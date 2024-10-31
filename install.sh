@@ -26,6 +26,7 @@ usage() {
 $app {autostart|-as|dm}
 autostart|-as        --    install autostart script
 dm                   --    install xsession entry
+all|-a               --    install all
 EOF
 }
 
@@ -34,6 +35,10 @@ case $1 in
         install_autostart
         ;;
     dm )
+        install_dm
+        ;;
+    all|-a )
+        install_autostart
         install_dm
         ;;
     * )

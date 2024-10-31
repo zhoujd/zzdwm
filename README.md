@@ -11,8 +11,13 @@ zzst
 
     $ sudo apt install libx11-dev libxft-dev libxinerama-dev
 
-## Build
+## Build dwm source
 
     $ cd src
     $ make
     $ sudo make install
+
+## Install dwm session
+
+    $ ./install.sh
+    $ ./install.sh all
