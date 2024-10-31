@@ -7,4 +7,23 @@ install_autostart() {
     echo "Install autostart done"
 }
 
-install_autostart
+usage() {
+    app=$(basename $0)
+    cat <<EOF
+$app {autostart|-as|dm}
+autostart|-as        --    install autostart script
+dm                   --    install xsession entry
+EOF
+}
+
+case $1 in
+    autostart|-as )
+        install_autostart
+        ;;
+    dm )
+        sudo $SCRIPT_ROOT/bin/dwm-dm-setup.sh
+        ;;
+    * )
+        usage
+        ;;
+esac
