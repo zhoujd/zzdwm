@@ -1,0 +1,5 @@
+## .gitignore
+
+config.h
+*.o
+dwm
