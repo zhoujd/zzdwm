@@ -64,6 +64,9 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont,
 static const char *termcmd[]  = { "st", NULL };
 static const char *emacscmd[]  = { "emacs", NULL };
 static const char *googlechromecmd[]  = { "google-chrome", NULL };
+static const char *rofiruncmd[]  = { "rofi", "-show", "run", NULL };
+static const char *rofisshcmd[]  = { "rofi", "-show", "ssh", NULL };
+static const char *rofiwincmd[]  = { "rofi", "-show", "window", NULL };
 
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
@@ -71,6 +74,9 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_c,      spawn,          {.v = termcmd } },
 	{ MODKEY,                       XK_e,      spawn,          {.v = emacscmd } },
 	{ MODKEY,                       XK_g,      spawn,          {.v = googlechromecmd } },
+	{ MODKEY,                       XK_r,      spawn,          {.v = rofiruncmd } },
+	{ MODKEY,                       XK_s,      spawn,          {.v = rofisshcmd } },
+	{ MODKEY,                       XK_w,      spawn,          {.v = rofiwincmd } },
 	{ MODKEY,                       XK_b,      togglebar,      {0} },
 	{ MODKEY|ShiftMask,             XK_j,      rotatestack,    {.i = +1 } },
 	{ MODKEY|ShiftMask,             XK_k,      rotatestack,    {.i = -1 } },
