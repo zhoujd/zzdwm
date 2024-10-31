@@ -7,7 +7,7 @@ static const int showbar            = 0;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
 static const int viewontag          = 1;        /* Switch view on tag switch */
 static const int user_bh            = 2;        /* 2 is the default spacing around the bar's font */
-static const char *fonts[]          = { "SF Mono:size=11" };
+static const char *fonts[]          = { "SF Mono:size=11", "SF Mono SC:size=11" };
 static const char col_gray1[]       = "#222222";
 static const char col_gray2[]       = "#444444";
 static const char col_gray3[]       = "#bbbbbb";
