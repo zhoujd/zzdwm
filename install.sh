@@ -7,6 +7,19 @@ install_autostart() {
     echo "Install autostart done"
 }
 
+install_dm() {
+    sudo tee /usr/share/xsessions/dwm.desktop <<EOF
+[Desktop Entry]
+Name=DWM Session
+Comment=DWM window manager
+Exec=dwm
+Icon=
+Type=Application
+DesktopNames=DWM
+EOF
+    echo "Install dm done"
+}
+
 usage() {
     app=$(basename $0)
     cat <<EOF
@@ -21,7 +34,7 @@ case $1 in
         install_autostart
         ;;
     dm )
-        sudo $SCRIPT_ROOT/bin/dwm-dm-setup.sh
+        install_dm
         ;;
     * )
         usage
