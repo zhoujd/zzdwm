@@ -2,11 +2,6 @@
 
 SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 
-install_autostart() {
-    ln -sfTv $SCRIPT_ROOT/misc/.dwm ~/.dwm
-    echo "Install autostart done"
-}
-
 install_dm() {
     sudo tee /usr/share/xsessions/dwm.desktop <<EOF
 [Desktop Entry]
@@ -23,22 +18,17 @@ EOF
 usage() {
     app=$(basename $0)
     cat <<EOF
-$app {autostart|-as|dm}
-autostart|-as        --    install autostart script
+$app {dm|all}
 dm                   --    install xsession entry
-all|-a               --    install all
+all                  --    install all
 EOF
 }
 
 case $1 in
-    autostart|-as )
-        install_autostart
-        ;;
     dm )
         install_dm
         ;;
-    all|-a )
-        install_autostart
+    all )
         install_dm
         ;;
     * )
