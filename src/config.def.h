@@ -2,6 +2,8 @@
 
 /* appearance */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
+static const int startwithgaps	     = 0;	 /* 1 means gaps are used by default */
+static const unsigned int gappx     = 10;       /* default gap between windows in pixels */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 0;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
@@ -107,6 +109,10 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_Right,  tagtoright,     {0} },
 	{ MODKEY|ControlMask,           XK_Left,   rotatetags,     {.i = -1 } },
 	{ MODKEY|ControlMask,           XK_Right,  rotatetags,     {.i = +1 } },
+	{ MODKEY,                       XK_minus,  setgaps,        {.i = -5 } },
+	{ MODKEY,                       XK_equal,  setgaps,        {.i = +5 } },
+	{ MODKEY|ShiftMask,             XK_minus,  setgaps,        {.i = GAP_RESET } },
+	{ MODKEY|ShiftMask,             XK_equal,  setgaps,        {.i = GAP_TOGGLE} },
 	TAGKEYS(                        XK_1,                      0)
 	TAGKEYS(                        XK_2,                      1)
 	TAGKEYS(                        XK_3,                      2)
