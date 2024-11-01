@@ -1482,7 +1482,7 @@ setcurrentdesktop(void){
 }
 void setdesktopnames(void){
 	XTextProperty text;
-	Xutf8TextListToTextProperty(dpy, tags, TAGSLENGTH, XUTF8StringStyle, &text);
+	Xutf8TextListToTextProperty(dpy, (char **)tags, TAGSLENGTH, XUTF8StringStyle, &text);
 	XSetTextProperty(dpy, root, &text, netatom[NetDesktopNames]);
 }
 
@@ -1558,8 +1558,10 @@ runautostart(void)
 		free(pathpfx);
 	}
 
-	if (access(path, X_OK) == 0)
-		system(path);
+	if (access(path, X_OK) == 0) {
+		if (system(path) != 0)
+			perror("Couldn't call system");
+  }
 
 	/* now the non-blocking script */
 	if (sprintf(path, "%s/%s", pathpfx, autostartsh) <= 0) {
@@ -1567,8 +1569,10 @@ runautostart(void)
 		free(pathpfx);
 	}
 
-	if (access(path, X_OK) == 0)
-		system(strcat(path, " &"));
+	if (access(path, X_OK) == 0) {
+		if (system(strcat(path, " &")) != 0)
+			perror("Couldn't call system");
+  }
 
 	free(pathpfx);
 	free(path);
@@ -2100,7 +2104,7 @@ updateclientlist()
 void updatecurrentdesktop(void){
 	long rawdata[] = { selmon->tagset[selmon->seltags] };
 	int i=0;
-	while(*rawdata >> i+1){
+	while(*rawdata >> (i+1)){
 		i++;
 	}
 	long data[] = { i };
