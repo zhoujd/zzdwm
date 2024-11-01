@@ -67,7 +67,7 @@ static const Layout layouts[] = {
 /* commands */
 static const char *termcmd[]  = { "st", NULL };
 static const char *emacscmd[]  = { "emacs", NULL };
-static const char *googlechromecmd[]  = { "google-chrome", NULL };
+static const char *chromecmd[]  = { "google-chrome", NULL };
 static const char *vscodecmd[]  = { "code", NULL };
 static const char *rofiruncmd[]  = { "rofi", "-show", "run", NULL };
 static const char *rofisshcmd[]  = { "rofi", "-show", "ssh", NULL };
@@ -77,7 +77,7 @@ static const Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_c,      spawn,          {.v = termcmd } },
 	{ MODKEY,                       XK_e,      spawn,          {.v = emacscmd } },
-	{ MODKEY,                       XK_g,      spawn,          {.v = googlechromecmd } },
+	{ MODKEY,                       XK_g,      spawn,          {.v = chromecmd } },
 	{ MODKEY,                       XK_u,      spawn,          {.v = vscodecmd } },
 	{ MODKEY,                       XK_r,      spawn,          {.v = rofiruncmd } },
 	{ MODKEY|Mod1Mask,              XK_r,      spawn,          {.v = rofiruncmd } },
