@@ -6,3 +6,7 @@ DWM
     ## https://ratfactor.com/dwm
     ## https://racfactor.com/dwm2
     ## https://ratfactor.com/slackware/three-monitors
+
+## Status Monitor
+
+    ## https://dwm.suckless.org/status_monitor/
