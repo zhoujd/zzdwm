@@ -23,7 +23,7 @@ static const char *colors[][3]      = {
 };
 
 static const char *const autostart[] = {
-	"nitrogen", "--restore", NULL,
+	"nitrogen", "--restore", "&", NULL,
 	NULL /* terminate */
 };
 
