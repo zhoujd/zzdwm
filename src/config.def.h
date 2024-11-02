@@ -122,6 +122,11 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_equal,  setgaps,        {.i = +5 } },
 	{ MODKEY|ShiftMask,             XK_minus,  setgaps,        {.i = GAP_RESET } },
 	{ MODKEY|ShiftMask,             XK_equal,  setgaps,        {.i = GAP_TOGGLE} },
+	{ MODKEY|ControlMask|ShiftMask, XK_h,      togglehorizontalmax, {0} },
+	{ MODKEY|ControlMask|ShiftMask, XK_l,      togglehorizontalmax, {0} },
+	{ MODKEY|ControlMask|ShiftMask, XK_j,      toggleverticalmax,   {0} },
+	{ MODKEY|ControlMask|ShiftMask, XK_k,      toggleverticalmax,   {0} },
+	{ MODKEY|ControlMask,           XK_m,      togglemaximize, {0} },
 	TAGKEYS(                        XK_1,                      0)
 	TAGKEYS(                        XK_2,                      1)
 	TAGKEYS(                        XK_3,                      2)
