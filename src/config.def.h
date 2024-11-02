@@ -10,7 +10,6 @@ static const int topbar             = 1;        /* 0 means bottom bar */
 static const int focusonwheel       = 0;        /* 0 means focus window by mouse click */
 static const int viewontag          = 1;        /* Switch view on tag switch */
 static const int user_bh            = 2;        /* 2 is the default spacing around the bar's font */
-static const int maxmaster          = 4;        /* 4 is the default max number of masters */
 static const char *fonts[]          = { "SF Mono:size=11", "SF Mono SC:size=11" };
 static const char col_gray1[]       = "#222222";
 static const char col_gray2[]       = "#444444";
@@ -44,6 +43,7 @@ static const Rule rules[] = {
 /* layout(s) */
 static const float mfact     = 0.55; /* factor of master area size [0.05..0.95] */
 static const int nmaster     = 1;    /* number of clients in master area */
+static const int maxmaster   = 4;    /* max number of clients in master area */
 static const int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
 static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen window */
 
