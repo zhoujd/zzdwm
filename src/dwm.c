@@ -302,7 +302,7 @@ static pid_t *autostart_pids;
 static size_t autostart_len;
 
 /* execute command from autostart array */
-static void
+void
 autostart_exec() {
 	const char *const *p;
 	size_t i = 0;
@@ -1535,11 +1535,13 @@ rotatestack(const Arg *arg)
 		restack(selmon);
 	}
 }
+
 void
 setcurrentdesktop(void){
 	long data[] = { 0 };
 	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32, PropModeReplace, (unsigned char *)data, 1);
 }
+
 void setdesktopnames(void){
 	XTextProperty text;
 	Xutf8TextListToTextProperty(dpy, (char **)tags, TAGSLENGTH, XUTF8StringStyle, &text);
@@ -1638,7 +1640,7 @@ setclientstate(Client *c, long state)
 
 void
 tagtoleft(const Arg *arg) {
-	if(selmon->sel != NULL
+	if (selmon->sel != NULL
 	&& __builtin_popcount(selmon->tagset[selmon->seltags] & TAGMASK) == 1
 	&& selmon->tagset[selmon->seltags] > 1) {
 		selmon->sel->tags >>= 1;
@@ -1649,7 +1651,7 @@ tagtoleft(const Arg *arg) {
 
 void
 tagtoright(const Arg *arg) {
-	if(selmon->sel != NULL
+	if (selmon->sel != NULL
 	&& __builtin_popcount(selmon->tagset[selmon->seltags] & TAGMASK) == 1
 	&& selmon->tagset[selmon->seltags] & (TAGMASK >> 1)) {
 		selmon->sel->tags <<= 1;
@@ -2150,10 +2152,14 @@ updateclientlist()
 				XA_WINDOW, 32, PropModeAppend,
 				(unsigned char *) &(c->win), 1);
 }
-void updatecurrentdesktop(void){
+
+void
+updatecurrentdesktop(void)
+{
 	long rawdata[] = { selmon->tagset[selmon->seltags] };
 	int i=0;
-	while(*rawdata >> (i+1)){
+
+	while(*rawdata >> (i+1)) {
 		i++;
 	}
 	long data[] = { i };
