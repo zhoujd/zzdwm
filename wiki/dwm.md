@@ -10,3 +10,7 @@ DWM
 ## Status Monitor
 
     ## https://dwm.suckless.org/status_monitor/
+
+## Key Chain
+
+    ## https://dwm.suckless.org/patches/keychain/
