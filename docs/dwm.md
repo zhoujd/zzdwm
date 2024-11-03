@@ -14,3 +14,7 @@ DWM
 ## Key Chain
 
     ## https://dwm.suckless.org/patches/keychain/
+
+## dwm-win32
+
+    ## https://github.com/prabirshrestha/dwm-win32
