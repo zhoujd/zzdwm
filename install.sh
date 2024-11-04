@@ -21,10 +21,11 @@ EOF
 }
 
 install_tool() {
-    echo "Install dmenu"
-    make -C $SCRIPT_ROOT/tools/dmenu clean
-    make -C $SCRIPT_ROOT/tools/dmenu
-    sudo make -C $SCRIPT_ROOT/tools/dmenu install
+    local proj=$SCRIPT_ROOT/tools/dmenu
+    echo "Install dmenu: $proj"
+    make -C $proj clean
+    make -C $proj
+    sudo make -C $proj install
     echo "Install tool done"
 }
 
