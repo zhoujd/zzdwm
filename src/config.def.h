@@ -71,9 +71,9 @@ static const char *termcmd[]  = { "st", NULL };
 static const char *emacscmd[]  = { "emacs", NULL };
 static const char *chromecmd[]  = { "google-chrome", NULL };
 static const char *vscodecmd[]  = { "code", NULL };
-static const char *runmenucmd[]  = { "runmenu", NULL };
-static const char *sshmenucmd[]  = { "sshmenu", NULL };
-static const char *winmenucmd[]  = { "winmenu", NULL };
+static const char *runmenucmd[]  = { "dmenu_run", NULL };
+static const char *sshmenucmd[]  = { "dmenu_ssh", NULL };
+static const char *winmenucmd[]  = { "dmenu_win", NULL };
 
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
