@@ -71,9 +71,9 @@ static const char *termcmd[]  = { "st", NULL };
 static const char *emacscmd[]  = { "emacs", NULL };
 static const char *chromecmd[]  = { "google-chrome", NULL };
 static const char *vscodecmd[]  = { "code", NULL };
-static const char *rofiruncmd[]  = { "rofi", "-show", "run", NULL };
-static const char *rofisshcmd[]  = { "rofi", "-show", "ssh", NULL };
-static const char *rofiwincmd[]  = { "rofi", "-show", "window", NULL };
+static const char *runmenucmd[]  = { "runmenu", NULL };
+static const char *sshmenucmd[]  = { "sshmenu", NULL };
+static const char *winmenucmd[]  = { "winmenu", NULL };
 
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
@@ -81,12 +81,12 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_e,      spawn,          {.v = emacscmd } },
 	{ MODKEY|Mod1Mask,              XK_g,      spawn,          {.v = chromecmd } },
 	{ MODKEY|Mod1Mask,              XK_u,      spawn,          {.v = vscodecmd } },
-	{ MODKEY,                       XK_r,      spawn,          {.v = rofiruncmd } },
-	{ MODKEY|Mod1Mask,              XK_r,      spawn,          {.v = rofiruncmd } },
-	{ MODKEY,                       XK_s,      spawn,          {.v = rofisshcmd } },
-	{ MODKEY|Mod1Mask,              XK_s,      spawn,          {.v = rofisshcmd } },
-	{ MODKEY,                       XK_w,      spawn,          {.v = rofiwincmd } },
-	{ MODKEY|Mod1Mask,              XK_w,      spawn,          {.v = rofiwincmd } },
+	{ MODKEY,                       XK_r,      spawn,          {.v = runmenucmd } },
+	{ MODKEY|Mod1Mask,              XK_r,      spawn,          {.v = runmenucmd } },
+	{ MODKEY,                       XK_s,      spawn,          {.v = sshmenucmd } },
+	{ MODKEY|Mod1Mask,              XK_s,      spawn,          {.v = sshmenucmd } },
+	{ MODKEY,                       XK_w,      spawn,          {.v = winmenucmd } },
+	{ MODKEY|Mod1Mask,              XK_w,      spawn,          {.v = winmenucmd } },
 	{ MODKEY,                       XK_b,      togglebar,      {0} },
 	{ MODKEY|ShiftMask,             XK_j,      rotatestack,    {.i = +1 } },
 	{ MODKEY|ShiftMask,             XK_k,      rotatestack,    {.i = -1 } },
