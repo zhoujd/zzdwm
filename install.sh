@@ -32,10 +32,10 @@ usage() {
     app=$(basename $0)
     cat <<EOF
 $app {dep|dm|tool|all}
-dep                  --    install build dependence
-dm                   --    install xsession entry
-tool                 --    install tools
-all                  --    install all
+dep       --    install build dependence
+dm        --    install xsession entry
+tool      --    install tools
+all       --    install all
 EOF
 }
 
