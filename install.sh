@@ -23,9 +23,9 @@ EOF
 install_tool() {
     local target=/usr/local/bin
     sudo mkdir -p $target
-    sudo cp -vf $SCRIPT_ROOT/tools/script/runmenu $target
-    sudo cp -vf $SCRIPT_ROOT/tools/script/sshmenu $target
-    sudo cp -vf $SCRIPT_ROOT/tools/script/winmenu $target
+    sudo cp -vf $SCRIPT_ROOT/tools/script/dmenu_run $target
+    sudo cp -vf $SCRIPT_ROOT/tools/script/dmenu_ssh $target
+    sudo cp -vf $SCRIPT_ROOT/tools/script/dmenu_win $target
     echo "Install tool done"
 }
 
