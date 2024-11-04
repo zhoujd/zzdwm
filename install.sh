@@ -20,12 +20,22 @@ EOF
     echo "Install dm done"
 }
 
+install_tool() {
+    local target=/usr/local/bin
+    sudo mkdir -p $target
+    sudo cp -vf $SCRIPT_ROOT/tools/script/runmenu $target
+    sudo cp -vf $SCRIPT_ROOT/tools/script/sshmenu $target
+    sudo cp -vf $SCRIPT_ROOT/tools/script/winmenu $target
+    echo "Install tool done"
+}
+
 usage() {
     app=$(basename $0)
     cat <<EOF
-$app {dep|dm|all}
+$app {dep|dm|tool|all}
 dep                  --    install build dependence
 dm                   --    install xsession entry
+tool                 --    install tools
 all                  --    install all
 EOF
 }
@@ -37,9 +47,13 @@ case $1 in
     dm )
         install_dm
         ;;
+    tool )
+        install_tool
+        ;;
     all )
         install_dep
         install_dm
+        install_tool
         ;;
     * )
         usage
