@@ -21,11 +21,10 @@ EOF
 }
 
 install_tool() {
-    local target=/usr/local/bin
-    sudo mkdir -p $target
-    sudo cp -vf $SCRIPT_ROOT/tools/script/dmenu_run $target
-    sudo cp -vf $SCRIPT_ROOT/tools/script/dmenu_ssh $target
-    sudo cp -vf $SCRIPT_ROOT/tools/script/dmenu_win $target
+    echo "Install dmenu"
+    make -C $SCRIPT_ROOT/tools/dmenu clean
+    make -C $SCRIPT_ROOT/tools/dmenu
+    sudo make -C $SCRIPT_ROOT/tools/dmenu install
     echo "Install tool done"
 }
 
