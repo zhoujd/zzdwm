@@ -13,11 +13,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: install-depend
+    - name: Install dependence
       run: sudo apt-get install -y libx11-dev libxft-dev libxinerama-dev
-    - name: build-dwm
+    - name: Build dwm
       run: make -C src/
-    - name: build-dmenu
+    - name: Build dmenu
       run: make -C tools/dmenu
-    - name: build-dwmstatus
+    - name: Build dwmstatus
       run: make -C tools/dwmstatus
