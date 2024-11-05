@@ -19,3 +19,5 @@ jobs:
       run: make -C src/
     - name: build-dmenu
       run: make -C tools/dmenu
+    - name: build-dwmstatus
+      run: make -C tools/dwmstatus
