@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: install-depend
-      run: sudo apt install -y libx11-dev libxft-dev libxinerama-dev
+      run: sudo apt-get install -y libx11-dev libxft-dev libxinerama-dev
     - name: build-dwm
       run: make -C src/
     - name: build-dmenu
