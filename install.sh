@@ -21,11 +21,16 @@ EOF
 }
 
 install_tool() {
-    local proj=$SCRIPT_ROOT/tools/dmenu
-    echo "Install dmenu: $proj"
-    make -C $proj clean
-    make -C $proj
-    sudo make -C $proj install
+    local projects=(
+        $SCRIPT_ROOT/tools/dmenu
+        $SCRIPT_ROOT/tools/dwmstatus
+    )
+    for proj in ${projects[@]}; do
+        echo "Install $proj"
+        make -C $proj clean
+        make -C $proj
+        sudo make -C $proj install
+    done
     echo "Install tool done"
 }
 
