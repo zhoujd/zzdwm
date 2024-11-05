@@ -69,8 +69,8 @@ static const Layout layouts[] = {
 /* commands */
 static const char *termcmd[]  = { "st", NULL };
 static const char *emacscmd[]  = { "emacs", NULL };
-static const char *chromecmd[]  = { "google-chrome", NULL };
-static const char *vscodecmd[]  = { "code", NULL };
+static const char *browsercmd[]  = { "google-chrome", NULL };
+static const char *codecmd[]  = { "code", NULL };
 static const char *runmenucmd[]  = { "dmenu_run", NULL };
 static const char *sshmenucmd[]  = { "dmenu_ssh", NULL };
 static const char *winmenucmd[]  = { "dmenu_win", NULL };
@@ -79,8 +79,8 @@ static const Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_c,      spawn,          {.v = termcmd } },
 	{ MODKEY,                       XK_e,      spawn,          {.v = emacscmd } },
-	{ MODKEY|Mod1Mask,              XK_g,      spawn,          {.v = chromecmd } },
-	{ MODKEY|Mod1Mask,              XK_u,      spawn,          {.v = vscodecmd } },
+	{ MODKEY|Mod1Mask,              XK_g,      spawn,          {.v = browsercmd } },
+	{ MODKEY|Mod1Mask,              XK_u,      spawn,          {.v = codecmd } },
 	{ MODKEY,                       XK_r,      spawn,          {.v = runmenucmd } },
 	{ MODKEY|Mod1Mask,              XK_r,      spawn,          {.v = runmenucmd } },
 	{ MODKEY,                       XK_s,      spawn,          {.v = sshmenucmd } },
