@@ -20,28 +20,37 @@ EOF
     echo "Install dm done"
 }
 
-install_tool() {
+build() {
     local projects=(
+        $SCRIPT_ROOT/src
         $SCRIPT_ROOT/tools/dmenu
         $SCRIPT_ROOT/tools/dwmstatus
     )
     for proj in ${projects[@]}; do
-        echo "Install $proj"
+        echo "Build $proj"
         make -C $proj clean
         make -C $proj
         sudo make -C $proj install
+        echo "Build $proj done"
     done
-    echo "Install tool done"
+    echo "Build done"
+}
+
+all() {
+    install_dep
+    install_dm
+    build
+    echo "Install all done"
 }
 
 usage() {
     app=$(basename $0)
     cat <<EOF
 $app {dep|dm|tool|all}
-dep       --    install build dependence
-dm        --    install xsession entry
-tool      --    install tools
-all       --    install all
+dep          --    Install build dependence
+dm           --    Install xsession entry
+build|-b     --    Build all
+all|-a       --    Install all
 EOF
 }
 
@@ -52,13 +61,11 @@ case $1 in
     dm )
         install_dm
         ;;
-    tool )
-        install_tool
+    build|-b )
+        build
         ;;
-    all )
-        install_dep
-        install_dm
-        install_tool
+    all|-a )
+        all
         ;;
     * )
         usage
