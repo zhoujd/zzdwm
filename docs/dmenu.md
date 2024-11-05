@@ -12,3 +12,23 @@ dmenu
     ## https://tools.suckless.org/dmenu/scripts/
     ## https://github.com/jukil/dmenu-scripts-collection
     ## https://github.com/aario/dmenu
+
+## Options
+
+    $ cat > ~/.dmenurc <<EOF
+    ## define the font for dmenu to be used
+    DMENU_FN="SF Mono-11"
+    ## background colour for unselected menu-items
+    DMENU_NB="#4a4a4a"
+    ## textcolour for unselected menu-items
+    DMENU_NF="#F9FAF9"
+    ## background colour for selected menu-items
+    DMENU_SB="#eb564d"
+    ## textcolour for selected menu-items
+    DMENU_SF="#F9FAF9"
+    ## command for the terminal application to be used:
+    TERMINAL_CMD="st -e"
+    ## export our variables
+    DMENU_OPTIONS="-fn $DMENU_FN -nb $DMENU_NB -nf $DMENU_NF -sf $DMENU_SF -sb $DMENU_SB"
+    export DMENU_FN DMENU_NB DMENU_NF DMENU_SB DMENU_SF TERMINAL_CMD DMENU_OPTIONS
+    EOF
