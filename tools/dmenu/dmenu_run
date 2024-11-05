@@ -3,8 +3,6 @@
 # dmenu_run improved
 # command ending with '!', is started in the terminal.
 
-test -s "$HOME"/.dmenurc && . "$HOME"/.dmenurc
-
 cmd="$(dmenu_path | dmenu -i -l 10 -p run "$@")"
 
 case $cmd in
