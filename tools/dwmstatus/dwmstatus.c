@@ -117,7 +117,7 @@ readfile(char *base, char *file)
 char *
 getbattery(char *base)
 {
-	char *co, status;
+	char *co, *status;
 	int descap, remcap;
 
 	descap = -1;
@@ -152,17 +152,17 @@ getbattery(char *base)
 
 	co = readfile(base, "status");
 	if (!strncmp(co, "Discharging", 11)) {
-		status = '-';
+		status = "-";
 	} else if(!strncmp(co, "Charging", 8)) {
-		status = '+';
+		status = "+";
 	} else {
-		status = ' ';
+		status = "";
 	}
 
 	if (remcap < 0 || descap < 0)
 		return smprintf("invalid");
 
-	return smprintf("%.0f%%%c", ((float)remcap / (float)descap) * 100, status);
+	return smprintf("%.0f%%%s", ((float)remcap / (float)descap) * 100, status);
 }
 
 char *
