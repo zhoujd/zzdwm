@@ -11,7 +11,6 @@ static const int focusonwheel       = 0;        /* 0 means focus window by mouse
 static const int viewontag          = 1;        /* Switch view on tag switch */
 static const int user_bh            = 2;        /* 2 is the default spacing around the bar's font */
 static const char *fonts[]          = {
-	"Droid Sans Fallback:size=11",
 	"SF Pro Display:size=11",
 	"SF Mono:size=11",
 	"SF Mono SC:size=11",
