@@ -13,9 +13,7 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-
 #include <X11/Xlib.h>
-
 #include <alsa/asoundlib.h>
 #include <alsa/mixer.h>
 
@@ -25,6 +23,8 @@
 
 char *tzutc = "UTC";
 char *tzsh = "Asia/Shanghai";
+char *startspace = " ";
+char *endspace = " ";
 
 static Display *dpy;
 
@@ -252,10 +252,11 @@ main(void)
 	for (;;sleep(30)) {
 		bat = getbattery("/sys/class/power_supply/BAT0");
 		tmutc = mktimes("%H:%M", tzutc);
-		tmsh = mktimes("%a %d %b %H:%M WW%W", tzsh);
+		tmsh = mktimes("WW%W %a %d %b %H:%M %Z", tzsh);
 		vol = volpercent();
 
-		status = smprintf("B:%s V:%s U:%s %s", bat, vol, tmutc, tmsh);
+		status = smprintf("%sB:%s V:%s U:%s %s%s",
+			startspace, bat, vol, tmutc, tmsh, endspace);
 		setstatus(status);
 
 		free(bat);
@@ -269,4 +270,3 @@ main(void)
 
 	return 0;
 }
-
