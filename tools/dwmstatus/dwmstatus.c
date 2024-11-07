@@ -219,7 +219,7 @@ volpercent()
 
 	snd_mixer_selem_id_alloca(&sid);
 	snd_mixer_selem_id_set_index(sid, 0);
-	snd_mixer_selem_id_set_name(sid, "Master");
+	snd_mixer_selem_id_set_name(sid, SOUNDCONTROL);
 
 	//Max volume
 	elem = snd_mixer_find_selem(handle, sid);
