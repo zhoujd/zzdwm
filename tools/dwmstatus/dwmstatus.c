@@ -1,6 +1,5 @@
 /*
- * Copy me if you can.
- * by 20h
+ * dwmstatus.c
  */
 
 #define _BSD_SOURCE
@@ -16,6 +15,13 @@
 #include <sys/wait.h>
 
 #include <X11/Xlib.h>
+
+#include <alsa/asoundlib.h>
+#include <alsa/mixer.h>
+
+/* Which sound card volume to display */
+#define SOUNDCARD	"default"
+#define SOUNDCONTROL	"Master"
 
 char *tzutc = "UTC";
 char *tzsh = "Asia/Shanghai";
@@ -197,6 +203,38 @@ execscript(char *cmd)
 	return smprintf("%s", retval);
 }
 
+char*
+volpercent()
+{
+	snd_mixer_t *handle;
+	snd_mixer_selem_id_t *sid;
+	snd_mixer_elem_t *elem;
+	long min, max;
+	long unit, volume;
+
+	snd_mixer_open(&handle, 0);
+	snd_mixer_attach(handle, SOUNDCARD);
+	snd_mixer_selem_register(handle, NULL, NULL);
+	snd_mixer_load(handle);
+
+	snd_mixer_selem_id_alloca(&sid);
+	snd_mixer_selem_id_set_index(sid, 0);
+	snd_mixer_selem_id_set_name(sid, "Master");
+
+	//Max volume
+	elem = snd_mixer_find_selem(handle, sid);
+	snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
+
+	//Vol unit
+	unit = max / 100;
+
+	//Volume
+	snd_mixer_selem_get_playback_volume(elem,
+		SND_MIXER_SCHN_FRONT_LEFT, &volume);
+
+	return smprintf("%.f%%", (double)volume / (double)unit);
+}
+
 int
 main(void)
 {
@@ -204,6 +242,7 @@ main(void)
 	char *bat;
 	char *tmutc;
 	char *tmsh;
+	char *vol;
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "dwmstatus: cannot open display.\n");
@@ -213,14 +252,16 @@ main(void)
 	for (;;sleep(30)) {
 		bat = getbattery("/sys/class/power_supply/BAT0");
 		tmutc = mktimes("%H:%M", tzutc);
-		tmsh = mktimes("WW%W %a %d %b %H:%M %Z", tzsh);
+		tmsh = mktimes("%a %d %b %H:%M WW%W", tzsh);
+		vol = volpercent();
 
-		status = smprintf("B:%s U:%s %s", bat, tmutc, tmsh);
+		status = smprintf("B:%s V:%s U:%s %s", bat, vol, tmutc, tmsh);
 		setstatus(status);
 
 		free(bat);
 		free(tmutc);
 		free(tmsh);
+		free(vol);
 		free(status);
 	}
 
