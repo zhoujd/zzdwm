@@ -4,6 +4,7 @@ SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 
 install_dep() {
     sudo apt install -y libx11-dev libxft-dev libxinerama-dev
+    sudo apt install -y libasound2-dev
     echo "Install dep done"
 }
 
