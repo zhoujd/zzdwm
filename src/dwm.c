@@ -1052,9 +1052,9 @@ incnmaster(const Arg *arg)
 {
 	selmon->nmaster = selmon->nmaster + arg->i;
 	if (selmon->nmaster > maxmaster)
-		selmon->nmaster = 1;
-	if (selmon->nmaster < 1)
 		selmon->nmaster = maxmaster;
+	if (selmon->nmaster < 1)
+		selmon->nmaster = 1;
 	arrange(selmon);
 }
 
