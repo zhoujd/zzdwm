@@ -10,6 +10,7 @@ zzdwm
 ## Build dependence
 
     $ sudo apt install libx11-dev libxft-dev libxinerama-dev
+    $ sudo apt install libasound2-dev
 
 ## Build dwm source
 
