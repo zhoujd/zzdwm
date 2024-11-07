@@ -11,9 +11,10 @@ static const int focusonwheel       = 0;        /* 0 means focus window by mouse
 static const int viewontag          = 1;        /* Switch view on tag switch */
 static const int user_bh            = 2;        /* 2 is the default spacing around the bar's font */
 static const char *fonts[]          = {
+	"Droid Sans Fallback:size=11",
+	"SF Pro Display:size=11",
 	"SF Mono:size=11",
 	"SF Mono SC:size=11",
-	"SF Pro Display:size=11",
 };
 static const char col_gray1[]       = "#222222";
 static const char col_gray2[]       = "#444444";
@@ -33,7 +34,7 @@ static const char *const autostart[] = {
 };
 /* Select the font index for you statusbar
  * the index is zero based*/
-static const int statusfontindex = 2;
+static const int statusfontindex = 0;
 /* tagging */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
