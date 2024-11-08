@@ -23,8 +23,6 @@
 
 char *tzutc = "UTC";
 char *tzsh = "Asia/Shanghai";
-char *startspace = " ";
-char *endspace = " ";
 
 static Display *dpy;
 
@@ -255,8 +253,8 @@ main(void)
 		tmsh = mktimes("WW%W %a %d %b %H:%M %Z", tzsh);
 		vol = volpercent();
 
-		status = smprintf("%sB:%s V:%s U:%s %s%s",
-			startspace, bat, vol, tmutc, tmsh, endspace);
+		status = smprintf("B:%s V:%s U:%s %s",
+			bat, vol, tmutc, tmsh);
 		setstatus(status);
 
 		free(bat);
