@@ -1050,7 +1050,16 @@ grabkeys(void)
 void
 incnmaster(const Arg *arg)
 {
-	selmon->nmaster = MIN(MAX(selmon->nmaster + arg->i, nminmaster), nmaxmaster);
+	if (selmon->nmaster > 0) {
+		selmon->nmaster = MIN(MAX(selmon->nmaster + arg->i, nminmaster), nmaxmaster);
+	} else if (selmon->nmaster < 0) {
+		selmon->nmaster = nminmaster;
+	} else {
+		if (arg->i > 0)
+			selmon->nmaster = MIN(MAX(selmon->nmaster + arg->i, nminmaster), nmaxmaster);
+		else
+			selmon->nmaster = nminmaster;
+	}
 	arrange(selmon);
 }
 
