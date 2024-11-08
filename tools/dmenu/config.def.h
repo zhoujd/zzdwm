@@ -7,7 +7,6 @@ static int min_width = 500;                    /* minimum width when centered */
 static const float menu_height_ratio = 4.0f;  /* This is the ratio used in the original calculation */
 /* -fn option overrides fonts[0]; default X11 font or font set */
 static const char *fonts[] = {
-	"SF Pro Display:size=11",
 	"SF Mono:size=11",
 	"SF Mono SC:size=11",
 };
