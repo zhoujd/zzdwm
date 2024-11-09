@@ -32,3 +32,8 @@ dmenu
     DMENU_OPTIONS="-fn $DMENU_FN -nb $DMENU_NB -nf $DMENU_NF -sf $DMENU_SF -sb $DMENU_SB"
     export DMENU_FN DMENU_NB DMENU_NF DMENU_SB DMENU_SF TERMINAL_CMD DMENU_OPTIONS
     EOF
+
+## keysym for Shift + Tab
+
+    ## https://www.cl.cam.ac.uk/~mgk25/ucs/keysymdef.h
+    ## XK_ISO_Left_Tab
