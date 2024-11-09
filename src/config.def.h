@@ -11,6 +11,7 @@ static const int horizpadbar        = 4;        /* horizontal padding for status
 static const int vertpadbar         = 2;        /* vertical padding for statusbar */
 static const int focusonwheel       = 0;        /* 0 means focus window by mouse click */
 static const int viewontag          = 1;        /* Switch view on tag switch */
+static const int attachmode         = 0;        /* 0 master (default), 1 = above, 2 = aside, 3 = below, 4 = bottom */
 static const char *fonts[]          = {
 	"SF Pro Display:size=11",
 	"SF Mono:size=11",
