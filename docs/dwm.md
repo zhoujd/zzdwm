@@ -5,6 +5,7 @@ DWM
 
     ## https://dwm.suckless.org/
     ## https://dwm.suckless.org/patches/
+    ## https://github.com/bakkeby/patches
     ## https://github.com/bakkeby/dwm-flexipatch
 
 ## Dave's Visual Guide to dwm
