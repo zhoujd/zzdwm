@@ -9,11 +9,12 @@ install_dep() {
 }
 
 install_dm() {
+    sudo cp -fv $SCRIPT_ROOT/bin/startdwm /usr/local/bin
     sudo tee /usr/share/xsessions/dwm.desktop <<EOF
 [Desktop Entry]
 Name=DWM Session
 Comment=DWM window manager
-Exec=dwm
+Exec=startdwm
 Icon=
 Type=Application
 DesktopNames=DWM
