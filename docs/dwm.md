@@ -26,3 +26,24 @@ DWM
 ## dwm-win32
 
     ## https://github.com/prabirshrestha/dwm-win32
+
+## Controlling Audio through keys in dwm
+
+    /* Volume Commands */
+    static const char *volume[3][4] = {
+      {"pactl", "set-sink-volume", "@DEFAULT_SINK@", "+10%"},
+      {"pactl", "set-sink-volume", "@DEFAULT_SINK@", "-10%"},
+      {"pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"},
+    };
+
+    /* Keys */
+    static Key keys[] = {
+    /* modifier key                     function  argument */
+      {0,       XF86XK_AudioRaiseVolume, spawn,   {.v=volume[0]} },
+      {0,       XF86XK_AudioLowerVolume, spawn,   {.v=volume[1]} },
+      {0,       XF86XK_AudioMute,        spawn,   {.v=volume[2]} },
+      // The rest of your keys and config file......
+    }
+
+    // https://cgit.freedesktop.org/xorg/proto/x11proto/tree/XF86keysym.h
+    #include <X11/XF86keysym.h>
