@@ -27,6 +27,7 @@ build() {
         $SCRIPT_ROOT/src
         $SCRIPT_ROOT/tools/dmenu
         $SCRIPT_ROOT/tools/dwmstatus
+        $SCRIPT_ROOT/tools/tabbed
     )
     for proj in ${projects[@]}; do
         echo "Build $proj"
