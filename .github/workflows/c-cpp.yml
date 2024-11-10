@@ -21,3 +21,5 @@ jobs:
       run: make -C tools/dmenu
     - name: Build dwmstatus
       run: make -C tools/dwmstatus
+    - name: Build tabbed
+      run: make -C tools/tabbed
