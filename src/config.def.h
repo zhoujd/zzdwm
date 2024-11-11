@@ -109,6 +109,8 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_Return, zoom,           {0} },
 	{ MODKEY,                       XK_Tab,    view,           {0} },
 	{ MODKEY|ShiftMask,             XK_c,      killclient,     {0} },
+	{ MODKEY|ControlMask,           XK_c,      killclient,     {.ui = 1} },  // kill unselect
+	{ MODKEY|ShiftMask|ControlMask, XK_c,      killclient,     {.ui = 2} },  // killall
 	{ MODKEY,                       XK_t,      setlayout,      {.v = &layouts[0]} },
 	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[1]} },
 	{ MODKEY,                       XK_m,      setlayout,      {.v = &layouts[2]} },
