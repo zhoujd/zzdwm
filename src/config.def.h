@@ -8,7 +8,7 @@ static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 0;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
 static const int horizpadbar        = 4;        /* horizontal padding for statusbar */
-static const int vertpadbar         = 2;        /* vertical padding for statusbar */
+static const int vertpadbar         = 0;        /* vertical padding for statusbar */
 static const int focusonwheel       = 0;        /* 0 means focus window by mouse click */
 static const int viewontag          = 1;        /* Switch view on tag switch */
 static const int attachmode         = 0;        /* 0 master (default), 1 = above, 2 = aside, 3 = below, 4 = bottom */
