@@ -17,6 +17,10 @@ static const char *fonts[]          = {
 	"SF Mono:size=11",
 	"SF Mono SC:size=11",
 };
+/* select the font index for statusbar
+ * the index is zero based */
+static const int statusfontindex    = 0;
+
 static const char col_gray1[]       = "#222222";
 static const char col_gray2[]       = "#444444";
 static const char col_gray3[]       = "#bbbbbb";
@@ -33,9 +37,6 @@ static const char *const autostart[] = {
 	"dwmstatus", "&", NULL,
 	NULL /* terminate */
 };
-/* Select the font index for you statusbar
- * the index is zero based*/
-static const int statusfontindex = 0;
 /* tagging */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
