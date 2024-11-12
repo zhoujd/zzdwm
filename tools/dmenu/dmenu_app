@@ -12,7 +12,16 @@ app=${1}
 num=$(wmctrl -xl | grep -i $app | wc -l)
 prompt="Windows"
 
-menu() {
+app_run() {
+    hash $app 2> /dev/null
+    if [ $? -eq 0 ]; then
+        $app &
+    else
+        echo "No $app can been found!"
+    fi
+}
+
+app_menu() {
     windows=$(wmctrl -xl | grep -i $app | tr -s '[:blank:]' | cut -d ' ' -f 3-3,5- | sed 's/^[a-zA-Z0-9-]*\.//' | sort | uniq)
     # Add spaces to align the WM_NAMEs of the windows
     max=$(echo "$windows" | awk '{cur=length($1); max=(cur>max?cur:max)} END{print max}')
@@ -32,9 +41,9 @@ case $num in
         wmctrl -a $app &
         ;;
     0 )
-        $app &
+        app_run
         ;;
     * )
-        menu
+        app_menu
         ;;
 esac
