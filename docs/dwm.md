@@ -47,3 +47,14 @@ DWM
 
     // https://cgit.freedesktop.org/xorg/proto/x11proto/tree/XF86keysym.h
     #include <X11/XF86keysym.h>
+
+
+## Switch to Application
+
+    ## With xdotool
+    $ application=emacs
+    $ xdotool search ".*${application}.*" windowactivate
+    $ xdotool search emacs windowactivate
+
+    ## With wmctrl
+    $ wmctrl -a emacs
