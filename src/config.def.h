@@ -79,7 +79,9 @@ static const Layout layouts[] = {
 
 /* commands */
 static const char *termcmd[]  = { "st", NULL };
+static const char *pulltermcmd[]  = { "wmctrl", "-a", "st", NULL };
 static const char *emacscmd[]  = { "emacs", NULL };
+static const char *pullemacscmd[]  = { "wmctrl", "-a", "emacs", NULL };
 static const char *browsercmd[]  = { "google-chrome", NULL };
 static const char *codecmd[]  = { "code", NULL };
 static const char *runmenucmd[]  = { "dmenu_run", NULL };
@@ -89,7 +91,9 @@ static const char *winmenucmd[]  = { "dmenu_win", NULL };
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_c,      spawn,          {.v = termcmd } },
+	{ MODKEY|Mod1Mask,              XK_c,      spawn,          {.v = pulltermcmd } },
 	{ MODKEY,                       XK_e,      spawn,          {.v = emacscmd } },
+	{ MODKEY|Mod1Mask,              XK_e,      spawn,          {.v = pullemacscmd } },
 	{ MODKEY|Mod1Mask,              XK_g,      spawn,          {.v = browsercmd } },
 	{ MODKEY|Mod1Mask,              XK_u,      spawn,          {.v = codecmd } },
 	{ MODKEY,                       XK_r,      spawn,          {.v = runmenucmd } },
