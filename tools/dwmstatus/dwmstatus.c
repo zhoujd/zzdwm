@@ -19,7 +19,7 @@
 
 /* Which sound card volume to display */
 #define SOUNDCARD	"default"
-#define SOUNDCONTROL	"Master"
+#define SOUNDCONTROL "Master"
 
 char *tzutc = "UTC";
 char *tzsh = "Asia/Shanghai";
@@ -208,28 +208,35 @@ volpercent()
 	snd_mixer_selem_id_t *sid;
 	snd_mixer_elem_t *elem;
 	long min, max;
-	long unit, volume;
+	long unit = 0, volume = 0;
 
-	snd_mixer_open(&handle, 0);
-	snd_mixer_attach(handle, SOUNDCARD);
-	snd_mixer_selem_register(handle, NULL, NULL);
-	snd_mixer_load(handle);
+	if (snd_mixer_open(&handle, 0) < 0)
+		goto END;
+	if (snd_mixer_attach(handle, SOUNDCARD) < 0)
+		goto END;
+	if (snd_mixer_selem_register(handle, NULL, NULL) < 0)
+		goto END;
+	if (snd_mixer_load(handle) < 0)
+		goto END;
 
 	snd_mixer_selem_id_alloca(&sid);
 	snd_mixer_selem_id_set_index(sid, 0);
 	snd_mixer_selem_id_set_name(sid, SOUNDCONTROL);
 
 	//Max volume
-	elem = snd_mixer_find_selem(handle, sid);
-	snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
-
+	if ((elem = snd_mixer_find_selem(handle, sid)) == NULL)
+		goto END;
+	if (snd_mixer_selem_get_playback_volume_range(elem, &min, &max) < 0)
+		goto END;
 	//Vol unit
 	unit = max / 100;
-
 	//Volume
-	snd_mixer_selem_get_playback_volume(elem,
-		SND_MIXER_SCHN_FRONT_LEFT, &volume);
+	if (snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &volume) < 0)
+		goto END;
 
+END:
+	if (handle != NULL)
+		snd_mixer_close(handle);
 	return smprintf("%.f%%", (double)volume / (double)unit);
 }
 
@@ -253,8 +260,7 @@ main(void)
 		tmsh = mktimes("WW%W %a %d %b %H:%M %Z", tzsh);
 		vol = volpercent();
 
-		status = smprintf("B:%s V:%s U:%s %s",
-			bat, vol, tmutc, tmsh);
+		status = smprintf("B:%s V:%s U:%s %s", bat, vol, tmutc, tmsh);
 		setstatus(status);
 
 		free(bat);
