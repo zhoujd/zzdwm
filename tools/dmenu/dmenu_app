@@ -1,15 +1,16 @@
 #!/bin/bash
 
-if [ -z "$1" ];then
+if [[ -z $1 ]]; then
     cat <<EOF
 Usage:
-$ $(basename $0) {app}
+$(basename $0) {app}
 EOF
-    exit 0
+    exit 1
 fi
 
 app=${1}
 num=$(wmctrl -xl | grep -i $app | wc -l)
+prompt="Windows"
 
 menu() {
     windows=$(wmctrl -xl | grep -i $app | tr -s '[:blank:]' | cut -d ' ' -f 3-3,5- | sed 's/^[a-zA-Z0-9-]*\.//' | sort | uniq)
@@ -20,7 +21,7 @@ menu() {
                       '{cur=length($1); printf $1; \
                     for(i=0; i < max - cur + 1; i++) printf " "; \
                     $1 = ""; printf "%s\n", $0}')
-    target=$(echo "$windows" | dmenu -l 10 -i -p Windows | tr -s '[:blank:]' | cut -d ' ' -f 2-)
+    target=$(echo "$windows" | dmenu -l 10 -i -p $prompt | tr -s '[:blank:]' | cut -d ' ' -f 2-)
     if [[ -n $target ]]; then
         wmctrl -a "$target"
     fi

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 term_cmd=${TERM_CMD:-st -e}
 ssh_cmd=${SSH_CMD:-ssh -t}
@@ -9,9 +9,9 @@ ssh_hosts=( $(grep "^Host\s\+[^*]" $ssh_config | cut -d " " -f 2-) )
 ssh_host=$(printf '%s\n' "${ssh_hosts[@]}" | dmenu -i -l 10 -p ssh "$@")
 
 if [ -n "$ssh_host" ]; then
-  ssh $ssh_host hash mosh-server 2> /dev/null
-  if [ $? -eq 0 ]; then
-    ssh_cmd="mosh"
-  fi
-  $term_cmd $ssh_cmd $ssh_host $remote_cmd
+    ssh $ssh_host hash mosh-server 2> /dev/null
+    if [ $? -eq 0 ]; then
+        ssh_cmd="mosh"
+    fi
+    $term_cmd $ssh_cmd $ssh_host $remote_cmd
 fi
