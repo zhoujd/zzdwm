@@ -79,9 +79,9 @@ static const Layout layouts[] = {
 
 /* commands */
 static const char *termcmd[]  = { "st", NULL };
-static const char *pulltermcmd[]  = { "wmctrl", "-a", "st", NULL };
+static const char *pulltermcmd[]  = { "dmenu_app", "st", NULL };
 static const char *emacscmd[]  = { "emacs", NULL };
-static const char *pullemacscmd[]  = { "wmctrl", "-a", "emacs", NULL };
+static const char *pullemacscmd[]  = { "dmenu_app", "emacs", NULL };
 static const char *browsercmd[]  = { "google-chrome", NULL };
 static const char *codecmd[]  = { "code", NULL };
 static const char *runmenucmd[]  = { "dmenu_run", NULL };
