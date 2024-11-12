@@ -15,7 +15,7 @@ prompt="Windows"
 app_run() {
     hash $app 2> /dev/null
     if [ $? -eq 0 ]; then
-        $app &
+        exec $app
     else
         echo "No $app can been found!"
     fi
@@ -38,7 +38,7 @@ app_menu() {
 
 case $num in
     1 )
-        wmctrl -a "$app" &
+        wmctrl -a "$app"
         ;;
     0 )
         app_run
