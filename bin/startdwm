@@ -1,3 +1,4 @@
 #!/bin/sh
-echo "$(date): Starting dwm desktop"
+
+echo "$(date): starting dwm desktop."
 dwm
