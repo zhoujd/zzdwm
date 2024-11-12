@@ -18,7 +18,7 @@
 #include <alsa/mixer.h>
 
 /* Which sound card volume to display */
-#define SOUNDCARD	"default"
+#define SOUNDCARD "default"
 #define SOUNDCONTROL "Master"
 
 char *tzutc = "UTC";
