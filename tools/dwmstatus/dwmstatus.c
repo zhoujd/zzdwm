@@ -254,7 +254,7 @@ main(void)
 		return 1;
 	}
 
-	for (;;sleep(30)) {
+	for (;;sleep(20)) {
 		bat = getbattery("/sys/class/power_supply/BAT0");
 		tmutc = mktimes("%H:%M", tzutc);
 		tmsh = mktimes("WW%W %a %d %b %H:%M %Z", tzsh);
