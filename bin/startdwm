@@ -1,4 +1,4 @@
 #!/bin/sh
 
 echo "$(date): starting dwm desktop."
-dwm
+exec dwm
