@@ -1,7 +1,11 @@
 #!/bin/bash
-entries=$(ls /usr/share/applications/)
+apppaths=(
+    /usr/share/applications/
+    /usr/local/share/applications/
+)
+entries=$(ls ${apppaths[@]})
 for entry in $entries; do
-  if [[ $entry == *.desktop ]]; then
-    echo "${entry%.*}"
-  fi
-done;
+    if [[ $entry == *.desktop ]]; then
+        echo "${entry%.*}"
+    fi
+done

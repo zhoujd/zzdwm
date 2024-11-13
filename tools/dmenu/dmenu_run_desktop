@@ -1,2 +1,2 @@
 #!/bin/sh
-dmenu_path_desktop | dmenu "$@" | ${SHELL:-"/bin/sh"} &
+dmenu_path_desktop | dmenu -i -l 10 -p drun "$@" | ${SHELL:-"/bin/sh"} &
