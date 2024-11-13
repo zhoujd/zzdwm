@@ -12,6 +12,7 @@ static const int vertpadbar         = 0;        /* vertical padding for statusba
 static const int focusonwheel       = 0;        /* 0 means focus window by mouse click */
 static const int viewontag          = 1;        /* Switch view on tag switch */
 static const int attachmode         = 0;        /* 0 master (default), 1 = above, 2 = aside, 3 = below, 4 = bottom */
+static const int background         = 1;        /* 0 means no root background */
 static const char *fonts[]          = {
 	"SF Pro Display:size=11",
 	"SF Mono:size=11",
@@ -31,8 +32,6 @@ static const char *colors[][3]      = {
 	[SchemeNorm] = { col_gray3, col_gray1, col_gray2 },
 	[SchemeSel]  = { col_gray4, col_cyan,  col_cyan  },
 };
-/* root window background pixel 0xRRGGBB */
-static const unsigned long background = 0x000000;
 /* auto start */
 static const char *const autostart[] = {
 	"dwmstatus", "&", NULL,

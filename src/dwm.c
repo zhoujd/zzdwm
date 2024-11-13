@@ -1911,8 +1911,10 @@ setup(void)
 	sw = DisplayWidth(dpy, screen);
 	sh = DisplayHeight(dpy, screen);
 	root = RootWindow(dpy, screen);
-	XSetWindowBackground(dpy, root, background);
-	XClearWindow(dpy, root);
+	if (background) {
+		XSetWindowBackground(dpy, root, BlackPixel(dpy, screen));
+		XClearWindow(dpy, root);
+	}
 	drw = drw_create(dpy, screen, root, sw, sh);
 	if (!drw_fontset_create(drw, fonts, LENGTH(fonts)))
 		die("no fonts could be loaded.");
