@@ -5,6 +5,7 @@ SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 install_dep() {
     sudo apt install -y libx11-dev libxft-dev libxinerama-dev
     sudo apt install -y libasound2-dev
+    sudo apt install -y libxfixes-dev libxi-dev libxext-dev
     echo "Install dep done"
 }
 
@@ -28,6 +29,7 @@ build() {
         $SCRIPT_ROOT/tools/dmenu
         $SCRIPT_ROOT/tools/dwmstatus
         $SCRIPT_ROOT/tools/tabbed
+        $SCRIPT_ROOT/tools/xbanish        
     )
     for proj in ${projects[@]}; do
         echo "Build $proj"
