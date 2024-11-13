@@ -3,10 +3,12 @@
 # dmenu_run improved
 # command ending with '!', is started in the terminal.
 
+term_cmd=${TERM_CMD:-"st -e"}
+sh_cmd=${SH_CMD:-"/bin/bash -c"}
 cmd="$(dmenu_path | dmenu -i -l 10 -p run "$@")"
 
 case $cmd in
     '')  ;;
-    *\!) exec "${TERMINAL:-st}" -e bash -c "${cmd%?}; read" ;;
+    *\!) exec ${term_cmd} ${sh_cmd} "${cmd%?}; read" ;;
     *)   exec ${cmd} ;;
 esac
