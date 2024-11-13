@@ -58,3 +58,10 @@ DWM
 
     ## With wmctrl
     $ wmctrl -a emacs
+
+## Font monospace
+
+    $ fc-match monospace
+    DejaVuSansMono.ttf: "DejaVu Sans Mono" "Book"
+    $ fc-match monospace:bold
+    DejaVuSansMono-Bold.ttf: "DejaVu Sans Mono" "Bold"
