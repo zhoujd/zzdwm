@@ -13,8 +13,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Install dependence
-      run: sudo apt-get install -y libx11-dev libxft-dev libxinerama-dev libasound2-dev
+    - name: Install dwm dependence
+      run: sudo apt-get install -y libx11-dev libxft-dev libxinerama-dev
+    - name: Install dwmstatus dependence
+      run: sudo apt-get install -y libasound2-dev
+    - name: Install xbanish dependence
+      run: sudo apt-get install -y libxfixes-dev libxi-dev libxext-dev
     - name: Build dwm
       run: make -C src/
     - name: Build dmenu
@@ -23,3 +27,5 @@ jobs:
       run: make -C tools/dwmstatus
     - name: Build tabbed
       run: make -C tools/tabbed
+    - name: Build xbanish
+      run: make -C tools/xbanish
