@@ -20,7 +20,7 @@ static const char *fonts[]          = {
 /* select the font index for statusbar
  * the index is zero based */
 static const int statusfontindex    = 0;
-
+/* colors */
 static const char col_gray1[]       = "#222222";
 static const char col_gray2[]       = "#444444";
 static const char col_gray3[]       = "#bbbbbb";
@@ -31,9 +31,8 @@ static const char *colors[][3]      = {
 	[SchemeNorm] = { col_gray3, col_gray1, col_gray2 },
 	[SchemeSel]  = { col_gray4, col_cyan,  col_cyan  },
 };
-
-/* root background pixel */
-static const unsigned int background = 0x0;
+/* root window background pixel 0xRRGGBB */
+static const unsigned long background = 0x000000;
 /* auto start */
 static const char *const autostart[] = {
 	"dwmstatus", "&", NULL,
