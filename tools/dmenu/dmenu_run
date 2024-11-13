@@ -7,6 +7,6 @@ cmd="$(dmenu_path | dmenu -i -l 10 -p run "$@")"
 
 case $cmd in
     '')  ;;
-    *\!) exec "${TERMINAL:-st}" -e bash -c "${cmd%?}; read" & ;;
-    *)   exec ${cmd} & ;;
+    *\!) exec "${TERMINAL:-st}" -e bash -c "${cmd%?}; read" ;;
+    *)   exec ${cmd} ;;
 esac

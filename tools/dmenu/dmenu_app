@@ -10,7 +10,7 @@ fi
 
 app=${1}
 num=$(wmctrl -xl 2>/dev/null | grep -i $app | wc -l)
-prompt="Windows"
+prompt="app"
 
 app_run() {
     hash $app 2> /dev/null
