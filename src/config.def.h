@@ -32,8 +32,10 @@ static const char *colors[][3]      = {
 	[SchemeSel]  = { col_gray4, col_cyan,  col_cyan  },
 };
 
+/* root background pixel */
+static const unsigned long background = 0x0;
+/* auto start */
 static const char *const autostart[] = {
-	"nitrogen", "--restore", "&", NULL,
 	"dwmstatus", "&", NULL,
 	"xbanish", "&", NULL,
 	NULL /* terminate */
