@@ -61,6 +61,8 @@ DWM
 
 ## Font monospace
 
+    ## https://www.freedesktop.org/wiki/Software/fontconfig/
+    ## https://fontconfig.pages.freedesktop.org/fontconfig/fontconfig-user.html
     $ fc-match monospace
     DejaVuSansMono.ttf: "DejaVu Sans Mono" "Book"
     $ fc-match monospace:bold
