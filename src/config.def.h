@@ -33,7 +33,7 @@ static const char *colors[][3]      = {
 };
 
 /* root background pixel */
-static const unsigned long background = 0x0;
+static const unsigned int background = 0x0;
 /* auto start */
 static const char *const autostart[] = {
 	"dwmstatus", "&", NULL,
