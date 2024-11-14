@@ -1,4 +1,5 @@
 #!/bin/sh
 
-echo "$(date): starting dwm desktop."
-exec dwm
+log=$HOME/.dwm.log
+echo "$(date): starting dwm desktop." >$log
+exec dwm 2>>$log
