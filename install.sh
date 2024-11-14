@@ -6,6 +6,7 @@ install_dep() {
     sudo apt install -y libx11-dev libxft-dev libxinerama-dev
     sudo apt install -y libasound2-dev
     sudo apt install -y libxfixes-dev libxi-dev libxext-dev
+    sudo apt install -y libxrandr-dev
     echo "Install dep done"
 }
 
