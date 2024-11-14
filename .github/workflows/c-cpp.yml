@@ -29,3 +29,5 @@ jobs:
       run: make -C tools/tabbed
     - name: Build xbanish
       run: make -C tools/xbanish
+    - name: Build slock
+      run: make -C tools/slock
