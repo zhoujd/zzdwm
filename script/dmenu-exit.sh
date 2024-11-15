@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # A simple logout dialog
+
 menu=(
     "0: Cancel"
     "1: Logout"
@@ -10,7 +11,6 @@ menu=(
 )
 prompt="exit:"
 choice=`printf '%s\n' "${menu[@]}" | dmenu -i -l 10 -p $prompt | cut -d ':' -f 1`
-# execute the choice in background
 case "$choice" in
     0) exit ;;
     1) xdotool key super+shift+q & ;;

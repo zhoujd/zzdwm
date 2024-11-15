@@ -37,3 +37,23 @@ dmenu
 
     ## https://www.cl.cam.ac.uk/~mgk25/ucs/keysymdef.h
     ## XK_ISO_Left_Tab
+
+## Enter sudo password
+
+    ## apply dmenu-password-5.0.diff
+    $ wget https://tools.suckless.org/dmenu/patches/password/dmenu-password-5.0.diff
+    $ patch -p1 < dmenu-password-5.0.diff
+
+    ## enter password via dmenu
+    password=$(echo -n | dmenu -i -P -p "Enter password:")
+    echo $password | sudo reboot
+
+    ## sudocmd
+    sudocmd() {
+        password=$(echo -n | dmenu -i -P -p "Enter password:")
+        if [ -n "$password" ]; then
+            echo $password | sudo -S $@
+        fi
+    }
+    sudocmd shutdown -h now
+    sudocmd reboot
