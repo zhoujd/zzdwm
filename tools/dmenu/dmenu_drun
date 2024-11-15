@@ -6,8 +6,8 @@ apppaths=(
     /usr/share/applications/
     /usr/local/share/applications/
 )
-entries=$(ls ${apppaths[@]})
 desktops() {
+    entries=$(ls ${apppaths[@]})
     for entry in $entries; do
         if [[ $entry == *.desktop ]]; then
             echo "${entry%.*}"
