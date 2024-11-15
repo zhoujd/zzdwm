@@ -1894,10 +1894,10 @@ void
 setsmfact(const Arg *arg) {
 	float sf;
 
-	if(!arg || !selmon->lt[selmon->sellt]->arrange)
+	if (!arg || !selmon->lt[selmon->sellt]->arrange)
 		return;
 	sf = arg->sf < 1.0 ? arg->sf + selmon->smfact : arg->sf - 1.0;
-	if(sf < 0 || sf > 0.9)
+	if (sf < 0 || sf > 0.9)
 		return;
 	selmon->smfact = sf;
 	arrange(selmon);
@@ -2127,11 +2127,11 @@ tile(Monitor *m)
 				my += HEIGHT(c) - c->bw;
 			} else {
 				smh = m->mh * m->smfact;
-				if(!(nexttiled(c->next)))
+				if (!(nexttiled(c->next)))
 					h = (m->wh - ty) / (n - i);
 				else
 					h = (m->wh - smh - ty) / (n - i);
-				if(h < minwsz) {
+				if (h < minwsz) {
 					c->isfloating = True;
 					XRaiseWindow(dpy, c->win);
 					resize(c, m->mx + (m->mw / 2 - WIDTH(c) / 2), m->my + (m->mh / 2 - HEIGHT(c) / 2), m->ww - mw, h - c->bw, False);
@@ -2139,7 +2139,7 @@ tile(Monitor *m)
 				}
 				else
 					resize(c, m->wx + mw - c->bw, m->wy + ty, m->ww - mw, h - c->bw, False);
-				if(!(nexttiled(c->next)))
+				if (!(nexttiled(c->next)))
 					ty += HEIGHT(c) + smh;
 				else
 					ty += HEIGHT(c);
