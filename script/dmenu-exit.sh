@@ -1,16 +1,15 @@
 #!/bin/bash
 
 # A simple logout dialog
-entries=(
+menu=(
     "0: Cancel"
     "1: Logout"
     "2: Shutdown"
     "3: Reboot"
     "4: Lock"
 )
-choice=$(printf '%s\n' "${entries[@]}" | \
-             dmenu -i -l 10 -p "select an action:" | \
-             cut -d ':' -f 1)
+prompt="exit:"
+choice=`printf '%s\n' "${menu[@]}" | dmenu -i -l 10 -p $prompt | cut -d ':' -f 1`
 # execute the choice in background
 case "$choice" in
     0) exit ;;
