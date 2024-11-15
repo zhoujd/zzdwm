@@ -28,7 +28,7 @@ clean:
 dist: clean
 	mkdir -p dmenu-$(VERSION)
 	cp LICENSE Makefile README arg.h config.def.h config.mk dmenu.1\
-		drw.h util.h dmenu_path dmenu_path_desktop dmenu_run dmenu_run_desktop stest.1 $(SRC)\
+		drw.h util.h dmenu_path dmenu_run stest.1 $(SRC)\
 		dmenu-$(VERSION)
 	tar -cf dmenu-$(VERSION).tar dmenu-$(VERSION)
 	gzip dmenu-$(VERSION).tar
@@ -37,16 +37,14 @@ dist: clean
 install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	cp -f dmenu dmenu_path dmenu_run stest $(DESTDIR)$(PREFIX)/bin
-	cp -f dmenu_path_desktop dmenu_run_desktop $(DESTDIR)$(PREFIX)/bin
-	cp -f dmenu_win dmenu_ssh dmenu_app dmenu_exit $(DESTDIR)$(PREFIX)/bin
+	cp -f dmenu_win dmenu_ssh dmenu_app dmenu_drun dmenu_exit $(DESTDIR)$(PREFIX)/bin
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_path
-	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_path_desktop
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_run
-	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_run_desktop
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_win
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_ssh
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_app
+	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_drun
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_exit
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/stest
 	mkdir -p $(DESTDIR)$(MANPREFIX)/man1
@@ -58,12 +56,11 @@ install: all
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/dmenu\
 		$(DESTDIR)$(PREFIX)/bin/dmenu_path\
-		$(DESTDIR)$(PREFIX)/bin/dmenu_path_desktop\
 		$(DESTDIR)$(PREFIX)/bin/dmenu_run\
-		$(DESTDIR)$(PREFIX)/bin/dmenu_run_desktop\
 		$(DESTDIR)$(PREFIX)/bin/dmenu_win\
 		$(DESTDIR)$(PREFIX)/bin/dmenu_ssh\
 		$(DESTDIR)$(PREFIX)/bin/dmenu_app\
+		$(DESTDIR)$(PREFIX)/bin/dmenu_drun\
 		$(DESTDIR)$(PREFIX)/bin/dmenu_exit\
 		$(DESTDIR)$(PREFIX)/bin/stest\
 		$(DESTDIR)$(MANPREFIX)/man1/dmenu.1\

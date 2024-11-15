@@ -1,4 +1,0 @@
-#!/bin/sh
-
-# dmenu to use only desktop files
-dmenu_path_desktop | dmenu -i -l 10 -p drun "$@" | ${SHELL:-"/bin/sh"} &
