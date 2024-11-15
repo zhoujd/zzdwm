@@ -15,6 +15,6 @@ case "$choice" in
     0) exit ;;
     1) xdotool key super+shift+q & ;;
     2) systemctl poweroff & ;;
-    3) systemctl shutdown & ;;
+    3) systemctl reboot & ;;
     4) slock & ;;
 esac
