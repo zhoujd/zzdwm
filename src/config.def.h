@@ -91,6 +91,7 @@ static const char *runmenucmd[]  = { "dmenu_run", NULL };
 static const char *sshmenucmd[]  = { "dmenu_ssh", NULL };
 static const char *winmenucmd[]  = { "dmenu_win", NULL };
 static const char *drunmenucmd[]  = { "dmenu_run_desktop", NULL };
+static const char *exitmenucmd[]  = { "dmenu_exit", NULL };
 static const char *lockcmd[]  = { "slock", NULL };
 
 static const Key keys[] = {
@@ -109,6 +110,7 @@ static const Key keys[] = {
 	{ MODKEY|Mod1Mask,              XK_w,      spawn,          {.v = winmenucmd } },
 	{ MODKEY,                       XK_p,      spawn,          {.v = drunmenucmd } },
 	{ MODKEY|Mod1Mask,              XK_p,      spawn,          {.v = drunmenucmd } },
+	{ MODKEY,                       XK_q,      spawn,          {.v = exitmenucmd } },
 	{ MODKEY|ControlMask,           XK_z,      spawn,          {.v = lockcmd } },
 	{ MODKEY,                       XK_b,      togglebar,      {0} },
 	{ MODKEY|ShiftMask,             XK_j,      rotatestack,    {.i = +1 } },
