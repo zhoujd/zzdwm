@@ -11,7 +11,6 @@ fi
 app=${1}
 windows=$(wmctrl -xl 2>/dev/null | grep -i $app)
 num=$(echo "$windows" | wc -l)
-prompt="app"
 
 app_run() {
     hash $app 2> /dev/null
@@ -33,7 +32,7 @@ app_menu() {
                       '{cur=length($1); printf $1; \
                         for(i=0; i < max - cur + 1; i++) printf " "; \
                         $1 = ""; printf "%s\n", $0}')
-    target=$(echo "$windows" | dmenu -l 10 -i -p $prompt | \
+    target=$(echo "$windows" | dmenu -l 10 -i -p app | \
                  tr -s '[:blank:]' | cut -d ' ' -f 2-)
     if [[ -n $target ]]; then
         wmctrl -a "$target"
