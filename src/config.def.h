@@ -90,7 +90,7 @@ static const char *codecmd[]  = { "code", NULL };
 static const char *runmenucmd[]  = { "dmenu_run", NULL };
 static const char *sshmenucmd[]  = { "dmenu_ssh", NULL };
 static const char *winmenucmd[]  = { "dmenu_win", NULL };
-static const char *drunmenucmd[]  = { "dmenu_run_desktop", NULL };
+static const char *drunmenucmd[]  = { "dmenu_drun", NULL };
 static const char *exitmenucmd[]  = { "dmenu_exit", NULL };
 static const char *lockcmd[]  = { "slock", NULL };
 
