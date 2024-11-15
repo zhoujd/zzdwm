@@ -45,15 +45,7 @@ dmenu
     $ patch -p1 < dmenu-password-5.0.diff
 
     ## enter password via dmenu
-    password=$(echo -n | dmenu -i -P -p "Enter password:")
-    echo $password | sudo reboot
-
-    ## sudocmd
-    sudocmd() {
-        password=$(echo -n | dmenu -i -P -p "Enter password:")
-        if [ -n "$password" ]; then
-            echo $password | sudo -S $@
-        fi
-    }
-    sudocmd shutdown -h now
-    sudocmd reboot
+    password=$(echo -n | dmenu -P -p "Enter password:")
+    if [ -n "$password" ]; then
+        echo $password | sudo -S reboot
+    fi
