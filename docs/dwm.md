@@ -67,3 +67,8 @@ DWM
     DejaVuSansMono.ttf: "DejaVu Sans Mono" "Book"
     $ fc-match monospace:bold
     DejaVuSansMono-Bold.ttf: "DejaVu Sans Mono" "Bold"
+
+## Font Unicode
+
+    ## https://fontawesome.com/search
+    ## https://fontawesome.com/v4/cheatsheet/
