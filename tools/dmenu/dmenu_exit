@@ -8,7 +8,13 @@ menu=(
     "2: Shutdown"
     "3: Reboot"
     "4: Lock"
+    "5: Reload"
 )
+
+reload() {
+    xdotool key super+shift+control+q
+}
+
 choice=`printf '%s\n' "${menu[@]}" | dmenu -i -l 10 -p exit | cut -d ':' -f 1`
 case "$choice" in
     0) exit ;;
@@ -16,4 +22,5 @@ case "$choice" in
     2) systemctl poweroff & ;;
     3) systemctl reboot & ;;
     4) slock & ;;
+    5) reload & ;;
 esac
