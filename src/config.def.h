@@ -112,7 +112,7 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_p,      spawn,          {.v = drunmenucmd } },
 	{ MODKEY|Mod1Mask,              XK_p,      spawn,          {.v = drunmenucmd } },
 	{ MODKEY,                       XK_q,      spawn,          {.v = exitmenucmd } },
-	{ MODKEY|ControlMask,           XK_z,      spawn,          {.v = lockcmd } },
+	{ MODKEY,                       XK_z,      spawn,          {.v = lockcmd } },
 	{ MODKEY,                       XK_b,      togglebar,      {0} },
 	{ MODKEY|ShiftMask,             XK_j,      rotatestack,    {.i = +1 } },
 	{ MODKEY|ShiftMask,             XK_k,      rotatestack,    {.i = -1 } },
