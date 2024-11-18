@@ -1344,7 +1344,7 @@ monocle(Monitor *m)
 			n++;
 	for (c = nexttiled(m->clients); c; c = nexttiled(c->next))
 		if (selmon->drawwithgaps)
-			resize(c, m->wx, m->wy, m->ww - 2 * c->bw, m->wh - 2 * c->bw, 0);
+			resize(c, m->wx, m->wy, m->ww - 2 * c->bw, m->wh - 2 * c->bw, False);
 		else
 			resize(c, m->wx - c->bw, m->wy, m->ww, m->wh, False);
 }
@@ -1425,7 +1425,7 @@ movemouse(const Arg *arg)
 			&& (abs(nx - c->x) > snap || abs(ny - c->y) > snap))
 				togglefloating(NULL);
 			if (!selmon->lt[selmon->sellt]->arrange || c->isfloating)
-				resize(c, nx, ny, c->w, c->h, 1);
+				resize(c, nx, ny, c->w, c->h, True);
 			break;
 		}
 	} while (ev.type != ButtonRelease);
@@ -1656,7 +1656,7 @@ resizemouse(const Arg *arg)
 			nh = MAX(ev.xmotion.y - ocy - 2 * c->bw + 1, 1);
 
 			if (!selmon->lt[selmon->sellt]->arrange || c->isfloating)
-				resize(c, c->x, c->y, nw, nh, 1);
+				resize(c, c->x, c->y, nw, nh, True);
 			break;
 		}
 	} while (ev.type != ButtonRelease);
@@ -2203,12 +2203,12 @@ tile(Monitor *m)
 		for (i = 0, my = ty = m->gappx, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
 			if (i < m->nmaster) {
 				h = (m->wh - my) / (MIN(n, m->nmaster) - i) - m->gappx;
-				resize(c, m->wx + m->gappx, m->wy + my, mw - (2*c->bw) - m->gappx, h - (2*c->bw), 0);
+				resize(c, m->wx + m->gappx, m->wy + my, mw - (2*c->bw) - m->gappx, h - (2*c->bw), False);
 				if (my + HEIGHT(c) + m->gappx < m->wh)
 					my += HEIGHT(c) + m->gappx;
 			} else {
 				h = (m->wh - ty) / (n - i) - m->gappx;
-				resize(c, m->wx + mw + m->gappx, m->wy + ty, m->ww - mw - (2*c->bw) - 2*m->gappx, h - (2*c->bw), 0);
+				resize(c, m->wx + mw + m->gappx, m->wy + ty, m->ww - mw - (2*c->bw) - 2*m->gappx, h - (2*c->bw), False);
 				if (ty + HEIGHT(c) + m->gappx < m->wh)
 					ty += HEIGHT(c) + m->gappx;
 			}
@@ -2266,7 +2266,7 @@ togglefloating(const Arg *arg)
 	selmon->sel->isfloating = !selmon->sel->isfloating || selmon->sel->isfixed;
 	if (selmon->sel->isfloating)
 		resize(selmon->sel, selmon->sel->x, selmon->sel->y,
-			selmon->sel->w, selmon->sel->h, 0);
+			selmon->sel->w, selmon->sel->h, False);
 
 	selmon->sel->x = selmon->sel->mon->mx + (selmon->sel->mon->mw - WIDTH(selmon->sel)) / 2;
 	selmon->sel->y = selmon->sel->mon->my + (selmon->sel->mon->mh - HEIGHT(selmon->sel)) / 2;
