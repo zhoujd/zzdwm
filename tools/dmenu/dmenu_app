@@ -9,8 +9,8 @@ EOF
 fi
 
 app=${1}
-windows=$(wmctrl -xl 2>/dev/null | grep -i $app)
-num=$(echo "$windows" | wc -l)
+windows=$(wmctrl -xl 2>/dev/null)
+num=$(echo "$windows" | grep -i $app | wc -l)
 
 app_run() {
     hash $app 2> /dev/null
@@ -22,7 +22,7 @@ app_run() {
 }
 
 app_menu() {
-    windows=$(echo "$windows" | tr -s '[:blank:]' |  cut -d ' ' -f 3-3,5- | \
+    windows=$(echo "$windows" | grep -i $app | tr -s '[:blank:]' |  cut -d ' ' -f 3-3,5- | \
                   sed 's/^[a-zA-Z0-9-]*\.//' | sort | uniq)
     # Add spaces to align the WM_NAMEs of the windows
     max=$(echo "$windows" | awk '{cur=length($1); \
