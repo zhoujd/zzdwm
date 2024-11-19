@@ -35,7 +35,8 @@ Key keys[] = {
 };
 
 ModeProperties mode_properties[MODE_SIZE] = {
-  [Execute] = { "Application Execute" },
+  [VolumeControl] = { "VolumeControl mode" },
+  [Execute] = { "Execute mode" },
 };
 
 // Call this script on mode change
