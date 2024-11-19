@@ -24,7 +24,7 @@ Key modes[MODE_SIZE][10] = {
     { 0, XK_k, cmd("amixer sset Master '5%+'") },
   },
   [Execute] = {
-    { 0, XK_c,       cmd("urxvt") },
+    { 0, XK_c, cmd("st") },
   },
 };
 
