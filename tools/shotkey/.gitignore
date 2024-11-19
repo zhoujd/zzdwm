@@ -1,4 +1,5 @@
 ## .gitignore
 
+config.h
 shotkey
 *.o
