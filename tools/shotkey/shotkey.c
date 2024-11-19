@@ -1,3 +1,7 @@
+/**
+ * shotkey.c
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -68,7 +72,7 @@ void spawn(char** command) {
 char* get_mode_label() {
   if (current_mode == NormalMode)
     return "";
-  if (LENGTH(mode_properties) <= current_mode) 
+  if (LENGTH(mode_properties) <= current_mode)
     return "";
 
   ModeProperties props = mode_properties[current_mode];
@@ -185,4 +189,3 @@ int main() {
 
   XCloseDisplay(dpy);
 }
-
