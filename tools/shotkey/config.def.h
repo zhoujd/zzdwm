@@ -25,6 +25,7 @@ Key modes[MODE_SIZE][10] = {
   },
   [Execute] = {
     { 0, XK_c, cmd("st") },
+    { 0, XK_e, cmd("emacs") },
   },
 };
 
