@@ -37,6 +37,7 @@ static const char *colors[][3]      = {
 /* auto start */
 static const char *const autostart[] = {
 	"dwmstatus", "&", NULL,
+	"shotkey", "&", NULL,
 	"xbanish", "&", NULL,
 	NULL /* terminate */
 };
