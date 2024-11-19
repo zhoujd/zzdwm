@@ -6,7 +6,7 @@ include config.mk
 SRC = shotkey.c
 OBJ = ${SRC:.c=.o}
 
-all: clean options shotkey
+all: options shotkey
 
 options:
 	@echo shotkey build options:
@@ -20,11 +20,13 @@ options:
 config.h:
 	cp config.def.h config.h
 
+$(OBJ): config.h
+
 shotkey: ${OBJ}
 	${CC} -o $@ ${OBJ} ${LDFLAGS}
 
 clean:
-	rm -f shotkey ${OBJ}
+	rm -f shotkey ${OBJ} config.h
 
 install: all
 	mkdir -p ${DESTDIR}${PREFIX}/bin
