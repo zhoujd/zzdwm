@@ -32,6 +32,7 @@ build() {
         $SCRIPT_ROOT/tools/tabbed
         $SCRIPT_ROOT/tools/xbanish
         $SCRIPT_ROOT/tools/slock
+        $SCRIPT_ROOT/tools/shotkey
     )
     for proj in ${projects[@]}; do
         echo "Build $proj"
