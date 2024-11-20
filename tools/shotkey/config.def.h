@@ -10,7 +10,7 @@ char shell[] = "/bin/sh";
 #define Super Mod4Mask
 
 enum {
-  VolumeControl,
+  Control,
   Execute,
   // Declare modes above this
   MODE_SIZE,
@@ -19,26 +19,24 @@ enum {
 // Define mode key bindings here
 // NOTE: "10" here is the maximum number of key bindings for each mode
 Key modes[MODE_SIZE][10] = {
-  [VolumeControl] = {
+  [Control] = {
     { 0, XK_j, cmd("amixer sset Master '5%-'") },
     { 0, XK_k, cmd("amixer sset Master '5%+'") },
   },
   [Execute] = {
     { 0, XK_c, cmd("st") },
     { 0, XK_e, cmd("emacs") },
-    { 0, XK_s, cmd("st -n screen -e screen") },
-    { 0, XK_t, cmd("st -n tmux -e tmux") },
   },
 };
 
 // Define normal mode key bindings here
 Key keys[] = {
-  { Super,  XK_y,             mode(VolumeControl, True) },
+  { Super,  XK_y,             mode(Control, True) },
   { Super,  XK_a,             mode(Execute, False) },
 };
 
 ModeProperties mode_properties[MODE_SIZE] = {
-  [VolumeControl] = { "VolumeControl mode" },
+  [Control] = { "Control mode" },
   [Execute] = { "Execute mode" },
 };
 
