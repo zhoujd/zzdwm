@@ -10,7 +10,7 @@ fi
 
 app=${1}
 windows=$(wmctrl -xl 2>/dev/null)
-num=$(echo "$windows" | grep -i $app | wc -l)
+num=$(echo "$windows" | tr -s '[:blank:]' |  cut -d ' ' -f 3-3 | grep -i $app | wc -l)
 
 app_run() {
     hash $app 2> /dev/null
