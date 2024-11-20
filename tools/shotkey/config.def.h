@@ -26,6 +26,8 @@ Key modes[MODE_SIZE][10] = {
   [Execute] = {
     { 0, XK_c, cmd("st") },
     { 0, XK_e, cmd("emacs") },
+    { 0, XK_s, cmd("st -n screen -e screen") },
+    { 0, XK_t, cmd("st -n tmux -e tmux") },
   },
 };
 
