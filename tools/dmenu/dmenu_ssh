@@ -13,5 +13,5 @@ if [ -n "$ssh_host" ]; then
     if [ $? -eq 0 ]; then
         ssh_cmd="mosh"
     fi
-    $term_cmd $ssh_cmd $ssh_host $remote_cmd
+    exec $term_cmd $ssh_cmd $ssh_host $remote_cmd
 fi

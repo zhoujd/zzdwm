@@ -18,9 +18,9 @@ reload() {
 choice=`printf '%s\n' "${menu[@]}" | dmenu -i -l 10 -p exit | cut -d ':' -f 1`
 case "$choice" in
     0) exit ;;
-    1) xdotool key super+shift+q & ;;
-    2) systemctl poweroff & ;;
-    3) systemctl reboot & ;;
-    4) slock & ;;
-    5) reload & ;;
+    1) exec xdotool key super+shift+q ;;
+    2) exec systemctl poweroff ;;
+    3) exec systemctl reboot ;;
+    4) exec slock ;;
+    5) exec reload ;;
 esac

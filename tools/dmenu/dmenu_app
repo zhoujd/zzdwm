@@ -35,7 +35,7 @@ app_menu() {
     target=$(echo "$apps" | dmenu -l 10 -i -p app | \
                  tr -s '[:blank:]' | cut -d ' ' -f 2-)
     if [[ -n $target ]]; then
-        wmctrl -a "$target"
+        exec wmctrl -a "$target"
     fi
 }
 
