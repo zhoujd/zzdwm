@@ -41,7 +41,7 @@ app_menu() {
 
 case $num in
     1 )
-        wmctrl -a "$app"
+        exec wmctrl -a "$app"
         ;;
     0 )
         app_run
