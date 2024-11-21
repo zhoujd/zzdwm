@@ -20,7 +20,7 @@ zzdwm
     $ make
     $ sudo make install
 
-## Install dwm session
+## Init dwm
 
-    $ ./install.sh
-    $ ./install.sh all
+    $ ./init.sh
+    $ ./init.sh all
