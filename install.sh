@@ -54,7 +54,7 @@ all() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-$app {dep|dm|build|-b|all|-a}
+Usage: $app {dep|dm|build|-b|all|-a}
 dep          --    Install build dependence
 dm           --    Install xsession entry
 build|-b     --    Build all
