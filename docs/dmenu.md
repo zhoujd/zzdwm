@@ -49,3 +49,12 @@ dmenu
     if [ -n "$password" ]; then
         echo $password | sudo -S reboot
     fi
+
+## Run desktop
+
+    ## sed
+    $ exec $(grep '^Exec' $full | tail -1 | \
+                   sed 's/^Exec=//' | sed 's/%.//' | \
+                   sed 's/^"//g' | sed 's/" *$//g')
+    ## awk
+    $ exec $(awk -F= '/^Exec/ {print $2; exit}' $full | awk '{print $1}')
