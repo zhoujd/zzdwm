@@ -26,12 +26,12 @@ app_menu() {
                sed 's/^[a-zA-Z0-9-]*\.//' | sort | uniq)
     # Add spaces to align the WM_NAMEs of the apps
     max=$(echo "$apps" | awk '{cur=length($1); \
-                                  max=(cur>max?cur:max)} END{print max}')
+                               max=(cur>max?cur:max)} END{print max}')
     apps=$(echo "$apps" | \
                awk -v max="$max" \
                    '{cur=length($1); printf $1; \
-                        for(i=0; i < max - cur + 1; i++) printf " "; \
-                        $1 = ""; printf "%s\n", $0}')
+                     for(i=0; i < max - cur + 1; i++) printf " "; \
+                     $1 = ""; printf "%s\n", $0}')
     target=$(echo "$apps" | dmenu -l 10 -i -p app | \
                  tr -s '[:blank:]' | cut -d ' ' -f 2-)
     if [[ -n $target ]]; then

@@ -3,12 +3,13 @@
 # dmenu to use only desktop files
 
 apppaths=(
-    /usr/share/applications/
+    $HOME/.local/share/applications/
     /usr/local/share/applications/
+    /usr/share/applications/
 )
 
 desktops() {
-    entries=$(ls ${apppaths[@]})
+    entries=$(ls ${apppaths[@]} | sort | uniq)
     for entry in $entries; do
         if [[ $entry == *.desktop ]]; then
             echo "${entry%.*}"
@@ -16,4 +17,5 @@ desktops() {
     done
 }
 
-desktops | dmenu -i -l 10 -p drun "$@" | exec ${SHELL:-"/bin/sh"}
+app=$(desktops | dmenu -i -l 10 -p drun "$@")
+exec gtk-launch $app
