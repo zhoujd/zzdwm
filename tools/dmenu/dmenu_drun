@@ -21,8 +21,6 @@ app=$(desktops | dmenu -i -l 10 -p drun "$@")
 for path in ${apppaths[@]}; do
     full="${path}/${app}.desktop"
     if [ -f "$full" ]; then
-        exec $(grep '^Exec' $full | tail -1 | \
-                   sed 's/^Exec=//' | sed 's/%.//' | \
-                   sed 's/^"//g' | sed 's/" *$//g')
+        exec $(awk -F= '/^Exec/ {print $2; exit}' $full | awk '{print $1}')
     fi
 done
