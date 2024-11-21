@@ -57,7 +57,13 @@ DWM
     $ xdotool search emacs windowactivate
 
     ## With wmctrl
+    $ sudo apt install wmctrl
     $ wmctrl -a emacs
+
+    ## With xdo
+    $ sudo apt install xdo
+    $ xdo activate -N firefox || firefox
+    $ xdo activate -N Emacs || emacs
 
 ## Font monospace
 
