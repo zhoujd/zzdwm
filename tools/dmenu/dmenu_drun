@@ -3,9 +3,9 @@
 # dmenu to use only desktop files
 
 apppaths=(
-    $HOME/.local/share/applications/
-    /usr/local/share/applications/
-    /usr/share/applications/
+    $HOME/.local/share/applications
+    /usr/local/share/applications
+    /usr/share/applications
 )
 
 desktops() {
@@ -18,4 +18,9 @@ desktops() {
 }
 
 app=$(desktops | dmenu -i -l 10 -p drun "$@")
-exec gtk-launch $app
+for path in ${apppaths[@]}; do
+    full="${path}/${app}.desktop"
+    if [ -f "$full" ]; then
+        exec $(awk -F= '/^Exec/ {print $2; exit}' $full)
+    fi
+done
