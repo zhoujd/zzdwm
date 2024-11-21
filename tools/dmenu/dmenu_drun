@@ -16,4 +16,4 @@ desktops() {
     done
 }
 
-desktops | dmenu -i -l 10 -p drun "$@" | ${SHELL:-"/bin/sh"} &
+desktops | dmenu -i -l 10 -p drun "$@" | exec ${SHELL:-"/bin/sh"}
