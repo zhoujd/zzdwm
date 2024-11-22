@@ -1577,7 +1577,7 @@ recttomon(int x, int y, int w, int h)
 void
 resetnmaster(const Arg *arg)
 {
-	selmon->nmaster = 1;
+	selmon->nmaster = MIN(MAX(arg->ui, nminmaster), nmaxmaster);
 	arrange(selmon);
 }
 
