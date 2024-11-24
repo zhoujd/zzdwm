@@ -78,3 +78,9 @@ DWM
 
     ## https://fontawesome.com/search
     ## https://fontawesome.com/v4/cheatsheet/
+
+## Launch or Focus
+
+    ## https://github.com/octetz/linux-desktop/blob/master/s/lof
+    ## https://github.com/joshrosso/linux-desktop/blob/master/s/lof_chromium
+    ## https://github.com/mkropat/jumpapp
