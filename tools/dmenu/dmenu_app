@@ -13,8 +13,12 @@ num=$(pgrep -f "^${app}$" | wc -l)
 
 app_focus() {
     app_pid="$(pgrep -f "^${app}$")"
-    wid=$(wmctrl -lp | grep "$app_pid" | awk '{print $1}')
-    exec wmctrl -iR "$wid"
+    if [ -n "$app_pid" ]; then
+        wid=$(wmctrl -lp | grep "$app_pid" | awk '{print $1}')
+        exec wmctrl -iR "$wid"
+    else
+        echo "No $app can been focus!"
+    fi
 }
 
 app_run() {
