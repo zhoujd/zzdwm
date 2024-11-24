@@ -9,8 +9,13 @@ EOF
 fi
 
 app=${1}
-windows=$(wmctrl -xl 2>/dev/null)
-num=$(echo "$windows" | tr -s '[:blank:]' |  cut -d ' ' -f 3-3 | grep -i $app | wc -l)
+num=$(pgrep -f "^${app}$" | wc -l)
+
+app_focus() {
+    app_pid="$(pgrep -f "^${app}$")"
+    wid=$(wmctrl -lp | grep "$app_pid" | awk '{print $1}')
+    exec wmctrl -iR "$wid"
+}
 
 app_run() {
     hash $app 2> /dev/null
@@ -22,6 +27,7 @@ app_run() {
 }
 
 app_menu() {
+    windows=$(wmctrl -xl 2>/dev/null)
     apps=$(echo "$windows" | grep -i $app | tr -s '[:blank:]' |  cut -d ' ' -f 3-3,5- | \
                sed 's/^[a-zA-Z0-9-]*\.//' | sort | uniq)
     # Add spaces to align the WM_NAMEs of the apps
@@ -41,7 +47,7 @@ app_menu() {
 
 case $num in
     1 )
-        exec wmctrl -a "$app"
+        app_focus
         ;;
     0 )
         app_run
