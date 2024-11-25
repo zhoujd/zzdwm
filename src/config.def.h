@@ -15,6 +15,7 @@ static const int viewontag          = 1;        /* Switch view on tag switch */
 static const int attachmode         = 0;        /* 0 master (default), 1 = above, 2 = aside, 3 = below, 4 = bottom */
 static const int background         = 1;        /* 0 means no root background */
 static const int focusedontoptiled  = 1;        /* 1 means focused tile client is shown on top of floating windows */
+static const int pertagallbars      = 0;        /* 1 means pertag with the same barpos */
 static const char *fonts[]          = {
 	"SF Pro Display:size=11",
 	"SF Mono:size=11",
@@ -115,6 +116,7 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_q,      spawn,          {.v = exitmenucmd } },
 	{ MODKEY,                       XK_z,      spawn,          {.v = slockcmd } },
 	{ MODKEY,                       XK_b,      togglebar,      {0} },
+	{ MODKEY|ShiftMask,             XK_b,      togglebar,      {.ui = 1} },
 	{ MODKEY|ShiftMask,             XK_j,      rotatestack,    {.i = +1 } },
 	{ MODKEY|ShiftMask,             XK_k,      rotatestack,    {.i = -1 } },
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
