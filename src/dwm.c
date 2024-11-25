@@ -273,9 +273,9 @@ static void tagtoleft(const Arg *arg);
 static void tagtoright(const Arg *arg);
 static void autostart_exec(void);
 static void maximize(int x, int y, int w, int h);
-static void togglemaximize(const Arg *arg);
-static void togglevertmax(const Arg *arg);
-static void togglehorizmax(const Arg *arg);
+static void floatmaximize(const Arg *arg);
+static void floatvertmax(const Arg *arg);
+static void floathorimax(const Arg *arg);
 static void sighup(int unused);
 static void sigterm(int unused);
 
@@ -2899,19 +2899,19 @@ maximize(int x, int y, int w, int h)
 }
 
 void
-togglemaximize(const Arg *arg)
+floatmaximize(const Arg *arg)
 {
 	maximize(selmon->wx, selmon->wy, selmon->ww - 2 * borderpx, selmon->wh - 2 * borderpx);
 }
 
 void
-togglevertmax(const Arg *arg)
+floatvertmax(const Arg *arg)
 {
 	maximize(selmon->sel->x, selmon->wy, selmon->sel->w, selmon->wh - 2 * borderpx);
 }
 
 void
-togglehorizmax(const Arg *arg)
+floathorimax(const Arg *arg)
 {
 	maximize(selmon->wx, selmon->sel->y, selmon->ww - 2 * borderpx, selmon->sel->h);
 }
