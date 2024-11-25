@@ -11,7 +11,7 @@ menu=(
     "5: Reload"
 )
 
-choice=`printf '%s\n' "${menu[@]}" | dmenu -i -l 10 -p exit | cut -d ':' -f 1`
+choice=`printf '%s\n' "${menu[@]}" | dmenu -i -l 10 -p Operation | cut -d ':' -f 1`
 case "$choice" in
     0) exit ;;
     1) exec xdotool key super+shift+q ;;
