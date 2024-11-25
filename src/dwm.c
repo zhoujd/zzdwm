@@ -129,7 +129,7 @@ struct Monitor {
 	int by;               /* bar geometry */
 	int mx, my, mw, mh;   /* screen size */
 	int wx, wy, ww, wh;   /* window area  */
-	int gappx;	      /* gaps between windows */
+	int gappx;            /* gaps between windows */
 	int drawwithgaps;     /* toggle gaps */
 	unsigned int seltags;
 	unsigned int sellt;
@@ -143,6 +143,7 @@ struct Monitor {
 	Window barwin;
 	const Layout *lt[2];
 	Pertag *pertag;
+	int showallbars; /* pertag display with same barpos */
 };
 
 typedef struct {
@@ -317,7 +318,6 @@ static Window root, wmcheckwin;
 
 struct Pertag {
 	unsigned int curtag, prevtag; /* current and previous tag */
-	unsigned int showallbars;     /* display with same barpos */
 	int nmasters[LENGTH(tags) + 1]; /* number of windows in master area */
 	float mfacts[LENGTH(tags) + 1]; /* mfacts per tag */
 	unsigned int sellts[LENGTH(tags) + 1]; /* selected layouts */
@@ -797,7 +797,7 @@ createmon(void)
 	strncpy(m->ltsymbol, layouts[0].symbol, sizeof m->ltsymbol);
 	m->pertag = ecalloc(1, sizeof(Pertag));
 	m->pertag->curtag = m->pertag->prevtag = 1;
-	m->pertag->showallbars = pertagallbars;
+	m->showallbars = pertagallbars;
 
 	for (i = 0; i <= LENGTH(tags); i++) {
 		m->pertag->nmasters[i] = m->nmaster;
@@ -2291,9 +2291,9 @@ togglebar(const Arg *arg)
 {
 	int i;
 	if (arg && arg->ui) {
-		selmon->pertag->showallbars = !selmon->pertag->showallbars;
+		selmon->showallbars = !selmon->showallbars;
 		for (i = 0; i <= LENGTH(tags); i++) {
-			selmon->showbar = selmon->pertag->showbars[i] = selmon->pertag->showallbars;
+			selmon->showbar = selmon->pertag->showbars[i] = selmon->showallbars;
 		}
 	} else {
 		selmon->showbar = selmon->pertag->showbars[selmon->pertag->curtag] = !selmon->showbar;
@@ -2382,7 +2382,7 @@ toggleview(const Arg *arg)
 		selmon->lt[selmon->sellt^1] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt^1];
 
 		if ((selmon->showbar != selmon->pertag->showbars[selmon->pertag->curtag]) &&
-		    !selmon->pertag->showallbars)
+		    !selmon->showallbars)
 			togglebar(NULL);
 
 		focus(NULL);
@@ -2735,7 +2735,7 @@ view(const Arg *arg)
 	selmon->lt[selmon->sellt^1] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt^1];
 
 	if ((selmon->showbar != selmon->pertag->showbars[selmon->pertag->curtag]) &&
-	    !selmon->pertag->showallbars)
+	    !selmon->showallbars)
 		togglebar(NULL);
 
 	focus(selmon->pertag->sel[selmon->pertag->curtag]);
