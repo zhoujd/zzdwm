@@ -1,12 +1,8 @@
 #!/bin/bash
 
-if [[ -z $1 ]]; then
-    cat <<EOF
-Usage:
-$(basename $0) {app}
+[[ $# -ne 1 ]] && cat <<EOF && exit
+Usage: $(basename $0) {app}
 EOF
-    exit 1
-fi
 
 app=${1}
 windows=$(wmctrl -xl 2>/dev/null)
@@ -18,7 +14,7 @@ app_focus() {
 
 app_run() {
     hash $app 2> /dev/null
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
         exec $app
     else
         echo "No $app can been found!"
