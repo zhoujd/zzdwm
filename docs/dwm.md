@@ -9,6 +9,13 @@ DWM
     ## https://github.com/bakkeby/patches
     ## https://github.com/bakkeby/dwm-flexipatch
 
+## Relative Source
+
+    ## Fetch source code
+    $ git clone https://git.suckless.org/dwm
+    $ git clone https://git.suckless.org/dmenu
+    $ git clone https://git.suckless.org/st
+
 ## Dave's Visual Guide to dwm
 
     ## https://ratfactor.com/dwm
