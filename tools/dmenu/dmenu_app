@@ -9,16 +9,11 @@ EOF
 fi
 
 app=${1}
-num=$(pgrep -f "^${app}$" | wc -l)
+windows=$(wmctrl -xl 2>/dev/null)
+num=$(echo "$windows" | tr -s '[:blank:]' |  cut -d ' ' -f 3-3 | grep -i $app | wc -l)
 
 app_focus() {
-    app_pid="$(pgrep -f "^${app}$")"
-    if [ -n "$app_pid" ]; then
-        wid=$(wmctrl -lp | grep "$app_pid" | awk '{print $1}')
-        exec wmctrl -iR "$wid"
-    else
-        echo "No $app can been focus!"
-    fi
+    exec wmctrl -a "$app"
 }
 
 app_run() {
