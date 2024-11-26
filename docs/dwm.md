@@ -8,6 +8,7 @@ DWM
     ## https://dwm.suckless.org/tutorial/
     ## https://github.com/bakkeby/patches
     ## https://github.com/bakkeby/dwm-flexipatch
+    ## https://wiki.archlinuxcn.org/wiki/Dwm
 
 ## Relative Source
 
