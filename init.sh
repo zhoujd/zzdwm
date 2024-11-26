@@ -15,7 +15,7 @@ install_dm() {
     sudo tee /usr/share/xsessions/dwm.desktop <<EOF
 [Desktop Entry]
 Name=DWM Session
-Comment=DWM window manager
+Comment=Dynamic window manager
 Exec=startdwm
 Icon=
 Type=Application
