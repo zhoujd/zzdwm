@@ -193,7 +193,7 @@ static int gettextprop(Window w, Atom atom, char *text, unsigned int size);
 static void grabbuttons(Client *c, int focused);
 static void grabkeys(void);
 static void incnmaster(const Arg *arg);
-static void initenv(void);
+static int initenv(void);
 static void keypress(XEvent *e);
 static void killthis(Client *c);
 static void killclient(const Arg *arg);
@@ -2917,13 +2917,17 @@ floathorimax(const Arg *arg)
 	maximize(selmon->wx, selmon->sel->y, selmon->ww - 2 * borderpx, selmon->sel->h);
 }
 
-void
+int
 initenv(void)
 {
-	if (setenv("LC_ALL", "en_US.UTF-8", 1))
+	int ret;
+	ret = setenv("LC_ALL", "en_US.UTF-8", 1);
+	if (ret)
 		fputs("warning: no LC_ALL update\n", stderr);
-	if (setenv("LANG", "en_US.UTF-8", 1))
+	ret = setenv("LANG", "en_US.UTF-8", 1);
+	if (ret)
 		fputs("warning: no LANG update\n", stderr);
+	return ret;
 }
 
 int
@@ -2935,7 +2939,8 @@ main(int argc, char *argv[])
 		die("usage: dwm [-v]");
 	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
 		fputs("warning: no locale support\n", stderr);
-	initenv();
+	if (initenv() != 0)
+		fputs("warning: no env init\n", stderr);
 	if (!(dpy = XOpenDisplay(NULL)))
 		die("dwm: cannot open display");
 	checkotherwm();
