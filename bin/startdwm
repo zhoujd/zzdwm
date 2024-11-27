@@ -1,11 +1,8 @@
 #!/bin/sh
 
-## No error logging
-#exec dwm >/dev/null 2>&1
-
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
 log=$HOME/.dwm-errors
 echo "$(date): starting dwm desktop." >$log
-exec dwm 2>>$log
+exec dwm >>$log 2>&1
