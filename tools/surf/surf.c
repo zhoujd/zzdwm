@@ -1399,10 +1399,6 @@ createwindow(Client *c)
 	} else {
 		w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
-		wmstr = g_path_get_basename(argv0);
-		gtk_window_set_wmclass(GTK_WINDOW(w), wmstr, "Surf");
-		g_free(wmstr);
-
 		wmstr = g_strdup_printf("%s[%"PRIu64"]", "Surf", c->pageid);
 		gtk_window_set_role(GTK_WINDOW(w), wmstr);
 		g_free(wmstr);
