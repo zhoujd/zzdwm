@@ -20,9 +20,9 @@ enum {
 // NOTE: "10" here is the maximum number of key bindings for each mode
 Key modes[MODE_SIZE][10] = {
   [Control] = {
-    { 0, XK_j, cmd("amixer sset Master '5%-'") },
-    { 0, XK_k, cmd("amixer sset Master '5%+'") },
-    { 0, XK_m, cmd("amixer set Master toggle") },
+    { 0, XK_j, cmd("pactl set-sink-volume @DEFAULT_SINK@ -10%") },
+    { 0, XK_k, cmd("pactl set-sink-volume @DEFAULT_SINK@ +10%") },
+    { 0, XK_m, cmd("pactl set-sink-mute @DEFAULT_SINK@ toggle") },
   },
   [Execute] = {
     { 0, XK_c, cmd("st") },
