@@ -6,16 +6,16 @@ echo "$(date): starting dwm desktop." >$log
 kind=run
 
 run() {
-    echo "$(date): Dwm on run mode." >>$log
+    echo "$(date): dwm on run mode." >>$log
     exec dwm >/dev/null 2>&1
 }
 
-dbg() {
-    echo "$(date): Dwm on debug mode." >>$log
+debug() {
+    echo "$(date): dwm on debug mode." >>$log
     exec dwm >>$log 2>&1
 }
 
 case $kind in
     run|-r ) run ;;
-    dbg|-d ) dbg ;;
+    debug|-d ) debug ;;
 esac
