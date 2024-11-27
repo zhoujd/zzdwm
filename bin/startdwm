@@ -1,5 +1,8 @@
 #!/bin/sh
 
+## No error logging
+#exec dwm >/dev/null 2>&1
+
 log=$HOME/.dwm-errors
 echo "$(date): starting dwm desktop." >$log
-exec dwm >>$log 2>&1
+exec dwm 2>>$log
