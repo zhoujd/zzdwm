@@ -3,11 +3,13 @@
 SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 
 install_dep() {
-    sudo apt install -y libx11-dev libxft-dev libxinerama-dev
-    sudo apt install -y libasound2-dev
-    sudo apt install -y libxfixes-dev libxi-dev libxext-dev
-    sudo apt install -y libxrandr-dev
-    sudo apt install -y libwebkit2gtk-4.0-dev libgcr-3-dev
+    sudo apt update
+    sudo apt install -y \
+         libx11-dev libxft-dev libxinerama-dev \
+         libasound2-dev \
+         libxfixes-dev libxi-dev libxext-dev \
+         libxrandr-dev \
+         libwebkit2gtk-4.0-dev libgcr-3-dev
     echo "Install dep done"
 }
 
