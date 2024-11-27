@@ -92,3 +92,9 @@ DWM
     ## https://github.com/octetz/linux-desktop/blob/master/s/lof
     ## https://github.com/joshrosso/linux-desktop/blob/master/s/lof_chromium
     ## https://github.com/mkropat/jumpapp
+
+## Color Palette
+
+    ## https://www.color-hex.com/
+    ## https://www.color-hex.com/color-palettes/
+    ## https://www.color-hex.com/color-palette/1034689
