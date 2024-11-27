@@ -17,8 +17,10 @@ dwmstatus
     $ sudo apt install -y libasound2-dev
 
     ## Increase volume by 5%
-    $ amixer -D pulse sset Master 5%+
+    $ amixer sset Master 5%+
     ## Decrease volume by 5%
-    $ amixer -D pulse sset Master 5%-
+    $ amixer sset Master 5%-
     ## Set volume to 50%
-    $ amixer -D pulse sset Master 50%
+    $ amixer sset Master 50%
+    ## Toggle sound
+    $ amixer set Master toggle
