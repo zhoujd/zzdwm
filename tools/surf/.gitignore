@@ -1,0 +1,7 @@
+## .gitignore
+
+config.h
+*.o
+surf
+webext-surf.so
+
