@@ -22,6 +22,7 @@ Key modes[MODE_SIZE][10] = {
   [Control] = {
     { 0, XK_j, cmd("amixer sset Master '5%-'") },
     { 0, XK_k, cmd("amixer sset Master '5%+'") },
+    { 0, XK_m, cmd("amixer set Master toggle") },
   },
   [Execute] = {
     { 0, XK_c, cmd("st") },
