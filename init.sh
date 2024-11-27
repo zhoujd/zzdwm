@@ -7,6 +7,7 @@ install_dep() {
     sudo apt install -y libasound2-dev
     sudo apt install -y libxfixes-dev libxi-dev libxext-dev
     sudo apt install -y libxrandr-dev
+    sudo apt install -y libwebkit2gtk-4.0-dev libgcr-3-dev
     echo "Install dep done"
 }
 
@@ -38,6 +39,7 @@ build() {
         $SCRIPT_ROOT/tools/xbanish
         $SCRIPT_ROOT/tools/slock
         $SCRIPT_ROOT/tools/shotkey
+        $SCRIPT_ROOT/tools/surf
     )
     for proj in ${projects[@]}; do
         echo "Build $proj"

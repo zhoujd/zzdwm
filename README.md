@@ -13,6 +13,7 @@ zzdwm
     $ sudo apt install libasound2-dev
     $ sudo apt install libxfixes-dev libxi-dev libxext-dev
     $ sudo apt install liblibxrandr-dev
+    $ sudo apt install libwebkit2gtk-4.0-dev libgcr-3-dev
 
 ## Build dwm source
 
