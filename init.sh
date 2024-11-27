@@ -18,7 +18,7 @@ install_dm() {
 Name=DWM Session
 Comment=Dynamic window manager
 Exec=startdwm
-Icon=
+Icon=dwm
 Type=Application
 DesktopNames=DWM
 EOF
