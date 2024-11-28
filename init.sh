@@ -1,6 +1,8 @@
 #!/bin/bash
 
 SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+CORE_ROOT=$(cd $SCRIPT_ROOT && pwd)
+CORE_TOP=$(cd $CORE_ROOT/.. && pwd)
 
 install_dep() {
     sudo apt update
@@ -8,13 +10,12 @@ install_dep() {
          libx11-dev libxft-dev libxinerama-dev \
          libasound2-dev \
          libxfixes-dev libxi-dev libxext-dev \
-         libxrandr-dev \
-         libwebkit2gtk-4.0-dev libgcr-3-dev
+         libxrandr-dev
     echo "Install dep done"
 }
 
 install_dm() {
-    sudo cp -fv $SCRIPT_ROOT/bin/startdwm /usr/local/bin
+    sudo cp -fv $CORE_ROOT/bin/startdwm /usr/local/bin
     sudo tee /usr/share/xsessions/dwm.desktop <<EOF
 [Desktop Entry]
 Name=DWM Session
@@ -29,21 +30,20 @@ EOF
 
 install_bin() {
     target=/usr/local/bin
-    sudo cp -fv $SCRIPT_ROOT/bin/dupterm $target
-    sudo cp -fv $SCRIPT_ROOT/bin/mg $target
+    sudo cp -fv $CORE_ROOT/bin/dupterm $target
+    sudo cp -fv $CORE_ROOT/bin/mg $target
     echo "Install bin done"
 }
 
 build() {
     local projects=(
-        $SCRIPT_ROOT/src
-        $SCRIPT_ROOT/tools/dmenu
-        $SCRIPT_ROOT/tools/dwmstatus
-        $SCRIPT_ROOT/tools/tabbed
-        $SCRIPT_ROOT/tools/xbanish
-        $SCRIPT_ROOT/tools/slock
-        $SCRIPT_ROOT/tools/shotkey
-        $SCRIPT_ROOT/tools/surf
+        $CORE_ROOT/src
+        $CORE_ROOT/tools/dmenu
+        $CORE_ROOT/tools/dwmstatus
+        $CORE_ROOT/tools/tabbed
+        $CORE_ROOT/tools/xbanish
+        $CORE_ROOT/tools/slock
+        $CORE_ROOT/tools/shotkey
     )
     for proj in ${projects[@]}; do
         echo "Build $proj"
