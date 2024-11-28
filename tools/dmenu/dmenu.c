@@ -862,6 +862,8 @@ setup(void)
 
 		if (centered) {
 			mw = MIN(MAX(max_textw() + promptw, min_width), info[i].width);
+			if (max_width)
+				mw = MIN(mw, max_width);
 			x = info[i].x_org + ((info[i].width  - mw) / 2);
 			y = info[i].y_org + ((info[i].height - mh) / menu_height_ratio);
 		} else {
