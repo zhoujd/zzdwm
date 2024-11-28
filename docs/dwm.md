@@ -114,6 +114,9 @@ DWM
     ## Textadept
     ## https://orbitalquark.github.io/textadept/
 
+    ## The original MicroEMACS
+    ## https://github.com/troglobit/MicroEMACS
+
 ## Message Copilot (AI Chat)
 
     ## https://copilot.microsoft.com/
