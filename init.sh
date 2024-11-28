@@ -27,9 +27,11 @@ EOF
     echo "Install dm done"
 }
 
-install_script() {
-    sudo cp -fv $SCRIPT_ROOT/script/dupterm /usr/local/bin
-    echo "Install script done"
+install_bin() {
+    target=/usr/local/bin
+    sudo cp -fv $SCRIPT_ROOT/bin/dupterm $target
+    sudo cp -fv $SCRIPT_ROOT/bin/mg $target
+    echo "Install bin done"
 }
 
 build() {
@@ -56,7 +58,7 @@ build() {
 all() {
     install_dep
     install_dm
-    install_script
+    install_bin
     build
     echo "Install all done"
 }
@@ -64,10 +66,10 @@ all() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-Usage: $app {dep|dm|script|build|-b|all|-a}
+Usage: $app {dep|dm|bin|build|-b|all|-a}
 dep          --    Install build dependence
 dm           --    Install xsession entry
-script       --    Install script
+bin          --    Install bin
 build|-b     --    Build all
 all|-a       --    Install all
 EOF
@@ -80,8 +82,8 @@ case $1 in
     dm )
         install_dm
         ;;
-    script )
-        install_script
+    bin )
+        install_bin
         ;;
     build|-b )
         build

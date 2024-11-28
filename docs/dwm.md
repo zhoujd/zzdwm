@@ -113,3 +113,8 @@ DWM
 
     ## Textadept
     ## https://orbitalquark.github.io/textadept/
+
+## Message Copilot (AI Chat)
+
+    ## https://copilot.microsoft.com/
+    ## https://copilot.microsoft.com/chats/Tg9aNkP1PwPC9kHydpxMF
