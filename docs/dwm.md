@@ -98,3 +98,18 @@ DWM
     ## https://www.color-hex.com/
     ## https://www.color-hex.com/color-palettes/
     ## https://www.color-hex.com/color-palette/1034689
+
+## Linux editors
+
+    ## Portable Mg
+    ## https://github.com/hboetes/mg
+    ## https://github.com/hboetes/mg/releases
+    $ wget https://github.com/hboetes/mg/releases/download/20240709/mg-20240709-static-amd64
+    $ sudo cp mg-20240709-static-amd64 /usr/local/bin/mg
+
+    ## Micro (GNU) Emacs
+    ## https://github.com/troglobit/mg
+    ## https://taingram.org/blog/lightweight-emacs-editors.html
+
+    ## Textadept
+    ## https://orbitalquark.github.io/textadept/
