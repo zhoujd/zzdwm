@@ -652,7 +652,7 @@ modeline(wp)
         vtputc(lchar);
 
     n  = 2;
-    strcpy(tline, " MicroEMACS 3.6 (");		/* Buffer name. */
+    strcpy(tline, " MicroEMACS (");		/* Buffer name. */
 
     /* display the modes */
 
