@@ -1,19 +1,16 @@
 #!/bin/bash
 
-[[ $# -ne 1 ]] && cat <<EOF && exit
-Usage: $(basename $0) {class}
-EOF
-
-win_class=$1 # 'terminator' # $1
-
-# get list of all windows matching with the class above
-win_list=$(wmctrl -x -l | grep -i $win_class | awk '{print $1}' )
-
 # get id of the focused window
 active_win_id=$(xprop -root | grep '^_NET_ACTIVE_W' | awk -F'# 0x' '{print $2}')
 if [ "$active_win_id" == "0" ]; then
     active_win_id=""
 fi
+
+# get win_class from $1 or active_win_id
+win_class=${1:-$(wmctrl -lx | grep $active_win_id | awk '{print $3}')}
+
+# get list of all windows matching with the class above
+win_list=$(wmctrl -x -l | grep -i $win_class | awk '{print $1}' )
 
 # get next window to focus on, removing id active
 switch_to=$(echo $win_list | sed s/.*$active_win_id// | awk '{print $1}')
