@@ -32,4 +32,4 @@ install:
 uninstall:
 		rm -f $(PREFIX)/bin/$(TARGET)
 
-
+.PHONY:		all clean install uninstall
