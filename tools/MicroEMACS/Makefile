@@ -1,6 +1,7 @@
 ### Makefile
 
 TARGET=		me
+PREFIX=         /usr/local
 
 CFLAGS=		-O2 -g -Dlinux -DSYS_PATH="" -Wno-implicit-function-declaration -Wno-implicit-int -static
 
@@ -23,3 +24,12 @@ clean:
 		$(RM) $(OFILES) $(TARGET)
 
 $(OFILES):	$(HFILES)
+
+install:
+		cp $(TARGET) $(PREFIX)/bin
+		chmod 755 $(PREFIX)/bin/$(TARGET)
+
+uninstall:
+		rm -f $(PREFIX)/bin/$(TARGET)
+
+
