@@ -117,7 +117,22 @@ DWM
     ## The original MicroEMACS
     ## https://github.com/troglobit/MicroEMACS
 
+    ## Jasspa MicroEmacs (standalone executables)
+    ## https://github.com/mittelmark/microemacs
+    ## https://github.com/mittelmark/microemacs/releases/tag/v09.12.21
+
+    ## Jasspa MicroEmacs (More with GDB)
+    ## https://github.com/bjasspa/jasspa
+    ## https://github.com/bjasspa/jasspa/releases
+
 ## Message Copilot (AI Chat)
 
     ## https://copilot.microsoft.com/
     ## https://copilot.microsoft.com/chats/Tg9aNkP1PwPC9kHydpxMF
+
+
+## Start ME
+
+    #!/bin/bash
+    export MEUSERPATH=~/.jasspa
+    mec @zach "$@"

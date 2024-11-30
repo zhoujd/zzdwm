@@ -32,8 +32,15 @@ install_bin() {
     target=/usr/local/bin
     sudo cp -fv $CORE_ROOT/bin/cyclewin $target
     sudo cp -fv $CORE_ROOT/bin/dupterm $target
+    sudo cp -fv $CORE_ROOT/bin/me $target
     sudo cp -fv $CORE_ROOT/bin/mg $target
     echo "Install bin done"
+}
+
+install_misc() {
+    rm -rf ~/.jasspa
+    cp -rv $CORE_ROOT/misc/.jasspa ~/.jasspa
+    echo "Install misc done"
 }
 
 build() {
@@ -45,7 +52,6 @@ build() {
         $CORE_ROOT/tools/xbanish
         $CORE_ROOT/tools/slock
         $CORE_ROOT/tools/shotkey
-        $CORE_ROOT/tools/MicroEMACS
     )
     for proj in ${projects[@]}; do
         echo "Build $proj"
@@ -61,6 +67,7 @@ all() {
     install_dep
     install_dm
     install_bin
+    install_misc
     build
     echo "Install all done"
 }
@@ -68,10 +75,11 @@ all() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-Usage: $app {dep|dm|bin|build|-b|all|-a}
+Usage: $app {dep|dm|bin|misc|build|-b|all|-a}
 dep          --    Install build dependence
 dm           --    Install xsession entry
 bin          --    Install bin
+misc         --    Install misc configure
 build|-b     --    Build all
 all|-a       --    Install all
 EOF
@@ -86,6 +94,9 @@ case $1 in
         ;;
     bin )
         install_bin
+        ;;
+    misc )
+        install_misc
         ;;
     build|-b )
         build
