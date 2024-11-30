@@ -80,7 +80,7 @@
  "frame-width" = "80"
  "kept-vers" = "10"
  "scheme" = "schememx"
- "scroll-bar" = "0x1be"
+ "scroll-bar" = "0"
  "system" = "34666626"
 }
 "linuxc" {
