@@ -32,14 +32,17 @@ install_bin() {
     target=/usr/local/bin
     sudo cp -fv $CORE_ROOT/bin/cyclewin $target
     sudo cp -fv $CORE_ROOT/bin/dupterm $target
-    sudo cp -fv $CORE_ROOT/bin/me $target
+    sudo cp -fv $CORE_ROOT/bin/mecs $target
+    sudo cp -fv $CORE_ROOT/bin/mews $target
     sudo cp -fv $CORE_ROOT/bin/mg $target
     echo "Install bin done"
 }
 
 install_misc() {
-    rm -rf ~/.jasspa
-    cp -rv $CORE_ROOT/misc/.jasspa ~/.jasspa
+    target=~/.config
+    mkdir -p ~/.config
+    rm -rf ~/.config/jasspa
+    cp -rv $CORE_ROOT/misc/.config/jasspa $target
     echo "Install misc done"
 }
 
