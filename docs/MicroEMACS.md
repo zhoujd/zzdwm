@@ -47,3 +47,10 @@ MicroEMACS
     ## You can use musl library to replace glibc.
     ## To use musl, you can either install it and build your software using musl-gcc,
     ## or you can use a Linux distribution that uses musl, e.g. Alpine Linux.
+
+    ## STATIC BUILDS on an alpine linux system
+    $ cat << EOF > Containerfile
+    FROM docker.io/amd64/alpine
+    RUN apk upgrade
+    RUN apk add git libbsd-static libbsd-dev ncurses-dev musl-dev ncurses-static gcc make
+    EOF
