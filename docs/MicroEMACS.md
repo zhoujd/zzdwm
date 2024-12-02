@@ -49,8 +49,16 @@ MicroEMACS
     ## or you can use a Linux distribution that uses musl, e.g. Alpine Linux.
 
     ## STATIC BUILDS on an alpine linux system
-    $ cat << EOF > Containerfile
-    FROM docker.io/amd64/alpine
-    RUN apk upgrade
+    ## https://github.com/linuxcontainers/
+    ## https://github.com/linuxcontainers/alpine
+    ## https://github.com/linuxcontainers/alpine/pkgs/container/alpine
+    $ docker pull ghcr.io/linuxcontainers/alpine:latest
+    $ docker pull docker.io/amd64/alpine:latest
+    $ cat << EOF > Dockerfile
+    FROM ghcr.io/linuxcontainers/alpine:latest
+    RUN /sbin/apk update --no-cache \
+        && /sbin/apk upgrade --no-cache \
+        && /bin/rm -rf /var/cache/apk/*
     RUN apk add git libbsd-static libbsd-dev ncurses-dev musl-dev ncurses-static gcc make
+    CMD ["/bin/sh"]
     EOF
