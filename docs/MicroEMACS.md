@@ -62,3 +62,7 @@ MicroEMACS
     RUN apk add git libbsd-static libbsd-dev ncurses-dev musl-dev ncurses-static gcc make
     CMD ["/bin/sh"]
     EOF
+
+## Install mg building dependence
+
+    $ sudo apt install libbsd-dev
