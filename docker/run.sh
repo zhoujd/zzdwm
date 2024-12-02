@@ -12,6 +12,8 @@ case $1 in
         docker build $BUILD_ARG -t $CNT_IMG -f $BUILD_FILE .
         ;;
     run|-r )
+        docker stop $CNT_NAME 2>/dev/null
+        docker rm $CNT_NAME 2>/dev/null
         docker run -it --name $CNT_NAME $CNT_IMG
         ;;
     status|st )
