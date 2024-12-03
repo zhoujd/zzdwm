@@ -4,6 +4,7 @@ MicroEMACS
 ## URLs
 
     ## https://github.com/troglobit/MicroEMACS
+    ## https://git.sr.ht/~tekk/microemacs
 
 ## Linux editors
 
