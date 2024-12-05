@@ -20,7 +20,7 @@ case $1 in
         docker ps | grep $CNT_IMG
         ;;
     clean|-c )
-        docker system prune -f -a
+        docker system prune -f
         ;;
     * )
         echo "Usage: $(basename $0) {build|-b|run|-r|status|-s|clean|-c}"
