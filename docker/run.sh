@@ -16,10 +16,13 @@ case $1 in
         docker rm $CNT_NAME 2>/dev/null
         docker run -it --name $CNT_NAME $CNT_IMG
         ;;
-    status|st )
+    status|-s )
         docker ps | grep $CNT_IMG
         ;;
+    clean|-c )
+        docker system prune -f -a
+        ;;
     * )
-        echo "Usage: $(basename $0) {build|-b|run|-r|status|st}"
+        echo "Usage: $(basename $0) {build|-b|run|-r|status|-s|clean|-c}"
         ;;
 esac
