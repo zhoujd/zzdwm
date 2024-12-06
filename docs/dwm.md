@@ -77,10 +77,24 @@ DWM
 
     ## https://www.freedesktop.org/wiki/Software/fontconfig/
     ## https://fontconfig.pages.freedesktop.org/fontconfig/fontconfig-user.html
+    ## https://unix.stackexchange.com/questions/106070/changing-monospace-fonts-system-wide
+    ## Or to /etc/fonts/local.conf to set it system-wide
+    $ cat ~/.config/fontconfig/fonts.conf <<EOF
+    EOF
+    <match target="pattern">
+      <test name="family" qual="any">
+        <string>monospace</string>
+      </test>
+      <edit binding="strong" mode="prepend" name="family">
+        <string>SF Mono</string>
+      </edit>
+    </match>
+    EOF
+
     $ fc-match monospace
-    DejaVuSansMono.ttf: "DejaVu Sans Mono" "Book"
+    SF-Mono-Regular.otf: "SF Mono" "Regular"
     $ fc-match monospace:bold
-    DejaVuSansMono-Bold.ttf: "DejaVu Sans Mono" "Bold"
+    SF-Mono-Bold.otf: "SF Mono" "Bold"
 
 ## Font Unicode
 
