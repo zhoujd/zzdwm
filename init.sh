@@ -7,7 +7,7 @@ CORE_TOP=$(cd $CORE_ROOT/.. && pwd)
 install_dep() {
     sudo apt update
     sudo apt install -y \
-         libx11-dev libxft-dev libxinerama-dev \
+         libx11-dev libxft-dev libxinerama-dev libxrender-dev \
          libasound2-dev \
          libxfixes-dev libxi-dev libxext-dev \
          libxrandr-dev
