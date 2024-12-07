@@ -5,6 +5,12 @@ echo "$(date): starting dwm desktop." >$log
 
 kind=run
 
+prepare() {
+    hash compton && compton &
+    hash nitrogen && nitrogen --restore &
+    echo "$(date): dwm prepare done." >>$log
+}
+
 run() {
     echo "$(date): dwm on run mode." >>$log
     exec dwm >/dev/null 2>&1
@@ -16,6 +22,12 @@ debug() {
 }
 
 case $kind in
-    run|-r ) run ;;
-    debug|-d ) debug ;;
+    run|-r )
+        prepare
+        run
+        ;;
+    debug|-d )
+        prepare
+        debug
+        ;;
 esac
