@@ -5,12 +5,6 @@ echo "$(date): starting dwm desktop." >$log
 
 kind=run
 
-prepare() {
-    nitrogen --restore &
-    xcompmgr-simple &
-    echo "$(date): dwm prepare done." >>$log
-}
-
 run() {
     echo "$(date): dwm on run mode." >>$log
     exec dwm >/dev/null 2>&1
@@ -23,11 +17,9 @@ debug() {
 
 case $kind in
     run|-r )
-        prepare
         run
         ;;
     debug|-d )
-        prepare
         debug
         ;;
 esac
