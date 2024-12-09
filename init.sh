@@ -51,7 +51,6 @@ build() {
         $CORE_ROOT/src
         $CORE_ROOT/tools/dmenu
         $CORE_ROOT/tools/dwmstatus
-        $CORE_ROOT/tools/tabbed
         $CORE_ROOT/tools/xbanish
         $CORE_ROOT/tools/slock
         $CORE_ROOT/tools/shotkey
