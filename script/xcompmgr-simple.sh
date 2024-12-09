@@ -7,8 +7,8 @@ CORE_TOP=$(cd $CORE_ROOT/.. && pwd)
 PROJ_ROOT=$CORE_ROOT/tools/xcompmgr-simple
 
 dep() {
-    sudo apt install -y libx11-dev libxfixes-dev libxext-dev
-    sudo apt install -y libxcomposite-dev libxrender-dev libxdamage-dev
+    sudo apt install -y libx11-dev libxfixes-dev libxext-dev libxrender-dev
+    sudo apt install -y libxcomposite-dev libxdamage-dev
     echo "Install dep done"
 }
 
