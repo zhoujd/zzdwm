@@ -6,8 +6,8 @@ echo "$(date): starting dwm desktop." >$log
 kind=run
 
 prepare() {
-    hash xcompmgr-simple && xcompmgr-simple &
-    hash nitrogen && nitrogen --restore &
+    nitrogen --restore &
+    xcompmgr-simple &
     echo "$(date): dwm prepare done." >>$log
 }
 
