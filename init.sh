@@ -10,7 +10,8 @@ install_dep() {
          libx11-dev libxft-dev libxinerama-dev libxrender-dev \
          libasound2-dev \
          libxfixes-dev libxi-dev libxext-dev \
-         libxrandr-dev
+         libxrandr-dev \
+         libxcomposite-dev libxdamage-dev
     echo "Install dep done"
 }
 

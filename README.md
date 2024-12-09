@@ -13,6 +13,7 @@ zzdwm
     $ sudo apt install libasound2-dev
     $ sudo apt install libxfixes-dev libxi-dev libxext-dev
     $ sudo apt install liblibxrandr-dev
+    $ sudo apt isntall libxcomposite-dev libxdamage-dev
 
 ## Build dwm source
 
