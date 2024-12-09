@@ -2,7 +2,7 @@
 
 CC	?= cc
 CFLAGS	?= -O2
-CFLAGS	+= -Wall -Wunused -Wmissing-prototypes -Wstrict-prototypes
+CFLAGS	+= -Wall
 
 PREFIX	?= /usr/local
 BINDIR	?= $(PREFIX)/bin
