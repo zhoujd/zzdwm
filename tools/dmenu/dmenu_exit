@@ -5,18 +5,20 @@
 menu=(
     "0: Cancel"
     "1: Logout"
-    "2: Shutdown"
-    "3: Reboot"
-    "4: Lock"
-    "5: Reload"
+    "2: Reload"
+    "3: Shutdown"
+    "4: Reboot"
+    "5: Lock"
+    "6: Off-screen"
 )
 
 choice=`printf '%s\n' "${menu[@]}" | dmenu -i -l 10 -p Operation | cut -d ':' -f 1`
 case "$choice" in
     0) exit ;;
     1) exec xdotool key super+shift+q ;;
-    2) exec systemctl poweroff ;;
-    3) exec systemctl reboot ;;
-    4) exec slock ;;
-    5) exec xdotool key super+shift+control+q ;;
+    2) exec xdotool key super+shift+control+q ;;
+    3) exec systemctl poweroff -i ;;
+    4) exec systemctl reboot ;;
+    5) exec slock ;;
+    6) exec xset dpms force off ;;
 esac
