@@ -106,7 +106,6 @@ static const char *drunmenucmd[] = { "dmenu_drun", NULL };
 static const char *exitmenucmd[] = { "dmenu_exit", NULL };
 static const char *slockcmd[] = { "slock", NULL };
 static const char *duptermcmd[] = { "dupterm", NULL };
-static const char *cyclewincmd[] = { "cyclewin", NULL };
 
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
@@ -125,7 +124,6 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_p,      spawn,          {.v = drunmenucmd } },
 	{ MODKEY|Mod1Mask,              XK_p,      spawn,          {.v = drunmenucmd } },
 	{ MODKEY,                       XK_q,      spawn,          {.v = exitmenucmd } },
-	{ MODKEY,                       XK_x,      spawn,          {.v = cyclewincmd } },
 	{ MODKEY,                       XK_z,      spawn,          {.v = slockcmd } },
 	{ MODKEY|ShiftMask,             XK_Return, spawn,          {.v = duptermcmd } },
 	{ MODKEY,                       XK_b,      togglebar,      {0} },
