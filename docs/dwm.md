@@ -117,3 +117,15 @@ DWM
 
     ## https://copilot.microsoft.com/
     ## https://copilot.microsoft.com/chats/Tg9aNkP1PwPC9kHydpxMF
+
+## Debug DWM
+
+    ## Xephyr is a nested X server that runs as an X application
+    $ sudo apt install xserver-xephyr
+
+    ## Adding the -g in CFLAGS in config.mk
+    ## CFLAGS = -g
+    $ Xephyr -br -ac -noreset -screen 800x600 :2 &
+    $ export DISPLAY=:2
+    $ make
+    $ gdb ./dwm
