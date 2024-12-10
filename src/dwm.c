@@ -977,56 +977,58 @@ expose(XEvent *e)
 }
 
 void
-focussame(const Arg *arg) {
-    Client *c;
-    XClassHint ch = { NULL, NULL };
-    char *class_name = NULL;
-    int direction = arg->i;
+focussame(const Arg *arg)
+{
+	Client *c;
+	XClassHint ch = { NULL, NULL };
+	char *class_name = NULL;
+	int direction = arg->i;
 
-    if (!selmon->sel)
-        return;
+	if (!selmon->sel)
+		return;
 
-    if (!XGetClassHint(dpy, selmon->sel->win, &ch))
-        return;
-    class_name = ch.res_class;
+	if (!XGetClassHint(dpy, selmon->sel->win, &ch))
+		return;
+	class_name = ch.res_class;
+	lastfocusedwin = selmon->sel->win;
 
-    Client *clients[32];
-    int num_clients = 0;
-    for (c = selmon->clients; c && num_clients < 32; c = c->next) {
-        if (c->tags & selmon->tagset[selmon->seltags] && XGetClassHint(dpy, c->win, &ch)) {
-            if (strcmp(class_name, ch.res_class) == 0)
-                clients[num_clients++] = c;
-            XFree(ch.res_class);
-            XFree(ch.res_name);
-        }
-    }
+	Client *clients[32];
+	int num_clients = 0;
+	for (c = selmon->clients; c && num_clients < 32; c = c->next) {
+		if (c->tags & selmon->tagset[selmon->seltags] && XGetClassHint(dpy, c->win, &ch)) {
+			if (strcmp(class_name, ch.res_class) == 0)
+				clients[num_clients++] = c;
+			XFree(ch.res_class);
+			XFree(ch.res_name);
+		}
+	}
 
-    Client *target_client = NULL;
-    if (direction == +1) {
-        for (int i = 0; i < num_clients; ++i) {
-            if (clients[i]->win == lastfocusedwin) {
-                target_client = clients[(i + 1) % num_clients];
-                break;
-            }
-        }
-        if (!target_client)
-            target_client = clients[0];
-    } else if (direction == -1) {
-        for (int i = 0; i < num_clients; ++i) {
-            if (clients[i]->win == lastfocusedwin) {
-                target_client = clients[(i - 1 + num_clients) % num_clients];
-                break;
-            }
-        }
-        if (!target_client)
-            target_client = clients[num_clients - 1];
-    }
+	Client *target_client = NULL;
+	if (direction == +1) {
+		for (int i = 0; i < num_clients; ++i) {
+			if (clients[i]->win == lastfocusedwin) {
+				target_client = clients[(i + 1) % num_clients];
+				break;
+			}
+		}
+		if (!target_client)
+			target_client = clients[0];
+	} else if (direction == -1) {
+		for (int i = 0; i < num_clients; ++i) {
+			if (clients[i]->win == lastfocusedwin) {
+				target_client = clients[(i - 1 + num_clients) % num_clients];
+				break;
+			}
+		}
+		if (!target_client)
+			target_client = clients[num_clients - 1];
+	}
 
-    if (target_client) {
-        focus(target_client);
-        restack(selmon);
-        lastfocusedwin = target_client->win;
-    }
+	if (target_client) {
+		focus(target_client);
+		restack(selmon);
+		lastfocusedwin = target_client->win;
+	}
 }
 
 void
