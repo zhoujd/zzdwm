@@ -179,6 +179,8 @@ static const Key keys[] = {
 	{ MODKEY|ControlMask,           XK_j,      floatvertmax,   {0} },
 	{ MODKEY|ControlMask,           XK_k,      floatvertmax,   {0} },
 	{ MODKEY|ControlMask,           XK_m,      floatmaximize,  {0} },
+	{ MODKEY,                       XK_n,      focussame,      {.i = +1 } },
+	{ MODKEY|ShiftMask,             XK_n,      focussame,      {.i = -1 } },
 	TAGKEYS(                        XK_1,                      0)
 	TAGKEYS(                        XK_2,                      1)
 	TAGKEYS(                        XK_3,                      2)
