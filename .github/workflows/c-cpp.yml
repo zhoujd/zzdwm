@@ -9,10 +9,12 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v4
+    - name: Install prepare
+      run: sudo apt-get update
     - name: Install dwm dependence
       run: sudo apt-get install -y libx11-dev libxft-dev libxinerama-dev libxrender-dev
     - name: Install dwmstatus dependence
