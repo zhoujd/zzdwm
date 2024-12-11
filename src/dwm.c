@@ -2038,21 +2038,19 @@ setgaps(const Arg *arg)
 }
 
 void
-	 setsticky(Client *c, int sticky)
-	 {
-
-		 if(sticky && !c->issticky) {
-			 XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
-					 PropModeReplace, (unsigned char *) &netatom[NetWMSticky], 1);
-			 c->issticky = 1;
-		 } else if(!sticky && c->issticky){
-			 XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
-					 PropModeReplace, (unsigned char *)0, 0);
-			 c->issticky = 0;
-			 arrange(c->mon);
-		 }
+setsticky(Client *c, int sticky)
+{
+	 if(sticky && !c->issticky) {
+		 XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
+				 PropModeReplace, (unsigned char *) &netatom[NetWMSticky], 1);
+		 c->issticky = 1;
+	 } else if(!sticky && c->issticky){
+		 XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
+				 PropModeReplace, (unsigned char *)0, 0);
+		 c->issticky = 0;
+		 arrange(c->mon);
 	 }
-
+}
 
 void
 setlayout(const Arg *arg)
@@ -2217,33 +2215,33 @@ shiftviewclients(const Arg *arg)
 	unsigned int tagmask = 0;
 
 	for (c = selmon->clients; c; c = c->next)
-		#if SCRATCHPADS_PATCH
+#if SCRATCHPADS_PATCH
 		if (!(c->tags & SPTAGMASK))
 			tagmask = tagmask | c->tags;
-		#else
+#else
 		tagmask = tagmask | c->tags;
-		#endif // SCRATCHPADS_PATCH
+#endif // SCRATCHPADS_PATCH
 
-	#if SCRATCHPADS_PATCH
+#if SCRATCHPADS_PATCH
 	shifted.ui = selmon->tagset[selmon->seltags] & ~SPTAGMASK;
-	#else
+#else
 	shifted.ui = selmon->tagset[selmon->seltags];
-	#endif // SCRATCHPADS_PATCH
+#endif // SCRATCHPADS_PATCH
 	if (arg->i > 0) // left circular shift
 		do {
 			shifted.ui = (shifted.ui << arg->i)
 			   | (shifted.ui >> (LENGTH(tags) - arg->i));
-			#if SCRATCHPADS_PATCH
+#if SCRATCHPADS_PATCH
 			shifted.ui &= ~SPTAGMASK;
-			#endif // SCRATCHPADS_PATCH
+#endif // SCRATCHPADS_PATCH
 		} while (tagmask && !(shifted.ui & tagmask));
 	else // right circular shift
 		do {
 			shifted.ui = (shifted.ui >> (- arg->i)
 			   | shifted.ui << (LENGTH(tags) + arg->i));
-			#if SCRATCHPADS_PATCH
+#if SCRATCHPADS_PATCH
 			shifted.ui &= ~SPTAGMASK;
-			#endif // SCRATCHPADS_PATCH
+#endif // SCRATCHPADS_PATCH
 		} while (tagmask && !(shifted.ui & tagmask));
 
 	view(&shifted);
