@@ -142,6 +142,8 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_l,      setsmfact,      {.f = -0.05} },
 	{ MODKEY,                       XK_Return, zoom,           {0} },
 	{ MODKEY,                       XK_Tab,    view,           {0} },
+	{ MODKEY|ShiftMask,             XK_Tab,    shiftviewclients, { .i = +1 } },
+	{ MODKEY|ShiftMask|ControlMask, XK_Tab,    shiftviewclients, { .i = -1 } },
 	{ MODKEY|ShiftMask,             XK_c,      killclient,     {0} },
 	{ MODKEY|ControlMask,           XK_c,      killclient,     {.ui = 1} },  // kill unselect
 	{ MODKEY|ShiftMask|ControlMask, XK_c,      killclient,     {.ui = 2} },  // killall
