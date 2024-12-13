@@ -2,6 +2,7 @@
 
 # get id of the focused window
 active_win_id=$(xprop -root | grep '^_NET_ACTIVE_W' | awk -F'# 0x' '{print $2}')
+
 if [ "$active_win_id" == "0" ]; then
     active_win_id=""
 fi
