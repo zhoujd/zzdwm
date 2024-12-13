@@ -31,8 +31,8 @@ EOF
 
 install_bin() {
     target=/usr/local/bin
-    sudo cp -fv $CORE_ROOT/bin/prevwin $target
     sudo cp -fv $CORE_ROOT/bin/nextwin $target
+    sudo cp -fv $CORE_ROOT/bin/prevwin $target
     sudo cp -fv $CORE_ROOT/bin/dupterm $target
     sudo cp -fv $CORE_ROOT/bin/me $target
     sudo cp -fv $CORE_ROOT/bin/mg $target
