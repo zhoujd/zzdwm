@@ -451,7 +451,7 @@ void restack_win(Window moving_window, Window target_window) {
     //  The moving_window wants to be placed in front of the target_window and we shall do just that
     //
     Client *moving_client = nullptr;
-    for (int i = 0; i < clients.size(); ++i) {
+    for (size_t i = 0; i < clients.size(); ++i) {
         moving_client = clients[i];
         if (moving_client->window == moving_window) {
             clients.erase(clients.begin() + i);
@@ -460,7 +460,7 @@ void restack_win(Window moving_window, Window target_window) {
     }
     if (moving_client != nullptr) {
         if (target_window != 0) {
-            for (int i = 0; i < clients.size(); ++i) {
+            for (size_t i = 0; i < clients.size(); ++i) {
                 if (clients[i]->window == target_window) {
                     clients.insert(clients.begin() + i, moving_client);
                     return;
@@ -533,7 +533,7 @@ void circulate_client(XCirculateEvent *ce) {
 
     if (!client) return;
 
-    Window target_window;
+    Window target_window = 0;
     if (ce->place == PlaceOnTop)
         target_window = clients[0]->window;
     else if (ce->place == PlaceOnBottom)
@@ -544,7 +544,7 @@ void circulate_client(XCirculateEvent *ce) {
 }
 
 void destroy_win(Window window, bool gone) {
-    int i = 0;
+    size_t i = 0;
     for (Client *w: clients) {
         if (w->window == window) {
             if (gone)
@@ -762,7 +762,7 @@ int main(int argc, char **argv) {
     unsigned int children_count;
     Window root_return, parent_return;
     XQueryTree(display, root_window, &root_return, &parent_return, &children, &children_count);
-    for (int i = 0; i < children_count; i++)
+    for (unsigned int i = 0; i < children_count; i++)
         add_client(children[i]);
     XFree(children);
     XUngrabServer(display);
