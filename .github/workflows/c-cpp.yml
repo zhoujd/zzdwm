@@ -47,3 +47,5 @@ jobs:
       run: make -C tools/MicroEMACS
     - name: Build xcompmgr-simple
       run: make -C tools/xcompmgr-simple
+    - name: Build utils
+      run: make -C tools/utils
