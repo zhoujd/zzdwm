@@ -46,9 +46,11 @@ static const unsigned int alphas[][3] = {
 
 /* auto start */
 static const char *const autostart[] = {
+	"blackwalls", "&", NULL,
 	"dwmstatus", "&", NULL,
 	"shotkey", "&", NULL,
 	"xbanish", "&", NULL,
+	"xcompmgr-simple", "&", NULL,
 	NULL /* terminate */
 };
 /* tagging */
