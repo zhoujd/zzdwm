@@ -25,7 +25,7 @@ jobs:
       run: sudo apt-get install -y libxrandr-dev
     - name: Install surf dependence
       run: sudo apt-get install -y libwebkit2gtk-4.0-dev libgcr-3-dev
-    - name: Install xcompmgr-simple dependence
+    - name: Install xcompmgr dependence
       run: sudo apt-get install -y libxcomposite-dev libxdamage-dev
     - name: Build dwm
       run: make -C src/
@@ -45,7 +45,7 @@ jobs:
       run: make -C tools/surf
     - name: Build MicroEMACS
       run: make -C tools/MicroEMACS
-    - name: Build xcompmgr-simple
-      run: make -C tools/xcompmgr-simple
+    - name: Build xcompmgr
+      run: make -C tools/xcompmgr
     - name: Build utils
       run: make -C tools/utils
