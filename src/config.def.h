@@ -50,7 +50,7 @@ static const char *const autostart[] = {
 	"dwmstatus", "&", NULL,
 	"shotkey", "&", NULL,
 	"xbanish", "&", NULL,
-	"xcompmgr-simple", "&", NULL,
+	"xcompmgr", "&", NULL,
 	NULL /* terminate */
 };
 /* tagging */
