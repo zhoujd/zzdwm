@@ -9,6 +9,7 @@ DWM
     ## https://github.com/bakkeby/patches
     ## https://github.com/bakkeby/dwm-flexipatch
     ## https://wiki.archlinuxcn.org/wiki/Dwm
+    ## https://github.com/ericpruitt/edge
 
 ## Relative Source
 
