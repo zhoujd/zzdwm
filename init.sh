@@ -55,7 +55,7 @@ build() {
         $CORE_ROOT/tools/xbanish
         $CORE_ROOT/tools/slock
         $CORE_ROOT/tools/shotkey
-        $CORE_ROOT/tools/xcompmgr-simple
+        $CORE_ROOT/tools/xcompmgr
         $CORE_ROOT/tools/utils
     )
     for proj in ${projects[@]}; do
