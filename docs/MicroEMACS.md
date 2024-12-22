@@ -82,6 +82,8 @@ MicroEMACS
     $ tfs -x mearchive mec.bin
 
     ## Add your own or replace changed files
-    $ bfs -a mec.bin ./mearchive
+    $ bfs -a mec ./mearchive
+    $ bfs -a mec -o me.bin ./mearchive
     or
-    $ tfs -a mec.bin ./mearchive
+    $ tfs -a mec ./mearchive
+    $ tfs -a mec -o me.bin ./mearchive
