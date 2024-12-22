@@ -68,3 +68,20 @@ MicroEMACS
 ## Install mg building dependence
 
     $ sudo apt install libbsd-dev
+
+## Modification of the MicroEmacs Executable
+
+    ## http://www.jasspa.com/zeroinst.html
+    ## Install bfs tool
+    $ wget http://www.jasspa.com/development/me-standalone/bfs-v0.1.2.tar.gz
+
+    ## https://github.com/mittelmark/microemacs/blob/master/README-standalone.md#Modi
+    ## Detach the current archive from the stand-alone executable into a folder mearchive like this
+    $ bfs -x mearchive mec.bin
+    or
+    $ tfs -x mearchive mec.bin
+
+    ## Add your own or replace changed files
+    $ bfs -a mec.bin ./mearchive
+    or
+    $ tfs -a mec.bin ./mearchive
