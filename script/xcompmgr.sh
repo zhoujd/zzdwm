@@ -4,7 +4,7 @@ SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 CORE_ROOT=$(cd $SCRIPT_ROOT/.. && pwd)
 CORE_TOP=$(cd $CORE_ROOT/.. && pwd)
 
-PROJ_ROOT=$CORE_ROOT/tools/xcompmgr-simple
+PROJ_ROOT=$CORE_ROOT/tools/xcompmgr
 
 dep() {
     sudo apt install -y libx11-dev libxfixes-dev libxext-dev libxrender-dev
