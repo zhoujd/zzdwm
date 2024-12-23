@@ -39,14 +39,6 @@ install_bin() {
     echo "Install bin done"
 }
 
-install_misc() {
-    target=~/.config
-    mkdir -p ~/.config
-    rm -rf ~/.config/jasspa
-    cp -rv $CORE_ROOT/misc/.config/jasspa $target
-    echo "Install misc done"
-}
-
 build() {
     local projects=(
         $CORE_ROOT/src
@@ -72,7 +64,6 @@ all() {
     install_dep
     install_dm
     install_bin
-    install_misc
     build
     echo "Install all done"
 }
@@ -80,11 +71,10 @@ all() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-Usage: $app {dep|dm|bin|misc|build|-b|all|-a}
+Usage: $app {dep|dm|bin|build|-b|all|-a}
 dep          --    Install build dependence
 dm           --    Install xsession entry
 bin          --    Install bin
-misc         --    Install misc configure
 build|-b     --    Build all
 all|-a       --    Install all
 EOF
@@ -99,9 +89,6 @@ case $1 in
         ;;
     bin )
         install_bin
-        ;;
-    misc )
-        install_misc
         ;;
     build|-b )
         build
