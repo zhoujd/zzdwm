@@ -160,7 +160,8 @@ $ gdb ./dwm
 
 ## DWM dracula Theme
 
-```
+```c
+// https://github.com/dracula/dwm/blob/main/config.h
 static const char col_gray1[]       = "#282a36";
 static const char col_gray2[]       = "#ffb86c";
 static const char col_gray3[]       = "#ff79c6";
