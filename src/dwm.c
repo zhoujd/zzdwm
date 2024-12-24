@@ -349,7 +349,8 @@ static size_t autostart_len;
 
 /* execute command from autostart array */
 void
-autostart_exec() {
+autostart_exec()
+{
 	const char *const *p;
 	size_t i = 0;
 
@@ -838,7 +839,8 @@ destroynotify(XEvent *e)
 }
 
 void
-doubledeck(Monitor *m) {
+doubledeck(Monitor *m)
+{
 	unsigned int i, n, mw, ns;
 	Client *c;
 
@@ -1347,7 +1349,8 @@ keypress(XEvent *e)
 }
 
 void
-killthis(Client *c) {
+killthis(Client *c)
+{
 	if (!sendevent(c, wmatom[WMDelete])) {
 		XGrabServer(dpy);
 		XSetErrorHandler(xerrordummy);
@@ -1493,7 +1496,8 @@ monocle(Monitor *m)
 }
 
 void
-grid(Monitor *m) {
+grid(Monitor *m)
+{
 	unsigned int i, n, cx, cy, cw, ch, aw, ah, cols, rows;
 	unsigned int cc, cr, chrest, cwrest; //fullgaps logic
 	Client *c;
@@ -1888,21 +1892,21 @@ rotatestack(const Arg *arg)
 	f = selmon->sel;
 	if (arg->i > 0) {
 		for (c = nexttiled(selmon->clients); c && nexttiled(c->next); c = nexttiled(c->next));
-		if (c){
+		if (c) {
 			detach(c);
 			attach(c);
 			detachstack(c);
 			attachstack(c);
 		}
 	} else {
-		if ((c = nexttiled(selmon->clients))){
+		if ((c = nexttiled(selmon->clients))) {
 			detach(c);
 			enqueue(c);
 			detachstack(c);
 			enqueuestack(c);
 		}
 	}
-	if (c){
+	if (c) {
 		arrange(selmon);
 		//unfocus(f, 1);
 		focus(f);
@@ -1911,12 +1915,14 @@ rotatestack(const Arg *arg)
 }
 
 void
-setcurrentdesktop(void){
+setcurrentdesktop(void)
+{
 	long data[] = { 0 };
 	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32, PropModeReplace, (unsigned char *)data, 1);
 }
 
-void setdesktopnames(void){
+void setdesktopnames(void)
+{
 	XTextProperty text;
 	Xutf8TextListToTextProperty(dpy, (char **)tags, TAGSLENGTH, XUTF8StringStyle, &text);
 	XSetTextProperty(dpy, root, &text, netatom[NetDesktopNames]);
@@ -2013,7 +2019,8 @@ setclientstate(Client *c, long state)
 }
 
 void
-tagtoleft(const Arg *arg) {
+tagtoleft(const Arg *arg)
+{
 	if (selmon->sel != NULL
 	&& __builtin_popcount(selmon->tagset[selmon->seltags] & TAGMASK) == 1
 	&& selmon->tagset[selmon->seltags] > 1) {
@@ -2024,7 +2031,8 @@ tagtoleft(const Arg *arg) {
 }
 
 void
-tagtoright(const Arg *arg) {
+tagtoright(const Arg *arg)
+{
 	if (selmon->sel != NULL
 	&& __builtin_popcount(selmon->tagset[selmon->seltags] & TAGMASK) == 1
 	&& selmon->tagset[selmon->seltags] & (TAGMASK >> 1)) {
@@ -2060,7 +2068,8 @@ sendevent(Client *c, Atom proto)
 }
 
 void
-setnumdesktops(void){
+setnumdesktops(void)
+{
 	long data[] = { TAGSLENGTH };
 	XChangeProperty(dpy, root, netatom[NetNumberOfDesktops], XA_CARDINAL, 32, PropModeReplace, (unsigned char *)data, 1);
 }
@@ -2090,7 +2099,7 @@ setfullscreen(Client *c, int fullscreen)
 		c->isfloating = 1;
 		resizeclient(c, c->mon->mx, c->mon->my, c->mon->mw, c->mon->mh);
 		XRaiseWindow(dpy, c->win);
-	} else if (!fullscreen && c->isfullscreen){
+	} else if (!fullscreen && c->isfullscreen) {
 		XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
 			PropModeReplace, (unsigned char*)0, 0);
 		c->isfullscreen = 0;
@@ -2128,11 +2137,11 @@ setgaps(const Arg *arg)
 void
 setsticky(Client *c, int sticky)
 {
-	 if(sticky && !c->issticky) {
+	 if (sticky && !c->issticky) {
 		 XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
 				 PropModeReplace, (unsigned char *) &netatom[NetWMSticky], 1);
 		 c->issticky = 1;
-	 } else if(!sticky && c->issticky){
+	 } else if (!sticky && c->issticky) {
 		 XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
 				 PropModeReplace, (unsigned char *)0, 0);
 		 c->issticky = 0;
@@ -2170,7 +2179,8 @@ setmfact(const Arg *arg)
 }
 
 void
-setsmfact(const Arg *arg) {
+setsmfact(const Arg *arg)
+{
 	float sf;
 
 	if (!arg || !selmon->lt[selmon->sellt]->arrange)
@@ -2276,8 +2286,10 @@ setup(void)
 	grabkeys();
 	focus(NULL);
 }
+
 void
-setviewport(void){
+setviewport(void)
+{
 	long data[] = { 0, 0 };
 	XChangeProperty(dpy, root, netatom[NetDesktopViewport], XA_CARDINAL, 32, PropModeReplace, (unsigned char *)data, 2);
 }
