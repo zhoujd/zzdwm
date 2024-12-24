@@ -1511,15 +1511,15 @@ grid(Monitor *m)
 
 	/* window geoms (cell height/width) */
 	if (m->drawwithgaps) { /* draw with fullgaps logic */
-		ch = (m->wh - 2*gappx - gappx * (rows - 1)) / (rows ? rows : 1);
-		cw = (m->ww - 2*gappx - gappx * (cols - 1)) / (cols ? cols : 1);
-		chrest = (m->wh - 2*gappx - gappx * (rows - 1)) - ch * rows;
-		cwrest = (m->ww - 2*gappx - gappx * (cols - 1)) - cw * cols;
+		ch = (m->wh - 2*m->gappx - m->gappx * (rows - 1)) / (rows ? rows : 1);
+		cw = (m->ww - 2*m->gappx - m->gappx * (cols - 1)) / (cols ? cols : 1);
+		chrest = (m->wh - 2*m->gappx - m->gappx * (rows - 1)) - ch * rows;
+		cwrest = (m->ww - 2*m->gappx - m->gappx * (cols - 1)) - cw * cols;
 		for (i = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++) {
 			cc = i / rows;
 			cr = i % rows;
-			cx = m->wx + gappx + cc * (cw + gappx) + MIN(cc, cwrest);
-			cy = m->wy + gappx + cr * (ch + gappx) + MIN(cr, chrest);
+			cx = m->wx + m->gappx + cc * (cw + m->gappx) + MIN(cc, cwrest);
+			cy = m->wy + m->gappx + cr * (ch + m->gappx) + MIN(cr, chrest);
 			resize(c, cx, cy, cw + (cc < cwrest ? 1 : 0) - 2*c->bw, ch + (cr < chrest ? 1 : 0) - 2*c->bw, False);
 		}
 	} else {
