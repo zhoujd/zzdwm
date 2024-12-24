@@ -16,6 +16,7 @@ static const int attachmode         = 0;        /* 0 master (default), 1 = above
 static const int background         = 1;        /* 0 means no root background */
 static const int focusedontoptiled  = 1;        /* 1 means focused tile client is shown on top of floating windows */
 static const int pertagallbars      = 0;        /* 1 means pertag with the same barpos */
+static const int urgentontag        = 0;        /* 1 means urgent show on tag */
 static const char *fonts[]          = {
 	"SF Pro Display:size=11",
 	"SF Mono:size=11",
