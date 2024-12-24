@@ -917,7 +917,7 @@ drawbar(Monitor *m)
 	int x, w, tw = 0;
 	int boxs = drw->fonts->h / 9;
 	int boxw = drw->fonts->h / 6 + 2;
-	unsigned int i, occ = 0, urg = 0;
+	unsigned int i, occ = 0;
 	unsigned int a = 0, s = 0;
 	Client *c;
 
@@ -933,18 +933,15 @@ drawbar(Monitor *m)
 
 	for (c = m->clients; c; c = c->next) {
 		occ |= c->tags;
-		if (c->isurgent)
-			urg |= c->tags;
 	}
 	x = 0;
 	for (i = 0; i < LENGTH(tags); i++) {
 		w = TEXTW(tags[i], 0);
 		drw_setscheme(drw, scheme[m->tagset[m->seltags] & 1 << i ? SchemeSel : SchemeNorm]);
-		drw_text(drw, x, 0, w, bh, lrpad / 2, tags[i], urg & 1 << i, 0);
+		drw_text(drw, x, 0, w, bh, lrpad / 2, tags[i], 0, 0);
 		if (occ & 1 << i)
 			drw_rect(drw, x + boxs, boxs, boxw, boxw,
-				m == selmon && selmon->sel && selmon->sel->tags & 1 << i,
-				urg & 1 << i);
+				m == selmon && selmon->sel && selmon->sel->tags & 1 << i, 0);
 		x += w;
 	}
 
@@ -1640,6 +1637,8 @@ propertynotify(XEvent *e)
 		case XA_WM_HINTS:
 			updatewmhints(c);
 			drawbars();
+			if (c->isurgent)
+				XSetWindowBorder(dpy, c->win, scheme[SchemeSel][ColFg].pixel);
 			break;
 		}
 		if (ev->atom == XA_WM_NAME || ev->atom == netatom[NetWMName]) {
