@@ -3,7 +3,7 @@ DWM
 
 ## URLs
 
-```
+```url
 ## https://dwm.suckless.org/
 ## https://dwm.suckless.org/patches/
 ## https://dwm.suckless.org/tutorial/
@@ -15,7 +15,7 @@ DWM
 
 ## Relative Source
 
-```
+```bash
 ## Fetch source code
 $ git clone https://git.suckless.org/dwm
 $ git clone https://git.suckless.org/dmenu
@@ -24,7 +24,7 @@ $ git clone https://git.suckless.org/st
 
 ## Dave's Visual Guide to dwm
 
-```
+```url
 ## https://ratfactor.com/dwm
 ## https://racfactor.com/dwm2
 ## https://ratfactor.com/slackware/three-monitors
@@ -32,25 +32,25 @@ $ git clone https://git.suckless.org/st
 
 ## Status Monitor
 
-```
+```url
 ## https://dwm.suckless.org/status_monitor/
 ```
 
 ## Key Chain
 
-```
+```url
 ## https://dwm.suckless.org/patches/keychain/
 ```
 
 ## dwm-win32
 
-```
+```url
 ## https://github.com/prabirshrestha/dwm-win32
 ```
 
 ## Controlling Audio through keys in dwm
 
-```
+```c
 /* Volume Commands */
 static const char *volume[3][4] = {
   {"pactl", "set-sink-volume", "@DEFAULT_SINK@", "+10%"},
@@ -73,7 +73,7 @@ static Key keys[] = {
 
 ## Switch to Application
 
-```
+```bash
 ## With xdotool
 $ application=emacs
 $ xdotool search ".*${application}.*" windowactivate
@@ -91,7 +91,7 @@ $ xdo activate -N Emacs || emacs
 
 ## Font monospace
 
-```
+```bash
 ## https://www.freedesktop.org/wiki/Software/fontconfig/
 ## https://fontconfig.pages.freedesktop.org/fontconfig/fontconfig-user.html
 ## https://unix.stackexchange.com/questions/106070/changing-monospace-fonts-system-wide
@@ -116,14 +116,14 @@ SF-Mono-Bold.otf: "SF Mono" "Bold"
 
 ## Font Unicode
 
-```
+```url
 ## https://fontawesome.com/search
 ## https://fontawesome.com/v4/cheatsheet
 ```
 
 ## Launch or Focus
 
-```
+```url
 ## https://github.com/octetz/linux-desktop/blob/master/s/lof
 ## https://github.com/joshrosso/linux-desktop/blob/master/s/lof_chromium
 ## https://github.com/mkropat/jumpapp
@@ -131,7 +131,7 @@ SF-Mono-Bold.otf: "SF Mono" "Bold"
 
 ## Color Palette
 
-```
+```url
 ## https://www.color-hex.com/
 ## https://www.color-hex.com/color-palettes/
 ## https://www.color-hex.com/color-palette/1034689
@@ -139,14 +139,14 @@ SF-Mono-Bold.otf: "SF Mono" "Bold"
 
 ## Message Copilot (AI Chat)
 
-```
+```url
 ## https://copilot.microsoft.com/
 ## https://copilot.microsoft.com/chats/Tg9aNkP1PwPC9kHydpxMF
 ```
 
 ## Debug DWM
 
-```
+```bash
 ## Xephyr is a nested X server that runs as an X application
 $ sudo apt install xserver-xephyr
 
