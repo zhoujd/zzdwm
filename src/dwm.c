@@ -858,9 +858,11 @@ doubledeck(Monitor *m)
 	for (i = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
 		if (m->drawwithgaps) { /* draw with fullgaps logic */
 			if (i < m->nmaster)
-				resize(c, m->wx + m->gappx, m->wy + m->gappx, mw - (2*c->bw) - m->gappx, m->wh - (2*c->bw) - 2*m->gappx, False);
+				resize(c, m->wx + m->gappx, m->wy + m->gappx,
+				       mw - (2*c->bw) - m->gappx, m->wh - (2*c->bw) - 2*m->gappx, False);
 			else
-				resize(c, m->wx + mw + m->gappx, m->wy + m->gappx, m->ww - mw - (2*c->bw) - 2*m->gappx, m->wh - (2*c->bw) - 2*m->gappx, False);
+				resize(c, m->wx + mw + m->gappx, m->wy + m->gappx,
+				       m->ww - mw - (2*c->bw) - 2*m->gappx, m->wh - (2*c->bw) - 2*m->gappx, False);
 		} else {
 			if (i < m->nmaster)
 				resize(c, m->wx, m->wy, mw - (2*c->bw), m->wh - (2*c->bw), False);
