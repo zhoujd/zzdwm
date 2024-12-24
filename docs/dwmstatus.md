@@ -17,7 +17,7 @@ dwmstatus
 
 ## Volume Status
 
-```
+```bash
 ## Install ALSA dependece
 $ sudo apt install -y libasound2-dev
 

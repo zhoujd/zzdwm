@@ -19,7 +19,7 @@ dmenu
 
 ## Options
 
-```
+```bash
 $ cat > ~/.dmenurc <<EOF
 ## define the font for dmenu to be used
 DMENU_FN="SF Mono-11"
@@ -48,7 +48,7 @@ EOF
 
 ## Enter sudo password
 
-```
+```bash
 ## apply dmenu-password-5.0.diff
 $ wget https://tools.suckless.org/dmenu/patches/password/dmenu-password-5.0.diff
 $ patch -p1 < dmenu-password-5.0.diff
@@ -62,7 +62,7 @@ fi
 
 ## Run desktop
 
-```
+```bash
 ## sed
 $ exec $(grep '^Exec' $full | tail -1 | \
                sed 's/^Exec=//' | sed 's/%.//' | \

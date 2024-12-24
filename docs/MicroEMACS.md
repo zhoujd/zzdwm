@@ -11,7 +11,7 @@ MicroEMACS
 
 ## Linux editors
 
-```
+```bash
 ## Portable Mg
 ## https://github.com/hboetes/mg
 ## https://github.com/hboetes/mg/releases
@@ -39,7 +39,7 @@ $ sudo cp mg-20240709-static-amd64 /usr/local/bin/mg
 
 ## Start MicroEMACS
 
-```
+```bash
 #!/bin/bash
 mkdir -p ~/.me
 touch ~/.me/me.emf
@@ -49,7 +49,7 @@ mec "$@"
 
 ## Create statically-linked binary that uses getaddrinfo
 
-```
+```bash
 ## glibc uses libnss to support a number of different providers for address resolution services
 ## Meanwhile in version 2.20 there is the --enable-static-nss flag of configure which seems to do exactly this
 
@@ -75,13 +75,13 @@ EOF
 
 ## Install mg building dependence
 
-```
+```bash
 $ sudo apt install libbsd-dev
 ```
 
 ## Modification of the MicroEmacs Executable
 
-```
+```bash
 ## http://www.jasspa.com/zeroinst.html
 ## Install bfs tool
 $ wget http://www.jasspa.com/development/me-standalone/bfs-v0.1.2.tar.gz

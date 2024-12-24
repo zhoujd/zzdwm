@@ -3,7 +3,7 @@ DWM
 
 ## URLs
 
-```url
+```
 ## https://dwm.suckless.org/
 ## https://dwm.suckless.org/patches/
 ## https://dwm.suckless.org/tutorial/
@@ -24,7 +24,7 @@ $ git clone https://git.suckless.org/st
 
 ## Dave's Visual Guide to dwm
 
-```url
+```
 ## https://ratfactor.com/dwm
 ## https://racfactor.com/dwm2
 ## https://ratfactor.com/slackware/three-monitors
@@ -32,19 +32,19 @@ $ git clone https://git.suckless.org/st
 
 ## Status Monitor
 
-```url
+```
 ## https://dwm.suckless.org/status_monitor/
 ```
 
 ## Key Chain
 
-```url
+```
 ## https://dwm.suckless.org/patches/keychain/
 ```
 
 ## dwm-win32
 
-```url
+```
 ## https://github.com/prabirshrestha/dwm-win32
 ```
 
@@ -116,14 +116,14 @@ SF-Mono-Bold.otf: "SF Mono" "Bold"
 
 ## Font Unicode
 
-```url
+```
 ## https://fontawesome.com/search
 ## https://fontawesome.com/v4/cheatsheet
 ```
 
 ## Launch or Focus
 
-```url
+```
 ## https://github.com/octetz/linux-desktop/blob/master/s/lof
 ## https://github.com/joshrosso/linux-desktop/blob/master/s/lof_chromium
 ## https://github.com/mkropat/jumpapp
@@ -131,7 +131,7 @@ SF-Mono-Bold.otf: "SF Mono" "Bold"
 
 ## Color Palette
 
-```url
+```
 ## https://www.color-hex.com/
 ## https://www.color-hex.com/color-palettes/
 ## https://www.color-hex.com/color-palette/1034689
@@ -139,7 +139,7 @@ SF-Mono-Bold.otf: "SF Mono" "Bold"
 
 ## Message Copilot (AI Chat)
 
-```url
+```
 ## https://copilot.microsoft.com/
 ## https://copilot.microsoft.com/chats/Tg9aNkP1PwPC9kHydpxMF
 ```
