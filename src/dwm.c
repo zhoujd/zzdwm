@@ -841,7 +841,7 @@ destroynotify(XEvent *e)
 void
 doubledeck(Monitor *m)
 {
-	unsigned int i, n, mw, ns;
+	unsigned int i, n, mw;
 	Client *c;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
@@ -850,19 +850,17 @@ doubledeck(Monitor *m)
 
 	if (n > m->nmaster) {
 		mw = m->nmaster ? m->ww * m->mfact : 0;
-		ns = m->nmaster > 0 ? 2 : 1;
 		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d|%d]", m->nmaster, n - m->nmaster);
 	} else {
 		mw = m->ww;
-		ns = 1;
 	}
 
 	for (i = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
 		if (m->drawwithgaps) { /* draw with fullgaps logic */
 			if (i < m->nmaster)
-				resize(c, m->wx + gappx, m->wy + gappx, mw - (2*c->bw) - gappx*(5-ns)/2, m->wh - (2*c->bw) - 2*gappx, False);
+				resize(c, m->wx + m->gappx, m->wy + m->gappx, mw - (2*c->bw) - m->gappx, m->wh - (2*c->bw) - 2*m->gappx, False);
 			else
-				resize(c, m->wx + mw + gappx/ns, m->wy + gappx, m->ww - mw - (2*c->bw) - gappx*(5-ns)/2, m->wh - (2*c->bw) - 2*gappx, False);
+				resize(c, m->wx + mw + m->gappx, m->wy + m->gappx, m->ww - mw - (2*c->bw) - 2*m->gappx, m->wh - (2*c->bw) - 2*m->gappx, False);
 		} else {
 			if (i < m->nmaster)
 				resize(c, m->wx, m->wy, mw - (2*c->bw), m->wh - (2*c->bw), False);
