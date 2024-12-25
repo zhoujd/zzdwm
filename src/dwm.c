@@ -1805,15 +1805,14 @@ resizemouse(const Arg *arg)
 	if (c->isfloating || NULL == c->mon->lt[c->mon->sellt]->arrange) {
 		XWarpPointer(dpy, None, c->win, 0, 0, 0, 0, c->w + c->bw - 1, c->h + c->bw - 1);
 	} else {
-		if (selmon->lt[selmon->sellt]->arrange == tile) {
-			XWarpPointer(dpy, None, root, 0, 0, 0, 0,
-			             selmon->mx + (selmon->ww * selmon->mfact),
-			             selmon->my + (selmon->wh / 2));
-		} else if (selmon->lt[selmon->sellt]->arrange == doubledeck) {
+		if (selmon->lt[selmon->sellt]->arrange == doubledeck)
 			XWarpPointer(dpy, None, root, 0, 0, 0, 0,
 			             selmon->mx + (selmon->ww * selmon->dmfact),
 			             selmon->my + (selmon->wh / 2));
-		}
+		else
+			XWarpPointer(dpy, None, root, 0, 0, 0, 0,
+			             selmon->mx + (selmon->ww * selmon->mfact),
+			             selmon->my + (selmon->wh / 2));
 	}
 
 	do {
@@ -1841,17 +1840,17 @@ resizemouse(const Arg *arg)
 	if (c->isfloating || NULL == c->mon->lt[c->mon->sellt]->arrange) {
 		XWarpPointer(dpy, None, c->win, 0, 0, 0, 0, c->w + c->bw - 1, c->h + c->bw - 1);
 	} else {
-		if (selmon->lt[selmon->sellt]->arrange == tile) {
-			selmon->mfact = (double) (ev.xmotion.x_root - selmon->mx) / (double) selmon->ww;
-			arrange(selmon);
-			XWarpPointer(dpy, None, root, 0, 0, 0, 0,
-			             selmon->mx + (selmon->ww * selmon->mfact),
-			             selmon->my + (selmon->wh / 2));
-		} else if (selmon->lt[selmon->sellt]->arrange == doubledeck) {
+		if (selmon->lt[selmon->sellt]->arrange == doubledeck) {
 			selmon->dmfact = (double) (ev.xmotion.x_root - selmon->mx) / (double) selmon->ww;
 			arrange(selmon);
 			XWarpPointer(dpy, None, root, 0, 0, 0, 0,
 			             selmon->mx + (selmon->ww * selmon->dmfact),
+			             selmon->my + (selmon->wh / 2));
+		} else {
+			selmon->mfact = (double) (ev.xmotion.x_root - selmon->mx) / (double) selmon->ww;
+			arrange(selmon);
+			XWarpPointer(dpy, None, root, 0, 0, 0, 0,
+			             selmon->mx + (selmon->ww * selmon->mfact),
 			             selmon->my + (selmon->wh / 2));
 		}
 	}
@@ -2187,16 +2186,16 @@ setmfact(const Arg *arg)
 
 	if (!arg || !selmon->lt[selmon->sellt]->arrange)
 		return;
-	if (selmon->lt[selmon->sellt]->arrange == tile) {
-		f = arg->f < 1.0 ? arg->f + selmon->mfact : arg->f - 1.0;
-		if (f < 0.05 || f > 0.95)
-			return;
-		selmon->mfact = selmon->pertag->mfacts[selmon->pertag->curtag] = f;
-	} else if (selmon->lt[selmon->sellt]->arrange == doubledeck) {
+	if (selmon->lt[selmon->sellt]->arrange == doubledeck) {
 		f = arg->f < 1.0 ? arg->f + selmon->dmfact : arg->f - 1.0;
 		if (f < 0.05 || f > 0.95)
 			return;
 		selmon->dmfact = selmon->pertag->dmfacts[selmon->pertag->curtag] = f;
+	} else {
+		f = arg->f < 1.0 ? arg->f + selmon->mfact : arg->f - 1.0;
+		if (f < 0.05 || f > 0.95)
+			return;
+		selmon->mfact = selmon->pertag->mfacts[selmon->pertag->curtag] = f;
 	}
 	arrange(selmon);
 }
