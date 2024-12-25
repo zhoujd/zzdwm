@@ -125,6 +125,7 @@ struct Monitor {
 	char ltsymbol[16];
 	float mfact;
 	float smfact;
+	float dmfact;
 	int nmaster;
 	int num;
 	int by;               /* bar geometry */
@@ -334,6 +335,7 @@ struct Pertag {
 	unsigned int curtag, prevtag; /* current and previous tag */
 	int nmasters[LENGTH(tags) + 1]; /* number of windows in master area */
 	float mfacts[LENGTH(tags) + 1]; /* mfacts per tag */
+	float dmfacts[LENGTH(tags) + 1]; /* dmfacts per tag */
 	unsigned int sellts[LENGTH(tags) + 1]; /* selected layouts */
 	const Layout *ltidxs[LENGTH(tags) + 1][2]; /* matrix of tags and layouts indexes  */
 	int showbars[LENGTH(tags) + 1]; /* display bar for the current tag */
@@ -802,6 +804,7 @@ createmon(void)
 	m->tagset[0] = m->tagset[1] = 1;
 	m->mfact = mfact;
 	m->smfact = smfact;
+	m->dmfact = dmfact;
 	m->nmaster = nmaster;
 	m->showbar = showbar;
 	m->topbar = topbar;
@@ -817,6 +820,7 @@ createmon(void)
 	for (i = 0; i <= LENGTH(tags); i++) {
 		m->pertag->nmasters[i] = m->nmaster;
 		m->pertag->mfacts[i] = m->mfact;
+		m->pertag->dmfacts[i] = m->dmfact;
 
 		m->pertag->ltidxs[i][0] = m->lt[0];
 		m->pertag->ltidxs[i][1] = m->lt[1];
@@ -849,7 +853,7 @@ doubledeck(Monitor *m)
 		return;
 
 	if (n > m->nmaster) {
-		mw = m->nmaster ? m->ww * m->mfact : 0;
+		mw = m->nmaster ? m->ww * m->dmfact : 0;
 		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d|%d]", m->nmaster, n - m->nmaster);
 	} else {
 		mw = m->ww;
@@ -1801,10 +1805,15 @@ resizemouse(const Arg *arg)
 	if (c->isfloating || NULL == c->mon->lt[c->mon->sellt]->arrange) {
 		XWarpPointer(dpy, None, c->win, 0, 0, 0, 0, c->w + c->bw - 1, c->h + c->bw - 1);
 	} else {
-		XWarpPointer(dpy, None, root, 0, 0, 0, 0,
-			selmon->mx + (selmon->ww * selmon->mfact),
-			selmon->my + (selmon->wh / 2)
-		);
+		if (selmon->lt[selmon->sellt]->arrange == tile) {
+			XWarpPointer(dpy, None, root, 0, 0, 0, 0,
+			             selmon->mx + (selmon->ww * selmon->mfact),
+			             selmon->my + (selmon->wh / 2));
+		} else if (selmon->lt[selmon->sellt]->arrange == doubledeck) {
+			XWarpPointer(dpy, None, root, 0, 0, 0, 0,
+			             selmon->mx + (selmon->ww * selmon->dmfact),
+			             selmon->my + (selmon->wh / 2));
+		}
 	}
 
 	do {
@@ -1832,12 +1841,19 @@ resizemouse(const Arg *arg)
 	if (c->isfloating || NULL == c->mon->lt[c->mon->sellt]->arrange) {
 		XWarpPointer(dpy, None, c->win, 0, 0, 0, 0, c->w + c->bw - 1, c->h + c->bw - 1);
 	} else {
-		selmon->mfact = (double) (ev.xmotion.x_root - selmon->mx) / (double) selmon->ww;
-		arrange(selmon);
-		XWarpPointer(dpy, None, root, 0, 0, 0, 0,
-			selmon->mx + (selmon->ww * selmon->mfact),
-			selmon->my + (selmon->wh / 2)
-		);
+		if (selmon->lt[selmon->sellt]->arrange == tile) {
+			selmon->mfact = (double) (ev.xmotion.x_root - selmon->mx) / (double) selmon->ww;
+			arrange(selmon);
+			XWarpPointer(dpy, None, root, 0, 0, 0, 0,
+			             selmon->mx + (selmon->ww * selmon->mfact),
+			             selmon->my + (selmon->wh / 2));
+		} else if (selmon->lt[selmon->sellt]->arrange == doubledeck) {
+			selmon->dmfact = (double) (ev.xmotion.x_root - selmon->mx) / (double) selmon->ww;
+			arrange(selmon);
+			XWarpPointer(dpy, None, root, 0, 0, 0, 0,
+			             selmon->mx + (selmon->ww * selmon->dmfact),
+			             selmon->my + (selmon->wh / 2));
+		}
 	}
 
 	XUngrabPointer(dpy, CurrentTime);
@@ -2171,10 +2187,17 @@ setmfact(const Arg *arg)
 
 	if (!arg || !selmon->lt[selmon->sellt]->arrange)
 		return;
-	f = arg->f < 1.0 ? arg->f + selmon->mfact : arg->f - 1.0;
-	if (f < 0.05 || f > 0.95)
-		return;
-	selmon->mfact = selmon->pertag->mfacts[selmon->pertag->curtag] = f;
+	if (selmon->lt[selmon->sellt]->arrange == tile) {
+		f = arg->f < 1.0 ? arg->f + selmon->mfact : arg->f - 1.0;
+		if (f < 0.05 || f > 0.95)
+			return;
+		selmon->mfact = selmon->pertag->mfacts[selmon->pertag->curtag] = f;
+	} else if (selmon->lt[selmon->sellt]->arrange == doubledeck) {
+		f = arg->f < 1.0 ? arg->f + selmon->dmfact : arg->f - 1.0;
+		if (f < 0.05 || f > 0.95)
+			return;
+		selmon->dmfact = selmon->pertag->dmfacts[selmon->pertag->curtag] = f;
+	}
 	arrange(selmon);
 }
 
@@ -2567,6 +2590,7 @@ toggleview(const Arg *arg)
 		/* apply settings for this view */
 		selmon->nmaster = selmon->pertag->nmasters[selmon->pertag->curtag];
 		selmon->mfact = selmon->pertag->mfacts[selmon->pertag->curtag];
+		selmon->dmfact = selmon->pertag->dmfacts[selmon->pertag->curtag];
 		selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag];
 		selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt];
 		selmon->lt[selmon->sellt^1] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt^1];
@@ -2922,6 +2946,7 @@ view(const Arg *arg)
 
 	selmon->nmaster = selmon->pertag->nmasters[selmon->pertag->curtag];
 	selmon->mfact = selmon->pertag->mfacts[selmon->pertag->curtag];
+	selmon->dmfact = selmon->pertag->dmfacts[selmon->pertag->curtag];
 	selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag];
 	selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt];
 	selmon->lt[selmon->sellt^1] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt^1];
