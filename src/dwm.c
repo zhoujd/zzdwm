@@ -235,6 +235,7 @@ static void setgaps(const Arg *arg);
 static void setlayout(const Arg *arg);
 static void setmfact(const Arg *arg);
 static void setsmfact(const Arg *arg);
+static void resetmfact(const Arg *arg);
 static void setnumdesktops(void);
 static void setup(void);
 static void setviewport(void);
@@ -2211,6 +2212,19 @@ setsmfact(const Arg *arg)
 	if (sf < 0 || sf > 0.9)
 		return;
 	selmon->smfact = sf;
+	arrange(selmon);
+}
+
+void
+resetmfact(const Arg *arg)
+{
+	if (!arg || !selmon->lt[selmon->sellt]->arrange)
+		return;
+	if (selmon->lt[selmon->sellt]->arrange == doubledeck) {
+		selmon->dmfact = dmfact;
+	} else {
+		selmon->mfact = mfact;
+	}
 	arrange(selmon);
 }
 
