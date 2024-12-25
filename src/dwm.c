@@ -2205,8 +2205,7 @@ void
 setsmfact(const Arg *arg)
 {
 	float sf;
-
-	if (!arg || !selmon->lt[selmon->sellt]->arrange)
+	if (!arg || selmon->lt[selmon->sellt]->arrange != tile)
 		return;
 	sf = arg->sf < 1.0 ? arg->sf + selmon->smfact : arg->sf - 1.0;
 	if (sf < 0 || sf > 0.9)
