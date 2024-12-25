@@ -2135,8 +2135,9 @@ setfullscreen(Client *c, int fullscreen)
 void
 setgaps(const Arg *arg)
 {
-	switch(arg->i)
-	{
+	if (!arg || selmon->lt[selmon->sellt]->arrange == monocle)
+		return;
+	switch(arg->i) {
 		case GAP_TOGGLE:
 			selmon->drawwithgaps = !selmon->drawwithgaps;
 			break;
