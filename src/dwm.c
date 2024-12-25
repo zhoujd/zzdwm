@@ -2221,9 +2221,9 @@ resetmfact(const Arg *arg)
 	if (!arg || !selmon->lt[selmon->sellt]->arrange)
 		return;
 	if (selmon->lt[selmon->sellt]->arrange == doubledeck) {
-		selmon->dmfact = dmfact;
+		selmon->dmfact = selmon->pertag->dmfacts[selmon->pertag->curtag] = dmfact;
 	} else {
-		selmon->mfact = mfact;
+		selmon->mfact = selmon->pertag->mfacts[selmon->pertag->curtag] = mfact;
 	}
 	arrange(selmon);
 }
