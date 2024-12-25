@@ -2147,7 +2147,7 @@ setgaps(const Arg *arg)
 			if (selmon->gappx + arg->i < 0)
 				selmon->gappx = 0;
 			else
-				selmon->gappx += arg->i;
+				selmon->gappx = MIN(selmon->gappx + arg->i, maxgappx);
 	}
 	arrange(selmon);
 }

@@ -2,16 +2,17 @@
 
 /* appearance */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
-static const int startwithgaps	    = 1;        /* 1 means gaps are used by default */
+static const int startwithgaps      = 1;        /* 1 means gaps are used by default */
 static const unsigned int gappx     = 10;       /* default gap between windows in pixels */
+static const unsigned int maxgappx  = 100;      /* max gap between windows in pixels */
 static const unsigned int snap      = 32;       /* snap pixel */
-static const unsigned int minwsz    = 20;       /* Minimal heigt of a client for smfact */
+static const unsigned int minwsz    = 20;       /* minimal heigt of a client for smfact */
 static const int showbar            = 0;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
 static const int horizpadbar        = 4;        /* horizontal padding for statusbar */
 static const int vertpadbar         = 0;        /* vertical padding for statusbar */
 static const int focusonwheel       = 0;        /* 0 means focus window by mouse click */
-static const int viewontag          = 1;        /* Switch view on tag switch */
+static const int viewontag          = 1;        /* switch view on tag switch */
 static const int attachmode         = 0;        /* 0 master (default), 1 = above, 2 = aside, 3 = below, 4 = bottom */
 static const int background         = 1;        /* 0 means no root background */
 static const int focusedontoptiled  = 1;        /* 1 means focused tile client is shown on top of floating windows */
