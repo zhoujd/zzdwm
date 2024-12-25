@@ -2472,10 +2472,27 @@ tile(Monitor *m)
 				if (my + HEIGHT(c) + m->gappx < m->wh)
 					my += HEIGHT(c) + m->gappx;
 			} else {
-				h = (m->wh - ty) / (n - i) - m->gappx;
-				resize(c, m->wx + mw + m->gappx, m->wy + ty, m->ww - mw - (2*c->bw) - 2*m->gappx, h - (2*c->bw), False);
-				if (ty + HEIGHT(c) + m->gappx < m->wh)
-					ty += HEIGHT(c) + m->gappx;
+				smh = m->mh * m->smfact;
+				if (!(nexttiled(c->next)))
+					h = (m->wh - ty) / (n - i);
+				else
+					h = (m->wh - smh - ty) / (n - i);
+				h -= m->gappx;
+				if (h < minwsz) {
+					c->isfloating = True;
+					XRaiseWindow(dpy, c->win);
+					resize(c, m->mx + (m->mw / 2 - WIDTH(c) / 2) + m->gappx, m->my + (m->mh / 2 - HEIGHT(c) / 2),
+								 m->ww - mw - 2*m->gappx, h - c->bw, False);
+					ty -= HEIGHT(c);
+					ty += m->gappx;
+				}
+				else
+					resize(c, m->wx + mw - c->bw + m->gappx, m->wy + ty, m->ww - mw - 2*m->gappx, h - c->bw, False);
+				if (!(nexttiled(c->next)))
+					ty += HEIGHT(c) + smh;
+				else
+					ty += HEIGHT(c);
+				ty += m->gappx;
 			}
 	} else { /* draw with singularborders logic */
 		if (n > m->nmaster)
