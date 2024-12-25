@@ -2484,14 +2484,13 @@ tile(Monitor *m)
 					XRaiseWindow(dpy, c->win);
 					resize(c, m->mx + (m->mw / 2 - WIDTH(c) / 2), m->my + (m->mh / 2 - HEIGHT(c) / 2),
 								 m->ww - mw, h - c->bw, False);
-					ty -= HEIGHT(c);
-				}
-				else
+				} else {
 					resize(c, m->wx + mw - c->bw + m->gappx, m->wy + ty, m->ww - mw - 2*m->gappx, h - c->bw, False);
-				if (!(nexttiled(c->next)))
-					ty = ty + HEIGHT(c) + smh + m->gappx;
-				else
-					ty = ty + HEIGHT(c) + m->gappx;
+					if (!(nexttiled(c->next)))
+						ty = ty + HEIGHT(c) + smh + m->gappx;
+					else
+						ty = ty + HEIGHT(c) + m->gappx;
+				}
 			}
 	} else { /* draw with singularborders logic */
 		if (n > m->nmaster)
@@ -2517,14 +2516,13 @@ tile(Monitor *m)
 					XRaiseWindow(dpy, c->win);
 					resize(c, m->mx + (m->mw / 2 - WIDTH(c) / 2), m->my + (m->mh / 2 - HEIGHT(c) / 2),
 								 m->ww - mw, h - c->bw, False);
-					ty -= HEIGHT(c);
-				}
-				else
+				} else {
 					resize(c, m->wx + mw - c->bw, m->wy + ty, m->ww - mw, h - c->bw, False);
-				if (!(nexttiled(c->next)))
-					ty += HEIGHT(c) + smh;
-				else
-					ty += HEIGHT(c);
+					if (!(nexttiled(c->next)))
+						ty += HEIGHT(c) + smh;
+					else
+						ty += HEIGHT(c);
+				}
 			}
 	}
 }
