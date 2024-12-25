@@ -2476,25 +2476,22 @@ tile(Monitor *m)
 			} else {
 				smh = m->mh * m->smfact;
 				if (!(nexttiled(c->next)))
-					h = (m->wh - ty) / (n - i);
+					h = (m->wh - ty) / (n - i) - m->gappx;
 				else
-					h = (m->wh - smh - ty) / (n - i);
-				h -= m->gappx;
+					h = (m->wh - smh - ty) / (n - i) - m->gappx;
 				if (h < minwsz) {
 					c->isfloating = True;
 					XRaiseWindow(dpy, c->win);
-					resize(c, m->mx + (m->mw / 2 - WIDTH(c) / 2) + m->gappx, m->my + (m->mh / 2 - HEIGHT(c) / 2),
-								 m->ww - mw - 2*m->gappx, h - c->bw, False);
+					resize(c, m->mx + (m->mw / 2 - WIDTH(c) / 2), m->my + (m->mh / 2 - HEIGHT(c) / 2),
+								 m->ww - mw, h - c->bw, False);
 					ty -= HEIGHT(c);
-					ty += m->gappx;
 				}
 				else
 					resize(c, m->wx + mw - c->bw + m->gappx, m->wy + ty, m->ww - mw - 2*m->gappx, h - c->bw, False);
 				if (!(nexttiled(c->next)))
-					ty += HEIGHT(c) + smh;
+					ty = ty + HEIGHT(c) + smh + m->gappx;
 				else
-					ty += HEIGHT(c);
-				ty += m->gappx;
+					ty = ty + HEIGHT(c) + m->gappx;
 			}
 	} else { /* draw with singularborders logic */
 		if (n > m->nmaster)
@@ -2518,7 +2515,8 @@ tile(Monitor *m)
 				if (h < minwsz) {
 					c->isfloating = True;
 					XRaiseWindow(dpy, c->win);
-					resize(c, m->mx + (m->mw / 2 - WIDTH(c) / 2), m->my + (m->mh / 2 - HEIGHT(c) / 2), m->ww - mw, h - c->bw, False);
+					resize(c, m->mx + (m->mw / 2 - WIDTH(c) / 2), m->my + (m->mh / 2 - HEIGHT(c) / 2),
+								 m->ww - mw, h - c->bw, False);
 					ty -= HEIGHT(c);
 				}
 				else
