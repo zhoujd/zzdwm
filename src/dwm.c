@@ -2492,14 +2492,14 @@ tile(Monitor *m)
 					h = (m->wh - ty) / (MIN(n, maxn) - i) - m->gappx;
 				else
 					h = (m->wh - smh - ty) / (MIN(n, maxn) - i) - m->gappx;
-				if ((h - c->bw) >= minwsz) {
+				if ((h - c->bw) < minwsz) {
+					resize(c, msx, msy, msw, msh, False);
+				} else {
 					resize(c, m->wx + mw - c->bw + m->gappx, m->wy + ty, m->ww - mw - 2*m->gappx, h - c->bw, False);
 					if (!(nexttiled(c->next)))
-						ty = ty + HEIGHT(c) + smh + m->gappx;
+						ty += HEIGHT(c) + smh + m->gappx;
 					else
-						ty = ty + HEIGHT(c) + m->gappx;
-				} else {
-					resize(c, msx, msy, msw, msh, False);
+						ty += HEIGHT(c) + m->gappx;
 				}
 			}
 	} else { /* draw with singularborders logic */
@@ -2527,14 +2527,14 @@ tile(Monitor *m)
 					h = (m->wh - ty) / (MIN(n, maxn) - i);
 				else
 					h = (m->wh - smh - ty) / (MIN(n, maxn) - i);
-				if ((h - c->bw) >= minwsz) {
+				if ((h - c->bw) < minwsz) {
+					resize(c, msx, msy, msw, msh, False);
+				} else {
 					resize(c, m->wx + mw - c->bw, m->wy + ty, m->ww - mw, h - c->bw, False);
 					if (!(nexttiled(c->next)))
-						ty = ty + HEIGHT(c) + smh;
+						ty += HEIGHT(c) + smh;
 					else
-						ty = ty + HEIGHT(c);
-				} else {
-					resize(c, msx, msy, msw, msh, False);
+						ty += HEIGHT(c);
 				}
 			}
 	}
