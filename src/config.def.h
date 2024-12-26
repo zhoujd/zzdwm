@@ -6,7 +6,7 @@ static const int startwithgaps      = 1;        /* 1 means gaps are used by defa
 static const unsigned int gappx     = 10;       /* default gap between windows in pixels */
 static const unsigned int maxgappx  = 100;      /* max gap between windows in pixels */
 static const unsigned int snap      = 32;       /* snap pixel */
-static const unsigned int minwsz    = 20;       /* minimal heigt of a client for smfact and grid */
+static const unsigned int minwsz    = 30;       /* minimal heigt of a client for smfact and grid */
 static const int showbar            = 0;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
 static const int horizpadbar        = 4;        /* horizontal padding for statusbar */
@@ -84,7 +84,7 @@ static const Layout layouts[] = {
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ "[M]",      monocle },
 	{ "HHH",      grid },
-	{ "[D]",      doubledeck },
+	{ "DD",       doubledeck },
 };
 
 /* key definitions */
