@@ -2456,17 +2456,16 @@ tagmon(const Arg *arg)
 void
 tile(Monitor *m)
 {
-	int i, n, h, smh, mw, my, ty;
-	int msx = 0, msy = 0, msw = 0, msh = 0, maxn = 0;
+	unsigned int i, n, h, smh, mw, my, ty;
+	unsigned int msx = 0, msy = 0, msw = 0, msh = 0, maxn = 0;
 	Client *c;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
 	if (n == 0)
 		return;
 	if (m->drawwithgaps) { /* draw with fullgaps logic */
-		maxn = (m->wh - 3*m->gappx) / (m->gappx + minwsz);
-		if (maxn > 0)
-			maxn += m->nmaster;
+		if ((m->wh - m->gappx) > 0)
+			maxn = ((m->wh - m->gappx) / (m->gappx + minwsz)) + m->nmaster;
 		else
 			maxn = m->nmaster;
 		if (n > m->nmaster)
