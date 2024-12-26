@@ -2457,7 +2457,7 @@ void
 tile(Monitor *m)
 {
 	int i, n, h, smh, mw, my, ty;
-	int fmode = 0, msx = 0, msy = 0, msw = 0, msh = 0, maxn = 0;
+	int msx = 0, msy = 0, msw = 0, msh = 0, maxn = 0;
 	Client *c;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
@@ -2484,7 +2484,7 @@ tile(Monitor *m)
 				if (my + HEIGHT(c) + m->gappx < m->wh)
 					my += HEIGHT(c) + m->gappx;
 			} else {
-				if (fmode || i >= maxn) {
+				if (i >= maxn) {
 					resize(c, msx, msy, msw, msh, False);
 					continue;
 				}
@@ -2493,10 +2493,7 @@ tile(Monitor *m)
 					h = (m->wh - ty) / (MIN(n, maxn) - i) - m->gappx;
 				else
 					h = (m->wh - smh - ty) / (MIN(n, maxn) - i) - m->gappx;
-				if ((h - c->bw) < minwsz) {
-					fmode = True;
-					resize(c, msx, msy, msw, msh, False);
-				} else {
+				if ((h - c->bw) >= minwsz) {
 					resize(c, m->wx + mw - c->bw + m->gappx, m->wy + ty, m->ww - mw - 2*m->gappx, h - c->bw, False);
 					if (!(nexttiled(c->next)))
 						ty = ty + HEIGHT(c) + smh + m->gappx;
