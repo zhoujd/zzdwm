@@ -2465,8 +2465,10 @@ tile(Monitor *m)
 		return;
 	if (m->drawwithgaps) { /* draw with fullgaps logic */
 		maxn = (m->wh - 3*m->gappx) / (m->gappx + minwsz);
-		if (maxn < 0)
-			maxn = 5;
+		if (maxn > 0)
+			maxn += m->nmaster;
+		else
+			maxn = m->nmaster;
 		if (n > m->nmaster)
 			mw = m->nmaster ? m->ww * m->mfact : 0;
 		else
