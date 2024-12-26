@@ -2498,9 +2498,12 @@ tile(Monitor *m)
 						ty = ty + HEIGHT(c) + smh + m->gappx;
 					else
 						ty = ty + HEIGHT(c) + m->gappx;
+				} else {
+					resize(c, msx, msy, msw, msh, False);
 				}
 			}
 	} else { /* draw with singularborders logic */
+		maxn = (m->wh / minwsz) + m->nmaster;
 		if (n > m->nmaster)
 			mw = m->nmaster ? m->ww * m->mfact : 0;
 		else
@@ -2508,28 +2511,30 @@ tile(Monitor *m)
 		for (i = my = ty = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
 			if (i < m->nmaster) {
 				h = (m->wh - my) / (MIN(n, m->nmaster) - i);
-				if (n == 1)
-					resize(c, m->wx - c->bw, m->wy, m->ww, m->wh, False);
-				else
-					resize(c, m->wx - c->bw, m->wy + my, mw - c->bw, h - c->bw, False);
-				my += HEIGHT(c) - c->bw;
+				msx = m->wx;
+				msy = m->wy + my;
+				msw = mw - (2*c->bw);
+				msh = h - (2*c->bw);
+				resize(c, msx, msy, msw, msh, False);
+				my += HEIGHT(c);
 			} else {
+				if (i >= maxn) {
+					resize(c, msx, msy, msw, msh, False);
+					continue;
+				}
 				smh = m->mh * m->smfact;
 				if (!(nexttiled(c->next)))
-					h = (m->wh - ty) / (n - i);
+					h = (m->wh - ty) / (MIN(n, maxn) - i);
 				else
-					h = (m->wh - smh - ty) / (n - i);
-				if (h < minwsz) {
-					c->isfloating = True;
-					XRaiseWindow(dpy, c->win);
-					resize(c, m->mx + (m->mw / 2 - WIDTH(c) / 2), m->my + (m->mh / 2 - HEIGHT(c) / 2),
-								 m->ww - mw, h - c->bw, False);
-				} else {
+					h = (m->wh - smh - ty) / (MIN(n, maxn) - i);
+				if ((h - c->bw) >= minwsz) {
 					resize(c, m->wx + mw - c->bw, m->wy + ty, m->ww - mw, h - c->bw, False);
 					if (!(nexttiled(c->next)))
-						ty += HEIGHT(c) + smh;
+						ty = ty + HEIGHT(c) + smh;
 					else
-						ty += HEIGHT(c);
+						ty = ty + HEIGHT(c);
+				} else {
+					resize(c, msx, msy, msw, msh, False);
 				}
 			}
 	}
