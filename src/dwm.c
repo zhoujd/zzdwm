@@ -2483,7 +2483,7 @@ tile(Monitor *m)
 					c->isfloating = True;
 					XRaiseWindow(dpy, c->win);
 					resize(c, m->mx + (m->mw / 2 - WIDTH(c) / 2), m->my + (m->mh / 2 - HEIGHT(c) / 2),
-								 m->ww - mw, minwsz, False);
+								 m->ww - mw, h - c->bw, False);
 				} else {
 					resize(c, m->wx + mw - c->bw + m->gappx, m->wy + ty, m->ww - mw - 2*m->gappx, h - c->bw, False);
 					if (!(nexttiled(c->next)))
@@ -2515,7 +2515,7 @@ tile(Monitor *m)
 					c->isfloating = True;
 					XRaiseWindow(dpy, c->win);
 					resize(c, m->mx + (m->mw / 2 - WIDTH(c) / 2), m->my + (m->mh / 2 - HEIGHT(c) / 2),
-								 m->ww - mw, minwsz, False);
+								 m->ww - mw, h - c->bw, False);
 				} else {
 					resize(c, m->wx + mw - c->bw, m->wy + ty, m->ww - mw, h - c->bw, False);
 					if (!(nexttiled(c->next)))
