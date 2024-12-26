@@ -2456,7 +2456,9 @@ tagmon(const Arg *arg)
 void
 tile(Monitor *m)
 {
-	unsigned int i, n, h, smh, mw, my, ty;
+	int i, n, h, smh, mw, my, ty;
+	int fgapx = 0, fgapy = 0;
+	int fmode = 0;
 	Client *c;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
@@ -2474,16 +2476,28 @@ tile(Monitor *m)
 				if (my + HEIGHT(c) + m->gappx < m->wh)
 					my += HEIGHT(c) + m->gappx;
 			} else {
+				if (fmode) {
+					c->isfloating = True;
+					XRaiseWindow(dpy, c->win);
+					resize(c, m->mx + (m->mw / 4) + fgapx, m->my + (m->mh / 4) + fgapy,
+								 m->mw / 2, m->mh / 2, False);
+					fgapx += 10;
+					fgapy += 10;
+					continue;
+				}
 				smh = m->mh * m->smfact;
 				if (!(nexttiled(c->next)))
 					h = (m->wh - ty) / (n - i) - m->gappx;
 				else
 					h = (m->wh - smh - ty) / (n - i) - m->gappx;
-				if (h < minwsz) {
+				if (h < minwsz || h <= 0) {
+					fmode = True;
 					c->isfloating = True;
 					XRaiseWindow(dpy, c->win);
-					resize(c, m->mx + (m->mw / 2 - WIDTH(c) / 2), m->my + (m->mh / 2 - HEIGHT(c) / 2),
-								 m->ww - mw, h - c->bw, False);
+					resize(c, m->mx + (m->mw / 4) + fgapx, m->my + (m->mh / 4) + fgapy,
+								 m->mw / 2, m->mh / 2, False);
+					fgapx += 10;
+					fgapy += 10;
 				} else {
 					resize(c, m->wx + mw - c->bw + m->gappx, m->wy + ty, m->ww - mw - 2*m->gappx, h - c->bw, False);
 					if (!(nexttiled(c->next)))
