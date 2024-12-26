@@ -2457,8 +2457,7 @@ void
 tile(Monitor *m)
 {
 	int i, n, h, smh, mw, my, ty;
-	int fgapx = 0, fgapy = 0;
-	int fmode = 0;
+	int fmode = 0, fgapx = 0, fgapy = 0, foffset = 10;
 	Client *c;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
@@ -2481,8 +2480,8 @@ tile(Monitor *m)
 					XRaiseWindow(dpy, c->win);
 					resize(c, m->mx + (m->mw / 4) + fgapx, m->my + (m->mh / 4) + fgapy,
 								 m->mw / 2, m->mh / 2, False);
-					fgapx += 10;
-					fgapy += 10;
+					fgapx += foffset;
+					fgapy += foffset;
 					continue;
 				}
 				smh = m->mh * m->smfact;
@@ -2496,8 +2495,8 @@ tile(Monitor *m)
 					XRaiseWindow(dpy, c->win);
 					resize(c, m->mx + (m->mw / 4) + fgapx, m->my + (m->mh / 4) + fgapy,
 								 m->mw / 2, m->mh / 2, False);
-					fgapx += 10;
-					fgapy += 10;
+					fgapx += foffset;
+					fgapy += foffset;
 				} else {
 					resize(c, m->wx + mw - c->bw + m->gappx, m->wy + ty, m->ww - mw - 2*m->gappx, h - c->bw, False);
 					if (!(nexttiled(c->next)))
