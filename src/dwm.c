@@ -2457,13 +2457,16 @@ void
 tile(Monitor *m)
 {
 	int i, n, h, smh, mw, my, ty;
-	int fmode = 0, msx = 0, msy = 0, msw = 0, msh = 0, maxn = 5;
+	int fmode = 0, msx = 0, msy = 0, msw = 0, msh = 0, maxn = 0;
 	Client *c;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
 	if (n == 0)
 		return;
 	if (m->drawwithgaps) { /* draw with fullgaps logic */
+		maxn = (m->wh - 3*m->gappx) / (m->gappx + minwsz);
+		if (maxn < 0)
+			maxn = 5;
 		if (n > m->nmaster)
 			mw = m->nmaster ? m->ww * m->mfact : 0;
 		else
