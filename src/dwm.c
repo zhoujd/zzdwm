@@ -2457,7 +2457,7 @@ void
 tile(Monitor *m)
 {
 	int i, n, h, smh, mw, my, ty;
-	int fmode = 0, fgapx = 0, fgapy = 0, foffset = 10;
+	int fmode = 0, msx = 0, msy = 0, msw = 0, msh = 0, maxn = 5;
 	Client *c;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
@@ -2471,32 +2471,26 @@ tile(Monitor *m)
 		for (i = 0, my = ty = m->gappx, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
 			if (i < m->nmaster) {
 				h = (m->wh - my) / (MIN(n, m->nmaster) - i) - m->gappx;
-				resize(c, m->wx + m->gappx, m->wy + my, mw - (2*c->bw) - m->gappx, h - (2*c->bw), False);
+				msx = m->wx + m->gappx;
+				msy = m->wy + my;
+				msw = mw - (2*c->bw) - m->gappx;
+				msh = h - (2*c->bw);
+				resize(c, msx, msy, msw, msh, False);
 				if (my + HEIGHT(c) + m->gappx < m->wh)
 					my += HEIGHT(c) + m->gappx;
 			} else {
-				if (fmode) {
-					c->isfloating = True;
-					XRaiseWindow(dpy, c->win);
-					resize(c, m->mx + (m->mw / 4) + fgapx, m->my + (m->mh / 4) + fgapy,
-								 m->mw / 2, m->mh / 2, False);
-					fgapx += foffset;
-					fgapy += foffset;
+				if (fmode || i >= maxn) {
+					resize(c, msx, msy, msw, msh, False);
 					continue;
 				}
 				smh = m->mh * m->smfact;
 				if (!(nexttiled(c->next)))
-					h = (m->wh - ty) / (n - i) - m->gappx;
+					h = (m->wh - ty) / (MIN(n, maxn) - i) - m->gappx;
 				else
-					h = (m->wh - smh - ty) / (n - i) - m->gappx;
-				if (h < minwsz || h <= 0) {
+					h = (m->wh - smh - ty) / (MIN(n, maxn) - i) - m->gappx;
+				if ((h - c->bw) < minwsz) {
 					fmode = True;
-					c->isfloating = True;
-					XRaiseWindow(dpy, c->win);
-					resize(c, m->mx + (m->mw / 4) + fgapx, m->my + (m->mh / 4) + fgapy,
-								 m->mw / 2, m->mh / 2, False);
-					fgapx += foffset;
-					fgapy += foffset;
+					resize(c, msx, msy, msw, msh, False);
 				} else {
 					resize(c, m->wx + mw - c->bw + m->gappx, m->wy + ty, m->ww - mw - 2*m->gappx, h - c->bw, False);
 					if (!(nexttiled(c->next)))
