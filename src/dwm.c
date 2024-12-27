@@ -1529,8 +1529,7 @@ grid(Monitor *m)
 			cr = i % rows;
 			cx = m->wx + m->gappx + cc * (cw + m->gappx) + MIN(cc, cwrest);
 			cy = m->wy + m->gappx + cr * (ch + m->gappx) + MIN(cr, chrest);
-			if (ch >= mincellh && cw >= mincellw)
-				resize(c, cx, cy, cw + (cc < cwrest ? 1 : 0) - 2*c->bw, ch + (cr < chrest ? 1 : 0) - 2*c->bw, False);
+			resize(c, cx, cy, cw + (cc < cwrest ? 1 : 0) - 2*c->bw, ch + (cr < chrest ? 1 : 0) - 2*c->bw, False);
 		}
 	} else {
 		ch = m->wh / (rows ? rows : 1);
@@ -1541,8 +1540,7 @@ grid(Monitor *m)
 			/* adjust height/width of last row/column's windows */
 			ah = ((i + 1) % rows == 0) ? m->wh - ch * rows : 0;
 			aw = (i >= rows * (cols - 1)) ? m->ww - cw * cols : 0;
-			if (ch >= mincellh && cw >= mincellw)
-				resize(c, cx, cy, cw - 2 * c->bw + aw, ch - 2 * c->bw + ah, False);
+			resize(c, cx, cy, cw - 2 * c->bw + aw, ch - 2 * c->bw + ah, False);
 		}
 	}
 }
