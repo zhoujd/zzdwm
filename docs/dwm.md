@@ -176,8 +176,9 @@ static const char *colors[][3]      = {
 
 ## GTK theming
 
-```
+```bash
 ## Theme: WhiteSur-Dark
+## https://github.com/vinceliuice/WhiteSur-gtk-theme/releases
 $ wget https://github.com/vinceliuice/WhiteSur-gtk-theme/raw/master/release/WhiteSur-Dark.tar.xz
 ## Icon: WhiteSur-Dark
 $ wget https://github.com/vinceliuice/WhiteSur-icon-theme/archive/refs/heads/master.zip
