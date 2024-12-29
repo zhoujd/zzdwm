@@ -178,11 +178,10 @@ static const char *colors[][3]      = {
 
 ```bash
 ## Theme: WhiteSur-Dark
-## https://github.com/vinceliuice/WhiteSur-gtk-theme/releases
-$ wget https://github.com/vinceliuice/WhiteSur-gtk-theme/raw/master/release/WhiteSur-Dark.tar.xz
+$ wget https://github.com/vinceliuice/WhiteSur-gtk-theme/archive/refs/heads/master.zip
 ## Icon: WhiteSur-Dark
 $ wget https://github.com/vinceliuice/WhiteSur-icon-theme/archive/refs/heads/master.zip
-## Mouse Cursor
+## Cursor: WhiteSur-cursors
 $ wget https://github.com/vinceliuice/WhiteSur-cursors/archive/refs/heads/master.zip
 $ cat ~/.icons/default/index.theme  <<EOF
 [Icon Theme]
