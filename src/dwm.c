@@ -2463,6 +2463,7 @@ tile(Monitor *m)
 		return;
 	if (m->drawwithgaps) { /* draw with fullgaps logic */
 		if ((m->wh - m->gappx) > 0)
+			/* wh = 2*gap + n*minwsz + (n - 1)*gap */
 			maxn = ((m->wh - m->gappx) / (m->gappx + minwsz)) + m->nmaster;
 		else
 			maxn = m->nmaster;
@@ -2490,10 +2491,10 @@ tile(Monitor *m)
 					h = (m->wh - ty) / (MIN(n, maxn) - i) - m->gappx;
 				else
 					h = (m->wh - smh - ty) / (MIN(n, maxn) - i) - m->gappx;
-				if ((h - c->bw) < minwsz) {
+				if (h < minwsz || (h - 2*c->bw) < 0) {
 					resize(c, msx, msy, msw, msh, False);
 				} else {
-					resize(c, m->wx + mw - c->bw + m->gappx, m->wy + ty, m->ww - mw - 2*m->gappx, h - c->bw, False);
+					resize(c, m->wx + mw + m->gappx, m->wy + ty, m->ww - mw - 2*m->gappx, h - 2*c->bw, False);
 					if (!(nexttiled(c->next)))
 						ty += HEIGHT(c) + smh + m->gappx;
 					else
@@ -2501,6 +2502,7 @@ tile(Monitor *m)
 				}
 			}
 	} else { /* draw with singularborders logic */
+		/* wh = n*minwsz */
 		maxn = (m->wh / minwsz) + m->nmaster;
 		if (n > m->nmaster)
 			mw = m->nmaster ? m->ww * m->mfact : 0;
@@ -2525,10 +2527,10 @@ tile(Monitor *m)
 					h = (m->wh - ty) / (MIN(n, maxn) - i);
 				else
 					h = (m->wh - smh - ty) / (MIN(n, maxn) - i);
-				if ((h - c->bw) < minwsz) {
+				if (h < minwsz || (h - 2*c->bw) < 0) {
 					resize(c, msx, msy, msw, msh, False);
 				} else {
-					resize(c, m->wx + mw - c->bw, m->wy + ty, m->ww - mw, h - c->bw, False);
+					resize(c, m->wx + mw, m->wy + ty, m->ww - mw, h - 2*c->bw, False);
 					if (!(nexttiled(c->next)))
 						ty += HEIGHT(c) + smh;
 					else
