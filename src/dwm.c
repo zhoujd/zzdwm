@@ -2462,7 +2462,7 @@ tile(Monitor *m)
 	if (n == 0)
 		return;
 	if (m->drawwithgaps) { /* draw with fullgaps logic */
-		if ((m->wh - m->gappx) > 0)
+		if ((m->wh - m->gappx) > 0 && (m->gappx + minwsz) > 0)
 			/* wh = 2*gap + n*minwsz + (n - 1)*gap */
 			maxn = ((m->wh - m->gappx) / (m->gappx + minwsz)) + m->nmaster;
 		else
@@ -2504,7 +2504,10 @@ tile(Monitor *m)
 			}
 	} else { /* draw with singularborders logic */
 		/* wh = n*minwsz */
-		maxn = (m->wh / minwsz) + m->nmaster;
+		if (minwsz > 0)
+			maxn = (m->wh / minwsz) + m->nmaster;
+		else
+			maxn = m->nmaster;
 		if (n > m->nmaster)
 			mw = m->nmaster ? m->ww * m->mfact : 0;
 		else
