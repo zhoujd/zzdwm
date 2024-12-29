@@ -1,7 +1,7 @@
 /* See LICENSE file for copyright and license details. */
 
 /* appearance */
-static const unsigned int borderpx  = 4;        /* border pixel of windows */
+static const unsigned int borderpx  = 2;        /* border pixel of windows */
 static const int startwithgaps      = 1;        /* 1 means gaps are used by default */
 static const unsigned int gappx     = 10;       /* default gap between windows in pixels */
 static const unsigned int maxgappx  = 100;      /* max gap between windows in pixels */

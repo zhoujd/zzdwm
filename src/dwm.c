@@ -2494,7 +2494,8 @@ tile(Monitor *m)
 				if (h < minwsz || (h - 2*c->bw) < 0) {
 					resize(c, msx, msy, msw, msh, False);
 				} else {
-					resize(c, m->wx + mw + m->gappx, m->wy + ty, m->ww - mw - 2*m->gappx, h - 2*c->bw, False);
+					resize(c, m->wx + mw + m->gappx, m->wy + ty,
+								 m->ww - mw - 2*c->bw - 2*m->gappx, h - 2*c->bw, False);
 					if (!(nexttiled(c->next)))
 						ty += HEIGHT(c) + smh + m->gappx;
 					else
@@ -2530,7 +2531,8 @@ tile(Monitor *m)
 				if (h < minwsz || (h - 2*c->bw) < 0) {
 					resize(c, msx, msy, msw, msh, False);
 				} else {
-					resize(c, m->wx + mw, m->wy + ty, m->ww - mw, h - 2*c->bw, False);
+					resize(c, m->wx + mw, m->wy + ty,
+								 m->ww - mw - 2*c->bw, h - 2*c->bw, False);
 					if (!(nexttiled(c->next)))
 						ty += HEIGHT(c) + smh;
 					else
