@@ -183,12 +183,16 @@ $ wget https://github.com/vinceliuice/WhiteSur-gtk-theme/archive/refs/heads/mast
 $ wget https://github.com/vinceliuice/WhiteSur-icon-theme/archive/refs/heads/master.zip
 ## Cursor: WhiteSur-cursors
 $ wget https://github.com/vinceliuice/WhiteSur-cursors/archive/refs/heads/master.zip
+
+## Default cursor
+$ mkdir -p ~/.icons/default
 $ cat ~/.icons/default/index.theme  <<EOF
 [Icon Theme]
 Name=Default
 Comment=Default Cursor Theme
 Inherits=WhiteSur-cursors
 EOF
+
 ## Change icon and cursor theme
 $ sudo apt install lxappearance
 $ lxappearance
