@@ -182,9 +182,14 @@ static const char *colors[][3]      = {
 $ wget https://github.com/vinceliuice/WhiteSur-gtk-theme/raw/master/release/WhiteSur-Dark.tar.xz
 ## Icon: WhiteSur-Dark
 $ wget https://github.com/vinceliuice/WhiteSur-icon-theme/archive/refs/heads/master.zip
-## Mouse Cursor: McMojave Cursors
-$ wget https://github.com/vinceliuice/McMojave-cursors/archive/refs/heads/master.zip
-
+## Mouse Cursor
+$ wget https://github.com/vinceliuice/WhiteSur-cursors/archive/refs/heads/master.zip
+$ cat ~/.icons/default/index.theme  <<EOF
+[Icon Theme]
+Name=Default
+Comment=Default Cursor Theme
+Inherits=WhiteSur-cursors
+EOF
 ## Change icon and cursor theme
 $ sudo apt install lxappearance
 $ lxappearance
