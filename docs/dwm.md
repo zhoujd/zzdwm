@@ -181,8 +181,13 @@ static const char *colors[][3]      = {
 $ wget https://github.com/vinceliuice/WhiteSur-gtk-theme/archive/refs/heads/master.zip
 ## Icon: WhiteSur-Dark
 $ wget https://github.com/vinceliuice/WhiteSur-icon-theme/archive/refs/heads/master.zip
+
 ## Cursor: WhiteSur-cursors
 $ wget https://github.com/vinceliuice/WhiteSur-cursors/archive/refs/heads/master.zip
+$ unzip master.zip
+$ rm -rf ~/.icons/WhiteSur-cursors
+$ cp -r WhiteSur-cursors-master/dist ~/.icons/WhiteSur-cursors
+$ rm -r WhiteSur-cursors-master master.zip
 
 ## Default cursor
 $ mkdir -p ~/.icons/default
