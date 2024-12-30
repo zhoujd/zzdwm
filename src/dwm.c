@@ -859,7 +859,10 @@ doubledeck(Monitor *m)
 		mw = m->nmaster ? m->ww * m->dmfact : 0;
 		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d|%d]", m->nmaster, n - m->nmaster);
 	} else {
-		mw = m->ww;
+		if (m->drawwithgaps)
+			mw = m->ww - m->gappx;
+		else
+			mw = m->ww;
 	}
 
 	for (i = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
