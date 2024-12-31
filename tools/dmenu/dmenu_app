@@ -10,7 +10,9 @@ num=$(echo "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 3 | \
           grep -i "^$app" | wc -l)
 
 app_focus() {
-    exec wmctrl -x -a "$app"
+    id=$(echo "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1,3 | \
+               grep -i "[[:space:]]\+$app" | cut -d ' ' -f 1)
+    exec wmctrl -i -a $id
 }
 
 app_run() {
