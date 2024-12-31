@@ -70,3 +70,25 @@ $ exec $(grep '^Exec' $full | tail -1 | \
 ## awk
 $ exec $(awk -F= '/^Exec/ {print $2; exit}' $full | awk '{print $1}')
 ```
+
+## Indexing selection
+
+```
+## Options 1
+options=( "1 Foo" "2 Bar" "3 Baz" )
+selection=$(printf '%s\n' "${options[@]}" | dmenu)
+index=${selection%% *}
+printf 'item #%d selected\n' "$index"
+
+## Options 2
+options=( "Foo" "Bar" "Baz" )
+selection=$(printf '%s\n' "${options[@]}" | dmenu)
+index=1
+for item in "${options[@]}"; do
+    if [[ $item == $selection ]]; then
+        break
+    fi
+    ((index++))
+done
+printf 'item #%d selected\n' "$index"
+```
