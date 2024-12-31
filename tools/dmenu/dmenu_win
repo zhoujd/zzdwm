@@ -16,8 +16,7 @@ windows=$(echo "$windows" | \
 target=$(echo "$windows" | dmenu -l 10 -i -ix -p Windows)
 
 if [[ -n "$target" ]]; then
-    target=$((target + 1))
     windows=$(wmctrl -xl 2>/dev/null | tr -s '[:blank:]' | cut -d ' ' -f 1)
-    id=$(echo $windows | cut -d ' ' -f $target-$target)
+    id=$(echo $windows | awk -vi=$((target + 1)) '{print $i}')
     exec wmctrl -i -a $id
 fi
