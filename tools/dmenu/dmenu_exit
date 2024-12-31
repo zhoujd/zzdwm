@@ -13,7 +13,7 @@ menu=(
 )
 
 choice=`printf '%s\n' "${menu[@]}" | dmenu -i -ix -l 10 -p Operation | cut -d ':' -f 1`
-case "$choice" in
+case $choice in
     0) exit ;;
     1) exec xdotool key super+shift+q ;;
     2) exec xdotool key super+shift+control+q ;;
