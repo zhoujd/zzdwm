@@ -1,7 +1,7 @@
 #!/bin/bash
 
 windows=$(wmctrl -xl 2>/dev/null | tr -s '[:blank:]' | cut -d ' ' -f 3-3,5- | \
-              sed 's/^[a-zA-Z0-9-]*\.//' | sort | uniq)
+              sed 's/^[a-zA-Z0-9-]*\.//')
 
 # Add spaces to align the WM_NAMEs of the windows
 max=$(echo "$windows" | awk '{cur=length($1); \
@@ -13,9 +13,11 @@ windows=$(echo "$windows" | \
                     for(i=0; i < max - cur + 1; i++) printf " "; \
                     $1 = ""; printf "%s\n", $0}')
 
-target=$(echo "$windows" | dmenu -l 10 -i -p Windows | \
-             tr -s '[:blank:]' | cut -d ' ' -f 2-)
+target=$(echo "$windows" | dmenu -l 10 -i -ix -p Windows)
 
 if [[ -n "$target" ]]; then
-    exec wmctrl -a "$target"
+    target=$((target + 1))
+    windows=$(wmctrl -xl 2>/dev/null | tr -s '[:blank:]' | cut -d ' ' -f 1)
+    id=$(echo $windows | cut -d ' ' -f $target-$target)
+    exec wmctrl -i -a $id
 fi
