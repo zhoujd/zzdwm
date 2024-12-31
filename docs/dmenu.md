@@ -92,3 +92,10 @@ for item in "${options[@]}"; do
 done
 printf 'item #%d selected\n' "$index"
 ```
+
+## Print Index
+
+```
+## https://tools.suckless.org/dmenu/patches/printindex/dmenu-printindex-5.0.diff
+## Pass the -ix flag to dmenu to enable index printing.
+```
