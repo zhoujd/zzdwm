@@ -3,16 +3,16 @@
 # A simple logout dialog
 
 menu=(
-    "0: Cancel"
-    "1: Logout"
-    "2: Reload"
-    "3: Shutdown"
-    "4: Reboot"
-    "5: Lock"
-    "6: Off-screen"
+    "Cancel"      # 0
+    "Logout"      # 1
+    "Reload"      # 2
+    "Shutdown"    # 3
+    "Reboot"      # 4
+    "Lock"        # 5
+    "Off-screen"  # 6
 )
 
-choice=`printf '%s\n' "${menu[@]}" | dmenu -i -l 10 -p Operation | cut -d ':' -f 1`
+choice=`printf '%s\n' "${menu[@]}" | dmenu -i -ix -l 10 -p Operation | cut -d ':' -f 1`
 case "$choice" in
     0) exit ;;
     1) exec xdotool key super+shift+q ;;
