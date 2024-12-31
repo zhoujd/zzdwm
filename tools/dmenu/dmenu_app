@@ -24,7 +24,7 @@ app_run() {
 app_menu() {
     windows=$(wmctrl -xl 2>/dev/null)
     apps=$(echo "$windows" | grep -i $app | tr -s '[:blank:]' |  cut -d ' ' -f 3-3,5- | \
-               sed 's/^[a-zA-Z0-9-]*\.//' | sort | uniq)
+               sed 's/^[a-zA-Z0-9-]*\.//')
     # Add spaces to align the WM_NAMEs of the apps
     max=$(echo "$apps" | awk '{cur=length($1); \
                                max=(cur>max?cur:max)} END{print max}')
@@ -33,10 +33,11 @@ app_menu() {
                    '{cur=length($1); printf $1; \
                      for(i=0; i < max - cur + 1; i++) printf " "; \
                      $1 = ""; printf "%s\n", $0}')
-    target=$(echo "$apps" | dmenu -l 10 -i -p app | \
-                 tr -s '[:blank:]' | cut -d ' ' -f 2-)
+    target=$(echo "$apps" | dmenu -l 10 -i -ix -p app)
     if [[ -n $target ]]; then
-        exec wmctrl -a "$target"
+        apps=$(wmctrl -xl 2>/dev/null | grep -i $app | tr -s '[:blank:]' | cut -d ' ' -f 1)
+        id=$(echo $apps | awk -vi=$((target + 1)) '{print $i}')
+        exec wmctrl -i -a $id
     fi
 }
 
