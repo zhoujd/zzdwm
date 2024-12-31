@@ -499,7 +499,8 @@ arrange(Monitor *m)
 void
 arrangemon(Monitor *m)
 {
-	strncpy(m->ltsymbol, m->lt[m->sellt]->symbol, sizeof m->ltsymbol);
+	memset(selmon->ltsymbol, 0, sizeof(selmon->ltsymbol));
+	strncpy(m->ltsymbol, m->lt[m->sellt]->symbol, sizeof(m->ltsymbol) - 1);
 	if (m->lt[m->sellt]->arrange)
 		m->lt[m->sellt]->arrange(m);
 }
@@ -814,7 +815,8 @@ createmon(void)
 	m->drawwithgaps = startwithgaps;
 	m->lt[0] = &layouts[0];
 	m->lt[1] = &layouts[1 % LENGTH(layouts)];
-	strncpy(m->ltsymbol, layouts[0].symbol, sizeof m->ltsymbol);
+	memset(selmon->ltsymbol, 0, sizeof(selmon->ltsymbol));
+	strncpy(m->ltsymbol, layouts[0].symbol, sizeof(m->ltsymbol) - 1);
 	m->pertag = ecalloc(1, sizeof(Pertag));
 	m->pertag->curtag = m->pertag->prevtag = 1;
 	m->showallbars = pertagallbars;
@@ -857,7 +859,7 @@ doubledeck(Monitor *m)
 
 	if (n > m->nmaster) {
 		mw = m->nmaster ? m->ww * m->dmfact : 0;
-		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d|%d]", m->nmaster, n - m->nmaster);
+		snprintf(m->ltsymbol, sizeof(m->ltsymbol), "[%d|%d]", m->nmaster, n - m->nmaster);
 	} else {
 		if (m->drawwithgaps)
 			mw = m->ww - m->gappx;
@@ -966,7 +968,7 @@ drawbar(Monitor *m)
 				s = a + 1;
 		if (!s && a)
 			s = 1;
-		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d/%d]", s, a);
+		snprintf(m->ltsymbol, sizeof(m->ltsymbol), "[%d/%d]", s, a);
 	}
 
 	w = TEXTW(m->ltsymbol, 0);
@@ -1205,7 +1207,7 @@ getatomprop(Client *c, Atom prop)
 	unsigned char *p = NULL;
 	Atom da, atom = None;
 
-	if (XGetWindowProperty(dpy, c->win, prop, 0L, sizeof atom, False, XA_ATOM,
+	if (XGetWindowProperty(dpy, c->win, prop, 0L, sizeof(atom), False, XA_ATOM,
 		&da, &di, &dl, &dl, &p) == Success && p) {
 		atom = *(Atom *)p;
 		XFree(p);
@@ -2175,7 +2177,8 @@ setlayout(const Arg *arg)
 		selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag] ^= 1;
 	if (arg && arg->v)
 		selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt] = (Layout *)arg->v;
-	strncpy(selmon->ltsymbol, selmon->lt[selmon->sellt]->symbol, sizeof selmon->ltsymbol);
+	memset(selmon->ltsymbol, 0, sizeof(selmon->ltsymbol));
+	strncpy(selmon->ltsymbol, selmon->lt[selmon->sellt]->symbol, sizeof(selmon->ltsymbol) - 1);
 	if (selmon->sel)
 		arrange(selmon);
 	else
@@ -2929,8 +2932,8 @@ updatestatus(void)
 void
 updatetitle(Client *c)
 {
-	if (!gettextprop(c->win, netatom[NetWMName], c->name, sizeof c->name))
-		gettextprop(c->win, XA_WM_NAME, c->name, sizeof c->name);
+	if (!gettextprop(c->win, netatom[NetWMName], c->name, sizeof(c->name)))
+		gettextprop(c->win, XA_WM_NAME, c->name, sizeof(c->name));
 	if (c->name[0] == '\0') /* hack to mark broken clients */
 		strcpy(c->name, broken);
 }
