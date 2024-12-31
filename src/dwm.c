@@ -595,7 +595,7 @@ buttonpress(XEvent *e)
 		if (i < LENGTH(tags)) {
 			click = ClkTagBar;
 			arg.ui = 1 << i;
-		} else if (ev->x < (int)(x + TEXTW(selmon->ltsymbol, 0)))
+		} else if (ev->x < x + (int)TEXTW(selmon->ltsymbol, 0))
 			click = ClkLtSymbol;
 		else if (ev->x > selmon->ww - (int)TEXTW(stext, 0))
 			click = ClkStatusText;
@@ -2484,9 +2484,8 @@ void
 tile(Monitor *m)
 {
 	unsigned int smh, mw, ty;
-	int i, n, h, my;
+	int i, n, h, my, maxn;
 	unsigned int msx = 0, msy = 0, msw = 0, msh = 0;
-	int maxn = 0;
 	Client *c;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
