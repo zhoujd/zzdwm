@@ -122,7 +122,7 @@ typedef struct {
 
 typedef struct Pertag Pertag;
 struct Monitor {
-	char ltsymbol[16];
+	char ltsymbol[32];
 	float mfact;
 	float smfact;
 	float dmfact;
@@ -508,7 +508,7 @@ void
 attachx(Client *c)
 {
 	Client *at;
-	unsigned int n;
+	int n;
 
 	switch (attachmode) {
 		case 1: // above
@@ -572,7 +572,8 @@ attachstack(Client *c)
 void
 buttonpress(XEvent *e)
 {
-	unsigned int i, x, click;
+	unsigned int i, click;
+	int x;
 	Arg arg = {0};
 	Client *c;
 	Monitor *m;
@@ -594,7 +595,7 @@ buttonpress(XEvent *e)
 		if (i < LENGTH(tags)) {
 			click = ClkTagBar;
 			arg.ui = 1 << i;
-		} else if (ev->x < x + TEXTW(selmon->ltsymbol, 0))
+		} else if (ev->x < (int)(x + TEXTW(selmon->ltsymbol, 0)))
 			click = ClkLtSymbol;
 		else if (ev->x > selmon->ww - (int)TEXTW(stext, 0))
 			click = ClkStatusText;
@@ -677,14 +678,14 @@ clientmessage(XEvent *e)
 	if (!c)
 		return;
 	if (cme->message_type == netatom[NetWMState]) {
-		if (cme->data.l[1] == netatom[NetWMFullscreen]
-		|| cme->data.l[2] == netatom[NetWMFullscreen])
+		if (cme->data.l[1] == (int)netatom[NetWMFullscreen] ||
+		    cme->data.l[2] == (int)netatom[NetWMFullscreen])
 			setfullscreen(c, (cme->data.l[0] == 1 /* _NET_WM_STATE_ADD    */
-				|| (cme->data.l[0] == 2 /* _NET_WM_STATE_TOGGLE */ && !c->isfullscreen)));
+			  || (cme->data.l[0] == 2 /* _NET_WM_STATE_TOGGLE */ && !c->isfullscreen)));
 
-        if (cme->data.l[1] == netatom[NetWMSticky]
-                || cme->data.l[2] == netatom[NetWMSticky])
-            setsticky(c, (cme->data.l[0] == 1 || (cme->data.l[0] == 2 && !c->issticky)));
+		if (cme->data.l[1] == (int)netatom[NetWMSticky] ||
+		    cme->data.l[2] == (int)netatom[NetWMSticky])
+			setsticky(c, (cme->data.l[0] == 1 || (cme->data.l[0] == 2 && !c->issticky)));
 	} else if (cme->message_type == netatom[NetActiveWindow]) {
 		for (i = 0; i < LENGTH(tags) && !((1 << i) & c->tags); i++);
 		if (i < LENGTH(tags)) {
@@ -848,7 +849,8 @@ destroynotify(XEvent *e)
 void
 doubledeck(Monitor *m)
 {
-	unsigned int i, n, mw;
+	unsigned int mw;
+	int i, n;
 	Client *c;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
@@ -885,8 +887,9 @@ void
 detach(Client *c)
 {
 	Client **tc;
+	unsigned int i;
 
-	for (int i = 1; i < LENGTH(tags); i++)
+	for (i = 1; i < LENGTH(tags); i++)
 		if (c == c->mon->tagmarked[i])
 			c->mon->tagmarked[i] = NULL;
 
@@ -1294,7 +1297,8 @@ grabkeys(void)
 {
 	updatenumlockmask();
 	{
-		unsigned int i, j, k;
+		unsigned int i, j;
+		int k;
 		unsigned int modifiers[] = { 0, LockMask, numlockmask, numlockmask|LockMask };
 		int start, end, skip;
 		KeySym *syms;
@@ -2246,7 +2250,7 @@ resetmfact(const Arg *arg)
 void
 setup(void)
 {
-	int i;
+	unsigned int i;
 	XSetWindowAttributes wa;
 	Atom utf8string;
 	struct sigaction sa;
@@ -2479,8 +2483,10 @@ tagmon(const Arg *arg)
 void
 tile(Monitor *m)
 {
-	unsigned int i, n, h, smh, mw, my, ty;
-	unsigned int msx = 0, msy = 0, msw = 0, msh = 0, maxn = 0;
+	unsigned int smh, mw, ty;
+	int i, n, h, my;
+	unsigned int msx = 0, msy = 0, msw = 0, msh = 0;
+	int maxn = 0;
 	Client *c;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
@@ -2516,7 +2522,7 @@ tile(Monitor *m)
 					h = (m->wh - ty) / (MIN(n, maxn) - i) - m->gappx;
 				else
 					h = (m->wh - smh - ty) / (MIN(n, maxn) - i) - m->gappx;
-				if (h < minwsz || (h - 2*c->bw) < 0) {
+				if (h < minwsz || (h < 2*c->bw)) {
 					resize(c, msx, msy, msw, msh, False);
 				} else {
 					resize(c, m->wx + mw + m->gappx, m->wy + ty,
@@ -2556,7 +2562,7 @@ tile(Monitor *m)
 					h = (m->wh - ty) / (MIN(n, maxn) - i);
 				else
 					h = (m->wh - smh - ty) / (MIN(n, maxn) - i);
-				if (h < minwsz || (h - 2*c->bw) < 0) {
+				if (h < minwsz || (h < 2*c->bw)) {
 					resize(c, msx, msy, msw, msh, False);
 				} else {
 					resize(c, m->wx + mw, m->wy + ty,
@@ -2573,7 +2579,7 @@ tile(Monitor *m)
 void
 togglebar(const Arg *arg)
 {
-	int i;
+	unsigned int i;
 	if (arg && arg->ui) {
 		selmon->showallbars = !selmon->showallbars;
 		for (i = 0; i <= LENGTH(tags); i++) {
@@ -2656,7 +2662,7 @@ toggleview(const Arg *arg)
 	if (newtagset) {
 		selmon->tagset[selmon->seltags] = newtagset;
 
-		if (newtagset == ~0) {
+		if (newtagset == ~0U) {
 			selmon->pertag->prevtag = selmon->pertag->curtag;
 			selmon->pertag->curtag = 0;
 		}
@@ -2704,7 +2710,7 @@ unfocus(Client *c, int setfocus)
 void
 unmanage(Client *c, int destroyed)
 {
-	int i;
+	unsigned int i;
 	Monitor *m = c->mon;
 	XWindowChanges wc;
 
@@ -2891,7 +2897,8 @@ updategeom(void)
 void
 updatenumlockmask(void)
 {
-	unsigned int i, j;
+	unsigned int i;
+	int j;
 	XModifierKeymap *modmap;
 
 	numlockmask = 0;
@@ -3016,7 +3023,7 @@ view(const Arg *arg)
 		selmon->tagset[selmon->seltags] = arg->ui & TAGMASK;
 		selmon->pertag->prevtag = selmon->pertag->curtag;
 
-		if (arg->ui == ~0)
+		if (arg->ui == ~0U)
 			selmon->pertag->curtag = 0;
 		else {
 			for (i = 0; !(arg->ui & 1 << i); i++) ;
