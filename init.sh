@@ -5,13 +5,18 @@ CORE_ROOT=$(cd $SCRIPT_ROOT && pwd)
 CORE_TOP=$(cd $CORE_ROOT/.. && pwd)
 
 install_dep() {
+    echo "Install prepare"
     sudo apt update
+    echo "Install dev package"
     sudo apt install -y \
          libx11-dev libxft-dev libxinerama-dev libxrender-dev \
          libasound2-dev \
          libxfixes-dev libxi-dev libxext-dev \
          libxrandr-dev \
          libxcomposite-dev libxdamage-dev
+    echo "Install tool package"
+    sudo apt install -y \
+         wmctrl alsa-utils
     echo "Install dep done"
 }
 
@@ -72,7 +77,7 @@ usage() {
     app=$(basename $0)
     cat <<EOF
 Usage: $app {dep|dm|bin|build|-b|all|-a}
-dep          --    Install build dependence
+dep          --    Install depend package
 dm           --    Install xsession entry
 bin          --    Install bin
 build|-b     --    Build all
