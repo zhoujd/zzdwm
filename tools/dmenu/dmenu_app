@@ -36,7 +36,8 @@ app_menu() {
                      $1 = ""; printf "%s\n", $0}')
     target=$(echo "$apps" | dmenu -l 10 -i -ix -p app)
     if [[ -n $target ]]; then
-        apps=$(wmctrl -xl 2>/dev/null | tr -s '[:blank:]' | cut -d ' ' -f 1,3 | \
+        windows=$(wmctrl -xl 2>/dev/null)
+        apps=$(echo "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1,3 | \
                    grep -i "[[:space:]]\+$app" | cut -d ' ' -f 1)
         id=$(echo $apps | tr -s '[:blank:]' | cut -d ' ' -f $((target + 1)))
         exec wmctrl -i -a $id
