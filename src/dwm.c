@@ -497,7 +497,8 @@ arrange(Monitor *m)
 void
 arrangemon(Monitor *m)
 {
-	snprintf(m->ltsymbol, sizeof(m->ltsymbol) - 1, "%s", m->lt[m->sellt]->symbol);
+	memset(m->ltsymbol, 0, sizeof(m->ltsymbol));
+	strncpy(m->ltsymbol, m->lt[m->sellt]->symbol, sizeof(m->ltsymbol) - 1);
 	if (m->lt[m->sellt]->arrange)
 		m->lt[m->sellt]->arrange(m);
 }
@@ -813,7 +814,8 @@ createmon(void)
 	m->drawwithgaps = startwithgaps;
 	m->lt[0] = &layouts[0];
 	m->lt[1] = &layouts[1 % LENGTH(layouts)];
-	snprintf(m->ltsymbol, sizeof(m->ltsymbol) - 1, "%s", layouts[0].symbol);
+	memset(m->ltsymbol, 0, sizeof(m->ltsymbol));
+	strncpy(m->ltsymbol, layouts[0].symbol, sizeof(m->ltsymbol) - 1);
 	m->pertag = ecalloc(1, sizeof(Pertag));
 	m->pertag->curtag = m->pertag->prevtag = 1;
 
@@ -1252,16 +1254,16 @@ gettextprop(Window w, Atom atom, char *text, unsigned int size)
 
 	if (!text || size == 0)
 		return 0;
-	text[0] = '\0';
 	if (!XGetTextProperty(dpy, w, &name, atom) || !name.nitems)
 		return 0;
 	if (name.encoding == XA_STRING) {
-		snprintf(text, size - 1, "%s", (char *)name.value);
+		memset(text, 0, size);
+		strncpy(text, (char *)name.value, size - 1);
 	} else if (XmbTextPropertyToTextList(dpy, &name, &list, &n) >= Success && n > 0 && *list) {
-		snprintf(text, size - 1, "%s", *list);
+		memset(text, 0, size);
+		strncpy(text, *list, size - 1);
 		XFreeStringList(list);
 	}
-	text[size - 1] = '\0';
 	XFree(name.value);
 	return 1;
 }
@@ -2186,7 +2188,8 @@ setlayout(const Arg *arg)
 		selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag] ^= 1;
 	if (arg && arg->v)
 		selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt] = (Layout *)arg->v;
-	snprintf(selmon->ltsymbol, sizeof(selmon->ltsymbol) - 1, "%s", selmon->lt[selmon->sellt]->symbol);
+	memset(selmon->ltsymbol, 0, sizeof(selmon->ltsymbol));
+	strncpy(selmon->ltsymbol, selmon->lt[selmon->sellt]->symbol, sizeof(selmon->ltsymbol) - 1);
 	if (selmon->sel)
 		arrange(selmon);
 	else
@@ -2942,8 +2945,10 @@ void
 updatestatus(void)
 {
 	Monitor* m;
-	if (!gettextprop(root, XA_WM_NAME, stext, sizeof(stext)))
-		strcpy(stext, "dwm");
+	if (!gettextprop(root, XA_WM_NAME, stext, sizeof(stext))) {
+		memset(stext, 0, sizeof(stext));
+		strncpy(stext, "dwm", sizeof(stext) - 1);
+	}
 	for(m = mons; m; m = m->next)
 		drawbar(m);
 }
@@ -2953,8 +2958,10 @@ updatetitle(Client *c)
 {
 	if (!gettextprop(c->win, netatom[NetWMName], c->name, sizeof(c->name)))
 		gettextprop(c->win, XA_WM_NAME, c->name, sizeof(c->name));
-	if (c->name[0] == '\0') /* hack to mark broken clients */
-		strcpy(c->name, broken);
+	if (!strlen(c->name)) {/* hack to mark broken clients */
+		memset(c->name, 0, sizeof(c->name));
+		strncpy(c->name, broken, sizeof(c->name) - 1);
+	}
 }
 
 void
