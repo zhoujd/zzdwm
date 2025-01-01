@@ -122,7 +122,7 @@ typedef struct {
 
 typedef struct Pertag Pertag;
 struct Monitor {
-	char ltsymbol[32];
+	char ltsymbol[64];
 	float mfact;
 	float smfact;
 	float dmfact;
