@@ -146,7 +146,6 @@ struct Monitor {
 	Window barwin;
 	const Layout *lt[2];
 	Pertag *pertag;
-	int showallbars; /* pertag display with same barpos */
 };
 
 typedef struct {
@@ -340,7 +339,6 @@ struct Pertag {
 	float dmfacts[LENGTH(tags) + 1]; /* dmfacts per tag */
 	unsigned int sellts[LENGTH(tags) + 1]; /* selected layouts */
 	const Layout *ltidxs[LENGTH(tags) + 1][2]; /* matrix of tags and layouts indexes  */
-	int showbars[LENGTH(tags) + 1]; /* display bar for the current tag */
 	Client *sel[LENGTH(tags) + 1]; /* selected client */
 };
 
@@ -818,7 +816,6 @@ createmon(void)
 	snprintf(m->ltsymbol, sizeof(m->ltsymbol), "%s", layouts[0].symbol);
 	m->pertag = ecalloc(1, sizeof(Pertag));
 	m->pertag->curtag = m->pertag->prevtag = 1;
-	m->showallbars = pertagallbars;
 
 	for (i = 0; i <= LENGTH(tags); i++) {
 		m->pertag->nmasters[i] = m->nmaster;
@@ -829,8 +826,6 @@ createmon(void)
 		m->pertag->ltidxs[i][0] = m->lt[0];
 		m->pertag->ltidxs[i][1] = m->lt[1];
 		m->pertag->sellts[i] = m->sellt;
-
-		m->pertag->showbars[i] = m->showbar;
 	}
 
 	return m;
@@ -2578,15 +2573,9 @@ tile(Monitor *m)
 void
 togglebar(const Arg *arg)
 {
-	unsigned int i;
-	if (arg && arg->ui) {
-		selmon->showallbars = !selmon->showallbars;
-		for (i = 0; i <= LENGTH(tags); i++) {
-			selmon->showbar = selmon->pertag->showbars[i] = selmon->showallbars;
-		}
-	} else {
-		selmon->showbar = selmon->pertag->showbars[selmon->pertag->curtag] = !selmon->showbar;
-	}
+	if (!arg)
+		return;
+	selmon->showbar = !selmon->showbar;
 	updatebarpos(selmon);
 	XMoveResizeWindow(dpy, selmon->barwin, selmon->wx, selmon->by, selmon->ww, bh);
 	arrange(selmon);
@@ -2681,11 +2670,6 @@ toggleview(const Arg *arg)
 		selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag];
 		selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt];
 		selmon->lt[selmon->sellt^1] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt^1];
-
-		if ((selmon->showbar != selmon->pertag->showbars[selmon->pertag->curtag]) &&
-		    !selmon->showallbars)
-			togglebar(NULL);
-
 		focus(NULL);
 		arrange(selmon);
 	}
@@ -3041,12 +3025,7 @@ view(const Arg *arg)
 	selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag];
 	selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt];
 	selmon->lt[selmon->sellt^1] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt^1];
-
-	if ((selmon->showbar != selmon->pertag->showbars[selmon->pertag->curtag]) &&
-	    !selmon->showallbars)
-		togglebar(NULL);
-
-	focus(selmon->pertag->sel[selmon->pertag->curtag]);
+	focus(NULL);
 	arrange(selmon);
 	updatecurrentdesktop();
 }
