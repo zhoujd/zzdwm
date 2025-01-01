@@ -4,8 +4,8 @@
 static const unsigned int borderpx  = 2;        /* border pixel of windows */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int startwithgaps      = 1;        /* 1 means gaps are used by default */
-static const int gappx              = 5;       /* default gap between windows in pixels */
-static const int maxgappx           = 50;      /* max gap between windows in pixels */
+static const int gappx              = 5;        /* default gap between windows in pixels */
+static const int maxgappx           = 50;       /* max gap between windows in pixels */
 static const int minwsz             = 25;       /* minimal heigt of a client for smfact */
 static const int showbar            = 0;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
