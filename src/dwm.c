@@ -497,7 +497,7 @@ arrange(Monitor *m)
 void
 arrangemon(Monitor *m)
 {
-	snprintf(m->ltsymbol, sizeof(m->ltsymbol), "%s", m->lt[m->sellt]->symbol);
+	snprintf(m->ltsymbol, sizeof(m->ltsymbol) - 1, "%s", m->lt[m->sellt]->symbol);
 	if (m->lt[m->sellt]->arrange)
 		m->lt[m->sellt]->arrange(m);
 }
@@ -813,7 +813,7 @@ createmon(void)
 	m->drawwithgaps = startwithgaps;
 	m->lt[0] = &layouts[0];
 	m->lt[1] = &layouts[1 % LENGTH(layouts)];
-	snprintf(m->ltsymbol, sizeof(m->ltsymbol), "%s", layouts[0].symbol);
+	snprintf(m->ltsymbol, sizeof(m->ltsymbol) - 1, "%s", layouts[0].symbol);
 	m->pertag = ecalloc(1, sizeof(Pertag));
 	m->pertag->curtag = m->pertag->prevtag = 1;
 
@@ -854,7 +854,7 @@ doubledeck(Monitor *m)
 
 	if (n > m->nmaster) {
 		mw = m->nmaster ? m->ww * m->dmfact : 0;
-		snprintf(m->ltsymbol, sizeof(m->ltsymbol), "[%d|%d]", m->nmaster, n - m->nmaster);
+		snprintf(m->ltsymbol, sizeof(m->ltsymbol) - 1, "[%d|%d]", m->nmaster, n - m->nmaster);
 	} else {
 		if (m->drawwithgaps)
 			mw = m->ww - m->gappx;
@@ -964,7 +964,7 @@ drawbar(Monitor *m)
 				s = a + 1;
 		if (!s && a)
 			s = 1;
-		snprintf(m->ltsymbol, sizeof(m->ltsymbol), "[%d/%d]", s, a);
+		snprintf(m->ltsymbol, sizeof(m->ltsymbol) - 1, "[%d/%d]", s, a);
 	}
 
 	w = TEXTW(m->ltsymbol, 0);
@@ -2186,7 +2186,7 @@ setlayout(const Arg *arg)
 		selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag] ^= 1;
 	if (arg && arg->v)
 		selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt] = (Layout *)arg->v;
-	snprintf(selmon->ltsymbol, sizeof(selmon->ltsymbol), "%s", selmon->lt[selmon->sellt]->symbol);
+	snprintf(selmon->ltsymbol, sizeof(selmon->ltsymbol) - 1, "%s", selmon->lt[selmon->sellt]->symbol);
 	if (selmon->sel)
 		arrange(selmon);
 	else
