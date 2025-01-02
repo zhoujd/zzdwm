@@ -97,7 +97,6 @@ $ xdo activate -N Emacs || emacs
 ## https://unix.stackexchange.com/questions/106070/changing-monospace-fonts-system-wide
 ## Or to /etc/fonts/local.conf to set it system-wide
 $ cat ~/.config/fontconfig/fonts.conf <<EOF
-EOF
 <match target="pattern">
   <test name="family" qual="any">
     <string>monospace</string>
@@ -170,7 +169,7 @@ static const char col_cyan[]        = "#282a36";
 static const char *colors[][3]      = {
     /*               fg         bg         border   */
     [SchemeNorm] = { col_gray3, col_gray1, col_cyan },
-    [SchemeSel]  = { col_gray4, col_cyan,  col_gray2  },
+    [SchemeSel]  = { col_gray4, col_cyan,  col_gray2 },
 };
 ```
 
@@ -191,7 +190,7 @@ $ rm -r WhiteSur-cursors-master master.zip
 
 ## Default cursor
 $ mkdir -p ~/.icons/default
-$ cat ~/.icons/default/index.theme  <<EOF
+$ cat ~/.icons/default/index.theme <<EOF
 [Icon Theme]
 Name=Default
 Comment=Default Cursor Theme

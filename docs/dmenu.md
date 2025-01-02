@@ -73,7 +73,7 @@ $ exec $(awk -F= '/^Exec/ {print $2; exit}' $full | awk '{print $1}')
 
 ## Indexing selection
 
-```
+```bash
 ## Options 1
 options=( "1 Foo" "2 Bar" "3 Baz" )
 selection=$(printf '%s\n' "${options[@]}" | dmenu)
