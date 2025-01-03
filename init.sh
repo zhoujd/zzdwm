@@ -35,13 +35,20 @@ EOF
 }
 
 install_bin() {
-    target=/usr/local/bin
-    sudo cp -fv $CORE_ROOT/bin/nextwin $target
-    sudo cp -fv $CORE_ROOT/bin/prevwin $target
-    sudo cp -fv $CORE_ROOT/bin/dupterm $target
-    sudo cp -fv $CORE_ROOT/bin/me $target
-    sudo cp -fv $CORE_ROOT/bin/mg $target
-    sudo cp -fv $CORE_ROOT/bin/tig $target
+    local target=/usr/local/bin
+    local apps=(
+        nextwin
+        prevwin
+        dupterm
+        me
+        mg
+        tig
+        hexyl
+        hexedit
+    )
+    for app in ${apps[@]}; do
+        sudo cp -fv $CORE_ROOT/bin/$app $target
+    done
     echo "Install bin done"
 }
 
