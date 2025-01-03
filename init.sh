@@ -41,6 +41,7 @@ install_bin() {
     sudo cp -fv $CORE_ROOT/bin/dupterm $target
     sudo cp -fv $CORE_ROOT/bin/me $target
     sudo cp -fv $CORE_ROOT/bin/mg $target
+    sudo cp -fv $CORE_ROOT/bin/tig $target
     echo "Install bin done"
 }
 
