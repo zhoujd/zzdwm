@@ -37,17 +37,17 @@ EOF
 install_bin() {
     local target=/usr/local/bin
     local apps=(
-        nextwin
-        prevwin
-        dupterm
-        me
-        mg
-        tig
-        hexyl
-        hexedit
+        $CORE_ROOT/bin/nextwin
+        $CORE_ROOT/bin/prevwin
+        $CORE_ROOT/bin/dupterm
+        $CORE_ROOT/bin/me
+        $CORE_ROOT/bin/mg
+        $CORE_ROOT/bin/tig
+        $CORE_ROOT/bin/hexyl
+        $CORE_ROOT/bin/hexedit
     )
     for app in ${apps[@]}; do
-        sudo cp -fv $CORE_ROOT/bin/$app $target
+        sudo cp -fv $app $target
     done
     echo "Install bin done"
 }
