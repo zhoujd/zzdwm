@@ -19,7 +19,7 @@ case $1 in
         docker run -it --name $CNT $IMG:$TAG
         ;;
     status|-s )
-        docker ps | grep $IMG
+        docker ps -a | grep $IMG
         ;;
     clean|-c )
         docker system prune -f
