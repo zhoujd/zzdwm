@@ -49,3 +49,5 @@ jobs:
       run: make -C tools/xcompmgr
     - name: Build utils
       run: make -C tools/utils
+    - name: Build mtm
+      run: make -C tools/mtm
