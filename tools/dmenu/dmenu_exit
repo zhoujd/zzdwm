@@ -12,7 +12,7 @@ menu=(
     "Off-screen"  # 6
 )
 
-choice=`printf '%s\n' "${menu[@]}" | dmenu -i -ix -l 10 -p Operation | cut -d ':' -f 1`
+choice=$(printf '%s\n' "${menu[@]}" | dmenu -i -ix -l 10 -p Operation)
 case $choice in
     0) exit ;;
     1) exec xdotool key super+shift+q ;;
