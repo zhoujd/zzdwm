@@ -60,6 +60,7 @@ build() {
         $CORE_ROOT/tools/shotkey
         $CORE_ROOT/tools/xcompmgr
         $CORE_ROOT/tools/utils
+        $CORE_ROOT/tools/mtm
     )
     for proj in ${projects[@]}; do
         echo "Build $proj"
