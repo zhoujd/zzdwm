@@ -42,8 +42,7 @@ install_bin() {
         $CORE_ROOT/bin/dupterm
         $CORE_ROOT/bin/me
         $CORE_ROOT/bin/mg
-        $CORE_ROOT/bin/tig
-        $CORE_ROOT/bin/hexyl
+        $CORE_ROOT/bin/xxd
         $CORE_ROOT/bin/hexedit
     )
     for app in ${apps[@]}; do
