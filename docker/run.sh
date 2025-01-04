@@ -19,6 +19,9 @@ case $1 in
         docker run -it --name $CNT $IMG:$TAG
         ;;
     status|-s )
+        echo "IMG:"
+        docker images | grep $IMG
+        echo "PS:"
         docker ps -a | grep $IMG
         ;;
     clean|-c )
