@@ -17,3 +17,13 @@ $ configure
 $ make LDFLAGS=-static
 $ ./detach --help
 ```
+
+## Usage guide
+
+```
+## Create a new session
+$ dtach -A /tmp/z-0 bash -l
+
+## Attach sesion
+$ dtach -a /tmp/z-0
+```
