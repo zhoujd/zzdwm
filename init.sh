@@ -40,9 +40,11 @@ install_bin() {
         $CORE_ROOT/bin/nextwin
         $CORE_ROOT/bin/prevwin
         $CORE_ROOT/bin/dupterm
+        $CORE_ROOT/bin/hexedit
         $CORE_ROOT/bin/me
         $CORE_ROOT/bin/mg
-        $CORE_ROOT/bin/hexedit
+        $CORE_ROOT/bin/mtm
+        $CORE_ROOT/bin/dtach
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $target
@@ -60,7 +62,6 @@ build() {
         $CORE_ROOT/tools/shotkey
         $CORE_ROOT/tools/xcompmgr
         $CORE_ROOT/tools/utils
-        $CORE_ROOT/tools/mtm
     )
     for proj in ${projects[@]}; do
         echo "Build $proj"
