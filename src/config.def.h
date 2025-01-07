@@ -71,6 +71,7 @@ static const Rule rules[] = {
 static const float mfact     = 0.55; /* factor of master area size [0.05..0.95] */
 static const float smfact    = 0.00; /* factor of tiled clients [0.00..0.95] */
 static const float dmfact    = 0.50; /* factor of doubledeck master area size [0.05..0.95] */
+static const float zmfact    = 0.50; /* factor of zetadeck master area size [0.05..0.95] */
 static const int nmaster     = 1;    /* number of clients in master area */
 static const int nmaxmaster  = 4;    /* max number of clients in master area */
 static const int nminmaster  = 0;    /* min number of clients in master area */
@@ -84,6 +85,7 @@ static const Layout layouts[] = {
 	{ "[M]",      monocle },
 	{ "HHH",      grid },
 	{ "DD",       doubledeck },
+	{ "ZD",       zetadeck },
 };
 
 /* key definitions */
@@ -162,6 +164,7 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_m,      setlayout,        {.v = &layouts[2]} },
 	{ MODKEY,                       XK_g,      setlayout,        {.v = &layouts[3]} },
 	{ MODKEY,                       XK_x,      setlayout,        {.v = &layouts[4]} },
+	{ MODKEY,                       XK_z,      setlayout,        {.v = &layouts[5]} },
 	{ MODKEY,                       XK_space,  setlayout,        {0} },
 	{ MODKEY|ShiftMask,             XK_space,  togglefloating,   {0} },
 	{ MODKEY|ControlMask,           XK_space,  focusmaster,      {0} },

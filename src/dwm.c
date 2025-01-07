@@ -126,6 +126,7 @@ struct Monitor {
 	float mfact;
 	float smfact;
 	float dmfact;
+	float zmfact;
 	int nmaster;
 	int num;
 	int by;               /* bar geometry */
@@ -176,6 +177,7 @@ static void configurenotify(XEvent *e);
 static void configurerequest(XEvent *e);
 static Monitor *createmon(void);
 static void doubledeck(Monitor *m);
+static void zetadeck(Monitor *m);
 static void destroynotify(XEvent *e);
 static void detach(Client *c);
 static void detachstack(Client *c);
@@ -337,6 +339,7 @@ struct Pertag {
 	float mfacts[LENGTH(tags) + 1]; /* mfacts per tag */
 	float smfacts[LENGTH(tags) + 1]; /* smfacts per tag */
 	float dmfacts[LENGTH(tags) + 1]; /* dmfacts per tag */
+	float zmfacts[LENGTH(tags) + 1]; /* zmfacts per tag */
 	unsigned int sellts[LENGTH(tags) + 1]; /* selected layouts */
 	const Layout *ltidxs[LENGTH(tags) + 1][2]; /* matrix of tags and layouts indexes  */
 	Client *sel[LENGTH(tags) + 1]; /* selected client */
@@ -807,6 +810,7 @@ createmon(void)
 	m->mfact = mfact;
 	m->smfact = smfact;
 	m->dmfact = dmfact;
+	m->zmfact = zmfact;
 	m->nmaster = nmaster;
 	m->showbar = showbar;
 	m->topbar = topbar;
@@ -824,6 +828,7 @@ createmon(void)
 		m->pertag->mfacts[i] = m->mfact;
 		m->pertag->smfacts[i] = m->smfact;
 		m->pertag->dmfacts[i] = m->dmfact;
+		m->pertag->zmfacts[i] = m->zmfact;
 
 		m->pertag->ltidxs[i][0] = m->lt[0];
 		m->pertag->ltidxs[i][1] = m->lt[1];
@@ -877,6 +882,43 @@ doubledeck(Monitor *m)
 				resize(c, m->wx, m->wy, mw - (2*c->bw), m->wh - (2*c->bw), False);
 			else
 				resize(c, m->wx + mw, m->wy, m->ww - mw - (2*c->bw), m->wh - (2*c->bw), False);
+		}
+}
+
+void
+zetadeck(Monitor *m)
+{
+	unsigned int mh;
+	int i, n;
+	Client *c;
+
+	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
+	if (n == 0)
+		return;
+
+	if (n > m->nmaster) {
+		mh = m->nmaster ? m->wh * m->zmfact : 0;
+		snprintf(m->ltsymbol, sizeof(m->ltsymbol) - 1, "[%d|%d]", m->nmaster, n - m->nmaster);
+	} else {
+		if (m->drawwithgaps)
+			mh = m->wh - m->gappx;
+		else
+			mh = m->wh;
+	}
+
+	for (i = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
+		if (m->drawwithgaps) { /* draw with fullgaps logic */
+			if (i < m->nmaster)
+				resize(c, m->wx + m->gappx, m->wy + m->gappx,
+				       m->ww - (2*c->bw) - 2*m->gappx, mh - (2*c->bw) - m->gappx, False);
+			else
+				resize(c, m->wx + m->gappx, m->wy + mh + m->gappx,
+				       m->ww - (2*c->bw) - 2*m->gappx, m->wh - mh - (2*c->bw) - 2*m->gappx, False);
+		} else {
+			if (i < m->nmaster)
+				resize(c, m->wx, m->wy, m->mw - (2*c->bw), mh - (2*c->bw), False);
+			else
+				resize(c, m->wx, m->wy + mh, m->ww - (2*c->bw), m->wh - mh - (2*c->bw), False);
 		}
 }
 
@@ -1823,6 +1865,10 @@ resizemouse(const Arg *arg)
 			XWarpPointer(dpy, None, root, 0, 0, 0, 0,
 			             selmon->mx + (selmon->ww * selmon->dmfact),
 			             selmon->my + (selmon->wh / 2));
+		else if (selmon->lt[selmon->sellt]->arrange == zetadeck)
+			XWarpPointer(dpy, None, root, 0, 0, 0, 0,
+			             selmon->mx + (selmon->ww / 2),
+			             selmon->my + (selmon->wh * selmon->zmfact));
 		else
 			XWarpPointer(dpy, None, root, 0, 0, 0, 0,
 			             selmon->mx + (selmon->ww * selmon->mfact),
@@ -1860,6 +1906,12 @@ resizemouse(const Arg *arg)
 			XWarpPointer(dpy, None, root, 0, 0, 0, 0,
 			             selmon->mx + (selmon->ww * selmon->dmfact),
 			             selmon->my + (selmon->wh / 2));
+		} else if (selmon->lt[selmon->sellt]->arrange == zetadeck) {
+			selmon->zmfact = (double) (ev.xmotion.y_root - selmon->my) / (double) selmon->wh;
+			arrange(selmon);
+			XWarpPointer(dpy, None, root, 0, 0, 0, 0,
+			             selmon->mx + (selmon->ww / 2),
+			             selmon->my + (selmon->wh * selmon->zmfact));
 		} else {
 			selmon->mfact = (double) (ev.xmotion.x_root - selmon->mx) / (double) selmon->ww;
 			arrange(selmon);
@@ -2209,6 +2261,11 @@ setmfact(const Arg *arg)
 		if (f < 0.05 || f > 0.95)
 			return;
 		selmon->dmfact = selmon->pertag->dmfacts[selmon->pertag->curtag] = f;
+	} else if (selmon->lt[selmon->sellt]->arrange == zetadeck) {
+		f = arg->f < 1.0 ? arg->f + selmon->zmfact : arg->f - 1.0;
+		if (f < 0.05 || f > 0.95)
+			return;
+		selmon->zmfact = selmon->pertag->zmfacts[selmon->pertag->curtag] = f;
 	} else {
 		f = arg->f < 1.0 ? arg->f + selmon->mfact : arg->f - 1.0;
 		if (f < 0.05 || f > 0.95)
@@ -2238,6 +2295,8 @@ resetmfact(const Arg *arg)
 		return;
 	if (selmon->lt[selmon->sellt]->arrange == doubledeck) {
 		selmon->dmfact = selmon->pertag->dmfacts[selmon->pertag->curtag] = dmfact;
+	} else if (selmon->lt[selmon->sellt]->arrange == zetadeck) {
+		selmon->zmfact = selmon->pertag->zmfacts[selmon->pertag->curtag] = zmfact;
 	} else {
 		selmon->mfact = selmon->pertag->mfacts[selmon->pertag->curtag] = mfact;
 		selmon->smfact = selmon->pertag->smfacts[selmon->pertag->curtag] = smfact;
@@ -2670,6 +2729,7 @@ toggleview(const Arg *arg)
 		selmon->mfact = selmon->pertag->mfacts[selmon->pertag->curtag];
 		selmon->smfact = selmon->pertag->smfacts[selmon->pertag->curtag];
 		selmon->dmfact = selmon->pertag->dmfacts[selmon->pertag->curtag];
+		selmon->zmfact = selmon->pertag->zmfacts[selmon->pertag->curtag];
 		selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag];
 		selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt];
 		selmon->lt[selmon->sellt^1] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt^1];
@@ -3029,6 +3089,7 @@ view(const Arg *arg)
 	selmon->mfact = selmon->pertag->mfacts[selmon->pertag->curtag];
 	selmon->smfact = selmon->pertag->smfacts[selmon->pertag->curtag];
 	selmon->dmfact = selmon->pertag->dmfacts[selmon->pertag->curtag];
+	selmon->zmfact = selmon->pertag->zmfacts[selmon->pertag->curtag];
 	selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag];
 	selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt];
 	selmon->lt[selmon->sellt^1] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt^1];
