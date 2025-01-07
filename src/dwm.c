@@ -829,7 +829,6 @@ createmon(void)
 		m->pertag->smfacts[i] = m->smfact;
 		m->pertag->dmfacts[i] = m->dmfact;
 		m->pertag->zmfacts[i] = m->zmfact;
-
 		m->pertag->ltidxs[i][0] = m->lt[0];
 		m->pertag->ltidxs[i][1] = m->lt[1];
 		m->pertag->sellts[i] = m->sellt;
@@ -2034,7 +2033,6 @@ rotatetags(const Arg *arg)
 		 arrange(selmon);
 	}
 }
-
 
 void
 run(void)
