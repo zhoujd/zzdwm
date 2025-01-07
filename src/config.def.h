@@ -84,8 +84,8 @@ static const Layout layouts[] = {
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ "[M]",      monocle },
 	{ "HHH",      grid },
-	{ "DD",       doubledeck },
-	{ "ZD",       zetadeck },
+	{ "[D]",      doubledeck },
+	{ "[Z]",      zetadeck },
 };
 
 /* key definitions */
