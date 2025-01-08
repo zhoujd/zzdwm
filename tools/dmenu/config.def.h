@@ -13,7 +13,8 @@ static const char *fonts[] = {
 	"SF Mono:size=11",
 	"SF Mono SC:size=11",
 };
-static const char *prompt      = NULL;         /* -p option; prompt to the left of input field */
+/* -p option; prompt to the left of input field */
+static const char *prompt = NULL;
 static const char *colors[SchemeLast][2] = {
 	/*     fg         bg       */
 	[SchemeNorm] = { "#bbbbbb", "#222222" },
@@ -24,7 +25,7 @@ static const char *colors[SchemeLast][2] = {
 	[SchemeOutHighlight] = { "#ffc978", "#00ffff" },
 };
 /* -l option; if nonzero, dmenu uses vertical list with given number of lines */
-static unsigned int lines      = 0;
+static unsigned int lines = 0;
 
 /*
  * Characters not considered part of a word while deleting words

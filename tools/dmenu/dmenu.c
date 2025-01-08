@@ -21,7 +21,7 @@
 
 /* macros */
 #define INTERSECT(x,y,w,h,r)  (MAX(0, MIN((x)+(w),(r).x_org+(r).width)  - MAX((x),(r).x_org)) \
-                             * MAX(0, MIN((y)+(h),(r).y_org+(r).height) - MAX((y),(r).y_org)))
+                               * MAX(0, MIN((y)+(h),(r).y_org+(r).height) - MAX((y),(r).y_org)))
 #define TEXTW(X)              (drw_fontset_getwidth(drw, (X)) + lrpad)
 #define NUMBERSMAXDIGITS      100
 #define NUMBERSBUFSIZE        (NUMBERSMAXDIGITS * 2) + 1
@@ -229,11 +229,13 @@ drawmenu(void)
 	w = (lines > 0 || !matches) ? mw - x : inputw;
 	drw_setscheme(drw, scheme[SchemeNorm]);
 	if (passwd) {
-	        censort = ecalloc(1, sizeof(text));
+		censort = ecalloc(1, sizeof(text));
 		memset(censort, '.', strlen(text));
 		drw_text(drw, x, 0, w, bh, lrpad / 2, censort, 0);
 		free(censort);
-	} else drw_text(drw, x, 0, w, bh, lrpad / 2, text, 0);
+	} else {
+		drw_text(drw, x, 0, w, bh, lrpad / 2, text, 0);
+	}
 
 	curpos = TEXTW(text) - TEXTW(&text[cursor]);
 	if ((curpos += lrpad / 2 - 1) < w) {
@@ -963,7 +965,7 @@ main(int argc, char *argv[])
 		else if (!strcmp(argv[i], "-i")) { /* case-insensitive item matching */
 			fstrncmp = strncasecmp;
 			fstrstr = cistrstr;
-		} else if (!strcmp(argv[i], "-P"))   /* is the input a password */
+		} else if (!strcmp(argv[i], "-P")) /* is the input a password */
 			passwd = 1;
 		else if (!strcmp(argv[i], "-ix"))  /* adds ability to return index in list */
 			print_index = 1;
