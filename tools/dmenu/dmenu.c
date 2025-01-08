@@ -198,6 +198,7 @@ static void
 recalculatenumbers()
 {
 	unsigned int numer = 0, denom = 0;
+	unsigned int new_mw = mw, new_mh = mh;
 	struct item *item;
 	if (matchend) {
 		numer++;
@@ -207,6 +208,11 @@ recalculatenumbers()
 	for (item = items; item && item->text; item++)
 		denom++;
 	snprintf(numbers, NUMBERSBUFSIZE, "%d/%d", numer, denom);
+
+	if (numer != denom) {
+		new_mh = (MIN(numer, lines) + 1) * bh;
+	}
+	XResizeWindow(dpy, win, new_mw, new_mh);
 }
 
 static void
