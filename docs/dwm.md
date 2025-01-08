@@ -201,3 +201,10 @@ EOF
 $ sudo apt install lxappearance
 $ lxappearance
 ```
+
+## The command-not-found.com
+
+```
+https://command-not-found.com/
+https://command-not-found.com/xprop
+```
