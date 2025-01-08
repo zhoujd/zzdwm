@@ -223,6 +223,9 @@ drawmenu(void)
 	int x = 0, y = 0, w;
 	char *censort;
 
+	/* recaculate and resize window height */
+	recalculatenumbers();
+
 	drw_setscheme(drw, scheme[SchemeNorm]);
 	drw_rect(drw, 0, 0, mw, mh, 1, 1);
 
@@ -249,7 +252,6 @@ drawmenu(void)
 		drw_rect(drw, x + curpos, 2, 2, bh - 4, 1, 0);
 	}
 
-	recalculatenumbers();
 	if (lines > 0) {
 		/* draw vertical list */
 		for (item = curr; item != next; item = item->right)
