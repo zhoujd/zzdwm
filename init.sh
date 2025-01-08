@@ -16,7 +16,7 @@ install_dep() {
          libxcomposite-dev libxdamage-dev
     echo "Install tool package"
     sudo apt install -y \
-         wmctrl alsa-utils
+         wmctrl x11-utils alsa-utils
     echo "Install dep done"
 }
 
