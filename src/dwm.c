@@ -1169,9 +1169,8 @@ void
 focusmaster(const Arg *arg)
 {
 	Client *master;
+	(void)arg;
 
-	if (!arg)
-		return;
 	if (selmon->nmaster > 1)
 		return;
 	if (!selmon->sel || (selmon->sel->isfullscreen && lockfullscreen))
@@ -1200,8 +1199,6 @@ focusmon(const Arg *arg)
 {
 	Monitor *m;
 
-	if (!arg)
-		return;
 	if (!mons->next)
 		return;
 	if ((m = dirtomon(arg->i)) == selmon)
@@ -1600,9 +1597,8 @@ movemouse(const Arg *arg)
 	Monitor *m;
 	XEvent ev;
 	Time lasttime = 0;
+	(void)arg;
 
-	if (!arg)
-		return;
 	if (!(c = selmon->sel))
 		return;
 	if (c->isfullscreen) /* no support moving fullscreen windows by mouse */
@@ -1841,9 +1837,8 @@ resizemouse(const Arg *arg)
 	Monitor *m;
 	XEvent ev;
 	Time lasttime = 0;
+	(void)arg;
 
-	if (!arg)
-		return;
 	if (!(c = selmon->sel))
 		return;
 	if (c->isfullscreen) /* no support resizing fullscreen windows by mouse */
@@ -2098,8 +2093,7 @@ setclientstate(Client *c, long state)
 void
 tagtoleft(const Arg *arg)
 {
-	if (!arg)
-		return;
+	(void)arg;
 	if (selmon->sel != NULL
 	&& __builtin_popcount(selmon->tagset[selmon->seltags] & TAGMASK) == 1
 	&& selmon->tagset[selmon->seltags] > 1) {
@@ -2112,8 +2106,7 @@ tagtoleft(const Arg *arg)
 void
 tagtoright(const Arg *arg)
 {
-	if (!arg)
-		return;
+	(void)arg;
 	if (selmon->sel != NULL
 	&& __builtin_popcount(selmon->tagset[selmon->seltags] & TAGMASK) == 1
 	&& selmon->tagset[selmon->seltags] & (TAGMASK >> 1)) {
@@ -2422,8 +2415,6 @@ shiftviewclients(const Arg *arg)
 	Client *c;
 	unsigned int tagmask = 0;
 
-	if (!arg)
-		return;
 	for (c = selmon->clients; c; c = c->next)
 		tagmask = tagmask | c->tags;
 
@@ -2481,8 +2472,6 @@ spawn(const Arg *arg)
 {
 	struct sigaction sa;
 
-	if (!arg)
-		return;
 	if (fork() == 0) {
 		if (dpy)
 			close(ConnectionNumber(dpy));
@@ -2512,8 +2501,6 @@ swapfocus()
 void
 tag(const Arg *arg)
 {
-	if (!arg)
-		return;
 	if (selmon->sel && arg->ui & TAGMASK) {
 		selmon->sel->tags = arg->ui & TAGMASK;
 		focus(NULL);
@@ -2526,8 +2513,6 @@ tag(const Arg *arg)
 void
 tagmon(const Arg *arg)
 {
-	if (!arg)
-		return;
 	if (!selmon->sel || !mons->next)
 		return;
 	sendmon(selmon->sel, dirtomon(arg->i));
@@ -2642,8 +2627,7 @@ togglebar(const Arg *arg)
 void
 togglefloating(const Arg *arg)
 {
-	if (!arg)
-		return;
+	(void)arg;
 	if (!selmon->sel)
 		return;
 	if (selmon->sel->isfullscreen) /* no support for fullscreen windows */
@@ -2662,8 +2646,7 @@ togglefloating(const Arg *arg)
 void
 togglefullscr(const Arg *arg)
 {
-	if (!arg)
-		return;
+	(void)arg;
 	if (selmon->sel)
 		setfullscreen(selmon->sel, !selmon->sel->isfullscreen);
 }
@@ -2671,8 +2654,7 @@ togglefullscr(const Arg *arg)
 void
 togglesticky(const Arg *arg)
 {
-	if (!arg)
-		return;
+	(void)arg;
 	if (!selmon->sel)
 		return;
 	setsticky(selmon->sel, !selmon->sel->issticky);
@@ -2683,8 +2665,6 @@ void
 toggletag(const Arg *arg)
 {
 	unsigned int newtags;
-	if (!arg)
-		return;
 
 	if (!selmon->sel)
 		return;
@@ -2703,8 +2683,6 @@ toggleview(const Arg *arg)
 	unsigned int newtagset = selmon->tagset[selmon->seltags] ^ (arg->ui & TAGMASK);
 	int i;
 
-	if (!arg)
-		return;
 	if (newtagset) {
 		selmon->tagset[selmon->seltags] = newtagset;
 
@@ -3055,8 +3033,6 @@ view(const Arg *arg)
 	int i;
 	unsigned int tmptag;
 
-	if (!arg)
-		return;
 	if ((arg->ui & TAGMASK) == selmon->tagset[selmon->seltags])
 		return;
 	selmon->seltags ^= 1; /* toggle sel tagset */
@@ -3090,9 +3066,9 @@ view(const Arg *arg)
 }
 
 void
-viewtoleft(const Arg *arg) {
-	if (!arg)
-		return;
+viewtoleft(const Arg *arg)
+{
+	(void)arg;
 	if(__builtin_popcount(selmon->tagset[selmon->seltags] & TAGMASK) == 1
 	&& selmon->tagset[selmon->seltags] > 1) {
 		selmon->seltags ^= 1; /* toggle sel tagset */
@@ -3103,9 +3079,9 @@ viewtoleft(const Arg *arg) {
 }
 
 void
-viewtoright(const Arg *arg) {
-	if (!arg)
-		return;
+viewtoright(const Arg *arg)
+{
+	(void)arg;
 	if(__builtin_popcount(selmon->tagset[selmon->seltags] & TAGMASK) == 1
 	&& selmon->tagset[selmon->seltags] & (TAGMASK >> 1)) {
 		selmon->seltags ^= 1; /* toggle sel tagset */
@@ -3247,8 +3223,7 @@ xinitvisual()
 void
 zoom(const Arg *arg)
 {
-	if (!arg)
-		return;
+	(void)arg;
 	Client *c = selmon->sel;
 	prevclient = nexttiled(selmon->clients);
 
@@ -3294,24 +3269,21 @@ maximize(int x, int y, int w, int h)
 void
 fmaximize(const Arg *arg)
 {
-	if (!arg)
-		return;
+	(void)arg;
 	maximize(selmon->wx, selmon->wy, selmon->ww - 2 * borderpx, selmon->wh - 2 * borderpx);
 }
 
 void
 fmaxheight(const Arg *arg)
 {
-	if (!arg)
-		return;
+	(void)arg;
 	maximize(selmon->sel->x, selmon->wy, selmon->sel->w, selmon->wh - 2 * borderpx);
 }
 
 void
 fmaxwidth(const Arg *arg)
 {
-	if (!arg)
-		return;
+	(void)arg;
 	maximize(selmon->wx, selmon->sel->y, selmon->ww - 2 * borderpx, selmon->sel->h);
 }
 
