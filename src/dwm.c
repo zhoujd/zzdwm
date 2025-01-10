@@ -342,7 +342,6 @@ struct Pertag {
 	float zmfacts[LENGTH(tags) + 1]; /* zmfacts per tag */
 	unsigned int sellts[LENGTH(tags) + 1]; /* selected layouts */
 	const Layout *ltidxs[LENGTH(tags) + 1][2]; /* matrix of tags and layouts indexes  */
-	Client *sel[LENGTH(tags) + 1]; /* selected client */
 };
 
 /* compile-time check if all tags fit into an unsigned int bit array. */
@@ -1152,7 +1151,6 @@ focus(Client *c)
 		XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
 	}
 	selmon->sel = c;
-	selmon->pertag->sel[selmon->pertag->curtag] = c;
 	drawbars();
 	restack(selmon);
 }
@@ -2754,13 +2752,8 @@ unfocus(Client *c, int setfocus)
 void
 unmanage(Client *c, int destroyed)
 {
-	unsigned int i;
 	Monitor *m = c->mon;
 	XWindowChanges wc;
-
-	for (i = 0; i < LENGTH(tags) + 1; i++)
-		if (c->mon->pertag->sel[i] == c)
-			c->mon->pertag->sel[i] = NULL;
 
 	detach(c);
 	detachstack(c);
@@ -3091,7 +3084,7 @@ view(const Arg *arg)
 	selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag];
 	selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt];
 	selmon->lt[selmon->sellt^1] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt^1];
-	focus(selmon->pertag->sel[selmon->pertag->curtag]);
+	focus(NULL);
 	arrange(selmon);
 	updatecurrentdesktop();
 }
