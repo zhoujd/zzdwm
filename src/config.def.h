@@ -14,7 +14,7 @@ static const int vertpadbar         = 0;        /* vertical padding for statusba
 static const int focusonwheel       = 0;        /* 0 means focus window by mouse click */
 static const int viewontag          = 0;        /* 1 means switch view on tag switch */
 static const int attachmode         = 0;        /* 0 master (default), 1 = above, 2 = aside, 3 = below, 4 = bottom */
-static const int background         = 0;        /* 0 means no root background */
+static const int background         = 1;        /* 0 means no root background */
 static const int focusedontoptiled  = 0;        /* 1 means focused tile client is shown on top of floating windows */
 static const int urgentontag        = 0;        /* 1 means urgent show on tag */
 static const char *fonts[]          = {
