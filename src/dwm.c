@@ -100,7 +100,6 @@ struct Client {
 	int bw, oldbw;
 	unsigned int tags;
 	int ismax, wasfloating, isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen, issticky;
-	int alwaysontop;
 	Client *next;
 	Client *snext;
 	Monitor *mon;
@@ -154,7 +153,6 @@ typedef struct {
 	const char *title;
 	unsigned int tags;
 	int isfloating;
-	int alwaysontop;
 	int monitor;
 } Rule;
 
@@ -212,7 +210,6 @@ static Client *nexttiled(Client *c);
 static void pop(Client *c);
 static void propertynotify(XEvent *e);
 static void quit(const Arg *arg);
-static void raiseclient(Client *c);
 static Monitor *recttomon(int x, int y, int w, int h);
 static void resetnmaster(const Arg *arg);
 static void resize(Client *c, int x, int y, int w, int h, int interact);
@@ -400,7 +397,6 @@ applyrules(Client *c)
 		{
 			c->isfloating = r->isfloating;
 			c->tags |= r->tags;
-			c->alwaysontop = r->alwaysontop;
 			for (m = mons; m && m->num != r->monitor; m = m->next);
 			if (m)
 				c->mon = m;
@@ -1151,7 +1147,6 @@ focus(Client *c)
 	}
 	selmon->sel = c;
 	drawbars();
-	restack(selmon);
 }
 
 /* there are some broken focus acquiring clients needing extra handling */
@@ -1212,7 +1207,6 @@ void
 focusstack(const Arg *arg)
 {
 	Client *c = NULL, *i;
-	XEvent xev;
 
 	if (!selmon->sel || (selmon->sel->isfullscreen && lockfullscreen))
 		return;
@@ -1233,7 +1227,6 @@ focusstack(const Arg *arg)
 		focus(c);
 		restack(selmon);
 	}
-	while (XCheckMaskEvent(dpy, EnterWindowMask, &xev));
 }
 
 Atom
@@ -1438,7 +1431,6 @@ manage(Window w, XWindowAttributes *wa)
 	Client *c, *t = NULL;
 	Window trans = None;
 	XWindowChanges wc;
-	XEvent xev;
 
 	c = ecalloc(1, sizeof(Client));
 	c->win = w;
@@ -1461,7 +1453,6 @@ manage(Window w, XWindowAttributes *wa)
 	if (XGetTransientForHint(dpy, w, &trans) && (t = wintoclient(trans))) {
 		c->mon = t->mon;
 		c->tags = t->tags;
-		c->alwaysontop = 1;
 	} else {
 		c->mon = selmon;
 		applyrules(c);
@@ -1504,7 +1495,6 @@ manage(Window w, XWindowAttributes *wa)
 	arrange(c->mon);
 	XMapWindow(dpy, c->win);
 	focus(NULL);
-	while (XCheckMaskEvent(dpy, EnterWindowMask, &xev));
 }
 
 void
@@ -1725,57 +1715,6 @@ quit(const Arg *arg)
 	running = 0;
 }
 
-void
-raiseclient(Client *c)
-{
-	Client *s, *top = NULL;
-	Monitor *m;
-	XWindowChanges wc;
-	int raised = 0;
-
-	/* If the raised client is on the sticky workspace, then refer to the previously
-	 * selected workspace when for searching other clients. */
-	m = c->mon;
-	wc.stack_mode = Above;
-	wc.sibling = m->barwin ? m->barwin : wmcheckwin;
-
-	/* If the raised client is always on top, then it should be raised first. */
-	if (c->alwaysontop && c->isfloating) {
-		top = c;
-		XRaiseWindow(dpy, c->win);
-		wc.stack_mode = Below;
-		wc.sibling = c->win;
-		raised = 1;
-	}
-
-	/* Check if there are floating always on top clients that need to be on top. */
-	for (s = m->stack; s; s = s->snext) {
-		if (s == c || !s->isfloating || !s->alwaysontop)
-			continue;
-
-		if (!top) {
-			top = s;
-			XRaiseWindow(dpy, s->win);
-			wc.stack_mode = Below;
-			wc.sibling = s->win;
-			continue;
-		}
-
-		XConfigureWindow(dpy, s->win, CWSibling|CWStackMode, &wc);
-		wc.sibling = s->win;
-	}
-
-	if (raised)
-		return;
-
-	if (top) {
-		XConfigureWindow(dpy, c->win, CWSibling|CWStackMode, &wc);
-		return;
-	}
-
-	XRaiseWindow(dpy, c->win);
-}
-
 Monitor *
 recttomon(int x, int y, int w, int h)
 {
@@ -1925,16 +1864,14 @@ void
 restack(Monitor *m)
 {
 	Client *c;
-	Client *raised;
 	XEvent ev;
 	XWindowChanges wc;
 
 	drawbar(m);
 	if (!m->sel)
 		return;
-
-	raised = (focusedontoptiled || m->sel->isfloating ? m->sel : NULL);
-
+	if (m->sel->isfloating || !m->lt[m->sellt]->arrange)
+		XRaiseWindow(dpy, m->sel->win);
 	if (m->lt[m->sellt]->arrange) {
 		wc.stack_mode = Below;
 		wc.sibling = m->barwin;
@@ -1944,10 +1881,6 @@ restack(Monitor *m)
 				wc.sibling = c->win;
 			}
 	}
-
-	if (raised)
-		raiseclient(raised);
-
 	if (m == selmon && (m->tagset[m->seltags] & m->sel->tags) && m->lt[m->sellt]->arrange != &monocle)
 		warp(m->sel);
 	XSync(dpy, False);

@@ -15,7 +15,6 @@ static const int focusonwheel       = 0;        /* 0 means focus window by mouse
 static const int viewontag          = 1;        /* 1 means switch view on tag switch */
 static const int attachmode         = 0;        /* 0 master (default), 1 = above, 2 = aside, 3 = below, 4 = bottom */
 static const int background         = 1;        /* 0 means no root background */
-static const int focusedontoptiled  = 0;        /* 1 means focused tile client is shown on top of floating windows */
 static const int urgentontag        = 0;        /* 1 means urgent show on tag */
 static const char *fonts[]          = {
 	"SF Pro Display:size=11",
@@ -62,9 +61,9 @@ static const Rule rules[] = {
 	 *	WM_CLASS(STRING) = instance, class
 	 *	WM_NAME(STRING) = title
 	 */
-	/* class      instance    title       tags mask     isfloating   alwaysontop  monitor */
-	{ "Gimp",     NULL,       NULL,       0,            1,           0,           -1 },
-	{ "Firefox",  NULL,       NULL,       1 << 8,       0,           0,           -1 },
+	/* class      instance    title       tags mask     isfloating   monitor */
+	{ "Gimp",     NULL,       NULL,       0,            1,           -1 },
+	{ "Firefox",  NULL,       NULL,       1 << 8,       0,           -1 },
 };
 
 /* layout(s) */
