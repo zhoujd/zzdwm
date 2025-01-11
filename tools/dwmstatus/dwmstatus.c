@@ -248,6 +248,7 @@ END:
 int
 main(void)
 {
+	unsigned int interval = 10;  // seconds
 	char *status;
 	char *bat;
 	char *tmutc;
@@ -259,7 +260,7 @@ main(void)
 		return 1;
 	}
 
-	for (;;sleep(20)) {
+	for (;;sleep(interval)) {
 		bat = getbattery("/sys/class/power_supply/BAT0");
 		tmutc = mktimes("%H:%M", tzutc);
 		tmsh = mktimes("WW%V %a %d %b %I:%M %p", tzsh);
