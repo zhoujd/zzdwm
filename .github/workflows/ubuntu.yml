@@ -9,26 +9,24 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
-    container:
-      image: ubuntu:22.04
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v4
     - name: Install prepare
-      run: apt-get update
+      run: sudo apt-get update
     - name: Install dwm dependence
-      run: apt-get install -y libx11-dev libxft-dev libxinerama-dev libxrender-dev
+      run: sudo apt-get install -y libx11-dev libxft-dev libxinerama-dev libxrender-dev
     - name: Install dwmstatus dependence
-      run: apt-get install -y libasound2-dev
+      run: sudo apt-get install -y libasound2-dev
     - name: Install xbanish dependence
-      run: apt-get install -y libxfixes-dev libxi-dev libxext-dev
+      run: sudo apt-get install -y libxfixes-dev libxi-dev libxext-dev
     - name: Install slock dependence
-      run: apt-get install -y libxrandr-dev
+      run: sudo apt-get install -y libxrandr-dev
     - name: Install surf dependence
-      run: apt-get install -y libwebkit2gtk-4.0-dev libgcr-3-dev
+      run: sudo apt-get install -y libwebkit2gtk-4.0-dev libgcr-3-dev
     - name: Install xcompmgr dependence
-      run: apt-get install -y libxcomposite-dev libxdamage-dev
+      run: sudo apt-get install -y libxcomposite-dev libxdamage-dev
     - name: Build dwm
       run: make -C src/
     - name: Build dmenu
