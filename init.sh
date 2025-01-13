@@ -44,6 +44,7 @@ install_bin() {
         $CORE_ROOT/bin/me
         $CORE_ROOT/bin/mg
         $CORE_ROOT/bin/mtm
+        $CORE_ROOT/bin/abduco
         $CORE_ROOT/bin/dtach
         $CORE_ROOT/bin/dvtm
         $CORE_ROOT/bin/dvtm-editor
