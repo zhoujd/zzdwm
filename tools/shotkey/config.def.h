@@ -18,6 +18,7 @@ enum {
 
 // Define mode key bindings here
 // NOTE: "10" here is the maximum number of key bindings for each mode
+// NOTE: Push cmd to backgroud with `&` to prevent zombie process creation
 Key modes[MODE_SIZE][10] = {
   [Control] = {
     { 0, XK_j, cmd("amixer -D pulse sset Master 5%- &") },
