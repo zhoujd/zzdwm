@@ -9,7 +9,9 @@ on:
 jobs:
   build:
 
-    runs-on: ghcr.io/linuxcontainers/alpine:3.20
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/linuxcontainers/alpine:3.20
 
     steps:
     - uses: actions/checkout@v4
