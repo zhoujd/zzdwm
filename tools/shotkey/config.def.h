@@ -20,13 +20,13 @@ enum {
 // NOTE: "10" here is the maximum number of key bindings for each mode
 Key modes[MODE_SIZE][10] = {
   [Control] = {
-    { 0, XK_j, cmd("amixer -D pulse sset Master 5%-") },
-    { 0, XK_k, cmd("amixer -D pulse sset Master 5%+") },
-    { 0, XK_m, cmd("amixer -D pulse set Master toggle") },
+    { 0, XK_j, cmd("amixer -D pulse sset Master 5%- &") },
+    { 0, XK_k, cmd("amixer -D pulse sset Master 5%+ &") },
+    { 0, XK_m, cmd("amixer -D pulse set Master toggle &") },
   },
   [Execute] = {
-    { 0, XK_c, cmd("st") },
-    { 0, XK_e, cmd("emacs") },
+    { 0, XK_c, cmd("st &") },
+    { 0, XK_e, cmd("emacs &") },
   },
 };
 

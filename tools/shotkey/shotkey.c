@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -60,12 +62,27 @@ int error_handler(Display *disp, XErrorEvent *xe) {
 }
 
 void spawn(char** command) {
-  if (fork() == 0) {
+  struct sigaction sa;
+  pid_t child_pid;
+  int status;
+
+  child_pid = fork();
+  if (child_pid == 0) {
     setsid();
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sa.sa_handler = SIG_DFL;
+    sigaction(SIGCHLD, &sa, NULL);
+
     execve(command[0], command, environ);
     fprintf(stderr, "shotkey: execve %s", command[0]);
     perror(" failed");
     exit(0);
+  } else {
+    printf("parent process!\n");
+    printf("parent PID =  %d, child pid = %d\n", getpid(), child_pid);
+    wait(&status); /* wait for child to exit, and store child's exit status */
   }
 }
 
