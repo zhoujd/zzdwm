@@ -27,3 +27,13 @@ $ dtach -A /tmp/z-0 bash -l
 ## Attach sesion
 $ dtach -a /tmp/z-0
 ```
+
+## Detach / reattach functionality
+
+```
+$ abduco -c dvtm-session
+
+## Detach using CTRL-\ and later reattach with
+## -e <char>  Set the detach character to <char>, defaults to ^\.
+$ abduco -a dvtm-session
+```

@@ -27,3 +27,12 @@ $ abduco
 $ abduco -a demo
 $ abduco -a session-name
 ```
+
+## Detach / reattach functionality
+
+```
+$ abduco -c dvtm-session
+
+## Detach using CTRL-\ and later reattach with
+$ abduco -a dvtm-session
+```
