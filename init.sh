@@ -45,6 +45,10 @@ install_bin() {
         $CORE_ROOT/bin/mg
         $CORE_ROOT/bin/mtm
         $CORE_ROOT/bin/dtach
+        $CORE_ROOT/bin/dvtm
+        $CORE_ROOT/bin/dvtm-editor
+        $CORE_ROOT/bin/dvtm-pager
+        $CORE_ROOT/bin/dvtm-status
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $target
