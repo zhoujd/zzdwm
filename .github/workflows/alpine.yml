@@ -20,4 +20,4 @@ jobs:
     - name: Build dvtm
       run: make -C tools/dvtm LDFLAGS=-static
     - name: Build mtm
-      run: make -C tools/mtm LDFLAGS=-static
+      run: make -C tools/mtm LDFLAGS=-static HEADERS='-DNCURSESW_INCLUDE_H="<ncurses.h>"'
