@@ -19,3 +19,5 @@ jobs:
       run: apk add make gcc musl-dev ncurses-dev ncurses-static libbsd-static libbsd-dev
     - name: Build dvtm
       run: make -C tools/dvtm LDFLAGS=-static
+    - name: Build mtm
+      run: make -C tools/mtm LDFLAGS=-static
