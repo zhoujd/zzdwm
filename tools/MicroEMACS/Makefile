@@ -3,7 +3,7 @@
 TARGET=		me
 PREFIX=         /usr/local
 
-CFLAGS=		-O2 -g -Dlinux -DSYS_PATH="" -Wno-implicit-function-declaration -Wno-implicit-int -static
+CFLAGS=		-Os -Dlinux -DSYS_PATH="" -Wno-implicit-function-declaration -Wno-implicit-int -static
 
 OFILES=		ansi.o basic.o bind.o buffer.o display.o file.o \
 		fileio.o hp150.o line.o lock.o main.o random.o region.o \
