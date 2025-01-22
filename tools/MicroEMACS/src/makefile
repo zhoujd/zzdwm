@@ -1,8 +1,8 @@
 # Sun/Solaris & Linux Makefile
 #
 
-#CC=gcc
-CC=musl-gcc
+CC=gcc
+#CC=musl-gcc
 #CFLAGS=-O2 -pipe
 # for UTF-8, set -DCOLOR=1 and add '-DUTF8=1'
 CFLAGS=-DCOLOR=1 -DUTF8=1 -pipe -g -O2 -fpie
