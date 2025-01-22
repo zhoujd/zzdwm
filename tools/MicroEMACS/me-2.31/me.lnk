@@ -1,0 +1,17 @@
+\ztc\lib\_mainl.obj+
+basic.obj+
+buffer.obj+
+display.obj+
+error.obj+
+file.obj+
+fileio.obj+
+ibmpc.obj+
+line.obj+
+main.obj+
+random.obj+
+region.obj+
+search.obj+
+spawn.obj+
+termio.obj+
+window.obj+
+word.obj

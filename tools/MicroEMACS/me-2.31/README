@@ -1,0 +1,28 @@
+This version of MicroEMACS is adapted by me from the version 2 furnished
+with the Atari Mark Williams C compiler.
+
+I made it work on:
+	- many Unix flavours (BSD, SYSV, Linux, ...)
+	- VAX/VMS
+	- DOS
+
+To generate, choose and edit one of the makefile.xx or build.ninja.
+You may have to edit the file ed.h to adjust some options.
+When made, the resulting standalone executable is 'me' or 'me.exe'
+and may be copied to any directory of your PATH.
+
+'me' may be called with up to 6 file names as command line arguments.
+The file 'me.doc' contains the list of the keybindings, but you should
+better have a minimum knowledge of the GNU emacs before using MicroEMACS:
+there is no general documentation here!
+
+License:
+	This program is in public domain; written by Dave G. Conroy,
+	adapted by Jean-François Moine (1990-2016).
+
+Contact:
+	Jean-François Moine (mailto:moinejf@free.fr)
+
+Original place:
+	http://moinejf.free.fr/
+

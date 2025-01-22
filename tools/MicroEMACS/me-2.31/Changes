@@ -1,0 +1,131 @@
+Version 2.31	2023-09-07
+	Bad display on insertion of UTF-8 characters out of highlight sequences
+	Colorize the ABC pseudo-comments
+
+Version 2.30	2020-03-30
+	Files starting by ':' are shell scripts
+
+Version 2.29	2018-01-04
+	Handle lines greater than 32Kb
+
+Version 2.28	2016-09-04
+	Colorize the PostScript strings.
+	Remove split of lines > 1024 characters.
+	Increase the max file name size from 80 to 256.
+	Fix screen garbage when reading a file with a long name.
+
+Version 2.27	2013/07/09
+	Fix syntax highlighting of strings with back-slashes.
+	Add xml mode.
+	Add build.ninja and clang compilation.
+	Fix some warnings.
+	Check mode line overflow.
+
+Version 2.26	2011/01/01
+	Crash when C-w with UTF-8 characters in region.
+
+Version 2.25	2010/12/17
+	Crash when C-x C-b with a file greater than 1000000 bytes.
+
+Version 2.24	2010/10/10
+	Bad character backward when previous deletion of UTF8 characters.
+	Bad deletion of UTF8 characters.
+
+Version 2.23	2010/03/08
+	Change backup file for Unix from '.BAK' to '~'.
+
+Version 2.22	2010/01/21
+	Handle UTF-8 characters on 3 bytes.
+
+Version 2.21	2010/01/01
+	Add UTF-8.
+
+Version 2.20	2003/11/10
+	Ignore '\r' in diff.
+
+Version 2.19	2002/06/20
+	Bad 1st char when horizontal shift.
+
+Version 2.18	2002/06/07
+	Remove SDX stuff.
+	More syntax highlighting.
+	Fix bad syntax highlighting when new line or line extension.
+
+Version 2.17	2002/03/19
+	Automatic horizontal shift.
+	Select buffer in buffer list.
+	Readonly buffers.
+	Syntax highlighting.
+
+Version 2.16	2001/12/07
+	Loop when reading a previously delete buffer.
+
+Version 2.15	2001/11/23
+	Go up to end of file when scrolling down.
+	Fix char delete when yanking before the last line.
+
+Version 2.14	2001/09/21
+	Don't add a blank line when yanking at end of buffer.
+	May kill the current displayed buffer.
+
+Version 2.13	2000/11/17
+	Get real screen size when xterm/rxvt.
+
+Version 2.12	1999/12/24
+	Option to handle old line numbers (was default - many files).
+
+Version 2.11	1999/10/15
+	Lines up to 1024 characters (ed.h).
+	Accept Linux keypad (main.c)
+	Accept 1 char on question 'yes/no' (display.c)
+	Put the cursor at the bottom of screen on PgUp (basic.c)
+	Always insert a newline on C-M (random.c)
+	Ignore tab, blank and EOL in diff (basic.c)
+	Restore the page scroll (basic.c)
+	Use all the screen (termio.c)
+	C-ANSIfy some code (display.c)
+	Change key-bindings closer to GNU Emacs (main.c)
+	Source under PRCS.
+
+Version 2.10	1995/07/27
+	Keep the file modes on Unix systems (fileio.c)
+	Make it run under linux (termio.c)
+	Link edition problem with Chorus (makefile.ch)
+	DOS options (ibmpc.c, makefile.ztc, termio.c)
+
+Version 2.9	1994/06/28
+	Ignore TAB / blanks in difference (basic.c)
+	ltoa conflict (buffer.c)
+	Sun OS 4.x and Solaris (display.c, makefile.sun)
+	STDC compile options (display.c, file.c, ibmpc.c, line.c,
+		random.c, search.c)
+	Rename works on Chorus MiX (fileio.c)
+	DOS compile problems (main.c, termio.c, window.c)
+	Chorus MiX compilation with new SP (makefile.ch)
+
+Version 2.8	1993/06/09
+	- Add C-X C-O (other window)
+	- Enhance window difference (basic.c)
+
+Versions 2.7	1993/02/10
+	- bug: loop when TAB at right edge
+	- PC graphic, SYSV
+
+Versions 2.6	1992/10/27
+	- Zortech complete, $ on left when shift
+	- get screen size (PC - V7)
+
+Versions 2.5	1992/04/03
+	- do it work on SUN-4 (sparc)
+
+Versions 2.4	1991/08/30
+	- shift screen by gold -> and gold <- (VT100)
+
+Versions 2.3	1990/09/05
+	- take the screen type from the terminal context (SDX)
+	- allocate screen in one zone
+	- shift display
+
+Versions <= 2.2	(1989-1990)
+	- Televideo - ABS - and some other things
+

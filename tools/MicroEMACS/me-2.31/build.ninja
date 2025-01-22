@@ -1,0 +1,90 @@
+# rules for ninja (ninja-build)
+
+VERSION = 2.31
+
+cc=musl-gcc
+#cc=gcc
+#cc=clang
+
+cflags = -g -O2 -Wall -pipe -fpie -DCOLOR=1 -DUTF8=1 -DMMAP=1
+#		-mthumb -march=armv7-a
+ldflags = -static -Wl,--no-dynamic-linker
+# -Wl,-Bstatic
+# -pie
+# -Wl,-Bsymbolic
+#ldflags = -pie
+
+rule cc
+  command = $cc $cflags -c $in -o $out
+
+rule ld
+  command = $cc $ldflags -o $out $in
+
+build ansi.o: cc ansi.c | ed.h
+build basic.o: cc basic.c | ed.h
+build buffer.o: cc buffer.c | ed.h
+build display.o: cc display.c | ed.h color.h
+build error.o: cc error.c | ed.h
+build file.o: cc file.c | ed.h
+build fileio.o: cc fileio.c | ed.h
+build fontlock.o: cc fontlock.c | ed.h color.h fontlock_cpp.c
+build line.o: cc line.c | ed.h
+build main.o: cc main.c | ed.h
+build random.o: cc random.c | ed.h
+build region.o: cc region.c | ed.h
+build search.o: cc search.c | ed.h
+build spawn.o: cc spawn.c | ed.h
+build termio.o: cc termio.c | ed.h
+build window.o: cc window.c | ed.h
+build word.o: cc word.c | ed.h
+
+build me: ld ansi.o basic.o buffer.o display.o error.o file.o fileio.o $
+ fontlock.o line.o main.o random.o region.o search.o $
+ spawn.o termio.o window.o word.o
+
+default me
+
+rule dist_tar
+  command = ln -s . me-$VERSION;$
+   tar -zcvf $out $
+ me-$VERSION/Changes $
+ me-$VERSION/README $
+ me-$VERSION/ansi.c $
+ me-$VERSION/atari.c $
+ me-$VERSION/basic.c $
+ me-$VERSION/build.ninja $
+ me-$VERSION/buffer.c $
+ me-$VERSION/color.h $
+ me-$VERSION/display.c $
+ me-$VERSION/ed.h $
+ me-$VERSION/error.c $
+ me-$VERSION/file.c $
+ me-$VERSION/fileio.c $
+ me-$VERSION/fontlock.c $
+ me-$VERSION/fontlock_cpp.c $
+ me-$VERSION/fontlock_cpp.gperf $
+ me-$VERSION/helplib.c $
+ me-$VERSION/ibmpc.c $
+ me-$VERSION/line.c $
+ me-$VERSION/lookup.c $
+ me-$VERSION/main.c $
+ me-$VERSION/makefile $
+ me-$VERSION/makefile.sun $
+ me-$VERSION/makefile.ztc $
+ me-$VERSION/me.doc $
+ me-$VERSION/me.lnk $
+ me-$VERSION/random.c $
+ me-$VERSION/region.c $
+ me-$VERSION/search.c $
+ me-$VERSION/spawn.c $
+ me-$VERSION/tcap.c $
+ me-$VERSION/televideo.c $
+ me-$VERSION/termio.c $
+ me-$VERSION/vt52.c $
+ me-$VERSION/window.c $
+ me-$VERSION/word.c;$
+   rm me-$VERSION
+
+build me-$VERSION.tar.gz: dist_tar
+
+build dist: phony me-$VERSION.tar.gz
