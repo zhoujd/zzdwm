@@ -23,7 +23,7 @@
 #define	WFDEBUG	0			/* Window flag debug.		*/
 #define	FASTHACK	1		/* Slightly faster update code	*/
 /* JFM: move prompt definition from ed.h */
-#define	PROMPT	" MicroEMACS 2.31 -- "
+#define	PROMPT	" MicroEMACS -- "
 
 #ifdef COLOR
 #ifdef UTF8
