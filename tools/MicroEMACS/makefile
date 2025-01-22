@@ -62,3 +62,6 @@ dist:
 		me-$(VERSION)/window.c \
 		me-$(VERSION)/word.c
 	rm me-$(VERSION)
+
+clean:
+	rm -f me *.o
