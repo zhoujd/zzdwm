@@ -43,8 +43,6 @@ jobs:
       run: make -C tools/shotkey
     - name: Build surf
       run: make -C tools/surf
-    - name: Build MicroEMACS
-      run: make -C tools/MicroEMACS
     - name: Build xcompmgr
       run: make -C tools/xcompmgr
     - name: Build utils
