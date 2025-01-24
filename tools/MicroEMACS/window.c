@@ -90,6 +90,7 @@ erefresh (int f, int n, int k)
 	wp->w_flag |= WFMODE | WFHARD;
       update ();
       eprintf ("[New size %d by %d]", nrow, ncol);
+      erefresh (FALSE, 1, 0);  /* force refresh */
     }
   return (TRUE);
 }
