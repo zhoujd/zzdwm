@@ -22,4 +22,4 @@ jobs:
     - name: Build mtm
       run: make -C tools/mtm LDFLAGS=-static HEADERS='-DNCURSESW_INCLUDE_H="<ncurses.h>"'
     - name: Build MicroEMACS
-      run: make -C tools/MicroEMACS
+      run: make -C tools/MicroEMACS LDFLAGS=-static
