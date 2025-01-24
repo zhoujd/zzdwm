@@ -32,12 +32,7 @@
  */
 
 #include	"def.h"
-
-#ifdef __FreeBSD__
 #include	<ncurses.h>
-#else
-#include	<ncursesw/ncurses.h>
-#endif
 
 #define CTRL(x) ((x) & 0x1f)
 
