@@ -248,7 +248,7 @@ main (int argc, char *argv[])
     eprintf (rubyerror ());
 #endif
   else
-    eprintf ("This is free software; use Esc Ctrl-V to see license information");
+    eprintf ("");
 
 loop:
   if (!inprof && !ttstat ())	/* If not in a profile, */
