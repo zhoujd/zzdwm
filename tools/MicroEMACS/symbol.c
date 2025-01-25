@@ -177,8 +177,8 @@ KEY key[] = {
   {KCTRL | 'V',		forwpage,	"forw-page"},
   {KCTRL | 'W',		killregion,	"kill-region"},
   {KCTRL | 'Y',		yank,		"yank"},
-  {KCTRL | 'Z',		backpage,	"back-page"},	/* like MINCE */
-/* {	KCTRL|'Z',	jeffexit,	"jeff-exit" }, */
+  {KCTRL | 'Z',	  jeffexit,	"jeff-exit"},
+  {KCTRL | '_',		undo,	"undo"},
   {KCTLX | KCTRL | 'B', listbuffers,	"display-buffers"},
   {KCTLX | KCTRL | 'C', quit,		"quit"},
   {KCTLX | KCTRL | 'E', eecho,		"echo"},
