@@ -286,7 +286,6 @@ KEY key[] = {
   {-1,			rubycommand,	"ruby-command"},
   {-1,			rubyload,	"ruby-load"},
 #endif
-  {-1,			jeffexit,	"jeff-exit"},
   {-1,			displaymessage,	"display-message"},
   {-1,			redo,		"redo"}
 };
