@@ -24,8 +24,8 @@ You can use the **-p profile** option when you invoke MicroEMACS to specify
 the name of the startup profile.  If you don't use this option, MicroEMACS
 will use a default profile name.
 The name of the default
-profile is `PE.PRO` on all systems except UNIX, where it is
-named `.pepro`.  MicroEMACS will look for this profile in the
+profile is `ME.PRO` on all systems except UNIX, where it is
+named `.mepro`.  MicroEMACS will look for this profile in the
 current directory.  If the profile is not found, MicroEMACS will
 look in a second directory, as follows:
 

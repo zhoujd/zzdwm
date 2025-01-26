@@ -276,12 +276,12 @@ ffpopen (char *fn)
 
   if (fn == NULL)
     {
-      if ((pfp = fopen (".pepro", "r")) != NULL)
+      if ((pfp = fopen (".mepro", "r")) != NULL)
 	return (FIOSUC);
       if ((fn = getenv ("HOME")) == NULL)
 	return (FIOFNF);
       strcpy (newname, fn);
-      strcat (newname, "/.pepro");
+      strcat (newname, "/.mepro");
       fn = newname;
     }
   if ((pfp = fopen (fn, "r")) == NULL)
