@@ -7,6 +7,7 @@ MicroEMACS
 ## https://github.com/troglobit/MicroEMACS
 ## https://git.sr.ht/~tekk/microemacs
 ## https://www.bloovis.com/cgit/microemacs/
+## https://github.com/bloovis/microemacs
 ```
 
 ## Linux editors
