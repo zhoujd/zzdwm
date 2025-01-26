@@ -18,7 +18,7 @@ jobs:
     - name: Install prepare
       run: apt-get update
     - name: Install build tools
-      run: apt-get install -y gcc make
+      run: apt-get install -y gcc g++ make
     - name: Install dwm dependence
       run: apt-get install -y libx11-dev libxft-dev libxinerama-dev libxrender-dev
     - name: Install dwmstatus dependence
