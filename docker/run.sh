@@ -2,16 +2,13 @@
 
 SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 
-BUILD_FILE=$SCRIPT_ROOT/dockerfiles/alpine.dockerfile
-BUILD_ARG=
-IMG=zz/alpine
+IMG=zhoujd/alpine
 TAG=base
 CNT=zz-build-1
 
 case $1 in
     build|-b )
-        docker build $BUILD_ARG -t $IMG:$TAG -f $BUILD_FILE .
-        docker tag $IMG:$TAG $IMG:latest
+        make -C dockerfiles
         ;;
     run|-r )
         docker stop $CNT 2>/dev/null
