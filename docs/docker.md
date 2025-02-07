@@ -19,3 +19,16 @@ ghcr.io/void-linux/void-musl-full       latest   81.4MB
 ghcr.io/void-linux/void-glibc-busybox   latest   39.6MB
 ghcr.io/void-linux/void-musl-busybox    latest   14.4MB
 ```
+
+## Void Linux xbps
+
+```
+## https://github.com/void-linux/xbps
+## https://docs.voidlinux.org/xbps/index.html
+$ xbps-query -Rs <pkg>
+$ xbps-install -Syu
+$ xbps-install -Sy <pkg>
+$ xbps-remove <pkg>
+$ xbps-remove -R <pkg>
+$ xbps-remove -Oo
+```

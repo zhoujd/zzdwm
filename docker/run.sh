@@ -3,6 +3,7 @@
 SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 
 IMG=zhoujd/alpine
+#IMG=zhoujd/void-linux
 TAG=base
 CNT=zz-build-1
 
@@ -11,8 +12,8 @@ case $1 in
         make -C dockerfiles
         ;;
     run|-r )
-        docker stop $CNT 2>&1 1>/dev/null
-        docker rm $CNT 2>&1 1>/dev/null
+        docker stop $CNT >/dev/null 2>&1
+        docker rm $CNT >/dev/null 2>&1
         docker run -it --name $CNT $IMG:$TAG
         ;;
     status|-s )
