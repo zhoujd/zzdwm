@@ -11,8 +11,8 @@ case $1 in
         make -C dockerfiles
         ;;
     run|-r )
-        docker stop $CNT 2>/dev/null
-        docker rm $CNT 2>/dev/null
+        docker stop $CNT 2>&1 1>/dev/null
+        docker rm $CNT 2>&1 1>/dev/null
         docker run -it --name $CNT $IMG:$TAG
         ;;
     status|-s )
