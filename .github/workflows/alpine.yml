@@ -23,5 +23,7 @@ jobs:
       run: make -C tools/dvtm LDFLAGS=-static
     - name: Build mtm
       run: make -C tools/mtm LDFLAGS=-static HEADERS='-DNCURSESW_INCLUDE_H="<ncurses.h>"'
+    - name: Build nq
+      run: make -C tools/nq LDFLAGS=-static
     - name: Build MicroEMACS
       run: make -C tools/MicroEMACS LDFLAGS=-static
