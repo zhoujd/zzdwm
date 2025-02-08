@@ -1,6 +1,6 @@
 ALL=nq nqtail nqterm
 
-CFLAGS=-g -Wall -O2 -Wno-unused-result
+CFLAGS=-g -Wall -O2 -Wno-unused-result -static
 
 DESTDIR=
 PREFIX=/usr/local
