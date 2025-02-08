@@ -50,6 +50,8 @@ install_bin() {
         $CORE_ROOT/bin/dvtm-editor
         $CORE_ROOT/bin/dvtm-pager
         $CORE_ROOT/bin/dvtm-status
+        $CORE_ROOT/bin/nq
+        $CORE_ROOT/bin/nqtail
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $target
