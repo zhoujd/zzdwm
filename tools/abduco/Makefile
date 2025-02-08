@@ -29,7 +29,7 @@ debug: clean
 
 clean:
 	@echo cleaning
-	@rm -f abduco ${OBJ} abduco-${VERSION}.tar.gz
+	@rm -f abduco ${OBJ} abduco-${VERSION}.tar.gz config.h
 
 dist: clean
 	@echo creating dist tarball
