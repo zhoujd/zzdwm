@@ -17,6 +17,8 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install dependence
       run: apk add make gcc musl-dev ncurses-dev ncurses-static libbsd-static libbsd-dev
+    - name: Build abduco
+      run: make -C tools/abduco LDFLAGS=-static
     - name: Build dvtm
       run: make -C tools/dvtm LDFLAGS=-static
     - name: Build mtm
