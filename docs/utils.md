@@ -12,3 +12,9 @@ Utils
 ```
 ## https://github.com/ericpruitt/edge/blob/master/utilities/blackwalls.c
 ```
+
+## nq: queue utilities
+
+```
+## https://github.com/leahneukirchen/nq
+```
