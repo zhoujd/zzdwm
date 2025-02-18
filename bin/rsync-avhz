@@ -28,7 +28,7 @@ fi
 # --No-g=No Group.
 # The --No's are partially undoing the Archive option.
 rsync               \
-    -avzh           \
+    -avhz           \
     --delete        \
     --no-o          \
     --no-g          \
