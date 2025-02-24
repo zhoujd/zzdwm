@@ -7,7 +7,7 @@
 # With / in path will not create the directory but it will copy the content only
 
 if [ $# != 2 ]; then
-cat <<EOF
+    cat <<EOF
 Usage: 
 `basename $0` <source> <target>"
 `basename $0` <source> ./"
