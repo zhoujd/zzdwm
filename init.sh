@@ -9,6 +9,7 @@ install_dep() {
     sudo apt update
     echo "Install dev package"
     sudo apt install -y \
+         make gcc g++ \
          libx11-dev libxft-dev libxinerama-dev libxrender-dev \
          libasound2-dev \
          libxfixes-dev libxi-dev libxext-dev \
