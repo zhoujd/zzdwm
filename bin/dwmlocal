@@ -9,16 +9,18 @@ opt=(
     "VBoxClient-all"
 )
 
-run() {
-    for cmd in "${opt[@]}"; do
-        echo $cmd
-        if [ -n "$(which $cmd)" ]; then
-            $cmd > /dev/null 2>&1
-            echo "$(date): run $cmd success." >>$log
-        fi
+run_cmd() {
+    local cmd=$1
+    if [ -n "$(which $cmd)" ]; then
+        $cmd >/dev/null 2>&1 || true
+        echo "$(date): run $cmd success." >>$log
+    fi
+}
+
+main() {
+    for i in "${opt[@]}"; do
+        run_cmd $i &
     done
 }
 
-run
-
-echo "$(date): started $app." >>$log
+main
