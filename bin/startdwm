@@ -1,25 +1,29 @@
 #!/bin/bash
 
 log=$HOME/.dwm-errors
-echo "$(date): starting dwm desktop." >$log
-
 kind=run
 
+init() {
+    rm -rf $log
+}
+
 run() {
-    echo "$(date): dwm on run mode." >>$log
+    echo "$(date) dwm: start dwm on run mode." >>$log
     exec dwm >/dev/null 2>&1
 }
 
 debug() {
-    echo "$(date): dwm on debug mode." >>$log
+    echo "$(date) dwm: start dwm on debug mode." >>$log
     exec dwm >>$log 2>&1
 }
 
 case $kind in
     run|-r )
+        init
         run
         ;;
     debug|-d )
+        init
         debug
         ;;
 esac
