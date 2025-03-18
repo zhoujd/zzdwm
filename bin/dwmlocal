@@ -3,8 +3,6 @@
 log=$HOME/.dwm-errors
 app=$(basename $0)
 
-echo "$(date): starting $app." >>$log
-
 opt=(
     "VBoxClient-all"
 )
@@ -13,7 +11,7 @@ run_cmd() {
     local cmd=$1
     if [ -n "$(which $cmd)" ]; then
         $cmd >/dev/null 2>&1 || true
-        echo "$(date): run $cmd success." >>$log
+        echo "$(date) $app: run $cmd success." >>$log
     fi
 }
 
