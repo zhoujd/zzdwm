@@ -1,0 +1,24 @@
+#!/bin/bash
+
+log=$HOME/.dwm-errors
+app=$(basename $0)
+
+echo "$(date): starting $app." >>$log
+
+opt=(
+    "VBoxClient-all"
+)
+
+run() {
+    for cmd in "${opt[@]}"; do
+        echo $cmd
+        if [ -n "$(which $cmd)" ]; then
+            $cmd > /dev/null 2>&1
+            echo "$(date): run $cmd success." >>$log
+        fi
+    done
+}
+
+run
+
+echo "$(date): started $app." >>$log

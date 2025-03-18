@@ -54,6 +54,7 @@ install_bin() {
         $CORE_ROOT/bin/nq
         $CORE_ROOT/bin/nqtail
         $CORE_ROOT/bin/rsync-avhz
+        $CORE_ROOT/bin/dwmlocal
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $target
@@ -82,6 +83,11 @@ build() {
     echo "Build done"
 }
 
+clean() {
+    git clean -dfx
+    echo "Clean done"
+}
+
 all() {
     install_dep
     install_dm
@@ -93,11 +99,12 @@ all() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-Usage: $app {dep|dm|bin|build|-b|all|-a}
+Usage: $app {dep|dm|bin|build|-b|clean|-c|all|-a}
 dep          --    Install depend package
 dm           --    Install xsession entry
 bin          --    Install bin
 build|-b     --    Build all
+clean|-c     --    Clean all
 all|-a       --    Install all
 EOF
 }
@@ -114,6 +121,9 @@ case $1 in
         ;;
     build|-b )
         build
+        ;;
+    clean|-c )
+        clean
         ;;
     all|-a )
         all
