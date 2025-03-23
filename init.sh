@@ -23,6 +23,7 @@ install_dep() {
 
 install_dm() {
     sudo cp -fv $CORE_ROOT/bin/startdwm /usr/local/bin
+    sudo mkdir -p /usr/share/xsessions
     sudo tee /usr/share/xsessions/dwm.desktop <<EOF
 [Desktop Entry]
 Name=DWM Session
