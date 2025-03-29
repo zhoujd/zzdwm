@@ -14,7 +14,7 @@ zzdwm
 ## Build dependence
 
 ```bash
-$ sudo apt install make gcc g++
+$ sudo apt install make gcc g++ yacc
 $ sudo apt install libx11-dev libxft-dev libxinerama-dev libxrender-dev
 $ sudo apt install libasound2-dev
 $ sudo apt install libxfixes-dev libxi-dev libxext-dev
