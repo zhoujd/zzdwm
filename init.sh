@@ -22,6 +22,7 @@ install_dep() {
 }
 
 install_dm() {
+    echo "Install dwm"
     sudo cp -fv $CORE_ROOT/bin/startdwm /usr/local/bin
     sudo mkdir -p /usr/share/xsessions
     sudo tee /usr/share/xsessions/dwm.desktop <<EOF
@@ -33,6 +34,8 @@ Icon=dwm
 Type=Application
 DesktopNames=DWM
 EOF
+    echo "Install cwm"
+    sudo cp -fv $CORE_ROOT/bin/startcwm /usr/local/bin
     sudo tee /usr/share/xsessions/cwm.desktop <<EOF
 [Desktop Entry]
 Name=CWM Session
