@@ -1,0 +1,29 @@
+#!/bin/bash
+
+log=$HOME/.cwm-errors
+kind=run
+
+init() {
+    rm -rf $log
+}
+
+run() {
+    echo "$(date) cwm: start cwm on run mode." >>$log
+    exec cwm >/dev/null 2>&1
+}
+
+debug() {
+    echo "$(date) cwm: start cwm on debug mode." >>$log
+    exec cwm >>$log 2>&1
+}
+
+case $kind in
+    run|-r )
+        init
+        run
+        ;;
+    debug|-d )
+        init
+        debug
+        ;;
+esac

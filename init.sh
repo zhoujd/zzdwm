@@ -27,11 +27,20 @@ install_dm() {
     sudo tee /usr/share/xsessions/dwm.desktop <<EOF
 [Desktop Entry]
 Name=DWM Session
-Comment=Dynamic window manager
+Comment=Dynamic Window Manager
 Exec=startdwm
 Icon=dwm
 Type=Application
 DesktopNames=DWM
+EOF
+    sudo tee /usr/share/xsessions/cwm.desktop <<EOF
+[Desktop Entry]
+Name=CWM Session
+Comment=Clam Window Manager
+Exec=startcwm
+Icon=cwm
+Type=Application
+DesktopNames=CWM
 EOF
     echo "Install dm done"
 }
