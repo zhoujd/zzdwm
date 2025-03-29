@@ -65,7 +65,8 @@ install_bin() {
 
 build() {
     local projects=(
-        $CORE_ROOT/src
+        $CORE_ROOT/src/dwm
+        $CORE_ROOT/src/cwm
         $CORE_ROOT/tools/dmenu
         $CORE_ROOT/tools/dwmstatus
         $CORE_ROOT/tools/xbanish
