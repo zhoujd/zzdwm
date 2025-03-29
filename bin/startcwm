@@ -15,6 +15,7 @@ run() {
 
 debug() {
     echo "$(date) cwm: start cwm on debug mode." >>$log
+    cwmlocal &
     exec cwm >>$log 2>&1
 }
 
