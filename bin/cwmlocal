@@ -5,6 +5,10 @@ app=$(basename $0)
 
 opt=(
     "VBoxClient-all"
+    "blackwalls"
+    "shotkey"
+    "xbanish"
+    "xcompmgr"
 )
 
 run_cmd() {
