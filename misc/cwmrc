@@ -94,10 +94,11 @@ bind-key 4S-e           menu-exec
 
 bind-mouse 4-1	        window-move
 
-# Autogroup some apps
+# Autogroup
 autogroup 1	        "st,st"
-autogroup 3	        "google-chrome,firefox"
-                        
+autogroup 3	        "Google-chrome"
+
+# TermBar
 ignore		        "termbar"
 autogroup 0	        "termbar"
 
