@@ -9,6 +9,7 @@ init() {
 
 run() {
     echo "$(date) cwm: start cwm on run mode." >>$log
+    cwmlocal &
     exec cwm >/dev/null 2>&1
 }
 
