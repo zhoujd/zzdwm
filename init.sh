@@ -73,6 +73,11 @@ install_bin() {
     echo "Install bin done"
 }
 
+install_misc() {
+    ln -sfTv $CORE_ROOT/misc/.cwmrc ~/.cwmrc
+    echo "Install misc done"
+}
+
 build() {
     local projects=(
         $CORE_ROOT/src/dwm
@@ -111,10 +116,11 @@ all() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-Usage: $app {dep|dm|bin|build|-b|clean|-c|all|-a}
+Usage: $app {dep|dm|bin|misc|build|-b|clean|-c|all|-a}
 dep          --    Install depend package
 dm           --    Install xsession entry
 bin          --    Install bin
+misc         --    Install misc
 build|-b     --    Build all
 clean|-c     --    Clean all
 all|-a       --    Install all
@@ -130,6 +136,9 @@ case $1 in
         ;;
     bin )
         install_bin
+        ;;
+    misc )
+        install_misc
         ;;
     build|-b )
         build
