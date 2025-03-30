@@ -11,18 +11,18 @@ opt=(
     "xcompmgr"
 )
 
-start() {
+spawn() {
     local cmd=$1
     if [ -n "$(which $cmd)" ]; then
+        echo "$(date) cwm: spawn $cmd." >>$log
         $cmd >/dev/null 2>&1 || true
-        echo "$(date) $app: run $cmd success." >>$log
     fi
 }
 
 init() {
     rm -rf $log
     for i in "${opt[@]}"; do
-        start $i &
+        spawn $i &
     done
 }
 
