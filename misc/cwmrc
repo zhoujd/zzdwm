@@ -92,7 +92,9 @@ bind-key 4S-g           menu-group
 bind-key 4S-a           menu-cmd
 bind-key 4S-e           menu-exec
 
+# Mouse
 bind-mouse 4-1	        window-move
+bind-mouse 4-3	        window-resize
 
 # Autogroup
 autogroup 1	        "st,st"
