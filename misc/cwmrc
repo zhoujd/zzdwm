@@ -116,7 +116,12 @@ bind-key 4M-u           "dmenu_app code"
 
 # Run dmenu
 bind-key 4-p            "dmenu_drun"
+bind-key 4M-p           "dmenu_drun"
 bind-key 4-r            "dmenu_run"
+bind-key 4M-r           "dmenu_run"
 bind-key 4-w            "dmenu_win"
+bind-key 4M-w           "dmenu_win"
 bind-key 4-s            "dmenu_ssh"
+bind-key 4M-s           "dmenu_ssh"
 bind-key 4-q            "dmenu_exit"
+bind-key 4M-q           "dmenu_exit"
