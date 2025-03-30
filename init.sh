@@ -23,24 +23,24 @@ install_dep() {
 
 install_dm() {
     echo "Install dwm"
-    sudo cp -fv $CORE_ROOT/bin/startdwm /usr/local/bin
+    sudo cp -fv $CORE_ROOT/bin/dwm-session /usr/local/bin
     sudo mkdir -p /usr/share/xsessions
     sudo tee /usr/share/xsessions/dwm.desktop <<EOF
 [Desktop Entry]
 Name=DWM Session
 Comment=Dynamic Window Manager
-Exec=startdwm
+Exec=dwm-session
 Icon=dwm
 Type=Application
 DesktopNames=DWM
 EOF
     echo "Install cwm"
-    sudo cp -fv $CORE_ROOT/bin/startcwm /usr/local/bin
+    sudo cp -fv $CORE_ROOT/bin/cwm-session /usr/local/bin
     sudo tee /usr/share/xsessions/cwm.desktop <<EOF
 [Desktop Entry]
 Name=CWM Session
 Comment=Clam Window Manager
-Exec=startcwm
+Exec=cwm-session
 Icon=cwm
 Type=Application
 DesktopNames=CWM
