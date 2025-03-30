@@ -109,6 +109,7 @@ all() {
     install_dep
     install_dm
     install_bin
+    install_misc
     build
     echo "Install all done"
 }
