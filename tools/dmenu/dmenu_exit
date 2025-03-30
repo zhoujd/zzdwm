@@ -12,13 +12,18 @@ menu=(
     "Off-screen"  # 6
 )
 
+sudorun() {
+    password=$(echo -n | dmenu -P -p "Enter sudo password:")
+    echo "$password" | sudo -S $*
+}
+
 choice=$(printf '%s\n' "${menu[@]}" | dmenu -i -ix -l 10 -p Operation)
 case $choice in
-    0) exit ;;
-    1) exec xdotool key super+shift+q ;;
-    2) exec xdotool key super+shift+control+q ;;
-    3) exec systemctl poweroff -i ;;
-    4) exec systemctl reboot ;;
-    5) exec slock ;;
-    6) exec xset dpms force off ;;
+    0 ) exit ;;
+    1 ) xdotool key super+shift+q ;;
+    2 ) xdotool key super+shift+control+q ;;
+    3 ) sudorun shutdown -h now ;;
+    4 ) sudorun reboot ;;
+    5 ) slock ;;
+    6 ) xset dpms force off ;;
 esac
