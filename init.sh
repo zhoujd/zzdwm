@@ -22,8 +22,9 @@ install_dep() {
 }
 
 install_dm() {
+    local target=/usr/local/bin
     echo "Install dwm"
-    sudo cp -fv $CORE_ROOT/bin/dwm-session /usr/local/bin
+    sudo ln -sfvT $CORE_ROOT/bin/dwm-session $target/dwm-session
     sudo mkdir -p /usr/share/xsessions
     sudo tee /usr/share/xsessions/dwm.desktop <<EOF
 [Desktop Entry]
@@ -35,7 +36,7 @@ Type=Application
 DesktopNames=DWM
 EOF
     echo "Install cwm"
-    sudo cp -fv $CORE_ROOT/bin/cwm-session /usr/local/bin
+    sudo ln -sfvT $CORE_ROOT/bin/cwm-session $target/cwm-session
     sudo tee /usr/share/xsessions/cwm.desktop <<EOF
 [Desktop Entry]
 Name=CWM Session
