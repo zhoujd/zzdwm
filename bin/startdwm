@@ -3,8 +3,23 @@
 log=$HOME/.dwm-errors
 kind=run
 
+opt=(
+    "VBoxClient-all"
+)
+
+start() {
+    local cmd=$1
+    if [ -n "$(which $cmd)" ]; then
+        $cmd >/dev/null 2>&1 || true
+        echo "$(date) $app: run $cmd success." >>$log
+    fi
+}
+
 init() {
     rm -rf $log
+    for i in "${opt[@]}"; do
+        start $i &
+    done
 }
 
 run() {
