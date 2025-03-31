@@ -19,21 +19,21 @@ spawn() {
     fi
 }
 
-init() {
+run() {
+    echo "$(date) cwm: start cwm on run mode." >$log
+    echo "$(date) dwm: start applications." >>$log
     for i in "${opt[@]}"; do
         spawn $i &
     done
-}
-
-run() {
-    echo "$(date) cwm: start cwm on run mode." >$log
-    init
     exec cwm >/dev/null 2>&1
 }
 
 debug() {
     echo "$(date) cwm: start cwm on debug mode." >$log
-    init
+    echo "$(date) dwm: start applications." >>$log
+    for i in "${opt[@]}"; do
+        spawn $i &
+    done
     exec cwm >>$log 2>&1
 }
 
