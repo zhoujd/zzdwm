@@ -13,7 +13,7 @@ menu=(
 )
 
 sudorun() {
-    password=$(echo -n | dmenu -P -p "Enter sudo password:")
+    password=$(echo -n | dmenu -P -p "[sudo] password for $USER:")
     echo "$password" | sudo -S $*
 }
 
