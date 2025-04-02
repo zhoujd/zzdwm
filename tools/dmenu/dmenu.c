@@ -207,7 +207,8 @@ recalculatenumbers()
 	}
 	for (item = items; item && item->text; item++)
 		denom++;
-	snprintf(numbers, NUMBERSBUFSIZE, "%d/%d", numer, denom);
+	if (!passwd)
+		snprintf(numbers, NUMBERSBUFSIZE, "%d/%d", numer, denom);
 
 	if (numer != denom) {
 		new_mh = (MIN(numer, lines) + 1) * bh;
