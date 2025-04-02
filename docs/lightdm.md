@@ -5,6 +5,7 @@ lightdm
 
 ```
 $ sudo apt install lightdm
+$ sudo rm -f /usr/share/xsessions/lightdm-xsession.desktop
 $ sudo systemctl enable lightdm
 $ sudo tee /etc/lightdm/lightdm-gtk-greeter.conf <<EOF
 [greeter]
@@ -20,7 +21,9 @@ $ sudo systemctl restart lightdm
 
 ```
 ## In /etc/lightdm/lightdm.conf Go down the file
-$ sudo vim /etc/lightdm/lightdm.conf
-greeter-hide-users=false
+## Update /etc/lightdm/lightdm.conf
+## greeter-hide-users=false
+$ sudo sed -i 's/#greeter-hide-users=false/greeter-hide-users=false/g' /etc/lightdm/lightdm.conf
+$ grep -n greeter-hide-users=false /etc/lightdm/lightdm.conf
 $ sudo systemctl restart lightdm
 ```
