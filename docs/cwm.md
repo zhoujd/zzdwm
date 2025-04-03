@@ -13,9 +13,11 @@ CWM
 
 ```
 ## https://man.openbsd.org/cwm.1
+## https://man.openbsd.org/cwmrc.5
+## https://man.openbsd.org/xprop.1
 ```
 
-## Termbar
+## Status
 
 ```
 ## https://github.com/gonzalo-/termbarc
