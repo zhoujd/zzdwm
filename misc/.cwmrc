@@ -91,16 +91,9 @@ bind-key 4S-m           menu-window
 bind-key 4S-g           menu-group
 bind-key 4S-a           menu-cmd
 bind-key 4S-e           menu-exec
+bind-key 4S-s           menu-ssh
 
-# Mouse
-bind-mouse 4-1	        window-move
-bind-mouse 4-3	        window-resize
-
-# Autogroup
-autogroup 1	        "st,st"
-autogroup 3	        "Google-chrome"
-
-# Run apps
+# Application
 bind-key 4-c            "st"
 bind-key 4M-c           "dmenu_app st"
 bind-key 4-e            "emacs"
@@ -110,7 +103,7 @@ bind-key 4M-g           "dmenu_app google-chrome"
 bind-key 4-u            "code"
 bind-key 4M-u           "dmenu_app code"
 
-# Run dmenu
+# Bind dmenu
 bind-key 4-p            "dmenu_drun"
 bind-key 4M-p           "dmenu_drun"
 bind-key 4-r            "dmenu_run"
@@ -121,3 +114,11 @@ bind-key 4-s            "dmenu_ssh"
 bind-key 4M-s           "dmenu_ssh"
 bind-key 4-q            "dmenu_exit"
 bind-key 4M-q           "dmenu_exit"
+
+# Mouse
+bind-mouse 4-1	        window-move
+bind-mouse 4-3	        window-resize
+
+# Autogroup
+autogroup 1	        "st,st"
+autogroup 3	        "Google-chrome"
