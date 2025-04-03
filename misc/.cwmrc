@@ -100,10 +100,6 @@ bind-mouse 4-3	        window-resize
 autogroup 1	        "st,st"
 autogroup 3	        "Google-chrome"
 
-# TermBar
-ignore		        "termbar"
-autogroup 0	        "termbar"
-
 # Run apps
 bind-key 4-c            "st"
 bind-key 4M-c           "dmenu_app st"
