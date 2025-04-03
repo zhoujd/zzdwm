@@ -4,13 +4,13 @@
 
 title="operation:"
 menu=(
-    "Cancel"      # 0
-    "Logout"      # 1
-    "Reload"      # 2
-    "Shutdown"    # 3
-    "Reboot"      # 4
-    "Lock"        # 5
-    "Off-screen"  # 6
+    "cancel"      # 0
+    "logout"      # 1
+    "reload"      # 2
+    "shutdown"    # 3
+    "reboot"      # 4
+    "lock"        # 5
+    "off-screen"  # 6
 )
 
 sudorun() {
