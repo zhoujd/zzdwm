@@ -1,5 +1,6 @@
 #!/bin/bash
 
+title="window:"
 windows=$(wmctrl -xl 2>/dev/null)
 apps=$(echo "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 3-3,5- | \
            sed 's/^[a-zA-Z0-9-]*\.//')
@@ -14,7 +15,7 @@ apps=$(echo "$apps" | \
                  for(i=0; i < max - cur + 1; i++) printf " "; \
                  $1 = ""; printf "%s\n", $0}')
 
-target=$(echo "$apps" | dmenu -l 10 -i -ix -p Window)
+target=$(echo "$apps" | dmenu -l 10 -i -ix -p $title)
 
 if [[ -n "$target" ]]; then
     apps=$(echo "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1)

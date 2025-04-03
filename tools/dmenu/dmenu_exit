@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# A simple logout dialog
+## logout dialog
 
+title="operation:"
 menu=(
     "Cancel"      # 0
     "Logout"      # 1
@@ -17,7 +18,7 @@ sudorun() {
     echo "$password" | sudo -S $*
 }
 
-choice=$(printf '%s\n' "${menu[@]}" | dmenu -i -ix -l 10 -p Operation)
+choice=$(printf '%s\n' "${menu[@]}" | dmenu -i -ix -l 10 -p $title)
 case $choice in
     0 ) exit ;;
     1 ) xdotool key super+shift+q ;;
