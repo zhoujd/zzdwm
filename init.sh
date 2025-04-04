@@ -112,6 +112,7 @@ all() {
     install_bin
     install_misc
     build
+    clean
     echo "Install all done"
 }
 
