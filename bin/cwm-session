@@ -12,7 +12,7 @@ opt=(
 )
 
 log() {
-    echo "[$(date)]$@"
+    echo "[$$.$(date +%N)]$@"
 }
 
 spawn() {
