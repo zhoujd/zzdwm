@@ -4,36 +4,34 @@ log=$HOME/.cwm-errors
 kind=run
 
 opt=(
-    "VBoxClient-all"
-    "blackwalls"
-    "shotkey"
-    "xbanish"
-    "xcompmgr"
+    "VBoxClient-all &"
+    "blackwalls &"
+    "shotkey &"
+    "xbanish &"
+    "xcompmgr &"
 )
 
 spawn() {
-    local cmd=$1
-    if [ -n "$(which $cmd)" ]; then
-        echo "$(date) cwm: spawn $cmd." >>$log
-        $cmd >/dev/null 2>&1 || true
-    fi
+    for i in "${opt[@]}"; do
+        app=$(echo $i | awk '{print $1}')
+        if [ -n "$(which $app)" ]; then
+            echo "$(date) cwm: spawn $app."
+            eval $i >/dev/null 2>&1
+        fi
+    done
 }
 
 run() {
     echo "$(date) cwm: start cwm on run mode." >$log
-    echo "$(date) dwm: start applications." >>$log
-    for i in "${opt[@]}"; do
-        spawn $i &
-    done
+    echo "$(date) cwm: start applications." >>$log
+    spawn >>$log 2>&1
     exec cwm >/dev/null 2>&1
 }
 
 debug() {
     echo "$(date) cwm: start cwm on debug mode." >$log
-    echo "$(date) dwm: start applications." >>$log
-    for i in "${opt[@]}"; do
-        spawn $i &
-    done
+    echo "$(date) cwm: start applications." >>$log
+    spawn >>$log 2>&1
     exec cwm >>$log 2>&1
 }
 
