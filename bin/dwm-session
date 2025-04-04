@@ -9,10 +9,10 @@ opt=(
 
 spawn() {
     for i in "${opt[@]}"; do
-        app=$(echo $i | awk '{print $1}')
+        app=$(echo "$i" | awk '{print $1}')
         if [ -n "$(which $app)" ]; then
             echo "$(date) dwm: spawn $app."
-            eval $i >/dev/null 2>&1
+            eval "$i" >/dev/null 2>&1
         fi
     done
 }
