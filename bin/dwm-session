@@ -18,24 +18,24 @@ spawn() {
 }
 
 run() {
-    echo "$(date) dwm: start dwm on run mode." >$log
-    echo "$(date) dwm: start applications." >>$log
-    spawn >>$log 2>&1
+    echo "$(date) dwm: start dwm on run mode."
+    echo "$(date) dwm: start applications."
+    spawn
     exec dwm >/dev/null 2>&1
 }
 
 debug() {
-    echo "$(date) dwm: start dwm on debug mode." >$log
-    echo "$(date) dwm: start applications." >>$log
-    spawn >>$log 2>&1
-    exec dwm >>$log 2>&1
+    echo "$(date) dwm: start dwm on debug mode."
+    echo "$(date) dwm: start applications."
+    spawn
+    exec dwm
 }
 
 case $kind in
     run|-r )
-        run
+        run >$log 2>&1
         ;;
     debug|-d )
-        debug
+        debug >$log 2>&1
         ;;
 esac
