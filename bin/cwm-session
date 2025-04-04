@@ -11,26 +11,30 @@ opt=(
     "xcompmgr &"
 )
 
+log() {
+    echo "[$(date)]$@"
+}
+
 spawn() {
     for i in "${opt[@]}"; do
         app=$(echo "$i" | awk '{print $1}')
         if [ -n "$(which $app)" ]; then
-            echo "$(date) cwm: spawn $app."
+            log "[spawn] run $app."
             eval "$i" >/dev/null 2>&1
         fi
     done
 }
 
 run() {
-    echo "$(date) cwm: start cwm on run mode."
-    echo "$(date) cwm: start applications."
+    log "[cwm] start cwm on run mode."
+    log "[cwm] start applications."
     spawn
     exec cwm >/dev/null 2>&1
 }
 
 debug() {
-    echo "$(date) cwm: start cwm on debug mode."
-    echo "$(date) cwm: start applications."
+    log "[cwm] start cwm on debug mode."
+    log "[cwm] start applications."
     spawn
     exec cwm
 }
