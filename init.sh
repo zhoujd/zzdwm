@@ -40,7 +40,7 @@ EOF
     sudo tee /usr/share/xsessions/cwm.desktop <<EOF
 [Desktop Entry]
 Name=CWM Session
-Comment=Clam Window Manager
+Comment=OpenBSD's CWM
 Exec=cwm-session
 Icon=cwm
 Type=Application
