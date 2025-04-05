@@ -13,7 +13,7 @@ OBJS=		calmwm.o screen.o xmalloc.o client.o menu.o \
 		search.o util.o xutil.o conf.o xevents.o group.o \
 		kbfunc.o strlcpy.o strlcat.o parse.o \
 		strtonum.o reallocarray.o
-		
+
 PKG_CONFIG?=	pkg-config
 
 CPPFLAGS+=	`${PKG_CONFIG} --cflags x11 xft xrandr`
