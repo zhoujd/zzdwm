@@ -15,7 +15,7 @@ apps=$(echo "$apps" | \
                  for(i=0; i < max - cur + 1; i++) printf " "; \
                  $1 = ""; printf "%s\n", $0}')
 
-target=$(echo "$apps" | dmenu -l 10 -i -ix -p $title)
+target=$(echo -n "$apps" | dmenu -l 10 -i -ix -p $title)
 
 if [[ -n "$target" ]]; then
     apps=$(echo "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1)
