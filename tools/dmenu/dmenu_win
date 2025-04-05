@@ -1,24 +1,41 @@
 #!/bin/bash
 
 title="window:"
-windows=$(wmctrl -xl 2>/dev/null)
-apps=$(echo "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 3-3,5- | \
-           sed 's/^[a-zA-Z0-9-]*\.//')
+num=$(wmctrl -l 2>/dev/null | wc -l)
 
-# Add spaces to align the WM_NAMEs of the windows
-max=$(echo "$apps" | awk '{cur=length($1); \
+win_menu() {
+    windows=$(wmctrl -xl 2>/dev/null)
+    apps=$(echo "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 3-3,5- | \
+               sed 's/^[a-zA-Z0-9-]*\.//')
+
+    # Add spaces to align the WM_NAMEs of the windows
+    max=$(echo "$apps" | awk '{cur=length($1); \
                            max=(cur>max?cur:max)} END{print max}')
 
-apps=$(echo "$apps" | \
-           awk -v max="$max" \
-               '{cur=length($1); printf $1; \
+    apps=$(echo "$apps" | \
+               awk -v max="$max" \
+                   '{cur=length($1); printf $1; \
                  for(i=0; i < max - cur + 1; i++) printf " "; \
                  $1 = ""; printf "%s\n", $0}')
 
-target=$(echo -n "$apps" | dmenu -l 10 -i -ix -p $title)
+    target=$(echo -n "$apps" | dmenu -l 10 -i -ix -p $title)
 
-if [[ -n "$target" ]]; then
-    apps=$(echo "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1)
-    id=$(echo $apps | awk -vi=$((target + 1)) '{print $i}')
-    exec wmctrl -i -a $id
-fi
+    if [[ -n "$target" ]]; then
+        apps=$(echo "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1)
+        id=$(echo $apps | awk -vi=$((target + 1)) '{print $i}')
+        exec wmctrl -i -a $id
+    fi
+}
+
+win_empty() {
+    echo -n "" | dmenu -l 10 -i -ix -p $title
+}
+
+case $num in
+    0 )
+        win_empty
+        ;;
+    * )
+        win_menu
+        ;;
+esac
