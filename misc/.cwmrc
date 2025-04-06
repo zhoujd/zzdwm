@@ -94,6 +94,11 @@ bind-key 4M-j           window-snap-down
 bind-key 4M-k           window-snap-up
 bind-key 4M-l           window-snap-right
 
+bind-key 4C-h           window-hmaximize
+bind-key 4C-j           window-vmaximize
+bind-key 4C-k           window-vmaximize
+bind-key 4C-l           window-hmaximize
+
 bind-key 4S-m           menu-window
 bind-key 4S-g           menu-group
 bind-key 4S-a           menu-cmd
