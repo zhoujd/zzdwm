@@ -26,6 +26,9 @@ EOF
 }
 
 restart() {
+    echo "Remove $HOME/.Xauthority"
+    rm -fv $HOME/.Xauthority
+    echo "Restart lightdm service"
     sudo systemctl restart lightdm
     echo "Restart lightdm done"
 }
