@@ -127,8 +127,8 @@ bind-key 4M-s           "dmenu_ssh"
 bind-key 4-q            "dmenu_exit"
 bind-key 4M-q           "dmenu_exit"
 
-bind-key 4S-Return      terminal                # Spawn a new terminal
-bind-key 4S-z           lock                    # Lock the screen
+bind-key 4S-Return      terminal
+bind-key 4S-z           lock
 
 # Remove all mouse default keybindings
 unbind-mouse all
