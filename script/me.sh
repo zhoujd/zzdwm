@@ -28,7 +28,7 @@ clean() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-Usage $app {dep|build|-b|clean|-c}
+Usage: $app {dep|build|-b|clean|-c}
 EOF
 }
 
