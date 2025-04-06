@@ -25,6 +25,10 @@ vtile			50
 
 moveamount		2
 
+# Define special commands
+command terminal        st
+command lock            slock
+
 # Key bindings
 
 # Remove all default keybindings
@@ -62,10 +66,13 @@ bind-key 4S-9           window-movetogroup-9
 
 bind-key 4S-a           group-toggle-all
 bind-key 4S-g           window-group
-                        
+
+bind-key 4-Tab          cyclegroup
+bind-key 4S-Tab         rcyclegroup
+
 bind-key 4SC-q          restart
 bind-key 4S-q           quit
-                        
+
 bind-key 4S-c           window-close
 bind-key 4S-u           window-hide
 
@@ -81,12 +88,12 @@ bind-key 4S-h           window-move-left
 bind-key 4S-j           window-move-down
 bind-key 4S-k           window-move-up
 bind-key 4S-l           window-move-right
-                        
+
 bind-key 4M-h           window-snap-left
 bind-key 4M-j           window-snap-down
 bind-key 4M-k           window-snap-up
 bind-key 4M-l           window-snap-right
-                        
+
 bind-key 4S-m           menu-window
 bind-key 4S-g           menu-group
 bind-key 4S-a           menu-cmd
@@ -115,10 +122,17 @@ bind-key 4M-s           "dmenu_ssh"
 bind-key 4-q            "dmenu_exit"
 bind-key 4M-q           "dmenu_exit"
 
+bind-key 4S-Return      terminal                # Spawn a new terminal
+bind-key 4S-z           lock                    # Lock the screen
+
+# Remove all mouse default keybindings
+unbind-mouse all
+
 # Mouse
-bind-mouse 4-1	        window-move
-bind-mouse 4-3	        window-resize
+bind-mouse 4-1          window-move
+bind-mouse 4-2          window-lower
+bind-mouse 4-3          window-resize
 
 # Autogroup
-autogroup 1	        "st,st"
-autogroup 3	        "Google-chrome"
+autogroup 1             "st,st"
+autogroup 3             "Google-chrome"
