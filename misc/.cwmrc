@@ -67,8 +67,8 @@ bind-key 4S-9           window-movetogroup-9
 bind-key 4S-a           group-toggle-all
 bind-key 4S-g           window-group
 
-bind-key 4-Tab          cyclegroup
-bind-key 4S-Tab         rcyclegroup
+bind-key 4-Tab          group-cycle
+bind-key 4S-Tab         group-rcycle
 
 bind-key 4SC-q          restart
 bind-key 4S-q           quit
