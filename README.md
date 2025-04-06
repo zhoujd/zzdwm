@@ -22,14 +22,6 @@ $ sudo apt install liblibxrandr-dev
 $ sudo apt install libxcomposite-dev libxdamage-dev
 ```
 
-## Build dwm source
-
-```bash
-$ cd src
-$ make
-$ sudo make install
-```
-
 ## Init dwm
 
 ```bash
