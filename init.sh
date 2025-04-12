@@ -80,7 +80,7 @@ install_misc() {
 }
 
 build() {
-    local projects=(
+    local items=(
         $CORE_ROOT/src/dwm
         $CORE_ROOT/src/cwm
         $CORE_ROOT/tools/dmenu
@@ -91,12 +91,12 @@ build() {
         $CORE_ROOT/tools/xcompmgr
         $CORE_ROOT/tools/utils
     )
-    for proj in ${projects[@]}; do
-        echo "Build $proj"
-        make -C $proj clean
-        make -C $proj
-        sudo make -C $proj install
-        echo "Build $proj done"
+    for item in ${items[@]}; do
+        echo "Build $item"
+        make -C $item clean
+        make -C $item
+        sudo make -C $item install
+        echo "Build $item done"
     done
     echo "Build done"
 }
