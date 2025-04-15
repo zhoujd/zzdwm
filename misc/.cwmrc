@@ -80,8 +80,8 @@ bind-key 4S-u           window-hide
 
 bind-key 4-f            window-fullscreen
 bind-key 4-m            window-maximize
-bind-key 4-t            window-htile
-bind-key 4S-t           window-vtile
+bind-key 4-t            window-vtile
+bind-key 4S-t           window-htile
 
 bind-key 4-j            window-cycle
 bind-key 4-k            window-rcycle
