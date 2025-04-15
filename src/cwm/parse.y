@@ -108,7 +108,7 @@ string		: string STRING			{
 
 numberstring	: NUMBER				{
 			char	*s;
-			if (asprintf(&s, "%lld", $1) == -1) {
+			if (asprintf(&s, "%ld", $1) == -1) {
 				yyerror("string: asprintf");
 				YYERROR;
 			}
