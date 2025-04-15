@@ -26,8 +26,10 @@ vtile			50
 moveamount		2
 
 # Define special commands
-command terminal        st
-command lock            slock
+command terminal        "st"
+command emacs           "emacs"
+command code            "code"
+command chrome          "google-chrome"
 
 # Key bindings
 
@@ -127,8 +129,8 @@ bind-key 4M-s           "dmenu_ssh"
 bind-key 4-q            "dmenu_exit"
 bind-key 4M-q           "dmenu_exit"
 
-bind-key 4S-Return      terminal
-bind-key 4S-z           lock
+bind-key 4S-Return      "st"
+bind-key 4S-z           "slock"
 
 # Remove all mouse default keybindings
 unbind-mouse all
