@@ -18,7 +18,7 @@ PKG_CONFIG?=	pkg-config
 
 CPPFLAGS+=	`${PKG_CONFIG} --cflags x11 xft xrandr`
 
-CFLAGS?=	-Wall -O2 -g -D_GNU_SOURCE
+CFLAGS?=	-Wall -O2 -g -D_GNU_SOURCE -Wno-format-truncation
 
 LDFLAGS+=	`${PKG_CONFIG} --libs x11 xft xrandr`
 
