@@ -195,6 +195,7 @@ struct client_ctx {
 	char			*res_class; /* class hint */
 	char			*res_name; /* class hint */
 	int			 initial_state; /* wm hint */
+	int			 resizehints; /* 1 means respect size hints in tiled resizals */
 };
 TAILQ_HEAD(client_q, client_ctx);
 
