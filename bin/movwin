@@ -1,29 +1,33 @@
 #!/bin/sh
-# Move a window to the side of a screen.
+# Move a window to the side/center of a screen.
 
 gap=8
 border=1
-case "$1" in
-    "left") xdotool getactivewindow windowmove $gap y ;;
-    "top")  xdotool getactivewindow windowmove x $gap ;;
-    "right")
-	screen_width=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
-	win_width=$(xdotool getactivewindow getwindowgeometry --shell | grep WIDTH | cut -d= -f2)
-	xdotool getactivewindow windowmove $(( $screen_width - $win_width - $gap - $border*2 )) y
-	;;
-    "bottom")
-	screen_height=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
-	win_height=$(xdotool getactivewindow getwindowgeometry --shell | grep HEIGHT | cut -d= -f2)
-	xdotool getactivewindow windowmove x $(( $screen_height - $win_height - $gap - $border*2 ))
-	;;
-    "center")
-	screen_width=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
-	screen_height=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
+case $1 in
+    left )
+        xdotool getactivewindow windowmove $gap y
+        ;;
+    top )
+        xdotool getactivewindow windowmove x $gap
+        ;;
+    right )
+        screen_width=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
+        win_width=$(xdotool getactivewindow getwindowgeometry --shell | grep WIDTH | cut -d= -f2)
+        xdotool getactivewindow windowmove $(( $screen_width - $win_width - $gap - $border*2 )) y
+        ;;
+    bottom )
+        screen_height=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
+        win_height=$(xdotool getactivewindow getwindowgeometry --shell | grep HEIGHT | cut -d= -f2)
+        xdotool getactivewindow windowmove x $(( $screen_height - $win_height - $gap - $border*2 ))
+        ;;
+    * )
+        screen_width=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
+        screen_height=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
         win_width=$(xdotool getactivewindow getwindowgeometry --shell | grep WIDTH | cut -d= -f2)
         win_height=$(xdotool getactivewindow getwindowgeometry --shell | grep HEIGHT | cut -d= -f2)
-	xdotool getactivewindow windowmove $(( ($screen_width - $win_width)/2 )) $(( ($screen_height - $win_height)/2 ))
-	;;
-    *)
-	echo "Usage: $(basename $0) {left|top|right|bottom|center}"
+        xdotool getactivewindow windowmove $(( ($screen_width - $win_width)/2 )) $(( ($screen_height - $win_height)/2 ))
+        ;;
+    --help|-h )
+        echo "Usage: $(basename $0) {left|top|right|bottom|--help|-h}"
         ;;
 esac

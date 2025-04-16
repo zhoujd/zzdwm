@@ -67,6 +67,7 @@ install_bin() {
         $CORE_ROOT/bin/dvtm-status
         $CORE_ROOT/bin/nq
         $CORE_ROOT/bin/nqtail
+        $CORE_ROOT/bin/movwin
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $target
