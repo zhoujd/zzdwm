@@ -781,6 +781,14 @@ client_get_sizehints(struct client_ctx *cc)
 		cc->hint.incw = size.width_inc;
 		cc->hint.inch = size.height_inc;
 	}
+	if (size.flags & PAspect) {
+		if (size.min_aspect.x > 0)
+			cc->hint.mina = (float)size.min_aspect.y /
+			    size.min_aspect.x;
+		if (size.max_aspect.y > 0)
+			cc->hint.maxa = (float)size.max_aspect.x /
+			    size.max_aspect.y;
+	}
 
 	if (cc->resizehints) {
 		cc->hint.incw = MAX(1, cc->hint.incw);
@@ -792,15 +800,6 @@ client_get_sizehints(struct client_ctx *cc)
 		cc->hint.inch = 1;
 		cc->hint.minw = 1;
 		cc->hint.minh = 1;
-	}
-
-	if (size.flags & PAspect) {
-		if (size.min_aspect.x > 0)
-			cc->hint.mina = (float)size.min_aspect.y /
-			    size.min_aspect.x;
-		if (size.max_aspect.y > 0)
-			cc->hint.maxa = (float)size.max_aspect.x /
-			    size.max_aspect.y;
 	}
 }
 
