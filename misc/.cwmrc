@@ -83,10 +83,9 @@ bind-key 4-m            window-maximize
 bind-key 4-t            window-vtile
 bind-key 4S-t           window-htile
 
+bind-key 4-h            window-cycle-inclass
 bind-key 4-j            window-cycle
 bind-key 4-k            window-rcycle
-
-bind-key 4-h            window-cycle-inclass
 bind-key 4-l            window-rcycle-inclass
 
 bind-key 4S-h           window-move-left
