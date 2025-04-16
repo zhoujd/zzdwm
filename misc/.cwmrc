@@ -132,6 +132,8 @@ bind-key 4M-q           "dmenu_exit"
 bind-key 4S-Return      "st"
 bind-key 4S-z           "slock"
 bind-key 4S-x           "movwin"
+bind-key 4-n            "nextwin"
+bind-key 4S-n           "prevwin"
 
 # Remove all mouse default keybindings
 unbind-mouse all
