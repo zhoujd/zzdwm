@@ -69,8 +69,8 @@ bind-key 4S-9           window-movetogroup-9
 bind-key 4S-a           group-toggle-all
 bind-key 4S-g           window-group
 
-bind-key 4-Tab          group-cycle
-bind-key 4S-Tab         group-rcycle
+bind-key 4-h            group-cycle
+bind-key 4-l            group-rcycle
 
 bind-key 4SC-q          restart
 bind-key 4S-q           quit
@@ -80,13 +80,15 @@ bind-key 4S-u           window-hide
 
 bind-key 4-f            window-fullscreen
 bind-key 4-m            window-maximize
+
 bind-key 4-t            window-vtile
 bind-key 4S-t           window-htile
 
-bind-key 4-h            window-cycle-inclass
 bind-key 4-j            window-cycle
 bind-key 4-k            window-rcycle
-bind-key 4-l            window-rcycle-inclass
+
+bind-key 4-v            window-cycle-inclass
+bind-key 4S-v           window-rcycle-inclass
 
 bind-key 4S-h           window-move-left
 bind-key 4S-j           window-move-down
