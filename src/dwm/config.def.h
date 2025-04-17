@@ -116,6 +116,7 @@ static const char *slockcmd[] = { "slock", NULL };
 static const char *duptermcmd[] = { "dupterm", NULL };
 static const char *nextwincmd[] = { "nextwin", NULL };
 static const char *prevwincmd[] = { "prevwin", NULL };
+static const char *movwincmd[] = { "movwin", NULL };
 
 static const Key keys[] = {
 	/* modifier                     key        function          argument */
@@ -139,6 +140,7 @@ static const Key keys[] = {
 	{ MODKEY|Mod1Mask,              XK_q,      spawn,            {.v = exitmenucmd} },
 	{ MODKEY,                       XK_n,      spawn,            {.v = nextwincmd} },
 	{ MODKEY|ShiftMask,             XK_n,      spawn,            {.v = prevwincmd} },
+	{ MODKEY|ShiftMask,             XK_x,      spawn,            {.v = movwincmd} },
 	{ MODKEY|ShiftMask,             XK_z,      spawn,            {.v = slockcmd} },
 	{ MODKEY|ShiftMask,             XK_Return, spawn,            {.v = duptermcmd} },
 	{ MODKEY,                       XK_b,      togglebar,        {0} },
