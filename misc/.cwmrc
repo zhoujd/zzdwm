@@ -105,6 +105,11 @@ bind-key 4C-j           window-vmaximize
 bind-key 4C-k           window-vmaximize
 bind-key 4C-l           window-hmaximize
 
+bind-key C4S-h          window-resize-left-big
+bind-key C4S-j          window-resize-down-big
+bind-key C4S-k          window-resize-up-big
+bind-key C4S-l          window-resize-right-big
+
 bind-key 4S-m           menu-window
 bind-key 4S-g           menu-group
 bind-key 4S-a           menu-cmd
