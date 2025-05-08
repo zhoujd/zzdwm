@@ -12,6 +12,7 @@ color activeborder	"#5294E2"
 color inactiveborder	"#565656"
 color urgencyborder	"#cc241d"
 
+
 # Menu colors
 color font		"#eeeeee"
 color selfont		"#eeeeee"
@@ -121,7 +122,7 @@ bind-key 4-c            "st"
 bind-key 4M-c           "dmenu_app st"
 bind-key 4-e            "emacs"
 bind-key 4M-e           "dmenu_app emacs"
-bind-key 4S-e           "emacsclient -n -c -a emacs"
+bind-key 4S-e           "emacsclient -n -c"
 bind-key 4-g            "google-chrome"
 bind-key 4M-g           "dmenu_app google-chrome"
 bind-key 4-u            "code"
