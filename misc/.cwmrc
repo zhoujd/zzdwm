@@ -1,4 +1,4 @@
-# CWM config file
+# OpenBSD's CWM config file
 
 # Sticky groups: uncomment to enable worskpace-like behavior
 sticky			yes
@@ -11,7 +11,6 @@ borderwidth		1
 color activeborder	"#5294E2"
 color inactiveborder	"#565656"
 color urgencyborder	"#cc241d"
-
 
 # Menu colors
 color font		"#eeeeee"
