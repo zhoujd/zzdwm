@@ -101,9 +101,11 @@ static const Layout layouts[] = {
 /* commands */
 static const char *termcmd[] = { "st", NULL };
 static const char *pulltermcmd[] = { "dmenu_app", "st", NULL };
+static const char *nexttermcmd[] = { "nextwin", "st", NULL };
 static const char *emacscmd[] = { "emacs", NULL };
 static const char *emacsclientcmd[] = { "emacsclient", "-n", "-c", NULL };
 static const char *pullemacscmd[] = { "dmenu_app", "emacs", NULL };
+static const char *nextemacscmd[] = { "nextwin", "emacs", NULL };
 static const char *browsercmd[] = { "dmenu_drun", "google-chrome", NULL };
 static const char *pullbrowsercmd[] = { "dmenu_app", "google-chrome", NULL };
 static const char *codecmd[] = { "dmenu_drun", "code", NULL };
@@ -123,8 +125,10 @@ static const Key keys[] = {
 	/* modifier                     key        function          argument */
 	{ MODKEY,                       XK_c,      spawn,            {.v = termcmd} },
 	{ MODKEY|Mod1Mask,              XK_c,      spawn,            {.v = pulltermcmd} },
+	{ MODKEY|ControlMask,           XK_c,      spawn,            {.v = nexttermcmd} },
 	{ MODKEY,                       XK_e,      spawn,            {.v = emacscmd} },
 	{ MODKEY|Mod1Mask,              XK_e,      spawn,            {.v = pullemacscmd} },
+	{ MODKEY|ControlMask,           XK_e,      spawn,            {.v = nextemacscmd} },
 	{ MODKEY|ShiftMask,             XK_e,      spawn,            {.v = emacsclientcmd} },
 	{ MODKEY|ShiftMask,             XK_g,      spawn,            {.v = browsercmd} },
 	{ MODKEY|Mod1Mask,              XK_g,      spawn,            {.v = pullbrowsercmd} },
@@ -142,7 +146,7 @@ static const Key keys[] = {
 	{ MODKEY|Mod1Mask,              XK_q,      spawn,            {.v = exitmenucmd} },
 	{ MODKEY,                       XK_n,      spawn,            {.v = nextwincmd} },
 	{ MODKEY|ShiftMask,             XK_n,      spawn,            {.v = prevwincmd} },
-	{ MODKEY|ShiftMask,             XK_x,      spawn,            {.v = movwincmd} },
+	{ MODKEY|ShiftMask,             XK_c,      spawn,            {.v = movwincmd} },
 	{ MODKEY|ShiftMask,             XK_z,      spawn,            {.v = slockcmd} },
 	{ MODKEY|ShiftMask,             XK_Return, spawn,            {.v = duptermcmd} },
 	{ MODKEY,                       XK_b,      togglebar,        {0} },
@@ -164,9 +168,9 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_Tab,    view,             {0} },
 	{ MODKEY|ShiftMask,             XK_Tab,    shiftviewclients, {.i = +1} },
 	{ MODKEY|ControlMask,           XK_Tab,    shiftviewclients, {.i = -1} },
-	{ MODKEY|ShiftMask,             XK_c,      killclient,       {0} },
-	{ MODKEY|ControlMask,           XK_c,      killclient,       {.ui = 1} },
-	{ MODKEY|ShiftMask|ControlMask, XK_c,      killclient,       {.ui = 2} },
+	{ MODKEY|ShiftMask,             XK_x,      killclient,       {0} },
+	{ MODKEY|ControlMask,           XK_x,      killclient,       {.ui = 1} },
+	{ MODKEY|ShiftMask|ControlMask, XK_x,      killclient,       {.ui = 2} },
 	{ MODKEY,                       XK_t,      setlayout,        {.v = &layouts[0]} },
 	{ MODKEY,                       XK_f,      setlayout,        {.v = &layouts[1]} },
 	{ MODKEY,                       XK_m,      setlayout,        {.v = &layouts[2]} },
