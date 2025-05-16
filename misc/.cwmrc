@@ -105,10 +105,10 @@ bind-key 4C-j           window-vmaximize
 bind-key 4C-k           window-vmaximize
 bind-key 4C-l           window-hmaximize
 
-bind-key C4S-h          window-resize-left-big
-bind-key C4S-j          window-resize-down-big
-bind-key C4S-k          window-resize-up-big
-bind-key C4S-l          window-resize-right-big
+bind-key 4SC-h          window-resize-left-big
+bind-key 4SC-j          window-resize-down-big
+bind-key 4SC-k          window-resize-up-big
+bind-key 4SC-l          window-resize-right-big
 
 bind-key 4S-m           menu-window
 bind-key 4S-g           menu-group
@@ -119,8 +119,12 @@ bind-key 4S-s           menu-ssh
 # Application
 bind-key 4-c            "st"
 bind-key 4M-c           "dmenu_app st"
+bind-key 4C-c           "nextwin st"
+bind-key 4SC-c          "prevwin st"
 bind-key 4-e            "emacs"
 bind-key 4M-e           "dmenu_app emacs"
+bind-key 4C-e           "nextwin emacs"
+bind-key 4SC-e          "prevwin emacs"
 bind-key 4S-e           "emacsclient -n -c"
 bind-key 4-g            "google-chrome"
 bind-key 4M-g           "dmenu_app google-chrome"
