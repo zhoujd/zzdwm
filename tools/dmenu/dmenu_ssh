@@ -6,7 +6,7 @@ ssh_cmd=${SSH_CMD:-"ssh -t"}
 remote_cmd=${REMOTE_CMD}
 
 config=${SSH_CONFIG_FILE:-$HOME/.ssh/config}
-hosts=( $(grep "^Host\s\+[^*]" $config 2>/dev/null | grep -v 'git.*com' | cut -d " " -f 2-) )
+hosts=( $(grep "^Host\s\+[^*]" $config 2>/dev/null | grep -v 'git' | cut -d " " -f 2-) )
 target=$(printf '%s\n' "${hosts[@]}" | sed -Ez '$ s/\n+$//' | dmenu -i -l 10 -p $title "$@")
 
 if [ -n "$target" ]; then
