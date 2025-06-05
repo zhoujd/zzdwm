@@ -123,6 +123,7 @@ static const char *nextwincmd[] = { "nextwin", NULL };
 static const char *prevwincmd[] = { "prevwin", NULL };
 static const char *movwincmd[] = { "movwin", NULL };
 static const char *urxvtcmd[] = { "urxvt", NULL };
+static const char *pullurxvtcmd[] = { "dmenu_app", "urxvt", NULL };
 
 static const Key keys[] = {
 	/* modifier                     key        function          argument */
@@ -139,6 +140,8 @@ static const Key keys[] = {
 	{ MODKEY|Mod1Mask,              XK_g,      spawn,            {.v = pullbrowsercmd} },
 	{ MODKEY|ShiftMask,             XK_u,      spawn,            {.v = codecmd} },
 	{ MODKEY|Mod1Mask,              XK_u,      spawn,            {.v = pullcodecmd} },
+	{ MODKEY|ShiftMask,             XK_t,      spawn,            {.v = urxvtcmd} },
+	{ MODKEY|Mod1Mask,              XK_t,      spawn,            {.v = pullurxvtcmd} },
 	{ MODKEY,                       XK_r,      spawn,            {.v = runmenucmd} },
 	{ MODKEY|Mod1Mask,              XK_r,      spawn,            {.v = runmenucmd} },
 	{ MODKEY,                       XK_s,      spawn,            {.v = sshmenucmd} },
@@ -152,7 +155,6 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_n,      spawn,            {.v = nextwincmd} },
 	{ MODKEY|ShiftMask,             XK_n,      spawn,            {.v = prevwincmd} },
 	{ MODKEY|ShiftMask,             XK_c,      spawn,            {.v = movwincmd} },
-	{ MODKEY|ShiftMask,             XK_t,      spawn,            {.v = urxvtcmd} },
 	{ MODKEY|ShiftMask,             XK_z,      spawn,            {.v = slockcmd} },
 	{ MODKEY|ShiftMask,             XK_Return, spawn,            {.v = duptermcmd} },
 	{ MODKEY,                       XK_b,      togglebar,        {0} },
