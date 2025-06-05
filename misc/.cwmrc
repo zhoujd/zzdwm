@@ -120,6 +120,9 @@ bind-key 4S-v           window-rcycle-inclass
 # Open menus
 bind-key 4C-w           menu-window
 bind-key 4C-g           menu-group
+bind-key 4C-p           menu-cmd
+bind-key 4C-r           menu-exec
+bind-key 4C-s           menu-ssh
 
 # What follows is rather self-explanatory
 bind-key 4SC-q          restart
