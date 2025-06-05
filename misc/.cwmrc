@@ -26,8 +26,9 @@ vtile			50
 moveamount		2
 
 # Define special commands
-command terminal        "st"
+command stterm          "st"
 command emacs           "emacs"
+command urxvt           "urxvt"
 command code            "code"
 command chrome          "google-chrome"
 
