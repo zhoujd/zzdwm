@@ -82,7 +82,6 @@ bind-key 4-f            window-fullscreen
 bind-key 4-m            window-maximize
 
 bind-key 4-t            window-vtile
-bind-key 4S-t           window-htile
 
 bind-key 4-j            window-cycle
 bind-key 4-k            window-rcycle
@@ -126,9 +125,11 @@ bind-key 4M-e           "dmenu_app emacs"
 bind-key 4C-e           "nextwin emacs"
 bind-key 4SC-e          "prevwin emacs"
 bind-key 4S-e           "emacsclient -n -c"
-bind-key 4-g            "google-chrome"
+bind-key 4S-g           "google-chrome"
 bind-key 4M-g           "dmenu_app google-chrome"
-bind-key 4-u            "code"
+bind-key 4S-t           "urxvt"
+bind-key 4M-t           "dmenu_app urxvt"
+bind-key 4S-u           "code"
 bind-key 4M-u           "dmenu_app code"
 
 # Bind dmenu
@@ -145,7 +146,6 @@ bind-key 4M-q           "dmenu_exit"
 
 bind-key 4S-Return      "st"
 bind-key 4S-z           "slock"
-bind-key 4S-t           "urxvt"
 bind-key 4S-c           "movwin"
 bind-key 4-n            "nextwin"
 bind-key 4S-n           "prevwin"
