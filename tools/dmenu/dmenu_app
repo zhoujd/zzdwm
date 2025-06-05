@@ -36,13 +36,18 @@ app_menu() {
                    '{cur=length($1); printf $1; \
                      for(i=0; i < max - cur + 1; i++) printf " "; \
                      $1 = ""; printf "%s\n", $0}')
-    target=$(echo "$apps" | dmenu -l 10 -i -ix -p $title)
-    if [[ -n "$target" ]]; then
-        apps=$(echo "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1,3 | \
-                   grep -i "[[:space:]]\+$app" | cut -d ' ' -f 1)
-        id=$(echo $apps | tr -s '[:blank:]' | cut -d ' ' -f $((target + 1)))
-        exec wmctrl -i -a $id
-    fi
+    target=$(echo -e "New\n$apps" | dmenu -l 10 -i -ix -p $title)
+    case $target in
+        0 )
+            app_run
+            ;;
+        * )
+            apps=$(echo "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1,3 | \
+                       grep -i "[[:space:]]\+$app" | cut -d ' ' -f 1)
+            id=$(echo $apps | tr -s '[:blank:]' | cut -d ' ' -f $target)
+            exec wmctrl -i -a $id
+            ;;
+    esac
 }
 
 case $num in
