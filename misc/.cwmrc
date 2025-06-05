@@ -171,3 +171,7 @@ bind-mouse 4-3          window-resize
 # Autogroup
 autogroup 1             "st,st"
 autogroup 3             "Google-chrome"
+
+# Ignore, and do not warp to, windows with these names
+ignore                  dmenu
+ignore                  lemonbar
