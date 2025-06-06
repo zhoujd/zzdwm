@@ -7,29 +7,30 @@ _colbg="#242424"                # Background color
 _colfg1="%{F#458588}"           # Foreground color 1
 _colfg2="%{F#dddddd}"           # Foreground color 2
 _font="SF Pro Display:size=10"  # XFT support
+_interval=2s                    # Update interval
 
 # Show name of the group we're in
 group() {
     _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP | cut -f 2)
     # Setup group names
     case "$_group" in
-        1 ) group_name=" 1 "
+        1 ) group_name="1"
             ;;
-        2 ) group_name=" 2 "
+        2 ) group_name="2"
             ;;
-        3 ) group_name=" 3 "
+        3 ) group_name="3"
             ;;
-        4 ) group_name=" 4 "
+        4 ) group_name="4"
             ;;
-        5 ) group_name=" 5 "
+        5 ) group_name="5"
             ;;
-        6 ) group_name=" 6 "
+        6 ) group_name="6"
             ;;
-        7 ) group_name=" 7 "
+        7 ) group_name="7"
             ;;
-        8 ) group_name=" 8 "
+        8 ) group_name="8"
             ;;
-        9 ) group_name=" 9 "
+        9 ) group_name="9"
             ;;
     esac
     printf '%s' "%{B#458488}%{F#242424} $group_name %{B-}${_colfg1}"
@@ -68,15 +69,15 @@ wnum() {
 batt() {
     _batt=$(cat /sys/class/power_supply/BAT0/capacity)
     if [ "${_batt}" -gt 75 ]; then
-	echo "${_colfg1}B: ${_colfg2}${_batt}%"
+        echo "${_colfg1}B: ${_colfg2}${_batt}%"
     elif [ "${_batt}" -gt 50 ]; then
-	echo "${_colfg1}B: ${_colfg2}${_batt}%"
+        echo "${_colfg1}B: ${_colfg2}${_batt}%"
     elif [ "${_batt}" -gt 25 ]; then
-	echo "${_colfg1}B: ${_colfg2}${_batt}%"
+        echo "${_colfg1}B: ${_colfg2}${_batt}%"
     elif [ "${_batt}" -lt 25 ]; then
-	echo "${_colfg1}B: ${_colfg2}${_batt}%"
+        echo "${_colfg1}B: ${_colfg2}${_batt}%"
     elif [ "${_batt}" -lt 10 ]; then
-	echo "${_colfg1}B: ${_colfg2}${_batt}%"
+        echo "${_colfg1}B: ${_colfg2}${_batt}%"
     fi
 }
 
@@ -151,9 +152,9 @@ clock() {
 status() {
     while true; do
         echo " %{l}$(group) $(winnum) $(win) %{r}$(batt) $(volume_alsa) $(clock) "
-        sleep 2
+        sleep ${_interval}
     done
 }
 
 # Pipe status to lemonbar
-status | lemonbar -p -d -B "${_colbg}" -f "$_font"
+status | lemonbar -p -d -B "${_colbg}" -f "${_font}"
