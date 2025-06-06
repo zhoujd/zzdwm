@@ -26,11 +26,11 @@ vtile                   50
 moveamount              2
 
 # Define special commands
-command stterm          "st"
-command emacs           "emacs"
-command urxvt           "urxvt"
-command code            "code"
-command chrome          "google-chrome"
+command "Terminal"      "st"
+command "Emacs"         "emacs"
+command "URxvt"         "urxvt"
+command "VS Code"       "code"
+command "Web Browser"   "google-chrome"
 
 # Key bindings
 
@@ -96,6 +96,7 @@ bind-key 4SC-l          window-resize-right-big
 
 # Toggle visibility of all groups
 bind-key 4-a            group-toggle-all
+bind-key 4-u            group-last
 
 # Add focused window to current group
 bind-key 4-g            window-group
