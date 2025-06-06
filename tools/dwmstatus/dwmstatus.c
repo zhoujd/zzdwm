@@ -209,8 +209,10 @@ volpercent()
 	snd_mixer_elem_t *elem;
 	long min, max;
 	long volume;
+	int unmute;
 	float unit = 0.0;
 	float result = 0.0;
+	char *ret;
 
 	if (snd_mixer_open(&handle, 0) < 0)
 		goto END;
@@ -228,6 +230,13 @@ volpercent()
 	//Max volume
 	if ((elem = snd_mixer_find_selem(handle, sid)) == NULL)
 		goto END;
+
+	if (snd_mixer_selem_get_playback_switch(elem, 0, &unmute) < 0)
+		goto END;
+
+	if (!unmute)
+		goto END;
+
 	if (snd_mixer_selem_get_playback_volume_range(elem, &min, &max) < 0)
 		goto END;
 
@@ -242,13 +251,18 @@ volpercent()
 END:
 	if (handle != NULL)
 		snd_mixer_close(handle);
-	return smprintf("%.f%%", result);
+
+	if (unmute)
+		ret = smprintf("%.f%%", result);
+	else
+		ret = smprintf("%s", "mute");
+	return ret;
 }
 
 int
 main(void)
 {
-	unsigned int interval = 10;  // seconds
+	unsigned int interval = 2;  // seconds
 	char *status;
 	char *bat;
 	char *tmutc;
