@@ -138,4 +138,4 @@ status() {
 }
 
 # Pipe status to lemonbar
-status | lemonbar -p -d -B "${_colbg}"
+status | lemonbar -p -d -B "${_colbg}" -f "SF Pro Display:size=10"
