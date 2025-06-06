@@ -69,6 +69,7 @@ install_bin() {
         $CORE_ROOT/bin/nq
         $CORE_ROOT/bin/nqtail
         $CORE_ROOT/bin/movwin
+        $CORE_ROOT/bin/cwmbar
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $target
@@ -92,6 +93,7 @@ build() {
         $CORE_ROOT/tools/shotkey
         $CORE_ROOT/tools/xcompmgr
         $CORE_ROOT/tools/utils
+        $CORE_ROOT/tools/lemonbar
     )
     for item in ${items[@]}; do
         echo "Build $item"
