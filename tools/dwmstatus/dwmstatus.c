@@ -240,22 +240,18 @@ volpercent()
 	if (snd_mixer_selem_get_playback_volume_range(elem, &min, &max) < 0)
 		goto END;
 
-	//Volume unit
-	unit = max / 100.0;
-
 	if (snd_mixer_selem_is_playback_mono(elem)) {
-		//Volume left value
 		if (snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &volume_left) < 0)
 			goto END;
 		volume_avg = volume_left;
+		unit = max / 100.0;
 	} else {
-		//Volume left value
 		if (snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &volume_left) < 0)
 			goto END;
-		//Volume right value
 		if (snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_RIGHT, &volume_right) < 0)
 			goto END;
 		volume_avg = (double)(volume_left + volume_right) / 2.0;
+		unit = (max * 2) / 100.0;
 	}
 
 	//Volume percent
