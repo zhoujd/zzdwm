@@ -141,9 +141,9 @@ volume_alsa() {
 
 # Date and time
 clock() {
-    dte_utc=$(date -u +"%H:%M")
+    dte_utc=$(date -u +"%k:%M")
     dte=$(date +"WW%V %a %d %b")
-    time=$(date +"%I:%M %p")
+    time=$(date +"%l:%M %p")
     echo "${_colfg1}U: ${_colfg2}${dte_utc} ${_colfg1}$dte ${_colfg2}$time"
 }
 
