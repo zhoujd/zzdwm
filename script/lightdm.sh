@@ -16,7 +16,7 @@ config() {
 [greeter]
 theme-name = Adwaita-dark
 icon-theme-name = Adwaita
-clock-format = %a %d %b %I:%M %p
+clock-format = %a %d %b %l:%M %p
 indicators = ~host;~spacer;~session;~clock;~power
 EOF
     echo "Enable default users"
