@@ -7,6 +7,9 @@ _colbg="#242424"                # background color
 _colfg1="%{F#458588}"           # foreground color 1
 _colfg2="%{F#dddddd}"           # foreground color 2
 
+# Font
+_font="SF Pro Display:size=10"
+
 # Show name of the group we're in
 group() {
     _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP | cut -f 2)
@@ -63,6 +66,35 @@ wnum() {
     printf '%s' "${_colfg1}wins: ${_colfg2}$_winnum"
 }
 
+# USB mount status
+usbmon() {
+    usb1=$(lsblk -la | awk '/sdc1/ { print $1 }')
+    usb1mounted=$(lsblk -la | awk '/sdc1/ { print $7 }')
+    if [ "$usb1" ]; then
+	if [ -z "$usb1mounted" ]; then
+	    echo "${_colfg1}"
+	else
+	    echo "${_colfg1} ${_colfg2}${usb1}"
+	fi
+    fi
+}
+
+# Battery status
+batt() {
+    _batt=$(cat /sys/class/power_supply/BAT0/capacity)
+    if [ "${_batt}" -gt 75 ]; then
+	echo "${_colfg1}B: ${_colfg2} ${_batt}%"
+    elif [ "${_batt}" -gt 50 ]; then
+	echo "${_colfg1}B: ${_colfg2} ${_batt}%"
+    elif [ "${_batt}" -gt 25 ]; then
+	echo "${_colfg1}B: ${_colfg2} ${_batt}%"
+    elif [ "${_batt}" -lt 25 ]; then
+	echo "${_colfg1}B: ${_colfg2} ${_batt}%"
+    elif [ "${_batt}" -lt 10 ]; then
+	echo "${_colfg1}B: ${_colfg2} ${_batt}%"
+    fi
+}
+
 # Show ram usage
 ram() {
     mem=$(free -h | awk '/Mem:/ { print $3 }' | cut -f1 -d 'i')
@@ -98,9 +130,9 @@ volume_pa() {
     muted=$(pactl list sinks | awk '/Mute:/ { print $2 }')
     vol=$(pactl list sinks | grep Volume: | awk 'FNR == 1 { print $5 }' | cut -f1 -d '%')
     if [ "$muted" = "yes" ]; then
-        echo "vol: muted"
+        echo "${_colfg1}vol: ${_colfg2}muted"
     else
-        echo "vol: ${vol}%"
+        echo "${_colfg1}vol: ${_colfg2}${vol}%"
     fi
 }
 
@@ -124,18 +156,19 @@ volume_alsa() {
 
 # Date and time
 clock() {
+    dte_utc=$(date -u +"%H:%M")
     dte=$(date +"WW%V %a %d %b")
     time=$(date +"%I:%M %p")
-    echo "${_colfg1}$dte ${_colfg2}$time"
+    echo "${_colfg1}U: ${_colfg2}${dte_utc} ${_colfg1}$dte ${_colfg2}$time"
 }
 
 # Draw the status
 status() {
     while true; do
-        echo " %{l}$(group) $(winnum) $(win) %{r}$(volume_alsa) | $(clock) "
+        echo " %{l}$(group) $(winnum) $(win) %{r}$(batt) | $(volume_alsa) | $(clock) "
         sleep 2
     done
 }
 
 # Pipe status to lemonbar
-status | lemonbar -p -d -B "${_colbg}" -f "SF Pro Display:size=10"
+status | lemonbar -p -d -B "${_colbg}" -f "$_font"
