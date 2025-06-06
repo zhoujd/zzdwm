@@ -208,7 +208,8 @@ volpercent()
 	snd_mixer_selem_id_t *sid;
 	snd_mixer_elem_t *elem;
 	long min, max;
-	long unit, volume;
+	long volume;
+	float unit = 0.0;
 	float result = 0.0;
 
 	if (snd_mixer_open(&handle, 0) < 0)
@@ -231,13 +232,12 @@ volpercent()
 		goto END;
 
 	//Volume unit
-	unit = max / 100;
+	unit = max / 100.0;
 	//Volume value
 	if (snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &volume) < 0)
 		goto END;
 	//Volume percent
-	if (unit != 0)
-		result = (double)volume / (double)unit;
+	result = (double)volume / (double)unit;
 
 END:
 	if (handle != NULL)
