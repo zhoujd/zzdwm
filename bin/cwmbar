@@ -1,14 +1,12 @@
 #!/bin/sh
 
-# Depends on: lemonbar, wmctrl.
+# Depends on lemonbar to actually draw the status on screen
 
 # Colors
-_colbg="#242424"                # background color
-_colfg1="%{F#458588}"           # foreground color 1
-_colfg2="%{F#dddddd}"           # foreground color 2
-
-# Font
-_font="SF Pro Display:size=10"
+_colbg="#242424"                # Background color
+_colfg1="%{F#458588}"           # Foreground color 1
+_colfg2="%{F#dddddd}"           # Foreground color 2
+_font="SF Pro Display:size=10"  # XFT support
 
 # Show name of the group we're in
 group() {
