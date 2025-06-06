@@ -21,13 +21,16 @@ enum {
 // NOTE: Push cmd to backgroud with `&` to prevent zombie process creation
 Key modes[MODE_SIZE][10] = {
   [Control] = {
-    { 0, XK_j, cmd("amixer -D pulse sset Master 5%- &") },
-    { 0, XK_k, cmd("amixer -D pulse sset Master 5%+ &") },
-    { 0, XK_m, cmd("amixer -D pulse set Master toggle &") },
+    { 0, XK_j, cmd("amixer sset Master 5%- &") },
+    { 0, XK_k, cmd("amixer sset Master 5%+ &") },
+    { 0, XK_m, cmd("amixer set Master toggle &") },
   },
   [Execute] = {
     { 0, XK_c, cmd("st &") },
     { 0, XK_e, cmd("emacs &") },
+    { 0, XK_g, cmd("google-chrome &") },
+    { 0, XK_t, cmd("urxvt &") },
+    { 0, XK_u, cmd("code &") },
   },
 };
 
