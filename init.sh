@@ -14,7 +14,8 @@ install_dep() {
          libasound2-dev \
          libxfixes-dev libxi-dev libxext-dev \
          libxrandr-dev \
-         libxcomposite-dev libxdamage-dev
+         libxcomposite-dev libxdamage-dev \
+         libx11-xcb-dev libxcb-randr0-dev libxcb-xinerama0-dev
     echo "Install tool package"
     sudo apt install -y \
          alsa-utils x11-utils wmctrl psmisc
