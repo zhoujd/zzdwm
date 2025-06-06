@@ -13,23 +13,23 @@ group() {
     _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP | cut -f 2)
     # Setup group names
     case "$_group" in
-        1 ) group_name="1"
+        1 ) group_name=" 1 "
             ;;
-        2 ) group_name="2"
+        2 ) group_name=" 2 "
             ;;
-        3 ) group_name="3"
+        3 ) group_name=" 3 "
             ;;
-        4 ) group_name="4"
+        4 ) group_name=" 4 "
             ;;
-        5 ) group_name="5"
+        5 ) group_name=" 5 "
             ;;
-        6 ) group_name="6"
+        6 ) group_name=" 6 "
             ;;
-        7 ) group_name="7"
+        7 ) group_name=" 7 "
             ;;
-        8 ) group_name="8"
+        8 ) group_name=" 8 "
             ;;
-        9 ) group_name="9"
+        9 ) group_name=" 9 "
             ;;
     esac
     printf '%s' "%{B#458488}%{F#242424} $group_name %{B-}${_colfg1}"
@@ -38,7 +38,7 @@ group() {
 # Show number of windows opened in total.
 winnum() {
     _winnum=$(wmctrl -l | wc -l)
-    printf '%s' "${_colfg1}[$_winnum]:"
+    printf '%s' "${_colfg1}[$_winnum]"
 }
 
 # Show window number/total number of windows and the name of currently
