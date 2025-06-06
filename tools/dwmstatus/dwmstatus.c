@@ -208,7 +208,7 @@ volpercent()
 	snd_mixer_selem_id_t *sid;
 	snd_mixer_elem_t *elem;
 	long min, max;
-	long volume_left, volume_right, volume_total, volume_avg;
+	long volume_left, volume_right, volume_avg;
 	int unmute;
 	float unit = 0.0;
 	float result = 0.0;
@@ -245,9 +245,9 @@ volpercent()
 
 	if (snd_mixer_selem_is_playback_mono(elem)) {
 		//Volume left value
-		if (snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &volume_total) < 0)
+		if (snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &volume_left) < 0)
 			goto END;
-		volume_avg = volume_total;
+		volume_avg = volume_left;
 	} else {
 		//Volume left value
 		if (snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &volume_left) < 0)
@@ -255,8 +255,7 @@ volpercent()
 		//Volume right value
 		if (snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_RIGHT, &volume_right) < 0)
 			goto END;
-		volume_total = volume_left + volume_right;
-		volume_avg = (double)volume_total / 2;
+		volume_avg = (double)(volume_left + volume_right) / 2.0;
 	}
 
 	//Volume percent
