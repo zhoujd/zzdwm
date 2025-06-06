@@ -66,32 +66,19 @@ wnum() {
     printf '%s' "${_colfg1}wins: ${_colfg2}$_winnum"
 }
 
-# USB mount status
-usbmon() {
-    usb1=$(lsblk -la | awk '/sdc1/ { print $1 }')
-    usb1mounted=$(lsblk -la | awk '/sdc1/ { print $7 }')
-    if [ "$usb1" ]; then
-	if [ -z "$usb1mounted" ]; then
-	    echo "${_colfg1}"
-	else
-	    echo "${_colfg1} ${_colfg2}${usb1}"
-	fi
-    fi
-}
-
 # Battery status
 batt() {
     _batt=$(cat /sys/class/power_supply/BAT0/capacity)
     if [ "${_batt}" -gt 75 ]; then
-	echo "${_colfg1}B: ${_colfg2} ${_batt}%"
+	echo "${_colfg1}B: ${_colfg2}${_batt}%"
     elif [ "${_batt}" -gt 50 ]; then
-	echo "${_colfg1}B: ${_colfg2} ${_batt}%"
+	echo "${_colfg1}B: ${_colfg2}${_batt}%"
     elif [ "${_batt}" -gt 25 ]; then
-	echo "${_colfg1}B: ${_colfg2} ${_batt}%"
+	echo "${_colfg1}B: ${_colfg2}${_batt}%"
     elif [ "${_batt}" -lt 25 ]; then
-	echo "${_colfg1}B: ${_colfg2} ${_batt}%"
+	echo "${_colfg1}B: ${_colfg2}${_batt}%"
     elif [ "${_batt}" -lt 10 ]; then
-	echo "${_colfg1}B: ${_colfg2} ${_batt}%"
+	echo "${_colfg1}B: ${_colfg2}${_batt}%"
     fi
 }
 
@@ -148,9 +135,9 @@ volume_alsa() {
     fi
 
     if [ "$muted" = "off" ]; then
-        echo "${_colfg1}vol: ${_colfg2}muted"
+        echo "${_colfg1}V: ${_colfg2}muted"
     else
-        echo "${_colfg1}vol: ${_colfg2}${vol}%"
+        echo "${_colfg1}V: ${_colfg2}${vol}%"
     fi
 }
 
@@ -165,7 +152,7 @@ clock() {
 # Draw the status
 status() {
     while true; do
-        echo " %{l}$(group) $(winnum) $(win) %{r}$(batt) | $(volume_alsa) | $(clock) "
+        echo " %{l}$(group) $(winnum) $(win) %{r}$(batt) $(volume_alsa) $(clock) "
         sleep 2
     done
 }
