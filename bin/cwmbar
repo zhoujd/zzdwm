@@ -132,7 +132,7 @@ clock() {
 # Draw the status
 status() {
     while true; do
-        echo " %{l}$(group) $(winnum) $(win) %{r}$(ram) | $(cpu) | $(network) | $(volume_alsa) | $(clock) "
+        echo " %{l}$(group) $(winnum) $(win) %{r}$(volume_alsa) | $(clock) "
         sleep 2
     done
 }
