@@ -263,7 +263,7 @@ main(void)
 	for (;;sleep(interval)) {
 		bat = getbattery("/sys/class/power_supply/BAT0");
 		tmutc = mktimes("%k:%M", tzutc);
-		tmsh = mktimes("WW%V %a %d %b %l:%M %p", tzsh);
+		tmsh = mktimes("WW%V %a %e %b %l:%M %p", tzsh);
 		vol = volpercent();
 
 		status = smprintf("B:%s V:%s U:%s %s", bat, vol, tmutc, tmsh);
