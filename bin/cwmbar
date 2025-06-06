@@ -112,10 +112,10 @@ network() {
 # Volume level for systems with pulseaudio. Replace $(volume_alsa) in
 # status() in order to use this one.
 volume_pa() {
-    muted=$(pactl list sinks | awk '/Mute:/ { print $2 }')
+    mute=$(pactl list sinks | awk '/Mute:/ { print $2 }')
     vol=$(pactl list sinks | grep Volume: | awk 'FNR == 1 { print $5 }' | cut -f1 -d '%')
-    if [ "$muted" = "yes" ]; then
-        echo "${_colfg1}vol: ${_colfg2}muted"
+    if [ "$mute" = "yes" ]; then
+        echo "${_colfg1}vol: ${_colfg2}mute"
     else
         echo "${_colfg1}vol: ${_colfg2}${vol}%"
     fi
@@ -125,15 +125,15 @@ volume_pa() {
 volume_alsa() {
     mono=$(amixer -M sget Master | grep Mono: | awk '{ print $2 }')
     if [ -z "$mono" ]; then
-        muted=$(amixer -M sget Master | awk 'FNR == 6 { print $7 }' | sed 's/[][]//g')
+        mute=$(amixer -M sget Master | awk 'FNR == 6 { print $7 }' | sed 's/[][]//g')
         vol=$(amixer -M sget Master | awk 'FNR == 6 { print $5 }' | sed 's/[][]//g; s/%//g')
     else
-        muted=$(amixer -M sget Master | awk 'FNR == 5 { print $6 }' | sed 's/[][]//g')
+        mute=$(amixer -M sget Master | awk 'FNR == 5 { print $6 }' | sed 's/[][]//g')
         vol=$(amixer -M sget Master | awk 'FNR == 5 { print $4 }' | sed 's/[][]//g; s/%//g')
     fi
 
-    if [ "$muted" = "off" ]; then
-        echo "${_colfg1}V: ${_colfg2}muted"
+    if [ "$mute" = "off" ]; then
+        echo "${_colfg1}V: ${_colfg2}mute"
     else
         echo "${_colfg1}V: ${_colfg2}${vol}%"
     fi
