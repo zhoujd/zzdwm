@@ -37,14 +37,14 @@ winnum() {
 win() {
     _wid=$(xprop -root 32x '\t$0' _NET_ACTIVE_WINDOW | cut -f 2)
     _win=$(xprop -id $_wid '\t$0' _NET_WM_NAME | awk -F '"' '{ print $2 }')
-    if [ -z "$_win" ]; then
+    if [ -z "${_win}" ]; then
         printf " "
     else
         # Trim window title if it exceeds 75 chars
         if [ "${#_win}" -gt "75" ]; then
-            printf '%.75s...' "${_colfg2}$_win"
+            printf '%.75s...' "${_colfg2}${_win}"
         else
-            printf '%s' "${_colfg2}$_win"
+            printf '%s' "${_colfg2}${_win}"
         fi
     fi
 }
