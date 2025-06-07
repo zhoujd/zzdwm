@@ -2,12 +2,17 @@
 
 # Depends on lemonbar to actually draw the status on screen
 
+# Common
+_bg="#242424"                   # Bar background color
+_font="SF Pro Display:size=10"  # XFT support
+_interval=2s                    # Refresh interval
+
 # Colors
-_colbg="#242424"                # Background color
+_colbg1="%{B#458588}"           # Background color 1
+_colbg2="%{B#242424}"           # Background color 2
 _colfg1="%{F#458588}"           # Foreground color 1
 _colfg2="%{F#dddddd}"           # Foreground color 2
-_font="SF Pro Display:size=10"  # XFT support
-_interval=2s                    # Update interval
+_colfg3="%{F#242424}"           # Foreground color 3
 
 # Show name of the group we're in
 group() {
@@ -33,7 +38,7 @@ group() {
         9 ) group_name="9"
             ;;
     esac
-    printf '%s' "%{B#458488}%{F#242424} $group_name %{B-}${_colfg1}"
+    printf '%s' "${_colbg1}${_colfg3} $group_name %{B-}"
 }
 
 # Show number of windows opened in total.
@@ -157,4 +162,4 @@ status() {
 }
 
 # Pipe status to lemonbar
-status | lemonbar -p -d -B "${_colbg}" -f "${_font}"
+status | lemonbar -p -d -B "${_bg}" -f "${_font}"
