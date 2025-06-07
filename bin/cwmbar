@@ -17,28 +17,13 @@ _colfg3="%{F#242424}"           # Foreground color 3
 # Show name of the group we're in
 group() {
     _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP | cut -f 2)
-    # Setup group names
-    case "$_group" in
-        1 ) group_name="1"
-            ;;
-        2 ) group_name="2"
-            ;;
-        3 ) group_name="3"
-            ;;
-        4 ) group_name="4"
-            ;;
-        5 ) group_name="5"
-            ;;
-        6 ) group_name="6"
-            ;;
-        7 ) group_name="7"
-            ;;
-        8 ) group_name="8"
-            ;;
-        9 ) group_name="9"
-            ;;
-    esac
-    printf '%s' "${_colbg1}${_colfg3} $group_name %{B-}"
+    for i in $(seq 1 9); do
+        if [ ${_group} -eq $i ]; then
+            printf '%s' "${_colbg1}${_colfg3} $i %{B-}"
+        else
+            printf '%s' "${_colfg2} $i "
+        fi
+    done
 }
 
 # Show number of windows opened in total.
