@@ -5,7 +5,7 @@
 # Common
 _bg="#242424"                   # Bar background color
 _font="SF Pro Display:size=10"  # XFT support
-_interval=2s                    # Refresh interval
+_interval=0.2                   # Refresh interval
 
 # Colors
 _colbg1="%{B#458588}"           # Background color 1
@@ -16,7 +16,7 @@ _colfg3="%{F#242424}"           # Foreground color 3
 
 # Show name of the group we're in
 group() {
-    _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP | cut -f 2)
+    _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
     for i in $(seq 1 9); do
         if [ ${_group} -eq $i ]; then
             printf '%s' "${_colbg1}${_colfg3} $i %{B-}"
@@ -35,8 +35,8 @@ winnum() {
 # Show window number/total number of windows and the name of currently
 # focused window
 win() {
-    _wid=$(xprop -root 32x '\t$0' _NET_ACTIVE_WINDOW | cut -f 2)
-    _win=$(xprop -id $_wid '\t$0' _NET_WM_NAME | awk -F '"' '{ print $2 }')
+    _wid=$(xprop -root 32x '\t$0' _NET_ACTIVE_WINDOW 2>/dev/null | cut -f 2)
+    _win=$(xprop -id $_wid '\t$0' _NET_WM_NAME 2>/dev/null | awk -F '"' '{ print $2 }')
     if [ -z "${_win}" ]; then
         printf " "
     else
