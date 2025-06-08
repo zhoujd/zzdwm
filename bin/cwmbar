@@ -21,7 +21,12 @@ group() {
         if [ ${_group} -eq $i ]; then
             printf '%s' "${_colbg1}${_colfg3} $i %{B-}"
         else
-            printf '%s' "${_colfg2} $i "
+            _winnumgroup=$(wmctrl -lp | awk '{print $2}' | grep -sc $i)
+            if [ ${_winnumgroup} -eq 0 ]; then
+                printf '%s' "${_colfg2} $i "
+            else
+                printf '%s' "${_colfg1} $i "
+            fi
         fi
     done
 }
