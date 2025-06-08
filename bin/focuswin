@@ -1,19 +1,20 @@
 #!/bin/bash
 
-[[ $# -ne 1 ]] && cat <<EOF && exit
+[[ $# -le 1 ]] && cat <<EOF && exit
 Usage: $(basename $0) {app}
 EOF
 
 app=${1}
+cmd=${2:-$app}
 num=$(wmctrl -xl 2>/dev/null | tr -s '[:blank:]' | cut -d ' ' -f 3 | \
           grep -i "^$app" | wc -l)
 
 app_run() {
-    hash $app 2>/dev/null
+    hash $cmd 2>/dev/null
     if [[ $? -eq 0 ]]; then
-        exec $app
+        exec $cmd
     else
-        echo "No $app can been found!"
+        echo "No $cmd can been found!"
     fi
 }
 

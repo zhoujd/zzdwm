@@ -72,6 +72,7 @@ install_bin() {
         $CORE_ROOT/bin/movwin
         $CORE_ROOT/bin/cwmbar
         $CORE_ROOT/bin/focuswin
+        $CORE_ROOT/bin/runec
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $target
