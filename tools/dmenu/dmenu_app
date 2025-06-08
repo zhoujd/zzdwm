@@ -1,10 +1,11 @@
 #!/bin/bash
 
-[[ $# -ne 1 ]] && cat <<EOF && exit
-Usage: $(basename $0) {app}
+[[ $# -le 1 ]] && cat <<EOF && exit
+Usage: $(basename $0) {app} [cmd]
 EOF
 
 app=${1}
+cmd=${2:-$app}
 title="app:"
 windows=$(wmctrl -xl 2>/dev/null)
 num=$(echo "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 3 | \
@@ -17,11 +18,11 @@ app_focus() {
 }
 
 app_run() {
-    hash $app 2>/dev/null
+    hash $cmd 2>/dev/null
     if [[ $? -eq 0 ]]; then
-        exec $app
+        exec $cmd
     else
-        echo "No $app can been found!"
+        echo "No $cmd can been found!"
     fi
 }
 
