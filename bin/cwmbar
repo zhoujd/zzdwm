@@ -3,7 +3,7 @@
 # Depends on lemonbar to actually draw the status on screen
 
 # Common
-_bg="#458588"                   # Bar background color
+_bg="#242424"                   # Bar background color
 _font="SF Pro Display:size=10"  # XFT support
 _interval=0.2                   # Refresh interval
 
@@ -19,7 +19,7 @@ group() {
     _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
     for i in $(seq 1 9); do
         if [ ${_group} -eq $i ]; then
-            printf '%s' "${_colbg1}${_colfg3} $i %{B-}"
+            printf '%s' "${_colbg1} ${_colfg3}$i %{B-}"
         else
             _winnumgroup=$(wmctrl -lp | awk '{print $2}' | grep -sc $i)
             if [ ${_winnumgroup} -eq 0 ]; then
