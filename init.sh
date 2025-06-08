@@ -71,6 +71,7 @@ install_bin() {
         $CORE_ROOT/bin/nqtail
         $CORE_ROOT/bin/movwin
         $CORE_ROOT/bin/cwmbar
+        $CORE_ROOT/bin/focuswin
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $target
