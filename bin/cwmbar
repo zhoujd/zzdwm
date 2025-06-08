@@ -3,7 +3,7 @@
 # Depends on lemonbar to actually draw the status on screen
 
 # Common
-_bg="#242424"                   # Bar background color
+_bg="#458588"                   # Bar background color
 _font="SF Pro Display:size=10"  # XFT support
 _interval=0.2                   # Refresh interval
 
@@ -23,9 +23,9 @@ group() {
         else
             _winnumgroup=$(wmctrl -lp | awk '{print $2}' | grep -sc $i)
             if [ ${_winnumgroup} -eq 0 ]; then
-                printf '%s' "${_colfg2} $i "
+                printf '%s' "${_colbg2} ${_colfg2}$i %{B-}"
             else
-                printf '%s' "${_colfg1} $i "
+                printf '%s' "${_colbg2} ${_colfg1}$i %{B-}"
             fi
         fi
     done
@@ -36,7 +36,7 @@ winnum() {
     _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
     _winnumgroup=$(wmctrl -lp | awk '{print $2}' | grep -sc ${_group})
     _winnum=$(wmctrl -l | wc -l)
-    printf '%s' "${_colfg1}[${_winnumgroup}/${_winnum}]"
+    printf '%s' "${_colbg2} ${_colfg1}[${_winnumgroup}/${_winnum}] %{B-}"
 }
 
 # Show window title of currently focused window
@@ -141,7 +141,7 @@ clock() {
 # Draw the status
 status() {
     while true; do
-        echo " %{l}$(group) $(winnum) $(wintitle) %{r}$(batt) $(volume_alsa) $(clock) "
+        echo " $%{l}$(group)$(winnum) $(wintitle) %{r}${_colbg2} $(batt) $(volume_alsa) $(clock) %{B-}"
         sleep ${_interval}
     done
 }
