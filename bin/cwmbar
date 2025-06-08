@@ -32,9 +32,8 @@ winnum() {
     printf '%s' "${_colfg1}[$_winnum]"
 }
 
-# Show window number/total number of windows and the name of currently
-# focused window
-win() {
+# Show window title of currently focused window
+wintitle() {
     _wid=$(xprop -root 32x '\t$0' _NET_ACTIVE_WINDOW 2>/dev/null | cut -f 2)
     _win=$(xprop -id $_wid '\t$0' _NET_WM_NAME 2>/dev/null | awk -F '"' '{ print $2 }')
     if [ -z "${_win}" ]; then
@@ -47,12 +46,6 @@ win() {
             printf '%s' "${_colfg2}${_win}"
         fi
     fi
-}
-
-# Same as winnum(), but outputs to the right, with different formatting.
-wnum() {
-    _winnum=$(wmctrl -l | wc -l)
-    printf '%s' "${_colfg1}wins: ${_colfg2}$_winnum"
 }
 
 # Battery status
@@ -141,7 +134,7 @@ clock() {
 # Draw the status
 status() {
     while true; do
-        echo " %{l}$(group) $(winnum) $(win) %{r}$(batt) $(volume_alsa) $(clock) "
+        echo " %{l}$(group) $(winnum) $(wintitle) %{r}$(batt) $(volume_alsa) $(clock) "
         sleep ${_interval}
     done
 }
