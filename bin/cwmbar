@@ -28,8 +28,10 @@ group() {
 
 # Show number of windows opened in total.
 winnum() {
+    _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
+    _winnumgroup=$(wmctrl -lp | awk '{print $2}' | grep -sc ${_group})
     _winnum=$(wmctrl -l | wc -l)
-    printf '%s' "${_colfg1}[$_winnum]"
+    printf '%s' "${_colfg1}[${_winnumgroup}/${_winnum}]"
 }
 
 # Show window title of currently focused window
