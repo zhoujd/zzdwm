@@ -11,12 +11,6 @@ windows=$(wmctrl -xl 2>/dev/null)
 num=$(echo "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 3 | \
           grep -i "^$app" | wc -l)
 
-app_focus() {
-    id=$(echo "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1,3 | \
-             grep -i "[[:space:]]\+$app" | cut -d ' ' -f 1)
-    exec wmctrl -i -a $id
-}
-
 app_run() {
     hash $cmd 2>/dev/null
     if [[ $? -eq 0 ]]; then
@@ -52,9 +46,6 @@ app_menu() {
 }
 
 case $num in
-    1 )
-        app_focus
-        ;;
     0 )
         app_run
         ;;
