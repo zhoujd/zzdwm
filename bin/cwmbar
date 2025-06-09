@@ -59,22 +59,22 @@ wintitle() {
 batt() {
     _batt=$(cat /sys/class/power_supply/BAT0/capacity)
     if [ "${_batt}" -gt 75 ]; then
-        echo "${_colfg1}B: ${_colfg2}${_batt}%"
+        echo "${_colfg2}B: ${_colfg2}${_batt}%"
     elif [ "${_batt}" -gt 50 ]; then
-        echo "${_colfg1}B: ${_colfg2}${_batt}%"
+        echo "${_colfg2}B: ${_colfg2}${_batt}%"
     elif [ "${_batt}" -gt 25 ]; then
-        echo "${_colfg1}B: ${_colfg2}${_batt}%"
+        echo "${_colfg2}B: ${_colfg2}${_batt}%"
     elif [ "${_batt}" -lt 25 ]; then
-        echo "${_colfg1}B: ${_colfg2}${_batt}%"
+        echo "${_colfg2}B: ${_colfg2}${_batt}%"
     elif [ "${_batt}" -lt 10 ]; then
-        echo "${_colfg1}B: ${_colfg2}${_batt}%"
+        echo "${_colfg2}B: ${_colfg2}${_batt}%"
     fi
 }
 
 # Show ram usage
 ram() {
     mem=$(free -h | awk '/Mem:/ { print $3 }' | cut -f1 -d 'i')
-    echo "${_colfg1}mem: ${_colfg2}$mem"
+    echo "${_colfg2}mem: ${_colfg2}$mem"
 }
 
 # Show cpu load
@@ -85,18 +85,18 @@ cpu() {
     read -r cpu a b c idle rest < /proc/stat
     total=$((a+b+c+idle))
     cpu=$((100*( (total-prevtotal) - (idle-previdle) ) / (total-prevtotal) ))
-    echo "${_colfg1}cpu: ${_colfg2}${cpu}%"
+    echo "${_colfg2}cpu: ${_colfg2}${cpu}%"
 }
 
 # Network connection status
 network() {
     conntype=$(ip route | awk '/default/ { print substr($5,1,1) }')
     if [ -z "$conntype" ]; then
-        echo "${_colfg1}net: ${_colfg2}down"
+        echo "${_colfg2}net: ${_colfg2}down"
     elif [ "$conntype" = "e" ]; then
-        echo "${_colfg1}wired: ${_colfg2}up"
+        echo "${_colfg2}wired: ${_colfg2}up"
     elif [ "$conntype" = "w" ]; then
-        echo "${_colfg1}wifi: ${_colfg2}up"
+        echo "${_colfg2}wifi: ${_colfg2}up"
     fi
 }
 
@@ -106,9 +106,9 @@ volume_pa() {
     mute=$(pactl list sinks | awk '/Mute:/ { print $2 }')
     vol=$(pactl list sinks | grep Volume: | awk 'FNR == 1 { print $5 }' | cut -f1 -d '%')
     if [ "$mute" = "yes" ]; then
-        echo "${_colfg1}vol: ${_colfg2}mute"
+        echo "${_colfg2}vol: ${_colfg2}mute"
     else
-        echo "${_colfg1}vol: ${_colfg2}${vol}%"
+        echo "${_colfg2}vol: ${_colfg2}${vol}%"
     fi
 }
 
@@ -124,9 +124,9 @@ volume_alsa() {
     fi
 
     if [ "$mute" = "off" ]; then
-        echo "${_colfg1}V: ${_colfg2}mute"
+        echo "${_colfg2}V: ${_colfg2}mute"
     else
-        echo "${_colfg1}V: ${_colfg2}${vol}%"
+        echo "${_colfg2}V: ${_colfg2}${vol}%"
     fi
 }
 
@@ -135,7 +135,7 @@ clock() {
     dte_utc=$(date -u +"%k:%M")
     dte=$(date +"WW%V %a %e %b")
     time=$(date +"%l:%M %p")
-    echo "${_colfg1}U: ${_colfg2}${dte_utc} ${_colfg1}$dte ${_colfg2}$time"
+    echo "${_colfg2}U: ${_colfg2}${dte_utc} ${_colfg2}$dte ${_colfg2}$time"
 }
 
 # Draw the status
