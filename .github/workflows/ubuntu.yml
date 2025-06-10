@@ -59,3 +59,5 @@ jobs:
       run: make -C tools/utils
     - name: Build lemonbar
       run: make -C tools/lemonbar
+    - name: Build detach
+      run: make -C tools/detach
