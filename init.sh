@@ -97,6 +97,7 @@ build() {
         $CORE_ROOT/tools/xcompmgr
         $CORE_ROOT/tools/utils
         $CORE_ROOT/tools/lemonbar
+        $CORE_ROOT/tools/detach
     )
     for item in ${items[@]}; do
         echo "Build $item"
