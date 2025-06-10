@@ -25,22 +25,18 @@
 int main(int argc, char **argv)
 {
 	if (argc == 1 || argv[1][0] == '-') {
-
 		if (argc == 2 && argv[1][1] == 'v') {
 			fprintf(stderr, PACKAGE " " VERSION " -- "
 				"Copyright (C) 2000 Jim Garrison\n"
 				PACKAGE " comes with ABSOLUTELY NO WARRANTY.  "
 				"This is free software,\nand you are welcome to"
 				" redistribute it under certain conditions\n");
-
 		} else {
 			fprintf(stderr,
 				"Usage: " PACKAGE " program arguments ...\n"
-				"       " PACKAGE " -v (shows version number)\n");	
+				"       " PACKAGE " -v (shows version number)\n");
 		}
-
 	} else {
-
 		fclose(stdin);
 		*stdin = *fopen("/dev/null", "r");
 
@@ -50,7 +46,6 @@ int main(int argc, char **argv)
 		if (fork())
 			return 0;
 		execvp(argv[1], &argv[1]);
-
 	}
 
 	return 0;
