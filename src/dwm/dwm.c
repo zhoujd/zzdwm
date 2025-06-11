@@ -1540,8 +1540,8 @@ grid(Monitor *m)
 {
 	unsigned int i, n, cx, cy, cw, ch, aw, ah, cols, rows;
 	unsigned int cc, cr, chrest, cwrest; //fullgaps logic
-	Client *c;
 	unsigned int maxrows, maxcols;
+	Client *c;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next))
 		n++;
