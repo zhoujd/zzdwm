@@ -1554,11 +1554,11 @@ grid(Monitor *m)
 
 	/* max rows and cols */
 	if (m->drawwithgaps) { /* draw with fullgaps logic */
-		maxrows = (m->wh - m->gappx) / (mincellh + m->gappx);
-		maxcols = (m->ww - m->gappx) / (mincellw + m->gappx);
+		maxrows = (m->wh - m->gappx) / ((mincellh + m->gappx) ? (mincellh + m->gappx) : 1);
+		maxcols = (m->ww - m->gappx) / ((mincellw + m->gappx) ? (mincellw + m->gappx) : 1);
 	} else {
-		maxrows = m->wh / mincellh;
-		maxcols = m->ww / mincellw;
+		maxrows = m->wh / (mincellh ? mincellh : 1);
+		maxcols = m->ww / (mincellw ? mincellw : 1);
 	}
 
 	/* limit rows and cols */
