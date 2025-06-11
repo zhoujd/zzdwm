@@ -1551,6 +1551,10 @@ grid(Monitor *m)
 			break;
 	cols = (rows && (rows - 1) * rows >= n) ? rows - 1 : rows;
 
+	/* limit max rows/cols */
+	rows = MIN(rows, maxrows);
+	cols = MIN(cols, maxcols);
+
 	/* window geoms (cell height/width) */
 	if (m->drawwithgaps) { /* draw with fullgaps logic */
 		ch = (m->wh - 2*m->gappx - m->gappx * (rows - 1)) / (rows ? rows : 1);
