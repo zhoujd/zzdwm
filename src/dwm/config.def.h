@@ -17,7 +17,7 @@ static const int attachmode         = 0;        /* 0 master (default), 1 = above
 static const int background         = 1;        /* 0 means no root background */
 static const int urgentontag        = 0;        /* 1 means urgent show on tag */
 static const int mincellw           = 200;      /* min cell width in grid layout */
-static const int mincellh           = 150;      /* min cell height in grid layout */
+static const int mincellh           = 120;      /* min cell height in grid layout */
 static const char *fonts[]          = {
 	"SF Pro Display:size=11",
 	"SF Mono:size=11",
