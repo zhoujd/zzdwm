@@ -1541,6 +1541,7 @@ grid(Monitor *m)
 	unsigned int i, n, cx, cy, cw, ch, aw, ah, cols, rows;
 	unsigned int cc, cr, chrest, cwrest; //fullgaps logic
 	Client *c;
+	unsigned int maxrows, maxcols;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next))
 		n++;
@@ -1551,7 +1552,16 @@ grid(Monitor *m)
 			break;
 	cols = (rows && (rows - 1) * rows >= n) ? rows - 1 : rows;
 
-	/* limit max rows/cols */
+	/* max rows and cols */
+	if (m->drawwithgaps) { /* draw with fullgaps logic */
+		maxrows = (m->wh - m->gappx) / (mincellh + m->gappx);
+		maxcols = (m->ww - m->gappx) / (mincellw + m->gappx);
+	} else {
+		maxrows = m->wh / mincellh;
+		maxcols = m->ww / mincellw;
+	}
+
+	/* limit rows and cols */
 	rows = MIN(rows, maxrows);
 	cols = MIN(cols, maxcols);
 
