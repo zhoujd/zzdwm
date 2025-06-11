@@ -24,10 +24,14 @@ install_dep() {
 
 install_dm() {
     local target=/usr/local/bin
+    local xs=/usr/share/xsessions
+    echo "Init $xs"
+    sudo mkdir -p $xs
     echo "Install dwm"
     sudo cp -fv $CORE_ROOT/bin/dwm-session $target/dwm-session
-    sudo mkdir -p /usr/share/xsessions
-    sudo tee /usr/share/xsessions/dwm.desktop <<EOF
+    local dwm_entry=$xs/dwm.desktop
+    echo "Install $dwm_entry"
+    sudo tee $dwm_entry <<EOF
 [Desktop Entry]
 Name=DWM Session
 Comment=Dynamic Window Manager
@@ -38,7 +42,9 @@ DesktopNames=DWM
 EOF
     echo "Install cwm"
     sudo cp -fv $CORE_ROOT/bin/cwm-session $target/cwm-session
-    sudo tee /usr/share/xsessions/cwm.desktop <<EOF
+    local cwm_entry=$xs/cwm.desktop
+    echo "Install $cwm_entry"
+    sudo tee $cwm_entry <<EOF
 [Desktop Entry]
 Name=CWM Session
 Comment=OpenBSD's CWM
@@ -86,7 +92,7 @@ install_misc() {
 }
 
 build() {
-    local items=(
+    local projects=(
         $CORE_ROOT/src/dwm
         $CORE_ROOT/src/cwm
         $CORE_ROOT/tools/dmenu
@@ -99,12 +105,12 @@ build() {
         $CORE_ROOT/tools/lemonbar
         $CORE_ROOT/tools/detach
     )
-    for item in ${items[@]}; do
-        echo "Build $item"
-        make -C $item clean
-        make -C $item
-        sudo make -C $item install
-        echo "Build $item done"
+    for proj in ${projects[@]}; do
+        echo "Build $proj"
+        make -C $proj clean
+        make -C $proj
+        sudo make -C $proj install
+        echo "Build $proj done"
     done
     echo "Build done"
 }
