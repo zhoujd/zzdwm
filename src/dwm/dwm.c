@@ -2461,6 +2461,7 @@ tile(Monitor *m)
 	int i, n, h, my, maxn;
 	unsigned int msx = 0, msy = 0, msw = 0, msh = 0;
 	Client *c;
+	int minwsz = bh + vertgappx * 2;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
 	if (n == 0)
