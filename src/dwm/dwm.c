@@ -995,7 +995,9 @@ drawbar(Monitor *m)
 		x += w;
 	}
 
-	if (m->lt[m->sellt]->arrange == monocle) {
+	if (m->lt[m->sellt]->arrange == monocle ||
+	    m->lt[m->sellt]->arrange == tile ||
+	    m->lt[m->sellt]->arrange == grid) {
 		for (c = nexttiled(m->clients), a = 0, s = 0; c; c = nexttiled(c->next), a++)
 			if (c == m->stack)
 				s = a + 1;
