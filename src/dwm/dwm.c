@@ -1003,7 +1003,8 @@ drawbar(Monitor *m)
 				s = a + 1;
 		if (!s && a)
 			s = 1;
-		snprintf(m->ltsymbol, sizeof(m->ltsymbol) - 1, "[%d/%d]", s, a);
+		if (a > 1)
+			snprintf(m->ltsymbol, sizeof(m->ltsymbol) - 1, "[%d/%d]", s, a);
 	}
 
 	w = TEXTW(m->ltsymbol, 0);
