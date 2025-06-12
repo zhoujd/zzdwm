@@ -1580,6 +1580,7 @@ main (int argc, char **argv)
                                 area_t *area = area_get(press_ev->event, press_ev->detail, press_ev->event_x);
                                 // Respond to the click
                                 if (area) {
+                                    (void)system(area->cmd);
                                     (void)write(STDOUT_FILENO, area->cmd, strlen(area->cmd));
                                     (void)write(STDOUT_FILENO, "\n", 1);
                                 }
