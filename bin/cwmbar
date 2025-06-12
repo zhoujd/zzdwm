@@ -143,7 +143,7 @@ clock() {
 # Draw the status
 status() {
     while true; do
-        echo "%{T1}$%{l}$(group)$(winnum) $(wintitle) %{r}%{T2}${_colbg2} $(batt) $(volume_alsa) $(clock) %{B-}"
+        echo "$%{l}%{T1}${_colbg1}$(group)$(winnum) $(wintitle)%{B-}%{T-}%{r}%{T2}${_colbg2} $(batt) $(volume_alsa) $(clock) %{B-}%{T-}"
         sleep ${_interval}
     done
 }
