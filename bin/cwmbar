@@ -3,21 +3,22 @@
 # Depends on lemonbar to actually draw the status on screen
 
 # Common
-_bg="#242424"                   # Bar background color
-_font="SF Pro Display:size=10"  # XFT support
-_interval=0.2                   # Refresh interval
+_bg="#242424"                       # Bar background color
+_font1="xft:SF Mono:size=10"        # XFT support font1
+_font2="xft:SF Pro Display:size=10" # XFT support font2
+_interval=0.2                       # Refresh interval
 
 # Colors
-_colbg1="%{B#458588}"           # Background color 1
-_colbg2="%{B#242424}"           # Background color 2
-_colfg1="%{F#458588}"           # Foreground color 1
-_colfg2="%{F#dddddd}"           # Foreground color 2
-_colfg3="%{F#242424}"           # Foreground color 3
+_colbg1="%{B#458588}"               # Background color 1
+_colbg2="%{B#242424}"               # Background color 2
+_colfg1="%{F#458588}"               # Foreground color 1
+_colfg2="%{F#dddddd}"               # Foreground color 2
+_colfg3="%{F#242424}"               # Foreground color 3
 
 # Show name of the group we're in
 group() {
     _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
-    _pad="  "
+    _pad=" "
     for i in $(seq 1 9); do
         if [ ${_group} -eq $i ]; then
             printf '%s' "${_colbg1}${_pad}${_colfg3}${i}${_pad}%{B-}"
@@ -142,10 +143,10 @@ clock() {
 # Draw the status
 status() {
     while true; do
-        echo " $%{l}$(group)$(winnum) $(wintitle) %{r}${_colbg2} $(batt) $(volume_alsa) $(clock) %{B-}"
+        echo "%{T1}$%{l}$(group)$(winnum) $(wintitle) %{r}%{T2}${_colbg2} $(batt) $(volume_alsa) $(clock) %{B-}"
         sleep ${_interval}
     done
 }
 
 # Pipe status to lemonbar
-status | lemonbar -p -d -B "${_bg}" -f "${_font}"
+status | lemonbar -p -d -B "${_bg}" -f "${_font1}" -f "${_font2}"
