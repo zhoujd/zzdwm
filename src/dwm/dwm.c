@@ -280,8 +280,6 @@ static void tagtoright(const Arg *arg);
 static void autostart_exec(void);
 static void maximize(int x, int y, int w, int h);
 static void fmaximize(const Arg *arg);
-static void fmaxheight(const Arg *arg);
-static void fmaxwidth(const Arg *arg);
 static void sighup(int unused);
 static void sigterm(int unused);
 static void focussame(const Arg *arg);
@@ -3218,22 +3216,19 @@ maximize(int x, int y, int w, int h)
 void
 fmaximize(const Arg *arg)
 {
-	(void)arg;
-	maximize(selmon->wx, selmon->wy, selmon->ww - 2 * borderpx, selmon->wh - 2 * borderpx);
-}
-
-void
-fmaxheight(const Arg *arg)
-{
-	(void)arg;
-	maximize(selmon->sel->x, selmon->wy, selmon->sel->w, selmon->wh - 2 * borderpx);
-}
-
-void
-fmaxwidth(const Arg *arg)
-{
-	(void)arg;
-	maximize(selmon->wx, selmon->sel->y, selmon->ww - 2 * borderpx, selmon->sel->h);
+	switch (arg->ui) {
+	case 0: // full both width and height
+		maximize(selmon->wx, selmon->wy, selmon->ww - 2 * borderpx, selmon->wh - 2 * borderpx);
+		break;
+	case 1: // full width
+		maximize(selmon->wx, selmon->sel->y, selmon->ww - 2 * borderpx, selmon->sel->h);
+		break;
+	case 2: // full height
+		maximize(selmon->sel->x, selmon->wy, selmon->sel->w, selmon->wh - 2 * borderpx);
+		break;
+	default:
+		break;
+	}
 }
 
 int
