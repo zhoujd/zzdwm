@@ -17,15 +17,16 @@ _colfg3="%{F#242424}"           # Foreground color 3
 # Show name of the group we're in
 group() {
     _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
+    _pad="  "
     for i in $(seq 1 9); do
         if [ ${_group} -eq $i ]; then
-            printf '%s' "${_colbg1} ${_colfg3}${i} %{B-}"
+            printf '%s' "${_colbg1}${_pad}${_colfg3}${i}${_pad}%{B-}"
         else
             _winnumgroup=$(wmctrl -lp | awk '{print $2}' | grep -sc $i)
             if [ ${_winnumgroup} -eq 0 ]; then
-                printf '%s' "${_colbg2}${_colfg2}%{A:xdotool key super+${i}:} ${i} %{A}%{B-}"
+                printf '%s' "${_colbg2}${_colfg2}%{A:xdotool key super+${i}:}${_pad}${i}${_pad}%{A}%{B-}"
             else
-                printf '%s' "${_colbg2}${_colfg1}%{A:xdotool key super+${i}:} ${i} %{A}%{B-}"
+                printf '%s' "${_colbg2}${_colfg1}%{A:xdotool key super+${i}:}${_pad}${i}${_pad}%{A}%{B-}"
             fi
         fi
     done
