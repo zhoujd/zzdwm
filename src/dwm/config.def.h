@@ -219,6 +219,10 @@ static const Key keys[] = {
 	{ MODKEY|ControlMask,           XK_j,      fmaximize,        {.ui = 2} },
 	{ MODKEY|ControlMask,           XK_k,      fmaximize,        {.ui = 2} },
 	{ MODKEY|ControlMask,           XK_m,      fmaximize,        {.ui = 0} },
+	{ MODKEY|Mod1Mask,              XK_h,      fsnap,            {.ui = 0} },
+	{ MODKEY|Mod1Mask,              XK_j,      fsnap,            {.ui = 1} },
+	{ MODKEY|Mod1Mask,              XK_k,      fsnap,            {.ui = 2} },
+	{ MODKEY|Mod1Mask,              XK_l,      fsnap,            {.ui = 3} },
 	{ MODKEY,                       XK_v,      focussame,        {.i = +1} },
 	{ MODKEY|ShiftMask,             XK_v,      focussame,        {.i = -1} },
 	TAGKEYS(                        XK_1,                        0)

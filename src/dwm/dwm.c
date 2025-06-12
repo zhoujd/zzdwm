@@ -280,6 +280,8 @@ static void tagtoright(const Arg *arg);
 static void autostart_exec(void);
 static void maximize(int x, int y, int w, int h);
 static void fmaximize(const Arg *arg);
+static void snapmove(int x, int y, int w, int h);
+static void fsnap(const Arg *arg);
 static void sighup(int unused);
 static void sigterm(int unused);
 static void focussame(const Arg *arg);
@@ -3225,6 +3227,42 @@ fmaximize(const Arg *arg)
 		break;
 	case 2: // full height
 		maximize(selmon->sel->x, selmon->wy, selmon->sel->w, selmon->wh - 2 * borderpx);
+		break;
+	default:
+		break;
+	}
+}
+
+void
+snapmove(int x, int y, int w, int h)
+{
+	XEvent ev;
+
+	if (!selmon->sel || selmon->sel->isfixed)
+		return;
+	XRaiseWindow(dpy, selmon->sel->win);
+	if (selmon->sel->isfloating) {
+		resize(selmon->sel, x, y, w, h, True);
+	}
+	drawbar(selmon);
+	while(XCheckMaskEvent(dpy, EnterWindowMask, &ev));
+}
+
+void
+fsnap(const Arg *arg)
+{
+	switch (arg->ui) {
+	case 0: // left
+		snapmove(selmon->wx + gappx, selmon->sel->y, selmon->sel->w, selmon->sel->h);
+		break;
+	case 1: // down
+		snapmove(selmon->sel->x, selmon->wh - 2 * borderpx - gappx - selmon->sel->h + bh, selmon->sel->w, selmon->sel->h);
+		break;
+	case 2: // up
+		snapmove(selmon->sel->x, selmon->wy + gappx, selmon->sel->w, selmon->sel->h);
+		break;
+	case 3: // right
+		snapmove(selmon->ww - 2 * borderpx - gappx - selmon->sel->w, selmon->sel->y, selmon->sel->w, selmon->sel->h);
 		break;
 	default:
 		break;
