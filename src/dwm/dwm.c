@@ -3251,15 +3251,10 @@ snapmove(int x, int y, int w, int h)
 void
 fsnap(const Arg *arg)
 {
-	int gap = 0, hf = 0;
+	int gap, hf;
 
-	if (selmon->drawwithgaps) { /* fullgaps logic */
-		gap = gappx;
-	}
-	if (selmon->showbar) {
-		hf = bh;
-	}
-
+	gap = selmon->drawwithgaps ? gappx : 0;
+	hf = selmon->showbar ? bh : 0;
 	switch (arg->ui) {
 	case 0: // left
 		snapmove(selmon->wx + gap, selmon->sel->y, selmon->sel->w, selmon->sel->h);
