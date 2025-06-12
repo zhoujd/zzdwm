@@ -255,7 +255,7 @@ volpercent()
 	}
 
 	//Volume percent
-	result = (double)volume_avg / (double)unit;
+	result = (double)volume_avg / (unit ? unit : 1);
 
 END:
 	if (handle != NULL)
