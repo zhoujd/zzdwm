@@ -79,9 +79,9 @@ enum {
 };
 
 enum { ALIGN_L = 0,
-       ALIGN_C,
-       ALIGN_R
-     };
+    ALIGN_C,
+    ALIGN_R
+};
 
 enum {
     GC_DRAW = 0,
@@ -166,7 +166,7 @@ fill_gradient (xcb_drawable_t d, int x, int y, int width, int height, rgba_t sta
 
         xcb_change_gc(c, gc[GC_DRAW], XCB_GC_FOREGROUND, (const uint32_t []){ step.v });
         xcb_poly_fill_rectangle(c, d, gc[GC_DRAW], 1,
-                               (const xcb_rectangle_t []){ { x, i * bh, width, bh / K + 1 } });
+                                (const xcb_rectangle_t []){ { x, i * bh, width, bh / K + 1 } });
     }
 
     xcb_change_gc(c, gc[GC_DRAW], XCB_GC_FOREGROUND, (const uint32_t []){ fgc.v });
@@ -182,8 +182,8 @@ fill_rect (xcb_drawable_t d, xcb_gcontext_t _gc, int x, int y, int width, int he
 // ourselves.
 // The funcion is taken from 'wmdia' (http://wmdia.sourceforge.net/)
 xcb_void_cookie_t xcb_poly_text_16_simple(xcb_connection_t * c,
-    xcb_drawable_t drawable, xcb_gcontext_t gc, int16_t x, int16_t y,
-    uint32_t len, const uint16_t *str)
+                                          xcb_drawable_t drawable, xcb_gcontext_t gc, int16_t x, int16_t y,
+                                          uint32_t len, const uint16_t *str)
 {
     static const xcb_protocol_request_t xcb_req = {
         5,                // count
@@ -261,23 +261,23 @@ int
 shift (monitor_t *mon, int x, int align, int ch_width)
 {
     switch (align) {
-        case ALIGN_C:
-            xcb_copy_area(c, mon->pixmap, mon->pixmap, gc[GC_DRAW],
-                    mon->width / 2 - x / 2, 0,
-                    mon->width / 2 - (x + ch_width) / 2, 0,
-                    x, bh);
-            x = mon->width / 2 - (x + ch_width) / 2 + x;
-            break;
-        case ALIGN_R:
-            xcb_copy_area(c, mon->pixmap, mon->pixmap, gc[GC_DRAW],
-                    mon->width - x, 0,
-                    mon->width - x - ch_width, 0,
-                    x, bh);
-            x = mon->width - ch_width;
-            break;
+    case ALIGN_C:
+        xcb_copy_area(c, mon->pixmap, mon->pixmap, gc[GC_DRAW],
+                      mon->width / 2 - x / 2, 0,
+                      mon->width / 2 - (x + ch_width) / 2, 0,
+                      x, bh);
+        x = mon->width / 2 - (x + ch_width) / 2 + x;
+        break;
+    case ALIGN_R:
+        xcb_copy_area(c, mon->pixmap, mon->pixmap, gc[GC_DRAW],
+                      mon->width - x, 0,
+                      mon->width - x - ch_width, 0,
+                      x, bh);
+        x = mon->width - ch_width;
+        break;
     }
-    
-        /* Draw the background first */
+
+    /* Draw the background first */
     fill_rect(mon->pixmap, gc[GC_CLEAR], x, 0, ch_width, bh);
     return x;
 }
@@ -320,11 +320,11 @@ draw_char (monitor_t *mon, font_t *cur_font, int x, int align, uint16_t ch)
     } else {
         /* xcb accepts string in UCS-2 BE, so swap */
         ch = (ch >> 8) | (ch << 8);
-        
+
         // The coordinates here are those of the baseline
         xcb_poly_text_16_simple(c, mon->pixmap, gc[GC_DRAW],
-                            x, y,
-                            1, &ch);
+                                x, y,
+                                1, &ch);
     }
 
     draw_lines(mon, x, ch_width);
@@ -373,22 +373,22 @@ parse_color (const char *str, char **end, const rgba_t def)
     string_len = ep - (str + 1);
 
     switch (string_len) {
-        case 3:
-            // Expand the #rgb format into #rrggbb (aa is set to 0xff)
-            tmp.v = (tmp.v & 0xf00) * 0x1100
-                  | (tmp.v & 0x0f0) * 0x0110
-                  | (tmp.v & 0x00f) * 0x0011;
-        case 6:
-            // If the code is in #rrggbb form then assume it's opaque
-            tmp.a = 255;
-            break;
-        case 7:
-        case 8:
-            // Colors in #aarrggbb format, those need no adjustments
-            break;
-        default:
-            fprintf(stderr, "Invalid color specified\n");
-            return def;
+    case 3:
+        // Expand the #rgb format into #rrggbb (aa is set to 0xff)
+        tmp.v = (tmp.v & 0xf00) * 0x1100
+            | (tmp.v & 0x0f0) * 0x0110
+            | (tmp.v & 0x00f) * 0x0011;
+    case 6:
+        // If the code is in #rrggbb form then assume it's opaque
+        tmp.a = 255;
+        break;
+    case 7:
+    case 8:
+        // Colors in #aarrggbb format, those need no adjustments
+        break;
+    default:
+        fprintf(stderr, "Invalid color specified\n");
+        return def;
     }
 
     // Premultiply the alpha in
@@ -483,18 +483,18 @@ area_add (char *str, const char *optend, char **end, monitor_t *mon, const int x
         const int size = x - a->begin;
 
         switch (align) {
-            case ALIGN_L:
-                a->end = x;
-                break;
-            case ALIGN_C:
-                a->begin = mon->width / 2 - size / 2 + a->begin / 2;
-                a->end = a->begin + size;
-                break;
-            case ALIGN_R:
-                // The newest is the rightmost one
-                a->begin = mon->width - size;
-                a->end = mon->width;
-                break;
+        case ALIGN_L:
+            a->end = x;
+            break;
+        case ALIGN_C:
+            a->begin = mon->width / 2 - size / 2 + a->begin / 2;
+            a->end = a->begin + size;
+            break;
+        case ALIGN_R:
+            // The newest is the rightmost one
+            a->begin = mon->width - size;
+            a->end = mon->width;
+            break;
         }
 
         a->active = false;
@@ -502,7 +502,7 @@ area_add (char *str, const char *optend, char **end, monitor_t *mon, const int x
     }
 
     if (area_stack.at + 1 > area_stack.max) {
-        fprintf(stderr, "Cannot add any more clickable areas (used %d/%d)\n", 
+        fprintf(stderr, "Cannot add any more clickable areas (used %d/%d)\n",
                 area_stack.at, area_stack.max);
         return false;
     }
@@ -610,7 +610,7 @@ parse (char *text)
 
     for (;;) {
         if (*p == '\0' || *p == '\n')
-			break;
+            break;
 
         if (p[0] == '%' && p[1] == '{' && (block_end = strchr(p++, '}'))) {
             p++;
@@ -620,91 +620,91 @@ parse (char *text)
                     p++;
 
                 switch (*p++) {
-                    case '+': set_attribute('+', *p++); break;
-                    case '-': set_attribute('-', *p++); break;
-                    case '!': set_attribute('!', *p++); break;
+                case '+': set_attribute('+', *p++); break;
+                case '-': set_attribute('-', *p++); break;
+                case '!': set_attribute('!', *p++); break;
 
-                    case 'R':
-                              tmp = fgc;
-                              fgc = bgc;
-                              bgc = tmp;
-                              update_gc();
-                              break;
+                case 'R':
+                    tmp = fgc;
+                    fgc = bgc;
+                    bgc = tmp;
+                    update_gc();
+                    break;
 
-                    case 'l': pos_x = 0; align = ALIGN_L; break;
-                    case 'c': pos_x = 0; align = ALIGN_C; break;
-                    case 'r': pos_x = 0; align = ALIGN_R; break;
+                case 'l': pos_x = 0; align = ALIGN_L; break;
+                case 'c': pos_x = 0; align = ALIGN_C; break;
+                case 'r': pos_x = 0; align = ALIGN_R; break;
 
-                    case 'A':
-                              button = XCB_BUTTON_INDEX_1;
-                              // The range is 1-5
-                              if (isdigit(*p) && (*p > '0' && *p < '6'))
-                                  button = *p++ - '0';
-                              if (!area_add(p, block_end, &p, cur_mon, pos_x, align, button))
-                                  return;
-                              break;
+                case 'A':
+                    button = XCB_BUTTON_INDEX_1;
+                    // The range is 1-5
+                    if (isdigit(*p) && (*p > '0' && *p < '6'))
+                        button = *p++ - '0';
+                    if (!area_add(p, block_end, &p, cur_mon, pos_x, align, button))
+                        return;
+                    break;
 
-                    case 'B': bgc = parse_color(p, &p, dbgc); update_gc(); break;
-                    case 'F': fgc = parse_color(p, &p, dfgc); update_gc(); break;
-                    case 'U': ugc = parse_color(p, &p, dugc); update_gc(); break;
+                case 'B': bgc = parse_color(p, &p, dbgc); update_gc(); break;
+                case 'F': fgc = parse_color(p, &p, dfgc); update_gc(); break;
+                case 'U': ugc = parse_color(p, &p, dugc); update_gc(); break;
 
-                    case 'S':
-                              if (*p == '+' && cur_mon->next)
-                              { cur_mon = cur_mon->next; }
-                              else if (*p == '-' && cur_mon->prev)
-                              { cur_mon = cur_mon->prev; }
-                              else if (*p == 'f')
-                              { cur_mon = monhead; }
-                              else if (*p == 'l')
-                              { cur_mon = montail ? montail : monhead; }
-                              else if (isdigit(*p))
-                              { cur_mon = monhead;
-                                for (int i = 0; i != *p-'0' && cur_mon->next; i++)
-                                    cur_mon = cur_mon->next;
-                              }
-                              else
-                              { p++; continue; }
-					          XftDrawDestroy (xft_draw);
-					          if (!(xft_draw = XftDrawCreate (dpy, cur_mon->pixmap, visual_ptr , colormap ))) {
-						        fprintf(stderr, "Couldn't create xft drawable\n");
-					          }
+                case 'S':
+                    if (*p == '+' && cur_mon->next)
+                    { cur_mon = cur_mon->next; }
+                    else if (*p == '-' && cur_mon->prev)
+                    { cur_mon = cur_mon->prev; }
+                    else if (*p == 'f')
+                    { cur_mon = monhead; }
+                    else if (*p == 'l')
+                    { cur_mon = montail ? montail : monhead; }
+                    else if (isdigit(*p))
+                    { cur_mon = monhead;
+                        for (int i = 0; i != *p-'0' && cur_mon->next; i++)
+                            cur_mon = cur_mon->next;
+                    }
+                    else
+                    { p++; continue; }
+                    XftDrawDestroy (xft_draw);
+                    if (!(xft_draw = XftDrawCreate (dpy, cur_mon->pixmap, visual_ptr , colormap ))) {
+                        fprintf(stderr, "Couldn't create xft drawable\n");
+                    }
 
-                              p++;
-                              pos_x = 0;
-                              break;
-                    case 'O':
-                              errno = 0;
-                              w = (int) strtoul(p, &p, 10);
-                              if (errno)
-                                  continue;
+                    p++;
+                    pos_x = 0;
+                    break;
+                case 'O':
+                    errno = 0;
+                    w = (int) strtoul(p, &p, 10);
+                    if (errno)
+                        continue;
 
-                              draw_shift(cur_mon, pos_x, align, w);
+                    draw_shift(cur_mon, pos_x, align, w);
 
-                              pos_x += w;
-                              area_shift(cur_mon->window, align, w);
-                              break;
+                    pos_x += w;
+                    area_shift(cur_mon->window, align, w);
+                    break;
 
-                    case 'T':
-                              if (*p == '-') { //Reset to automatic font selection
-                                  font_index = -1;
-                                  p++;
-                                  break;
-                              } else if (isdigit(*p)) {
-                                  font_index = (int)strtoul(p, &ep, 10);
-                                  // User-specified 'font_index' ∊ (0,font_count]
-                                  // Otherwise just fallback to the automatic font selection
-                                  if (!font_index || font_index > font_count)
-                                  font_index = -1;
-                                  p = ep;
-                                  break;
-                              } else {
-                                  fprintf(stderr, "Invalid font slot \"%c\"\n", *p++); //Swallow the token
-                                  break;
-                              }
+                case 'T':
+                    if (*p == '-') { //Reset to automatic font selection
+                        font_index = -1;
+                        p++;
+                        break;
+                    } else if (isdigit(*p)) {
+                        font_index = (int)strtoul(p, &ep, 10);
+                        // User-specified 'font_index' ∊ (0,font_count]
+                        // Otherwise just fallback to the automatic font selection
+                        if (!font_index || font_index > font_count)
+                            font_index = -1;
+                        p = ep;
+                        break;
+                    } else {
+                        fprintf(stderr, "Invalid font slot \"%c\"\n", *p++); //Swallow the token
+                        break;
+                    }
 
                     // In case of error keep parsing after the closing }
-                    default:
-                        p = block_end;
+                default:
+                    p = block_end;
                 }
             }
             // Eat the trailing }
@@ -759,8 +759,8 @@ parse (char *text)
 
             if(cur_font->ptr)
                 xcb_change_gc(c, gc[GC_DRAW] , XCB_GC_FONT, (const uint32_t []) {
-                cur_font->ptr
-            });
+                        cur_font->ptr
+                    });
             int w = draw_char(cur_mon, cur_font, pos_x, align, ucs);
 
             pos_x += w;
@@ -898,8 +898,8 @@ set_ewmh_atoms (void)
         xcb_change_property(c, XCB_PROP_MODE_REPLACE, mon->window, atom_list[NET_WM_WINDOW_TYPE], XCB_ATOM_ATOM, 32, 1, &atom_list[NET_WM_WINDOW_TYPE_DOCK]);
         xcb_change_property(c, XCB_PROP_MODE_APPEND,  mon->window, atom_list[NET_WM_STATE], XCB_ATOM_ATOM, 32, 2, &atom_list[NET_WM_STATE_STICKY]);
         xcb_change_property(c, XCB_PROP_MODE_REPLACE, mon->window, atom_list[NET_WM_DESKTOP], XCB_ATOM_CARDINAL, 32, 1, (const uint32_t []) {
-            0u - 1u
-        } );
+                0u - 1u
+            } );
         xcb_change_property(c, XCB_PROP_MODE_REPLACE, mon->window, atom_list[NET_WM_STRUT_PARTIAL], XCB_ATOM_CARDINAL, 32, 12, strut);
         xcb_change_property(c, XCB_PROP_MODE_REPLACE, mon->window, atom_list[NET_WM_STRUT], XCB_ATOM_CARDINAL, 32, 4, strut);
         xcb_change_property(c, XCB_PROP_MODE_REPLACE, mon->window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, 3, "bar");
@@ -928,9 +928,9 @@ monitor_new (int x, int y, int width, int height)
                       ret->x, ret->y, width, bh, 0,
                       XCB_WINDOW_CLASS_INPUT_OUTPUT, visual,
                       XCB_CW_BACK_PIXEL | XCB_CW_BORDER_PIXEL | XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK | XCB_CW_COLORMAP,
-    (const uint32_t []) {
-        bgc.v, bgc.v, dock, XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_BUTTON_PRESS, colormap
-    });
+                      (const uint32_t []) {
+                          bgc.v, bgc.v, dock, XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_BUTTON_PRESS, colormap
+                      });
 
     ret->pixmap = xcb_generate_id(c);
     xcb_create_pixmap(c, depth, ret->pixmap, ret->window, width, bh);
@@ -1012,10 +1012,10 @@ monitor_create_chain (xcb_rectangle_t *rects, const int num)
             continue;
         if (rects[i].width > left) {
             monitor_t *mon = monitor_new(
-                                 rects[i].x + left,
-                                 rects[i].y,
-                                 min(width, rects[i].width - left),
-                                 rects[i].height);
+                rects[i].x + left,
+                rects[i].y,
+                min(width, rects[i].width - left),
+                rects[i].height);
 
             if (!mon)
                 break;
@@ -1043,7 +1043,7 @@ get_randr_monitors (void)
     int i, j, num, valid = 0;
 
     rres_reply = xcb_randr_get_screen_resources_current_reply(c,
-                 xcb_randr_get_screen_resources_current(c, scr->root), NULL);
+                                                              xcb_randr_get_screen_resources_current(c, scr->root), NULL);
 
     if (!rres_reply) {
         fprintf(stderr, "Failed to get current randr screen resources\n");
@@ -1077,7 +1077,7 @@ get_randr_monitors (void)
         }
 
         ci_reply = xcb_randr_get_crtc_info_reply(c,
-                   xcb_randr_get_crtc_info(c, oi_reply->crtc, XCB_CURRENT_TIME), NULL);
+                                                 xcb_randr_get_crtc_info(c, oi_reply->crtc, XCB_CURRENT_TIME), NULL);
 
         free(oi_reply);
 
@@ -1107,7 +1107,7 @@ get_randr_monitors (void)
 
             if (i != j && rects[j].width) {
                 if (rects[j].x >= rects[i].x && rects[j].x + rects[j].width <= rects[i].x + rects[i].width &&
-                        rects[j].y >= rects[i].y && rects[j].y + rects[j].height <= rects[i].y + rects[i].height) {
+                    rects[j].y >= rects[i].y && rects[j].y + rects[j].height <= rects[i].y + rects[i].height) {
                     rects[j].width = 0;
                     valid--;
                 }
@@ -1138,7 +1138,7 @@ get_xinerama_monitors (void)
     int screens;
 
     xqs_reply = xcb_xinerama_query_screens_reply(c,
-                xcb_xinerama_query_screens_unchecked(c), NULL);
+                                                 xcb_xinerama_query_screens_unchecked(c), NULL);
 
     iter = xcb_xinerama_query_screens_screen_info_iterator(xqs_reply);
     screens = iter.rem;
@@ -1164,20 +1164,20 @@ xcb_visualid_t
 get_visual (void)
 {
 
-    XVisualInfo xv; 
+    XVisualInfo xv;
     xv.depth = 32;
     int result = 0;
-    XVisualInfo* result_ptr = NULL; 
+    XVisualInfo* result_ptr = NULL;
     result_ptr = XGetVisualInfo(dpy, VisualDepthMask, &xv, &result);
 
     if (result > 0) {
         visual_ptr = result_ptr->visual;
         return result_ptr->visualid;
     }
-    
+
     //Fallback
-    visual_ptr = DefaultVisual(dpy, scr_nbr);	
-	return scr->root_visual;
+    visual_ptr = DefaultVisual(dpy, scr_nbr);
+    return scr->root_visual;
 }
 
 // Parse an X-styled geometry string, we don't support signed offsets though.
@@ -1243,7 +1243,7 @@ xconn (void)
         exit (EXIT_FAILURE);
     }
 
-	XSetEventQueueOwner(dpy, XCBOwnsEventQueue);
+    XSetEventQueueOwner(dpy, XCBOwnsEventQueue);
 
     if (xcb_connection_has_error(c)) {
         fprintf(stderr, "Couldn't connect to X\n");
@@ -1254,7 +1254,7 @@ xconn (void)
     scr = xcb_setup_roots_iterator(xcb_get_setup(c)).data;
 
     /* Try to get a RGBA visual and build the colormap for that */
-	visual = get_visual();
+    visual = get_visual();
     colormap = xcb_generate_id(c);
     xcb_create_colormap(c, XCB_COLORMAP_ALLOC_NONE, colormap, scr->root, visual);
 }
@@ -1482,34 +1482,34 @@ main (int argc, char **argv)
 
     while ((ch = getopt(argc, argv, "hg:bdf:a:pu:B:F:U:n:o:")) != -1) {
         switch (ch) {
-            case 'h':
-                printf ("lemonbar version %s patched with XFT support\n", VERSION);
-                printf ("usage: %s [-h | -g | -b | -d | -f | -a | -p | -n | -u | -B | -F]\n"
-                        "\t-h Show this help\n"
-                        "\t-g Set the bar geometry {width}x{height}+{xoffset}+{yoffset}\n"
-                        "\t-b Put the bar at the bottom of the screen\n"
-                        "\t-d Force docking (use this if your WM isn't EWMH compliant)\n"
-                        "\t-f Set the font name to use\n"
-                        "\t-a Number of clickable areas available (default is 10)\n"
-                        "\t-p Don't close after the data ends\n"
-                        "\t-n Set the WM_NAME atom to the specified value for this bar\n"
-                        "\t-u Set the underline/overline height in pixels\n"
-                        "\t-B Set background color in #AARRGGBB\n"
-                        "\t-F Set foreground color in #AARRGGBB\n"
-                        "\t-o Add a vertical offset to the text, it can be negative\n", argv[0]);
-                exit (EXIT_SUCCESS);
-            case 'g': (void)parse_geometry_string(optarg, geom_v); break;
-            case 'p': permanent = true; break;
-            case 'n': wm_name = strdup(optarg); break;
-            case 'b': topbar = false; break;
-            case 'd': dock = true; break;
-            case 'f': font_load(optarg); break;
-            case 'u': bu = strtoul(optarg, NULL, 10); break;
-            case 'o': add_y_offset(strtol(optarg, NULL, 10)); break;
-            case 'B': dbgc = bgc = parse_color(optarg, NULL, (rgba_t)0x00000000U); break;
-            case 'F': dfgc = fgc = parse_color(optarg, NULL, (rgba_t)0xffffffffU); break;
-            case 'U': dugc = ugc = parse_color(optarg, NULL, fgc); break;
-            case 'a': areas = strtoul(optarg, NULL, 10); break;
+        case 'h':
+            printf ("lemonbar version %s patched with XFT support\n", VERSION);
+            printf ("usage: %s [-h | -g | -b | -d | -f | -a | -p | -n | -u | -B | -F]\n"
+                    "\t-h Show this help\n"
+                    "\t-g Set the bar geometry {width}x{height}+{xoffset}+{yoffset}\n"
+                    "\t-b Put the bar at the bottom of the screen\n"
+                    "\t-d Force docking (use this if your WM isn't EWMH compliant)\n"
+                    "\t-f Set the font name to use\n"
+                    "\t-a Number of clickable areas available (default is 10)\n"
+                    "\t-p Don't close after the data ends\n"
+                    "\t-n Set the WM_NAME atom to the specified value for this bar\n"
+                    "\t-u Set the underline/overline height in pixels\n"
+                    "\t-B Set background color in #AARRGGBB\n"
+                    "\t-F Set foreground color in #AARRGGBB\n"
+                    "\t-o Add a vertical offset to the text, it can be negative\n", argv[0]);
+            exit (EXIT_SUCCESS);
+        case 'g': (void)parse_geometry_string(optarg, geom_v); break;
+        case 'p': permanent = true; break;
+        case 'n': wm_name = strdup(optarg); break;
+        case 'b': topbar = false; break;
+        case 'd': dock = true; break;
+        case 'f': font_load(optarg); break;
+        case 'u': bu = strtoul(optarg, NULL, 10); break;
+        case 'o': add_y_offset(strtol(optarg, NULL, 10)); break;
+        case 'B': dbgc = bgc = parse_color(optarg, NULL, (rgba_t)0x00000000U); break;
+        case 'F': dfgc = fgc = parse_color(optarg, NULL, (rgba_t)0xffffffffU); break;
+        case 'U': dugc = ugc = parse_color(optarg, NULL, fgc); break;
+        case 'a': areas = strtoul(optarg, NULL, 10); break;
         }
     }
 
@@ -1545,7 +1545,7 @@ main (int argc, char **argv)
 
     // Prevent fgets to block
     fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
-	
+
     for (;;) {
         bool redraw = false;
 
@@ -1570,21 +1570,21 @@ main (int argc, char **argv)
                     expose_ev = (xcb_expose_event_t *)ev;
 
                     switch (ev->response_type & 0x7F) {
-                        case XCB_EXPOSE:
-                            if (expose_ev->count == 0)
-                                redraw = true;
-                            break;
-                        case XCB_BUTTON_PRESS:
-                            press_ev = (xcb_button_press_event_t *)ev;
-                            {
-                                area_t *area = area_get(press_ev->event, press_ev->detail, press_ev->event_x);
-                                // Respond to the click
-                                if (area) {
-                                    (void)system(area->cmd);
-                                    (void)write(STDOUT_FILENO, area->cmd, strlen(area->cmd));
-                                    (void)write(STDOUT_FILENO, "\n", 1);
-                                }
+                    case XCB_EXPOSE:
+                        if (expose_ev->count == 0)
+                            redraw = true;
+                        break;
+                    case XCB_BUTTON_PRESS:
+                        press_ev = (xcb_button_press_event_t *)ev;
+                        {
+                            area_t *area = area_get(press_ev->event, press_ev->detail, press_ev->event_x);
+                            // Respond to the click
+                            if (area) {
+                                (void)system(area->cmd);
+                                (void)write(STDOUT_FILENO, area->cmd, strlen(area->cmd));
+                                (void)write(STDOUT_FILENO, "\n", 1);
                             }
+                        }
                         break;
                     }
 
