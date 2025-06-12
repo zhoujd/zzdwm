@@ -2272,7 +2272,7 @@ setup(void)
 	drw = drw_create(dpy, screen, root, sw, sh, visual, depth, cmap);
 	if (!drw_fontset_create(drw, fonts, LENGTH(fonts)))
 		die("no fonts could be loaded.");
-	lrpad = drw->fonts->h;
+	lrpad = barpad ? (barpad * 2) : drw->fonts->h;
 	bh = drw->fonts->h + vertpadbar;
 	updategeom();
 	/* init atoms */
