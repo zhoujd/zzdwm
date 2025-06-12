@@ -6,6 +6,7 @@
 _bg="#242424"                       # Bar background color
 _font1="xft:SF Mono:size=10"        # XFT support font1
 _font2="xft:SF Pro Display:size=10" # XFT support font2
+_pad1=" "
 _interval=0.2                       # Refresh interval
 
 # Colors
@@ -143,7 +144,9 @@ clock() {
 # Draw the status
 status() {
     while true; do
-        echo "$%{l}%{T1}${_colbg1}$(group)$(winnum) $(wintitle)%{B-}%{T-}%{r}%{T2}${_colbg2} $(batt) $(volume_alsa) $(clock) %{B-}%{T-}"
+        _left="%{l}%{O1}%{T1}${_colbg1}$(group) $(winnum) $(wintitle)%{O1}%{B-}%{T-}"
+        _right="%{r}%{O2}%{T2}${_colbg2}$(batt) $(volume_alsa) $(clock)%{O2}%{B-}%{T-}"
+        echo "${_left}${_right}"
         sleep ${_interval}
     done
 }
