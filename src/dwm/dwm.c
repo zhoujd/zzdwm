@@ -1602,7 +1602,13 @@ grid(Monitor *m)
 }
 
 void
-moveorplace(const Arg *arg) {
+moveorplace(const Arg *arg)
+{
+	/* placemouse options, choose which feels more natural:
+	 *    0 - tiled position is relative to mouse cursor
+	 *    1 - tiled postiion is relative to window center
+	 *    2 - mouse pointer warps to window center
+	 */
 	if ((!selmon->lt[selmon->sellt]->arrange || (selmon->sel && selmon->sel->isfloating)))
 		movemouse(arg);
 	else
