@@ -3414,6 +3414,10 @@ snapmove(int x, int y, int w, int h)
 		return;
 	XRaiseWindow(dpy, selmon->sel->win);
 	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
+		selmon->sel->oldx = selmon->sel->x;
+		selmon->sel->oldy = selmon->sel->y;
+		selmon->sel->oldw = selmon->sel->w;
+		selmon->sel->oldh = selmon->sel->h;
 		resize(selmon->sel, x, y, w, h, True);
 	}
 	drawbar(selmon);
