@@ -2385,7 +2385,7 @@ setsmfact(const Arg *arg)
 		return;
 	if (selmon->lt[selmon->sellt]->arrange == zetadeck) {
 		sf = arg->sf < 1.0 ? arg->sf + selmon->zmfact : arg->sf - 1.0;
-		if (sf < 0 || sf > 0.9)
+		if (sf < 0.05 || sf > 0.95)
 			return;
 		selmon->zmfact = selmon->pertag->zmfacts[selmon->pertag->curtag] = sf;
 	} else {
