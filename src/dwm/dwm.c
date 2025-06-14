@@ -286,7 +286,7 @@ static void tagtoright(const Arg *arg);
 static void autostart_exec(void);
 static void maximize(int x, int y, int w, int h);
 static void fmaximize(const Arg *arg);
-static void snapmove(int x, int y, int w, int h);
+static void moveclient(int x, int y, int w, int h);
 static void fsnap(const Arg *arg);
 static void sighup(int unused);
 static void sigterm(int unused);
@@ -2366,9 +2366,9 @@ setmfact(const Arg *arg)
 	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
 		f = arg->f < 1.0 ? arg->f * 1000 : arg->f;
 		if (arg->f > 0.0) {
-			snapmove(MAX(selmon->sel->x + f, lrpad - selmon->sel->w), selmon->sel->y, selmon->sel->w, selmon->sel->h);
+			moveclient(MAX(selmon->sel->x + f, lrpad - selmon->sel->w), selmon->sel->y, selmon->sel->w, selmon->sel->h);
 		} else {
-			snapmove(MIN(selmon->sel->x + f, selmon->wx - lrpad), selmon->sel->y, selmon->sel->w, selmon->sel->h);
+			moveclient(MIN(selmon->sel->x + f, selmon->wx - lrpad), selmon->sel->y, selmon->sel->w, selmon->sel->h);
 		}
 	} else if (selmon->lt[selmon->sellt]->arrange == doubledeck) {
 		f = arg->f < 1.0 ? arg->f + selmon->dmfact : arg->f - 1.0;
@@ -2394,9 +2394,9 @@ setsmfact(const Arg *arg)
 	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
 		sf = arg->sf < 1.0 ? arg->sf * 1000 : arg->sf;
 		if (arg->f < 0.0) {
-			snapmove(selmon->sel->x, MAX(selmon->sel->y + sf, lrpad - selmon->sel->h), selmon->sel->w, selmon->sel->h);
+			moveclient(selmon->sel->x, MAX(selmon->sel->y + sf, lrpad - selmon->sel->h), selmon->sel->w, selmon->sel->h);
 		} else {
-			snapmove(selmon->sel->x, MAX(selmon->sel->y + sf, selmon->wy - lrpad), selmon->sel->w, selmon->sel->h);
+			moveclient(selmon->sel->x, MAX(selmon->sel->y + sf, selmon->wy - lrpad), selmon->sel->w, selmon->sel->h);
 		}
 	} else if (selmon->lt[selmon->sellt]->arrange == zetadeck) {
 		sf = arg->sf < 1.0 ? arg->sf + selmon->zmfact : arg->sf - 1.0;
@@ -3421,7 +3421,7 @@ fmaximize(const Arg *arg)
 }
 
 void
-snapmove(int x, int y, int w, int h)
+moveclient(int x, int y, int w, int h)
 {
 	XEvent ev;
 
@@ -3448,16 +3448,16 @@ fsnap(const Arg *arg)
 	hf = selmon->showbar ? bh : 0;
 	switch (arg->ui) {
 	case 0: // left
-		snapmove(selmon->wx + gap, selmon->sel->y, selmon->sel->w, selmon->sel->h);
+		moveclient(selmon->wx + gap, selmon->sel->y, selmon->sel->w, selmon->sel->h);
 		break;
 	case 1: // down
-		snapmove(selmon->sel->x, selmon->wh - 2 * borderpx - gap - selmon->sel->h + hf, selmon->sel->w, selmon->sel->h);
+		moveclient(selmon->sel->x, selmon->wh - 2 * borderpx - gap - selmon->sel->h + hf, selmon->sel->w, selmon->sel->h);
 		break;
 	case 2: // up
-		snapmove(selmon->sel->x, selmon->wy + gap, selmon->sel->w, selmon->sel->h);
+		moveclient(selmon->sel->x, selmon->wy + gap, selmon->sel->w, selmon->sel->h);
 		break;
 	case 3: // right
-		snapmove(selmon->ww - 2 * borderpx - gap - selmon->sel->w, selmon->sel->y, selmon->sel->w, selmon->sel->h);
+		moveclient(selmon->ww - 2 * borderpx - gap - selmon->sel->w, selmon->sel->y, selmon->sel->w, selmon->sel->h);
 		break;
 	default:
 		break;
