@@ -2365,7 +2365,7 @@ setmfact(const Arg *arg)
 		return;
 	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
 		f = arg->f < 1.0 ? arg->f * 1000 : arg->f;
-		snapmove(selmon->sel->x, selmon->sel->y, MAX(selmon->sel->w + f, mincellw), selmon->sel->h);
+		snapmove(MAX(selmon->sel->x + f, selmon->wx), selmon->sel->y, selmon->sel->w, selmon->sel->h);
 	} else if (selmon->lt[selmon->sellt]->arrange == doubledeck) {
 		f = arg->f < 1.0 ? arg->f + selmon->dmfact : arg->f - 1.0;
 		if (f < 0.05 || f > 0.95)
@@ -2389,7 +2389,7 @@ setsmfact(const Arg *arg)
 		return;
 	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
 		sf = arg->sf < 1.0 ? arg->sf * 1000 : arg->sf;
-		snapmove(selmon->sel->x, selmon->sel->y, selmon->sel->w, MAX(selmon->sel->h + sf, mincellh));
+		snapmove(selmon->sel->x, MAX(selmon->sel->y + sf, selmon->wy), selmon->sel->w, selmon->sel->h);
 	} else if (selmon->lt[selmon->sellt]->arrange == zetadeck) {
 		sf = arg->sf < 1.0 ? arg->sf + selmon->zmfact : arg->sf - 1.0;
 		if (sf < 0.05 || sf > 0.95)
