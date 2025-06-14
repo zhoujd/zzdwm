@@ -2368,11 +2368,6 @@ setmfact(const Arg *arg)
 		if (f < 0.05 || f > 0.95)
 			return;
 		selmon->dmfact = selmon->pertag->dmfacts[selmon->pertag->curtag] = f;
-	} else if (selmon->lt[selmon->sellt]->arrange == zetadeck) {
-		f = arg->f < 1.0 ? arg->f + selmon->zmfact : arg->f - 1.0;
-		if (f < 0.05 || f > 0.95)
-			return;
-		selmon->zmfact = selmon->pertag->zmfacts[selmon->pertag->curtag] = f;
 	} else {
 		f = arg->f < 1.0 ? arg->f + selmon->mfact : arg->f - 1.0;
 		if (f < 0.05 || f > 0.95)
@@ -2386,12 +2381,19 @@ void
 setsmfact(const Arg *arg)
 {
 	float sf;
-	if (!arg || selmon->lt[selmon->sellt]->arrange != tile)
+	if (!arg || !selmon->lt[selmon->sellt]->arrange)
 		return;
-	sf = arg->sf < 1.0 ? arg->sf + selmon->smfact : arg->sf - 1.0;
-	if (sf < 0 || sf > 0.9)
-		return;
-	selmon->smfact = selmon->pertag->smfacts[selmon->pertag->curtag] = sf;
+	if (selmon->lt[selmon->sellt]->arrange == zetadeck) {
+		sf = arg->sf < 1.0 ? arg->sf + selmon->zmfact : arg->sf - 1.0;
+		if (sf < 0 || sf > 0.9)
+			return;
+		selmon->zmfact = selmon->pertag->zmfacts[selmon->pertag->curtag] = sf;
+	} else {
+		sf = arg->sf < 1.0 ? arg->sf + selmon->smfact : arg->sf - 1.0;
+		if (sf < 0 || sf > 0.9)
+			return;
+		selmon->smfact = selmon->pertag->smfacts[selmon->pertag->curtag] = sf;
+	}
 	arrange(selmon);
 }
 
