@@ -239,6 +239,8 @@ static void setlayout(const Arg *arg);
 static void setmfact(const Arg *arg);
 static void setsmfact(const Arg *arg);
 static void resetmfact(const Arg *arg);
+static void setwfact(const Arg *arg);
+static void sethfact(const Arg *arg);
 static void setnumdesktops(void);
 static void setup(void);
 static void setviewport(void);
@@ -2424,6 +2426,34 @@ resetmfact(const Arg *arg)
 	} else {
 		selmon->mfact = selmon->pertag->mfacts[selmon->pertag->curtag] = mfact;
 		selmon->smfact = selmon->pertag->smfacts[selmon->pertag->curtag] = smfact;
+	}
+	arrange(selmon);
+}
+
+void
+setwfact(const Arg *arg)
+{
+	float f;
+
+	if (!arg)
+		return;
+	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
+		f = arg->f < 1.0 ? arg->f * 1000.0 : arg->f;
+		moveclient(selmon->sel->x, selmon->sel->y, MAX(selmon->sel->w + f, mincellw), selmon->sel->h);
+	}
+	arrange(selmon);
+}
+
+void
+sethfact(const Arg *arg)
+{
+	float sf;
+
+	if (!arg)
+		return;
+	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
+		sf = arg->sf < 1.0 ? arg->sf * 1000.0 : arg->sf;
+		moveclient(selmon->sel->x, selmon->sel->y, selmon->sel->w, MAX(selmon->sel->h + sf, mincellh));
 	}
 	arrange(selmon);
 }
