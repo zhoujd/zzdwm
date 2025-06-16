@@ -2438,7 +2438,7 @@ setwfact(const Arg *arg)
 	if (!arg)
 		return;
 	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
-		f = arg->f < 1.0 ? arg->f * 1000.0 : arg->f;
+		f = arg->f < 1.0 ? arg->f * 500.0 : arg->f;
 		moveclient(selmon->sel->x, selmon->sel->y, MAX(selmon->sel->w + f, mincellw), selmon->sel->h);
 	}
 	arrange(selmon);
@@ -2452,7 +2452,7 @@ sethfact(const Arg *arg)
 	if (!arg)
 		return;
 	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
-		sf = arg->sf < 1.0 ? arg->sf * 1000.0 : arg->sf;
+		sf = arg->sf < 1.0 ? arg->sf * 500.0 : arg->sf;
 		moveclient(selmon->sel->x, selmon->sel->y, selmon->sel->w, MAX(selmon->sel->h + sf, mincellh));
 	}
 	arrange(selmon);
