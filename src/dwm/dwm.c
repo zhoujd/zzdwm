@@ -2396,9 +2396,9 @@ setsmfact(const Arg *arg)
 	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
 		sf = arg->sf < 1.0 ? arg->sf * 500.0 : arg->sf;
 		if (sf > 0.0) {
-			moveclient(selmon->sel->x, MAX(selmon->sel->y + sf, selmon->wy + selmon->sel->h - lrpad - bh), selmon->sel->w, selmon->sel->h);
+			moveclient(selmon->sel->x, MAX(selmon->sel->y + sf, selmon->wy + selmon->sel->h - lrpad), selmon->sel->w, selmon->sel->h);
 		} else {
-			moveclient(selmon->sel->x, MAX(selmon->sel->y + sf, selmon->wy - selmon->sel->h + lrpad - bh), selmon->sel->w, selmon->sel->h);
+			moveclient(selmon->sel->x, MAX(selmon->sel->y + sf, selmon->wy - selmon->sel->h + lrpad), selmon->sel->w, selmon->sel->h);
 		}
 	} else if (selmon->lt[selmon->sellt]->arrange == zetadeck) {
 		sf = arg->sf < 1.0 ? arg->sf + selmon->zmfact : arg->sf - 1.0;
