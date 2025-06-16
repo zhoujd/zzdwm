@@ -2368,12 +2368,12 @@ setmfact(const Arg *arg)
 	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
 		f = arg->f < 1.0 ? arg->f * 500.0 : arg->f;
 		if (f > 0.0) {
-			if (selmon->mw - selmon->sel->x > lrpad &&
-			    selmon->sel->x + f < selmon->mw)
+			if (selmon->sel->x < selmon->mw - lrpad &&
+			    selmon->sel->x + f < selmon->mw - lrpad)
 				moveclient(selmon->sel->x + f, selmon->sel->y, selmon->sel->w, selmon->sel->h);
 		} else {
-			if (selmon->sel->x + selmon->sel->w - selmon->mx > lrpad &&
-			    selmon->sel->x + selmon->sel->w + f > selmon->mx)
+			if (selmon->sel->x + selmon->sel->w > selmon->mx + lrpad &&
+			    selmon->sel->x + selmon->sel->w + f > selmon->mx + lrpad)
 				moveclient(selmon->sel->x + f, selmon->sel->y, selmon->sel->w, selmon->sel->h);
 		}
 	} else if (selmon->lt[selmon->sellt]->arrange == doubledeck) {
@@ -2400,12 +2400,12 @@ setsmfact(const Arg *arg)
 	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
 		sf = arg->sf < 1.0 ? arg->sf * 500.0 : arg->sf;
 		if (sf > 0.0) {
-			if (selmon->mh - selmon->sel->y > lrpad &&
-			    selmon->sel->y + sf < selmon->mh)
+			if (selmon->sel->y < selmon->mh - lrpad &&
+			    selmon->sel->y + sf < selmon->mh - lrpad)
 				moveclient(selmon->sel->x, selmon->sel->y + sf, selmon->sel->w, selmon->sel->h);
 		} else {
-			if (selmon->sel->y + selmon->sel->h - (selmon->showbar ? bh : 0) - selmon->my > lrpad &&
-			    selmon->sel->y + selmon->sel->h + (selmon->showbar ? bh : 0) + sf > selmon->my)
+			if (selmon->sel->y + selmon->sel->h - (selmon->showbar ? bh : 0)  > selmon->my + lrpad &&
+			    selmon->sel->y + selmon->sel->h + (selmon->showbar ? bh : 0) + sf > selmon->my + lrpad)
 				moveclient(selmon->sel->x, selmon->sel->y + sf, selmon->sel->w, selmon->sel->h);
 		}
 	} else if (selmon->lt[selmon->sellt]->arrange == zetadeck) {
