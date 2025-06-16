@@ -26,7 +26,8 @@ static const char *fonts[]          = {
 	"SF Mono SC:size=11",
 };
 /* select the font index for statusbar
- * the index is zero based */
+ * the index is zero based
+ */
 static const int statusfontindex    = 0;
 /* colors */
 static const char col_gray1[]       = "#222222";
