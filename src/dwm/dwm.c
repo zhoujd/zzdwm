@@ -2368,9 +2368,9 @@ setmfact(const Arg *arg)
 	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
 		f = arg->f < 1.0 ? arg->f * 1000.0 : arg->f;
 		if (f > 0.0) {
-			moveclient(MAX(selmon->sel->x + f, lrpad - selmon->sel->w), selmon->sel->y, selmon->sel->w, selmon->sel->h);
+			moveclient(MAX(selmon->sel->x + f, selmon->wx + selmon->sel->w - lrpad), selmon->sel->y, selmon->sel->w, selmon->sel->h);
 		} else {
-			moveclient(MIN(selmon->sel->x + f, selmon->wx - lrpad), selmon->sel->y, selmon->sel->w, selmon->sel->h);
+			moveclient(MAX(selmon->sel->x + f, selmon->wx - selmon->sel->w + lrpad), selmon->sel->y, selmon->sel->w, selmon->sel->h);
 		}
 	} else if (selmon->lt[selmon->sellt]->arrange == doubledeck) {
 		f = arg->f < 1.0 ? arg->f + selmon->dmfact : arg->f - 1.0;
