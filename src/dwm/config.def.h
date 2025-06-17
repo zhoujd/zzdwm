@@ -129,8 +129,11 @@ static const char *nextwincmd[] = { "nextwin", NULL };
 static const char *prevwincmd[] = { "prevwin", NULL };
 static const char *movwincmd[] = { "movwin", NULL };
 
-/* Keys
- *  https://cgit.freedesktop.org/xorg/proto/x11proto/tree/keysymdef.h
+/* A list of keys is in /usr/include/X11/keysym.h and in /usr/include/X11/keysymdef.h
+ * URL: https://cgit.freedesktop.org/xorg/proto/x11proto/tree/keysymdef.h
+ * List of modifier:
+ *   Release, Control, Shift, Mod1 (Alt), Mod2 (NumLock),
+ *   Mod3 (CapsLock), Mod4, Mod5 (Scroll).
  */
 static const Key keys[] = {
 	/* modifier                     key              function          argument */
