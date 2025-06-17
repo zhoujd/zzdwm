@@ -129,6 +129,9 @@ static const char *nextwincmd[] = { "nextwin", NULL };
 static const char *prevwincmd[] = { "prevwin", NULL };
 static const char *movwincmd[] = { "movwin", NULL };
 
+/* Keys
+ *  https://cgit.freedesktop.org/xorg/proto/x11proto/tree/keysymdef.h
+ */
 static const Key keys[] = {
 	/* modifier                     key              function          argument */
 	{ MODKEY,                       XK_c,            spawn,            {.v = termcmd} },
