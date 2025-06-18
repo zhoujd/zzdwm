@@ -1,9 +1,7 @@
 #!/bin/sh
 
-# Depends on lemonbar to actually draw the status on screen
-
 # Common
-_interval=0.2                       # Refresh interval
+_interval=0.05                      # Refresh interval
 
 # Font
 _font1="xft:SF Mono:size=10"        # XFT support font1
@@ -53,7 +51,7 @@ wintitle() {
 }
 
 # Battery status
-batt() {
+battery() {
     _batt=$(cat /sys/class/power_supply/BAT0/capacity)
     if [ "${_batt}" -gt 75 ]; then
         echo "${_colfg2}B: ${_colfg2}${_batt}%"
@@ -139,9 +137,8 @@ clock() {
 status() {
     while true; do
         _left="%{l}${_colbg2}%{O0}%{T1}$(group)$(winnum)${_colbg1}$(wintitle)%{T-}%{O0}%{B-}"
-        _medium=""
-        _right="%{r}${_colbg2}%{O2}%{T2}$(batt) $(volume_alsa) $(clock)%{T-}%{O2}%{B-}"
-        echo "${_left}${_medium}${_right}"
+        _right="%{r}${_colbg2}%{O2}%{T2}$(battery) $(volume_alsa) $(clock)%{T-}%{O2}%{B-}"
+        echo "${_left}${_right}"
         sleep ${_interval}
     done
 }
