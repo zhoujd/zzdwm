@@ -38,7 +38,7 @@ winnum() {
     _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
     _winnumgroup=$(wmctrl -lp | awk '{print $2}' | grep -sc ${_group})
     _winnum=$(wmctrl -l | wc -l)
-    printf '%s' "${_colbg2}${_colfg1}%{O0}[${_winnumgroup}/${_winnum}]%{O8}"
+    printf '%s' "${_colbg2}${_colfg1}%{O8}[${_winnumgroup}/${_winnum}]%{O8}"
 }
 
 # Show window title of currently focused window
