@@ -3,10 +3,11 @@
 # Depends on lemonbar to actually draw the status on screen
 
 # Common
-_bg="#000000"                       # Bar background color
+_interval=0.2                       # Refresh interval
+
+# Font
 _font1="xft:SF Mono:size=10"        # XFT support font1
 _font2="xft:SF Pro Display:size=10" # XFT support font2
-_interval=0.2                       # Refresh interval
 
 # Colors
 _colbg1="%{B#005577}"               # Background color 1
@@ -146,4 +147,4 @@ status() {
 }
 
 # Pipe status to lemonbar
-status | lemonbar -p -d -B "${_bg}" -f "${_font1}" -f "${_font2}"
+status | lemonbar -p -d -f "${_font1}" -f "${_font2}"
