@@ -138,9 +138,9 @@ clock() {
 # Draw the status
 status() {
     while true; do
-        _left="%{l}%{O0}%{T1}${_colbg2}$(group)$(winnum)%{O0}%{B-}%{T-}"
-        _medium="%{O0}%{T1}${_colbg1}$(wintitle)%{O0}%{B-}%{T-}"
-        _right="%{r}%{O2}%{T2}${_colbg2}$(batt) $(volume_alsa) $(clock)%{O2}%{B-}%{T-}"
+        _left="%{l}${_colbg2}%{O0}%{T1}$(group)$(winnum)${_colbg1}$(wintitle)%{T-}%{O0}%{B-}"
+        _medium=""
+        _right="%{r}${_colbg2}%{O2}%{T2}$(batt) $(volume_alsa) $(clock)%{T-}%{O2}%{B-}"
         echo "${_left}${_medium}${_right}"
         sleep ${_interval}
     done
