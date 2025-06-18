@@ -49,12 +49,7 @@ wintitle() {
     if [ -z "${_win}" ]; then
         printf '%s' "${_titlebg}${_colfg2}%{B-}"
     else
-        # Trim window title if it exceeds 75 chars
-        if [ "${#_win}" -gt "75" ]; then
-            printf '%.75s...' "${_titlebg}${_colfg2}${_pad}${_win}%{B-}"
-        else
-            printf '%s' "${_titlebg}${_colfg2}${_pad}${_win}%{B-}"
-        fi
+        printf '%-75s%2048s' "${_titlebg}${_colfg2}${_pad}${_win}" "${_pad}%{B-}"
     fi
 }
 
