@@ -3,31 +3,30 @@
 # Depends on lemonbar to actually draw the status on screen
 
 # Common
-_bg="#242424"                       # Bar background color
+_bg="#000000"                       # Bar background color
 _font1="xft:SF Mono:size=10"        # XFT support font1
 _font2="xft:SF Pro Display:size=10" # XFT support font2
 _interval=0.2                       # Refresh interval
-_pad=" "                            # Text padding
 
 # Colors
-_colbg1="%{B#458588}"               # Background color 1
+_colbg1="%{B#005577}"               # Background color 1
 _colbg2="%{B#242424}"               # Background color 2
 _colfg1="%{F#458588}"               # Foreground color 1
 _colfg2="%{F#dddddd}"               # Foreground color 2
-_colfg3="%{F#242424}"               # Foreground color 3
+_colfg3="%{F#eeeeee}"               # Foreground color 3
 
 # Show name of the group we're in
 group() {
     _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
     for i in $(seq 1 9); do
         if [ ${_group} -eq $i ]; then
-            printf '%s' "${_colbg1}${_pad}${_colfg3}${i}${_pad}%{B-}"
+            printf '%s' "${_colbg1}%{O8}${_colfg3}${i}%{O8}"
         else
             _winnumgroup=$(wmctrl -lp | awk '{print $2}' | grep -sc $i)
             if [ ${_winnumgroup} -eq 0 ]; then
-                printf '%s' "${_colbg2}${_colfg2}%{A:xdotool key super+${i}:}${_pad}${i}${_pad}%{A}%{B-}"
+                printf '%s' "${_colbg2}${_colfg2}%{A:xdotool key super+${i}:}%{O8}${i}%{O8}%{A}"
             else
-                printf '%s' "${_colbg2}${_colfg1}%{A:xdotool key super+${i}:}${_pad}${i}${_pad}%{A}%{B-}"
+                printf '%s' "${_colbg2}${_colfg1}%{A:xdotool key super+${i}:}%{O8}${i}%{O8}%{A}"
             fi
         fi
     done
@@ -38,18 +37,17 @@ winnum() {
     _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
     _winnumgroup=$(wmctrl -lp | awk '{print $2}' | grep -sc ${_group})
     _winnum=$(wmctrl -l | wc -l)
-    printf '%s' "${_colbg2} ${_colfg1}[${_winnumgroup}/${_winnum}] %{B-}"
+    printf '%s' "${_colbg2}${_colfg1}%{O0}[${_winnumgroup}/${_winnum}]%{O8}"
 }
 
 # Show window title of currently focused window
 wintitle() {
     _wid=$(xprop -root 32x '\t$0' _NET_ACTIVE_WINDOW 2>/dev/null | cut -f 2)
     _win=$(xprop -id $_wid '\t$0' _NET_WM_NAME 2>/dev/null | awk -F '"' '{ print $2 }')
-    _titlebg=${_colbg1}
     if [ -z "${_win}" ]; then
-        printf '%s' "${_titlebg}${_colfg2}%{B-}"
+        printf '%-75s%2048s' "${_colbg2}${_colfg2}" "%{B-}"
     else
-        printf '%-75s%2048s' "${_titlebg}${_colfg2}${_pad}${_win}" "${_pad}%{B-}"
+        printf '%-75s%2048s' "${_colbg1}${_colfg2}%{O8}${_win}%{O8}" "%{B-}"
     fi
 }
 
@@ -139,7 +137,7 @@ clock() {
 # Draw the status
 status() {
     while true; do
-        _left="%{l}%{O0}%{T1}${_colbg1}$(group) $(winnum)%{O0}%{B-}%{T-}"
+        _left="%{l}%{O0}%{T1}${_colbg2}$(group)$(winnum)%{O0}%{B-}%{T-}"
         _medium="%{O0}%{T1}${_colbg1}$(wintitle)%{O0}%{B-}%{T-}"
         _right="%{r}%{O2}%{T2}${_colbg2}$(batt) $(volume_alsa) $(clock)%{O2}%{B-}%{T-}"
         echo "${_left}${_medium}${_right}"
