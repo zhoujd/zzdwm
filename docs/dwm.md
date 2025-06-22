@@ -114,6 +114,30 @@ $ fc-match monospace:bold
 SF-Mono-Bold.otf: "SF Mono" "Bold"
 ```
 
+## Getting antialiased fonts in dwm
+
+```
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+    <!-- Enable antialiasing for all fonts -->
+    <match target="font">
+        <edit mode="assign" name="antialias"><bool>true</bool></edit>
+    </match>
+    <!-- Enable hinting -->
+    <match target="font">
+        <edit name="hinting" mode="assign"><bool>true</bool></edit>
+    </match>
+    <match target="font">
+        <edit name="hintstyle" mode="assign"><const>hintslight</const></edit>
+    </match>
+    <!-- subpixel rendering -->
+    <match target="font">
+        <edit name="rgba" mode="assign"><const>rgb</const></edit>
+    </match>
+</fontconfig>
+```
+
 ## Font Unicode
 
 ```
@@ -212,7 +236,7 @@ https://command-not-found.com/xprop
 
 ## DWM GruvBox Theme
 
-```
+```c
 /* https://github.com/plasmoduck/themes/tree/master/gruvbox */
 /* colors */
 static const char norm_fg[]     = "#a89984";
