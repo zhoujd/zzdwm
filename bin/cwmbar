@@ -34,22 +34,22 @@ group() {
 # Show number of windows opened in total.
 winnum() {
     _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
-    _wingroup=($(wmctrl -lp | grep -s " ${_group} " | awk '{print $1}'))
-    _winnumgroup=$(wmctrl -lp | awk '{print $2}' | grep -sc ${_group})
+    _gwin=($(wmctrl -lp | grep -s " ${_group} " | awk '{print $1}'))
+    _gwinnum=$(wmctrl -lp | awk '{print $2}' | grep -sc ${_group})
     # get id of the focused window
     _active_win_id=$(xprop -root | grep '^_NET_ACTIVE_W' | awk -F'# 0x' '{print $2}')
     if [ "$_active_win_id" == "0" ]; then
         _active_win_id=""
     fi
     # get index of the focused window
-    _winindex=0
-    for i in "${!_wingroup[@]}"; do
-        if [[ "${_wingroup[$i]}" == *"${_active_win_id}" ]]; then
-            _winindex=$(expr $i + 1)
+    _gwinindex=0
+    for i in "${!_gwin[@]}"; do
+        if [[ "${_gwin[$i]}" == *"${_active_win_id}" ]]; then
+            _gwinindex=$(expr $i + 1)
             break
         fi
     done
-    printf '%s' "${_colbg2}${_colfg1}%{O8}[${_winindex}/${_winnumgroup}]%{O8}"
+    printf '%s' "${_colbg2}${_colfg1}%{O8}[${_gwinindex}/${_gwinnum}]%{O8}"
 }
 
 # Show window title of currently focused window
