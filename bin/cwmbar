@@ -23,9 +23,9 @@ group() {
         else
             _winnumgroup=$(wmctrl -lp | awk '{print $2}' | grep -sc $i)
             if [ ${_winnumgroup} -eq 0 ]; then
-                printf '%s' "${_colbg2}${_colfg2}%{A:xdotool key super+${i}:}%{O8}${i}%{O8}%{A}"
+                printf '%s' "${_colbg2}${_colfg2}%{A:wmctrl -s ${i}:}%{O8}${i}%{O8}%{A}"
             else
-                printf '%s' "${_colbg2}${_colfg1}%{A:xdotool key super+${i}:}%{O8}${i}%{O8}%{A}"
+                printf '%s' "${_colbg2}${_colfg1}%{A:wmctrl -s ${i}:}%{O8}${i}%{O8}%{A}"
             fi
         fi
     done
