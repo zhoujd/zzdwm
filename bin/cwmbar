@@ -14,7 +14,7 @@ _colfg1="#458588"                   # Foreground color 1
 _colfg2="#dddddd"                   # Foreground color 2
 _colfg3="#eeeeee"                   # Foreground color 3
 
-# Show name of the group we're in
+# Show groups
 group() {
     _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
     for i in $(seq 1 9); do
@@ -31,7 +31,7 @@ group() {
     done
 }
 
-# Show number of windows opened in total.
+# Window number of current group
 winnum() {
     _group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
     _gwinnum=$(wmctrl -lp | awk '{print $2}' | grep -sc ${_group})
@@ -52,7 +52,7 @@ winnum() {
     printf '%s' "%{B${_colbg2}}%{F${_colfg1}}%{O8}[${_gwinidx}/${_gwinnum}]%{O8}"
 }
 
-# Show window title of currently focused window
+# Window title of currently focused window
 wintitle() {
     _wid=$(xprop -root 32x '\t$0' _NET_ACTIVE_WINDOW 2>/dev/null | cut -f 2)
     _win=$(xprop -id $_wid '\t$0' _NET_WM_NAME 2>/dev/null | awk -F '"' '{ print $2 }')
