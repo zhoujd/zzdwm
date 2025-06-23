@@ -21,11 +21,12 @@ group() {
         if [ ${_group} -eq $i ]; then
             printf '%s' "%{B${_colbg1}}%{O8}%{F${_colfg3}}${i}%{O8}"
         else
-            _winnumgroup=$(wmctrl -lp | awk '{print $2}' | grep -sc $i)
+            _winnumgroup=$(wmctrl -lp | awk '{print $2}' | grep -sc ${i})
+            _gclick="wmctrl -s ${i}"
             if [ ${_winnumgroup} -eq 0 ]; then
-                printf '%s' "%{B${_colbg2}}%{F${_colfg2}}%{A:wmctrl -s ${i}:}%{O8}${i}%{O8}%{A}"
+                printf '%s' "%{B${_colbg2}}%{F${_colfg2}}%{A:${_gclick}:}%{O8}${i}%{O8}%{A}"
             else
-                printf '%s' "%{B${_colbg2}}%{F${_colfg1}}%{A:wmctrl -s ${i}:}%{O8}${i}%{O8}%{A}"
+                printf '%s' "%{B${_colbg2}}%{F${_colfg1}}%{A:${_gclick}:}%{O8}${i}%{O8}%{A}"
             fi
         fi
     done
@@ -49,7 +50,8 @@ winnum() {
             break
         fi
     done
-    printf '%s' "%{B${_colbg2}}%{F${_colfg1}}%{O8}[${_gwinidx}/${_gwinnum}]%{O8}"
+    _format="[${_gwinidx}/${_gwinnum}]"
+    printf '%s' "%{B${_colbg2}}%{F${_colfg1}}%{O8}${_format}%{O8}"
 }
 
 # Window title of currently focused window
