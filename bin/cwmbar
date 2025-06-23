@@ -61,7 +61,8 @@ wintitle() {
     if [ -z "${_win}" ]; then
         printf '%-75s%2048s' "%{B${_colbg2}}%{F${_colfg2}}" "%{B-}"
     else
-        printf '%-75s%2048s' "%{B${_colbg1}}%{F${_colfg2}}%{O8}${_win}%{O8}" "%{B-}"
+        _action="xdotool key super+j"
+        printf '%-75s%2048s' "%{B${_colbg1}}%{F${_colfg2}}%{A2:${_action}:}%{O8}${_win}%{O8}%{A}" "%{B-}"
     fi
 }
 
