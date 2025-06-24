@@ -28,6 +28,9 @@
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #define indexof(c,s) (strchr((s),(c))-(s))
 
+// Loop delay
+#define DELAY (20 * 1000)
+
 typedef struct font_t {
     xcb_font_t ptr;
     xcb_charinfo_t *width_lut;
@@ -1589,6 +1592,7 @@ main (int argc, char **argv)
                     }
 
                     free(ev);
+                    usleep(DELAY);
                 }
             }
         }
