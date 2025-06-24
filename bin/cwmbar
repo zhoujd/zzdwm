@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Common
-_interval=0.02                      # Refresh interval
+_interval=1s                        # Refresh interval
 
 # Font
 _font1="xft:SF Mono:size=10"        # XFT support font1
