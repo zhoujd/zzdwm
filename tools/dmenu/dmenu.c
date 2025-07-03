@@ -577,6 +577,13 @@ insert:
 		break;
 	case XK_Return:
 	case XK_KP_Enter:
+		if (restrict_return) {
+			if (ev->state & (ShiftMask | ControlMask)) {
+				printf("%s\n", restrict_value);
+				cleanup();
+				exit(0);
+			}
+		}
 		if (print_index)
 			printf("%d\n", (sel && !(ev->state & ShiftMask)) ? sel->index : -1);
 		else
@@ -984,6 +991,8 @@ main(int argc, char *argv[])
 			passwd = 1;
 		else if (!strcmp(argv[i], "-ix"))  /* adds ability to return index in list */
 			print_index = 1;
+		else if (!strcmp(argv[i], "-r"))   /* restrict return */
+			restrict_return = 1;
 		else if (i + 1 == argc)
 			usage();
 		/* these options take one argument */
@@ -1006,7 +1015,7 @@ main(int argc, char *argv[])
 		else if (!strcmp(argv[i], "-w"))   /* embedding window id */
 			embed = argv[++i];
 		else if (!strcmp(argv[i], "-bw"))
-			border_width = atoi(argv[++i]); /* border width */
+			border_width = atoi(argv[++i]);  /* border width */
 		else if (!strcmp(argv[i], "-n"))   /* preselected item */
 			preselected = atoi(argv[++i]);
 		else

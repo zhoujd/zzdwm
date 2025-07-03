@@ -3,7 +3,7 @@
 dmenu \- dynamic menu
 .SH SYNOPSIS
 .B dmenu
-.RB [ \-bfivP ]
+.RB [ \-bfirvP ]
 .RB [ \-l
 .IR lines ]
 .RB [ \-m
@@ -57,6 +57,10 @@ dmenu will not directly display the keyboard input, but instead replace it with 
 .TP
 .B \-ix
 dmenu prints the index of matched text instead of the text itself.
+.TP
+.B \-r
+disables ctr-return and shift-return. this guarantees that dmenu prints to
+stdout only once, and it only prints an item read from stdin.
 .TP
 .BI \-l " lines"
 dmenu lists items vertically, with the given number of lines.
