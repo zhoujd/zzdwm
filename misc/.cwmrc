@@ -163,6 +163,7 @@ bind-key 4-s            "dmenu_ssh"
 bind-key 4M-s           "dmenu_ssh"
 bind-key 4-q            "dmenu_exit"
 bind-key 4M-q           "dmenu_exit"
+bind-key 4M-m           "dmenu_man"
 
 # Remove all mouse default keybindings
 unbind-mouse all
