@@ -129,6 +129,7 @@ static const char *duptermcmd[] = { "dupterm", NULL };
 static const char *nextwincmd[] = { "nextwin", NULL };
 static const char *prevwincmd[] = { "prevwin", NULL };
 static const char *movwincmd[] = { "movwin", NULL };
+static const char *manmenucmd[] = { "dmenu_man", NULL };
 
 /* keysyms in https://cgit.freedesktop.org/xorg/proto/x11proto/tree/keysymdef.h */
 static const Key keys[] = {
@@ -157,6 +158,7 @@ static const Key keys[] = {
 	{ MODKEY|Mod1Mask,              XK_p,            spawn,            {.v = drunmenucmd} },
 	{ MODKEY,                       XK_q,            spawn,            {.v = exitmenucmd} },
 	{ MODKEY|Mod1Mask,              XK_q,            spawn,            {.v = exitmenucmd} },
+	{ MODKEY|Mod1Mask,              XK_m,            spawn,            {.v = manmenucmd} },
 	{ MODKEY,                       XK_n,            spawn,            {.v = nextwincmd} },
 	{ MODKEY|ShiftMask,             XK_n,            spawn,            {.v = prevwincmd} },
 	{ MODKEY|ShiftMask,             XK_c,            spawn,            {.v = movwincmd} },
