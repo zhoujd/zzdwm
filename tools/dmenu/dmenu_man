@@ -1,9 +1,10 @@
 #!/bin/sh
 
 HOST=$(hostname)
+TITLE="man:"
 PAGE=$(man -k . | sort \
                 | awk '{ print $1 " " $2 }' \
-                | dmenu -p 'Man:' -l 10 \
+                | dmenu -p $TITLE -l 10 \
                 | tr -d ' ')
 
 if [ -n "$PAGE" ]; then
