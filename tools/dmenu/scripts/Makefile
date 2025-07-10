@@ -16,15 +16,18 @@ all:
 	@echo "sudo make install"
 	@echo "sudo make uninstall"
 
+.PHONY: prepare
+prepare:
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+
 .PHONY: install $(addprefix install_,$(TOOLS))
-install: $(addprefix install_,$(TOOLS))
+install: prepare $(addprefix install_,$(TOOLS))
 
 .PHONY: uninstall $(addprefix uninstall_,$(TOOLS))
 uninstall: $(addprefix uninstall_,$(TOOLS))
 
 define TOOL_template
 install_$(1): $(1)
-	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	cp -f $(1) $(DESTDIR)$(PREFIX)/bin/$(1)
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(1)
 
