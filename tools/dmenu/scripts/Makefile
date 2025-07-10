@@ -10,19 +10,27 @@ TOOLS := \
 	dmenu_ssh \
 	dmenu_win
 
+.PHONY: all
 all:
 	@echo "Usage:"
 	@echo "sudo make install"
 	@echo "sudo make uninstall"
 
+
+.PHONY: install $(addprefix install_,$(TOOLS))
 install: $(addprefix install_,$(TOOLS))
-$(addprefix install_,$(TOOLS)): install_%: %
-	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	cp -f $< $(DESTDIR)$(PREFIX)/bin/$<
-	chmod 755 $(DESTDIR)$(PREFIX)/bin/$<
 
+.PHONY: uninstall $(addprefix uninstall_,$(TOOLS))
 uninstall: $(addprefix uninstall_,$(TOOLS))
-$(addprefix uninstall_,$(TOOLS)):
-	rm -f $(DESTDIR)$(PREFIX)/bin/$(patsubst uninstall_%,%,$@)
 
-.PHONY: all install $(addprefix install_,$(TOOLS)) uninstall $(addprefix uninstall_,$(TOOLS))
+define TOOL_template
+install_$(1): $(1)
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	cp -f $(1) $(DESTDIR)$(PREFIX)/bin/$(1)
+	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(1)
+
+uninstall_$(1):
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(1)
+endef
+
+$(foreach tool,$(TOOLS),$(eval $(call TOOL_template,$(tool))))
