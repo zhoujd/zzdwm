@@ -37,7 +37,8 @@ dist: clean
 install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	cp -f dmenu dmenu_path dmenu_run stest $(DESTDIR)$(PREFIX)/bin
-	cp -f dmenu_win dmenu_ssh dmenu_app dmenu_drun dmenu_exit dmenu_man $(DESTDIR)$(PREFIX)/bin
+	cp -f dmenu_win dmenu_ssh dmenu_app dmenu_drun dmenu_exit $(DESTDIR)$(PREFIX)/bin
+	cp -f dmenu_man dmenu_menu $(DESTDIR)$(PREFIX)/bin
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_path
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_run
@@ -47,6 +48,7 @@ install: all
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_drun
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_exit
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_man
+	chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_menu
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/stest
 	mkdir -p $(DESTDIR)$(MANPREFIX)/man1
 	sed "s/VERSION/$(VERSION)/g" < dmenu.1 > $(DESTDIR)$(MANPREFIX)/man1/dmenu.1
@@ -64,6 +66,7 @@ uninstall:
 		$(DESTDIR)$(PREFIX)/bin/dmenu_drun\
 		$(DESTDIR)$(PREFIX)/bin/dmenu_exit\
 		$(DESTDIR)$(PREFIX)/bin/dmenu_man\
+		$(DESTDIR)$(PREFIX)/bin/dmenu_menu\
 		$(DESTDIR)$(PREFIX)/bin/stest\
 		$(DESTDIR)$(MANPREFIX)/man1/dmenu.1\
 		$(DESTDIR)$(MANPREFIX)/man1/stest.1

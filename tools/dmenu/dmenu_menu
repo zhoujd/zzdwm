@@ -1,0 +1,15 @@
+#!/bin/sh
+
+app=$(basename $0)
+prompt="menu:"
+menupath="/usr/local/bin"
+target="$(find $menupath/dmenu_* -maxdepth 1 -type f -executable \
+               -exec grep -Iq . {} \; -print \
+             | sed 's|^'$menupath/'||' \
+             | sort \
+             | grep -s -v $app \
+             | dmenu -p $prompt -l 10)"
+
+if [ -n "$target" ]; then
+    eval "$menupath/$target"
+fi
