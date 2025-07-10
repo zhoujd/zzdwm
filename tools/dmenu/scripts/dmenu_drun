@@ -14,7 +14,7 @@ desktops() {
     entries=$(ls ${apppaths[@]} | sort | uniq)
     for entry in $entries; do
         if [[ $entry == *.desktop ]]; then
-            echo -n "${entry%.*}"
+            printf "%s\n" "${entry%.*}"
         fi
     done
 }
