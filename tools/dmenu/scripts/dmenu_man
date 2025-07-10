@@ -7,5 +7,5 @@ page=$(man -k . | sort \
                 | tr -d ' ')
 
 if [ -n "$page" ]; then
-    exec st -t "st:$page $$@$(hostname)" -e man "$page"
+    exec st -t "$title$page $$@$(hostname)" -e man "$page"
 fi
