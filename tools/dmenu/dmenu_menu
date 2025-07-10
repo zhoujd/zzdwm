@@ -1,14 +1,21 @@
-#!/bin/sh
+#!/bin/bash
 
-app=$(basename $0)
-prompt="menu:"
 menupath="/usr/local/bin"
-target="$(find $menupath/dmenu_* -maxdepth 1 -type f -executable \
-             | sed 's|^'$menupath/'||' \
-             | sort \
-             | grep -s -v $app \
-             | dmenu -p $prompt -l 10)"
+prompt="menu:"
+ignores=(
+    dmenu_menu
+    dmenu_path
+)
 
+menus=$(find $menupath/dmenu_* -maxdepth 1 -type f -executable \
+            | sed 's|^'$menupath/'||' \
+            | sort)
+
+for ig in ${ignores[@]}; do
+    menus=$(echo "$menus" | grep -v $ig)
+done
+
+target=$(echo "$menus" | dmenu -p $prompt -l 10)
 if [ -n "$target" ]; then
-    eval "$menupath/$target"
+    exec $menupath/$target
 fi
