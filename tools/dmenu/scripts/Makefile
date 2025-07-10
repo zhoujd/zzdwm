@@ -16,7 +16,6 @@ all:
 	@echo "sudo make install"
 	@echo "sudo make uninstall"
 
-
 .PHONY: install $(addprefix install_,$(TOOLS))
 install: $(addprefix install_,$(TOOLS))
 
