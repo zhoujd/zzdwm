@@ -1,6 +1,6 @@
 #!/bin/bash
 
-[[ $# -lt 1 ]] && cat <<EOF && exit
+[ $# -lt 1 ] && cat <<EOF && exit
 Usage: $(basename $0) {app} [cmd]
 EOF
 

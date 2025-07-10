@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# dmenu to use only desktop files
-
 title="drun:"
 lines=10
 apppaths=(
