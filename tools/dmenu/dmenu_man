@@ -1,12 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
-HOST=$(hostname)
-TITLE="man:"
-PAGE=$(man -k . | sort \
+title="man:"
+page=$(man -k . | sort \
                 | awk '{ print $1 " " $2 }' \
-                | dmenu -p $TITLE -l 10 \
+                | dmenu -p $title -l 10 \
                 | tr -d ' ')
 
-if [ -n "$PAGE" ]; then
-  st -t "st:$PAGE $$@$HOST" -e man "$PAGE"
+if [ -n "$page" ]; then
+    exec st -t "st:$page $$@$(hostname)" -e man "$page"
 fi

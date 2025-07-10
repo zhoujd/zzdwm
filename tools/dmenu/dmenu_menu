@@ -2,7 +2,7 @@
 
 menupath=/usr/local/bin
 app=$(basename $0)
-prompt="menu:"
+title="menu:"
 ignores=(
     $app
     dmenu_path
@@ -16,7 +16,7 @@ for ig in ${ignores[@]}; do
     menus=$(echo "$menus" | grep -v $ig)
 done
 
-target=$(echo "$menus" | dmenu -p $prompt -l 10)
+target=$(echo "$menus" | dmenu -p $title -l 10)
 if [ -n "$target" ]; then
     exec $menupath/$target
 fi
