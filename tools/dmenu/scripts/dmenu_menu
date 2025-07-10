@@ -13,14 +13,11 @@ menus=$(find $menupath/dmenu_* -maxdepth 1 -type f -executable 2>/dev/null \
             | sed 's|^'$menupath/'||' \
             | sort)
 
-if [ -n "$menus" ]; then
-    for ig in ${ignores[@]}; do
-        menus=$(echo "$menus" | grep -v $ig)
-    done
-    target=$(echo "$menus" | dmenu -p $title -l $lines)
-    if [ -n "$target" ]; then
-        exec $menupath/$target
-    fi
-else
-    echo -n "" | dmenu -p $title -l $lines
+for ig in ${ignores[@]}; do
+    menus=$(echo -n "$menus" | grep -v $ig)
+done
+
+target=$(echo -n "$menus" | dmenu -p $title -l $lines)
+if [ -n "$target" ]; then
+    exec $menupath/$target
 fi

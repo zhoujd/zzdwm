@@ -14,7 +14,7 @@ menu=(
 
 sudorun() {
     password=$(echo -n | dmenu -P -p "[sudo] password for $USER:")
-    echo "$password" | sudo -S $*
+    printf '%s\n' "$password" | sudo -S $*
 }
 
 choice=$(printf '%s\n' "${menu[@]}" | dmenu -i -ix -l $lines -p $title)
