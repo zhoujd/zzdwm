@@ -17,6 +17,7 @@ all:
 
 install: $(addprefix install_,$(TOOLS))
 $(addprefix install_,$(TOOLS)): install_%: %
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	cp -f $< $(DESTDIR)$(PREFIX)/bin/$<
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/$<
 
