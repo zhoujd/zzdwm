@@ -1,9 +1,10 @@
 #!/bin/bash
 
-menupath="/usr/local/bin"
+menupath=/usr/local/bin
+app=$(basename $0)
 prompt="menu:"
 ignores=(
-    dmenu_menu
+    $app
     dmenu_path
 )
 
