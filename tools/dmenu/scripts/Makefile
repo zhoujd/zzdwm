@@ -1,7 +1,7 @@
 ## Makefile
 
-PREFIX = /usr/local
-SCRIPTS = \
+PREFIX := /usr/local
+TOOLS := \
 	dmenu_app \
 	dmenu_drun \
 	dmenu_exit \
@@ -10,11 +10,18 @@ SCRIPTS = \
 	dmenu_ssh \
 	dmenu_win
 
-all: install
+all:
+	@echo "Usage:"
+	@echo "sudo make install"
+	@echo "sudo make uninstall"
 
-install: $(SCRIPTS)
-	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	chmod 755 $^
-	cp -f $^ $(DESTDIR)$(PREFIX)/bin
+install: $(addprefix install_,$(TOOLS))
+$(addprefix install_,$(TOOLS)): install_%: %
+	cp -f $< $(DESTDIR)$(PREFIX)/bin/$<
+	chmod 755 $(DESTDIR)$(PREFIX)/bin/$<
 
-.PHONY: all install
+uninstall: $(addprefix uninstall_,$(TOOLS))
+$(addprefix uninstall_,$(TOOLS)):
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(patsubst uninstall_%,%,$@)
+
+.PHONY: all install $(addprefix install_,$(TOOLS)) uninstall $(addprefix uninstall_,$(TOOLS))

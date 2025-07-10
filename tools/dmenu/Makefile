@@ -55,5 +55,6 @@ uninstall:
 		$(DESTDIR)$(PREFIX)/bin/stest\
 		$(DESTDIR)$(MANPREFIX)/man1/dmenu.1\
 		$(DESTDIR)$(MANPREFIX)/man1/stest.1
+	make -C scripts uninstall
 
 .PHONY: all clean dist install uninstall
