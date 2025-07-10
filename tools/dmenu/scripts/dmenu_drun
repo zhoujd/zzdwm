@@ -3,6 +3,7 @@
 # dmenu to use only desktop files
 
 title="drun:"
+lines=10
 apppaths=(
     $HOME/.local/share/applications
     /usr/local/share/applications
@@ -30,7 +31,7 @@ launch() {
 
 case $1 in
     '' )
-        app=$(desktops | dmenu -i -l 10 -p $title)
+        app=$(desktops | dmenu -i -l $lines -p $title)
         launch $app
         ;;
     * )

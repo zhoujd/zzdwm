@@ -1,9 +1,10 @@
 #!/bin/bash
 
 title="man:"
+lines=10
 page=$(man -k . | sort \
                 | awk '{ print $1 " " $2 }' \
-                | dmenu -p $title -l 10 \
+                | dmenu -p $title -l $lines \
                 | tr -d ' ')
 
 if [ -n "$page" ]; then

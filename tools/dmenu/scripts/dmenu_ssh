@@ -1,13 +1,14 @@
 #!/bin/bash
 
 title="ssh:"
+lines=10
 term_cmd=${TERM_CMD:-"st -e"}
 ssh_cmd=${SSH_CMD:-"ssh -t"}
 remote_cmd=${REMOTE_CMD}
 
 configs=( ~/.ssh/config ~/.ssh/config.d/* )
 hosts=( $(grep -si "^Host\s\+[^*]" ${configs[@]} | grep -v 'git' | cut -d " " -f 2-) )
-target=$(printf '%s\n' ${hosts[@]} | sed -Ez '$ s/\n+$//' | dmenu -i -l 10 -p $title "$@")
+target=$(printf '%s\n' ${hosts[@]} | sed -Ez '$ s/\n+$//' | dmenu -i -l $lines -p $title "$@")
 
 if [ -n "$target" ]; then
     ssh $target hash mosh-server 2>/dev/null
