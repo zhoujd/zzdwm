@@ -103,6 +103,7 @@ build() {
         $CORE_ROOT/tools/utils
         $CORE_ROOT/tools/lemonbar
         $CORE_ROOT/tools/detach
+        $CORE_ROOT/tools/sfm
     )
     for proj in ${projects[@]}; do
         echo "Build $proj"
