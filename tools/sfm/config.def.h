@@ -24,7 +24,7 @@ static const ColorPair color_panell    = { 166, 233, BOLD };
 static const ColorPair color_panelr    = { 5,   233, BOLD };
 static const ColorPair color_status    = { 243, 0,   NORM };
 
-static const ColorPair color_search    = { 15, 104,   NORM };
+static const ColorPair color_search    = { 15, 104,  NORM };
 static const ColorPair color_selected  = { 21, 118,  NORM };
 
 static const ColorPair color_normal    = { 33,  0,   NORM };
