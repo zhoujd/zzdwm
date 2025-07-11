@@ -27,7 +27,7 @@ ${BIN}: ${OBJ}
 	${CC} ${LDFLAGS} -o $@ ${OBJ}
 
 clean:
-	rm -f ${BIN} ${OBJ} ${BIN}-${VERSION}.tar.gz
+	rm -f ${BIN} ${OBJ} ${BIN}-${VERSION}.tar.gz config.h
 
 dist: clean
 	mkdir -p ${BIN}-${VERSION}
