@@ -19,7 +19,6 @@ static const int background         = 1;        /* 0 means no root background */
 static const int urgentontag        = 0;        /* 1 means urgent show on tag */
 static const int mincellw           = 200;      /* min cell width in grid and resizing in float */
 static const int mincellh           = 120;      /* min cell height in grid and resizing in float */
-static const int tsflag             = 0;        /* 0 for title scheme using default, 1 for SchemeNorm */
 static const char *fonts[]          = {
 	"SF Pro Display:size=11",
 	"SF Mono:size=11",
@@ -37,8 +36,9 @@ static const char col_gray4[]       = "#eeeeee";
 static const char col_cyan[]        = "#005577";
 static const char *colors[][3]      = {
 	/*               fg         bg         border   */
-	[SchemeNorm] = { col_gray3, col_gray1, col_gray2 },
-	[SchemeSel]  = { col_gray4, col_cyan,  col_cyan  },
+	[SchemeNorm]  = { col_gray3, col_gray1, col_gray2 },
+	[SchemeSel]   = { col_gray4, col_cyan,  col_cyan  },
+	[SchemeTitle] = { col_gray4, col_cyan,  col_cyan  },
 };
 /* alpha */
 static const unsigned int baralpha    = 0xd0;
