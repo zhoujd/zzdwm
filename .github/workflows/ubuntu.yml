@@ -61,3 +61,5 @@ jobs:
       run: make -C tools/lemonbar
     - name: Build detach
       run: make -C tools/detach
+    - name: Build sfm
+      run: make -C tools/sfm
