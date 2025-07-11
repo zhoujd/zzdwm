@@ -7,6 +7,7 @@ DWM
 ## https://dwm.suckless.org/
 ## https://dwm.suckless.org/patches/
 ## https://dwm.suckless.org/tutorial/
+## https://suckless.org/rocks/
 ## https://github.com/bakkeby/patches
 ## https://github.com/bakkeby/dwm-flexipatch
 ## https://wiki.archlinuxcn.org/wiki/Dwm
