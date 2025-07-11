@@ -28,6 +28,7 @@ Key modes[MODE_SIZE][10] = {
   [Execute] = {
     { 0, XK_c, cmd("st &") },
     { 0, XK_e, cmd("emacs &") },
+    { 0, XK_f, cmd("pcmanfm &") },
     { 0, XK_g, cmd("google-chrome &") },
     { 0, XK_t, cmd("urxvt &") },
     { 0, XK_u, cmd("code &") },
