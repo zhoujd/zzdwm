@@ -205,7 +205,7 @@ set_panes(void)
 	panes[Left].current_index = 0;
 	panes[Left].watcher.fd = -1;
 	panes[Left].watcher.signal = SIGUSR1;
-	panes[Left].offset = 0;
+	panes[Left].offset = 1;
 
 	strncpy(panes[Right].path, home, PATH_MAX - 1);
 	panes[Right].entries = NULL;
@@ -214,7 +214,7 @@ set_panes(void)
 	panes[Right].current_index = 0;
 	panes[Right].watcher.fd = -1;
 	panes[Right].watcher.signal = SIGUSR2;
-	panes[Right].offset = term.cols / 2;
+	panes[Right].offset = (term.cols / 2) + 2;
 
 	pane_idx = Left; /* cursor pane */
 	current_pane = &panes[pane_idx];
@@ -1016,6 +1016,7 @@ write_entries_name(void)
 		"\x1b[%d;38;5;%d;48;5;%dm" // Set colors for left pane
 		"%-*.*s"                   // Left string with padding
 		"\x1b[%d;38;5;%d;48;5;%dm" // Set colors for right pane
+		" "                        // Right padding
 		"%-*.*s"                   // Right string with padding
 		"\x1b[0m",                 // Reset colors
 		color_panell.attr, color_panell.fg, color_panell.bg, half_cols,
