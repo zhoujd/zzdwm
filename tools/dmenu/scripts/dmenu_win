@@ -19,7 +19,6 @@ apps=$(echo -n "$apps" | \
 target=$(echo -n "$apps" | dmenu -l $lines -i -ix -p $title)
 
 if [ -n "$target" ]; then
-    apps=$(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1)
-    id=$(echo -n $apps | awk -vi=$((target + 1)) '{print $i}')
-    exec wmctrl -i -a $id
+    apps=($(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1))
+    exec wmctrl -i -a ${apps[$target]}
 fi

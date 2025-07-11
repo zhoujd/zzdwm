@@ -37,10 +37,9 @@ app_menu() {
             app_run
             ;;
         * )
-            apps=$(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1,3 | \
-                       grep -i "[[:space:]]\+$app" | cut -d ' ' -f 1)
-            id=$(echo -n $apps | tr -s '[:blank:]' | cut -d ' ' -f $(expr $target + 1))
-            exec wmctrl -i -a $id
+            apps=($(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1,3 | \
+                       grep -i "[[:space:]]\+$app" | cut -d ' ' -f 1))
+            exec wmctrl -i -a ${apps[$target]}
             ;;
     esac
 }
