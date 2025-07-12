@@ -1,0 +1,8 @@
+#!/bin/sh
+
+WM=dwm
+if [ -z "$DISPLAY" ]; then
+    exec startx ~/.xinitrc $WM
+else
+    echo "Please run in console."
+fi

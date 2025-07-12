@@ -78,6 +78,8 @@ install_bin() {
         $CORE_ROOT/bin/cwmbar
         $CORE_ROOT/bin/focuswin
         $CORE_ROOT/bin/runec
+        $CORE_ROOT/bin/startdwm
+        $CORE_ROOT/bin/startcwm        
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $target
