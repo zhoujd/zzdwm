@@ -604,7 +604,7 @@ buttonpress(XEvent *e)
 			arg.ui = 1 << i;
 		} else if (ev->x < x + (int)TEXTW(selmon->ltsymbol, 0))
 			click = ClkLtSymbol;
-		else if (ev->x > selmon->ww - (int)TEXTW(stext, 0))
+		else if (ev->x > selmon->ww - (int)TEXTW(stext, 0) && showstatus)
 			click = ClkStatusText;
 		else
 			click = ClkWinTitle;
@@ -3260,7 +3260,7 @@ void
 updatestatus(void)
 {
 	Monitor* m;
-	if (!gettextprop(root, XA_WM_NAME, stext, sizeof(stext))) {
+	if (!gettextprop(root, XA_WM_NAME, stext, sizeof(stext)) && showstatus) {
 		memset(stext, 0, sizeof(stext));
 		strncpy(stext, "dwm", sizeof(stext) - 1);
 	}
