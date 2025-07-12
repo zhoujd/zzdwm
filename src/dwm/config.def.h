@@ -136,7 +136,7 @@ static const char *movwincmd[] = { "movwin", NULL };
 static const char *manmenucmd[] = { "dmenu_man", NULL };
 static const char *dmenucmd[] = { "dmenu_menu", NULL };
 
-/* keysyms in https://cgit.freedesktop.org/xorg/proto/x11proto/tree/keysymdef.h */
+/* keys */
 static const Key keys[] = {
 	/* modifier                     key              function          argument */
 	{ MODKEY,                       XK_c,            spawn,            {.v = termcmd} },
