@@ -19,7 +19,7 @@ static const int background         = 1;        /* 0 means no root background */
 static const int urgentontag        = 0;        /* 1 means urgent show on tag */
 static const int mincellw           = 200;      /* min cell width in grid and resizing in float */
 static const int mincellh           = 120;      /* min cell height in grid and resizing in float */
-static const int showstatus         = 1;        /* 0 means no status text */
+static const int showstatus         = 2;        /* 0 means no status text, 1 = selected (default), 2 = all monitors */
 static const char *fonts[]          = {
 	"SF Pro Display:size=11",
 	"SF Mono:size=11",
