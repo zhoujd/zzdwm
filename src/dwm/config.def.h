@@ -1,25 +1,25 @@
 /* See LICENSE file for copyright and license details. */
 
 /* appearance */
-static const unsigned int borderpx  = 1;        /* border pixel of windows */
-static const unsigned int snap      = 32;       /* snap pixel */
-static const int startwithgaps      = 1;        /* 1 means gaps are used by default */
-static const int gappx              = 5;        /* default gap between windows in pixels */
-static const int maxgappx           = 50;       /* max gap between windows in pixels */
-static const int vertgappx          = 4;        /* default vertical gap of a client for smfact in tile layout */
-static const int showbar            = 0;        /* 0 means no bar */
-static const int topbar             = 1;        /* 0 means bottom bar */
-static const int barpad             = 8;        /* 0 means use default bar padding */
-static const int horizpadbar        = 4;        /* horizontal padding for statusbar in pixels */
-static const int vertpadbar         = 0;        /* vertical padding for statusbar in pixels */
-static const int focusonwheel       = 0;        /* 0 means focus window by mouse click */
-static const int viewontag          = 1;        /* 1 means switch view on tag switch */
-static const int attachmode         = 0;        /* 0 master (default), 1 = above, 2 = aside, 3 = below, 4 = bottom */
-static const int background         = 1;        /* 0 means no root background */
-static const int urgentontag        = 0;        /* 1 means urgent show on tag */
-static const int mincellw           = 200;      /* min cell width in grid and resizing in float */
-static const int mincellh           = 120;      /* min cell height in grid and resizing in float */
-static const int showstatus         = 2;        /* 0 means no status text, 1 = selected (default), 2 = all monitors */
+static const unsigned int borderpx  = 1;   /* border pixel of windows */
+static const unsigned int snap      = 32;  /* snap pixel */
+static const int startwithgaps      = 1;   /* 1 means gaps are used by default */
+static const int gappx              = 5;   /* default gap between windows in pixels */
+static const int maxgappx           = 50;  /* max gap between windows in pixels */
+static const int vertgappx          = 4;   /* default vertical gap of a client for smfact in tile layout */
+static const int showbar            = 0;   /* 0 means no bar */
+static const int topbar             = 1;   /* 0 means bottom bar */
+static const int barpad             = 8;   /* 0 means use default bar padding */
+static const int horizpadbar        = 4;   /* horizontal padding for statusbar in pixels */
+static const int vertpadbar         = 0;   /* vertical padding for statusbar in pixels */
+static const int focusonwheel       = 0;   /* 0 means focus window by mouse click */
+static const int viewontag          = 1;   /* 1 means switch view on tag switch */
+static const int attachmode         = 0;   /* 0 master (default), 1 = above, 2 = aside, 3 = below, 4 = bottom */
+static const int background         = 1;   /* 0 means no root background */
+static const int urgentontag        = 0;   /* 1 means urgent show on tag */
+static const int mincellw           = 200; /* min cell width in grid and resizing in float */
+static const int mincellh           = 120; /* min cell height in grid and resizing in float */
+static const int showstatus         = 2;   /* 0 means no status text, 1 = selected (default), 2 = all monitors */
 static const char *fonts[]          = {
 	"SF Pro Display:size=11",
 	"SF Mono:size=11",
@@ -93,7 +93,7 @@ static const Layout layouts[] = {
 	{ "HHH",      grid },
 	{ "[D]",      doubledeck },
 	{ "[Z]",      zetadeck },
-	{ "[ ]",      clear },  /* hides all visible clients */
+	{ "[ ]",      clear },   /* hides all visible clients */
 	{ NULL,       NULL },
 };
 
