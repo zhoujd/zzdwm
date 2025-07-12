@@ -209,6 +209,7 @@ static void mappingnotify(XEvent *e);
 static void maprequest(XEvent *e);
 static void monocle(Monitor *m);
 static void grid(Monitor *m);
+static void clear(Monitor *m);
 static void movemouse(const Arg *arg);
 static void moveorplace(const Arg *arg);
 static Client *nexttiled(Client *c);
@@ -1039,6 +1040,12 @@ drawbar(Monitor *m)
 	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0, 0);
 
 	if ((w = m->ww - tw - x) > bh) {
+		if (m->lt[m->sellt]->arrange == clear) { /* hide title in clear layout */
+			drw_setscheme(drw, scheme[SchemeNorm]);
+			drw_rect(drw, x, 0, w, bh, 1, 1);
+			drw_map(drw, m->barwin, 0, 0, m->ww, bh);
+			return;
+		}
 		if (m->sel) {
 			drw_setscheme(drw, scheme[m == selmon ? SchemeTitle : SchemeNorm]);
 			drw_text(drw, x, 0, w, bh, lrpad / 2, m->sel->name, 0, 0);
@@ -1619,6 +1626,22 @@ grid(Monitor *m)
 			aw = (i >= rows * (cols - 1)) ? m->ww - cw * cols : 0;
 			resize(c, cx, cy, cw - 2 * c->bw + aw, ch - 2 * c->bw + ah, False);
 		}
+	}
+}
+
+/*
+ * clear
+ * - hides all visible windows, to show you the nice wallpaper
+ * - drawbar() checks if it's clear() layout to hide the window title
+ * (or to hide stuff)
+ */
+void
+clear(Monitor *m)
+{
+	Client *c;
+	for (c = m->stack; c; c = c->snext) {
+		if (ISVISIBLE(c))
+			XMoveWindow(dpy, c->win, WIDTH(c) * -2, c->y);
 	}
 }
 

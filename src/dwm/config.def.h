@@ -91,6 +91,7 @@ static const Layout layouts[] = {
 	{ "HHH",      grid },
 	{ "[D]",      doubledeck },
 	{ "[Z]",      zetadeck },
+	{ "[ ]",      clear },  /* hides all visible clients */
 	{ NULL,       NULL },
 };
 
@@ -183,6 +184,7 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_g,            setlayout,        {.v = &layouts[3]} },
 	{ MODKEY,                       XK_x,            setlayout,        {.v = &layouts[4]} },
 	{ MODKEY,                       XK_z,            setlayout,        {.v = &layouts[5]} },
+	{ MODKEY,                       XK_backslash,    setlayout,        {.v = &layouts[6]} },
 	{ MODKEY,                       XK_space,        setlayout,        {0} },
 	{ MODKEY|ShiftMask,             XK_space,        togglefloating,   {0} },
 	{ MODKEY|ControlMask,           XK_space,        focusmaster,      {0} },
