@@ -36,19 +36,21 @@ static const char col_gray3[]       = "#d7d7d7";
 static const char col_gray4[]       = "#ebdbb2";
 static const char col_cyan[]        = "#924441";
 static const char *colors[][3]      = {
-	/*                fg         bg         border   */
-	[SchemeNorm]  = { col_gray3, col_gray1, col_gray2 },
-	[SchemeSel]   = { col_gray4, col_cyan,  col_cyan  },
-	[SchemeTitle] = { col_gray4, col_cyan,  col_cyan  },
+	/*                 fg         bg         border   */
+	[SchemeNorm]   = { col_gray3, col_gray1, col_gray2 },
+	[SchemeSel]    = { col_gray4, col_cyan,  col_cyan  },
+	[SchemeTitle]  = { col_gray4, col_cyan,  col_cyan  },
+	[SchemeStatus] = { col_gray3, col_gray1, col_gray2 },
 };
 /* alpha */
 static const unsigned int baralpha    = 0xd0;
 static const unsigned int borderalpha = OPAQUE;
 static const unsigned int alphas[][3] = {
-	/*                fg      bg        border*/
-	[SchemeNorm]  = { OPAQUE, baralpha, borderalpha },
-	[SchemeSel]   = { OPAQUE, baralpha, borderalpha },
-	[SchemeTitle] = { OPAQUE, baralpha, borderalpha },
+	/*                 fg      bg        border*/
+	[SchemeNorm]   = { OPAQUE, baralpha, borderalpha },
+	[SchemeSel]    = { OPAQUE, baralpha, borderalpha },
+	[SchemeTitle]  = { OPAQUE, baralpha, borderalpha },
+	[SchemeStatus] = { OPAQUE, baralpha, borderalpha },
 };
 
 /* auto start */

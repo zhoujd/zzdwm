@@ -66,7 +66,7 @@
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
-enum { SchemeNorm, SchemeSel, SchemeTitle }; /* color schemes */
+enum { SchemeNorm, SchemeSel, SchemeTitle, SchemeStatus }; /* color schemes */
 enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMFullscreen, NetWMSticky, NetActiveWindow, NetWMWindowType,
        NetWMWindowTypeDesktop, NetWMWindowTypeDialog, NetClientList, NetDesktopNames,
@@ -1002,7 +1002,7 @@ drawbar(Monitor *m)
 	/* draw status first so it can be overdrawn by tags later */
 	/* default: status is only drawn on selected monitor */
 	if ((m == selmon || showstatus > 1) && showstatus) {
-		drw_setscheme(drw, scheme[SchemeNorm]);
+		drw_setscheme(drw, scheme[SchemeStatus]);
 		tw = TEXTW(stext, statusfontindex) - lrpad + horizpadbar * 2;
 		drw_text(drw, m->ww - tw, 0, tw, bh, horizpadbar, stext, 0, statusfontindex);
 	}
