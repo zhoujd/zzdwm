@@ -33,8 +33,8 @@ static const int statusfontindex    = 0;
 static const char col_gray1[]       = "#282c34";
 static const char col_gray2[]       = "#282c34";
 static const char col_gray3[]       = "#d7d7d7";
-static const char col_gray4[]       = "#eeeeee";
-static const char col_cyan[]        = "#924444";
+static const char col_gray4[]       = "#ebdbb2";
+static const char col_cyan[]        = "#924441";
 static const char *colors[][3]      = {
 	/*                fg         bg         border   */
 	[SchemeNorm]  = { col_gray3, col_gray1, col_gray2 },
