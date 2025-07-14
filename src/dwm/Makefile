@@ -6,6 +6,10 @@ include config.mk
 SRC = drw.c dwm.c util.c
 OBJ = ${SRC:.c=.o}
 
+TDIR = themes
+TFILES = default.h gruvbox.h night.h
+THEMES = $(addprefix $(TDIR)/, $(TFILES))
+
 all: dwm
 
 .c.o:
@@ -13,7 +17,7 @@ all: dwm
 
 ${OBJ}: config.h config.mk
 
-config.h: config.def.h
+config.h: config.def.h $(THEMES)
 	cp config.def.h $@
 
 dwm: ${OBJ}
