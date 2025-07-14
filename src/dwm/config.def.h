@@ -30,11 +30,7 @@ static const char *fonts[]          = {
  */
 static const int statusfontindex    = 0;
 /* colors */
-static const char col_gray1[]       = "#262626";
-static const char col_gray2[]       = "#504945";
-static const char col_gray3[]       = "#d5c4a1";
-static const char col_gray4[]       = "#ebdbb2";
-static const char col_cyan[]        = "#924441";
+#include "themes/gruvbox.h"
 static const char *colors[][3]      = {
 	/*                 fg         bg         border   */
 	[SchemeNorm]   = { col_gray3, col_gray1, col_gray2 },
