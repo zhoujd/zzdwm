@@ -6,12 +6,16 @@ include config.mk
 SRC = drw.c dmenu.c stest.c util.c
 OBJ = $(SRC:.c=.o)
 
+TDIR = themes
+TFILES = default.h gruvbox.h
+THEMES = $(addprefix $(TDIR)/, $(TFILES))
+
 all: dmenu stest
 
 .c.o:
 	$(CC) -c $(CFLAGS) $<
 
-config.h: config.def.h
+config.h: config.def.h $(THEMES)
 	cp config.def.h $@
 
 $(OBJ): arg.h config.h config.mk drw.h
