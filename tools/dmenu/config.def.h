@@ -15,14 +15,15 @@ static const char *fonts[] = {
 };
 /* -p option; prompt to the left of input field */
 static const char *prompt = NULL;
+#include "themes/gruvbox.h"
 static const char *colors[SchemeLast][2] = {
 	/*     fg         bg       */
-	[SchemeNorm] = { "#d5c4a1", "#262626" },
-	[SchemeSel]  = { "#ebdbb2", "#924441" },
-	[SchemeOut]  = { "#000000", "#00ffff" },
-	[SchemeSelHighlight]  = { "#ffc978", "#924441" },
-	[SchemeNormHighlight] = { "#ffc978", "#262626" },
-	[SchemeOutHighlight]  = { "#ffc978", "#00ffff" },
+	[SchemeNorm] = { norm_fg, norm_bg },
+	[SchemeSel]  = { sel_fg,  sel_bg },
+	[SchemeOut]  = { out_fg,  out_bg },
+	[SchemeNormHighlight] = { norm_hi_fg, norm_hi_bg },
+	[SchemeSelHighlight]  = { sel_hi_fg,  sel_hi_bg },
+	[SchemeOutHighlight]  = { out_hi_fg,  out_hi_bg },
 };
 /* -l option; if nonzero, dmenu uses vertical list with given number of lines */
 static unsigned int lines = 0;
