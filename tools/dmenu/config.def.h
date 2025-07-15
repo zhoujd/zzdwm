@@ -21,9 +21,9 @@ static const char *colors[SchemeLast][2] = {
 	[SchemeNorm] = { norm_fg, norm_bg },
 	[SchemeSel]  = { sel_fg,  sel_bg },
 	[SchemeOut]  = { out_fg,  out_bg },
-	[SchemeNormHighlight] = { norm_hi_fg, norm_hi_bg },
-	[SchemeSelHighlight]  = { sel_hi_fg,  sel_hi_bg },
-	[SchemeOutHighlight]  = { out_hi_fg,  out_hi_bg },
+	[SchemeNormHighlight] = { norm_hi_fg, norm_bg },
+	[SchemeSelHighlight]  = { sel_hi_fg,  sel_bg },
+	[SchemeOutHighlight]  = { out_hi_fg,  out_bg },
 };
 /* -l option; if nonzero, dmenu uses vertical list with given number of lines */
 static unsigned int lines = 0;
