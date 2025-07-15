@@ -8,6 +8,6 @@ static const char out_fg[]       = "#000000";
 static const char out_bg[]       = "#00ffff";
 
 /* highlight */
-static const char norm_hi_fg[]   = "#fabd2f";
-static const char sel_hi_fg[]    = "#fabd2f";
-static const char out_hi_fg[]    = "#fabd2f";
+static const char norm_hi_fg[]   = "#ffaf00";
+static const char sel_hi_fg[]    = "#ffaf00";
+static const char out_hi_fg[]    = "#ffaf00";
