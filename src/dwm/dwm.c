@@ -2913,6 +2913,8 @@ togglebar(const Arg *arg)
 void
 togglefloating(const Arg *arg)
 {
+	int fx, fh;
+
 	(void)arg;
 	if (!selmon->sel)
 		return;
@@ -2924,7 +2926,10 @@ togglefloating(const Arg *arg)
 			selmon->sel->w, selmon->sel->h, False);
 
 	selmon->sel->x = selmon->sel->mon->mx + (selmon->sel->mon->mw - WIDTH(selmon->sel)) / 2;
-	selmon->sel->y = selmon->sel->mon->my + (selmon->sel->mon->mh - HEIGHT(selmon->sel)) / 2;
+	/* support bar offsize */
+	fx = selmon->sel->mon->my + (selmon->showbar ? bh : 0);
+	fh = selmon->showbar ? selmon->sel->mon->mh - bh : selmon->sel->mon->mh;
+	selmon->sel->y = fx + (fh - HEIGHT(selmon->sel)) / 2;
 
 	arrange(selmon);
 }
