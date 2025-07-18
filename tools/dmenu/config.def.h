@@ -42,4 +42,4 @@ static unsigned int border_width = 0;
 
 /* -r option; if 1, disables shift-return and ctrl-return */
 static int restrict_return = 0;
-static const char *restrict_value = "New";
+static const char *restrict_value = "NEW";

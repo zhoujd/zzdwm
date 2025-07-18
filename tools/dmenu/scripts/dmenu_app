@@ -33,7 +33,7 @@ app_menu() {
     target=$(echo -n "$apps" | dmenu -l $lines -i -ix -r -p $title)
     case $target in
         '' ) exit ;;
-        New )
+        NEW )
             app_run
             ;;
         * )
