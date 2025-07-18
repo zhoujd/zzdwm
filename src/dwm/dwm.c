@@ -3272,7 +3272,7 @@ updatestatus(void)
 	Monitor* m;
 	if (!gettextprop(root, XA_WM_NAME, stext, sizeof(stext)) && showstatus) {
 		memset(stext, 0, sizeof(stext));
-		strncpy(stext, "dwm", sizeof(stext) - 1);
+		strncpy(stext, "dwm-"VERSION, sizeof(stext) - 1);
 	}
 	for(m = mons; m; m = m->next)
 		drawbar(m);
