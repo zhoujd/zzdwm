@@ -25,6 +25,7 @@ static const char *fonts[]          = {
 	"SF Pro Display:size=11",
 	"SF Mono:size=11",
 	"SF Mono SC:size=11",
+	"SF Mono Nerd:size=11",
 };
 /* select the font index for statusbar
  * the index is zero based
