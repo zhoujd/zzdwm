@@ -24,7 +24,7 @@ static const int floatoffset        = 1;   /* 0 default means no float window of
 static const char *fonts[]          = {
 	"SF Mono Nerd:size=11",
 	"SF Pro Display:size=11",
-	"SF Mono SC:size=11",
+	"Droid Sans Fallback:size=11",
 };
 /* select the font index for statusbar
  * the index is zero based
