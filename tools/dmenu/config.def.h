@@ -10,8 +10,8 @@ static const int user_bh = 2;                  /* add an defined amount of pixel
 static const float menu_height_ratio = 4.0f;   /* This is the ratio used in the original calculation */
 /* -fn option overrides fonts[0]; default X11 font or font set */
 static const char *fonts[] = {
-	"SF Mono:size=11",
-	"SF Mono SC:size=11",
+	"SF Mono Nerd:size=11",
+	"Droid Sans Fallback:size=11",
 };
 /* -p option; prompt to the left of input field */
 static const char *prompt = NULL;
