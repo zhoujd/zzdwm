@@ -22,15 +22,14 @@ static const int mincellh           = 120; /* min cell height in grid and resizi
 static const int showstatus         = 2;   /* 0 means no status text, 1 = selected (default), 2 = all monitors */
 static const int floatoffset        = 1;   /* 0 default means no float window offset base on bar height */
 static const char *fonts[]          = {
-	"SF Pro Display:size=11",
-	"SF Mono:size=11",
-	"SF Mono SC:size=11",
 	"SF Mono Nerd:size=11",
+	"SF Pro Display:size=11",
+	"SF Mono SC:size=11",
 };
 /* select the font index for statusbar
  * the index is zero based
  */
-static const int statusfontindex    = 0;
+static const int statusfontindex    = 1;
 /* colors */
 #include "themes/gruvbox.h"
 static const char *colors[][3]      = {
