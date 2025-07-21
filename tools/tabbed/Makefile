@@ -30,8 +30,8 @@ all: ${BIN}
 
 ${OBJ}: config.h
 
-config.h:
-	cp config.def.h $@
+config.h: config.def.h
+	cp -f config.def.h $@
 
 .o:
 	${CC} -o $@ $< ${TABBED_LDFLAGS}
