@@ -20,8 +20,8 @@ options:
 
 ${OBJ}: config.h config.mk
 
-config.h:
-	cp config.def.h $@
+config.h: config.def.h
+	cp -f config.def.h $@
 
 ${BIN}: ${OBJ}
 	${CC} ${LDFLAGS} -o $@ ${OBJ}
