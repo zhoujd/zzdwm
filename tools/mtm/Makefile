@@ -17,7 +17,7 @@ mtm: vtparser.c mtm.c pair.c config.h
 	strip mtm
 
 config.h: config.def.h
-	cp -i config.def.h config.h
+	cp -f config.def.h $@
 
 install: mtm
 	mkdir -p $(DESTDIR)/bin $(MANDIR)
