@@ -10,8 +10,8 @@ DEBUG_CFLAGS = ${CFLAGS} -UNDEBUG -O0 -g -ggdb -Wall -Wextra -Wno-unused-paramet
 
 all: dvtm dvtm-editor
 
-config.h:
-	cp config.def.h config.h
+config.h: config.def.h
+	cp config.def.h $@
 
 dvtm: config.h config.mk *.c *.h
 	${CC} ${CFLAGS} ${SRC} ${LDFLAGS} ${LIBS} -o $@
