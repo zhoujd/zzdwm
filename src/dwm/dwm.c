@@ -244,6 +244,7 @@ static void resetmfact(const Arg *arg);
 static void setwfact(const Arg *arg);
 static void sethfact(const Arg *arg);
 static void setnumdesktops(void);
+static void setdeflayouts(void);
 static void setup(void);
 static void setviewport(void);
 static void seturgent(Client *c, int urg);
@@ -2518,6 +2519,25 @@ sethfact(const Arg *arg)
 }
 
 void
+setdeflayouts(void)
+{
+	unsigned int i;
+	int j;
+
+	for (i = 0; i < LENGTH(tags); i++) {
+		if (taglayouts[i] != 0) {
+			Layout *l;
+			view(&((Arg) { .ui = 1 << i }));
+			l = (Layout *)layouts;
+			for (j = 0; j < taglayouts[i]; j++)
+				l++;
+			setlayout(&((Arg) { .v = l }));
+		}
+	}
+	view(&((Arg) { .ui = 1 << 0 }));
+}
+
+void
 setup(void)
 {
 	unsigned int i;
@@ -2610,17 +2630,7 @@ setup(void)
 	XSelectInput(dpy, root, wa.event_mask);
 	grabkeys();
 	/* set default tag layouts */
-	for (i = 0; i < LENGTH(tags); i++) {
-		if (taglayouts[i] != 0) {
-			Layout *l;
-			view(&((Arg) { .ui = 1 << i }));
-			l = (Layout *)layouts;
-			for (int j = 0; j < taglayouts[i]; j++)
-				l++;
-			setlayout(&((Arg) { .v = l }));
-		}
-	}
-	view(&((Arg) { .ui = 1 << 0 }));
+	setdeflayouts();
 	focus(NULL);
 }
 
