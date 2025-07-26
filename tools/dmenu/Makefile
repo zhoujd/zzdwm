@@ -7,7 +7,7 @@ SRC = drw.c dmenu.c stest.c util.c
 OBJ = $(SRC:.c=.o)
 
 TDIR = themes
-TFILES = default.h gruvbox.h
+TFILES = default.h gruvbox.h nerd.h
 THEMES = $(addprefix $(TDIR)/, $(TFILES))
 
 all: dmenu stest
