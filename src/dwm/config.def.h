@@ -31,7 +31,7 @@ static const char *fonts[]          = {
  */
 static const int statusfontindex    = 1;
 /* colors */
-#include "themes/nerd.h"
+#include "themes/gruvbox.h"
 static const char *colors[][3]      = {
 	/*                 fg         bg         border   */
 	[SchemeNorm]   = { col_gray3, col_gray1, col_gray2 },
