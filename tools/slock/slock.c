@@ -97,11 +97,12 @@ static void
 writemessage(Display *dpy, Window win, int screen)
 {
 	int len, line_len, width, height, s_width, s_height, i, j, k, tab_replace, tab_size;
-        XftFont *fontinfo;
-        XftColor xftcolor;
-        XftDraw *xftdraw;
-        XGlyphInfo ext_msg, ext_space;
+	XftFont *fontinfo;
+	XftColor xftcolor;
+	XftDraw *xftdraw;
+	XGlyphInfo ext_msg, ext_space;
 	XineramaScreenInfo *xsi;
+
 	xftdraw = XftDrawCreate(dpy, win, DefaultVisual(dpy, screen), DefaultColormap(dpy, screen));
 	fontinfo = XftFontOpenName(dpy, screen, font_name);
 	XftColorAllocName(dpy, DefaultVisual(dpy, screen), DefaultColormap(dpy, screen), text_color, &xftcolor);
@@ -118,7 +119,7 @@ writemessage(Display *dpy, Window win, int screen)
 	XftTextExtentsUtf8(dpy, fontinfo, (XftChar8 *) " ", 1, &ext_space);
 	tab_size = 8 * ext_space.width;
 
-	/*  To prevent "Uninitialized" warnings. */
+	/* To prevent "Uninitialized" warnings. */
 	xsi = NULL;
 
 	/*
@@ -177,14 +178,12 @@ writemessage(Display *dpy, Window win, int screen)
 
 	/* xsi should not be NULL anyway if Xinerama is active, but to be safe */
 	if (XineramaIsActive(dpy) && xsi != NULL)
-			XFree(xsi);
+		XFree(xsi);
 
 	XftFontClose(dpy, fontinfo);
 	XftColorFree(dpy, DefaultVisual(dpy, screen), DefaultColormap(dpy, screen), &xftcolor);
 	XftDrawDestroy(xftdraw);
 }
-
-
 
 static const char *
 gethash(void)
