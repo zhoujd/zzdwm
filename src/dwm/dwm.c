@@ -808,10 +808,11 @@ Monitor *
 createmon(void)
 {
 	Monitor *m;
-	unsigned int i;
+	unsigned int i, defaulttag;
 
+	defaulttag = (deftag <= LENGTH(tags) && deftag > 0) ? deftag : 1;
 	m = ecalloc(1, sizeof(Monitor));
-	m->tagset[0] = m->tagset[1] = 1;
+	m->tagset[0] = m->tagset[1] = defaulttag;
 	m->mfact = mfact;
 	m->smfact = smfact;
 	m->dmfact = dmfact;
@@ -822,7 +823,7 @@ createmon(void)
 	m->gappx = gappx;
 	m->drawwithgaps = startwithgaps;
 	m->pertag = ecalloc(1, sizeof(Pertag));
-	m->pertag->curtag = m->pertag->prevtag = 1;
+	m->pertag->curtag = m->pertag->prevtag = defaulttag;
 
 	for (i = 0; i <= LENGTH(tags); i++) {
 		m->pertag->nmasters[i] = m->nmaster;
@@ -839,10 +840,10 @@ createmon(void)
 		m->pertag->sellts[i] = m->sellt;
 	}
 
-	m->lt[0] = m->pertag->ltidxs[1][0];
-	m->lt[1] = &layouts[1 % LENGTH(layouts)];
+	m->lt[0] = m->pertag->ltidxs[defaulttag][0];
+	m->lt[1] = &layouts[defaulttag % LENGTH(layouts)];
 	memset(m->ltsymbol, 0, sizeof(m->ltsymbol));
-	strncpy(m->ltsymbol, m->pertag->ltidxs[1][0]->symbol, sizeof(m->ltsymbol) - 1);
+	strncpy(m->ltsymbol, m->pertag->ltidxs[defaulttag][0]->symbol, sizeof(m->ltsymbol) - 1);
 
 	return m;
 }
