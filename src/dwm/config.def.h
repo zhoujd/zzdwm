@@ -138,6 +138,11 @@ static const char *movwincmd[] = { "movwin", NULL };
 static const char *manmenucmd[] = { "dmenu_man", NULL };
 static const char *dmenucmd[] = { "dmenu_menu", NULL };
 
+/* XFree86 vender specific keysyms
+ * https://cgit.freedesktop.org/xorg/proto/x11proto/tree/XF86keysym.h
+ */
+#include <X11/XF86keysym.h>
+
 /* keys */
 static const Key keys[] = {
 	/* modifier                     key              function          argument */
