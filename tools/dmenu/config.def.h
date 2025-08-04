@@ -15,7 +15,7 @@ static const char *fonts[] = {
 };
 /* -p option; prompt to the left of input field */
 static const char *prompt = NULL;
-#include "themes/custom.h"
+#include "themes/gruvbox.h"
 static const char *colors[SchemeLast][2] = {
 	/*     fg         bg       */
 	[SchemeNorm] = { norm_fg, norm_bg },
