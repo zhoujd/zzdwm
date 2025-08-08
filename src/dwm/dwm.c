@@ -1038,8 +1038,13 @@ drawbar(Monitor *m)
 				s = a + 1;
 		if (!s && a)
 			s = 1;
-		if (a > 1)
-			snprintf(m->ltsymbol, sizeof(m->ltsymbol) - 1, "[%d/%d]", s, a);
+		if (m->lt[m->sellt]->arrange == grid) {
+			if (a > 2)
+				snprintf(m->ltsymbol, sizeof(m->ltsymbol) - 1, "[%d/%d]", s, a);
+		} else {
+			if (a > 1)
+				snprintf(m->ltsymbol, sizeof(m->ltsymbol) - 1, "[%d/%d]", s, a);
+		}
 	}
 
 	w = TEXTW(m->ltsymbol, 0);
