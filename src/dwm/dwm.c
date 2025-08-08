@@ -1062,7 +1062,7 @@ drawbar(Monitor *m)
 				if (m->sel->isfloating)
 					drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
 				if (m->sel->issticky)
-					drw_rect(drw, x + boxs, bh - boxw - boxs, boxw, boxw, m->sel->isfixed, 0);
+					drw_rect(drw, x + boxs, bh - boxs - boxw, boxw, boxw, m->sel->isfixed, 0);
 			} else {
 				drw_setscheme(drw, scheme[SchemeNorm]);
 				drw_rect(drw, x, 0, w, bh, 1, 1);
