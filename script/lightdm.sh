@@ -3,6 +3,10 @@
 dep() {
     echo "Install lightdm"
     sudo apt install -y lightdm
+    sudo apt install -y lightdm-gtk-greeter
+    sudo apt install -y lightdm-gtk-greeter-settings
+
+    echo "Enable light service"
     sudo systemctl enable lightdm
 
     echo "Remove default xsession"
