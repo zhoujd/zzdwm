@@ -1,14 +1,11 @@
 #!/bin/bash
 
 dep() {
-    echo "Install lightdm"
+    echo "Install package"
     sudo apt install -y lightdm
     sudo apt install -y lightdm-gtk-greeter
-    sudo apt install -y lightdm-gtk-greeter-settings
-
-    echo "Enable light service"
+    echo "Enable service"
     sudo systemctl enable lightdm
-
     echo "Remove default xsession"
     sudo rm -fv /usr/share/xsessions/lightdm-xsession.desktop
     echo "Install dep done"
@@ -20,6 +17,7 @@ config() {
 [greeter]
 theme-name = Adwaita-dark
 icon-theme-name = Adwaita
+font-name = SF Pro Display 10
 clock-format = %a %e %b %l:%M %p
 indicators = ~host;~spacer;~session;~clock;~power
 EOF
