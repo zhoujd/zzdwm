@@ -1,5 +1,4 @@
 /* colors */
-
 static const char norm_fg[]      = "#d5c4a1";
 static const char norm_bg[]      = "#282828";
 static const char sel_fg[]       = "#ebdbb2";
