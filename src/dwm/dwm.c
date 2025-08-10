@@ -1059,10 +1059,13 @@ drawbar(Monitor *m)
 		} else {
 			if (m->sel) {
 				drw_setscheme(drw, scheme[m == selmon ? SchemeTitle : SchemeNorm]);
-				if (!centretitle || (int)TEXTW(m->sel->name, 0) > w) {
-					tlpad = lrpad / 2;
-				} else {
+				if (centertitle) {
 					tlpad = (w - TEXTW(m->sel->name, 0)) / 2;
+				} else {
+					tlpad = lrpad / 2;
+				}
+				if ((int)TEXTW(m->sel->name, 0) > maxtitle) {
+					m->sel->name[maxtitle + 1] = 0;
 				}
 				drw_text(drw, x, 0, w, bh, tlpad, m->sel->name, 0, 0);
 				if (m->sel->isfloating)
