@@ -4,8 +4,8 @@
 _interval=1s                        # Refresh interval
 
 # Font
-_font1="xft:SF Mono SC:size=9"      # XFT support font1
-_font2="xft:SF Pro Display:size=9"  # XFT support font2
+_font1="xft:SF Mono SC:size=10"     # XFT support font1
+_font2="xft:SF Pro Display:size=10" # XFT support font2
 
 # Colors
 _colbg1="#005577"                   # Background color 1
