@@ -1065,7 +1065,9 @@ drawbar(Monitor *m)
 					tlpad = lrpad / 2;
 				}
 				if ((int)TEXTW(m->sel->name, 0) > maxtitle) {
-					m->sel->name[maxtitle + 1] = 0;
+					for (i = 0; i < 3; i++)
+						m->sel->name[maxtitle + i] = '.';
+					m->sel->name[maxtitle + 3] = 0;
 				}
 				drw_text(drw, x, 0, w, bh, tlpad, m->sel->name, 0, 0);
 				if (m->sel->isfloating)
