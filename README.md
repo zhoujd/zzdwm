@@ -6,7 +6,6 @@ zzdwm
 ```
 ## https://dwm.suckless.org/
 ## https://dl.suckless.org/dwm/
-## https://dl.suckless.org/dwm/dwm-6.5.tar.gz
 ## https://git.suckless.org/dwm/
 ## https://git.suckless.org/dwm/files.html
 ```
