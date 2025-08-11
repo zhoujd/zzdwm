@@ -37,7 +37,7 @@ ecalloc(size_t nmemb, size_t size)
 }
 
 void
-truncate_utf8_bytes(char *s, size_t bytes)
+utf8trunc(char *s, size_t bytes)
 {
 	unsigned int i;
 	size_t pos, len;

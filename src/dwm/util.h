@@ -7,4 +7,4 @@
 
 void die(const char *fmt, ...);
 void *ecalloc(size_t nmemb, size_t size);
-void truncate_utf8_bytes(char *s, size_t bytes);
+void utf8trunc(char *s, size_t bytes);
