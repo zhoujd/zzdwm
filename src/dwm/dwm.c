@@ -1059,17 +1059,19 @@ drawbar(Monitor *m)
 		} else {
 			if (m->sel) {
 				drw_setscheme(drw, scheme[m == selmon ? SchemeTitle : SchemeNorm]);
-				if (centertitle) {
-					tlpad = (w - TEXTW(m->sel->name, 0)) / 2;
-				} else {
-					tlpad = lrpad / 2;
+				if (maxtitle > 0) {
+					if (centertitle) {
+						tlpad = (w - TEXTW(m->sel->name, 0)) / 2;
+					} else {
+						tlpad = lrpad / 2;
+					}
+					if ((int)TEXTW(m->sel->name, 0) > maxtitle) {
+						for (i = 0; i < TNUM; i++)
+							m->sel->name[maxtitle + i] = '.';
+						m->sel->name[maxtitle + TNUM] = '\0';
+					}
+					drw_text(drw, x, 0, w, bh, tlpad, m->sel->name, 0, 0);
 				}
-				if ((int)TEXTW(m->sel->name, 0) > maxtitle) {
-					for (i = 0; i < TNUM; i++)
-						m->sel->name[maxtitle + i] = '.';
-					m->sel->name[maxtitle + TNUM] = '\0';
-				}
-				drw_text(drw, x, 0, w, bh, tlpad, m->sel->name, 0, 0);
 				if (m->sel->isfloating)
 					drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
 				if (m->sel->issticky)
