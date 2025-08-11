@@ -62,7 +62,6 @@
 #define OPAQUE                  0xffU
 #define GAP_TOGGLE              100
 #define GAP_RESET               0
-#define TNUM                    3
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
@@ -1060,11 +1059,7 @@ drawbar(Monitor *m)
 			if (m->sel) {
 				drw_setscheme(drw, scheme[m == selmon ? SchemeTitle : SchemeNorm]);
 				if (maxtitle > 0) {
-					if ((int)TEXTW(m->sel->name, 0) > maxtitle) {
-						for (i = 0; i < TNUM; i++)
-							m->sel->name[maxtitle + i] = '.';
-						m->sel->name[maxtitle + TNUM] = '\0';
-					}
+					truncate_utf8_bytes(m->sel->name, maxtitle);
 					if (centertitle) {
 						tlpad = (w - TEXTW(m->sel->name, 0)) / 2;
 					} else {
