@@ -1059,7 +1059,7 @@ drawbar(Monitor *m)
 			if (m->sel) {
 				drw_setscheme(drw, scheme[m == selmon ? SchemeTitle : SchemeNorm]);
 				if (maxtitle > 0) {
-					utf8trunc(m->sel->name, maxtitle);
+					utf8trunc(m->sel->name, MIN(maxtitle, sizeof(m->sel->name)));
 					if (centertitle) {
 						tlpad = (w - TEXTW(m->sel->name, 0)) / 2;
 					} else {
