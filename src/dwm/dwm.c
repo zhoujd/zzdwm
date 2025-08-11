@@ -1060,14 +1060,16 @@ drawbar(Monitor *m)
 				drw_setscheme(drw, scheme[m == selmon ? SchemeTitle : SchemeNorm]);
 				if (maxtitle > 0) {
 					utf8trunc(m->sel->name, MIN(maxtitle, sizeof(m->sel->name)));
-					if (centertitle)
+					if (centertitle) {
 						tlpad = (w - TEXTW(m->sel->name, 0)) / 2;
-					else
+					} else {
 						tlpad = lrpad / 2;
-					if (w > (int)TEXTW(m->sel->name, 0))
-						drw_text(drw, x, 0, w, bh, tlpad, m->sel->name, 0, 0);
-					else
+					}
+					if (w < (int)TEXTW(m->sel->name, 0)) {
 						drw_rect(drw, x, 0, w, bh, 1, 1);
+					} else {
+						drw_text(drw, x, 0, w, bh, tlpad, m->sel->name, 0, 0);
+					}
 				}
 				if (m->sel->isfloating)
 					drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
