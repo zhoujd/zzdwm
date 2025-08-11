@@ -60,9 +60,9 @@
 #define TAGSLENGTH              (LENGTH(tags))
 #define TEXTW(X,F)              (drw_fontset_getwidth(drw, (X), (F)) + lrpad)
 #define OPAQUE                  0xffU
-
-#define GAP_TOGGLE 100
-#define GAP_RESET  0
+#define GAP_TOGGLE              100
+#define GAP_RESET               0
+#define TNUM                    3
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
@@ -1065,9 +1065,9 @@ drawbar(Monitor *m)
 					tlpad = lrpad / 2;
 				}
 				if ((int)TEXTW(m->sel->name, 0) > maxtitle) {
-					for (i = 0; i < 3; i++)
+					for (i = 0; i < TNUM; i++)
 						m->sel->name[maxtitle + i] = '.';
-					m->sel->name[maxtitle + 3] = 0;
+					m->sel->name[maxtitle + TNUM] = '\0';
 				}
 				drw_text(drw, x, 0, w, bh, tlpad, m->sel->name, 0, 0);
 				if (m->sel->isfloating)
