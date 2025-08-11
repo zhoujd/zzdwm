@@ -243,6 +243,7 @@ static void resetmfact(const Arg *arg);
 static void setwfact(const Arg *arg);
 static void sethfact(const Arg *arg);
 static void setnumdesktops(void);
+static void setdeflayouts(void);
 static void setup(void);
 static void setviewport(void);
 static void seturgent(Client *c, int urg);
@@ -807,11 +808,10 @@ Monitor *
 createmon(void)
 {
 	Monitor *m;
-	unsigned int i, defaulttag;
+	unsigned int i;
 
-	defaulttag = (deftag <= LENGTH(tags) && deftag > 0) ? deftag : 1;
 	m = ecalloc(1, sizeof(Monitor));
-	m->tagset[0] = m->tagset[1] = defaulttag;
+	m->tagset[0] = m->tagset[1] = 1;
 	m->mfact = mfact;
 	m->smfact = smfact;
 	m->dmfact = dmfact;
@@ -821,8 +821,12 @@ createmon(void)
 	m->topbar = topbar;
 	m->gappx = gappx;
 	m->drawwithgaps = startwithgaps;
+	m->lt[0] = &layouts[0];
+	m->lt[1] = &layouts[1 % LENGTH(layouts)];
+	memset(m->ltsymbol, 0, sizeof(m->ltsymbol));
+	strncpy(m->ltsymbol, layouts[0].symbol, sizeof(m->ltsymbol) - 1);
 	m->pertag = ecalloc(1, sizeof(Pertag));
-	m->pertag->curtag = m->pertag->prevtag = defaulttag;
+	m->pertag->curtag = m->pertag->prevtag = 1;
 
 	for (i = 0; i <= LENGTH(tags); i++) {
 		m->pertag->nmasters[i] = m->nmaster;
@@ -830,19 +834,10 @@ createmon(void)
 		m->pertag->smfacts[i] = m->smfact;
 		m->pertag->dmfacts[i] = m->dmfact;
 		m->pertag->zmfacts[i] = m->zmfact;
-		if (i >= 1) {
-			m->pertag->ltidxs[i][0] = &layouts[taglayouts[i-1]];
-		} else {
-			m->pertag->ltidxs[i][0] = &layouts[0];
-		}
+		m->pertag->ltidxs[i][0] = m->lt[0];
 		m->pertag->ltidxs[i][1] = m->lt[1];
 		m->pertag->sellts[i] = m->sellt;
 	}
-
-	m->lt[0] = m->pertag->ltidxs[defaulttag][0];
-	m->lt[1] = &layouts[defaulttag % LENGTH(layouts)];
-	memset(m->ltsymbol, 0, sizeof(m->ltsymbol));
-	strncpy(m->ltsymbol, m->pertag->ltidxs[defaulttag][0]->symbol, sizeof(m->ltsymbol) - 1);
 
 	return m;
 }
@@ -2542,6 +2537,25 @@ sethfact(const Arg *arg)
 }
 
 void
+setdeflayouts(void)
+{
+	unsigned int i;
+	int j;
+
+	for (i = 0; i < LENGTH(tags); i++) {
+		if (taglayouts[i] != 0) {
+			Layout *l;
+			view(&((Arg) { .ui = 1 << i }));
+			l = (Layout *)layouts;
+			for (j = 0; j < taglayouts[i]; j++)
+				l++;
+			setlayout(&((Arg) { .v = l }));
+		}
+	}
+	view(&((Arg) { .ui = 1 << 0 }));
+}
+
+void
 setup(void)
 {
 	unsigned int i;
@@ -2633,6 +2647,8 @@ setup(void)
 	XChangeWindowAttributes(dpy, root, CWEventMask|CWCursor, &wa);
 	XSelectInput(dpy, root, wa.event_mask);
 	grabkeys();
+	/* set default tag layouts */
+	setdeflayouts();
 	focus(NULL);
 }
 
