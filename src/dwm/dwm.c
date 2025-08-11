@@ -2552,7 +2552,7 @@ setdeflayouts(void)
 			setlayout(&((Arg) { .v = l }));
 		}
 	}
-	view(&((Arg) { .ui = 1 << 0 }));
+	view(&((Arg) { .ui = 1 << (deftag - 1) }));
 }
 
 void
