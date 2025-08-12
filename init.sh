@@ -27,8 +27,6 @@ install_dm() {
     local xs=/usr/share/xsessions
     echo "Init $xs"
     sudo mkdir -p $xs
-    echo "Install dwm"
-    sudo cp -fv $CORE_ROOT/bin/dwm-session $target/dwm-session
     local dwm_entry=$xs/dwm.desktop
     echo "Install $dwm_entry"
     sudo tee $dwm_entry <<EOF
@@ -40,8 +38,6 @@ Icon=dwm
 Type=Application
 DesktopNames=DWM
 EOF
-    echo "Install cwm"
-    sudo cp -fv $CORE_ROOT/bin/cwm-session $target/cwm-session
     local cwm_entry=$xs/cwm.desktop
     echo "Install $cwm_entry"
     sudo tee $cwm_entry <<EOF
@@ -62,24 +58,16 @@ install_bin() {
         $CORE_ROOT/bin/nextwin
         $CORE_ROOT/bin/prevwin
         $CORE_ROOT/bin/dupterm
-        $CORE_ROOT/bin/hexedit
         $CORE_ROOT/bin/me
         $CORE_ROOT/bin/mg
-        $CORE_ROOT/bin/mtm
-        $CORE_ROOT/bin/abduco
-        $CORE_ROOT/bin/dtach
-        $CORE_ROOT/bin/dvtm
-        $CORE_ROOT/bin/dvtm-editor
-        $CORE_ROOT/bin/dvtm-pager
-        $CORE_ROOT/bin/dvtm-status
-        $CORE_ROOT/bin/nq
-        $CORE_ROOT/bin/nqtail
         $CORE_ROOT/bin/movwin
-        $CORE_ROOT/bin/cwmbar
         $CORE_ROOT/bin/focuswin
         $CORE_ROOT/bin/runec
         $CORE_ROOT/bin/startdwm
-        $CORE_ROOT/bin/startcwm        
+        $CORE_ROOT/bin/startcwm
+        $CORE_ROOT/bin/dwm-session
+        $CORE_ROOT/bin/cwm-session
+        $CORE_ROOT/libexec/cwmbar
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $target
