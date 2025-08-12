@@ -27,28 +27,8 @@ install_dm() {
     local xs=/usr/share/xsessions
     echo "Init $xs"
     sudo mkdir -p $xs
-    local dwm_entry=$xs/dwm.desktop
-    echo "Install $dwm_entry"
-    sudo tee $dwm_entry <<EOF
-[Desktop Entry]
-Name=DWM Session
-Comment=Dynamic Window Manager
-Exec=dwm-session
-Icon=dwm
-Type=Application
-DesktopNames=DWM
-EOF
-    local cwm_entry=$xs/cwm.desktop
-    echo "Install $cwm_entry"
-    sudo tee $cwm_entry <<EOF
-[Desktop Entry]
-Name=CWM Session
-Comment=OpenBSD's CWM
-Exec=cwm-session
-Icon=cwm
-Type=Application
-DesktopNames=CWM
-EOF
+    sudo cp -fv $CORE_ROOT/misc/xsessions/dwm.desktop $xs
+    sudo cp -fv $CORE_ROOT/misc/xsessions/cwm.desktop $xs
     echo "Install dm done"
 }
 
@@ -76,7 +56,8 @@ install_bin() {
 }
 
 install_misc() {
-    ln -sfTv $CORE_ROOT/misc/.cwmrc ~/.cwmrc
+    echo "Install cwmrc"
+    ln -sfTv $CORE_ROOT/misc/cwm/cwmrc ~/.cwmrc
     echo "Install misc done"
 }
 

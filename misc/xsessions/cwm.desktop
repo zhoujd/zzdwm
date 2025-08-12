@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=CWM Session
+Comment=OpenBSD's CWM
+Exec=cwm-session
+Icon=cwm
+Type=Application
+DesktopNames=CWM

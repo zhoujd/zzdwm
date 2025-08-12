@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=DWM Session
+Comment=Dynamic Window Manager
+Exec=dwm-session
+Icon=dwm
+Type=Application
+DesktopNames=DWM
