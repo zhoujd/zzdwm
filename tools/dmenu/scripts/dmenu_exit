@@ -20,7 +20,7 @@ sudorun() {
 choice=$(printf '%s\n' "${menu[@]}" | dmenu -i -ix -l $lines -p $title)
 case $choice in
     0 ) exit ;;
-    1 ) xdotool key super+shift+q ;;
+    1 ) xdotool key super+control+q ;;
     2 ) xdotool key super+shift+control+q ;;
     3 ) sudorun shutdown -h now ;;
     4 ) sudorun reboot ;;
