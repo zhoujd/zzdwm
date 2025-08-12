@@ -27,8 +27,8 @@ install_dm() {
     local xs=/usr/share/xsessions
     echo "Init $xs"
     sudo mkdir -p $xs
-    sudo cp -fv $CORE_ROOT/misc/xsessions/dwm.desktop $xs
-    sudo cp -fv $CORE_ROOT/misc/xsessions/cwm.desktop $xs
+    sudo cp -fv $CORE_ROOT/misc/dm/dwm.desktop $xs
+    sudo cp -fv $CORE_ROOT/misc/dm/cwm.desktop $xs
     echo "Install dm done"
 }
 
