@@ -1,16 +1,23 @@
-=head1 NAME
+=head1 Lemonbar Xft (In sync with Oct 2024 lemonbar version)
 
 lemonbar - Featherweight lemon-scented bar
 
-=for HTML <a href="https://travis-ci.org/LemonBoy/bar"><img src="https://travis-ci.org/LemonBoy/bar.svg?branch=master"></a>
+=for HTML <img src="https://github.com/LemonBoy/bar/workflows/Does%20this%20build%20look%20infected%3F/badge.svg">
 
 =head1 SYNOPSIS
 
-I<lemonbar> [-h | -g I<width>B<x>I<height>B<+>I<x>B<+>I<y> | -b | -d | -f I<font> | -p | -n I<name> | -u I<pixel> | -B I<color> | -F I<color> | -U I<color> | -o I<offset> ]
+I<lemonbar> [-h | -g I<width>B<x>I<height>B<+>I<x>B<+>I<y> | -o | -b | -d | -f I<font> | -p | -n I<name> | -u I<pixel> | -B I<color> | -F I<color> | -U I<color>]
 
 =head1 DESCRIPTION
 
-B<lemonbar> (formerly known as B<bar>) is a lightweight bar entirely based on XCB. Provides full UTF-8 support, basic formatting, RandR and Xinerama support and EWMH compliance without wasting your precious memory.
+B<lemonbar> (formerly known as B<bar>) is a lightweight statusbar based on XCB.
+Provides full UTF-8 support, basic formatting, RandR and Xinerama support and
+EWMH compliance without wasting your precious memory.
+
+=head1 INPUT
+
+The data to be parsed is read from the standard input, parsing and printing the
+input data are delayed until a newline is found.
 
 =head1 OPTIONS
 
@@ -24,6 +31,10 @@ Display the help and exit.
 
 Set the window geometry. If a parameter is omitted it's filled with the default value. If the I<y> parameter is specified along with the B<-b> switch then the position is relative to the bottom of the screen.
 
+=item B<-o> I<name>
+
+Set next output to I<name>. May be used multiple times; order is significant. If any B<-o> options are given, only B<-o> specified monitors will be used. Invalid output names are silently ignored. (only supported on randr configurations at this time)
+
 =item B<-b>
 
 Dock the bar at the bottom of the screen.
@@ -34,12 +45,8 @@ Force docking without asking the window manager. This is needed if the window ma
 
 =item B<-f> I<font>
 
-Define the font to load into one of the five slots (the number of slots is hardcoded and can be tweaked by
-changing the MAX_FONT_COUNT parameter in the source code). This version supports fontconfig font specifiers and anti-aliased fonts.
-
-=item B<-a> I<number>
-
-Set number of clickable areas (default is 10)
+Specifies a font to use. Can be used multiple times to load more than a single
+font.
 
 =item B<-p>
 
@@ -60,10 +67,6 @@ Set the background color of the bar. I<color> must be specified in the hex forma
 =item B<-F> I<color>
 
 Set the foreground color of the bar. Accepts the same color formats as B<-B>.
-
-=item B<-o> I<offset>
-
-Add a vertical offset to the text. I<offset> must be a number and can be negative. I<-o -3> will push the text 3 pixels up.
 
 =item B<-U> I<color>
 
@@ -143,6 +146,11 @@ First/last monitor.
 
 Nth monitor.
 
+=item I<n>B<NAME>
+
+Named monitor.
+Eg. I<%{SnHDMI-0} This text will show up on the HDMI-0 output>
+
 =back
 
 =back
@@ -189,7 +197,7 @@ L<git repository|https://github.com/LemonBoy/bar>
 
 =head1 AUTHOR
 
-2012-2017 (C) The Lemon Man
+2012-2020 (C) The Lemon Man
 
 Xinerama support was kindly contributed by Stebalien
 
