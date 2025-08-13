@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Common
-_interval=0.5                       # Refresh interval
+_interval=0.2                       # Refresh interval
 
 # Font
-_font1="xft:SF Mono SC:size=9"      # XFT support font 1
-_font2="xft:SF Pro Display:size=9"  # XFT support font 2
+_font1="xft:SF Mono SC:size=10"     # XFT support font 1
+_font2="xft:SF Pro Display:size=10" # XFT support font 2
 
 # Colors
 _colbg1="#005577"                   # Background color 1
