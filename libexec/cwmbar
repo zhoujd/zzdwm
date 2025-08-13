@@ -153,7 +153,7 @@ clock() {
 status() {
     while true; do
         _left="%{l}%{B${_colbg2}}%{O0}%{T1}$(group)$(winnum)%{B${_colbg1}}$(wintitle)%{T-}%{O0}%{B-}"
-        _right="%{r}%{B${_colbg2}}%{O2}%{T2}$(battery) $(volume_alsa) $(clock)%{T-}%{O2}%{B-}"
+        _right="%{r}%{B${_colbg2}}%{O3}%{T2}$(battery) $(volume_alsa) $(clock)%{T-}%{O3}%{B-}"
         echo "${_left}${_right}"
         sleep ${_interval}
     done
