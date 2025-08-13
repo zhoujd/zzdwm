@@ -95,7 +95,7 @@ bind-key 4SC-k          window-resize-up-big
 bind-key 4SC-l          window-resize-right-big
 
 # Toggle visibility of all groups
-bind-key 4-a            group-toggle-all
+bind-key 4-o            group-toggle-all
 bind-key 4-u            group-last
 
 # Add focused window to current group
@@ -104,12 +104,13 @@ bind-key 4-g            window-group
 bind-key 4-h            group-cycle
 bind-key 4-l            group-rcycle
 
-bind-key 4C-x           window-close
-bind-key 4C-u           window-hide
+bind-key 4S-x           window-close
+bind-key 4S-i           window-hide
 
 bind-key 4-f            window-fullscreen
 bind-key 4-m            window-maximize
 bind-key 4-t            window-vtile
+bind-key 4-z            window-htile
 
 # Cycle/reverse cycle through windows
 bind-key 4-j            window-cycle
