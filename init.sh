@@ -23,12 +23,12 @@ install_dep() {
 }
 
 install_dm() {
-    local target=/usr/local/bin
-    local xs=/usr/share/xsessions
-    echo "Init $xs"
-    sudo mkdir -p $xs
-    sudo cp -fv $CORE_ROOT/misc/dm/dwm.desktop $xs
-    sudo cp -fv $CORE_ROOT/misc/dm/cwm.desktop $xs
+    local target=/usr/share/xsessions
+    local dm=$CORE_ROOT/misc/dm
+    echo "Init $target"
+    sudo mkdir -p $target
+    sudo cp -fv $dm/dwm.desktop $target
+    sudo cp -fv $dm/cwm.desktop $target
     echo "Install dm done"
 }
 
