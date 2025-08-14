@@ -28,9 +28,9 @@ app_menu() {
     apps=$(echo -n "$apps" | \
                awk -v max="$max" \
                    '{cur=length($2); \
-                     if($1!="0") printf "%-4s", $1; \
                      printf $2; \
                      for(i=0; i < max - cur + 1; i++) printf " "; \
+                     if($1!="0") printf "%4s", $1; \
                      $1=$2=""; \
                      printf "%s\n", $0}')
     target=$(echo -n "$apps" | dmenu -l $lines -i -ix -r -p $title)
