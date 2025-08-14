@@ -3,22 +3,42 @@
 title="tag:"
 lines=10
 
-tags=$(wmctrl -d 2>/dev/null | grep -v nogroup | tr -s '[:blank:]' | cut -d ' ' -f 1,2,9,10)
-tags=$(echo -n "$tags" | \
-          awk '{
-                 if ($4 != "") {
-                   printf "%-8s", $1; \
-                   printf "%-4s", $2; \
-                   printf "%-10s", $4; \
-                 } else {
-                   printf "%-8s", $3; \
-                   printf "%-4s", $2; \
-                 } \
-                 printf "\n"; \
-               }')
+cwm() {
+    group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
+    totalwinnum=$(wmctrl -lp | awk '{print $2}' | wc -l)
+    for i in $(seq 1 9); do
+        gwinnum=$(wmctrl -lp | awk '{print $2}' | grep -sc ${i})
+        if [ ${group} -eq $i ]; then
+            printf '%-8s%4s%20s\n' "${i}" "*" "$gwinnum/$totalwinnum"
+        else
+            printf '%-8s%4s%20s\n' "${i}" "-" "$gwinnum/$totalwinnum"
+        fi
+    done
+}
 
-target=$(echo -n "$tags" | dmenu -l $lines -i -ix -p $title)
+dwm() {
+    group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
+    totalwinnum=$(wmctrl -lp | awk '{print $2}' | wc -l)
+    for i in $(seq 1 9); do
+        if [ ${group} -eq $i ]; then
+            printf '%-8s%4s\n' "${i}" "*"
+        else
+            printf '%-8s%4s\n' "${i}" "-"
+        fi
+    done
+}
 
-if [ -n "$target" ]; then
-    xdotool key super+$(expr $target + 1)
-fi
+case $DESKTOP_SESSION in
+    cwm )
+        target=$(cwm | dmenu -l $lines -i -ix -p $title)
+        if [ -n "$target" ]; then
+            xdotool key super+$(expr $target + 1)
+        fi
+        ;;
+    * )
+        target=$(dwm | dmenu -l $lines -i -ix -p $title)
+        if [ -n "$target" ]; then
+            xdotool key super+$(expr $target + 1)
+        fi
+        ;;
+esac
