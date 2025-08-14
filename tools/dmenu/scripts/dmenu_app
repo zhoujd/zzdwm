@@ -20,16 +20,19 @@ app_run() {
 }
 
 app_menu() {
-    apps=$(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 3-3,5- | \
-               grep -i "^$app" | sed 's/^[a-zA-Z0-9-]*\.//')
+    apps=$(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 2-3,5- | \
+               sed 's/[a-zA-Z0-9-]*\.//' | grep -i "$app" )
     # Add spaces to align the WM_NAMEs of the apps
-    max=$(echo -n "$apps" | awk '{cur=length($1); \
-                               max=(cur>max?cur:max)} END{print max}')
+    max=$(echo -n "$apps" | awk '{cur=length($2); \
+                                  max=(cur>max?cur:max)} END{print max}')
     apps=$(echo -n "$apps" | \
                awk -v max="$max" \
-                   '{cur=length($1); printf $1; \
+                   '{cur=length($2); \
+                     printf $2; \
                      for(i=0; i < max - cur + 1; i++) printf " "; \
-                     $1 = ""; printf "%s\n", $0}')
+                     if($1!="0") printf "%2s", $1; \
+                     $1=$2=""; \
+                     printf "%s\n", $0}')
     target=$(echo -n "$apps" | dmenu -l $lines -i -ix -r -p $title)
     case $target in
         '' ) exit ;;
