@@ -8,7 +8,8 @@ TOOLS := \
 	dmenu_man \
 	dmenu_menu \
 	dmenu_ssh \
-	dmenu_win
+	dmenu_win \
+	dmenu_tag
 
 .PHONY: all
 all:
