@@ -3,42 +3,34 @@
 title="tag:"
 lines=10
 
-cwm() {
+tags() {
     group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
     totalwinnum=$(wmctrl -lp | awk '{print $2}' | wc -l)
-    for i in $(seq 1 9); do
-        gwinnum=$(wmctrl -lp | awk '{print $2}' | grep -sc ${i})
-        if [ ${group} -eq $i ]; then
-            printf '%-8s%4s%20s\n' "${i}" "*" "$gwinnum/$totalwinnum"
-        else
-            printf '%-8s%4s%20s\n' "${i}" "-" "$gwinnum/$totalwinnum"
-        fi
-    done
+    case $DESKTOP_SESSION in
+        cwm )
+            for i in $(seq 1 9); do
+                if [ ${group} -eq ${i} ]; then
+                    gwinnum=$(wmctrl -lp | awk '{print $2}' | grep -sc ${i})
+                    printf '%-8s%4s%20s\n' "${i}" "*" "$gwinnum/$totalwinnum"
+                else
+                    gwinnum=$(wmctrl -lp | awk '{print $2}' | grep -sc ${i})
+                    printf '%-8s%4s%20s\n' "${i}" "-" "$gwinnum/$totalwinnum"
+                fi
+            done
+            ;;
+        * )
+            for i in $(seq 0 8); do
+                if [ ${group} -eq ${i} ]; then
+                    printf '%-8s%4s\n' "$(expr $i + 1)" "*"
+                else
+                    printf '%-8s%4s\n' "$(expr $i + 1)" "-"
+                fi
+            done
+            ;;
+    esac
 }
 
-dwm() {
-    group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
-    totalwinnum=$(wmctrl -lp | awk '{print $2}' | wc -l)
-    for i in $(seq 1 9); do
-        if [ ${group} -eq $i ]; then
-            printf '%-8s%4s\n' "${i}" "*"
-        else
-            printf '%-8s%4s\n' "${i}" "-"
-        fi
-    done
-}
-
-case $DESKTOP_SESSION in
-    cwm )
-        target=$(cwm | dmenu -l $lines -i -ix -p $title)
-        if [ -n "$target" ]; then
-            xdotool key super+$(expr $target + 1)
-        fi
-        ;;
-    * )
-        target=$(dwm | dmenu -l $lines -i -ix -p $title)
-        if [ -n "$target" ]; then
-            xdotool key super+$(expr $target + 1)
-        fi
-        ;;
-esac
+target=$(tags | dmenu -l $lines -i -ix -p $title)
+if [ -n "$target" ]; then
+    xdotool key super+$(expr $target + 1)
+fi
