@@ -9,7 +9,6 @@ opt=(
     "shotkey &"
     "xbanish &"
     "xcompmgr &"
-    "cwmbar &"
 )
 
 log() {
