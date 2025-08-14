@@ -13,7 +13,6 @@ max=$(echo -n "$apps" | awk '{cur=length($2); \
 apps=$(echo -n "$apps" | \
            awk -v max="$max" \
                '{cur=length($2); \
-                 if($1!="0") printf "%-3s", "#"$1; \
                  printf $2; \
                  for(i=0; i < max - cur + 1; i++) printf " "; \
                  $1=$2=""; \
