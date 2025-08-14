@@ -47,7 +47,6 @@ install_bin() {
         $CORE_ROOT/bin/startcwm
         $CORE_ROOT/bin/dwm-session
         $CORE_ROOT/bin/cwm-session
-        $CORE_ROOT/libexec/cwmbar
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $target
