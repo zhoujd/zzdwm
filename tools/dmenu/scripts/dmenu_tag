@@ -4,7 +4,7 @@ title="tag:"
 lines=10
 tags=$(wmctrl -d 2>/dev/null | grep -v nogroup | tr -s '[:blank:]' | cut -d ' ' -f 1-2,10-10)
 tags=$(echo -n "$tags" | \
-           awk '{printf "%-4s", $1; \
+           awk '{printf "%-8s", $1; \
                  printf "%-4s", $2; \
                  printf "%-10s", $3; \
                  printf "\n"; \
