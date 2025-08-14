@@ -176,10 +176,6 @@ bind-mouse 4-1          window-move
 bind-mouse 4-2          window-lower
 bind-mouse 4-3          window-resize
 
-# Autogroup
-autogroup 1             "st,st"
-autogroup 3             "Google-chrome"
-
 # Ignore, and do not warp to, windows with these names
 ignore                  lemonbar
 ignore                  cwmbar
