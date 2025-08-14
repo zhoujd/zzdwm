@@ -1,0 +1,17 @@
+#!/bin/bash
+
+title="tag:"
+lines=10
+tags=$(wmctrl -d 2>/dev/null | grep -v nogroup | tr -s '[:blank:]' | cut -d ' ' -f 1-2,10-10)
+tags=$(echo -n "$tags" | \
+           awk '{printf "%-4s", $1; \
+                 printf "%-4s", $2; \
+                 printf "%-10s", $3; \
+                 printf "\n"; \
+                 }')
+
+target=$(echo -n "$tags" | dmenu -l $lines -i -ix -p $title)
+
+if [ -n "$target" ]; then
+    wmctrl -s $(expr $target + 1)
+fi
