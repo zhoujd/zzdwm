@@ -5,9 +5,9 @@ lines=10
 
 tags() {
     group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
-    totalwinnum=$(wmctrl -lp | awk '{print $2}' | wc -l)
     case $DESKTOP_SESSION in
         cwm )
+            totalwinnum=$(wmctrl -lp | awk '{print $2}' | wc -l)
             for i in $(seq 1 9); do
                 if [ ${group} -eq ${i} ]; then
                     gwinnum=$(wmctrl -lp | awk '{print $2}' | grep -sc ${i})
