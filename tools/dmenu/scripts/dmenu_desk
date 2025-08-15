@@ -3,8 +3,8 @@
 title="tag:"
 lines=10
 
-tags() {
-    group=$(xprop -root 32c '\t$0' _NET_CURRENT_DESKTOP 2>/dev/null | cut -f 2)
+desks() {
+    group=$(xdotool get_desktop)
     case $DESKTOP_SESSION in
         cwm )
             totalwinnum=$(wmctrl -lp | awk '{print $2}' | wc -l)
@@ -30,7 +30,7 @@ tags() {
     esac
 }
 
-target=$(tags | dmenu -l $lines -i -ix -p $title)
+target=$(desks | dmenu -l $lines -i -ix -p $title)
 if [ -n "$target" ]; then
     xdotool key super+$(expr $target + 1)
 fi
