@@ -113,7 +113,10 @@ bind-key 4-g            window-group
 bind-key 4-j            window-cycle
 bind-key 4-k            window-rcycle
 
-bind-key 4S-i           window-hide
+bind-key 4-i            window-raise
+bind-key 4-d            window-lower
+
+bind-key 4S-a           window-hide
 bind-key 4S-s           window-stick
 
 # Close windows
