@@ -103,7 +103,9 @@ bind-key 4-l            group-rcycle
 
 bind-key 4-f            window-fullscreen
 bind-key 4-m            window-maximize
+bind-key 4-u            window-freeze
 bind-key 4-t            window-vtile
+bind-key 4-z            window-htile
 
 # Cycle/reverse cycle through windows
 bind-key 4-j            window-cycle
@@ -159,7 +161,8 @@ bind-key 4-s            "dmenu_ssh"
 bind-key 4M-s           "dmenu_ssh"
 bind-key 4-q            "dmenu_exit"
 bind-key 4M-q           "dmenu_exit"
-bind-key 4M-v           "dmenu_wincd"
+bind-key 4-b            "dmenu_wincd"
+bind-key 4M-b           "dmenu_wincd"
 bind-key 4-slash        "dmenu_man"
 bind-key 4-grave        "dmenu_menu"
 bind-key 4-apostrophe   "dmenu_desk"
