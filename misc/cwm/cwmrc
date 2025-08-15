@@ -149,7 +149,7 @@ bind-key 4S-c           "movwin"
 bind-key 4-n            "nextwin"
 bind-key 4S-n           "prevwin"
 
-# Open dmenu scripts
+# Open dmenu menu
 bind-key 4-p            "dmenu_drun"
 bind-key 4M-p           "dmenu_drun"
 bind-key 4-r            "dmenu_run"
@@ -163,6 +163,13 @@ bind-key 4M-q           "dmenu_exit"
 bind-key 4-slash        "dmenu_man"
 bind-key 4-grave        "dmenu_desk"
 bind-key 4-apostrophe   "dmenu_menu"
+
+# Open build-in menu
+bind-key 4C-w           menu-window
+bind-key 4C-g           menu-group
+bind-key 4C-p           menu-cmd
+bind-key 4C-r           menu-exec
+bind-key 4C-s           menu-ssh
 
 # Remove all mouse default keybindings
 unbind-mouse all
