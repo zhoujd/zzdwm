@@ -93,7 +93,7 @@ done
 printf 'item #%d selected\n' "$index"
 ```
 
-## Print Index
+## Print index
 
 ```
 ## https://tools.suckless.org/dmenu/patches/printindex/dmenu-printindex-5.0.diff
@@ -111,4 +111,23 @@ static const char *colors[SchemeLast][2] = {
     [SchemeOut] = { "#000000", "#00ffff" },
     [SchemeOutHighlight] = { "#ffc978", "#00ffff" },
 };
+```
+
+## Read input
+
+```bash
+$ dmenu < /dev/null
+```
+
+```c
+errno = 0; // popen(3p) says on failure it "may" set errno
+if(!(f = popen("dmenu < /dev/null", "r"))) {
+    fprintf(stderr, "dwm: popen 'dmenu < /dev/null' failed%s%s\n",
+            errno ? ": " : "", errno ? strerror(errno) : "");
+    return;
+}
+if (!(p = fgets(name, MAX_TAGLEN, f)) && (i = errno) && ferror(f))
+    fprintf(stderr, "dwm: fgets failed: %s\n", strerror(i));
+if (pclose(f) < 0)
+    fprintf(stderr, "dwm: pclose failed: %s\n", strerror(errno));
 ```
