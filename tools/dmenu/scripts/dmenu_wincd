@@ -2,8 +2,8 @@
 
 title="window:"
 lines=10
-tags=$(xdotool get_desktop)
-windows=$(wmctrl -xl 2>/dev/null | grep -E "\s+$tags\s+")
+desktop=$(xdotool get_desktop)
+windows=$(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+")
 apps=$(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 3-3,5- | \
            sed 's/[a-zA-Z0-9-]*\.//')
 

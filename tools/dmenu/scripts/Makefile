@@ -10,7 +10,7 @@ TOOLS := \
 	dmenu_ssh \
 	dmenu_win \
 	dmenu_desk \
-	dmenu_tag
+	dmenu_wincd
 
 .PHONY: all
 all:
