@@ -95,8 +95,8 @@ bind-key 4SC-k          window-resize-up-big
 bind-key 4SC-l          window-resize-right-big
 
 # Toggle visibility of all groups
-bind-key 4-o            group-toggle-all
-bind-key 4-u            group-last
+bind-key 4-g            group-toggle-all
+bind-key 4-o            group-last
 
 bind-key 4-h            group-cycle
 bind-key 4-l            group-rcycle
@@ -182,4 +182,3 @@ bind-mouse 4S-3         window-lower
 
 # Ignore, and do not warp to, windows with these names
 ignore                  lemonbar
-ignore                  cwmbar
