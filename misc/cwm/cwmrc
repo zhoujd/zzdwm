@@ -104,10 +104,6 @@ bind-key 4-l            group-rcycle
 bind-key 4-f            window-fullscreen
 bind-key 4-m            window-maximize
 bind-key 4-t            window-vtile
-bind-key 4-z            window-htile
-
-# Toggle group membership of current window
-bind-key 4-g            window-group
 
 # Cycle/reverse cycle through windows
 bind-key 4-j            window-cycle
