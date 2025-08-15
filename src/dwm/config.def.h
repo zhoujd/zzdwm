@@ -132,14 +132,14 @@ static const char *sshmenucmd[] = { "dmenu_ssh", NULL };
 static const char *winmenucmd[] = { "dmenu_win", NULL };
 static const char *drunmenucmd[] = { "dmenu_drun", NULL };
 static const char *exitmenucmd[] = { "dmenu_exit", NULL };
+static const char *deskmenucmd[] = { "dmenu_desk", NULL };
+static const char *enummenucmd[] = { "dmenu_menu", NULL };
 static const char *slockcmd[] = { "slock", NULL };
 static const char *duptermcmd[] = { "dupterm", NULL };
 static const char *nextwincmd[] = { "nextwin", NULL };
 static const char *prevwincmd[] = { "prevwin", NULL };
 static const char *movwincmd[] = { "movwin", NULL };
 static const char *manmenucmd[] = { "dmenu_man", NULL };
-static const char *dmenucmd[] = { "dmenu_menu", NULL };
-static const char *deskmenucmd[] = { "dmenu_desk", NULL };
 
 /* XFree86 vender specific keysyms
  * https://cgit.freedesktop.org/xorg/proto/x11proto/tree/XF86keysym.h
@@ -179,8 +179,8 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_z,            spawn,            {.v = slockcmd} },
 	{ MODKEY|ShiftMask,             XK_Return,       spawn,            {.v = duptermcmd} },
 	{ MODKEY,                       XK_slash,        spawn,            {.v = manmenucmd} },
-	{ MODKEY,                       XK_grave,        spawn,            {.v = deskmenucmd} },
-	{ MODKEY,                       XK_apostrophe,   spawn,            {.v = dmenucmd} },
+	{ MODKEY,                       XK_apostrophe,   spawn,            {.v = deskmenucmd} },
+	{ MODKEY,                       XK_grave,        spawn,            {.v = enummenucmd} },
 	{ MODKEY,                       XK_b,            togglebar,        {0} },
 	{ MODKEY,                       XK_i,            incnmaster,       {.i = +1} },
 	{ MODKEY,                       XK_d,            incnmaster,       {.i = -1} },
