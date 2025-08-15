@@ -10,7 +10,7 @@ desks() {
             labels=(nogroup one two three four five six seven eight nine)
             total=$(wmctrl -lp | awk '{print $2}' | wc -l)
             for i in $(seq 1 9); do
-                num=$(wmctrl -lp | awk '{print $2}' | grep -sc ${i})
+                num=$(wmctrl -lp | awk '{print $2}' | grep -sc "^${i}$")
                 if [ ${group} -eq ${i} ]; then
                     printf '%-8s%4s%20s\n' "${labels[$i]}" "*" "$num/$total"
                 else
