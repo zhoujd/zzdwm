@@ -18,7 +18,7 @@ color selfont           "#eeeeee"
 color menubg            "#161616"
 color menufg            "#5294E2"
 
-gap                     2 2 2 2
+gap                     1 1 1 1
 
 htile                   50
 vtile                   50
