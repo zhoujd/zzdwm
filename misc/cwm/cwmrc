@@ -125,6 +125,10 @@ bind-key 4SC-x          group-close
 bind-key 4-v            window-cycle-inclass
 bind-key 4S-v           window-rcycle-inclass
 
+# Cycle/reverse cycle through group windows
+bind-key 4-Tab          window-cycle-ingroup
+bind-key 4S-Tab         window-rcycle-ingroup
+
 bind-key 4SC-q          restart
 bind-key 4C-q           quit
 
