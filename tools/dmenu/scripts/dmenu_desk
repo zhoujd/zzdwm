@@ -1,6 +1,6 @@
 #!/bin/bash
 
-title="tag:"
+title="desktop:"
 lines=10
 
 desks() {
