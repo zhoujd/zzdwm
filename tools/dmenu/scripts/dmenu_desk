@@ -7,14 +7,14 @@ desks() {
     group=$(xdotool get_desktop)
     case $DESKTOP_SESSION in
         cwm )
-            totalwinnum=$(wmctrl -lp | awk '{print $2}' | wc -l)
+            labels=(nogroup one two three four five six seven eight nine)
+            total=$(wmctrl -lp | awk '{print $2}' | wc -l)
             for i in $(seq 1 9); do
+                num=$(wmctrl -lp | awk '{print $2}' | grep -sc ${i})
                 if [ ${group} -eq ${i} ]; then
-                    gwinnum=$(wmctrl -lp | awk '{print $2}' | grep -sc ${i})
-                    printf '%-8s%4s%20s\n' "${i}" "*" "$gwinnum/$totalwinnum"
+                    printf '%-8s%4s%20s\n' "${labels[$i]}" "*" "$num/$total"
                 else
-                    gwinnum=$(wmctrl -lp | awk '{print $2}' | grep -sc ${i})
-                    printf '%-8s%4s%20s\n' "${i}" "-" "$gwinnum/$totalwinnum"
+                    printf '%-8s%4s%20s\n' "${labels[$i]}" "-" "$num/$total"
                 fi
             done
             ;;
