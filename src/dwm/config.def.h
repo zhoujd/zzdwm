@@ -139,6 +139,7 @@ static const char *duptermcmd[] = { "dupterm", NULL };
 static const char *nextwincmd[] = { "nextwin", NULL };
 static const char *prevwincmd[] = { "prevwin", NULL };
 static const char *movwincmd[] = { "movwin", NULL };
+static const char *deckwincmd[] = { "deckwin", NULL };
 static const char *manmenucmd[] = { "dmenu_man", NULL };
 
 /* XFree86 vender specific keysyms
@@ -152,6 +153,8 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_c,            spawn,            {.v = termcmd} },
 	{ MODKEY|Mod1Mask,              XK_c,            spawn,            {.v = pulltermcmd} },
 	{ MODKEY|ControlMask,           XK_c,            spawn,            {.v = focustermcmd} },
+	{ MODKEY|ShiftMask,             XK_c,            spawn,            {.v = movwincmd} },
+	{ MODKEY|ControlMask|ShiftMask, XK_c,            spawn,            {.v = deckwincmd} },
 	{ MODKEY,                       XK_e,            spawn,            {.v = emacscmd} },
 	{ MODKEY|Mod1Mask,              XK_e,            spawn,            {.v = pullemacscmd} },
 	{ MODKEY|ControlMask,           XK_e,            spawn,            {.v = focusemacscmd} },
@@ -175,7 +178,6 @@ static const Key keys[] = {
 	{ MODKEY|Mod1Mask,              XK_q,            spawn,            {.v = exitmenucmd} },
 	{ MODKEY,                       XK_n,            spawn,            {.v = nextwincmd} },
 	{ MODKEY|ShiftMask,             XK_n,            spawn,            {.v = prevwincmd} },
-	{ MODKEY|ShiftMask,             XK_c,            spawn,            {.v = movwincmd} },
 	{ MODKEY|ShiftMask,             XK_z,            spawn,            {.v = slockcmd} },
 	{ MODKEY|ShiftMask,             XK_Return,       spawn,            {.v = duptermcmd} },
 	{ MODKEY,                       XK_slash,        spawn,            {.v = manmenucmd} },
