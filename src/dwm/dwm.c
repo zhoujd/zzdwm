@@ -1283,6 +1283,7 @@ focusstack(const Arg *arg)
 	if (c) {
 		focus(c);
 		restack(selmon);
+		warp(selmon->sel);
 	}
 }
 
@@ -1552,6 +1553,7 @@ manage(Window w, XWindowAttributes *wa)
 	arrange(c->mon);
 	XMapWindow(dpy, c->win);
 	focus(NULL);
+	warp(selmon->sel);
 }
 
 void
@@ -3087,6 +3089,7 @@ unmanage(Client *c, int destroyed)
 	focus(NULL);
 	updateclientlist();
 	arrange(m);
+	warp(selmon->sel);
 }
 
 void
