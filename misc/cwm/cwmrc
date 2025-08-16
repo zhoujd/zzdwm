@@ -25,13 +25,6 @@ vtile                   50
 
 moveamount              2
 
-# Define special commands
-command "Terminal"      "st"
-command "Emacs"         "emacs"
-command "URxvt"         "urxvt"
-command "VS Code"       "code"
-command "Web Browser"   "google-chrome"
-
 # Key bindings
 
 # Remove all default keybindings
