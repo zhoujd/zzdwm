@@ -15,7 +15,7 @@ color urgencyborder     "#cc241d"
 gap                     1 1 1 1
 
 htile                   50
-vtile                   55
+vtile                   50
 
 moveamount              2
 
