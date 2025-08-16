@@ -89,7 +89,6 @@ bind-key 4SC-l          window-resize-right-big
 
 # Toggle visibility of all groups
 bind-key 4-g            group-toggle-all
-bind-key 4-o            group-last
 
 bind-key 4-h            group-cycle
 bind-key 4-l            group-rcycle
@@ -113,10 +112,6 @@ bind-key 4S-s           window-stick
 # Close windows
 bind-key 4S-x           window-close
 bind-key 4SC-x          group-close
-
-# Cycle/reverse cycle through class windows
-bind-key 4-v            window-cycle-inclass
-bind-key 4S-v           window-rcycle-inclass
 
 # Cycle/reverse cycle through group windows
 bind-key 4-Tab          window-cycle-ingroup
@@ -158,8 +153,8 @@ bind-key 4-s            "dmenu_ssh"
 bind-key 4M-s           "dmenu_ssh"
 bind-key 4-q            "dmenu_exit"
 bind-key 4M-q           "dmenu_exit"
-bind-key 4-b            "dmenu_wincd"
-bind-key 4M-b           "dmenu_wincd"
+bind-key 4-v            "dmenu_wincd"
+bind-key 4M-v           "dmenu_wincd"
 bind-key 4-slash        "dmenu_man"
 bind-key 4-grave        "dmenu_menu"
 bind-key 4-apostrophe   "dmenu_desk"
