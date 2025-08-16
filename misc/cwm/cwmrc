@@ -70,7 +70,8 @@ bind-key 4M-k           window-snap-up
 bind-key 4M-l           window-snap-right
 
 # Maximize windows
-bind-key 4-backslash    window-hmaximize
+bind-key 4-backslash    window-maximize
+bind-key 4C-backslash   window-hmaximize
 bind-key 4S-backslash   window-vmaximize
 
 # Dock windows
