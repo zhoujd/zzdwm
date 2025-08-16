@@ -1,4 +1,4 @@
-/*	$OpenBSD$ */
+/*	$OpenBSD: parse.y,v 1.75 2021/12/24 16:00:47 okan Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -22,6 +22,7 @@
 %{
 
 #include <sys/types.h>
+#include <inttypes.h>
 #include "queue.h"
 
 #include <ctype.h>
@@ -34,8 +35,6 @@
 #include <string.h>
 
 #include "calmwm.h"
-
-#define YYSTYPE_IS_DECLARED
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {
@@ -108,7 +107,7 @@ string		: string STRING			{
 
 numberstring	: NUMBER				{
 			char	*s;
-			if (asprintf(&s, "%ld", $1) == -1) {
+			if (asprintf(&s, "%" PRId64, $1) == -1) {
 				yyerror("string: asprintf");
 				YYERROR;
 			}

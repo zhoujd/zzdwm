@@ -15,7 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $OpenBSD$
+ * $OpenBSD: xevents.c,v 1.150 2020/03/24 14:47:29 okan Exp $
  */
 
 /*
@@ -401,7 +401,17 @@ xev_handle_clientmessage(XEvent *ee)
 			if ((old_cc = client_current(NULL)) != NULL)
 				client_ptr_save(old_cc);
 			client_show(cc);
-			client_ptr_warp(cc);
+
+			/*
+			 * Only warp the pointer if the source indication field says that
+			 * the request to activate another window comes from a pager or
+			 * other direct user input.
+			 *
+			 * This will stop certain dialog windows from repeatedly activating
+			 * themselves, effectively jailing the cursor.
+			 */
+			if(e->data.l[0] == 2)
+				client_ptr_warp(cc);
 		}
 	} else if (e->message_type == ewmh[_NET_WM_DESKTOP]) {
 		if ((cc = client_find(e->window)) != NULL) {
@@ -410,7 +420,7 @@ xev_handle_clientmessage(XEvent *ee)
 			 * is 0xFFFFFFFF (-1) then the window should appear
 			 * on all desktops, in our case, group 0.
 			 */
-			if (e->data.l[0] == (unsigned long)-1)
+			if (e->data.l[0] == 0xFFFFFFFF)
 				group_movetogroup(cc, 0);
 			else
 				if (e->data.l[0] >= 0 &&

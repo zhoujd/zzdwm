@@ -15,7 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $OpenBSD$
+ * $OpenBSD: client.c,v 1.264 2021/04/22 10:02:55 kn Exp $
  */
 
 #include <sys/types.h>
@@ -73,16 +73,15 @@ client_init(Window win, struct screen_ctx *sc)
 	cc->stackingorder = 0;
 	cc->initial_state = 0;
 	memset(&cc->hint, 0, sizeof(cc->hint));
-	TAILQ_INIT(&cc->nameq);
 
 	cc->geom.x = wattr.x;
 	cc->geom.y = wattr.y;
 	cc->geom.w = wattr.width;
 	cc->geom.h = wattr.height;
 	cc->colormap = wattr.colormap;
+	cc->visual = wattr.visual;
 	cc->obwidth = wattr.border_width;
 	cc->bwidth = Conf.bwidth;
-	cc->resizehints = 0;
 
 	client_set_name(cc);
 	conf_client(cc);
@@ -210,7 +209,10 @@ void
 client_remove(struct client_ctx *cc)
 {
 	struct screen_ctx	*sc = cc->sc;
-	struct winname		*wn;
+	unsigned int		 i;
+
+	for (i = 0; i < CWM_COLOR_NITEMS; i++)
+		XftColorFree(X_Dpy, cc->visual, cc->colormap, &cc->xftcolor[i]);
 
 	TAILQ_REMOVE(&sc->clientq, cc, entry);
 
@@ -219,12 +221,6 @@ client_remove(struct client_ctx *cc)
 
 	if (cc->flags & CLIENT_ACTIVE)
 		xu_ewmh_net_active_window(sc, None);
-
-	while ((wn = TAILQ_FIRST(&cc->nameq)) != NULL) {
-		TAILQ_REMOVE(&cc->nameq, wn, entry);
-		free(wn->name);
-		free(wn);
-	}
 
 	free(cc->name);
 	free(cc->label);
@@ -322,6 +318,8 @@ client_toggle_fullscreen(struct client_ctx *cc)
 		cc->geom = cc->fullgeom;
 		cc->flags &= ~(CLIENT_FULLSCREEN | CLIENT_FREEZE);
 		goto resize;
+	} else {
+		client_raise(cc);
 	}
 
 	cc->fullgeom = cc->geom;
@@ -575,29 +573,28 @@ client_urgency(struct client_ctx *cc)
 void
 client_draw_border(struct client_ctx *cc)
 {
-	struct screen_ctx	*sc = cc->sc;
 	unsigned long		 pixel;
 
 	if (cc->flags & CLIENT_ACTIVE)
 		switch (cc->flags & CLIENT_HIGHLIGHT) {
 		case CLIENT_GROUP:
-			pixel = sc->xftcolor[CWM_COLOR_BORDER_GROUP].pixel;
+			pixel = cc->xftcolor[CWM_COLOR_BORDER_GROUP].pixel;
 			break;
 		case CLIENT_UNGROUP:
-			pixel = sc->xftcolor[CWM_COLOR_BORDER_UNGROUP].pixel;
+			pixel = cc->xftcolor[CWM_COLOR_BORDER_UNGROUP].pixel;
 			break;
 		default:
-			pixel = sc->xftcolor[CWM_COLOR_BORDER_ACTIVE].pixel;
+			pixel = cc->xftcolor[CWM_COLOR_BORDER_ACTIVE].pixel;
 			break;
 		}
 	else
-		pixel = sc->xftcolor[CWM_COLOR_BORDER_INACTIVE].pixel;
+		pixel = cc->xftcolor[CWM_COLOR_BORDER_INACTIVE].pixel;
 
 	if (cc->flags & CLIENT_URGENCY)
-		pixel = sc->xftcolor[CWM_COLOR_BORDER_URGENCY].pixel;
+		pixel = cc->xftcolor[CWM_COLOR_BORDER_URGENCY].pixel;
 
 	XSetWindowBorderWidth(X_Dpy, cc->win, (unsigned int)cc->bwidth);
-	XSetWindowBorder(X_Dpy, cc->win, pixel | (0xffu << 24));
+	XSetWindowBorder(X_Dpy, cc->win, pixel);
 }
 
 static void
@@ -662,33 +659,10 @@ client_close(struct client_ctx *cc)
 void
 client_set_name(struct client_ctx *cc)
 {
-	struct winname	*wn, *wnnxt;
-	int		 i = 0;
-
 	free(cc->name);
 	if (!xu_get_strprop(cc->win, ewmh[_NET_WM_NAME], &cc->name))
 		if (!xu_get_strprop(cc->win, XA_WM_NAME, &cc->name))
 			cc->name = xstrdup("");
-
-	TAILQ_FOREACH_SAFE(wn, &cc->nameq, entry, wnnxt) {
-		if (strcmp(wn->name, cc->name) == 0) {
-			TAILQ_REMOVE(&cc->nameq, wn, entry);
-			free(wn->name);
-			free(wn);
-		}
-		i++;
-	}
-	wn = xmalloc(sizeof(*wn));
-	wn->name = xstrdup(cc->name);
-	TAILQ_INSERT_TAIL(&cc->nameq, wn, entry);
-
-	/* Garbage collection. */
-	if ((i + 1) > Conf.nameqlen) {
-		wn = TAILQ_FIRST(&cc->nameq);
-		TAILQ_REMOVE(&cc->nameq, wn, entry);
-		free(wn->name);
-		free(wn);
-	}
 }
 
 static void
@@ -781,6 +755,11 @@ client_get_sizehints(struct client_ctx *cc)
 		cc->hint.incw = size.width_inc;
 		cc->hint.inch = size.height_inc;
 	}
+	cc->hint.incw = MAX(1, cc->hint.incw);
+	cc->hint.inch = MAX(1, cc->hint.inch);
+	cc->hint.minw = MAX(1, cc->hint.minw);
+	cc->hint.minh = MAX(1, cc->hint.minh);
+
 	if (size.flags & PAspect) {
 		if (size.min_aspect.x > 0)
 			cc->hint.mina = (float)size.min_aspect.y /
@@ -788,18 +767,6 @@ client_get_sizehints(struct client_ctx *cc)
 		if (size.max_aspect.y > 0)
 			cc->hint.maxa = (float)size.max_aspect.x /
 			    size.max_aspect.y;
-	}
-
-	if (cc->resizehints) {
-		cc->hint.incw = MAX(1, cc->hint.incw);
-		cc->hint.inch = MAX(1, cc->hint.inch);
-		cc->hint.minw = MAX(1, cc->hint.minw);
-		cc->hint.minh = MAX(1, cc->hint.minh);
-	} else {
-		cc->hint.incw = 1;
-		cc->hint.inch = 1;
-		cc->hint.minw = 1;
-		cc->hint.minh = 1;
 	}
 }
 
@@ -857,15 +824,13 @@ client_mwm_hints(struct client_ctx *cc)
 
 	if (xu_get_prop(cc->win, cwmh[_MOTIF_WM_HINTS],
 	    cwmh[_MOTIF_WM_HINTS], MWM_HINTS_ELEMENTS,
-	    (unsigned char **)&mwmh) <= 0)
-		return;
-
-	if ((mwmh->flags & MWM_HINTS_DECORATIONS) &&
-	    !(mwmh->decorations & MWM_DECOR_ALL)) {
-		if (!(mwmh->decorations & MWM_DECOR_BORDER))
+	    (unsigned char **)&mwmh) == MWM_HINTS_ELEMENTS) {
+		if (mwmh->flags & MWM_FLAGS_DECORATIONS &&
+		    !(mwmh->decorations & MWM_DECOR_ALL) &&
+		    !(mwmh->decorations & MWM_DECOR_BORDER))
 			cc->bwidth = 0;
+		XFree(mwmh);
 	}
-	XFree(mwmh);
 }
 
 void

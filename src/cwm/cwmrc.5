@@ -1,4 +1,4 @@
-.\"	$OpenBSD$
+.\"	$OpenBSD: cwmrc.5,v 1.76 2020/04/16 13:32:35 okan Exp $
 .\"
 .\" Copyright (c) 2004,2005 Marius Aamodt Eriksen <marius@monkey.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate$
+.Dd $Mdocdate: April 16 2020 $
 .Dt CWMRC 5
 .Os
 .Sh NAME
@@ -230,12 +230,6 @@ after calling
 If set to 0, the vertical size of the master window will
 remain unchanged.
 The default is 50.
-.It Ic wm Ar name path
-Every
-.Ar name
-entry is shown in the wm menu.
-When selected, the window manager is replaced by
-.Ar path .
 .El
 .Sh BIND FUNCTION LIST
 .Bl -tag -width 23n -compact
@@ -261,20 +255,10 @@ Launch group search menu.
 Launch
 .Dq exec program
 menu.
-.It menu-exec-wm
-Launch
-.Dq exec WindowManager
-menu.
-.It menu-ssh
-Launch
-.Dq ssh
-menu.
 .It group-toggle-[n]
 Toggle visibility of group n, where n is 1-9.
 .It group-only-[n]
 Show only group n, where n is 1-9, hiding other groups.
-.It group-last
-Show only the previously active group.
 .It group-close-[n]
 Close all windows in group n, where n is 1-9.
 .It group-toggle-all
@@ -295,10 +279,6 @@ Reverse cycle through windows.
 Forward cycle through windows in current group.
 .It window-rcycle-ingroup
 Reverse cycle through windows in current group.
-.It window-cycle-inclass
-Forward cycle through windows of the current window class.
-.It window-rcycle-inclass
-Reverse cycle through windows of the current window class.
 .It window-close
 Close current window.
 .It window-hide
@@ -451,12 +431,15 @@ Move pointer 10 times
 pixels left.
 .El
 .Sh FILES
-.Bl -tag -width "~/.cwmrcXXX" -compact
-.It Pa ~/.cwmrc
+.Bl -tag -width "$XDG_CONFIG_HOME/cwm/cwmrcXXX" -compact
+.It Pa $XDG_CONFIG_HOME/cwm/cwmrc
 Default
 .Xr cwm 1
 configuration file.
 .El
+.Pp
+If $XDG_CONFIG_HOME is unset or empty, it will default to
+.Em ~/.config
 .Sh EXAMPLES
 .Bd -literal
 # Set default Xft(3) font

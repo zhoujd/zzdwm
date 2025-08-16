@@ -3,3 +3,5 @@
 cwm
 parse.c
 *.o
+*.d
+

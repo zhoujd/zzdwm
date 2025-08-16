@@ -15,11 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $OpenBSD$
+ * $OpenBSD: kbfunc.c,v 1.170 2020/03/20 18:50:08 tim Exp $
  */
-
-/* For FreeBSD. */
-#define _WITH_GETLINE
 
 #include <sys/types.h>
 #include "queue.h"
@@ -165,13 +162,13 @@ kbfunc_client_move_mb(void *ctx, struct cargs *cargs)
 
 	client_ptr_inbound(cc, 1);
 
-	if (XGrabPointer(X_Dpy, sc->rootwin, False, MOUSEMASK,
+	if (XGrabPointer(X_Dpy, cc->win, False, MOUSEMASK,
 	    GrabModeAsync, GrabModeAsync, None, Conf.cursor[CF_MOVE],
 	    CurrentTime) != GrabSuccess)
 		return;
 
-	screen_prop_win_create(sc, cc->win);
-	screen_prop_win_draw(sc, "%+5d%+5d", cc->geom.x, cc->geom.y);
+	screen_prop_win_create(sc, cc);
+	screen_prop_win_draw(sc, "%4d, %-4d", cc->geom.x, cc->geom.y);
 	while (move) {
 		XMaskEvent(X_Dpy, MOUSEMASK, &ev);
 		switch (ev.type) {
@@ -195,7 +192,7 @@ kbfunc_client_move_mb(void *ctx, struct cargs *cargs)
 			    area.y, area.y + area.h, sc->snapdist);
 			client_move(cc);
 			screen_prop_win_draw(sc,
-			    "%+5d%+5d", cc->geom.x, cc->geom.y);
+			    "%4d, %-4d", cc->geom.x, cc->geom.y);
 			break;
 		case ButtonRelease:
 			move = 0;
@@ -254,12 +251,12 @@ kbfunc_client_resize_mb(void *ctx, struct cargs *cargs)
 
 	xu_ptr_set(cc->win, cc->geom.w, cc->geom.h);
 
-	if (XGrabPointer(X_Dpy, sc->rootwin, False, MOUSEMASK,
+	if (XGrabPointer(X_Dpy, cc->win, False, MOUSEMASK,
 	    GrabModeAsync, GrabModeAsync, None, Conf.cursor[CF_RESIZE],
 	    CurrentTime) != GrabSuccess)
 		return;
 
-	screen_prop_win_create(sc, cc->win);
+	screen_prop_win_create(sc, cc);
 	screen_prop_win_draw(sc, "%4d x %-4d", cc->dim.w, cc->dim.h);
 	while (resize) {
 		XMaskEvent(X_Dpy, MOUSEMASK, &ev);
@@ -270,8 +267,8 @@ kbfunc_client_resize_mb(void *ctx, struct cargs *cargs)
 				continue;
 			ltime = ev.xmotion.time;
 
-			cc->geom.w = ev.xmotion.x - cc->geom.x - cc->bwidth;
-			cc->geom.h = ev.xmotion.y - cc->geom.y - cc->bwidth;
+			cc->geom.w = ev.xmotion.x;
+			cc->geom.h = ev.xmotion.y;
 			client_apply_sizehints(cc);
 			client_resize(cc, 1);
 			screen_prop_win_draw(sc,
@@ -433,9 +430,7 @@ kbfunc_client_cycle(void *ctx, struct cargs *cargs)
 		/* Only cycle visible and non-ignored windows. */
 		if ((newcc->flags & (CLIENT_SKIP_CYCLE)) ||
 		    ((flags & CWM_CYCLE_INGROUP) &&
-		    (newcc->gc != oldcc->gc)) ||
-		    ((flags & CWM_CYCLE_INCLASS) &&
-		    strcmp(newcc->res_class, oldcc->res_class) != 0))
+		    (newcc->gc != oldcc->gc)))
 			again = 1;
 
 		/* Is oldcc the only non-hidden window? */
@@ -455,8 +450,9 @@ kbfunc_client_cycle(void *ctx, struct cargs *cargs)
 		newcc->ptr.x = newcc->geom.w / 2;
 		newcc->ptr.y = newcc->geom.h / 2;
 	}
+	client_ptr_warp(newcc);
 
-	/* When no client is active, warp pointer to last active. */
+	/* When no client is active warp pointer to last active */
 	if (oldcc->flags & (CLIENT_ACTIVE))
 		client_ptr_warp(newcc);
 	else if (oldcc->flags & (CLIENT_SKIP_CYCLE))
@@ -490,14 +486,6 @@ void
 kbfunc_group_only(void *ctx, struct cargs *cargs)
 {
 	group_only(ctx, cargs->flag);
-}
-
-void
-kbfunc_group_last(void *ctx, struct cargs *cargs)
-{
-	struct screen_ctx	*sc = ctx;
-
-	group_only(ctx, sc->group_last->num);
 }
 
 void
@@ -538,6 +526,8 @@ kbfunc_menu_client(void *ctx, struct cargs *cargs)
 
 	TAILQ_INIT(&menuq);
 	TAILQ_FOREACH(cc, &sc->clientq, entry) {
+		if (cc->flags & CLIENT_IGNORE)
+			continue;
 		if ((cargs->flag & CWM_MENU_WINDOW_ALL) ||
 		    (cc->flags & CLIENT_HIDDEN))
 			menuq_add(&menuq, cc, NULL);
@@ -614,33 +604,6 @@ kbfunc_menu_group(void *ctx, struct cargs *cargs)
 }
 
 void
-kbfunc_menu_wm(void *ctx, struct cargs *cargs)
-{
-	struct screen_ctx	*sc = ctx;
-	struct cmd_ctx		*wm;
-	struct menu		*mi;
-	struct menu_q		 menuq;
-	int			 mflags = 0;
-
-	if (cargs->xev == CWM_XEV_BTN)
-		mflags |= CWM_MENU_LIST;
-
-	TAILQ_INIT(&menuq);
-	TAILQ_FOREACH(wm, &Conf.wmq, entry)
-		menuq_add(&menuq, wm, NULL);
-
-	if ((mi = menu_filter(sc, &menuq, "wm", NULL, mflags,
-	    search_match_wm, search_print_wm)) != NULL) {
-		wm = (struct cmd_ctx *)mi->ctx;
-		free(Conf.wm_argv);
-		Conf.wm_argv = xstrdup(wm->path);
-		cwm_status = CWM_EXEC_WM;
-	}
-
-	menuq_clear(&menuq);
-}
-
-void
 kbfunc_menu_exec(void *ctx, struct cargs *cargs)
 {
 #define NPATHS 256
@@ -675,14 +638,16 @@ kbfunc_menu_exec(void *ctx, struct cargs *cargs)
 			(void)memset(tpath, '\0', sizeof(tpath));
 			l = snprintf(tpath, sizeof(tpath), "%s/%s", paths[i],
 			    dp->d_name);
-			if (l == -1 || l >= sizeof(tpath))
+			if (l < 0)
+				continue;
+			if ((unsigned)l >= sizeof(tpath))
 				continue;
 			/* Skip everything but regular files and symlinks. */
 			if (dp->d_type != DT_REG && dp->d_type != DT_LNK) {
 				/* lstat(2) in case d_type isn't supported. */
 				if (lstat(tpath, &sb) == -1)
 					continue;
-				if (!S_ISREG(sb.st_mode) &&
+				if (!S_ISREG(sb.st_mode) && 
 				    !S_ISLNK(sb.st_mode))
 					continue;
 			}
@@ -698,72 +663,6 @@ kbfunc_menu_exec(void *ctx, struct cargs *cargs)
 		if (mi->text[0] == '\0')
 			goto out;
 		u_spawn(mi->text);
-	}
-out:
-	if (mi != NULL && mi->dummy)
-		free(mi);
-	menuq_clear(&menuq);
-}
-
-void
-kbfunc_menu_ssh(void *ctx, struct cargs *cargs)
-{
-	struct screen_ctx	*sc = ctx;
-	struct cmd_ctx		*cmd;
-	struct menu		*mi;
-	struct menu_q		 menuq;
-	FILE			*fp;
-	char			*buf, *lbuf, *p;
-	char			 hostbuf[_POSIX_HOST_NAME_MAX+1];
-	char			 path[PATH_MAX];
-	int			 l;
-	size_t			 len;
-	ssize_t			 slen;
-	int			 mflags = (CWM_MENU_DUMMY);
-
-	TAILQ_FOREACH(cmd, &Conf.cmdq, entry) {
-		if (strcmp(cmd->name, "term") == 0)
-			break;
-	}
-	TAILQ_INIT(&menuq);
-
-	if ((fp = fopen(Conf.known_hosts, "r")) == NULL) {
-		warn("%s: %s", __func__, Conf.known_hosts);
-		goto menu;
-	}
-
-	lbuf = NULL;
-	len = 0;
-	while ((slen = getline(&lbuf, &len, fp)) != -1) {
-		buf = lbuf;
-		if (buf[slen - 1] == '\n')
-			buf[slen - 1] = '\0';
-		
-		/* skip hashed hosts */
-		if (strncmp(buf, HASH_MARKER, strlen(HASH_MARKER)) == 0)
-			continue;
-		for (p = buf; *p != ',' && *p != ' ' && p != buf + slen; p++)
-			;
-		/* ignore badness */
-		if (p - buf + 1 > sizeof(hostbuf))
-			continue;
-		(void)strlcpy(hostbuf, buf, p - buf + 1);
-		menuq_add(&menuq, NULL, "%s", hostbuf);
-	}
-	free(lbuf);
-	if (ferror(fp))
-		err(1, "%s", path);
-	(void)fclose(fp);
-menu:
-	if ((mi = menu_filter(sc, &menuq, "ssh", NULL, mflags,
-	    search_match_text, search_print_text)) != NULL) {
-		if (mi->text[0] == '\0')
-			goto out;
-		l = snprintf(path, sizeof(path), "%s -T '[ssh] %s' -e ssh %s",
-		    cmd->path, mi->text, mi->text);
-		if (l == -1 || l >= sizeof(path))
-			goto out;
-		u_spawn(path);
 	}
 out:
 	if (mi != NULL && mi->dummy)

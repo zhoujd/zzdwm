@@ -15,21 +15,15 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $OpenBSD$
+ * $OpenBSD: calmwm.h,v 1.375 2020/04/16 13:32:35 okan Exp $
  */
 
 #ifndef _CALMWM_H_
 #define _CALMWM_H_
 
-#include <sys/param.h>
-#include <stdio.h>
 #include "queue.h"
 
-/* prototypes for portable-included functions */
-char *fgetln(FILE *, size_t *);
-long long strtonum(const char *, long long, long long, const char **);
 void *reallocarray(void *, size_t, size_t);
-
 
 #ifdef strlcat
 #define HAVE_STRLCAT
@@ -40,6 +34,11 @@ size_t strlcat(char *, const char *, size_t);
 #define HAVE_STRLCPY
 #else
 size_t strlcpy(char *, const char *, size_t);
+#endif
+#ifdef strtonum
+#define HAVE_STRTONUM
+#else
+long long strtonum(const char *, long long, long long, const char **);
 #endif
 
 #include <X11/XKBlib.h>
@@ -88,7 +87,6 @@ size_t strlcpy(char *, const char *, size_t);
 #define CWM_CYCLE_FORWARD	0x0001
 #define CWM_CYCLE_REVERSE	0x0002
 #define CWM_CYCLE_INGROUP	0x0004
-#define CWM_CYCLE_INCLASS	0x0008
 
 enum cwm_status {
 	CWM_QUIT,
@@ -132,7 +130,6 @@ struct winname {
 	TAILQ_ENTRY(winname)	 entry;
 	char			*name;
 };
-TAILQ_HEAD(name_q, winname);
 TAILQ_HEAD(ignore_q, winname);
 
 struct client_ctx {
@@ -141,6 +138,7 @@ struct client_ctx {
 	struct group_ctx	*gc;
 	Window			 win;
 	Colormap		 colormap;
+	Visual			*visual;
 	int			 bwidth; /* border width */
 	int			 obwidth; /* original border width */
 	struct geom		 geom, savegeom, fullgeom;
@@ -189,13 +187,12 @@ struct client_ctx {
 #define CLIENT_MAXIMIZED		(CLIENT_VMAXIMIZED | CLIENT_HMAXIMIZED)
 	int			 flags;
 	int			 stackingorder;
-	struct name_q		 nameq;
 	char			*name;
 	char			*label;
 	char			*res_class; /* class hint */
 	char			*res_name; /* class hint */
 	int			 initial_state; /* wm hint */
-	int			 resizehints; /* 1 means respect size hints in tiled resizals */
+	XftColor		 xftcolor[CWM_COLOR_NITEMS];
 };
 TAILQ_HEAD(client_q, client_ctx);
 
@@ -237,7 +234,6 @@ struct screen_ctx {
 	struct region_q		 regionq;
 	struct group_q		 groupq;
 	struct group_ctx	*group_active;
-	struct group_ctx	*group_last;
 	Colormap		 colormap;
 	Visual			*visual;
 	struct {
@@ -311,7 +307,6 @@ struct conf {
 	struct wm_q		 wmq;
 	int			 ngroups;
 	int			 stickygroups;
-	int			 nameqlen;
 	int			 bwidth;
 	int			 mamount;
 	int			 snapdist;
@@ -325,46 +320,36 @@ struct conf {
 	int			 xrandr;
 	int			 xrandr_event_base;
 	char			*conf_file;
-	char			*known_hosts;
 	char			*wm_argv;
 	int			 debug;
 };
 
 /* MWM hints */
 struct mwm_hints {
-#define MWM_HINTS_ELEMENTS	5L
+#define MWM_HINTS_ELEMENTS	3L
+#define MWM_FLAGS_STATUS	(1<<3)
 
-#define MWM_HINTS_FUNCTIONS	(1L << 0)
-#define MWM_HINTS_DECORATIONS	(1L << 1)
-#define MWM_HINTS_INPUT_MODE	(1L << 2)
-#define MWM_HINTS_STATUS	(1L << 3)
+#define MWM_FLAGS_FUNCTIONS	(1<<0)
+#define MWM_FLAGS_DECORATIONS	(1<<1)
+#define MWM_FLAGS_INPUT_MODE	(1<<2)
 	unsigned long	flags;
 
-#define MWM_FUNC_ALL		(1L << 0)
-#define MWM_FUNC_RESIZE		(1L << 1)
-#define MWM_FUNC_MOVE		(1L << 2)
-#define MWM_FUNC_MINIMIZE	(1L << 3)
-#define MWM_FUNC_MAXIMIZE	(1L << 4)
-#define MWM_FUNC_CLOSE		(1L << 5)
+#define MWM_FUNCS_ALL		(1<<0)
+#define MWM_FUNCS_RESIZE	(1<<1)
+#define MWM_FUNCS_MOVE		(1<<2)
+#define MWM_FUNCS_MINIMIZE	(1<<3)
+#define MWM_FUNCS_MAXIMIZE	(1<<4)
+#define MWM_FUNCS_CLOSE		(1<<5)
 	unsigned long	functions;
 
-#define	MWM_DECOR_ALL		(1L << 0)
-#define	MWM_DECOR_BORDER	(1L << 1)
-#define MWM_DECOR_RESIZEH	(1L << 2)
-#define MWM_DECOR_TITLE		(1L << 3)
-#define MWM_DECOR_MENU		(1L << 4)
-#define MWM_DECOR_MINIMIZE	(1L << 5)
-#define MWM_DECOR_MAXIMIZE	(1L << 6)
+#define	MWM_DECOR_ALL		(1<<0)
+#define	MWM_DECOR_BORDER	(1<<1)
+#define MWM_DECOR_RESIZE_HANDLE	(1<<2)
+#define MWM_DECOR_TITLEBAR	(1<<3)
+#define MWM_DECOR_MENU		(1<<4)
+#define MWM_DECOR_MINIMIZE	(1<<5)
+#define MWM_DECOR_MAXIMIZE	(1<<6)
 	unsigned long	decorations;
-
-#define MWM_INPUT_MODELESS			0
-#define MWM_INPUT_PRIMARY_APPLICATION_MODAL	1
-#define MWM_INPUT_SYSTEM_MODAL			2
-#define MWM_INPUT_FULL_APPLICATION_MODAL	3
-	long		inputMode;
-
-#define MWM_TEAROFF_WINDOW	(1L << 0)
-	unsigned long	status;
 };
 
 enum cwmh {
@@ -419,8 +404,6 @@ extern Atom				 cwmh[CWMH_NITEMS];
 extern Atom				 ewmh[EWMH_NITEMS];
 extern struct screen_q			 Screenq;
 extern struct conf			 Conf;
-
-void			 usage(void);
 
 void			 client_apply_sizehints(struct client_ctx *);
 void			 client_close(struct client_ctx *);
@@ -487,24 +470,19 @@ void			 search_match_exec(struct menu_q *, struct menu_q *,
 			     char *);
 void			 search_match_group(struct menu_q *, struct menu_q *,
 			     char *);
-void			 search_match_path(struct menu_q *, struct menu_q *,
-			     char *);
 void			 search_match_text(struct menu_q *, struct menu_q *,
-			     char *);
-void			 search_match_wm(struct menu_q *, struct menu_q *,
 			     char *);
 void			 search_print_client(struct menu *, int);
 void			 search_print_cmd(struct menu *, int);
 void			 search_print_group(struct menu *, int);
 void			 search_print_text(struct menu *, int);
-void			 search_print_wm(struct menu *, int);
 
 struct region_ctx	*region_find(struct screen_ctx *, int, int);
 void			 screen_assert_clients_within(struct screen_ctx *);
 struct geom		 screen_area(struct screen_ctx *, int, int, int);
 struct screen_ctx	*screen_find(Window);
 void			 screen_init(int);
-void			 screen_prop_win_create(struct screen_ctx *, Window);
+void			 screen_prop_win_create(struct screen_ctx *, struct client_ctx *);
 void			 screen_prop_win_destroy(struct screen_ctx *);
 void			 screen_prop_win_draw(struct screen_ctx *,
 			     const char *, ...)
@@ -536,16 +514,13 @@ void			 kbfunc_client_toggle_group(void *, struct cargs *);
 void			 kbfunc_client_movetogroup(void *, struct cargs *);
 void			 kbfunc_group_toggle(void *, struct cargs *);
 void			 kbfunc_group_only(void *, struct cargs *);
-void			 kbfunc_group_last(void *, struct cargs *);
 void			 kbfunc_group_close(void *, struct cargs *);
 void			 kbfunc_group_cycle(void *, struct cargs *);
 void			 kbfunc_group_toggle_all(void *, struct cargs *);
 void			 kbfunc_menu_client(void *, struct cargs *);
 void			 kbfunc_menu_cmd(void *, struct cargs *);
 void			 kbfunc_menu_group(void *, struct cargs *);
-void			 kbfunc_menu_wm(void *, struct cargs *);
 void			 kbfunc_menu_exec(void *, struct cargs *);
-void			 kbfunc_menu_ssh(void *, struct cargs *);
 void			 kbfunc_client_menu_label(void *, struct cargs *);
 void			 kbfunc_exec_cmd(void *, struct cargs *);
 void			 kbfunc_exec_lock(void *, struct cargs *);
@@ -610,11 +585,10 @@ int			 xu_ewmh_get_net_wm_desktop(struct client_ctx *, long *);
 void			 xu_ewmh_set_net_wm_desktop(struct client_ctx *);
 Atom 			*xu_ewmh_get_net_wm_state(struct client_ctx *, int *);
 void 			 xu_ewmh_handle_net_wm_state_msg(struct client_ctx *,
-			     int, Atom, Atom);
+			     int, Atom , Atom);
 void 			 xu_ewmh_set_net_wm_state(struct client_ctx *);
 void 			 xu_ewmh_restore_net_wm_state(struct client_ctx *);
 
-char			*u_argv(char * const *);
 void			 u_exec(char *);
 void			 u_spawn(char *);
 void			 log_debug(int, const char *, const char *, ...)
