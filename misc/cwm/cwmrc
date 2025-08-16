@@ -70,10 +70,14 @@ bind-key 4M-k           window-snap-up
 bind-key 4M-l           window-snap-right
 
 # Maximize windows
-bind-key 4C-h           window-hmaximize
-bind-key 4C-j           window-vmaximize
-bind-key 4C-k           window-vmaximize
-bind-key 4C-l           window-hmaximize
+bind-key 4-backslash    window-hmaximize
+bind-key 4S-backslash   window-vmaximize
+
+# Dock windows
+bind-key 4C-h           "dockwin left"
+bind-key 4C-j           "dockwin bottom"
+bind-key 4C-k           "dockwin top"
+bind-key 4C-l           "dockwin right"
 
 # Resize windows
 bind-key 4SC-h          window-resize-left-big
@@ -133,6 +137,7 @@ bind-key 4M-u           "dmenu_app code"
 bind-key 4S-Return      "st"
 bind-key 4S-z           "slock"
 bind-key 4S-c           "movwin"
+bind-key 4SC-c          "dockwin"
 bind-key 4-n            "nextwin"
 bind-key 4S-n           "prevwin"
 

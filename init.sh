@@ -42,6 +42,7 @@ install_bin() {
         $CORE_ROOT/bin/mg
         $CORE_ROOT/bin/movwin
         $CORE_ROOT/bin/focuswin
+        $CORE_ROOT/bin/dockwin
         $CORE_ROOT/bin/runec
         $CORE_ROOT/bin/startdwm
         $CORE_ROOT/bin/startcwm

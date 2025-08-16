@@ -29,7 +29,7 @@ case $1 in
         ;;
     * )
         xdotool getactivewindow windowmove \
-                $(( $mw/2 )) $(( $mh/2 ))
+                $(( $mw/4 )) $(( $mh/4 ))
         xdotool getactivewindow windowsize $hw $hh
         ;;
     --help|-h )
