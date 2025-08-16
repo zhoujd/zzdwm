@@ -18,21 +18,18 @@ case $1 in
         xdotool getactivewindow windowsize $fw $hh
         ;;
     right )
-        xdotool getactivewindow windowmove \
-                $(( $mw/2 + $gap/2 )) $gap
+        xdotool getactivewindow windowmove $(( $mw/2 + $gap/2 )) $gap
         xdotool getactivewindow windowsize $hw $fh
         ;;
     bottom )
-        xdotool getactivewindow windowmove \
-                $gap $(( $mh/2 + $gap/2 ))
+        xdotool getactivewindow windowmove $gap $(( $mh/2 + $gap/2 ))
         xdotool getactivewindow windowsize $fw $hh
-        ;;
-    * )
-        xdotool getactivewindow windowmove \
-                $(( $mw/4 )) $(( $mh/4 ))
-        xdotool getactivewindow windowsize $hw $hh
         ;;
     --help|-h )
         echo "Usage: $(basename $0) {left|top|right|bottom|--help|-h}"
+        ;;
+    * )
+        xdotool getactivewindow windowmove $(( $mw/4 )) $(( $mh/4 ))
+        xdotool getactivewindow windowsize $hw $hh
         ;;
 esac
