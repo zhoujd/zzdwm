@@ -82,6 +82,7 @@ client_init(Window win, struct screen_ctx *sc)
 	cc->visual = wattr.visual;
 	cc->obwidth = wattr.border_width;
 	cc->bwidth = Conf.bwidth;
+	cc->resizehints = 0;
 
 	client_set_name(cc);
 	conf_client(cc);
@@ -755,11 +756,6 @@ client_get_sizehints(struct client_ctx *cc)
 		cc->hint.incw = size.width_inc;
 		cc->hint.inch = size.height_inc;
 	}
-	cc->hint.incw = MAX(1, cc->hint.incw);
-	cc->hint.inch = MAX(1, cc->hint.inch);
-	cc->hint.minw = MAX(1, cc->hint.minw);
-	cc->hint.minh = MAX(1, cc->hint.minh);
-
 	if (size.flags & PAspect) {
 		if (size.min_aspect.x > 0)
 			cc->hint.mina = (float)size.min_aspect.y /
@@ -767,6 +763,18 @@ client_get_sizehints(struct client_ctx *cc)
 		if (size.max_aspect.y > 0)
 			cc->hint.maxa = (float)size.max_aspect.x /
 			    size.max_aspect.y;
+	}
+
+	if (cc->resizehints) {
+		cc->hint.incw = MAX(1, cc->hint.incw);
+		cc->hint.inch = MAX(1, cc->hint.inch);
+		cc->hint.minw = MAX(1, cc->hint.minw);
+		cc->hint.minh = MAX(1, cc->hint.minh);
+	} else {
+		cc->hint.incw = 1;
+		cc->hint.inch = 1;
+		cc->hint.minw = 1;
+		cc->hint.minh = 1;
 	}
 }
 

@@ -193,6 +193,7 @@ struct client_ctx {
 	char			*res_name; /* class hint */
 	int			 initial_state; /* wm hint */
 	XftColor		 xftcolor[CWM_COLOR_NITEMS];
+	int			 resizehints; /* 1 means respect size hints in tiled resizals */
 };
 TAILQ_HEAD(client_q, client_ctx);
 
