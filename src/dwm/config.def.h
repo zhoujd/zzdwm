@@ -197,7 +197,7 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_g,            setlayout,        {.v = &layouts[3]} },
 	{ MODKEY,                       XK_x,            setlayout,        {.v = &layouts[4]} },
 	{ MODKEY,                       XK_z,            setlayout,        {.v = &layouts[5]} },
-	{ MODKEY,                       XK_backslash,    setlayout,        {.v = &layouts[6]} },
+	{ MODKEY,                       XK_BackSpace,    setlayout,        {.v = &layouts[6]} },
 	{ MODKEY,                       XK_space,        setlayout,        {0} },
 	{ MODKEY|ShiftMask,             XK_space,        togglefloating,   {0} },
 	{ MODKEY|ControlMask,           XK_space,        focusmaster,      {0} },
@@ -241,10 +241,8 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_l,            setmfact,         {.f = +0.05} },
 	{ MODKEY|ShiftMask,             XK_j,            setsmfact,        {.f = +0.05} },
 	{ MODKEY|ShiftMask,             XK_k,            setsmfact,        {.f = -0.05} },
-	{ MODKEY|ControlMask,           XK_h,            fmaximize,        {.ui = 1} }, /* full width */
-	{ MODKEY|ControlMask,           XK_l,            fmaximize,        {.ui = 1} }, /* full width */
-	{ MODKEY|ControlMask,           XK_j,            fmaximize,        {.ui = 2} }, /* full height */
-	{ MODKEY|ControlMask,           XK_k,            fmaximize,        {.ui = 2} }, /* full height */
+	{ MODKEY,                       XK_backslash,    fmaximize,        {.ui = 1} }, /* full width */
+	{ MODKEY|ShiftMask,             XK_backslash,    fmaximize,        {.ui = 2} }, /* full height */
 	{ MODKEY|ControlMask,           XK_m,            fmaximize,        {.ui = 0} }, /* maximize */
 	{ MODKEY|ControlMask|ShiftMask, XK_h,            setwfact,         {.f = -0.05} },
 	{ MODKEY|ControlMask|ShiftMask, XK_l,            setwfact,         {.f = +0.05} },
