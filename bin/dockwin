@@ -1,34 +1,36 @@
 #!/bin/sh
-# Move a window to the side/center of a screen.
+# Dock a window to the side of a screen.
 
-gap=0
-border=0
+gap=8
 mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
 mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
-
+fw=$(( $mw - $gap*2  ))
+fh=$(( $mh - $gap*2  ))
+hw=$(( ($mw - $gap*3) / 2 ))
+hh=$(( ($mh - $gap*3) / 2 ))
 case $1 in
     left )
         xdotool getactivewindow windowmove $gap $gap
-        xdotool getactivewindow windowsize 50% 100%
+        xdotool getactivewindow windowsize $hw $fh
         ;;
     top )
         xdotool getactivewindow windowmove $gap $gap
-        xdotool getactivewindow windowsize 100% 50%
+        xdotool getactivewindow windowsize $fw $hh
         ;;
     right )
         xdotool getactivewindow windowmove \
-                $(( $mw/2 + $gap - $border*2 )) $gap
-        xdotool getactivewindow windowsize 50% 100%
+                $(( $mw/2 + $gap/2 )) $gap
+        xdotool getactivewindow windowsize $hw $fh
         ;;
     bottom )
         xdotool getactivewindow windowmove \
-                $gap $(( $mh/2 - $gap - $border*2 ))
-        xdotool getactivewindow windowsize 100% 50%
+                $gap $(( $mh/2 + $gap/2 ))
+        xdotool getactivewindow windowsize $fw $hh
         ;;
     * )
         xdotool getactivewindow windowmove \
                 $(( $mw/2 )) $(( $mh/2 ))
-        xdotool getactivewindow windowsize 50% 50%
+        xdotool getactivewindow windowsize $hw $hh
         ;;
     --help|-h )
         echo "Usage: $(basename $0) {left|top|right|bottom|--help|-h}"
