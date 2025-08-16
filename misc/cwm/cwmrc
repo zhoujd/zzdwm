@@ -12,12 +12,6 @@ color activeborder      "#5294E2"
 color inactiveborder    "#565656"
 color urgencyborder     "#cc241d"
 
-# Menu colors
-color font              "#eeeeee"
-color selfont           "#eeeeee"
-color menubg            "#161616"
-color menufg            "#5294E2"
-
 gap                     1 1 1 1
 
 htile                   50
