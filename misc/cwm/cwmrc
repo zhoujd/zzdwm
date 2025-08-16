@@ -21,7 +21,7 @@ color menufg            "#5294E2"
 gap                     1 1 1 1
 
 htile                   50
-vtile                   50
+vtile                   55
 
 moveamount              2
 
