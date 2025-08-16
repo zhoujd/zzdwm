@@ -293,6 +293,7 @@ static void maximize(int x, int y, int w, int h);
 static void fmaximize(const Arg *arg);
 static void moveclient(int x, int y, int w, int h);
 static void fsnap(const Arg *arg);
+static void fdeck(const Arg *arg);
 static void sighup(int unused);
 static void sigterm(int unused);
 static void focussame(const Arg *arg);
@@ -3661,6 +3662,36 @@ fsnap(const Arg *arg)
 		break;
 	case 3: // right
 		moveclient(selmon->ww - 2 * borderpx - gap - selmon->sel->w, selmon->sel->y, selmon->sel->w, selmon->sel->h);
+		break;
+	default:
+		break;
+	}
+}
+
+void
+fdeck(const Arg *arg)
+{
+	int gap, hf;
+	int fw, fh, hw, hh;
+
+	gap = selmon->drawwithgaps ? gappx : 0;
+	hf = selmon->showbar ? bh : 0;
+	fw = selmon->ww - 2*gap;
+	fh = selmon->wh - 2*gap;
+	hw = (selmon->ww - 3*gap) / 2;
+	hh = (selmon->wh - 3*gap) / 2;
+	switch (arg->ui) {
+	case 0: // left
+		moveclient(selmon->wx + gap, selmon->wy + gap, hw, fh);
+		break;
+	case 1: // bottom
+		moveclient(selmon->wx + gap, selmon->wh/2 + gap/2 + hf, fw, hh);
+		break;
+	case 2: // top
+		moveclient(selmon->wx + gap, selmon->wy + gap, fw, hh);
+		break;
+	case 3: // right
+		moveclient(selmon->ww/2 + gap/2, selmon->wy + gap, hw, fh);
 		break;
 	default:
 		break;
