@@ -9,6 +9,13 @@ CWM
 ## https://wiki.archlinux.org/title/Cwm
 ```
 
+## Linux port source
+
+```
+## https://git.oriole.systems/cwm/snapshot/cwm-7.0.tar.gz
+$ git clone https://git.oriole.systems/cwm
+```
+
 ## Manual
 
 ```
