@@ -1,0 +1,36 @@
+#!/bin/sh
+# Move a window to the side/center of a screen.
+
+gap=0
+border=0
+mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
+mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
+
+case $1 in
+    left )
+        xdotool getactivewindow windowmove $gap $gap
+        xdotool getactivewindow windowsize 50% 100%
+        ;;
+    top )
+        xdotool getactivewindow windowmove $gap $gap
+        xdotool getactivewindow windowsize 100% 50%
+        ;;
+    right )
+        xdotool getactivewindow windowmove \
+                $(( $mw/2 + $gap - $border*2 )) $gap
+        xdotool getactivewindow windowsize 50% 100%
+        ;;
+    bottom )
+        xdotool getactivewindow windowmove \
+                $gap $(( $mh/2 - $gap - $border*2 ))
+        xdotool getactivewindow windowsize 100% 50%
+        ;;
+    * )
+        xdotool getactivewindow windowmove \
+                $(( $mw/2 )) $(( $mh/2 ))
+        xdotool getactivewindow windowsize 50% 50%
+        ;;
+    --help|-h )
+        echo "Usage: $(basename $0) {left|top|right|bottom|--help|-h}"
+        ;;
+esac
