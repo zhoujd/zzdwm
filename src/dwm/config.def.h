@@ -143,9 +143,9 @@ static const char *manmenucmd[] = { "dmenu_man", NULL };
 
 /* XFree86 vender specific keysyms
  * https://cgit.freedesktop.org/xorg/proto/x11proto/tree/XF86keysym.h
+ * https://cgit.freedesktop.org/xorg/proto/x11proto/tree/keysymdef.h
  */
 #include <X11/XF86keysym.h>
-
 /* keys */
 static const Key keys[] = {
 	/* modifier                     key              function          argument */
