@@ -3655,13 +3655,13 @@ fsnap(const Arg *arg)
 		moveclient(selmon->wx + gap, selmon->sel->y, selmon->sel->w, selmon->sel->h);
 		break;
 	case 1: // down
-		moveclient(selmon->sel->x, selmon->wh - 2 * borderpx - gap - selmon->sel->h + hf, selmon->sel->w, selmon->sel->h);
+		moveclient(selmon->sel->x, selmon->wh - 2*borderpx - gap - selmon->sel->h + hf, selmon->sel->w, selmon->sel->h);
 		break;
 	case 2: // up
 		moveclient(selmon->sel->x, selmon->wy + gap, selmon->sel->w, selmon->sel->h);
 		break;
 	case 3: // right
-		moveclient(selmon->ww - 2 * borderpx - gap - selmon->sel->w, selmon->sel->y, selmon->sel->w, selmon->sel->h);
+		moveclient(selmon->ww - 2*borderpx - gap - selmon->sel->w, selmon->sel->y, selmon->sel->w, selmon->sel->h);
 		break;
 	default:
 		break;
@@ -3676,22 +3676,22 @@ fdeck(const Arg *arg)
 
 	gap = selmon->drawwithgaps ? gappx : 0;
 	hf = selmon->showbar ? bh : 0;
-	fw = selmon->ww - 2*gap;
-	fh = selmon->wh - 2*gap;
-	hw = (selmon->ww - 3*gap) / 2;
-	hh = (selmon->wh - 3*gap) / 2;
+	fw = selmon->ww - 2*gap - 2*borderpx;
+	fh = selmon->wh - 2*gap - 2*borderpx;
+	hw = (selmon->ww - 3*gap - 2*borderpx) / 2;
+	hh = (selmon->wh - 3*gap - 2*borderpx) / 2;
 	switch (arg->ui) {
 	case 0: // left
-		moveclient(selmon->wx + gap, selmon->wy + gap, hw, fh);
+		moveclient(selmon->wx + gap + borderpx, selmon->wy + gap, hw, fh);
 		break;
 	case 1: // bottom
-		moveclient(selmon->wx + gap, selmon->wh/2 + gap/2 + hf, fw, hh);
+		moveclient(selmon->wx + gap, selmon->wh/2 + borderpx + gap/2 + hf, fw, hh);
 		break;
 	case 2: // top
 		moveclient(selmon->wx + gap, selmon->wy + gap, fw, hh);
 		break;
 	case 3: // right
-		moveclient(selmon->ww/2 + gap/2, selmon->wy + gap, hw, fh);
+		moveclient(selmon->ww/2 + borderpx + gap/2, selmon->wy + gap, hw, fh);
 		break;
 	default:
 		break;
