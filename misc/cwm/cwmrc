@@ -163,4 +163,5 @@ bind-mouse 4S-1         window-raise
 bind-mouse 4S-3         window-lower
 
 # Ignore, and do not warp to, windows with these names
+ignore                  dmenu
 ignore                  lemonbar
