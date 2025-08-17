@@ -279,3 +279,20 @@ static const char *colors[][3]      = {
     [SchemeTitle] = { col_gray4, col_cyan,  col_cyan  },
 };
 ```
+
+## _NET_WM_DESKTOP
+
+```
+_NET_WM_DESKTOP
+           Query and set what desktop a window is living in.
+           Support for this enables these commands: "set_desktop_for_window", "get_desktop_for_window".
+```
+
+
+## _NET_ACTIVE_WINDOW
+
+```
+_NET_ACTIVE_WINDOW
+           Allows you to query and set the active window by asking the window manager to bring it forward.
+           Support for this enables these commands: "windowactivate", "getactivewindow".
+```
