@@ -8,28 +8,29 @@ fw=$(( $mw - $gap*2  ))
 fh=$(( $mh - $gap*2  ))
 hw=$(( ($mw - $gap*3) / 2 ))
 hh=$(( ($mh - $gap*3) / 2 ))
+id=$(xdotool getwindowfocus)
 case $1 in
-    left )
-        xdotool getactivewindow windowmove $gap $gap
-        xdotool getactivewindow windowsize $hw $fh
-        ;;
-    top )
-        xdotool getactivewindow windowmove $gap $gap
-        xdotool getactivewindow windowsize $fw $hh
-        ;;
-    right )
-        xdotool getactivewindow windowmove $(( $mw/2 + $gap/2 )) $gap
-        xdotool getactivewindow windowsize $hw $fh
-        ;;
-    bottom )
-        xdotool getactivewindow windowmove $gap $(( $mh/2 + $gap/2 ))
-        xdotool getactivewindow windowsize $fw $hh
-        ;;
     --help|-h )
         echo "Usage: $(basename $0) {left|top|right|bottom|--help|-h}"
         ;;
+    left )
+        xdotool windowmove $id $gap $gap
+        xdotool windowsize $id $hw $fh
+        ;;
+    top )
+        xdotool windowmove $id $gap $gap
+        xdotool windowsize $id $fw $hh
+        ;;
+    right )
+        xdotool windowmove $id $(( $mw/2 + $gap/2 )) $gap
+        xdotool windowsize $id $hw $fh
+        ;;
+    bottom )
+        xdotool windowmove $id $gap $(( $mh/2 + $gap/2 ))
+        xdotool windowsize $id $fw $hh
+        ;;
     * )
-        xdotool getactivewindow windowmove $(( $mw/4 )) $(( $mh/4 ))
-        xdotool getactivewindow windowsize $hw $hh
+        xdotool windowmove $id $(( $mw/4 )) $(( $mh/4 ))
+        xdotool windowsize $id $hw $hh
         ;;
 esac
