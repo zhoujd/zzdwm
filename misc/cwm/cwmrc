@@ -96,6 +96,7 @@ bind-key 4-f            window-fullscreen
 bind-key 4-m            window-maximize
 bind-key 4-u            window-freeze
 bind-key 4-t            window-vtile
+bind-key 4-b            window-htile
 
 # Cycle/reverse cycle through windows
 bind-key 4-j            window-cycle
