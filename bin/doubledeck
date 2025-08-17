@@ -1,0 +1,72 @@
+#!/bin/bash
+# Dock a window to the side of a screen.
+
+gap=5
+deck() {
+    act=$1
+    id=$2
+    mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
+    mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
+    fw=$(( $mw - $gap*2  ))
+    fh=$(( $mh - $gap*2  ))
+    hw=$(( ($mw - $gap*3) / 2 ))
+    hh=$(( ($mh - $gap*3) / 2 ))
+    case $act in
+        --help|-h )
+            echo "Usage: $(basename $0) {left|top|right|bottom|--help|-h}"
+            ;;
+        left )
+            xdotool windowmove $id $gap $gap
+            xdotool windowsize $id $hw $fh
+            ;;
+        top )
+            xdotool windowmove $id $gap $gap
+            xdotool windowsize $id $fw $hh
+            ;;
+        right )
+            xdotool windowmove $id $(( $mw/2 + $gap/2 )) $gap
+            xdotool windowsize $id $hw $fh
+            ;;
+        bottom )
+            xdotool windowmove $id $gap $(( $mh/2 + $gap/2 ))
+            xdotool windowsize $id $fw $hh
+            ;;
+        * )
+            xdotool windowmove $id $(( $mw/4 )) $(( $mh/4 ))
+            xdotool windowsize $id $hw $hh
+            ;;
+    esac
+}
+
+layout() {
+    desktop=$(xdotool get_desktop)
+    focus=$(xprop -root | grep '^_NET_ACTIVE_W' | awk '{print $5}')
+    windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | tr -s '[:blank:]' | \
+                   awk '{print $1}'))
+    echo focus: $focus
+    for win in ${windows[@]}; do
+        if [[ $win -eq $focus ]]; then
+            echo Act is: $win
+            case $1 in
+               h ) 
+                   deck left $win
+                   ;;
+               v )
+                   deck top $win
+                   ;;
+            esac
+        else
+            echo This is: $win
+            case $1 in
+               h ) 
+                   deck right $win
+                   ;;
+               v )
+                   deck bottom $win
+                   ;;
+            esac
+        fi
+    done
+}
+
+layout $@
