@@ -4,7 +4,7 @@
 sticky                  yes
 
 # Default font
-fontname                "SF Mono:pixelsize=12:bold"
+fontname                "SF Mono:pixelsize=11:bold"
 
 # Appearance
 borderwidth             1
@@ -119,7 +119,7 @@ bind-key 4S-Tab         window-rcycle-ingroup
 bind-key 4SC-q          restart
 bind-key 4C-q           quit
 
-# Application
+# Applications
 bind-key 4-c            "st"
 bind-key 4M-c           "dmenu_app st"
 bind-key 4C-c           "focuswin st"
