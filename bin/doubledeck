@@ -1,16 +1,17 @@
 #!/bin/bash
-# Dock a window to the side of a screen.
+# Deck windows
 
 gap=5
+
 deck() {
-    act=$1
-    id=$2
-    mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
-    mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
-    fw=$(( $mw - $gap*2  ))
-    fh=$(( $mh - $gap*2  ))
-    hw=$(( ($mw - $gap*3) / 2 ))
-    hh=$(( ($mh - $gap*3) / 2 ))
+    local act=$1
+    local id=$2
+    local mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
+    local mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
+    local fw=$(( $mw - $gap*2  ))
+    local fh=$(( $mh - $gap*2  ))
+    local hw=$(( ($mw - $gap*3) / 2 ))
+    local hh=$(( ($mh - $gap*3) / 2 ))
     case $act in
         --help|-h )
             echo "Usage: $(basename $0) {left|top|right|bottom|--help|-h}"
@@ -38,30 +39,28 @@ deck() {
     esac
 }
 
-layout() {
-    desktop=$(xdotool get_desktop)
-    focus=$(xprop -root | grep '^_NET_ACTIVE_W' | awk '{print $5}')
-    windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | tr -s '[:blank:]' | \
-                   awk '{print $1}'))
-    echo focus: $focus
+main() {
+    local kind=$1
+    local desktop=$(xdotool get_desktop)
+    local focus=$(xprop -root | grep '^_NET_ACTIVE_W' | awk '{print $5}')
+    local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
+                         tr -s '[:blank:]' |  awk '{print $1}'))
     for win in ${windows[@]}; do
         if [[ $win -eq $focus ]]; then
-            echo Act is: $win
-            case $1 in
-               h ) 
+            case $kind in
+               v ) 
                    deck left $win
                    ;;
-               v )
+               h )
                    deck top $win
                    ;;
             esac
         else
-            echo This is: $win
-            case $1 in
-               h ) 
+            case $kind in
+               v ) 
                    deck right $win
                    ;;
-               v )
+               h )
                    deck bottom $win
                    ;;
             esac
@@ -69,4 +68,4 @@ layout() {
     done
 }
 
-layout $@
+main $@
