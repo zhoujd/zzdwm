@@ -45,27 +45,29 @@ main() {
     local focus=$(xprop -root | grep '^_NET_ACTIVE_W' | awk '{print $5}')
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
-    for win in ${windows[@]}; do
-        if [[ $win -eq $focus ]]; then
-            case $kind in
-               v ) 
-                   deck left $win
-                   ;;
-               h )
-                   deck top $win
-                   ;;
-            esac
-        else
-            case $kind in
-               v ) 
-                   deck right $win
-                   ;;
-               h )
-                   deck bottom $win
-                   ;;
-            esac
-        fi
-    done
+    case $kind in
+        v )
+            for win in ${windows[@]}; do
+                if [[ $win -eq $focus ]]; then
+                    deck left $win
+                else
+                    deck right $win
+                fi
+            done
+            ;;
+        h )
+            for win in ${windows[@]}; do
+                if [[ $win -eq $focus ]]; then
+                    deck top $win
+                else
+                    deck bottom $win
+                fi
+            done
+            ;;
+        * )
+            echo "$(basename $0) {v|h}"
+            ;;
+    esac
 }
 
 main $@

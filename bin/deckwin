@@ -1,36 +1,42 @@
-#!/bin/sh
+#!/bin/bash
 # Dock a window to the side of a screen.
 
 gap=5
-mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
-mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
-fw=$(( $mw - $gap*2  ))
-fh=$(( $mh - $gap*2  ))
-hw=$(( ($mw - $gap*3) / 2 ))
-hh=$(( ($mh - $gap*3) / 2 ))
-id=$(xdotool getactivewindow)
-case $1 in
-    --help|-h )
-        echo "Usage: $(basename $0) {left|top|right|bottom|--help|-h}"
-        ;;
-    left )
-        xdotool windowmove $id $gap $gap
-        xdotool windowsize $id $hw $fh
-        ;;
-    top )
-        xdotool windowmove $id $gap $gap
-        xdotool windowsize $id $fw $hh
-        ;;
-    right )
-        xdotool windowmove $id $(( $mw/2 + $gap/2 )) $gap
-        xdotool windowsize $id $hw $fh
-        ;;
-    bottom )
-        xdotool windowmove $id $gap $(( $mh/2 + $gap/2 ))
-        xdotool windowsize $id $fw $hh
-        ;;
-    * )
-        xdotool windowmove $id $(( $mw/4 )) $(( $mh/4 ))
-        xdotool windowsize $id $hw $hh
-        ;;
-esac
+
+main() {
+    local kind=$1
+    local id=$(xdotool getactivewindow)
+    local mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
+    local mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
+    local fw=$(( $mw - $gap*2  ))
+    local fh=$(( $mh - $gap*2  ))
+    local hw=$(( ($mw - $gap*3) / 2 ))
+    local hh=$(( ($mh - $gap*3) / 2 ))
+    case $kind in
+        --help|-h )
+            echo "Usage: $(basename $0) {left|top|right|bottom|--help|-h}"
+            ;;
+        left )
+            xdotool windowmove $id $gap $gap
+            xdotool windowsize $id $hw $fh
+            ;;
+        top )
+            xdotool windowmove $id $gap $gap
+            xdotool windowsize $id $fw $hh
+            ;;
+        right )
+            xdotool windowmove $id $(( $mw/2 + $gap/2 )) $gap
+            xdotool windowsize $id $hw $fh
+            ;;
+        bottom )
+            xdotool windowmove $id $gap $(( $mh/2 + $gap/2 ))
+            xdotool windowsize $id $fw $hh
+            ;;
+        * )
+            xdotool windowmove $id $(( $mw/4 )) $(( $mh/4 ))
+            xdotool windowsize $id $hw $hh
+            ;;
+    esac
+}
+
+main $@
