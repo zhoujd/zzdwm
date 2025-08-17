@@ -8,7 +8,7 @@ fw=$(( $mw - $gap*2  ))
 fh=$(( $mh - $gap*2  ))
 hw=$(( ($mw - $gap*3) / 2 ))
 hh=$(( ($mh - $gap*3) / 2 ))
-id=$(xdotool getwindowfocus)
+id=$(xdotool getactivewindow)
 case $1 in
     --help|-h )
         echo "Usage: $(basename $0) {left|top|right|bottom|--help|-h}"
