@@ -69,7 +69,8 @@ enum { SchemeNorm, SchemeSel, SchemeTitle, SchemeStatus }; /* color schemes */
 enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMFullscreen, NetWMSticky, NetActiveWindow, NetWMWindowType,
        NetWMWindowTypeDesktop, NetWMWindowTypeDialog, NetClientList, NetDesktopNames,
-       NetDesktopViewport, NetNumberOfDesktops, NetCurrentDesktop, NetLast }; /* EWMH atoms */
+       NetDesktopViewport, NetNumberOfDesktops, NetCurrentDesktop,
+       NetWMDesktop, NetCloseWindow, NetLast }; /* EWMH atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
 enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
        ClkClientWin, ClkRootWin, ClkLast }; /* clicks */
@@ -264,6 +265,7 @@ static void toggleview(const Arg *arg);
 static void unfocus(Client *c, int setfocus);
 static void unmanage(Client *c, int destroyed);
 static void unmapnotify(XEvent *e);
+static void updateclientdesktop(Client *c);
 static void updatecurrentdesktop(void);
 static void updatebarpos(Monitor *m);
 static void updatebars(void);
@@ -492,6 +494,7 @@ applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact)
 void
 arrange(Monitor *m)
 {
+	updatecurrentdesktop();
 	if (m)
 		showhide(m->stack);
 	else for (m = mons; m; m = m->next)
@@ -682,6 +685,7 @@ clientmessage(XEvent *e)
 	XClientMessageEvent *cme = &e->xclient;
 	Client *c = wintoclient(cme->window);
 	unsigned int i;
+	Arg arg;
 
 	if (!c)
 		return;
@@ -703,6 +707,12 @@ clientmessage(XEvent *e)
 			focus(c);
 			restack(selmon);
 		}
+	} else if(cme->message_type == netatom[NetWMDesktop]) {
+		c->tags = cme->data.l[0];
+		arrange(c->mon);
+	} else if(cme->message_type == netatom[NetCloseWindow]) {
+		arg.v = (void *) c;
+		killclient(&arg);
 	}
 }
 
@@ -1469,10 +1479,17 @@ killclient(const Arg *arg)
 {
 	Client *c;
 
-	if (!selmon->sel)
+	if (arg->v) {
+		c = (Client *) arg->v;
+		if (!c)
+			return;
+		killthis(c);
 		return;
+	}
 
 	if (!arg->ui || arg->ui == 0) {
+		if (!selmon->sel)
+			return;
 		killthis(selmon->sel);
 		return;
 	}
@@ -1542,6 +1559,7 @@ manage(Window w, XWindowAttributes *wa)
 		c->isfloating = c->oldstate = trans != None || c->isfixed;
 	if (c->isfloating)
 		XRaiseWindow(dpy, c->win);
+	updateclientdesktop(c);
 	attachx(c);
 	attachstack(c);
 	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32, PropModeAppend,
@@ -2330,7 +2348,8 @@ void
 setnumdesktops(void)
 {
 	long data[] = { TAGSLENGTH };
-	XChangeProperty(dpy, root, netatom[NetNumberOfDesktops], XA_CARDINAL, 32, PropModeReplace, (unsigned char *)data, 1);
+	XChangeProperty(dpy, root, netatom[NetNumberOfDesktops], XA_CARDINAL, 32,
+	                PropModeReplace, (unsigned char *)data, 1);
 }
 
 void
@@ -2615,6 +2634,8 @@ setup(void)
 	netatom[NetNumberOfDesktops] = XInternAtom(dpy, "_NET_NUMBER_OF_DESKTOPS", False);
 	netatom[NetCurrentDesktop] = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
 	netatom[NetDesktopNames] = XInternAtom(dpy, "_NET_DESKTOP_NAMES", False);
+	netatom[NetCloseWindow] = XInternAtom(dpy, "_NET_CLOSE_WINDOW", False);
+	netatom[NetWMDesktop] = XInternAtom(dpy, "_NET_WM_DESKTOP", False);
 	/* init cursors */
 	cursor[CurNormal] = drw_cur_create(drw, XC_left_ptr);
 	cursor[CurResize] = drw_cur_create(drw, XC_sizing);
@@ -3159,8 +3180,7 @@ updateclientlist(void)
 }
 
 void
-updatecurrentdesktop(void)
-{
+updateclientdesktop(Client *c) {
 	long rawdata[] = { selmon->tagset[selmon->seltags] };
 	int i=0;
 
@@ -3168,7 +3188,21 @@ updatecurrentdesktop(void)
 		i++;
 	}
 	long data[] = { i };
-	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32, PropModeReplace, (unsigned char *)data, 1);
+	XChangeProperty(dpy, c->win, netatom[NetWMDesktop], XA_CARDINAL, 32,
+			PropModeReplace, (unsigned char *)data, 1);
+}
+
+void
+updatecurrentdesktop(void) {
+	long rawdata[] = { selmon->tagset[selmon->seltags] };
+	int i=0;
+
+	while(*rawdata >> (i+1)) {
+		i++;
+	}
+	long data[] = { i };
+	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32,
+			PropModeReplace, (unsigned char *)data, 1);
 }
 
 int
