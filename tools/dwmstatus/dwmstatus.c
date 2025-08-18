@@ -272,11 +272,14 @@ int
 main(void)
 {
 	unsigned int interval = 2;  // seconds
+	unsigned int week;
 	char *status;
 	char *bat;
+	char *vol;
 	char *tmutc;
 	char *tmsh;
-	char *vol;
+	char *wsh;
+	char *dsh;
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "dwmstatus: cannot open display.\n");
@@ -285,17 +288,27 @@ main(void)
 
 	for (;;sleep(interval)) {
 		bat = getbattery("/sys/class/power_supply/BAT0");
-		tmutc = mktimes("%k:%M", tzutc);
-		tmsh = mktimes("WW%-V %a %e %b %l:%M %p", tzsh);
 		vol = volpercent();
+		tmutc = mktimes("%k:%M", tzutc);
+		tmsh = mktimes("%a %e %b %l:%M %p", tzsh);
+		wsh = mktimes("%-V", tzsh);
+		dsh = mktimes("%u", tzsh);
 
-		status = smprintf("B:%s V:%s U:%s %s", bat, vol, tmutc, tmsh);
+		/* If Sunday, show the week number of the next week */
+		if (atoi(dsh) > 6)
+			week = atoi(wsh) + 1;
+		else
+			week = atoi(wsh);
+
+		status = smprintf("B:%s V:%s U:%s W:%d %s", bat, vol, tmutc, week, tmsh);
 		setstatus(status);
 
-		free(bat);
-		free(tmutc);
+		free(dsh);
+		free(wsh);
 		free(tmsh);
+		free(tmutc);
 		free(vol);
+		free(bat);
 		free(status);
 	}
 
