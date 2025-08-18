@@ -4,12 +4,13 @@ title="desktop:"
 lines=10
 
 desks() {
+    labels=(one two three four five six seven eight nine)
+    tags=$(wmctrl -d | grep -v nogroup | wc -l)
     group=$(xdotool get_desktop)
     total=$(wmctrl -lp | awk '{print $2}' | wc -l)
-    labels=(one two three four five six seven eight nine)
     case $DESKTOP_SESSION in
         cwm )
-            for i in $(seq 0 8); do
+            for((i=0; i<$tags; i++)); do
                 l=${labels[$i]};
                 g=$(expr $i + 1);
                 n=$(wmctrl -lp | awk '{print $2}' | grep -sc "^${g}$")
@@ -22,7 +23,7 @@ desks() {
             done
             ;;
         dwm )
-            for i in $(seq 0 8); do
+            for((i=0; i<$tags; i++)); do
                 l=${labels[$i]};
                 n=$(wmctrl -lp | awk '{print $2}' | grep -sc "^${i}$")
                 if [ ${group} -eq ${i} ]; then
