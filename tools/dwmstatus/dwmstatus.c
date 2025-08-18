@@ -300,7 +300,7 @@ main(void)
 		else
 			week = atoi(wsh);
 
-		status = smprintf("B:%s V:%s U:%s W:%d %s", bat, vol, tmutc, week, tmsh);
+		status = smprintf("B:%s V:%s U:%s W%d %s", bat, vol, tmutc, week, tmsh);
 		setstatus(status);
 
 		free(dsh);
