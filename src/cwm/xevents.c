@@ -401,17 +401,7 @@ xev_handle_clientmessage(XEvent *ee)
 			if ((old_cc = client_current(NULL)) != NULL)
 				client_ptr_save(old_cc);
 			client_show(cc);
-
-			/*
-			 * Only warp the pointer if the source indication field says that
-			 * the request to activate another window comes from a pager or
-			 * other direct user input.
-			 *
-			 * This will stop certain dialog windows from repeatedly activating
-			 * themselves, effectively jailing the cursor.
-			 */
-			if(e->data.l[0] == 2)
-				client_ptr_warp(cc);
+			client_ptr_warp(cc);
 		}
 	} else if (e->message_type == ewmh[_NET_WM_DESKTOP]) {
 		if ((cc = client_find(e->window)) != NULL) {
