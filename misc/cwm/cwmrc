@@ -157,11 +157,10 @@ bind-key 4-s            "dmenu_ssh"
 bind-key 4M-s           "dmenu_ssh"
 bind-key 4-q            "dmenu_exit"
 bind-key 4M-q           "dmenu_exit"
-bind-key 4-v            "dmenu_wincd"
-bind-key 4M-v           "dmenu_wincd"
 bind-key 4-slash        "dmenu_man"
 bind-key 4-grave        "dmenu_menu"
 bind-key 4-apostrophe   "dmenu_desk"
+bind-key 4-semicolon    "dmenu_wincd"
 
 # Remove all mouse default keybindings
 unbind-mouse all
