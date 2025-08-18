@@ -5,27 +5,32 @@ lines=10
 
 desks() {
     group=$(xdotool get_desktop)
+    total=$(wmctrl -lp | awk '{print $2}' | wc -l)
+    labels=(one two three four five six seven eight nine)
     case $DESKTOP_SESSION in
         cwm )
-            labels=(nogroup one two three four five six seven eight nine)
-            total=$(wmctrl -lp | awk '{print $2}' | wc -l)
-            for i in $(seq 1 9); do
-                num=$(wmctrl -lp | awk '{print $2}' | grep -sc "^${i}$")
-                if [ ${group} -eq ${i} ]; then
-                    printf '%-8s%4s%20s\n' "${labels[$i]}" "*" "$num/$total"
+            for i in $(seq 0 8); do
+                l=${labels[$i]};
+                g=$(expr $i + 1);
+                n=$(wmctrl -lp | awk '{print $2}' | grep -sc "^${g}$")
+                if [ ${group} -eq ${g} ]; then
+                    f="*"
                 else
-                    printf '%-8s%4s%20s\n' "${labels[$i]}" "-" "$num/$total"
+                    f="-"
                 fi
+                printf '%-8s%4s%20s\n' "${l}" "${f}" "${n}/${total}"
             done
             ;;
         dwm )
-            labels=(1 2 3 4 5 6 7 8 9)
             for i in $(seq 0 8); do
+                l=${labels[$i]};
+                n=$(wmctrl -lp | awk '{print $2}' | grep -sc "^${i}$")
                 if [ ${group} -eq ${i} ]; then
-                    printf '%-8s%4s\n' "${labels[$i]}" "*"
+                    f="*"
                 else
-                    printf '%-8s%4s\n' "${labels[$i]}" "-"
+                    f="-"
                 fi
+                printf '%-8s%4s%20s\n' "${l}" "${f}" "${n}/${total}"
             done
             ;;
         * )
