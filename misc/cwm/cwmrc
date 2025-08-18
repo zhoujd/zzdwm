@@ -141,6 +141,8 @@ bind-key 4S-c           "movwin"
 bind-key 4SC-c          "deckwin"
 bind-key 4-n            "nextwin"
 bind-key 4S-n           "prevwin"
+bind-key 4-v            "nextwincd"
+bind-key 4S-v           "prevwincd"
 
 # Multiple deck windows
 bind-key 4-x            "doubledeck v"

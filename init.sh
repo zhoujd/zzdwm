@@ -37,6 +37,8 @@ install_bin() {
     local apps=(
         $CORE_ROOT/bin/nextwin
         $CORE_ROOT/bin/prevwin
+        $CORE_ROOT/bin/nextwincd
+        $CORE_ROOT/bin/prevwincd
         $CORE_ROOT/bin/dupterm
         $CORE_ROOT/bin/me
         $CORE_ROOT/bin/mg
