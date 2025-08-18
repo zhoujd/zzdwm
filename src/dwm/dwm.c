@@ -707,10 +707,10 @@ clientmessage(XEvent *e)
 			focus(c);
 			restack(selmon);
 		}
-	} else if(cme->message_type == netatom[NetWMDesktop]) {
+	} else if (cme->message_type == netatom[NetWMDesktop]) {
 		c->tags = cme->data.l[0];
 		arrange(c->mon);
-	} else if(cme->message_type == netatom[NetCloseWindow]) {
+	} else if (cme->message_type == netatom[NetCloseWindow]) {
 		arg.v = (void *) c;
 		killclient(&arg);
 	}
@@ -3184,9 +3184,9 @@ updateclientlist(void)
 void
 updateclientdesktop(Client *c) {
 	long rawdata[] = { selmon->tagset[selmon->seltags] };
-	int i=0;
+	int i = 0;
 
-	while(*rawdata >> (i+1)) {
+	while (*rawdata >> (i+1)) {
 		i++;
 	}
 	long data[] = { i };
@@ -3197,9 +3197,9 @@ updateclientdesktop(Client *c) {
 void
 updatecurrentdesktop(void) {
 	long rawdata[] = { selmon->tagset[selmon->seltags] };
-	int i=0;
+	int i = 0;
 
-	while(*rawdata >> (i+1)) {
+	while (*rawdata >> (i+1)) {
 		i++;
 	}
 	long data[] = { i };
