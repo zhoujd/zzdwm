@@ -1008,8 +1008,10 @@ drawbar(Monitor *m)
 	unsigned int a = 0, s = 0;
 	Client *c;
 
-	if (!m->showbar)
+	if (!m->showbar) {
+		XSync(dpy, False);
 		return;
+	}
 
 	/* draw status first so it can be overdrawn by tags later */
 	/* default: status is only drawn on selected monitor */
