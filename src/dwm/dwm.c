@@ -297,7 +297,7 @@ static void sigterm(int unused);
 static void focussame(const Arg *arg);
 
 /* variables */
-static Arg focusdirection = { .i = 1 };
+static Client *prevclient = NULL;
 static const char broken[] = "broken";
 static char stext[256];
 static int screen;
@@ -1274,7 +1274,6 @@ focusstack(const Arg *arg)
 {
 	Client *c = NULL, *i;
 
-	focusdirection.i = arg->i;
 	if (!selmon->sel || (selmon->sel->isfullscreen && lockfullscreen))
 		return;
 	if (arg->i > 0) {
@@ -2751,8 +2750,13 @@ spawn(const Arg *arg)
 void
 swapfocus()
 {
-	focusdirection.i *= -1;
-	focusstack(&focusdirection);
+	Client *c;
+
+	for (c = selmon->clients; c && c != prevclient; c = c->next) ;
+	if (c == prevclient) {
+		focus(prevclient);
+		restack(prevclient->mon);
+	}
 }
 
 void
@@ -3047,6 +3051,7 @@ unfocus(Client *c, int setfocus)
 {
 	if (!c)
 		return;
+	prevclient = c;
 	grabbuttons(c, 0);
 	XSetWindowBorder(dpy, c->win, scheme[SchemeNorm][ColBorder].pixel);
 	if (setfocus) {
@@ -3541,11 +3546,13 @@ zoom(const Arg *arg)
 {
 	(void)arg;
 	Client *c = selmon->sel;
+	prevclient = nexttiled(selmon->clients);
 
 	if (!selmon->lt[selmon->sellt]->arrange || !c || c->isfloating)
 		return;
-	if (c == nexttiled(selmon->clients) && !(c = nexttiled(c->next)))
-		return;
+	if (c == nexttiled(selmon->clients))
+		if (!c || !(c = prevclient = nexttiled(c->next)))
+ 			return;
 	pop(c);
 }
 
