@@ -36,7 +36,7 @@ if [ -n "$target" ]; then
         cwm )
             wmctrl -s $(expr $target + 1)
             ;;
-        zwm )
+        * )
             wmctrl -s $target
             ;;
     esac
