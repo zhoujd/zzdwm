@@ -8,38 +8,36 @@ desks() {
     tags=$(wmctrl -d | grep -v nogroup | wc -l)
     group=$(xdotool get_desktop)
     total=$(wmctrl -lp | awk '{print $2}' | wc -l)
-    case $DESKTOP_SESSION in
-        cwm )
-            for((i=0; i<$tags; i++)); do
-                l=${labels[$i]};
-                g=$(expr $i + 1);
-                n=$(wmctrl -lp | awk '{print $2}' | grep -sc "^${g}$")
-                if [ ${group} -eq ${g} ]; then
-                    f="*"
-                else
-                    f="-"
-                fi
-                printf '%-8s%4s%20s\n' "${l}" "${f}" "${n}/${total}"
-            done
-            ;;
-        dwm )
-            for((i=0; i<$tags; i++)); do
-                l=${labels[$i]};
-                n=$(wmctrl -lp | awk '{print $2}' | grep -sc "^${i}$")
-                if [ ${group} -eq ${i} ]; then
-                    f="*"
-                else
-                    f="-"
-                fi
-                printf '%-8s%4s%20s\n' "${l}" "${f}" "${n}/${total}"
-            done
-            ;;
-        * )
-            ;;
-    esac
+    for((i=0; i<$tags; i++)); do
+        case $DESKTOP_SESSION in
+            cwm )
+                g=$(expr $i + 1)
+                ;;
+            * )
+                g=$i
+                ;;
+        esac
+        num=$(wmctrl -lp | awk '{print $2}' | grep -sc "^${g}$")
+        if [ ${group} -eq ${g} ]; then
+            flag="*"
+        else
+            flag="-"
+        fi
+        printf '%-8s%4s%20s\n' "${labels[$i]}" "${flag}" "${num}/${total}"
+    done
 }
 
 target=$(desks | dmenu -l $lines -i -ix -p $title)
 if [ -n "$target" ]; then
-    xdotool key super+$(expr $target + 1)
+    case $DESKTOP_SESSION in
+        dwm )
+            xdotool key super+$(expr $target + 1)
+            ;;
+        cwm )
+            wmctrl -s $(expr $target + 1)
+            ;;
+        zwm )
+            wmctrl -s $target
+            ;;
+    esac
 fi
