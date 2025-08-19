@@ -72,13 +72,11 @@ build() {
         $CORE_ROOT/src/cwm
         $CORE_ROOT/tools/dmenu
         $CORE_ROOT/tools/dwmstatus
-        $CORE_ROOT/tools/xbanish
         $CORE_ROOT/tools/slock
-        $CORE_ROOT/tools/shotkey
-        $CORE_ROOT/tools/xcompmgr
         $CORE_ROOT/tools/utils
-        $CORE_ROOT/tools/lemonbar
-        $CORE_ROOT/tools/detach
+        $CORE_ROOT/tools/shotkey
+        $CORE_ROOT/tools/xbanish
+        $CORE_ROOT/tools/xcompmgr
     )
     for proj in ${projects[@]}; do
         echo "Build $proj"
