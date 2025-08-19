@@ -1,6 +1,6 @@
 #!/bin/bash
 
-title="window:"
+title="wincd:"
 lines=10
 desktop=$(xdotool get_desktop)
 windows=$(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+")
