@@ -12,11 +12,14 @@ color activeborder      "#5294E2"
 color inactiveborder    "#565656"
 color urgencyborder     "#cc241d"
 
+# Gaps (top, bottom, left, right)
 gap                     1 1 1 1
 
+# Size of manually tiled Windows in %
 htile                   50
 vtile                   50
 
+# How many pixels a window gets moved by
 moveamount              2
 
 # Key bindings
