@@ -252,7 +252,7 @@ static void shiftviewclients(const Arg *arg);
 static void showhide(Client *c);
 static void spawn(const Arg *arg);
 static void swapfocus();
-static void swaptags(const Arg *arg);
+static void swaptag(const Arg *arg);
 static void tag(const Arg *arg);
 static void tagmon(const Arg *arg);
 static void tagswapmon(const Arg *arg);
@@ -2764,7 +2764,7 @@ swapfocus()
 }
 
 void
-swaptags(const Arg *arg)
+swaptag(const Arg *arg)
 {
 	unsigned int newtag = arg->ui & TAGMASK;
 	unsigned int curtag = selmon->tagset[selmon->seltags];
