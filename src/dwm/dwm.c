@@ -204,6 +204,7 @@ static int initenv(void);
 static void keypress(XEvent *e);
 static void killthis(Client *c);
 static void killclient(const Arg *arg);
+static void killclientev(const Arg *arg);
 static void manage(Window w, XWindowAttributes *wa);
 static void mappingnotify(XEvent *e);
 static void maprequest(XEvent *e);
@@ -709,7 +710,7 @@ clientmessage(XEvent *e)
 		arrange(c->mon);
 	} else if (cme->message_type == netatom[NetCloseWindow]) {
 		arg.v = (void *) c;
-		killclient(&arg);
+		killclientev(&arg);
 	}
 }
 
@@ -1478,17 +1479,10 @@ killclient(const Arg *arg)
 {
 	Client *c;
 
-	if (arg->v) {
-		c = (Client *) arg->v;
-		if (!c)
-			return;
-		killthis(c);
+	if (!selmon->sel)
 		return;
-	}
 
 	if (!arg->ui || arg->ui == 0) {
-		if (!selmon->sel)
-			return;
 		killthis(selmon->sel);
 		return;
 	}
@@ -1496,6 +1490,19 @@ killclient(const Arg *arg)
 	for (c = selmon->clients; c; c = c->next) {
 		if (!ISVISIBLE(c) || (arg->ui == 1 && c == selmon->sel))
 			continue;
+		killthis(c);
+	}
+}
+
+void
+killclientev(const Arg *arg)
+{
+	Client *c;
+
+	if (arg->v) {
+		c = (Client *)arg->v;
+		if (!c)
+			return;
 		killthis(c);
 	}
 }
