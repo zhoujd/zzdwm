@@ -138,7 +138,7 @@ bind-key 4M-u           "dmenu_app code"
 
 bind-key 4S-Return      "st"
 bind-key 4S-z           "slock"
-bind-key 4S-c           "movwin"
+bind-key 4S-c           "movewin"
 bind-key 4SC-c          "deckwin"
 bind-key 4-n            "nextwin"
 bind-key 4S-n           "prevwin"
