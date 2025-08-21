@@ -20,7 +20,7 @@ htile                   50
 vtile                   50
 
 # How many pixels a window gets moved by
-moveamount              8
+moveamount              1
 
 # Key bindings
 
@@ -61,10 +61,10 @@ bind-key 4S-8           window-movetogroup-8
 bind-key 4S-9           window-movetogroup-9
 
 # Move windows
-bind-key 4S-h           window-move-left
-bind-key 4S-j           window-move-down
-bind-key 4S-k           window-move-up
-bind-key 4S-l           window-move-right
+bind-key 4S-h           window-move-left-big
+bind-key 4S-j           window-move-down-big
+bind-key 4S-k           window-move-up-big
+bind-key 4S-l           window-move-right-big
 
 # Snap windows
 bind-key 4M-h           window-snap-left
