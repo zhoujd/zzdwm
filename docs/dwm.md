@@ -298,6 +298,10 @@ _NET_ACTIVE_WINDOW
 ```
 ## Latest spec
 ## https://specifications.freedesktop.org/wm-spec/latest/
+
 ## 3.6 _NET_CURRENT_DESKTOP
 ## https://specifications.freedesktop.org/wm-spec/latest/ar01s03.html#id-1.4.8
+
+## The ewmh python module
+## https://ewmh.readthedocs.io/en/latest/ewmh.html
 ```
