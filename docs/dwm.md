@@ -285,18 +285,18 @@ static const char *colors[][3]      = {
 ```
 ## https://github.com/ericpruitt/mydwm/blob/master/patches/10-more-ewmhs.diff
 _NET_WM_DESKTOP
-           Query and set what desktop a window is living in.
-           Support for this enables these commands: "set_desktop_for_window", "get_desktop_for_window".
+    Query and set what desktop a window is living in.
+    Support for this enables these commands: "set_desktop_for_window", "get_desktop_for_window".
 
 _NET_ACTIVE_WINDOW
-           Allows you to query and set the active window by asking the window manager to bring it forward.
-           Support for this enables these commands: "windowactivate", "getactivewindow".
+    Allows you to query and set the active window by asking the window manager to bring it forward.
+    Support for this enables these commands: "windowactivate", "getactivewindow".
 ```
 
-## WM Spec
+## Extended Window Manager Hints (EWMH) spec
 
 ```
-## Extended Window Manager Hints
+## Latest spec
 ## https://specifications.freedesktop.org/wm-spec/latest/
 ## 3.6 _NET_CURRENT_DESKTOP
 ## https://specifications.freedesktop.org/wm-spec/latest/ar01s03.html#id-1.4.8
