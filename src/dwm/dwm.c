@@ -709,7 +709,7 @@ clientmessage(XEvent *e)
 		c->tags = cme->data.l[0];
 		arrange(c->mon);
 	} else if (cme->message_type == netatom[NetCloseWindow]) {
-		arg.v = (void *) c;
+		arg.v = (void *)c;
 		killclientev(&arg);
 	}
 }
@@ -2204,7 +2204,8 @@ setcurrentdesktop(void)
 	                PropModeReplace, (unsigned char *)data, 1);
 }
 
-void setdesktopnames(void)
+void
+setdesktopnames(void)
 {
 	XTextProperty text;
 	Xutf8TextListToTextProperty(dpy, (char **)tags, TAGSLENGTH, XUTF8StringStyle, &text);
