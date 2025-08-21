@@ -37,3 +37,11 @@ $ git clone https://git.oriole.systems/cwm
 ## https://github.com/gonzalo-/termbarc
 ## https://github.com/gonzalo-/termbar
 ```
+
+## Switch to last window
+
+```
+If you hold alt while repeatedly pressing tab, you'll cycle through the visible windows,
+but if you release both alt and tab, and then press them again,
+the previously focused window will become focused again.
+```
