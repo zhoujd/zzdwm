@@ -42,9 +42,9 @@ install_bin() {
         $CORE_ROOT/bin/dupterm
         $CORE_ROOT/bin/me
         $CORE_ROOT/bin/mg
-        $CORE_ROOT/bin/movwin
-        $CORE_ROOT/bin/focuswin
+        $CORE_ROOT/bin/movewin
         $CORE_ROOT/bin/deckwin
+        $CORE_ROOT/bin/focuswin
         $CORE_ROOT/bin/doubledeck
         $CORE_ROOT/bin/runec
         $CORE_ROOT/bin/startdwm
