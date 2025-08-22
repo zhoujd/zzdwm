@@ -60,12 +60,6 @@ bind-key 4S-7           window-movetogroup-7
 bind-key 4S-8           window-movetogroup-8
 bind-key 4S-9           window-movetogroup-9
 
-# Move windows
-bind-key 4S-h           window-move-left-big
-bind-key 4S-j           window-move-down-big
-bind-key 4S-k           window-move-up-big
-bind-key 4S-l           window-move-right-big
-
 # Snap windows
 bind-key 4M-h           window-snap-left
 bind-key 4M-j           window-snap-down
@@ -81,6 +75,12 @@ bind-key 4C-h           "deckwin left"
 bind-key 4C-j           "deckwin bottom"
 bind-key 4C-k           "deckwin top"
 bind-key 4C-l           "deckwin right"
+
+# Move windows
+bind-key 4S-h           window-move-left-big
+bind-key 4S-j           window-move-down-big
+bind-key 4S-k           window-move-up-big
+bind-key 4S-l           window-move-right-big
 
 # Resize windows
 bind-key 4SC-h          window-resize-left-big
