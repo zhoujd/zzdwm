@@ -276,7 +276,6 @@ main(void)
 	char *status;
 	char *bat;
 	char *vol;
-	char *tmutc;
 	char *tmsh;
 	char *wsh;
 	char *dsh;
@@ -289,7 +288,6 @@ main(void)
 	for (;;sleep(interval)) {
 		bat = getbattery("/sys/class/power_supply/BAT0");
 		vol = volpercent();
-		tmutc = mktimes("%k:%M", tzutc);
 		tmsh = mktimes("%a %e %b %l:%M %p", tzsh);
 		wsh = mktimes("%-V", tzsh);
 		dsh = mktimes("%u", tzsh);
@@ -300,13 +298,12 @@ main(void)
 		else
 			week = atoi(wsh);
 
-		status = smprintf("B:%s V:%s U:%s W%d %s", bat, vol, tmutc, week, tmsh);
+		status = smprintf("B:%s V:%s WW%d %s", bat, vol, week, tmsh);
 		setstatus(status);
 
 		free(dsh);
 		free(wsh);
 		free(tmsh);
-		free(tmutc);
 		free(vol);
 		free(bat);
 		free(status);
