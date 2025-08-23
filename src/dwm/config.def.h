@@ -25,14 +25,13 @@ static const int floatoffset        = 1;   /* 0 default means no float window of
 static const int centertitle        = 1;   /* 1 means place title in the middle of barwin, 0 means default */
 static const int maxtitle           = 75;  /* max title length in bytes, 0 means no title */
 static const char *fonts[]          = {
-	"SF Mono Nerd:size=11",
-	"SF Pro Display:size=11",
+	"Spleen:size=11",
 	"Droid Sans Fallback:size=11",
 };
 /* select the font index for statusbar
  * the index is zero based
  */
-static const int statusfontindex    = 1;
+static const int statusfontindex    = 0;
 /* colors */
 #include "themes/custom.h"
 static const char *colors[][3]      = {
