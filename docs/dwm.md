@@ -305,3 +305,19 @@ _NET_ACTIVE_WINDOW
 ## The ewmh python module
 ## https://ewmh.readthedocs.io/en/latest/ewmh.html
 ```
+
+## Nord theme
+
+```
+## https://www.nordtheme.com/
+Polar Night
+#2e3440
+#3b4252
+#434c5e
+#4c566a
+
+Snow Storm
+#d8dee9
+#e5e9f0
+#eceff4
+```
