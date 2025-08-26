@@ -26,7 +26,7 @@ static const int centertitle        = 1;   /* 1 means place title in the middle 
 static const int maxtitle           = 75;  /* max title length in bytes, 0 means no title */
 static const char *fonts[]          = {
 	"SF Mono Nerd:size=11",
-	"Droid Sans Fallback:size=11",
+	"PingFang SC:size=11",
 };
 /* select the font index for statusbar
  * the index is zero based
