@@ -11,7 +11,7 @@ static const float menu_height_ratio = 4.0f;   /* This is the ratio used in the 
 /* -fn option overrides fonts[0]; default X11 font or font set */
 static const char *fonts[] = {
 	"SF Mono Nerd:size=11",
-	"Droid Sans Fallback:size=11",
+	"PingFang SC:size=11",
 };
 /* -p option; prompt to the left of input field */
 static const char *prompt = NULL;
