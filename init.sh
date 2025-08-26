@@ -27,8 +27,7 @@ install_dm() {
     local dm=$CORE_ROOT/misc/dm
     echo "Init $target"
     sudo mkdir -p $target
-    sudo cp -fv $dm/dwm.desktop $target
-    sudo cp -fv $dm/cwm.desktop $target
+    sudo cp -fv $dm/{dwm,cwm}.desktop $target
     echo "Install dm done"
 }
 
