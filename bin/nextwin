@@ -7,10 +7,10 @@ if [ "$active_win_id" == "0" ]; then
 fi
 
 # get win_class from $1 or active_win_id
-win_class=${1:-$(wmctrl -x -l | grep $active_win_id | awk '{print $3}')}
+win_class=${1:-$(wmctrl -xl | grep $active_win_id | awk '{print $3}')}
 
 # get list of all windows matching with the class above
-win_list=$(wmctrl -x -l | grep -i $win_class | awk '{print $1}')
+win_list=$(wmctrl -xl | grep -i $win_class | awk '{print $1}')
 
 # get next window to focus on, removing id active
 switch_to=$(echo $win_list | sed s/.*$active_win_id// | awk '{print $1}')
