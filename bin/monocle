@@ -1,11 +1,12 @@
 #!/bin/bash
-# Monocle windows
+# Monocle/Float windows
 
-maximize() {
+monocle() {
     local desktop=$(xdotool get_desktop)
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
     for win in ${windows[@]}; do
+        wmctrl -ir $win -b remove,maximized_vert,maximized_horz
         wmctrl -ir $win -b add,maximized_vert,maximized_horz
     done
 }
@@ -23,7 +24,7 @@ main() {
     local kind=$1
     case $kind in
         m )
-            maximize
+            monocle
             ;;
         f )
             float
