@@ -41,7 +41,10 @@ app_menu() {
         * )
             apps=($(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1,3 | \
                        grep -i "[[:space:]]\+$app" | cut -d ' ' -f 1))
-            exec wmctrl -i -a ${apps[$target]}
+            winid=${apps[$target]}
+            xdotool windowactivate $winid
+            xdotool windowraise $winid
+            xdotool windowfocus $winid
             ;;
     esac
 }

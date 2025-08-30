@@ -23,5 +23,8 @@ target=$(echo -n "$apps" | dmenu -l $lines -i -ix -p $title)
 
 if [ -n "$target" ]; then
     apps=($(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1))
-    exec wmctrl -i -a ${apps[$target]}
+    winid=${apps[$target]}
+    xdotool windowactivate $winid
+    xdotool windowraise $winid
+    xdotool windowfocus $winid
 fi
