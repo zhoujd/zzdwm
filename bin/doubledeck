@@ -35,6 +35,13 @@ deck() {
     esac
 }
 
+focus() {
+    local id=$1
+    xdotool windowactivate $id
+    xdotool windowraise $id
+    xdotool windowfocus $id
+}
+
 usage() {
     local app=$(basename $0)
     cat <<EOF
@@ -47,35 +54,27 @@ EOF
 main() {
     local kind=$1
     local desktop=$(xdotool get_desktop)
-    local focus=$(xprop -root | grep '^_NET_ACTIVE_W' | awk '{print $5}')
+    local id=$(xdotool getactivewindow)
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
     case $kind in
         v )  ## doubledeck
             for win in ${windows[@]}; do
-                if [[ $win -eq $focus ]]; then
-                    deck left $win
-                else
+                if [[ $win -ne $id ]]; then
                     deck right $win
                 fi
             done
-            ## Reset focus
-            xdotool windowactivate $focus
-            xdotool windowraise $focus
-            xdotool windowfocus $focus
+            deck left $id
+            focus $id
             ;;
         h ) ## zetadeck
             for win in ${windows[@]}; do
-                if [[ $win -eq $focus ]]; then
-                    deck top $win
-                else
+                if [[ $win -ne $id ]]; then
                     deck bottom $win
                 fi
             done
-            ## Reset focus
-            xdotool windowactivate $focus
-            xdotool windowraise $focus
-            xdotool windowfocus $focus
+            deck top $id
+            focus $id
             ;;
         * )
             usage

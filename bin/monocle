@@ -1,6 +1,13 @@
 #!/bin/bash
 # Monocle/Float windows
 
+focus() {
+    local id=$1
+    xdotool windowactivate $id
+    xdotool windowraise $id
+    xdotool windowfocus $id
+}
+
 monocle() {
     local desktop=$(xdotool get_desktop)
     local id=$(xdotool getactivewindow)
@@ -9,10 +16,7 @@ monocle() {
     for win in ${windows[@]}; do
         wmctrl -ir $win -b add,maximized_vert,maximized_horz
     done
-    ## Reset focus
-    xdotool windowactivate $id
-    xdotool windowraise $id
-    xdotool windowfocus $id
+    focus $id
 }
 
 float() {
@@ -23,10 +27,7 @@ float() {
     for win in ${windows[@]}; do
         wmctrl -ir $win -b remove,maximized_vert,maximized_horz
     done
-    ## Reset focus
-    xdotool windowactivate $id
-    xdotool windowraise $id
-    xdotool windowfocus $id
+    focus $id
 }
 
 usage() {
