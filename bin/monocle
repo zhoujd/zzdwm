@@ -6,7 +6,6 @@ monocle() {
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
     for win in ${windows[@]}; do
-        wmctrl -ir $win -b remove,maximized_vert,maximized_horz
         wmctrl -ir $win -b add,maximized_vert,maximized_horz
     done
 }
