@@ -25,5 +25,7 @@ fi
 
 # switch to window
 if [ "$switch_to" != '' ]; then
-    pullwin $switch_to
+    xdotool windowactivate $switch_to
+    xdotool windowraise $switch_to
+    xdotool windowfocus $switch_to
 fi

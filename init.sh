@@ -34,7 +34,6 @@ install_dm() {
 install_bin() {
     local target=/usr/local/bin
     local apps=(
-        $CORE_ROOT/bin/pullwin
         $CORE_ROOT/bin/nextwin
         $CORE_ROOT/bin/prevwin
         $CORE_ROOT/bin/nextwincd
