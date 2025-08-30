@@ -3,6 +3,18 @@
 
 gap=5
 
+focus() {
+    local id=$1
+    xdotool windowactivate $id
+    xdotool windowraise $id
+    xdotool windowfocus $id
+}
+
+prepare() {
+    local id=$1
+    wmctrl -ir $id -b remove,maximized_vert,maximized_horz
+}
+
 deck() {
     local act=$1
     local id=$2
@@ -14,32 +26,29 @@ deck() {
     local hh=$(( ($mh - $gap*3) / 2 ))
     case $act in
         left )
+            prepare $id
             xdotool windowmove $id $gap $gap
             xdotool windowsize $id $hw $fh
             ;;
         top )
+            prepare $id
             xdotool windowmove $id $gap $gap
             xdotool windowsize $id $fw $hh
             ;;
         right )
+            prepare $id
             xdotool windowmove $id $(( $mw/2 + $gap/2 )) $gap
             xdotool windowsize $id $hw $fh
             ;;
         bottom )
+            prepare $id
             xdotool windowmove $id $gap $(( $mh/2 + $gap/2 ))
             xdotool windowsize $id $fw $hh
             ;;
         * )
-            echo "Usage: $(basename $0) {left|top|right|bottom|--help|-h}"
+            echo "The $act doesn't support"
             ;;
     esac
-}
-
-focus() {
-    local id=$1
-    xdotool windowactivate $id
-    xdotool windowraise $id
-    xdotool windowfocus $id
 }
 
 usage() {
