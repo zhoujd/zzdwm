@@ -32,10 +32,6 @@ deck() {
             xdotool windowmove $id $gap $(( $mh/2 + $gap/2 ))
             xdotool windowsize $id $fw $hh
             ;;
-        max )
-            xdotool windowmove $id $gap $gap
-            xdotool windowsize $id $fw $fh
-            ;;
         * )
             xdotool windowmove $id $(( $mw/4 )) $(( $mh/4 ))
             xdotool windowsize $id $hw $hh
@@ -68,13 +64,8 @@ main() {
                 fi
             done
             ;;
-        m )
-            for win in ${windows[@]}; do
-                deck max $win
-            done
-            ;;
         * )
-            echo "$(basename $0) {v|h|m}"
+            echo "$(basename $0) {v|h}"
             ;;
     esac
 }
