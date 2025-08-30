@@ -3,6 +3,18 @@
 
 gap=5
 
+focus() {
+    local id=$1
+    xdotool windowactivate $id
+    xdotool windowraise $id
+    xdotool windowfocus $id
+}
+
+prepare() {
+    local id=$1
+    wmctrl -ir $id -b remove,maximized_vert,maximized_horz
+}
+
 main() {
     local kind=$1
     local id=$(xdotool getactivewindow)
@@ -18,31 +30,37 @@ main() {
             echo "Usage: $(basename $0) {left|top|right|bottom|--help|-h}"
             ;;
         left )
+            prepare $id
             xdotool windowmove $id $gap $gap
             xdotool windowsize $id $hw $fh
+            focus $id
             ;;
         top )
+            prepare $id
             xdotool windowmove $id $gap $gap
             xdotool windowsize $id $fw $hh
+            focus $id
             ;;
         right )
+            prepare $id
             xdotool windowmove $id $(( $mw/2 + $gap/2 )) $gap
             xdotool windowsize $id $hw $fh
+            focus $id
             ;;
         bottom )
+            prepare $id
             xdotool windowmove $id $gap $(( $mh/2 + $gap/2 ))
             xdotool windowsize $id $fw $hh
+            focus $id
             ;;
         * )
-            ## Unmaximize window
-            wmctrl -ir $id -b remove,maximized_vert,maximized_horz
+            ## Prepare window
+            prepare $id
             ## Reset window
             xdotool windowmove $id $(( $mw/4 )) $(( $mh/4 ))
             xdotool windowsize $id $hw $hh
             ## Reset focus
-            xdotool windowactivate $id
-            xdotool windowraise $id
-            xdotool windowfocus $id
+            focus $id
             ;;
     esac
 }
