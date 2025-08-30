@@ -146,9 +146,10 @@ bind-key 4-v            "nextwincd"
 bind-key 4S-v           "prevwincd"
 
 # Multiple deck windows
-bind-key 4-m            "doubledeck m"
 bind-key 4-x            "doubledeck v"
 bind-key 4-z            "doubledeck h"
+bind-key 4-f            "monocle f"
+bind-key 4-m            "monocle m"
 
 # Open dmenu menu
 bind-key 4-p            "dmenu_drun"

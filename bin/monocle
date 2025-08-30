@@ -1,28 +1,37 @@
 #!/bin/bash
 # Monocle windows
 
-gap=2
+maximize() {
+    local desktop=$(xdotool get_desktop)
+    local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
+                         tr -s '[:blank:]' |  awk '{print $1}'))
+    for win in ${windows[@]}; do
+        wmctrl -ir $win -b add,maximized_vert,maximized_horz
+    done
+}
 
-deck() {
-    local act=$1
-    local id=$2
-    local mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
-    local mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
-    local fw=$(( $mw - $gap*2  ))
-    local fh=$(( $mh - $gap*2  ))
-    xdotool windowmove $id $gap $gap
-    xdotool windowsize $id $fw $fh
+float() {
+    local desktop=$(xdotool get_desktop)
+    local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
+                         tr -s '[:blank:]' |  awk '{print $1}'))
+    for win in ${windows[@]}; do
+        wmctrl -ir $win -b remove,maximized_vert,maximized_horz
+    done
 }
 
 main() {
     local kind=$1
-    local desktop=$(xdotool get_desktop)
-    local focus=$(xprop -root | grep '^_NET_ACTIVE_W' | awk '{print $5}')
-    local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
-                         tr -s '[:blank:]' |  awk '{print $1}'))
-    for win in ${windows[@]}; do
-        deck max $win
-    done
+    case $kind in
+        m )
+            maximize
+            ;;
+        f )
+            float
+            ;;
+        * )
+            echo "$(basename $0) {m|f}"
+            ;;
+    esac
 }
 
 main $@
