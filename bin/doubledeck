@@ -39,6 +39,15 @@ deck() {
     esac
 }
 
+usage() {
+    local app=$(basename $0)
+    cat <<EOF
+$app  {v|h}
+v   -- doubledeck
+h   -- zetadeck
+EOF
+}
+
 main() {
     local kind=$1
     local desktop=$(xdotool get_desktop)
@@ -46,7 +55,7 @@ main() {
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
     case $kind in
-        v )
+        v )  ## doubledeck
             for win in ${windows[@]}; do
                 if [[ $win -eq $focus ]]; then
                     deck left $win
@@ -55,7 +64,7 @@ main() {
                 fi
             done
             ;;
-        h )
+        h ) ## zetadeck
             for win in ${windows[@]}; do
                 if [[ $win -eq $focus ]]; then
                     deck top $win
@@ -65,7 +74,7 @@ main() {
             done
             ;;
         * )
-            echo "$(basename $0) {v|h}"
+            usage
             ;;
     esac
 }

@@ -20,6 +20,15 @@ float() {
     done
 }
 
+usage() {
+    local app=$(basename $0)
+    cat <<EOF
+$app  {m|f}
+m   -- monocle
+f   -- float
+EOF
+}
+
 main() {
     local kind=$1
     case $kind in
@@ -30,7 +39,7 @@ main() {
             float
             ;;
         * )
-            echo "$(basename $0) {m|f}"
+            usage
             ;;
     esac
 }
