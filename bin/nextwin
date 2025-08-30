@@ -22,5 +22,5 @@ fi
 
 # switch to window
 if [ "$switch_to" != '' ]; then
-    wmctrl -i -a $switch_to
+    pullwin $switch_to
 fi
