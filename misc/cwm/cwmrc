@@ -94,8 +94,8 @@ bind-key 4-g            group-toggle-all
 bind-key 4-h            group-cycle
 bind-key 4-l            group-rcycle
 
-bind-key 4-f            window-fullscreen
-bind-key 4-m            window-maximize
+bind-key 4S-f           window-fullscreen
+bind-key 4S-m           window-maximize
 bind-key 4-t            window-vtile
 bind-key 4-b            window-htile
 
@@ -146,6 +146,7 @@ bind-key 4-v            "nextwincd"
 bind-key 4S-v           "prevwincd"
 
 # Multiple deck windows
+bind-key 4-m            "doubledeck m"
 bind-key 4-x            "doubledeck v"
 bind-key 4-z            "doubledeck h"
 
