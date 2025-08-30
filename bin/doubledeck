@@ -13,9 +13,6 @@ deck() {
     local hw=$(( ($mw - $gap*3) / 2 ))
     local hh=$(( ($mh - $gap*3) / 2 ))
     case $act in
-        --help|-h )
-            echo "Usage: $(basename $0) {left|top|right|bottom|--help|-h}"
-            ;;
         left )
             xdotool windowmove $id $gap $gap
             xdotool windowsize $id $hw $fh
@@ -33,8 +30,7 @@ deck() {
             xdotool windowsize $id $fw $hh
             ;;
         * )
-            xdotool windowmove $id $(( $mw/4 )) $(( $mh/4 ))
-            xdotool windowsize $id $hw $hh
+            echo "Usage: $(basename $0) {left|top|right|bottom|--help|-h}"
             ;;
     esac
 }
@@ -63,6 +59,10 @@ main() {
                     deck right $win
                 fi
             done
+            ## Reset focus
+            xdotool windowactivate $focus
+            xdotool windowraise $focus
+            xdotool windowfocus $focus
             ;;
         h ) ## zetadeck
             for win in ${windows[@]}; do
@@ -72,6 +72,10 @@ main() {
                     deck bottom $win
                 fi
             done
+            ## Reset focus
+            xdotool windowactivate $focus
+            xdotool windowraise $focus
+            xdotool windowfocus $focus
             ;;
         * )
             usage
