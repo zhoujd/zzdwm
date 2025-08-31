@@ -15,6 +15,16 @@ prepare() {
     wmctrl -ir $id -b remove,maximized_vert,maximized_horz
 }
 
+setwin() {
+    local id=$1
+    local pos_x=$2
+    local pos_y=$3
+    local size_x=$4
+    local size_y=$5
+    xdotool windowmove $id $pos_x $pos_y
+    xdotool windowsize $id $size_x $size_y
+}
+
 main() {
     local kind=$1
     local id=$(xdotool getactivewindow)
@@ -31,35 +41,30 @@ main() {
             ;;
         left )
             prepare $id
-            xdotool windowmove $id $gap $gap
-            xdotool windowsize $id $hw $fh
+            setwin $id $gap $gap $hw $fh
             focus $id
             ;;
         top )
             prepare $id
-            xdotool windowmove $id $gap $gap
-            xdotool windowsize $id $fw $hh
+            setwin $id $gap $gap $fw $hh
             focus $id
             ;;
         right )
             prepare $id
-            xdotool windowmove $id $(( $mw/2 + $gap/2 )) $gap
-            xdotool windowsize $id $hw $fh
+            setwin $id $(($mw/2+$gap/2)) $gap $hw $fh
             focus $id
             ;;
         bottom )
             prepare $id
-            xdotool windowmove $id $gap $(( $mh/2 + $gap/2 ))
-            xdotool windowsize $id $fw $hh
+            setwin $id $gap $(($mh/2+$gap/2)) $fw $hh
             focus $id
             ;;
         * )
             ## Prepare window
             prepare $id
-            ## Reset window
-            xdotool windowmove $id $(( $mw/8 )) $(( $mh/8 ))
-            xdotool windowsize $id $(( $hw*3/2 )) $(( $hh*3/2 ))
-            ## Reset focus
+            ## Set window
+            setwin $id $(($mw/8)) $(($mh/8)) $(($hw*3/2)) $(($hh*3/2))
+            ## Set focus
             focus $id
             ;;
     esac

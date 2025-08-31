@@ -15,35 +15,41 @@ prepare() {
     wmctrl -ir $id -b remove,maximized_vert,maximized_horz
 }
 
+setwin() {
+    local id=$1
+    local pos_x=$2
+    local pos_y=$3
+    local size_x=$4
+    local size_y=$5
+    xdotool windowmove $id $pos_x $pos_y
+    xdotool windowsize $id $size_x $size_y
+}
+
 deck() {
     local act=$1
     local id=$2
     local mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
     local mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
-    local fw=$(( $mw - $gap*2  ))
-    local fh=$(( $mh - $gap*2  ))
-    local hw=$(( ($mw - $gap*3) / 2 ))
-    local hh=$(( ($mh - $gap*3) / 2 ))
+    local fw=$(($mw-$gap*2))
+    local fh=$(($mh-$gap*2))
+    local hw=$((($mw-$gap*3)/2))
+    local hh=$((($mh-$gap*3)/2))
     case $act in
         left )
             prepare $id
-            xdotool windowmove $id $gap $gap
-            xdotool windowsize $id $hw $fh
+            setwin $id $gap $gap $hw $fh
             ;;
         top )
             prepare $id
-            xdotool windowmove $id $gap $gap
-            xdotool windowsize $id $fw $hh
+            setwin $id $gap $gap $fw $hh
             ;;
         right )
             prepare $id
-            xdotool windowmove $id $(( $mw/2 + $gap/2 )) $gap
-            xdotool windowsize $id $hw $fh
+            setwin $id $(($mw/2+$gap/2)) $gap $hw $fh
             ;;
         bottom )
             prepare $id
-            xdotool windowmove $id $gap $(( $mh/2 + $gap/2 ))
-            xdotool windowsize $id $fw $hh
+            setwin $id $gap $(($mh/2+$gap/2)) $fw $hh
             ;;
         * )
             echo "The $act doesn't support"
@@ -67,7 +73,7 @@ main() {
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
     case $kind in
-        v )  ## doubledeck
+        v )
             for win in ${windows[@]}; do
                 if [[ $win -ne $id ]]; then
                     deck right $win
@@ -76,7 +82,7 @@ main() {
             deck left $id
             focus $id
             ;;
-        h ) ## zetadeck
+        h )
             for win in ${windows[@]}; do
                 if [[ $win -ne $id ]]; then
                     deck bottom $win
