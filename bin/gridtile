@@ -1,9 +1,6 @@
 #!/bin/bash
 
-# grabbing screen width and height
-SIZE=`xdpyinfo | awk '/dimensions/{print $2}'`
-SW=`echo $SIZE | cut -f1 -dx`
-SH=`echo $SIZE | cut -f2 -dx`
+gap=5
 
 focus() {
     local id=$1
@@ -32,42 +29,44 @@ cell() {
     local id=$2
     local mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
     local mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
+    local cw=$(((mw-gap*4)/3))
+    local ch=$(((mh-gap*4)/3))
     case $pos in
         0 )
             prepare $id
-            setwin $id 0 0 $((mw/3)) $((mh/3))
+            setwin $id $gap $gap $cw $ch
             ;;
         1 )
             prepare $id
-            setwin $id $((mw/3)) 0 $((mw/3)) $((mh/3))
+            setwin $id $(($cw+2*$gap)) $gap $cw $ch
             ;;
         2 )
             prepare $id
-            setwin $id $((2*mw/3)) 0 $((mw/3)) $((mh/3))
+            setwin $id $((2*$cw+3*$gap)) $gap $cw $ch
             ;;
         3 )
             prepare $id
-            setwin $id 0 $((mh/3))  $((mw/3)) $((mh/3))
+            setwin $id $gap $(($ch+2*$gap)) $cw $ch
             ;;
         4 )
             prepare $id
-            setwin $id $((mw/3)) $((mh/3)) $((mw/3)) $((mh/3))
+            setwin $id $(($cw+2*$gap)) $(($ch+2*$gap)) $cw $ch
             ;;
         5 )
             prepare $id
-            setwin $id $((2*mw/3)) $((mh/3)) $((mw/3)) $((mh/3))
+            setwin $id $((2*$cw+3*$gap)) $(($ch+2*$gap)) $cw $ch
             ;;
         6 )
             prepare $id
-            setwin $id 0 $((2*mh/3)) $((mw/3)) $((mh/3))
+            setwin $id $gap $((2*$ch+3*$gap)) $cw $ch
             ;;
         7 )
             prepare $id
-            setwin $id $((mw/3)) $((2*mh/3)) $((mw/3)) $((mh/3))
+            setwin $id $(($cw+2*$gap)) $((2*$ch+3*$gap)) $cw $ch
             ;;
         8 )
             prepare $id
-            setwin $id $((2*mw/3)) $((2*mh/3)) $((mw/3)) $((mh/3))
+            setwin $id $((2*$cw+3*$gap)) $((2*$ch+3*$gap)) $cw $ch
             ;;
         * )
             echo "The $pos doesn't support"
@@ -95,6 +94,7 @@ main() {
         esac
         pos=$((pos+1))
     done
+    focus $id
 }
 
 main $@
