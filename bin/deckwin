@@ -30,10 +30,10 @@ main() {
     local id=$(xdotool getactivewindow)
     local mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
     local mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
-    local fw=$(( $mw - $gap*2  ))
-    local fh=$(( $mh - $gap*2  ))
-    local hw=$(( ($mw - $gap*3) / 2 ))
-    local hh=$(( ($mh - $gap*3) / 2 ))
+    local fw=$(($mw-$gap*2))
+    local fh=$(($mh-$gap*2))
+    local hw=$((($mw-$gap*3)/2))
+    local hh=$((($mh-$gap*3)/2))
 
     case $kind in
         --help|-h )
