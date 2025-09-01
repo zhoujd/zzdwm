@@ -70,6 +70,7 @@ grid1() {
     local ch=$((mh-gap*2))
     for win in ${windows[@]}; do
         setwin $win $gap $gap $cw $ch
+        pos=$((pos+1))
     done
 }
 
