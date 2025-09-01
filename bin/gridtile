@@ -2,16 +2,17 @@
 
 gap=5
 
-focus() {
-    local id=$1
-    xdotool windowactivate $id
-    xdotool windowraise $id
-    xdotool windowfocus $id
-}
-
 prepare() {
     local id=$1
     wmctrl -ir $id -b remove,maximized_vert,maximized_horz
+}
+
+focus() {
+    local id=$1
+    prepare $id
+    xdotool windowactivate $id
+    xdotool windowraise $id
+    xdotool windowfocus $id
 }
 
 setwin() {
@@ -32,25 +33,11 @@ cell4() {
     local cw=$(((mw-gap*3)/2))
     local ch=$(((mh-gap*3)/2))
     case $pos in
-        0 )
-            prepare $id
-            setwin $id $gap $gap $cw $ch
-            ;;
-        1 )
-            prepare $id
-            setwin $id $(($cw+2*$gap)) $gap $cw $ch
-            ;;
-        2 )
-            prepare $id
-            setwin $id $gap $(($ch+2*$gap)) $cw $ch
-            ;;
-        3 )
-            prepare $id
-            setwin $id $(($cw+2*$gap)) $(($ch+2*$gap)) $cw $ch
-            ;;
-        * )
-            echo "The $pos doesn't support"
-            ;;
+        0 ) setwin $id $gap $gap $cw $ch ;;
+        1 ) setwin $id $(($cw+2*$gap)) $gap $cw $ch ;;
+        2 ) setwin $id $gap $(($ch+2*$gap)) $cw $ch ;;
+        3 ) setwin $id $(($cw+2*$gap)) $(($ch+2*$gap)) $cw $ch ;;
+        * ) echo "The $pos doesn't support" ;;
     esac
 }
 
@@ -62,45 +49,16 @@ cell9() {
     local cw=$(((mw-gap*4)/3))
     local ch=$(((mh-gap*4)/3))
     case $pos in
-        0 )
-            prepare $id
-            setwin $id $gap $gap $cw $ch
-            ;;
-        1 )
-            prepare $id
-            setwin $id $(($cw+2*$gap)) $gap $cw $ch
-            ;;
-        2 )
-            prepare $id
-            setwin $id $((2*$cw+3*$gap)) $gap $cw $ch
-            ;;
-        3 )
-            prepare $id
-            setwin $id $gap $(($ch+2*$gap)) $cw $ch
-            ;;
-        4 )
-            prepare $id
-            setwin $id $(($cw+2*$gap)) $(($ch+2*$gap)) $cw $ch
-            ;;
-        5 )
-            prepare $id
-            setwin $id $((2*$cw+3*$gap)) $(($ch+2*$gap)) $cw $ch
-            ;;
-        6 )
-            prepare $id
-            setwin $id $gap $((2*$ch+3*$gap)) $cw $ch
-            ;;
-        7 )
-            prepare $id
-            setwin $id $(($cw+2*$gap)) $((2*$ch+3*$gap)) $cw $ch
-            ;;
-        8 )
-            prepare $id
-            setwin $id $((2*$cw+3*$gap)) $((2*$ch+3*$gap)) $cw $ch
-            ;;
-        * )
-            echo "The $pos doesn't support"
-            ;;
+        0 ) setwin $id $gap $gap $cw $ch ;;
+        1 ) setwin $id $(($cw+2*$gap)) $gap $cw $ch ;;
+        2 ) setwin $id $((2*$cw+3*$gap)) $gap $cw $ch ;;
+        3 ) setwin $id $gap $(($ch+2*$gap)) $cw $ch ;;
+        4 ) setwin $id $(($cw+2*$gap)) $(($ch+2*$gap)) $cw $ch ;;
+        5 ) setwin $id $((2*$cw+3*$gap)) $(($ch+2*$gap)) $cw $ch ;;
+        6 ) setwin $id $gap $((2*$ch+3*$gap)) $cw $ch ;;
+        7 ) setwin $id $(($cw+2*$gap)) $((2*$ch+3*$gap)) $cw $ch ;;
+        8 ) setwin $id $((2*$cw+3*$gap)) $((2*$ch+3*$gap)) $cw $ch ;;
+        * ) echo "The $pos doesn't support" ;;
     esac
 }
 
@@ -142,9 +100,7 @@ main() {
     local id=$(xdotool getactivewindow)
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
-    local num=${#windows[@]}
-    echo "num: $num"
-    if [ $num -gt 4 ]; then
+    if [ ${#windows[@]} -gt 4 ]; then
         grid9
     else
         grid4
