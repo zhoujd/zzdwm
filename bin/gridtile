@@ -63,6 +63,9 @@ cell9() {
 }
 
 grid4() {
+    local desktop=$(xdotool get_desktop)
+    local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
+                         tr -s '[:blank:]' |  awk '{print $1}'))
     local pos=0
     for win in ${windows[@]}; do
         case $((pos%4)) in
@@ -76,6 +79,9 @@ grid4() {
 }
 
 grid9() {
+    local desktop=$(xdotool get_desktop)
+    local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
+                         tr -s '[:blank:]' |  awk '{print $1}'))
     local pos=0
     for win in ${windows[@]}; do
         case $((pos%9)) in
@@ -93,9 +99,8 @@ grid9() {
     done
 }
 
-main() {
+auto() {
     local desktop=$(xdotool get_desktop)
-    local id=$(xdotool getactivewindow)
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
     if [ ${#windows[@]} -gt 4 ]; then
@@ -103,6 +108,16 @@ main() {
     else
         grid4
     fi
+}
+
+main() {
+    local kind=$1
+    local id=$(xdotool getactivewindow)
+    case $kind in
+        4 ) grid4 ;;
+        9 ) grid9 ;;
+        * ) auto ;;
+    esac
     focus $id
 }
 
