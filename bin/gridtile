@@ -24,7 +24,37 @@ setwin() {
     xdotool windowsize $id $size_x $size_y
 }
 
-cell() {
+cell4() {
+    local pos=$1
+    local id=$2
+    local mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
+    local mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
+    local cw=$(((mw-gap*3)/2))
+    local ch=$(((mh-gap*3)/2))
+    case $pos in
+        0 )
+            prepare $id
+            setwin $id $gap $gap $cw $ch
+            ;;
+        1 )
+            prepare $id
+            setwin $id $(($cw+2*$gap)) $gap $cw $ch
+            ;;
+        2 )
+            prepare $id
+            setwin $id $gap $(($ch+2*$gap)) $cw $ch
+            ;;
+        3 )
+            prepare $id
+            setwin $id $(($cw+2*$gap)) $(($ch+2*$gap)) $cw $ch
+            ;;
+        * )
+            echo "The $pos doesn't support"
+            ;;
+    esac
+}
+
+cell9() {
     local pos=$1
     local id=$2
     local mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
@@ -74,27 +104,51 @@ cell() {
     esac
 }
 
+grid4() {
+    local pos=0
+    for win in ${windows[@]}; do
+        case $((pos%4)) in
+            0 ) cell4 0 $win ;;
+            1 ) cell4 1 $win ;;
+            2 ) cell4 2 $win ;;
+            3 ) cell4 3 $win ;;
+        esac
+        pos=$((pos+1))
+    done
+    focus $id
+}
+
+grid9() {
+    local pos=0
+    for win in ${windows[@]}; do
+        case $((pos%9)) in
+            0 ) cell9 0 $win ;;
+            1 ) cell9 1 $win ;;
+            2 ) cell9 2 $win ;;
+            3 ) cell9 3 $win ;;
+            4 ) cell9 4 $win ;;
+            5 ) cell9 5 $win ;;
+            6 ) cell9 6 $win ;;
+            7 ) cell9 7 $win ;;
+            8 ) cell9 8 $win ;;
+        esac
+        pos=$((pos+1))
+    done
+    focus $id
+}
+
 main() {
     local desktop=$(xdotool get_desktop)
     local id=$(xdotool getactivewindow)
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
-    local pos=0
-    for win in ${windows[@]}; do
-        case $((pos%9)) in
-            0 ) cell 0 $win ;;
-            1 ) cell 1 $win ;;
-            2 ) cell 2 $win ;;
-            3 ) cell 3 $win ;;
-            4 ) cell 4 $win ;;
-            5 ) cell 5 $win ;;
-            6 ) cell 6 $win ;;
-            7 ) cell 7 $win ;;
-            8 ) cell 8 $win ;;
-        esac
-        pos=$((pos+1))
-    done
-    focus $id
+    local num=${#windows[@]}
+    echo "num: $num"
+    if [ $num -gt 4 ]; then
+        grid9
+    else
+        grid4
+    fi
 }
 
 main $@
