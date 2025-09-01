@@ -96,7 +96,8 @@ grid9() {
 }
 
 auto() {
-    if [ ${#windows[@]} -gt 4 ]; then
+    local warp=4
+    if [ ${#windows[@]} -gt $warp ]; then
         grid9
     else
         grid4
