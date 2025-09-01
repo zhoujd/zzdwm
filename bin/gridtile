@@ -2,16 +2,16 @@
 
 gap=5
 
-prepare() {
-    local id=$1
-    wmctrl -ir $id -b remove,maximized_vert,maximized_horz
-}
-
 focus() {
     local id=$1
     xdotool windowactivate $id
     xdotool windowraise $id
     xdotool windowfocus $id
+}
+
+prepare() {
+    local id=$1
+    wmctrl -ir $id -b remove,maximized_vert,maximized_horz
 }
 
 setwin() {
