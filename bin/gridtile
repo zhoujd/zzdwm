@@ -31,39 +31,6 @@ setwin() {
     xdotool windowsize $id $size_x $size_y
 }
 
-cell4() {
-    local pos=$1
-    local id=$2
-    local cw=$(((mw-gap*3)/2))
-    local ch=$(((mh-gap*3)/2))
-    case $pos in
-        0 ) setwin $id $gap $gap $cw $ch ;;
-        1 ) setwin $id $(($cw+2*$gap)) $gap $cw $ch ;;
-        2 ) setwin $id $gap $(($ch+2*$gap)) $cw $ch ;;
-        3 ) setwin $id $(($cw+2*$gap)) $(($ch+2*$gap)) $cw $ch ;;
-        * ) echo "The $pos doesn't support" ;;
-    esac
-}
-
-cell9() {
-    local pos=$1
-    local id=$2
-    local cw=$(((mw-gap*4)/3))
-    local ch=$(((mh-gap*4)/3))
-    case $pos in
-        0 ) setwin $id $gap $gap $cw $ch ;;
-        1 ) setwin $id $(($cw+2*$gap)) $gap $cw $ch ;;
-        2 ) setwin $id $((2*$cw+3*$gap)) $gap $cw $ch ;;
-        3 ) setwin $id $gap $(($ch+2*$gap)) $cw $ch ;;
-        4 ) setwin $id $(($cw+2*$gap)) $(($ch+2*$gap)) $cw $ch ;;
-        5 ) setwin $id $((2*$cw+3*$gap)) $(($ch+2*$gap)) $cw $ch ;;
-        6 ) setwin $id $gap $((2*$ch+3*$gap)) $cw $ch ;;
-        7 ) setwin $id $(($cw+2*$gap)) $((2*$ch+3*$gap)) $cw $ch ;;
-        8 ) setwin $id $((2*$cw+3*$gap)) $((2*$ch+3*$gap)) $cw $ch ;;
-        * ) echo "The $pos doesn't support" ;;
-    esac
-}
-
 grid1() {
     local pos=0
     local cw=$((mw-gap*2))
@@ -82,7 +49,6 @@ grid2() {
         case $((pos%2)) in
             0 ) setwin $win $gap $gap $cw $ch ;;
             1 ) setwin $win $(($cw+2*$gap)) $gap $cw $ch ;;
-            * ) echo "The $pos doesn't support" ;;
         esac
         pos=$((pos+1))
     done
@@ -90,12 +56,14 @@ grid2() {
 
 grid4() {
     local pos=0
+    local cw=$(((mw-gap*3)/2))
+    local ch=$(((mh-gap*3)/2))
     for win in ${windows[@]}; do
         case $((pos%4)) in
-            0 ) cell4 0 $win ;;
-            1 ) cell4 1 $win ;;
-            2 ) cell4 2 $win ;;
-            3 ) cell4 3 $win ;;
+            0 ) setwin $win $gap $gap $cw $ch ;;
+            1 ) setwin $win $(($cw+2*$gap)) $gap $cw $ch ;;
+            2 ) setwin $win $gap $(($ch+2*$gap)) $cw $ch ;;
+            3 ) setwin $win $(($cw+2*$gap)) $(($ch+2*$gap)) $cw $ch ;;
         esac
         pos=$((pos+1))
     done
@@ -103,17 +71,19 @@ grid4() {
 
 grid9() {
     local pos=0
+    local cw=$(((mw-gap*4)/3))
+    local ch=$(((mh-gap*4)/3))
     for win in ${windows[@]}; do
         case $((pos%9)) in
-            0 ) cell9 0 $win ;;
-            1 ) cell9 1 $win ;;
-            2 ) cell9 2 $win ;;
-            3 ) cell9 3 $win ;;
-            4 ) cell9 4 $win ;;
-            5 ) cell9 5 $win ;;
-            6 ) cell9 6 $win ;;
-            7 ) cell9 7 $win ;;
-            8 ) cell9 8 $win ;;
+            0 ) setwin $win $gap $gap $cw $ch ;;
+            1 ) setwin $win $(($cw+2*$gap)) $gap $cw $ch ;;
+            2 ) setwin $win $((2*$cw+3*$gap)) $gap $cw $ch ;;
+            3 ) setwin $win $gap $(($ch+2*$gap)) $cw $ch ;;
+            4 ) setwin $win $(($cw+2*$gap)) $(($ch+2*$gap)) $cw $ch ;;
+            5 ) setwin $win $((2*$cw+3*$gap)) $(($ch+2*$gap)) $cw $ch ;;
+            6 ) setwin $win $gap $((2*$ch+3*$gap)) $cw $ch ;;
+            7 ) setwin $win $(($cw+2*$gap)) $((2*$ch+3*$gap)) $cw $ch ;;
+            8 ) setwin $win $((2*$cw+3*$gap)) $((2*$ch+3*$gap)) $cw $ch ;;
         esac
         pos=$((pos+1))
     done
