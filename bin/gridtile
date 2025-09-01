@@ -64,6 +64,29 @@ cell9() {
     esac
 }
 
+grid1() {
+    local pos=0
+    local cw=$((mw-gap*2))
+    local ch=$((mh-gap*2))
+    for win in ${windows[@]}; do
+        setwin $win $gap $gap $cw $ch
+    done
+}
+
+grid2() {
+    local pos=0
+    local cw=$(((mw-gap*3)/2))
+    local ch=$((mh-gap*2))
+    for win in ${windows[@]}; do
+        case $((pos%2)) in
+            0 ) setwin $win $gap $gap $cw $ch ;;
+            1 ) setwin $win $(($cw+2*$gap)) $gap $cw $ch ;;
+            * ) echo "The $pos doesn't support" ;;
+        esac
+        pos=$((pos+1))
+    done
+}
+
 grid4() {
     local pos=0
     for win in ${windows[@]}; do
@@ -96,17 +119,23 @@ grid9() {
 }
 
 auto() {
-    local warp=4
-    if [ ${#windows[@]} -gt $warp ]; then
+    local num=${#windows[@]}
+    if [ $num -gt 4 ]; then
         grid9
-    else
+    elif [ $num -gt 2 ]; then
         grid4
+    elif [ $num -gt 1 ]; then
+        grid2
+    else
+        grid1
     fi
 }
 
 main() {
     local kind=$1
     case $kind in
+        1 ) grid1 ;;
+        2 ) grid2 ;;
         4 ) grid4 ;;
         9 ) grid9 ;;
         * ) auto ;;
