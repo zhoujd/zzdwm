@@ -73,7 +73,6 @@ grid4() {
         esac
         pos=$((pos+1))
     done
-    focus $id
 }
 
 grid9() {
@@ -92,7 +91,6 @@ grid9() {
         esac
         pos=$((pos+1))
     done
-    focus $id
 }
 
 main() {
@@ -105,6 +103,7 @@ main() {
     else
         grid4
     fi
+    focus $id
 }
 
 main $@
