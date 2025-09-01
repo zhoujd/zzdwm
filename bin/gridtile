@@ -102,9 +102,22 @@ auto() {
     fi
 }
 
+usage() {
+    local app=$(basename $0)
+    cat <<EOF
+$app {1|2|4|9|-h|--help}
+default: auto mode
+$app 1   --  1x1 mode
+$app 2   --  1x2 mode
+$app 4   --  2x2 mode
+$app 9   --  3x3 mode
+EOF
+}
+
 main() {
     local kind=$1
     case $kind in
+        -h|--help ) usage ;;
         1 ) grid1 ;;
         2 ) grid2 ;;
         4 ) grid4 ;;
