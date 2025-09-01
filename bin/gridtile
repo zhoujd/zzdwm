@@ -9,7 +9,6 @@ prepare() {
 
 focus() {
     local id=$1
-    prepare $id
     xdotool windowactivate $id
     xdotool windowraise $id
     xdotool windowfocus $id
@@ -21,6 +20,7 @@ setwin() {
     local pos_y=$3
     local size_x=$4
     local size_y=$5
+    prepare $id
     xdotool windowmove $id $pos_x $pos_y
     xdotool windowsize $id $size_x $size_y
 }
