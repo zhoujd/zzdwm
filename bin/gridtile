@@ -1,6 +1,12 @@
 #!/bin/bash
 
 gap=5
+active=$(xdotool getactivewindow)
+desktop=$(xdotool get_desktop)
+windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
+               tr -s '[:blank:]' |  awk '{print $1}'))
+mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
+mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
 
 focus() {
     local id=$1
@@ -28,8 +34,6 @@ setwin() {
 cell4() {
     local pos=$1
     local id=$2
-    local mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
-    local mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
     local cw=$(((mw-gap*3)/2))
     local ch=$(((mh-gap*3)/2))
     case $pos in
@@ -44,8 +48,6 @@ cell4() {
 cell9() {
     local pos=$1
     local id=$2
-    local mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
-    local mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
     local cw=$(((mw-gap*4)/3))
     local ch=$(((mh-gap*4)/3))
     case $pos in
@@ -63,9 +65,6 @@ cell9() {
 }
 
 grid4() {
-    local desktop=$(xdotool get_desktop)
-    local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
-                         tr -s '[:blank:]' |  awk '{print $1}'))
     local pos=0
     for win in ${windows[@]}; do
         case $((pos%4)) in
@@ -79,9 +78,6 @@ grid4() {
 }
 
 grid9() {
-    local desktop=$(xdotool get_desktop)
-    local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
-                         tr -s '[:blank:]' |  awk '{print $1}'))
     local pos=0
     for win in ${windows[@]}; do
         case $((pos%9)) in
@@ -100,9 +96,6 @@ grid9() {
 }
 
 auto() {
-    local desktop=$(xdotool get_desktop)
-    local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
-                         tr -s '[:blank:]' |  awk '{print $1}'))
     if [ ${#windows[@]} -gt 4 ]; then
         grid9
     else
@@ -112,13 +105,12 @@ auto() {
 
 main() {
     local kind=$1
-    local id=$(xdotool getactivewindow)
     case $kind in
         4 ) grid4 ;;
         9 ) grid9 ;;
         * ) auto ;;
     esac
-    focus $id
+    focus $active
 }
 
 main $@
