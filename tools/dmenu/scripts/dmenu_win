@@ -15,8 +15,7 @@ for((i=0; i<$tags; i++)); do
         * ) t=$i ;;
     esac
     l=${labels[$i]}
-    s=" "
-    apps=$(echo -n "$apps" | sed "s/^${t}\s\+/${l}${s}/")
+    apps=$(echo -n "$apps" | sed -r "s/^${t}(\s+)/${l}\1/")
 done
 
 # Add spaces to align the WM_NAMEs of the windows
