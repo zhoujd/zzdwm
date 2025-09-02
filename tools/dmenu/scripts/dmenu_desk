@@ -24,8 +24,9 @@ desks() {
         else
             flag2=" "
         fi
-        status=${num}/${total}
-        printf '%-8s%4s%10s%20s\n' "${labels[$i]}" "${flag1}" "${flag2}" "$status"
+        status="${num}/${total}"
+        printf '%-8s%4s%10s%20s\n' \
+               "${labels[$i]}" "${flag1}" "${flag2}" "${status}"
     done
 }
 
