@@ -6,7 +6,7 @@ windows=$(wmctrl -xl 2>/dev/null)
 apps=$(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 2-3,5- | \
            sed 's/[a-zA-Z0-9-]*\.//')
 
-# Update labels
+# Add labels
 labels=(one two three four five six seven eight nine)
 tags=$(wmctrl -d | grep -v nogroup | wc -l)
 for((i=0; i<$tags; i++)); do
