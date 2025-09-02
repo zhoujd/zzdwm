@@ -9,9 +9,8 @@ apps=$(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 2-3,5- | \
 # Add labels
 labels=(one two three four five six seven eight nine)
 tags=$(wmctrl -d | grep -v nogroup | wc -l)
-wm=$(wmctrl -m | grep Name: | awk '{print $2}' | tr '[:upper:]' '[:lower:]')
 for((i=0; i<$tags; i++)); do
-    case $wm in
+    case $DESKTOP_SESSION in
         cwm ) t=$(($i+1)) ;;
         * ) t=$i ;;
     esac
