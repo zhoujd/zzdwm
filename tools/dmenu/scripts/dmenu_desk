@@ -34,14 +34,8 @@ desks() {
 target=$(desks | dmenu -l $lines -i -ix -p $title)
 if [ -n "$target" ]; then
     case $DESKTOP_SESSION in
-        dwm )
-            xdotool key super+$(expr $target + 1)
-            ;;
-        cwm )
-            wmctrl -s $(expr $target + 1)
-            ;;
-        * )
-            wmctrl -s $target
-            ;;
+        dwm ) xdotool key super+$(expr $target + 1) ;;
+        cwm ) wmctrl -s $(expr $target + 1) ;;
+        * ) wmctrl -s $target ;;
     esac
 fi
