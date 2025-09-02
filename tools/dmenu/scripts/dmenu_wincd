@@ -4,8 +4,21 @@ title="wincd:"
 lines=10
 desktop=$(xdotool get_desktop)
 windows=$(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+")
-apps=$(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 3-3,5- | \
+apps=$(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 2-3,5- | \
            sed 's/[a-zA-Z0-9-]*\.//')
+
+# Add labels
+labels=(one two three four five six seven eight nine)
+tags=$(wmctrl -d | grep -v nogroup | wc -l)
+wm=$(wmctrl -m | grep Name: | awk '{print $2}')
+for((i=0; i<$tags; i++)); do
+    case $wm in
+        CWM ) t=$(($i+1)) ;;
+        * ) t=$i ;;
+    esac
+    l=${labels[$i]}
+    apps=$(echo -n "$apps" | sed -r "s/^${t}(\s+)/${l}\1/")
+done
 
 # Add spaces to align the WM_NAMEs of the windows
 max=$(echo -n "$apps" | awk '{cur=length($1); \
@@ -13,10 +26,11 @@ max=$(echo -n "$apps" | awk '{cur=length($1); \
 
 apps=$(echo -n "$apps" | \
            awk -v max="$max" \
-               '{cur=length($1); \
-                 printf $1; \
+               '{cur=length($2); \
+                 printf "%-8s", $1; \
+                 printf $2; \
                  for(i=0; i < max - cur + 1; i++) printf " "; \
-                 $1=""; \
+                 $1=$2=""; \
                  printf "%s\n", $0}')
 
 target=$(echo -n "$apps" | dmenu -l $lines -i -ix -p $title)
