@@ -10,12 +10,8 @@ desks() {
     total=$(wmctrl -lp | awk '{print $2}' | wc -l)
     for((i=0; i<$tags; i++)); do
         case $DESKTOP_SESSION in
-            cwm )
-                g=$(expr $i + 1)
-                ;;
-            * )
-                g=$i
-                ;;
+            cwm ) g=$(($i+1)) ;;
+            * ) g=$i ;;
         esac
         num=$(wmctrl -lp | awk '{print $2}' | grep -sc "^${g}$")
         if [ ${group} -eq ${g} ]; then
