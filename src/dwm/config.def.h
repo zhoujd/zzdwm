@@ -143,6 +143,7 @@ static const char *movewincmd[] = { "movewin", NULL };
 static const char *deckwincmd[] = { "deckwin", NULL };
 static const char *manmenucmd[] = { "dmenu_man", NULL };
 static const char *wincdmenucmd[] = { "dmenu_wincd", NULL };
+static const char *infomenucmd[] = { "dmenu_info", NULL };
 
 /* XFree86 vender specific keysyms
  * https://cgit.freedesktop.org/xorg/proto/x11proto/tree/XF86keysym.h
@@ -183,6 +184,7 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_z,            spawn,            {.v = slockcmd} },
 	{ MODKEY|ShiftMask,             XK_Return,       spawn,            {.v = duptermcmd} },
 	{ MODKEY,                       XK_slash,        spawn,            {.v = manmenucmd} },
+	{ MODKEY|ShiftMask,             XK_slash,        spawn,            {.v = infomenucmd} },
 	{ MODKEY,                       XK_apostrophe,   spawn,            {.v = deskmenucmd} },
 	{ MODKEY,                       XK_grave,        spawn,            {.v = enummenucmd} },
 	{ MODKEY,                       XK_semicolon,    spawn,            {.v = wincdmenucmd} },
