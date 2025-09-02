@@ -6,6 +6,15 @@ windows=$(wmctrl -xl 2>/dev/null)
 apps=$(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 2-3,5- | \
            sed 's/[a-zA-Z0-9-]*\.//')
 
+# Update labels
+labels=(one two three four five six seven eight nine)
+tags=$(wmctrl -d | grep -v nogroup | wc -l)
+for((i=0; i<$tags; i++)); do
+    t=$(expr $i + 1)
+    l=${labels[$i]}
+    apps=$(echo -n "$apps" | sed "s/^${t}\s\+/${l} /")
+done
+
 # Add spaces to align the WM_NAMEs of the windows
 max=$(echo -n "$apps" | awk '{cur=length($2); \
                               max=(cur>max?cur:max)} END{print max}')
@@ -13,6 +22,7 @@ max=$(echo -n "$apps" | awk '{cur=length($2); \
 apps=$(echo -n "$apps" | \
            awk -v max="$max" \
                '{cur=length($2); \
+                 printf "%-8s", $1; \
                  printf $2; \
                  for(i=0; i < max - cur + 1; i++) printf " "; \
                  $1=$2=""; \
