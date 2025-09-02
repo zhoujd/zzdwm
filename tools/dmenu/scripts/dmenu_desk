@@ -9,6 +9,7 @@ desks() {
     group=$(xdotool get_desktop)
     total=$(wmctrl -l | awk '{print $2}' | wc -l)
     for((i=0; i<$tags; i++)); do
+        label="${labels[$i]}"
         case $DESKTOP_SESSION in
             cwm ) g=$(expr $i + 1) ;;
             * ) g=$i ;;
@@ -25,8 +26,8 @@ desks() {
             flag2=" "
         fi
         status="${num}/${total}"
-        printf '%-8s%4s%10s%20s\n' \
-               "${labels[$i]}" "${flag1}" "${flag2}" "${status}"
+        printf '%-10s%5s%10s%20s\n' \
+               "${label}" "${flag1}" "${flag2}" "${status}"
     done
 }
 
