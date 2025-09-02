@@ -23,7 +23,7 @@ desks() {
         if [ ${num} -ne 0 ]; then
             flag2="+"
         else
-            flag2=" "
+            flag2="="
         fi
         status="${num}/${total}"
         printf '%-10s%5s%10s%20s\n' \
