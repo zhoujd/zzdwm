@@ -11,14 +11,14 @@ apps=$(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 2-3,5- | \
 labels=(one two three four five six seven eight nine)
 wm=$(wmctrl -m | grep Name: | awk '{print $2}')
 case $wm in
-    CWM ) t=$(($desktop+1)) ;;
+    CWM ) t=$(($desktop-1)) ;;
     * ) t=$desktop ;;
 esac
 l=${labels[$t]}
 apps=$(echo -n "$apps" | sed -r "s/^${desktop}(\s+)/${l}\1/")
 
 # Add spaces to align the WM_NAMEs of the windows
-max=$(echo -n "$apps" | awk '{cur=length($1); \
+max=$(echo -n "$apps" | awk '{cur=length($2); \
                               max=(cur>max?cur:max)} END{print max}')
 
 apps=$(echo -n "$apps" | \
