@@ -7,13 +7,13 @@ desks() {
     labels=(one two three four five six seven eight nine)
     tags=$(wmctrl -d | grep -v nogroup | wc -l)
     group=$(xdotool get_desktop)
-    total=$(wmctrl -lp | awk '{print $2}' | wc -l)
+    total=$(wmctrl -l | awk '{print $2}' | wc -l)
     for((i=0; i<$tags; i++)); do
         case $DESKTOP_SESSION in
             cwm ) g=$(expr $i + 1) ;;
             * ) g=$i ;;
         esac
-        num=$(wmctrl -lp | awk '{print $2}' | grep -sc "^${g}$")
+        num=$(wmctrl -l | awk '{print $2}' | grep -sc "^${g}$")
         if [ ${group} -eq ${g} ]; then
             flag="*"
         else
