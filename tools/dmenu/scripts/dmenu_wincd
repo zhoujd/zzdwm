@@ -1,19 +1,11 @@
 #!/bin/bash
 
+title="wincd:"
+lines=10
 desktop=$(xdotool get_desktop)
 windows=$(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+")
 apps=$(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 3-3,5- | \
            sed 's/[a-zA-Z0-9-]*\.//')
-
-# Title
-labels=(one two three four five six seven eight nine)
-wm=$(wmctrl -m | grep Name: | awk '{print $2}')
-case $wm in
-    CWM ) t=$((${desktop}-1)) ;;
-    * ) t=${desktop} ;;
-esac
-title="${labels[$t]}:"
-lines=10
 
 # Add spaces to align the WM_NAMEs of the windows
 max=$(echo -n "$apps" | awk '{cur=length($1); \
