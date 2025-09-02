@@ -15,11 +15,17 @@ desks() {
         esac
         num=$(wmctrl -l | awk '{print $2}' | grep -sc "^${g}$")
         if [ ${group} -eq ${g} ]; then
-            flag="*"
+            flag1="*"
         else
-            flag="-"
+            flag1="-"
         fi
-        printf '%-8s%4s%20s\n' "${labels[$i]}" "${flag}" "${num}/${total}"
+        if [ ${num} -ne 0 ]; then
+            flag2="+"
+        else
+            flag2=" "
+        fi
+        status=${num}/${total}
+        printf '%-8s%4s%10s%20s\n' "${labels[$i]}" "${flag1}" "${flag2}" "$status"
     done
 }
 
