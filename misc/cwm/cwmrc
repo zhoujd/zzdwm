@@ -167,6 +167,7 @@ bind-key 4-slash        "dmenu_man"
 bind-key 4-grave        "dmenu_menu"
 bind-key 4-apostrophe   "dmenu_desk"
 bind-key 4-semicolon    "dmenu_wincd"
+bind-key 4-question     "dmenu_info"
 
 # Remove all mouse default keybindings
 unbind-mouse all
