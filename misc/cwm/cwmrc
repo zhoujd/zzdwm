@@ -129,7 +129,6 @@ bind-key 4-z            "doubledeck h"
 
 # Applications
 bind-key 4-c            "st"
-bind-key 4S-Return      "st"
 bind-key 4-e            "runec"
 
 # Remove all mouse default keybindings
