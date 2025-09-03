@@ -36,8 +36,8 @@ Key modes[MODE_SIZE][10] = {
 
 // Define normal mode key bindings here
 Key keys[] = {
-  { Super, XK_y, mode(Control, True) },
-  { Super, XK_a, mode(Execute, False) },
+  { Super, XK_Escape, mode(Control, True) },
+  { Super, XK_a,      mode(Execute, False) },
 };
 
 ModeProperties mode_properties[MODE_SIZE] = {
