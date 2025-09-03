@@ -131,6 +131,7 @@ bind-key 4-z            "doubledeck h"
 bind-key 4-c            "st"
 bind-key 4-e            "runec"
 
+# Cycle/reverse the same window class in group
 bind-key 4-v            "nextwincd"
 bind-key 4S-v           "prevwincd"
 
