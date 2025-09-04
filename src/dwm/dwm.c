@@ -2899,7 +2899,7 @@ tile(Monitor *m)
 			mw = m->nmaster ? m->ww * m->mfact : 0;
 		else
 			mw = m->ww - m->gappx;
-		for (i = 0, my = ty = m->gappx, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
+		for (i = 0, my = ty = m->gappx, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++) {
 			if (i < m->nmaster) {
 				h = (m->wh - my) / (MIN(n, m->nmaster) - i) - m->gappx;
 				msx = m->wx + m->gappx;
@@ -2930,6 +2930,7 @@ tile(Monitor *m)
 						ty += HEIGHT(c) + m->gappx;
 				}
 			}
+		}
 	} else { /* draw with singularborders logic */
 		/* wh = n*minwsz */
 		if (minwsz > 0)
@@ -2940,7 +2941,7 @@ tile(Monitor *m)
 			mw = m->nmaster ? m->ww * m->mfact : 0;
 		else
 			mw = m->ww;
-		for (i = my = ty = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
+		for (i = my = ty = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++) {
 			if (i < m->nmaster) {
 				h = (m->wh - my) / (MIN(n, m->nmaster) - i);
 				msx = m->wx;
@@ -2970,6 +2971,7 @@ tile(Monitor *m)
 						ty += HEIGHT(c);
 				}
 			}
+		}
 	}
 }
 
@@ -2996,7 +2998,7 @@ bstack(Monitor *m) {
 			mh = m->nmaster ? m->wh * m->mfact : 0;
 		else
 			mh = m->wh - m->gappx;
-		for (i = 0, mx = tx = m->gappx, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
+		for (i = 0, mx = tx = m->gappx, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++) {
 			if (i < m->nmaster) {
 				w = (m->ww - mx) / (MIN(n, m->nmaster) - i) - m->gappx;
 				msy = m->wy + m->gappx;
@@ -3027,6 +3029,7 @@ bstack(Monitor *m) {
 						tx += WIDTH(c) + m->gappx;
 				}
 			}
+		}
 	} else {
 		if (n > m->nmaster) {
 			mh = m->nmaster ? m->mfact * m->wh : 0;
