@@ -1040,6 +1040,7 @@ drawbar(Monitor *m)
 
 	if (m->lt[m->sellt]->arrange == monocle ||
 	    m->lt[m->sellt]->arrange == tile ||
+	    m->lt[m->sellt]->arrange == bstack ||
 	    m->lt[m->sellt]->arrange == grid) {
 		for (c = nexttiled(m->clients), a = 0, s = 0; c; c = nexttiled(c->next), a++)
 			if (c == m->stack)
@@ -2972,14 +2973,14 @@ tile(Monitor *m)
 	}
 }
 
-static void
+void
 bstack(Monitor *m) {
-	unsigned int smw;
 	int w, h, mh, mx, tx, ty, tw;
-	unsigned int msx = 0, msy = 0, msw = 0, msh = 0;
-	int my, maxn;
 	int i, n;
 	Client *c;
+	unsigned int smw;
+	unsigned int msx = 0, msy = 0, msw = 0, msh = 0;
+	int my, maxn;
 	int minwsz = bh*minwfact + vertgappx*2;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
