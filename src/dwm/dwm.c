@@ -2883,7 +2883,7 @@ tile(Monitor *m)
 	int i, n, h, my, maxn;
 	unsigned int msx = 0, msy = 0, msw = 0, msh = 0;
 	Client *c;
-	int minwsz = bh + vertgappx * 2;
+	int minwsz = bh*minwfact + vertgappx*2;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
 	if (n == 0)
@@ -2974,32 +2974,79 @@ tile(Monitor *m)
 
 static void
 bstack(Monitor *m) {
+	unsigned int smw;
 	int w, h, mh, mx, tx, ty, tw;
+	unsigned int msx = 0, msy = 0, msw = 0, msh = 0;
+	int my, maxn;
 	int i, n;
 	Client *c;
+	int minwsz = bh*minwfact + vertgappx*2;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
 	if (n == 0)
 		return;
-	if (n > m->nmaster) {
-		mh = m->nmaster ? m->mfact * m->wh : 0;
-		tw = m->ww / (n - m->nmaster);
-		ty = m->wy + mh;
+	if (m->drawwithgaps) { /* draw with fullgaps logic */
+		if ((m->ww - m->gappx) > 0 && (m->gappx + minwsz) > 0)
+			/* wh = 2*gap + n*minwsz + (n - 1)*gap */
+			maxn = ((m->ww - m->gappx) / (m->gappx + minwsz)) + m->nmaster;
+		else
+			maxn = m->nmaster;
+		if (n > m->nmaster)
+			mh = m->nmaster ? m->wh * m->mfact : 0;
+		else
+			mh = m->wh - m->gappx;
+		for (i = 0, mx = tx = m->gappx, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
+			if (i < m->nmaster) {
+				w = (m->ww - mx) / (MIN(n, m->nmaster) - i) - m->gappx;
+				msy = m->wy + m->gappx;
+				msx = m->wx + mx;
+				msh = mh - (2*c->bw) - m->gappx;
+				msw = w - (2*c->bw);
+				resize(c, msx, msy, msw, msh, False);
+				if (mx + WIDTH(c) + m->gappx < m->ww)
+					my += WIDTH(c) + m->gappx;
+			} else {
+				if (i >= maxn) {
+					resize(c, msx, msy, msw, msh, False);
+					continue;
+				}
+				smw = m->mw * m->smfact;
+				if (!(nexttiled(c->next)))
+					w = (m->ww - tx) / (MIN(n, maxn) - i) - m->gappx;
+				else
+					w = (m->ww - smw - tx) / (MIN(n, maxn) - i) - m->gappx;
+				if (w < minwsz || (w < 2*c->bw)) {
+					resize(c, msx, msy, msw, msh, False);
+				} else {
+					resize(c, m->wx + tx, m->wy + mh + m->gappx,
+					       w - 2*c->bw, m->wh - mh - 2*c->bw - 2*m->gappx, False);
+					if (!(nexttiled(c->next)))
+						tx += WIDTH(c) + smw + m->gappx;
+					else
+						tx += WIDTH(c) + m->gappx;
+				}
+			}
 	} else {
-		mh = m->wh;
-		tw = m->ww;
-		ty = m->wy;
-	}
-	for (i = mx = 0, tx = m->wx, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++) {
-		if (i < m->nmaster) {
-			w = (m->ww - mx) / (MIN(n, m->nmaster) - i);
-			resize(c, m->wx + mx, m->wy, w - (2 * c->bw), mh - (2 * c->bw), 0);
-			mx += WIDTH(c);
+		if (n > m->nmaster) {
+			mh = m->nmaster ? m->mfact * m->wh : 0;
+			tw = m->ww / (n - m->nmaster);
+			ty = m->wy + mh;
 		} else {
-			h = m->wh - mh;
-			resize(c, tx, ty, tw - (2 * c->bw), h - (2 * c->bw), 0);
-			if (tw != m->ww)
-				tx += WIDTH(c);
+			mh = m->wh;
+			tw = m->ww;
+			ty = m->wy;
+		}
+		for (i = mx = 0, tx = m->wx, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++) {
+			if (i < m->nmaster) {
+				w = (m->ww - mx) / (MIN(n, m->nmaster) - i);
+				resize(c, m->wx + mx, m->wy, w - (2 * c->bw), mh - (2 * c->bw), 0);
+				mx += WIDTH(c);
+			} else {
+				h = m->wh - mh;
+				resize(c, tx, ty, tw - (2 * c->bw), h - (2 * c->bw), 0);
+				if (tw != m->ww)
+					tx += WIDTH(c);
+			}
 		}
 	}
 }
