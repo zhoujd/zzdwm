@@ -119,10 +119,7 @@ static const Layout layouts[] = {
 static const char *termcmd[] = { "st", NULL };
 static const char *emacscmd[] = { "runec", NULL };
 
-/* XFree86 vender specific keysyms
- * https://cgit.freedesktop.org/xorg/proto/x11proto/tree/XF86keysym.h
- * https://cgit.freedesktop.org/xorg/proto/x11proto/tree/keysymdef.h
- */
+/* XFree86 vender specific keysyms */
 #include <X11/XF86keysym.h>
 /* keys */
 static const Key keys[] = {
