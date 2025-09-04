@@ -96,6 +96,7 @@ static const Layout layouts[] = {
 	{ "HHH",      grid },
 	{ "[D]",      doubledeck },
 	{ "[Z]",      zetadeck },
+	{ "TTT",      bstack },
 	{ "[ ]",      clear },   /* hides all visible clients */
 	{ NULL,       NULL },
 };
@@ -127,7 +128,7 @@ static const Key keys[] = {
 	/* modifier                     key              function          argument */
 	{ MODKEY,                       XK_c,            spawn,            {.v = termcmd} },
 	{ MODKEY,                       XK_e,            spawn,            {.v = emacscmd} },
-	{ MODKEY,                       XK_b,            togglebar,        {0} },
+	{ MODKEY|ShiftMask,             XK_b,            togglebar,        {0} },
 	{ MODKEY,                       XK_i,            incnmaster,       {.i = +1} },
 	{ MODKEY,                       XK_d,            incnmaster,       {.i = -1} },
 	{ MODKEY|ShiftMask,             XK_i,            resetnmaster,     {.ui = nmaxmaster} },
@@ -143,7 +144,8 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_g,            setlayout,        {.v = &layouts[3]} },
 	{ MODKEY,                       XK_x,            setlayout,        {.v = &layouts[4]} },
 	{ MODKEY,                       XK_z,            setlayout,        {.v = &layouts[5]} },
-	{ MODKEY,                       XK_BackSpace,    setlayout,        {.v = &layouts[6]} },
+	{ MODKEY,                       XK_b,            setlayout,        {.v = &layouts[6]} },
+	{ MODKEY,                       XK_BackSpace,    setlayout,        {.v = &layouts[7]} },
 	{ MODKEY,                       XK_space,        setlayout,        {0} },
 	{ MODKEY|ShiftMask,             XK_space,        togglefloating,   {0} },
 	{ MODKEY|ControlMask,           XK_space,        focusmaster,      {0} },
