@@ -235,7 +235,7 @@ static void resizemouse(const Arg *arg);
 static void restack(Monitor *m);
 static void rotatestack(const Arg *arg);
 static void rotatetags(const Arg *arg);
-static void gravefloat(const Arg *arg);
+static void incfloat(const Arg *arg);
 static void run(void);
 static void scan(void);
 static int sendevent(Client *c, Atom proto);
@@ -1435,7 +1435,7 @@ void
 incnmaster(const Arg *arg)
 {
 	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
-		gravefloat(arg);
+		incfloat(arg);
 	} else {
 		if (selmon->nmaster > 0) {
 			selmon->nmaster = MIN(MAX(selmon->nmaster + arg->i, nminmaster), nmaxmaster);
@@ -2262,7 +2262,7 @@ rotatetags(const Arg *arg)
 }
 
 void
-gravefloat(const Arg *arg)
+incfloat(const Arg *arg)
 {
 	if (!selmon->sel || !selmon->sel->win)
 		return;
