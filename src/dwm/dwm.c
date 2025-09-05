@@ -208,7 +208,6 @@ static int gettextprop(Window w, Atom atom, char *text, unsigned int size);
 static void grabbuttons(Client *c, int focused);
 static void grabkeys(void);
 static void incnmaster(const Arg *arg);
-static void increase(const Arg *arg);
 static int initenv(void);
 static void keypress(XEvent *e);
 static void killthis(Client *c);
@@ -1435,27 +1434,21 @@ grabkeys(void)
 void
 incnmaster(const Arg *arg)
 {
-	if (selmon->nmaster > 0) {
-		selmon->nmaster = MIN(MAX(selmon->nmaster + arg->i, nminmaster), nmaxmaster);
-	} else if (selmon->nmaster < 0) {
-		selmon->nmaster = nminmaster;
-	} else {
-		if (arg->i > 0)
-			selmon->nmaster = MIN(MAX(selmon->nmaster + arg->i, nminmaster), nmaxmaster);
-		else
-			selmon->nmaster = nminmaster;
-	}
-	selmon->pertag->nmasters[selmon->pertag->curtag] = selmon->nmaster;
-	arrange(selmon);
-}
-
-void
-increase(const Arg *arg)
-{
 	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
 		gravefloat(arg);
 	} else {
-		incnmaster(arg);
+		if (selmon->nmaster > 0) {
+			selmon->nmaster = MIN(MAX(selmon->nmaster + arg->i, nminmaster), nmaxmaster);
+		} else if (selmon->nmaster < 0) {
+			selmon->nmaster = nminmaster;
+		} else {
+			if (arg->i > 0)
+				selmon->nmaster = MIN(MAX(selmon->nmaster + arg->i, nminmaster), nmaxmaster);
+			else
+				selmon->nmaster = nminmaster;
+		}
+		selmon->pertag->nmasters[selmon->pertag->curtag] = selmon->nmaster;
+		arrange(selmon);
 	}
 }
 
