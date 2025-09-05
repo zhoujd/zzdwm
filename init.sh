@@ -18,7 +18,7 @@ install_dep() {
          libx11-xcb-dev libxcb-randr0-dev libxcb-xinerama0-dev
     echo "Install tool package"
     sudo apt install -y \
-         alsa-utils x11-utils wmctrl psmisc
+         alsa-utils x11-utils wmctrl xdotool psmisc
     echo "Install dep done"
 }
 
