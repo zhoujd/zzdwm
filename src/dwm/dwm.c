@@ -1438,11 +1438,6 @@ incnmaster(const Arg *arg)
 		incfloat(arg);
 		return;
 	}
-	if ((selmon->lt[selmon->sellt]->arrange == grid) ||
-	    (selmon->lt[selmon->sellt]->arrange == monocle) ||
-	    (selmon->lt[selmon->sellt]->arrange == clear)) {
-		return;
-	}
 	if (selmon->nmaster > 0) {
 		selmon->nmaster = MIN(MAX(selmon->nmaster + arg->i, nminmaster), nmaxmaster);
 	} else if (selmon->nmaster < 0) {
