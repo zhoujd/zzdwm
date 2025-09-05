@@ -1434,6 +1434,12 @@ grabkeys(void)
 void
 incnmaster(const Arg *arg)
 {
+	/* grave float client */
+	if (selmon->sel && selmon->sel->win &&
+	    (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating)) {
+		gravefloat(arg);
+		return;
+	}
 	if (selmon->nmaster > 0) {
 		selmon->nmaster = MIN(MAX(selmon->nmaster + arg->i, nminmaster), nmaxmaster);
 	} else if (selmon->nmaster < 0) {
