@@ -3020,11 +3020,10 @@ tile(Monitor *m)
 void
 bstack(Monitor *m) {
 	int w, h, mh, mx, tx, ty, tw;
-	int i, n;
+	int i, n, maxn;
 	Client *c;
 	unsigned int smw;
 	unsigned int msx = 0, msy = 0, msw = 0, msh = 0;
-	int my, maxn;
 	int minwsz = bh*minwfact + vertgappx*2;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
@@ -3043,13 +3042,13 @@ bstack(Monitor *m) {
 		for (i = 0, mx = tx = m->gappx, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++) {
 			if (i < m->nmaster) {
 				w = (m->ww - mx) / (MIN(n, m->nmaster) - i) - m->gappx;
-				msy = m->wy + m->gappx;
 				msx = m->wx + mx;
-				msh = mh - (2*c->bw) - m->gappx;
+				msy = m->wy + m->gappx;
 				msw = w - (2*c->bw);
+				msh = mh - (2*c->bw) - m->gappx;
 				resize(c, msx, msy, msw, msh, False);
 				if (mx + WIDTH(c) + m->gappx < m->ww)
-					my += WIDTH(c) + m->gappx;
+					mx += WIDTH(c) + m->gappx;
 			} else {
 				if (i >= maxn) {
 					resize(c, msx, msy, msw, msh, False);
