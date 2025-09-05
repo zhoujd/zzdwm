@@ -87,6 +87,7 @@ static const int nmaxmaster  = 4;    /* max number of clients in master area */
 static const int nminmaster  = 0;    /* min number of clients in master area */
 static const int resizehints = 0;    /* 1 means respect size hints in tiled resizals */
 static const int floathints  = 0;    /* 1 means respect size hints if the window is floating */
+static const int decorhints  = 1;    /* 1 means respect decoration hints */
 static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen window */
 
 static const Layout layouts[] = {
