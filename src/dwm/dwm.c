@@ -235,6 +235,7 @@ static void resizemouse(const Arg *arg);
 static void restack(Monitor *m);
 static void rotatestack(const Arg *arg);
 static void rotatetags(const Arg *arg);
+static void gravefloat(const Arg *arg);
 static void run(void);
 static void scan(void);
 static int sendevent(Client *c, Atom proto);
@@ -2252,6 +2253,20 @@ rotatetags(const Arg *arg)
 		 selmon->tagset[selmon->seltags] = newtagset;
 		 focus(NULL);
 		 arrange(selmon);
+	}
+}
+
+void
+gravefloat(const Arg *arg)
+{
+	if (!selmon->sel || !selmon->sel->win)
+		return;
+	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
+		if (arg->i < 0) {
+			XLowerWindow(dpy, selmon->sel->win);
+		} else {
+			XRaiseWindow(dpy, selmon->sel->win);
+		}
 	}
 }
 
