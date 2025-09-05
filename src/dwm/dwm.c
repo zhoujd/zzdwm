@@ -1439,6 +1439,7 @@ incnmaster(const Arg *arg)
 		return;
 	}
 	if ((selmon->lt[selmon->sellt]->arrange == grid) ||
+	    (selmon->lt[selmon->sellt]->arrange == monocle) ||
 	    (selmon->lt[selmon->sellt]->arrange == clear)) {
 		return;
 	}
