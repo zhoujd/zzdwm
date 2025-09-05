@@ -1436,20 +1436,24 @@ incnmaster(const Arg *arg)
 {
 	if (!selmon->lt[selmon->sellt]->arrange || selmon->sel->isfloating) {
 		incfloat(arg);
-	} else {
-		if (selmon->nmaster > 0) {
-			selmon->nmaster = MIN(MAX(selmon->nmaster + arg->i, nminmaster), nmaxmaster);
-		} else if (selmon->nmaster < 0) {
-			selmon->nmaster = nminmaster;
-		} else {
-			if (arg->i > 0)
-				selmon->nmaster = MIN(MAX(selmon->nmaster + arg->i, nminmaster), nmaxmaster);
-			else
-				selmon->nmaster = nminmaster;
-		}
-		selmon->pertag->nmasters[selmon->pertag->curtag] = selmon->nmaster;
-		arrange(selmon);
+		return;
 	}
+	if ((selmon->lt[selmon->sellt]->arrange == grid) ||
+	    (selmon->lt[selmon->sellt]->arrange == clear)) {
+		return;
+	}
+	if (selmon->nmaster > 0) {
+		selmon->nmaster = MIN(MAX(selmon->nmaster + arg->i, nminmaster), nmaxmaster);
+	} else if (selmon->nmaster < 0) {
+		selmon->nmaster = nminmaster;
+	} else {
+		if (arg->i > 0)
+			selmon->nmaster = MIN(MAX(selmon->nmaster + arg->i, nminmaster), nmaxmaster);
+		else
+			selmon->nmaster = nminmaster;
+	}
+	selmon->pertag->nmasters[selmon->pertag->curtag] = selmon->nmaster;
+	arrange(selmon);
 }
 
 #ifdef XINERAMA
