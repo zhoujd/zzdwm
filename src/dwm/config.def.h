@@ -25,7 +25,7 @@ static const int floatoffset        = 1;   /* 0 default means no float window of
 static const int centertitle        = 1;   /* 1 means place title in the middle of barwin, 0 means default */
 static const int maxtitle           = 75;  /* max title length in bytes, 0 means no title */
 static const float minwfact         = 2.0; /* min window fact bases on font height in tile and bstack */
-static const int autoraise          = 0;   /* 1 means raises float active window automatic, 0 means default */
+static const int autoraise          = 0;   /* 1 means raises floating window automatic, 0 means default */
 static const char *fonts[]          = {
 	"SF Mono:size=11",
 	"PingFang SC:size=11",
@@ -129,8 +129,8 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_c,            spawn,            {.v = termcmd} },
 	{ MODKEY,                       XK_e,            spawn,            {.v = emacscmd} },
 	{ MODKEY|ShiftMask,             XK_b,            togglebar,        {0} },
-	{ MODKEY,                       XK_i,            incnmaster,       {.i = +1} },
-	{ MODKEY,                       XK_d,            incnmaster,       {.i = -1} },
+	{ MODKEY,                       XK_i,            increase,         {.i = +1} },
+	{ MODKEY,                       XK_d,            increase,         {.i = -1} },
 	{ MODKEY|ShiftMask,             XK_i,            resetnmaster,     {.ui = nmaxmaster} },
 	{ MODKEY|ShiftMask,             XK_d,            resetnmaster,     {.ui = nminmaster} },
 	{ MODKEY,                       XK_Return,       zoom,             {0} },
