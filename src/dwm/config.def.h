@@ -24,7 +24,7 @@ static const int showstatus         = 2;   /* 0 means no status text, 1 = select
 static const int floatoffset        = 1;   /* 0 default means no float window offset base on bar height */
 static const int centertitle        = 1;   /* 1 means place title in the middle of barwin, 0 means default */
 static const int maxtitle           = 75;  /* max title length in bytes, 0 means no title */
-static const float minwfact         = 2.0; /* min window fact in tile and bstack */
+static const float minwfact         = 2.0; /* min window fact bases on font height in tile and bstack */
 static const char *fonts[]          = {
 	"SF Mono:size=11",
 	"PingFang SC:size=11",
