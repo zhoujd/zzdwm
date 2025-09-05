@@ -1220,6 +1220,9 @@ focus(Client *c)
 			XConfigureWindow(dpy, c->win, CWSibling | CWStackMode, &wc);
 		}
 		setfocus(c);
+		if (!selmon->lt[selmon->sellt]->arrange || c->isfloating) {
+			XRaiseWindow(dpy, c->win);
+		}
 	} else {
 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
 		XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
