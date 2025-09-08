@@ -129,7 +129,7 @@ bind-key 4-z            "doubledeck h"
 
 # Applications
 bind-key 4-c            "st"
-bind-key 4-e            "runec"
+bind-key 4-e            "ec"
 
 # Cycle/reverse the same window class in group
 bind-key 4-v            "nextwincd"
