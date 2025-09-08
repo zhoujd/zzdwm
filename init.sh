@@ -47,7 +47,7 @@ install_bin() {
         $CORE_ROOT/bin/doubledeck
         $CORE_ROOT/bin/monocle
         $CORE_ROOT/bin/gridtile
-        $CORE_ROOT/bin/runec
+        $CORE_ROOT/bin/ec
         $CORE_ROOT/bin/startdwm
         $CORE_ROOT/bin/startcwm
         $CORE_ROOT/bin/dwm-session
