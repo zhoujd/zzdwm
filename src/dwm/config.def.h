@@ -119,7 +119,7 @@ static const Layout layouts[] = {
 
 /* commands */
 static const char *termcmd[] = { "st", NULL };
-static const char *emacscmd[] = { "runec", NULL };
+static const char *emacscmd[] = { "ec", NULL };
 
 /* XFree86 vender specific keysyms */
 #include <X11/XF86keysym.h>
