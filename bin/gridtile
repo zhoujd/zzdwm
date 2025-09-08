@@ -43,12 +43,12 @@ grid1() {
 
 grid2() {
     local pos=0
-    local cw=$(((mw-gap*3)/2))
-    local ch=$((mh-gap*2))
+    local cw=$((mw-gap*2))
+    local ch=$(((mh-gap*3)/2))
     for win in ${windows[@]}; do
         case $((pos%2)) in
             0 ) setwin $win $gap $gap $cw $ch ;;
-            1 ) setwin $win $(($cw+2*$gap)) $gap $cw $ch ;;
+            1 ) setwin $win $gap $(($ch+2*$gap)) $cw $ch ;;
         esac
         pos=$((pos+1))
     done
