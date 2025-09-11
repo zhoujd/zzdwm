@@ -6,4 +6,4 @@ else
     OPT=-c
 fi
 
-exec emacsclient -n $OPT -a "" "$@"
+exec emacsclient -n $OPT "$@"
