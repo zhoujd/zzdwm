@@ -37,7 +37,7 @@ grid1() {
     local ch=$((mh-gap*2))
     for win in ${windows[@]}; do
         setwin $win $gap $gap $cw $ch
-        pos=$((pos+1))
+        pos=$(($pos+1))
     done
 }
 
@@ -46,11 +46,11 @@ grid2() {
     local cw=$((mw-gap*2))
     local ch=$(((mh-gap*3)/2))
     for win in ${windows[@]}; do
-        case $((pos%2)) in
+        case $(($pos%2)) in
             0 ) setwin $win $gap $gap $cw $ch ;;
             1 ) setwin $win $gap $(($ch+2*$gap)) $cw $ch ;;
         esac
-        pos=$((pos+1))
+        pos=$(($pos+1))
     done
 }
 
@@ -59,13 +59,13 @@ grid4() {
     local cw=$(((mw-gap*3)/2))
     local ch=$(((mh-gap*3)/2))
     for win in ${windows[@]}; do
-        case $((pos%4)) in
+        case $(($pos%4)) in
             0 ) setwin $win $gap $gap $cw $ch ;;
             1 ) setwin $win $(($cw+2*$gap)) $gap $cw $ch ;;
             2 ) setwin $win $gap $(($ch+2*$gap)) $cw $ch ;;
             3 ) setwin $win $(($cw+2*$gap)) $(($ch+2*$gap)) $cw $ch ;;
         esac
-        pos=$((pos+1))
+        pos=$(($pos+1))
     done
 }
 
@@ -74,7 +74,7 @@ grid9() {
     local cw=$(((mw-gap*4)/3))
     local ch=$(((mh-gap*4)/3))
     for win in ${windows[@]}; do
-        case $((pos%9)) in
+        case $(($pos%9)) in
             0 ) setwin $win $gap $gap $cw $ch ;;
             1 ) setwin $win $(($cw+2*$gap)) $gap $cw $ch ;;
             2 ) setwin $win $((2*$cw+3*$gap)) $gap $cw $ch ;;
@@ -85,7 +85,7 @@ grid9() {
             7 ) setwin $win $(($cw+2*$gap)) $((2*$ch+3*$gap)) $cw $ch ;;
             8 ) setwin $win $((2*$cw+3*$gap)) $((2*$ch+3*$gap)) $cw $ch ;;
         esac
-        pos=$((pos+1))
+        pos=$(($pos+1))
     done
 }
 
