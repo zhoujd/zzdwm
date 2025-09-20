@@ -2,29 +2,29 @@
 
 # The top-level source directory.
 
-srcdir		= .
+srcdir = .
 
 # Directories containing system- and tty-specific source.
 
-SYS		= ./sys/unix
-TTY		= ./tty/ncurses
-VPATH		= $(SYS):$(TTY)
-INC		= -I$(srcdir) -I$(SYS) -I$(TTY)
+SYS = ./sys/unix
+TTY = ./tty/ncurses
+VPATH = $(SYS):$(TTY)
+INC = -I$(srcdir) -I$(SYS) -I$(TTY)
 
 # Compilers, linkers, and their flags.
 
-CC		= gcc
-CFLAGS_DEBUG	= -g -DDEBUG=1
+CC = gcc
+CFLAGS_DEBUG = -g -DDEBUG=1
 CFLAGS_OPTIMIZE	= -Os
-CFLAGS		= $(CFLAGS_OPTIMIZE) -DLINUX $(INC) -Wall -DPREFIX=/usr/local
+CFLAGS = $(CFLAGS_OPTIMIZE) -DLINUX $(INC) -Wall
 
-LD		= gcc
-LDFLAGS		= -L/usr/lib64/termcap
-LIBS		= -lncursesw
+LD = gcc
+LDFLAGS = -L/usr/lib64/termcap
+LIBS = -lncursesw
 
 # Objects comprising MicroEMACS.
 
-OBJ :=	 \
+OBJ := \
 	basic.o \
 	buffer.o \
 	cinfo.o \
@@ -65,14 +65,14 @@ OBJ :=	 \
 # How to link MicroEMACS.
 
 TARGET = em
-PREFIX = /usr/local/bin
+DEST = /usr/local/bin
 
 $(TARGET): $(OBJ)
 	$(LD) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 
 install: $(TARGET)
 	strip $(TARGET)
-	cp -p $(TARGET) $(PREFIX)
+	cp -p $(TARGET) $(DEST)
 
 clean:
 	rm -f *.[o] $(TARGET)
