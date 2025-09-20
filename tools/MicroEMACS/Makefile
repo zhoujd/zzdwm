@@ -64,13 +64,15 @@ OBJ :=	 \
 
 # How to link MicroEMACS.
 
-me:	$(OBJ)
-	$(LD) -o me $(LDFLAGS) $(OBJ) $(LIBS)
+TARGET = em
+PREFIX = /usr/local/bin
 
-install: me
-	strip me
-	cp -p me /usr/local/bin
+$(TARGET): $(OBJ)
+	$(LD) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
+
+install: $(TARGET)
+	strip $(TARGET)
+	cp -p $(TARGET) $(PREFIX)
 
 clean:
-	rm -f *.[o] me
-
+	rm -f *.[o] $(TARGET)
