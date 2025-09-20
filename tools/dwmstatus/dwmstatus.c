@@ -132,7 +132,7 @@ getbattery(char *base)
 		return smprintf("");
 	if (co[0] != '1') {
 		free(co);
-		return smprintf("not present");
+		return smprintf(""); /* not present */
 	}
 	free(co);
 
@@ -164,7 +164,7 @@ getbattery(char *base)
 	}
 
 	if (remcap < 0 || descap < 0)
-		return smprintf("invalid");
+		return smprintf(""); /* invalid */
 
 	return smprintf("%.0f%%%s", ((float)remcap / (float)descap) * 100, status);
 }
@@ -298,7 +298,11 @@ main(void)
 		else
 			week = atoi(wsh);
 
-		status = smprintf("B:%s V:%s WW%d %s", bat, vol, week, tmsh);
+		if (strlen(bat))
+			status = smprintf("B:%s V:%s WW%d %s", bat, vol, week, tmsh);
+		else
+			status = smprintf("V:%s WW%d %s", vol, week, tmsh);
+
 		setstatus(status);
 
 		free(dsh);
