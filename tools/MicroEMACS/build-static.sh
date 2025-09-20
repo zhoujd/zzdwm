@@ -19,6 +19,22 @@ install() {
     echo "Install done"
 }
 
+remove() {
+    if [ "$(whoami)" == "root" ]; then
+        make uninstall
+    else
+        sudo make uninstall
+    fi
+    echo "Remove done"
+}
+
+usage() {
+    app=$(basename $0)
+    cat <<EOF
+Usage: $app {build|-b|clean|-c|install|-i|remove|-r}
+EOF
+}
+
 case $1 in
     build|-b )
         build
@@ -29,7 +45,10 @@ case $1 in
     install|-i )
         install
         ;;
+    remove|-r )
+        remove
+        ;;
     * )
-        echo "Usage: $(basename $0) {build|-b|clean|-c|install|-i}"
+        usage
         ;;
 esac
