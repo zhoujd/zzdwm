@@ -1,6 +1,7 @@
 #!/bin/bash
 
 SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+TOP_ROOT=$(cd $SCRIPT_ROOT/.. && pwd)
 CNT=zz-build-1
 
 run() {
@@ -17,7 +18,9 @@ run() {
     esac
     docker stop $CNT >/dev/null 2>&1
     docker rm $CNT >/dev/null 2>&1
-    docker run -it --name $CNT $img:$tag
+    docker run -it --name $CNT \
+       -v $TOP_ROOT:/root/$(basename $TOP_ROOT) \
+       $img:$tag
     echo "Run Done"
 }
 
