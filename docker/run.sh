@@ -15,17 +15,7 @@ RUN_PARAM=(
     --name=$CTN
     --privileged=true
     --cap-add=ALL
-    -h $CTN
     -v $TOP:$MNT/$(basename $TOP)
-)
-
-EXEC_PARAM=(
-    -e DISPLAY=$DISPLAY
-)
-
-SHELL_PARAM=(
-    sh
-    -l
 )
 
 run() {
@@ -86,9 +76,6 @@ case $1 in
         ;;
     purge )
         docker system prune -f -a
-        ;;
-    shell )
-        docker exec -it ${EXEC_PARAM[@]} ${CTN} ${SHELL_PARAM[@]}
         ;;
     * )
         usage
