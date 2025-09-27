@@ -4,6 +4,7 @@ SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 TOP=$(cd $SCRIPT_ROOT/.. && pwd)
 CTN=zz-build-1
 MNT=/root
+
 IMGS=(
     zhoujd/alpine:base
     zhoujd/void-linux:base
@@ -11,10 +12,20 @@ IMGS=(
 
 RUN_PARAM=(
     -it
-    --name $CTN
+    --name=$CTN
     --privileged=true
     --cap-add=ALL
+    -h $CTN
     -v $TOP:$MNT/$(basename $TOP)
+)
+
+EXEC_PARAM=(
+    -e DISPLAY=$DISPLAY
+)
+
+SHELL_PARAM=(
+    sh
+    -l
 )
 
 run() {
@@ -75,6 +86,9 @@ case $1 in
         ;;
     purge )
         docker system prune -f -a
+        ;;
+    shell )
+        docker exec -it ${EXEC_PARAM[@]} ${CTN} ${SHELL_PARAM[@]}
         ;;
     * )
         usage
