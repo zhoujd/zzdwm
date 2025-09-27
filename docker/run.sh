@@ -31,6 +31,8 @@ run() {
             img=${IMGS[0]}
             ;;
     esac
+    docker stop $CTN >/dev/null 2>&1
+    docker rm $CTN >/dev/null 2>&1
     docker run ${RUN_PARAM[@]} $img
     echo "Run Done"
 }
@@ -65,7 +67,6 @@ case $1 in
         ;;
     run|-r )
         shift
-        clean
         run "$@"
         ;;
     status|-s )
