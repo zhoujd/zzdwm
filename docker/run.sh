@@ -9,6 +9,14 @@ IMGS=(
     zhoujd/void-linux:base
 )
 
+RUN_PARAM=(
+    -it
+    --name $CTN
+    --privileged=true
+    --cap-add=ALL
+    -v $TOP:$MNT/$(basename $TOP)
+)
+
 run() {
     local kind=$1
     case $kind in
@@ -22,13 +30,7 @@ run() {
             img=${IMGS[0]}
             ;;
     esac
-    docker stop $CTN >/dev/null 2>&1
-    docker rm $CTN >/dev/null 2>&1
-    docker run \
-           -it \
-           --name $CTN \
-           -v $TOP:$MNT/$(basename $TOP) \
-           $img
+    docker run ${RUN_PARAM[@]} $img
     echo "Run Done"
 }
 
@@ -62,6 +64,7 @@ case $1 in
         ;;
     run|-r )
         shift
+        clean
         run "$@"
         ;;
     status|-s )
