@@ -3,33 +3,40 @@
 SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 TOP=$(cd $SCRIPT_ROOT/.. && pwd)
 CTN=zz-build-1
+IMGS=(
+    zhoujd/alpine
+    zhoujd/void-linux
+)
 
 run() {
     local kind=$1
-    local img=zhoujd/alpine
+    local idx=0
     local tag=base
     local mnt=/root
+    local img=${IMGS[0]}
     case $kind in
         alpine|-a )
-            img=zhoujd/alpine
+            img=${IMGS[0]}
             ;;
         void|-v )
-            img=zhoujd/void-linux
+            img=${IMGS[1]}
             ;;
     esac
     docker stop $CTN >/dev/null 2>&1
     docker rm $CTN >/dev/null 2>&1
-    docker run -it --name $CTN \
-       -v $TOP:$mnt/$(basename $TOP) \
-       $img:$tag
+    docker run \
+           -it --name $CTN \
+           -v $TOP:$mnt/$(basename $TOP) \
+           $img:$tag
     echo "Run Done"
 }
 
 status() {
-    echo "IMG:"
-    docker images | grep zhoujd/alpine
-    docker images | grep zhoujd/void-linux
-    echo "PS:"
+    echo "[IMG]"
+    for img in ${IMGS[@]}; do
+        docker images | grep $img
+    done
+    echo "[PS]"
     docker ps -a | grep $CTN
     echo "Status Done"
 }
