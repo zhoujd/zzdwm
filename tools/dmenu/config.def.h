@@ -12,7 +12,7 @@ static const float menu_height_ratio = 4.0f;   /* This is the ratio used in the 
 static const char *fonts[] = {
 	"SF Mono:size=11",
 	"PingFang SC:size=11",
-	"Symbols Nerd Font Mono:size=11",
+	"Symbols Nerd Font:size=11",
 };
 /* -p option; prompt to the left of input field */
 static const char *prompt = NULL;
