@@ -29,7 +29,7 @@ static const float minwfact         = 2.0; /* min window fact bases on font heig
 static const char *fonts[]          = {
 	"SF Mono:size=11",
 	"PingFang SC:size=11",
-	"Symbols Nerd Font Mono:size=11",
+	"Symbols Nerd Font:size=11",
 };
 /* select the font index for statusbar
  * the index is zero based
