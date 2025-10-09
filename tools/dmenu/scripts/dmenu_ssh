@@ -2,7 +2,7 @@
 
 title="ssh:"
 lines=10
-term_cmd=${TERM_CMD:-"st -e"}
+term_cmd=${TERM_CMD:-"urxvt -e"}
 ssh_cmd=${SSH_CMD:-"ssh -t"}
 remote_cmd=${REMOTE_CMD}
 
