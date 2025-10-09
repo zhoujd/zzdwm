@@ -299,9 +299,9 @@ main(void)
 			week = atoi(wsh);
 
 		if (strlen(bat))
-			status = smprintf("B:%s V:%s WW%d %s", bat, vol, week, tmsh);
+			status = smprintf("B:%s V:%s W%d.%s %s", bat, vol, week, dsh, tmsh);
 		else
-			status = smprintf("V:%s WW%d %s", vol, week, tmsh);
+			status = smprintf("V:%s W%d.%s %s", vol, week, dsh, tmsh);
 
 		setstatus(status);
 
