@@ -1,3 +1,4 @@
+# Tiny vi editor
 
 # CC = gcc
 # Set CC to your target's 'C' compiler to build for it
@@ -11,7 +12,7 @@ CFLAGS = -Wall -Os -s -static
 LDFLAGS = $(DEBUG)
 LDLIBS =
 
-vi : vi.c Makefile
+vi : vi.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) vi.c -o vi
 
 clean:
