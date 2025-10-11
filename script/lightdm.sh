@@ -18,7 +18,7 @@ config() {
 theme-name = Adwaita-dark
 icon-theme-name = Adwaita
 font-name = SF Pro Display 10
-clock-format = %a %e %b %l:%M %p
+clock-format = %a %-e %b %-l:%M %p
 indicators = ~host;~spacer;~session;~clock;~power
 EOF
     echo "Enable default users"
