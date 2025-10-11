@@ -288,7 +288,7 @@ main(void)
 	for (;;sleep(interval)) {
 		bat = getbattery("/sys/class/power_supply/BAT0");
 		vol = volpercent();
-		tmsh = mktimes("%a %e %b %l:%M %p", tzsh);
+		tmsh = mktimes("%a %-e %b %-l:%M %p", tzsh);
 		wsh = mktimes("%-V", tzsh);
 		dsh = mktimes("%u", tzsh);
 
