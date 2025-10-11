@@ -1,4 +1,4 @@
-FROM ghcr.io/linuxcontainers/alpine:3.20
+FROM ghcr.io/linuxcontainers/alpine
 RUN apk update --no-cache \
         && apk upgrade --no-cache \
         && apk add \
