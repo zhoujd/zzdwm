@@ -7,7 +7,8 @@ vi
 ## Clone busybox
 ## https://github.com/mirror/busybox
 ## https://coral.googlesource.com/busybox
-$ git clone https://github.com/mirror/busybox
+## https://git.busybox.net/busybox
+$ git clone https://git.busybox.net/busybox
 $ cd busybox
 
 ## Config for static VI
