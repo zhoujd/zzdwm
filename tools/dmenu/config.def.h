@@ -7,7 +7,7 @@ static int min_width = 500;                    /* minimum width when centered */
 static int max_width = 640;                    /* maximum width when centered; if 0, not apply */
 static int colorprompt = 1;                    /* if 1, prompt uses SchemeSel, otherwise SchemeNorm */
 static const int user_bh = 2;                  /* add an defined amount of pixels to the bar height */
-static const float menu_height_ratio = 4.0f;   /* This is the ratio used in the original calculation */
+static const float menu_height_ratio = 2.5f;   /* This is the ratio used in the original calculation */
 /* -fn option overrides fonts[0]; default X11 font or font set */
 static const char *fonts[] = {
 	"SF Mono:size=11",
