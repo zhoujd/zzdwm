@@ -30,3 +30,13 @@ $ cp busybox_VI vi
 ## https://github.com/RaymiiOrg/viless
 ## https://raymii.org/s/blog/Bare_Metal_Boot_to_Vi.html
 ```
+
+## vi yank X number of characters
+
+```
+## Use yl or yh to copy a character which is on the cursor
+## Use y5l (<- that's a lowercase L)
+## use y5h to yank 5 characters backwards
+## Remap this particular sequence to a key-combination
+:nnoremap <C-l> y5l
+```
