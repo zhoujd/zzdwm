@@ -2231,7 +2231,10 @@ void
 setdesktopnames(void)
 {
 	XTextProperty text;
-	Xutf8TextListToTextProperty(dpy, (char **)tags, TAGSLENGTH, XUTF8StringStyle, &text);
+	const char *names[] = {
+		"one", "two", "three", "four", "five", "six", "seven", "eight", "nine"
+	};
+	Xutf8TextListToTextProperty(dpy, (char **)names, TAGSLENGTH, XUTF8StringStyle, &text);
 	XSetTextProperty(dpy, root, &text, netatom[NetDesktopNames]);
 }
 
