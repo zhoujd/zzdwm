@@ -1,10 +1,10 @@
-/* 
+/*
  * Copyright (c) 2012 Scott Vokes <vokes.s@gmail.com>
- *  
+ *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
- *  
+ *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
@@ -47,8 +47,7 @@ static int query_len = 0;
 
 static void usage() {
     fprintf(stderr,
-        "fuzzy-finder v. %s, by Scott Vokes <vokes.s@gmail.com>\n"
-        "usage: ff [-dhiltR] [-c char] [-n count] [-r root] query\n"
+        "usage: ff [-dhiltRV] [-c char] [-n count] [-r root] query\n"
         "-c CHAR   char to toggle Consecutive match (default: '=')\n"
         "-d        show Dotfiles\n"
         "-D        only show directories\n"
@@ -57,8 +56,15 @@ static void usage() {
         "-l        follow Links\n"
         "-t        run Tests and exit\n"
         "-r ROOT   set search Root (default: .)\n"
-        "-R        don't recurse subdirectories\n", FF_VERSION);
+        "-R        don't recurse subdirectories\n"
+        "-V        print Version\n");
     exit(EXIT_FAILURE);
+}
+
+static void version() {
+    fprintf(stderr,
+        "fuzzy-finder v. %s, by Scott Vokes <vokes.s@gmail.com>\n", FF_VERSION);
+    exit(EXIT_SUCCESS);
 }
 
 /* Append a name element to the path buffer. */
@@ -218,7 +224,7 @@ static void proc_args(int argc, char **argv) {
     uint i = 0;
     int a = 0;
 
-    while ((a = getopt(argc, argv, "c:dDhilr:tR")) != -1) {
+    while ((a = getopt(argc, argv, "c:dDhilr:tRV")) != -1) {
         switch (a) {
         case 'c':               /* set consecutive match char */
             conseq_char = optarg[0]; break;
@@ -239,6 +245,8 @@ static void proc_args(int argc, char **argv) {
             run_tests(); break;
         case 'R':
             recurse = 0; break;
+        case 'V':
+            version(); break;
         default:
             fprintf(stderr, "ff: illegal option: -- %c\n", a);
             usage();
@@ -270,7 +278,7 @@ int main(int argc, char **argv) {
     }
 
     setlinebuf(stdout);
-    
+
     walk(root, put_path(0, root, 1), 0);
     return EXIT_SUCCESS;
 }
