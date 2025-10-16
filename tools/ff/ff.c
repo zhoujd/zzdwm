@@ -63,7 +63,7 @@ static void usage() {
 
 static void version() {
     fprintf(stderr,
-        "fuzzy-finder v. %s, by Scott Vokes <vokes.s@gmail.com>\n", FF_VERSION);
+        "fuzzy-finder v%s\n", FF_VERSION);
     exit(EXIT_SUCCESS);
 }
 
