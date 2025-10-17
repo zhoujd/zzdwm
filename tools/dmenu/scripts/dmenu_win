@@ -10,12 +10,12 @@ apps=$(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1-3,5- | \
 max=$(echo -n "$apps" | awk '{cur=length($3); \
                               max=(cur>max?cur:max)} END{print max}')
 wm=$(wmctrl -m | grep Name: | awk '{print $2}')
-win=$(xdotool getactivewindow)
+id=$(xdotool getactivewindow)
 
 apps=$(echo -n "$apps" | \
            awk -v max="$max" \
-               -v win="$win" \
                -v wm="$wm" \
+               -v id="$id" \
                '{cur=length($3); \
                  group[0]="one"; \
                  group[1]="two"; \
@@ -26,15 +26,11 @@ apps=$(echo -n "$apps" | \
                  group[6]="seven"; \
                  group[7]="eight"; \
                  group[8]="nine"; \
-                 if (wm == "CWM") { \
-                   $2 -= 1;
-                 } \
+                 tag=" "; \
+                 if(wm == "CWM") $2 -= 1; \
                  printf "%-8s", group[$2]; \
-                 if (win == $1) { \
-                   printf "* "; \
-                 } else { \
-                   printf "  "; \
-                 } \
+                 if(id == $1) tag="*";
+                 printf "%-2s", tag; \
                  printf "%s", $3; \
                  for(i=0; i < max - cur + 1; i++) printf " "; \
                  $1=$2=$3=""; \
