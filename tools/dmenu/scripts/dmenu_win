@@ -11,29 +11,30 @@ max=$(echo -n "$apps" | awk '{cur=length($3); \
                               max=(cur>max?cur:max)} END{print max}')
 wm=$(wmctrl -m | grep Name: | awk '{print $2}')
 id=$(xdotool getactivewindow)
-
 apps=$(echo -n "$apps" | \
            awk -v max="$max" \
                -v wm="$wm" \
                -v id="$id" \
-               '{cur=length($3); \
-                 group[0]="one"; \
-                 group[1]="two"; \
-                 group[2]="three"; \
-                 group[3]="four"; \
-                 group[4]="five"; \
-                 group[5]="six"; \
-                 group[6]="seven"; \
-                 group[7]="eight"; \
-                 group[8]="nine"; \
-                 tag=" "; \
-                 if(wm == "CWM") $2 -= 1; \
-                 printf "%-8s", group[$2]; \
-                 if(id == $1) tag="*";
-                 printf "%-2s", tag; \
-                 printf "%s", $3; \
-                 for(i=0; i < max - cur + 1; i++) printf " "; \
-                 $1=$2=$3=""; \
+               '{cur=length($3);
+                 group[0]="one";
+                 group[1]="two";
+                 group[2]="three";
+                 group[3]="four";
+                 group[4]="five";
+                 group[5]="six";
+                 group[6]="seven";
+                 group[7]="eight";
+                 group[8]="nine";
+                 id1=sprintf("%d", $1);
+                 id2=sprintf("%d", id);
+                 tag=" ";
+                 if(wm=="CWM") $2 -= 1;
+                 printf "%-8s", group[$2];
+                 if(id1==id2) tag="*";
+                 printf "%-2s", tag;
+                 printf "%s", $3;
+                 for(i=0; i < max - cur + 1; i++) printf " ";
+                 $1=$2=$3="";
                  printf "%s\n", $0}')
 
 target=$(echo -n "$apps" | dmenu -l $lines -i -ix -p $title)
