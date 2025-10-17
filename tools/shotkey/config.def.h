@@ -60,7 +60,7 @@ Key keys[] = {
   { MODKEY,                       XK_q,          cmd("dmenu_exit &") },
   { MODKEY|Mod1Mask,              XK_q,          cmd("dmenu_exit &") },
   { MODKEY|Mod1Mask,              XK_i,          cmd("dmenu_info &") },
-  { MODKEY|Mod1Mask,              XK_y,          cmd("dmenu_time &") },
+  { MODKEY|Mod1Mask,              XK_y,          cmd("dmenu_date &") },
   { MODKEY,                       XK_n,          cmd("nextwin &") },
   { MODKEY|ShiftMask,             XK_n,          cmd("prevwin &") },
   { MODKEY|ShiftMask,             XK_z,          cmd("slock &") },
