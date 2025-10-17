@@ -12,7 +12,7 @@ TOOLS := \
 	dmenu_desk \
 	dmenu_wincd \
 	dmenu_info \
-	dmenu_time
+	dmenu_date
 
 .PHONY: all
 all:
