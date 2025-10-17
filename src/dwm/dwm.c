@@ -2828,16 +2828,21 @@ swaptag(const Arg *arg)
 		return;
 
 	for (Client *c = selmon->clients; c != NULL; c = c->next) {
-		if((c->tags & newtag) || (c->tags & curtag))
+		if ((c->tags & newtag) || (c->tags & curtag))
 			c->tags ^= curtag ^ newtag;
 
-		if(!c->tags) c->tags = newtag;
+		if (!c->tags) c->tags = newtag;
 	}
 
 	selmon->tagset[selmon->seltags] = newtag;
 
 	focus(NULL);
 	arrange(selmon);
+	for (Client *c = selmon->clients; c != NULL; c = c->next) {
+		if (c->tags & newtag) {
+			updateclientdesktop(c);
+		}
+	}
 }
 
 void
