@@ -1,5 +1,7 @@
 #!/bin/bash
 
+NOW=$(date +'W%-V %a %-e %b %-l:%M %p %Z %Y')
+
 message() {
     local opt=(
         -file -
@@ -9,7 +11,7 @@ message() {
         -center
         -timeout 3
     )
-    date | xmessage ${opt[@]}
+    echo $NOW | xmessage ${opt[@]}
 }
 
 menu() {
@@ -17,7 +19,7 @@ menu() {
         -l 10
         -p date:
     )
-    date | dmenu ${opt[@]}
+    echo $NOW | dmenu ${opt[@]}
 }
 
 usage() {
