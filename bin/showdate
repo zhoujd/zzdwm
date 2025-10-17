@@ -1,0 +1,10 @@
+#!/bin/bash
+
+msg=$(date)
+opt=(
+    -fg white
+    -bg black
+    -center
+    -timeout 3
+)
+xmessage $msg ${opt[@]}

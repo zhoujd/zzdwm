@@ -38,6 +38,7 @@ install_bin() {
         $CORE_ROOT/bin/prevwin
         $CORE_ROOT/bin/nextwincd
         $CORE_ROOT/bin/prevwincd
+        $CORE_ROOT/bin/showdate
         $CORE_ROOT/bin/dupterm
         $CORE_ROOT/bin/ec
         $CORE_ROOT/bin/em
