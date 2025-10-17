@@ -77,11 +77,11 @@ grid9() {
         case $(($pos%9)) in
             0 ) setwin $win $gap $gap $cw $ch ;;
             1 ) setwin $win $(($cw+2*$gap)) $gap $cw $ch ;;
-            2 ) setwin $win $((2*$cw+3*$gap)) $gap $cw $ch ;;
-            3 ) setwin $win $gap $(($ch+2*$gap)) $cw $ch ;;
+            2 ) setwin $win $gap $(($ch+2*$gap)) $cw $ch ;;
+            3 ) setwin $win $((2*$cw+3*$gap)) $gap $cw $ch ;;
             4 ) setwin $win $(($cw+2*$gap)) $(($ch+2*$gap)) $cw $ch ;;
-            5 ) setwin $win $((2*$cw+3*$gap)) $(($ch+2*$gap)) $cw $ch ;;
-            6 ) setwin $win $gap $((2*$ch+3*$gap)) $cw $ch ;;
+            5 ) setwin $win $gap $((2*$ch+3*$gap)) $cw $ch ;;
+            6 ) setwin $win $((2*$cw+3*$gap)) $(($ch+2*$gap)) $cw $ch ;;
             7 ) setwin $win $(($cw+2*$gap)) $((2*$ch+3*$gap)) $cw $ch ;;
             8 ) setwin $win $((2*$cw+3*$gap)) $((2*$ch+3*$gap)) $cw $ch ;;
         esac
