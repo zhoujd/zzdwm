@@ -28,12 +28,12 @@ apps=$(echo -n "$apps" | \
                  id1=sprintf("%d", $1);
                  id2=sprintf("%d", id);
                  tag=" ";
-                 if(wm=="CWM") $2 -= 1;
+                 if(wm=="CWM") $2-=1;
                  printf "%-8s", group[$2];
                  if(id1==id2) tag="*";
                  printf "%-2s", tag;
                  printf "%s", $3;
-                 for(i=0; i < max - cur + 1; i++) printf " ";
+                 for(i=0; i<max-cur+1; i++) printf " ";
                  $1=$2=$3="";
                  printf "%s\n", $0}')
 
