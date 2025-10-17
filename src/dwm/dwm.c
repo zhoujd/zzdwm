@@ -2849,6 +2849,7 @@ tag(const Arg *arg)
 		arrange(selmon);
 		if(viewontag && ((arg->ui & TAGMASK) != TAGMASK))
 			view(arg);
+		updateclientdesktop(selmon->sel);
 	}
 }
 
