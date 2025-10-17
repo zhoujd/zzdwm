@@ -1,11 +1,42 @@
 #!/bin/bash
 
-msg=$(date)
-opt=(
-    -default okay
-    -fg white
-    -bg black
-    -center
-    -timeout 3
-)
-xmessage $msg ${opt[@]}
+message() {
+    local opt=(
+        -file -
+        -default okay
+        -fg white
+        -bg black
+        -center
+        -timeout 3
+    )
+    date | xmessage ${opt[@]}
+}
+
+menu() {
+    local opt=(
+        -l 10
+        -p date:
+    )
+    date | dmenu ${opt[@]}
+}
+
+usage() {
+    local app=$(basename $0)
+    cat <<EOF
+$app {-m|-h}
+-m  use xmessage, dmenu as default
+-h  print this help
+EOF
+}
+
+case $1 in
+    -m )
+        message
+        ;;
+    -h )
+        usage
+        ;;
+    * )
+        menu
+        ;;
+esac
