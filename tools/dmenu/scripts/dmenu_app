@@ -49,7 +49,7 @@ app_menu() {
                      if(id1==id2) tag="*";
                      printf "%-2s", tag;
                      printf "%s", $3;
-                     for(i=0; i<max-cur+1; i++) printf " ";
+                     for(i=0;i<max-cur+1;i++) printf " ";
                      $1=$2=$3="";
                      printf "%s\n", $0}')
     target=$(echo -n "$apps" | dmenu -l $lines -i -ix -r -p $title)
