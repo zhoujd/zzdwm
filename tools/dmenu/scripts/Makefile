@@ -11,7 +11,8 @@ TOOLS := \
 	dmenu_win \
 	dmenu_desk \
 	dmenu_wincd \
-	dmenu_info
+	dmenu_info \
+	dmenu_time
 
 .PHONY: all
 all:

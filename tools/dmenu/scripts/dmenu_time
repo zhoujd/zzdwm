@@ -1,0 +1,8 @@
+#!/bin/bash
+
+NOW=$(date +'W%-V %a %-e %b %-l:%M %p %Z %Y')
+OPT=(
+    -l 10
+    -p date:
+)
+echo $NOW | dmenu ${OPT[@]}
