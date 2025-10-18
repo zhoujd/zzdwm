@@ -1,0 +1,78 @@
+#!/bin/bash
+# Deck windows
+
+gap=5
+maxstack=4
+mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
+mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
+fw=$(($mw-$gap*2))
+fh=$(($mh-$gap*2))
+hw=$((($mw-$gap*3)/2))
+hh=$((($mh-$gap*3)/2))
+
+focus() {
+    local id=$1
+    xdotool windowactivate $id
+    xdotool windowraise $id
+    xdotool windowfocus $id
+}
+
+prepare() {
+    local id=$1
+    wmctrl -ir $id -b remove,maximized_vert,maximized_horz
+}
+
+setwin() {
+    local id=$1
+    local pos_x=$2
+    local pos_y=$3
+    local size_x=$4
+    local size_y=$5
+    xdotool windowmove $id $pos_x $pos_y
+    xdotool windowsize $id $size_x $size_y
+}
+
+master() {
+    local id=$1
+    prepare $id
+    setwin $id $gap $gap $fw $hh
+}
+
+main() {
+    local desktop=$(xdotool get_desktop)
+    local id=$(xdotool getactivewindow)
+    local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
+                         tr -s '[:blank:]' |  awk '{print $1}'))
+    local num=${#windows[@]}
+    local stacks=()
+    for w in ${windows[@]}; do
+        if [[ $w -ne $id ]]; then
+          stacks+=($w)  
+        fi
+    done
+    local nstack=${#stacks[@]}
+    if [[ $nstack -lt $maxstack ]]; then
+        local cw=$((($fw+$gap)/$nstack-$gap))
+        local y=$(($hh+2*$gap))
+        for ((i=0; i<$nstack; i++)); do
+            local win=${stacks[$i]}
+            local x=$(($gap*($i+1)+$cw*$i))
+            prepare $win
+            setwin $win $x $y $cw $hh
+        done
+    else
+        local cw=$((($fw+$gap)/$maxstack-$gap))
+        local y=$(($hh+2*$gap))
+        for ((i=0; i<$nstack; i++)); do
+            local win=${stacks[$i]}
+            local n=$(($i%$maxstack))
+            local x=$(($gap*($n+1)+$cw*$n))
+            prepare $win
+            setwin $win $x $y $cw $hh
+        done
+    fi
+    master $id
+    focus $id
+}
+
+main $@
