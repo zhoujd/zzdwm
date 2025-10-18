@@ -103,9 +103,6 @@ bind-key 4-k            window-rcycle
 bind-key 4-Tab          window-cycle-ingroup
 bind-key 4S-Tab         window-rcycle-ingroup
 
-bind-key 4-t            window-vtile
-bind-key 4-b            window-htile
-
 bind-key 4-i            window-raise
 bind-key 4-d            window-lower
 
@@ -121,6 +118,8 @@ bind-key 4SC-q          restart
 bind-key 4C-q           quit
 
 # Layouts
+bind-key 4-t            window-vtile
+bind-key 4-b            window-htile
 bind-key 4-m            "monocle m"
 bind-key 4-f            "monocle f"
 bind-key 4-g            "gridtile"

@@ -1,0 +1,60 @@
+#!/bin/bash
+# Deck windows
+
+gap=5
+maxstack=4
+mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
+mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
+fw=$(($mw-$gap*2))
+fh=$(($mh-$gap*2))
+
+focus() {
+    local id=$1
+    xdotool windowactivate $id
+    xdotool windowraise $id
+    xdotool windowfocus $id
+}
+
+prepare() {
+    local id=$1
+    wmctrl -ir $id -b remove,maximized_vert,maximized_horz
+}
+
+setwin() {
+    local id=$1
+    local pos_x=$2
+    local pos_y=$3
+    local size_x=$4
+    local size_y=$5
+    xdotool windowmove $id $pos_x $pos_y
+    xdotool windowsize $id $size_x $size_y
+}
+
+master() {
+    local id=$1
+    local hw=$((($mw-$gap*3)/2))
+    local hh=$((($mh-$gap*3)/2))
+    prepare $id
+    setwin $id $gap $gap $hw $fh
+}
+
+main() {
+    local desktop=$(xdotool get_desktop)
+    local id=$(xdotool getactivewindow)
+    local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
+                         tr -s '[:blank:]' |  awk '{print $1}'))
+    local num=${#windows[@]}
+    for win in ${windows[@]}; do
+        if [[ $win -ne $id ]]; then
+            if [[ $num -gt $maxstack ]]; then
+                echo "1"
+            else
+                echo "2"
+            fi
+        fi
+    done
+    master $id
+    focus $id
+}
+
+main $@
