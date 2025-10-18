@@ -15,10 +15,6 @@ color urgencyborder     "#cc241d"
 # Gaps (top, bottom, left, right)
 gap                     0 0 0 0
 
-# Size of manually tiled Windows in %
-htile                   50
-vtile                   50
-
 # How many pixels a window gets moved by
 moveamount              1
 
