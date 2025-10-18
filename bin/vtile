@@ -57,7 +57,6 @@ main() {
         for ((i=0; i<$nstack; i++)); do
             local win=${stacks[$i]}
             local y=$(($gap*($i+1)+$ch*$i))
-            echo y:$y
             prepare $win
             setwin $win $x $y $hw $ch
         done
@@ -68,7 +67,6 @@ main() {
             local win=${stacks[$i]}
             local n=$(($i%$maxstack))
             local y=$(($gap*($n+1)+$ch*$n))
-            echo y:$y
             prepare $win
             setwin $win $x $y $hw $ch
         done
