@@ -51,26 +51,19 @@ main() {
         fi
     done
     local nstack=${#stacks[@]}
-    if [[ $nstack -lt $maxstack ]]; then
-        local cw=$((($fw+$gap)/$nstack-$gap))
-        local y=$(($hh+2*$gap))
-        for ((i=0; i<$nstack; i++)); do
-            local win=${stacks[$i]}
-            local x=$(($gap*($i+1)+$cw*$i))
-            prepare $win
-            setwin $win $x $y $cw $hh
-        done
-    else
-        local cw=$((($fw+$gap)/$maxstack-$gap))
-        local y=$(($hh+2*$gap))
-        for ((i=0; i<$nstack; i++)); do
-            local win=${stacks[$i]}
-            local n=$(($i%$maxstack))
-            local x=$(($gap*($n+1)+$cw*$n))
-            prepare $win
-            setwin $win $x $y $cw $hh
-        done
+    local ns=$nstack
+    if [[ $nstack -gt $maxstack ]]; then
+        ns=$maxstack
     fi
+    local cw=$((($fw+$gap)/$ns-$gap))
+    local y=$(($hh+2*$gap))
+    for ((i=0; i<$nstack; i++)); do
+        local win=${stacks[$i]}
+        local n=$(($i%$ns))
+        local x=$(($gap*($n+1)+$cw*$n))
+        prepare $win
+        setwin $win $x $y $cw $hh
+    done
     master $id
     focus $id
 }
