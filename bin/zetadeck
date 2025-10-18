@@ -64,10 +64,10 @@ main() {
                          tr -s '[:blank:]' |  awk '{print $1}'))
     for win in ${windows[@]}; do
         if [[ $win -ne $id ]]; then
-            deck right $win
+            deck bottom $win
         fi
     done
-    deck left $id
+    deck top $id
     focus $id
 }
 

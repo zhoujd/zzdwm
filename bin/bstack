@@ -1,5 +1,5 @@
 #!/bin/bash
-# Deck windows
+# tile windows
 
 gap=5
 maxstack=4
