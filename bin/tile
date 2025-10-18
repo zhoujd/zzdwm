@@ -55,12 +55,12 @@ main() {
     if [[ $nstack -gt $maxstack ]]; then
         ns=$maxstack
     fi
-    local ch=$((($fh+$gap)/$ns-$gap))
+    local ch=$((($mh-($ns+1)*$gap)/$ns))
     local x=$(($hw+2*$gap))
     for ((i=0; i<$nstack; i++)); do
         local win=${stacks[$i]}
         local n=$(($i%$ns))
-        local y=$(($gap*($n+1)+$ch*$n))
+        local y=$((($gap+$ch)*$n+$gap))
         prepare $win
         setwin $win $x $y $hw $ch
     done
