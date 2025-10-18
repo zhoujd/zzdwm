@@ -7,6 +7,8 @@ mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
 mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
 fw=$(($mw-$gap*2))
 fh=$(($mh-$gap*2))
+hw=$((($mw-$gap*3)/2))
+hh=$((($mh-$gap*3)/2))
 
 focus() {
     local id=$1
@@ -32,8 +34,6 @@ setwin() {
 
 master() {
     local id=$1
-    local hw=$((($mw-$gap*3)/2))
-    local hh=$((($mh-$gap*3)/2))
     prepare $id
     setwin $id $gap $gap $hw $fh
 }
@@ -44,15 +44,35 @@ main() {
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
     local num=${#windows[@]}
-    for win in ${windows[@]}; do
-        if [[ $win -ne $id ]]; then
-            if [[ $num -gt $maxstack ]]; then
-                echo "1"
-            else
-                echo "2"
-            fi
+    local stacks=()
+    for w in ${windows[@]}; do
+        if [[ $w -ne $id ]]; then
+          stacks+=($w)  
         fi
     done
+    local nstack=${#stacks[@]}
+    if [[ $nstack -lt $maxstack ]]; then
+        local ch=$((($fh+$gap)/$nstack-$gap))
+        local x=$(($hw+2*$gap))
+        for ((i=0; i<$nstack; i++)); do
+            local win=${stacks[$i]}
+            local y=$(($gap*($i+1)+$ch*$i))
+            echo y:$y
+            prepare $win
+            setwin $win $x $y $hw $ch
+        done
+    else
+        local ch=$((($fh+$gap)/$maxstack-$gap))
+        local x=$(($hw+2*$gap))
+        for ((i=0; i<$nstack; i++)); do
+            local win=${stacks[$i]}
+            local n=$(($i%$maxstack))
+            local y=$(($gap*($n+1)+$ch*$n))
+            echo y:$y
+            prepare $win
+            setwin $win $x $y $hw $ch
+        done
+    fi
     master $id
     focus $id
 }
