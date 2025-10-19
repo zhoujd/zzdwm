@@ -32,12 +32,6 @@ setwin() {
     xdotool windowsize $id $size_x $size_y
 }
 
-master() {
-    local id=$1
-    prepare $id
-    setwin $id $gap $gap $fw $hh
-}
-
 main() {
     local desktop=$(xdotool get_desktop)
     local id=$(xdotool getactivewindow)
@@ -64,7 +58,8 @@ main() {
         prepare $win
         setwin $win $x $y $cw $hh
     done
-    master $id
+    prepare $id
+    setwin $id $gap $gap $((($cw+$gap)*$ns-$gap)) $hh
     focus $id
 }
 
