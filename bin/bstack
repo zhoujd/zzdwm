@@ -41,7 +41,7 @@ main() {
     local stacks=()
     for w in ${windows[@]}; do
         if [[ $w -ne $id ]]; then
-          stacks+=($w)  
+            stacks+=($w)
         fi
     done
     local nstack=${#stacks[@]}
