@@ -48,8 +48,10 @@ main() {
     done
     local nstack=${#stacks[@]}
     local ns=$nstack
-    if [[ $nstack -gt $maxstack ]]; then
+    if [[ $ns -gt $maxstack ]]; then
         ns=$maxstack
+    elif [[ $ns -eq 0 ]]; then
+        ns=1
     fi
     local cw=$((($mw-($ns+1)*$gap)/$ns))
     local y=$(($hh+2*$gap))
