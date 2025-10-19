@@ -84,6 +84,9 @@ bind-key 4SC-j          window-resize-down-big
 bind-key 4SC-k          window-resize-up-big
 bind-key 4SC-l          window-resize-right-big
 
+# Toggle visibility of all groups
+bind-key 4-BackSpace    group-toggle-all
+
 # Cycle/reverse cycle through groups
 bind-key 4-h            group-cycle
 bind-key 4-l            group-rcycle
