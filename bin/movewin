@@ -1,7 +1,7 @@
 #!/bin/sh
 # Move a window to the side/center of a screen.
 
-gap=5
+gap=${WINGAP:-5}
 
 case $1 in
     --help|-h )
@@ -16,18 +16,18 @@ case $1 in
     right )
         mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
         ww=$(xdotool getactivewindow getwindowgeometry --shell | grep WIDTH | cut -d= -f2)
-        xdotool getactivewindow windowmove $(( $mw - $ww - $gap )) y
+        xdotool getactivewindow windowmove $(($mw-$ww-$gap)) y
         ;;
     bottom )
         mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
         wh=$(xdotool getactivewindow getwindowgeometry --shell | grep HEIGHT | cut -d= -f2)
-        xdotool getactivewindow windowmove x $(( $mh - $wh - $gap ))
+        xdotool getactivewindow windowmove x $(($mh-$wh-$gap))
         ;;
     * )
         mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
         mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
         ww=$(xdotool getactivewindow getwindowgeometry --shell | grep WIDTH | cut -d= -f2)
         wh=$(xdotool getactivewindow getwindowgeometry --shell | grep HEIGHT | cut -d= -f2)
-        xdotool getactivewindow windowmove $(( ($mw - $ww)/2 )) $(( ($mh - $wh)/2 ))
+        xdotool getactivewindow windowmove $((($mw-$ww)/2)) $((($mh-$wh)/2))
         ;;
 esac

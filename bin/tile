@@ -1,7 +1,7 @@
 #!/bin/bash
 # tile windows
 
-gap=5
+gap=${WINGAP:-5}
 maxstack=4
 mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
 mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')

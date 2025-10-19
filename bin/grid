@@ -1,6 +1,6 @@
 #!/bin/bash
 
-gap=5
+gap=${WINGAP:-5}
 active=$(xdotool getactivewindow)
 desktop=$(xdotool get_desktop)
 windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
