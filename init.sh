@@ -44,7 +44,6 @@ install_bin() {
         $CORE_ROOT/bin/me
         $CORE_ROOT/bin/mg
         $CORE_ROOT/bin/vi
-        $CORE_ROOT/bin/ff
         $CORE_ROOT/bin/movewin
         $CORE_ROOT/bin/deckwin
         $CORE_ROOT/bin/focuswin
