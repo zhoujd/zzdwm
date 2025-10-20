@@ -73,6 +73,13 @@ install_misc() {
     echo "Install misc done"
 }
 
+install() {
+    install_dm
+    install_bin
+    install_misc
+    echo "Install all done"
+}
+
 build() {
     local projects=(
         $CORE_ROOT/src/dwm
@@ -98,13 +105,6 @@ build() {
 clean() {
     git clean -dfx
     echo "Clean done"
-}
-
-install() {
-    install_dm
-    install_bin
-    install_misc
-    echo "Install all done"
 }
 
 all() {
