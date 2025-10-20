@@ -24,14 +24,20 @@ prepare() {
 
 main() {
     local desktop=$(xdotool get_desktop)
+    local id=$(xdotool getactivewindow)
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
+    if [ -z "$id" ]; then
+        id=${windows[0]}
+    fi
     for w in ${windows[@]}; do
         local width=$(xwininfo -id $w | grep Width | cut -d: -f2 | tr -d ' ')
         local height=$(xwininfo -id $w | grep Height | cut -d: -f2 | tr -d ' ')
         local y=$(xwininfo -id $w | grep Absolute | grep Y: | awk '{print $4}')
+        prepare $w
         xdotool windowmove $w $(($width * -2)) $y
     done
+    focus $id
 }
 
 main $@
