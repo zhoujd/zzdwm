@@ -31,9 +31,9 @@ float() {
         local height=$(xwininfo -id $win | grep Height | cut -d: -f2 | tr -d ' ')
         local x=$(xwininfo -id $win | grep Absolute | grep X: | awk '{print $4}')
         local y=$(xwininfo -id $win | grep Absolute | grep Y: | awk '{print $4}')
-        if [ $x -lt 0 ]; then
-            xdotool windowmove $win 0 $y
-        fi
+        [ $x -lt 0 ] && x=0
+        [ $y -lt 0 ] && y=0
+        xdotool windowmove $win $x $y
     done
     focus $id
 }
