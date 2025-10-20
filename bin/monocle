@@ -14,7 +14,6 @@ monocle() {
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
     for win in ${windows[@]}; do
-        xdotool windowmove $win 0 0
         wmctrl -ir $win -b add,maximized_vert,maximized_horz
     done
     focus $id
@@ -27,22 +26,6 @@ float() {
                          tr -s '[:blank:]' |  awk '{print $1}'))
     for win in ${windows[@]}; do
         wmctrl -ir $win -b remove,maximized_vert,maximized_horz
-        xdotool windowmove $win 0 0
-    done
-    focus $id
-}
-
-clear() {
-    local desktop=$(xdotool get_desktop)
-    local id=$(xdotool getactivewindow)
-    local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
-                         tr -s '[:blank:]' |  awk '{print $1}'))
-    for win in ${windows[@]}; do
-        local width=$(xwininfo -id $win | grep Width | cut -d: -f2 | tr -d ' ')
-        local height=$(xwininfo -id $win | grep Height | cut -d: -f2 | tr -d ' ')
-        local y=$(xwininfo -id $win | grep Absolute | grep Y: | awk '{print $4}')
-        wmctrl -ir $win -b remove,maximized_vert,maximized_horz
-        xdotool windowmove $win $((-2*$width)) $y
     done
     focus $id
 }
@@ -53,7 +36,6 @@ usage() {
 $app  {v|h}
 m   -- monocle
 f   -- float
-c   -- clear
 EOF
 }
 
@@ -65,9 +47,6 @@ main() {
             ;;
         f )
             float
-            ;;
-        c )
-            clear
             ;;
         * )
             usage
