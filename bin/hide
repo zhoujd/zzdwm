@@ -30,7 +30,7 @@ main() {
         local width=$(xwininfo -id $w | grep Width | cut -d: -f2 | tr -d ' ')
         local height=$(xwininfo -id $w | grep Height | cut -d: -f2 | tr -d ' ')
         local y=$(xwininfo -id $w | grep Absolute | grep Y: | awk '{print $4}')
-        xdotool windowmove $id $(($width * -2)) $y
+        xdotool windowmove $w $(($width * -2)) $y
     done
 }
 

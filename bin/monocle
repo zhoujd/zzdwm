@@ -15,6 +15,7 @@ monocle() {
                          tr -s '[:blank:]' |  awk '{print $1}'))
     for win in ${windows[@]}; do
         wmctrl -ir $win -b add,maximized_vert,maximized_horz
+        xdotool windowmove $win 0 0
     done
     focus $id
 }
@@ -26,6 +27,13 @@ float() {
                          tr -s '[:blank:]' |  awk '{print $1}'))
     for win in ${windows[@]}; do
         wmctrl -ir $win -b remove,maximized_vert,maximized_horz
+        local width=$(xwininfo -id $win | grep Width | cut -d: -f2 | tr -d ' ')
+        local height=$(xwininfo -id $win | grep Height | cut -d: -f2 | tr -d ' ')
+        local x=$(xwininfo -id $win | grep Absolute | grep X: | awk '{print $4}')
+        local y=$(xwininfo -id $win | grep Absolute | grep Y: | awk '{print $4}')
+        if [ $x -lt 0 ]; then
+            xdotool windowmove $win 0 $y
+        fi
     done
     focus $id
 }

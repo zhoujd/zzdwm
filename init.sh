@@ -54,6 +54,7 @@ install_bin() {
         $CORE_ROOT/bin/grid
         $CORE_ROOT/bin/tile
         $CORE_ROOT/bin/bstack
+        $CORE_ROOT/bin/hide
         $CORE_ROOT/bin/startdwm
         $CORE_ROOT/bin/startcwm
         $CORE_ROOT/bin/dwm-session

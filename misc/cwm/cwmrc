@@ -85,7 +85,7 @@ bind-key 4SC-k          window-resize-up-big
 bind-key 4SC-l          window-resize-right-big
 
 # Toggle visibility of all groups
-bind-key 4-BackSpace    group-toggle-all
+bind-key 4-0            group-toggle-all
 
 # Cycle/reverse cycle through groups
 bind-key 4-h            group-cycle
@@ -121,6 +121,7 @@ bind-key 4-f            "monocle f"
 bind-key 4-g            "grid"
 bind-key 4-x            "doubledeck"
 bind-key 4-z            "zetadeck"
+bind-key 4-BackSpace    "hide"
 
 # Applications
 bind-key 4-c            "st"
