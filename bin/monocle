@@ -5,6 +5,7 @@ focus() {
     local id=$1
     xdotool windowactivate $id
     xdotool windowraise $id
+    xdotool windowraise $id
     xdotool windowfocus $id
 }
 
