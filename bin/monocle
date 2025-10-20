@@ -8,6 +8,14 @@ focus() {
     xdotool windowfocus $id
 }
 
+setwin() {
+    id=$1
+    pos_x=$2
+    pos_y=$3
+    wmctrl -ir $id -b remove,maximized_vert,maximized_horz
+    xdotool windowmove $id $pos_x $pos_y
+}
+
 monocle() {
     local desktop=$(xdotool get_desktop)
     local id=$(xdotool getactivewindow)
@@ -23,17 +31,30 @@ monocle() {
 float() {
     local desktop=$(xdotool get_desktop)
     local id=$(xdotool getactivewindow)
+    local mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
+    local mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
-    for win in ${windows[@]}; do
-        wmctrl -ir $win -b remove,maximized_vert,maximized_horz
+    local num=${#windows[@]}
+    for ((i=0; i<$num; i++)); do
+        local win=${windows[$i]}
         local width=$(xwininfo -id $win | grep Width | cut -d: -f2 | tr -d ' ')
         local height=$(xwininfo -id $win | grep Height | cut -d: -f2 | tr -d ' ')
-        local x=$(xwininfo -id $win | grep Absolute | grep X: | awk '{print $4}')
-        local y=$(xwininfo -id $win | grep Absolute | grep Y: | awk '{print $4}')
-        [ $x -lt 0 ] && x=0
-        [ $y -lt 0 ] && y=0
-        xdotool windowmove $win $x $y
+        local c=$(($i%4))
+        case $c in
+            0 )
+                setwin $win 0 0
+                ;;
+            1 )
+                setwin $win $(($mw-$width)) 0
+                ;;
+            2 )
+                setwin $win 0 $(($mh-$height))
+                ;;
+            3 )
+                setwin $win $(($mw-$width)) $(($mh-$height))
+                ;;
+        esac
     done
     focus $id
 }
