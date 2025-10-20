@@ -67,8 +67,8 @@ install_bin() {
 
 install_misc() {
     echo "Install cwmrc"
-    mkdir -p $target
-    ln -sfTv $CORE_ROOT/misc/cwm/cwmrc ~/.cwmrc
+    local cwm=$CORE_ROOT/misc/cwm
+    ln -sfTv $cwm/cwmrc ~/.cwmrc
     echo "Install misc done"
 }
 
