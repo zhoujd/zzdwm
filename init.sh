@@ -100,6 +100,13 @@ clean() {
     echo "Clean done"
 }
 
+install() {
+    install_dm
+    install_bin
+    install_misc
+    echo "Install all done"
+}
+
 all() {
     install_dep
     install_dm
@@ -107,20 +114,21 @@ all() {
     install_misc
     build
     clean
-    echo "Install all done"
+    echo "Init all done"
 }
 
 usage() {
     app=$(basename $0)
     cat <<EOF
-Usage: $app {dep|dm|bin|misc|build|-b|clean|-c|all|-a}
+Usage: $app {dep|dm|bin|misc|install|-i|build|-b|clean|-c|all|-a}
 dep          --    Install depend package
 dm           --    Install xsession entry
 bin          --    Install bin
 misc         --    Install misc
+install|-i   --    Install all
 build|-b     --    Build all
 clean|-c     --    Clean all
-all|-a       --    Install all
+all|-a       --    Init all
 EOF
 }
 
@@ -136,6 +144,9 @@ case $1 in
         ;;
     misc )
         install_misc
+        ;;
+    install|-i )
+        install
         ;;
     build|-b )
         build
