@@ -32,8 +32,8 @@ float() {
     local y=$gap
     for win in ${windows[@]}; do
         wmctrl -ir $win -b remove,maximized_vert,maximized_horz
-        [ $x -gt $mw ] && x=$gap
-        [ $y -gt $mh ] && y=$gap
+        [ $(($x+$gap)) -gt $mw ] && x=$gap
+        [ $(($y+$gap)) -gt $mh ] && y=$gap
         xdotool windowmove $win $x $y
         x=$(($x+$interval))
         y=$(($y+$interval))
