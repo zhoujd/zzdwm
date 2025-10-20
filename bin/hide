@@ -1,0 +1,37 @@
+#!/bin/bash
+# tile windows
+
+gap=${WINGAP:-5}
+maxstack=4
+mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
+mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
+fw=$(($mw-$gap*2))
+fh=$(($mh-$gap*2))
+hw=$((($mw-$gap*3)/2))
+hh=$((($mh-$gap*3)/2))
+
+focus() {
+    local id=$1
+    xdotool windowactivate $id
+    xdotool windowraise $id
+    xdotool windowfocus $id
+}
+
+prepare() {
+    local id=$1
+    wmctrl -ir $id -b remove,maximized_vert,maximized_horz
+}
+
+main() {
+    local desktop=$(xdotool get_desktop)
+    local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
+                         tr -s '[:blank:]' |  awk '{print $1}'))
+    for w in ${windows[@]}; do
+        local width=$(xwininfo -id $w | grep Width | cut -d: -f2 | tr -d ' ')
+        local height=$(xwininfo -id $w | grep Height | cut -d: -f2 | tr -d ' ')
+        local y=$(xwininfo -id $w | grep Absolute | grep Y: | awk '{print $4}')
+        xdotool windowmove $id $(($width * -2)) $y
+    done
+}
+
+main $@
