@@ -87,6 +87,9 @@ bind-key 4SC-l          window-resize-right-big
 # Toggle visibility of all groups
 bind-key 4-0            group-toggle-all
 
+# Show only the previously active group
+bind-key 4-Tab          group-last
+
 # Cycle/reverse cycle through groups
 bind-key 4-h            group-cycle
 bind-key 4-l            group-rcycle
@@ -94,10 +97,6 @@ bind-key 4-l            group-rcycle
 # Cycle/reverse cycle through windows
 bind-key 4-j            window-cycle
 bind-key 4-k            window-rcycle
-
-# Cycle/reverse cycle through group windows
-bind-key 4-Tab          window-cycle-ingroup
-bind-key 4S-Tab         window-rcycle-ingroup
 
 bind-key 4-i            window-raise
 bind-key 4-d            window-lower
