@@ -12,7 +12,12 @@ CWM
 ## Linux port source
 
 ```
-## https://git.oriole.systems/cwm/snapshot/cwm-7.0.tar.gz
+## BSD cvs import and verion is greater than v7.4
+## https://github.com/leahneukirchen/cwm
+$ git clone https://github.com/leahneukirchen/cwm
+
+## Linux port version is v7.0
+## https://git.oriole.systems/cwm
 $ git clone https://git.oriole.systems/cwm
 ```
 
