@@ -24,14 +24,19 @@ float() {
     local id=$(xdotool getactivewindow)
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
+    local mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
+    local mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
     local interval=30
-    local x=0
-    local y=0
+    local gap=5
+    local x=$gap
+    local y=$gap
     for win in ${windows[@]}; do
         wmctrl -ir $win -b remove,maximized_vert,maximized_horz
+        [ $x -gt $mw ] && x=$gap
+        [ $y -gt $mh ] && y=$gap
+        xdotool windowmove $win $x $y
         x=$(($x+$interval))
         y=$(($y+$interval))
-        xdotool windowmove $win $x $y
     done
     focus $id
 }
