@@ -1,5 +1,5 @@
 #!/bin/bash
-# monocle windows
+# float windows
 
 focus() {
     local id=$1
@@ -10,8 +10,8 @@ focus() {
 
 setwin() {
     id=$1
+    wmctrl -ir $id -b remove,maximized_vert,maximized_horz
     xdotool windowmove $id 0 0
-    wmctrl -ir $win -b add,maximized_vert,maximized_horz
 }
 
 main() {

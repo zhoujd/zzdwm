@@ -115,8 +115,8 @@ bind-key 4C-q           quit
 # Layouts
 bind-key 4-t            "tile"
 bind-key 4-b            "bstack"
-bind-key 4-m            "monocle m"
-bind-key 4-f            "monocle f"
+bind-key 4-m            "monocle"
+bind-key 4-f            "float"
 bind-key 4-g            "grid"
 bind-key 4-x            "doubledeck"
 bind-key 4-z            "zetadeck"

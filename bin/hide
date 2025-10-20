@@ -15,6 +15,15 @@ prepare() {
     wmctrl -ir $id -b remove,maximized_vert,maximized_horz
 }
 
+setwin() {
+    local id=$1
+    local width=$(xwininfo -id $id | grep Width | cut -d: -f2 | tr -d ' ')
+    local height=$(xwininfo -id $id | grep Height | cut -d: -f2 | tr -d ' ')
+    local y=$(xwininfo -id $id | grep Absolute | grep Y: | awk '{print $4}')
+    prepare $id
+    xdotool windowmove $id $((-2*$width)) $y
+}
+
 main() {
     local desktop=$(xdotool get_desktop)
     local id=$(xdotool getactivewindow)
@@ -23,13 +32,12 @@ main() {
     if [ -z "$id" ]; then
         id=${windows[0]}
     fi
-    for w in ${windows[@]}; do
-        local width=$(xwininfo -id $w | grep Width | cut -d: -f2 | tr -d ' ')
-        local height=$(xwininfo -id $w | grep Height | cut -d: -f2 | tr -d ' ')
-        local y=$(xwininfo -id $w | grep Absolute | grep Y: | awk '{print $4}')
-        prepare $w
-        xdotool windowmove $w $(($width * -2)) $y
+    for win in ${windows[@]}; do
+        if [[ $win -ne $id ]]; then
+            setwin $win
+        fi
     done
+    setwin $id
     focus $id
 }
 
