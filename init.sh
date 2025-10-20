@@ -55,10 +55,10 @@ install_bin() {
         $CORE_ROOT/bin/tile
         $CORE_ROOT/bin/bstack
         $CORE_ROOT/bin/hide
-        $CORE_ROOT/bin/startdwm
-        $CORE_ROOT/bin/startcwm
-        $CORE_ROOT/bin/dwm-session
-        $CORE_ROOT/bin/cwm-session
+        $CORE_ROOT/libexec/wm/startdwm
+        $CORE_ROOT/libexec/wm/startcwm
+        $CORE_ROOT/libexec/wm/dwm-session
+        $CORE_ROOT/libexec/wm/cwm-session
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $target
