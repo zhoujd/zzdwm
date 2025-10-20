@@ -114,13 +114,13 @@ bind-key 4C-q           quit
 
 # Layouts
 bind-key 4-t            "tile v"
-bind-key 4-f            "float"
-bind-key 4-m            "monocle"
+bind-key 4-f            "monocle f"
+bind-key 4-m            "monocle m"
 bind-key 4-g            "grid"
 bind-key 4-x            "doubledeck v"
 bind-key 4-z            "doubledeck h"
 bind-key 4-b            "tile h"
-bind-key 4-BackSpace    "hide"
+bind-key 4-BackSpace    "monocle c"
 
 # Applications
 bind-key 4-c            "st"

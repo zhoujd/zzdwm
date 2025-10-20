@@ -48,13 +48,9 @@ install_bin() {
         $CORE_ROOT/bin/deckwin
         $CORE_ROOT/bin/focuswin
         $CORE_ROOT/bin/doubledeck
-        $CORE_ROOT/bin/zetadeck
         $CORE_ROOT/bin/monocle
-        $CORE_ROOT/bin/float
         $CORE_ROOT/bin/grid
         $CORE_ROOT/bin/tile
-        $CORE_ROOT/bin/bstack
-        $CORE_ROOT/bin/hide
         $CORE_ROOT/libexec/wm/startdwm
         $CORE_ROOT/libexec/wm/startcwm
         $CORE_ROOT/libexec/wm/dwm-session
