@@ -31,30 +31,11 @@ monocle() {
 float() {
     local desktop=$(xdotool get_desktop)
     local id=$(xdotool getactivewindow)
-    local mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
-    local mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
-    local num=${#windows[@]}
-    for ((i=0; i<$num; i++)); do
-        local win=${windows[$i]}
-        local width=$(xwininfo -id $win | grep Width | cut -d: -f2 | tr -d ' ')
-        local height=$(xwininfo -id $win | grep Height | cut -d: -f2 | tr -d ' ')
-        local c=$(($i%4))
-        case $c in
-            0 )
-                setwin $win 0 0
-                ;;
-            1 )
-                setwin $win $(($mw-$width)) 0
-                ;;
-            2 )
-                setwin $win 0 $(($mh-$height))
-                ;;
-            3 )
-                setwin $win $(($mw-$width)) $(($mh-$height))
-                ;;
-        esac
+    for win in ${windows[@]}; do
+        wmctrl -ir $win -b remove,maximized_vert,maximized_horz
+        xdotool windowmove $win 0 0
     done
     focus $id
 }
