@@ -55,7 +55,7 @@ other() {
 usage() {
     local app=$(basename $0)
     cat <<EOF
-$app  {v|h}
+$app  {m|f|o}
 m   -- monocle
 f   -- float
 o   -- other
