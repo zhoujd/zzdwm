@@ -57,15 +57,6 @@ deck() {
     esac
 }
 
-usage() {
-    local app=$(basename $0)
-    cat <<EOF
-$app  {v|h}
-v   -- doubledeck
-h   -- zetadeck
-EOF
-}
-
 vdeck() {
     local desktop=$(xdotool get_desktop)
     local id=$(xdotool getactivewindow)
@@ -92,6 +83,15 @@ hdeck() {
     done
     deck top $id
     focus $id
+}
+
+usage() {
+    local app=$(basename $0)
+    cat <<EOF
+$app  {v|h}
+v   -- doubledeck
+h   -- zetadeck
+EOF
 }
 
 main() {

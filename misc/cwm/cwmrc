@@ -113,13 +113,13 @@ bind-key 4SC-q          restart
 bind-key 4C-q           quit
 
 # Layouts
-bind-key 4-t            "tile"
+bind-key 4-t            "tile v"
 bind-key 4-f            "float"
 bind-key 4-m            "monocle"
 bind-key 4-g            "grid"
 bind-key 4-x            "doubledeck v"
 bind-key 4-z            "doubledeck h"
-bind-key 4-b            "bstack"
+bind-key 4-b            "tile h"
 bind-key 4-BackSpace    "hide"
 
 # Applications

@@ -32,7 +32,7 @@ setwin() {
     xdotool windowsize $id $size_x $size_y
 }
 
-main() {
+vtile() {
     local desktop=$(xdotool get_desktop)
     local id=$(xdotool getactivewindow)
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
@@ -65,6 +65,65 @@ main() {
     prepare $id
     setwin $id $gap $gap $hw $((($ch+$gap)*$ns-$gap))
     focus $id
+}
+
+htile() {
+    local desktop=$(xdotool get_desktop)
+    local id=$(xdotool getactivewindow)
+    local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
+                         tr -s '[:blank:]' |  awk '{print $1}'))
+    if [ -z "$id" ]; then
+        id=${windows[0]}
+    fi
+    local stacks=()
+    for w in ${windows[@]}; do
+        if [[ $w -ne $id ]]; then
+            stacks+=($w)
+        fi
+    done
+    local nstack=${#stacks[@]}
+    local ns=$nstack
+    if [[ $ns -gt $maxstack ]]; then
+        ns=$maxstack
+    elif [[ $ns -eq 0 ]]; then
+        ns=1
+    fi
+    local cw=$((($mw-($ns+1)*$gap)/$ns))
+    local y=$(($hh+2*$gap))
+    for ((i=0; i<$nstack; i++)); do
+        local win=${stacks[$i]}
+        local n=$(($i%$ns))
+        local x=$((($gap+$cw)*$n+$gap))
+        prepare $win
+        setwin $win $x $y $cw $hh
+    done
+    prepare $id
+    setwin $id $gap $gap $((($cw+$gap)*$ns-$gap)) $hh
+    focus $id
+}
+
+usage() {
+    local app=$(basename $0)
+    cat <<EOF
+$app  {v|h}
+v   -- tile
+h   -- bstack
+EOF
+}
+
+main() {
+    local kind=$1
+    case $kind in
+        v )
+            vtile
+            ;;
+        h )
+            htile
+            ;;
+        * )
+            usage
+            ;;
+    esac
 }
 
 main $@
