@@ -15,7 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $OpenBSD: search.c,v 1.70 2020/02/27 14:56:39 okan Exp $
+ * $OpenBSD$
  */
 
 #include <sys/types.h>
@@ -71,6 +71,7 @@ search_match_client(struct menu_q *menuq, struct menu_q *resultq, char *search)
 {
 	struct menu		*mi, *tierp[3], *before = NULL;
 	struct client_ctx	*cc;
+	struct winname		*wn;
 
 	(void)memset(tierp, 0, sizeof(tierp));
 
@@ -85,8 +86,11 @@ search_match_client(struct menu_q *menuq, struct menu_q *resultq, char *search)
 
 		/* Match on window name history, from present to past. */
 		if (tier < 0) {
-			if (match_substr(search, cc->name, 0))
-				tier = 1;
+			TAILQ_FOREACH_REVERSE(wn, &cc->nameq, name_q, entry)
+				if (match_substr(search, wn->name, 0)) {
+					tier = 1;
+					break;
+				}
 		}
 
 		/* Match on window resource class. */
@@ -97,7 +101,7 @@ search_match_client(struct menu_q *menuq, struct menu_q *resultq, char *search)
 			continue;
 
 		/* Current window is ranked down. */
-		if (((unsigned)tier < nitems(tierp) - 1) && (cc->flags & CLIENT_ACTIVE))
+		if ((tier < nitems(tierp) - 1) && (cc->flags & CLIENT_ACTIVE))
 			tier++;
 
 		/* Hidden window is ranked up. */
@@ -160,7 +164,7 @@ match_path_type(struct menu_q *resultq, char *search, int flag)
 	struct menu     *mi;
 	char 		*pattern;
 	glob_t		 g;
-	size_t		 i;
+	int		 i;
 
 	xasprintf(&pattern, "%s*", search);
 	if (glob(pattern, GLOB_MARK, NULL, &g) != 0)
@@ -202,6 +206,13 @@ search_match_exec(struct menu_q *menuq, struct menu_q *resultq, char *search)
 }
 
 void
+search_match_path(struct menu_q *menuq, struct menu_q *resultq, char *search)
+{
+	TAILQ_INIT(resultq);
+	match_path_type(resultq, search, PATH_ANY);
+}
+
+void
 search_match_text(struct menu_q *menuq, struct menu_q *resultq, char *search)
 {
 	struct menu	*mi;
@@ -209,6 +220,21 @@ search_match_text(struct menu_q *menuq, struct menu_q *resultq, char *search)
 	TAILQ_INIT(resultq);
 	TAILQ_FOREACH(mi, menuq, entry) {
 		if (match_substr(search, mi->text, 0))
+			TAILQ_INSERT_TAIL(resultq, mi, resultentry);
+	}
+}
+
+void
+search_match_wm(struct menu_q *menuq, struct menu_q *resultq, char *search)
+{
+	struct menu		*mi;
+	struct cmd_ctx		*wm;
+
+	TAILQ_INIT(resultq);
+	TAILQ_FOREACH(mi, menuq, entry) {
+		wm = (struct cmd_ctx *)mi->ctx;
+		if ((match_substr(search, wm->name, 0)) ||
+		    (match_substr(search, wm->path, 0)))
 			TAILQ_INSERT_TAIL(resultq, mi, resultentry);
 	}
 }
@@ -251,4 +277,13 @@ void
 search_print_text(struct menu *mi, int listing)
 {
 	(void)snprintf(mi->print, sizeof(mi->print), "%s", mi->text);
+}
+
+void
+search_print_wm(struct menu *mi, int listing)
+{
+	struct cmd_ctx		*wm = (struct cmd_ctx *)mi->ctx;
+
+	(void)snprintf(mi->print, sizeof(mi->print), "%s [%s]",
+	    wm->name, wm->path);
 }

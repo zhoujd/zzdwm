@@ -1,7 +1,7 @@
-/*	$OpenBSD: strlcat.c,v 1.19 2019/01/25 00:19:25 millert Exp $	*/
+/*	$OpenBSD: strlcat.c,v 1.14 2015/01/15 03:54:12 millert Exp $	*/
 
 /*
- * Copyright (c) 1998, 2015 Todd C. Miller <millert@openbsd.org>
+ * Copyright (c) 1998, 2015 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,17 +16,20 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef HAVE_STRLCAT
+/* OPENBSD ORIGINAL: lib/libc/string/strlcat.c */
 
 #include <sys/types.h>
 #include <string.h>
+#include "calmwm.h"
+
+#ifndef HAVE_STRLCAT
 
 /*
  * Appends src to string dst of size dsize (unlike strncat, dsize is the
  * full size of dst, not space left).  At most dsize-1 characters
  * will be copied.  Always NUL terminates (unless dsize <= strlen(dst)).
  * Returns strlen(src) + MIN(dsize, strlen(initial dst)).
- * If retval >= dsize, truncation occurred.
+ * If retval >= siz, truncation occurred.
  */
 size_t
 strlcat(char *dst, const char *src, size_t dsize)
@@ -56,4 +59,4 @@ strlcat(char *dst, const char *src, size_t dsize)
 	return(dlen + (src - osrc));	/* count does not include NUL */
 }
 
-#endif
+#endif /* !HAVE_STRLCAT */

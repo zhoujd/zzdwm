@@ -16,7 +16,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $OpenBSD: menu.c,v 1.109 2020/02/27 14:56:39 okan Exp $
+ * $OpenBSD$
  */
 
 #include <sys/types.h>
@@ -53,7 +53,7 @@ struct menu_ctx {
 	XftDraw			*xftdraw;
 	struct geom		 geom;
 	char			 searchstr[MENU_MAXENTRY + 1];
-	char			 dispstr[MENU_MAXENTRY*2 + 5];
+	char			 dispstr[MENU_MAXENTRY*2 + 1];
 	char			 promptstr[MENU_MAXENTRY + 1];
 	int			 list;
 	int			 listing;
@@ -76,6 +76,7 @@ static void		 menu_draw(struct menu_ctx *, struct menu_q *,
 static void 		 menu_draw_entry(struct menu_ctx *, struct menu_q *,
 			     int, int);
 static int		 menu_calc_entry(struct menu_ctx *, int, int);
+static struct menu	*menu_complete_path(struct menu_ctx *);
 static int		 menu_keycode(XKeyEvent *, enum ctltype *, char *);
 
 struct menu *
@@ -188,6 +189,34 @@ out:
 }
 
 static struct menu *
+menu_complete_path(struct menu_ctx *mc)
+{
+	struct screen_ctx	*sc = mc->sc;
+	struct menu		*mi, *mr;
+	struct menu_q		 menuq;
+	int			 mflags = (CWM_MENU_DUMMY);
+
+	mr = xcalloc(1, sizeof(*mr));
+
+	TAILQ_INIT(&menuq);
+
+	if ((mi = menu_filter(sc, &menuq, mc->searchstr, NULL, mflags,
+	    search_match_path, search_print_text)) != NULL) {
+		mr->abort = mi->abort;
+		mr->dummy = mi->dummy;
+		if (mi->text[0] != '\0')
+			snprintf(mr->text, sizeof(mr->text), "%s \"%s\"",
+			    mc->searchstr, mi->text);
+		else if (!mr->abort)
+			strlcpy(mr->text, mc->searchstr, sizeof(mr->text));
+	}
+	
+	menuq_clear(&menuq);
+
+	return mr;
+}
+
+static struct menu *
 menu_handle_key(XEvent *e, struct menu_ctx *mc, struct menu_q *menuq,
     struct menu_q *resultq)
 {
@@ -247,6 +276,16 @@ menu_handle_key(XEvent *e, struct menu_ctx *mc, struct menu_q *menuq,
 		break;
 	case CTL_TAB:
 		if ((mi = TAILQ_FIRST(resultq)) != NULL) {
+			/*
+			 * - We are in exec_path menu mode
+			 * - It is equal to the input
+			 * We got a command, launch the file menu
+			 */
+			if ((mc->flags & CWM_MENU_FILE) &&
+			    (strncmp(mc->searchstr, mi->text,
+					strlen(mi->text))) == 0)
+				return menu_complete_path(mc);
+
 			/*
 			 * Put common prefix of the results into searchstr
 			 */
@@ -316,7 +355,7 @@ menu_draw(struct menu_ctx *mc, struct menu_q *menuq, struct menu_q *resultq)
 	XftTextExtentsUtf8(X_Dpy, sc->xftfont,
 	    (const FcChar8*)mc->dispstr, strlen(mc->dispstr), &extents);
 	mc->geom.w = extents.xOff;
-	mc->geom.h = sc->xftfont->height + 1;
+	mc->geom.h = sc->xftfont->ascent + sc->xftfont->descent;
 	mc->num = 1;
 
 	TAILQ_FOREACH(mi, resultq, resultentry) {
@@ -325,7 +364,7 @@ menu_draw(struct menu_ctx *mc, struct menu_q *menuq, struct menu_q *resultq)
 		    (const FcChar8*)mi->print,
 		    MIN(strlen(mi->print), MENU_MAXENTRY), &extents);
 		mc->geom.w = MAX(mc->geom.w, extents.xOff);
-		mc->geom.h += sc->xftfont->height + 1;
+		mc->geom.h += sc->xftfont->ascent + sc->xftfont->descent;
 		mc->num++;
 	}
 
@@ -364,15 +403,15 @@ menu_draw(struct menu_ctx *mc, struct menu_q *menuq, struct menu_q *resultq)
 	    (const FcChar8*)mc->dispstr, strlen(mc->dispstr));
 
 	TAILQ_FOREACH(mi, resultq, resultentry) {
-		int y = n * (sc->xftfont->height + 1) + sc->xftfont->ascent + 1;
+		int y = n * (sc->xftfont->ascent + sc->xftfont->descent);
 
 		/* Stop drawing when menu doesn't fit inside the screen. */
-		if (mc->geom.y + y > area.h)
+		if (mc->geom.y + y >= area.h)
 			break;
 
 		XftDrawStringUtf8(mc->xftdraw,
 		    &sc->xftcolor[CWM_COLOR_MENU_FONT], sc->xftfont,
-		    0, y,
+		    0, y + sc->xftfont->ascent,
 		    (const FcChar8*)mi->print, strlen(mi->print));
 		n++;
 	}
@@ -386,7 +425,7 @@ menu_draw_entry(struct menu_ctx *mc, struct menu_q *resultq,
 {
 	struct screen_ctx	*sc = mc->sc;
 	struct menu		*mi;
-	int			 color, i = 1;
+	int			 color, i = 1, y;
 
 	TAILQ_FOREACH(mi, resultq, resultentry)
 		if (entry == i++)
@@ -394,14 +433,13 @@ menu_draw_entry(struct menu_ctx *mc, struct menu_q *resultq,
 	if (mi == NULL)
 		return;
 
+	y = entry * (sc->xftfont->ascent + sc->xftfont->descent);
 	color = (active) ? CWM_COLOR_MENU_FG : CWM_COLOR_MENU_BG;
-	XftDrawRect(mc->xftdraw, &sc->xftcolor[color], 0,
-	    (sc->xftfont->height + 1) * entry, mc->geom.w,
-	    (sc->xftfont->height + 1) + sc->xftfont->descent);
+	XftDrawRect(mc->xftdraw, &sc->xftcolor[color], 0, y,
+	    mc->geom.w, sc->xftfont->ascent + sc->xftfont->descent);
 	color = (active) ? CWM_COLOR_MENU_FONT_SEL : CWM_COLOR_MENU_FONT;
 	XftDrawStringUtf8(mc->xftdraw,
-	    &sc->xftcolor[color], sc->xftfont,
-	    0, (sc->xftfont->height + 1) * entry + sc->xftfont->ascent + 1,
+	    &sc->xftcolor[color], sc->xftfont, 0, y + sc->xftfont->ascent,
 	    (const FcChar8*)mi->print, strlen(mi->print));
 }
 
@@ -448,11 +486,11 @@ menu_calc_entry(struct menu_ctx *mc, int x, int y)
 	struct screen_ctx	*sc = mc->sc;
 	int			 entry;
 
-	entry = y / (sc->xftfont->height + 1);
+	entry = y / (sc->xftfont->ascent + sc->xftfont->descent);
 
 	/* in bounds? */
 	if (x < 0 || x > mc->geom.w || y < 0 ||
-	    y > (sc->xftfont->height + 1) * mc->num ||
+	    y > (sc->xftfont->ascent + sc->xftfont->descent) * mc->num ||
 	    entry < 0 || entry >= mc->num)
 		entry = -1;
 

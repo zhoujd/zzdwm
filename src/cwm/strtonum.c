@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtonum.c,v 1.8 2015/09/13 08:31:48 guenther Exp $	*/
+/*	$OpenBSD: strtonum.c,v 1.7 2013/04/17 18:40:58 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 Ted Unangst and Todd Miller
@@ -16,6 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+/* OPENBSD ORIGINAL: lib/libc/stdlib/strtonum.c */
 
 #ifndef HAVE_STRTONUM
 #include <errno.h>
@@ -65,4 +67,4 @@ strtonum(const char *numstr, long long minval, long long maxval,
 	return (ll);
 }
 
-#endif
+#endif /* HAVE_STRTONUM */

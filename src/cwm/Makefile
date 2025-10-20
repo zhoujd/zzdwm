@@ -1,32 +1,54 @@
-PROG = cwm
-OBJS = calmwm.o client.o conf.o group.o kbfunc.o menu.o parse.o \
-	   reallocarray.o screen.o search.o strlcat.o strlcpy.o strtonum.o \
-	   util.o xevents.o xmalloc.o xutil.o
-LIBS = x11 xft xrandr
+# cwm makefile for BSD make and GNU make
+# uses pkg-config, DESTDIR and PREFIX
 
-PREFIX ?= /usr/local
-BINDIR ?= ${PREFIX}/bin
-MANDIR ?= ${PREFIX}/share/man
+PROG=		cwm
 
-PKG_CONFIG ?= pkg-config
+PREFIX?=	/usr/local
 
-CFLAGS   ?= -O2
-CFLAGS   += -MMD -Wall -Wextra -Wno-unused-parameter
-CPPFLAGS += -D_GNU_SOURCE $(shell ${PKG_CONFIG} --cflags ${LIBS})
-LDLIBS   += $(shell ${PKG_CONFIG} --libs ${LIBS})
+SRCS=		calmwm.c screen.c xmalloc.c client.c menu.c \
+		search.c util.c xutil.c conf.c xevents.c group.c \
+		kbfunc.c parse.y
 
-${PROG}: ${OBJS}
-	${CC} -o $@ ${CFLAGS} ${OBJS} ${LDLIBS}
+OBJS=		calmwm.o screen.o xmalloc.o client.o menu.o \
+		search.o util.o xutil.o conf.o xevents.o group.o \
+		kbfunc.o strlcpy.o strlcat.o parse.o \
+		strtonum.o reallocarray.o
 
-install:
-	install -D -m 0755 -t '${DESTDIR}${BINDIR}' ${PROG}
-	install -D -m 0644 -t '${DESTDIR}${MANDIR}/man1' ${PROG}.1
-	install -D -m 0644 -t '${DESTDIR}${MANDIR}/man5' ${PROG}rc.5
+PKG_CONFIG?=	pkg-config
+
+CPPFLAGS+=	`${PKG_CONFIG} --cflags x11 xft xrandr`
+
+CFLAGS?=	-Wall -O2 -g -D_GNU_SOURCE -Wno-format-truncation
+
+LDFLAGS+=	`${PKG_CONFIG} --libs x11 xft xrandr`
+
+MANPREFIX?=	${PREFIX}/share/man
+
+all: ${PROG}
 
 clean:
-	rm -f ${OBJS} ${OBJS:.o=.d} ${PROG}
+	rm -f ${OBJS} ${PROG} parse.c
 
-.INTERMEDIATE: parse.c
-.PHONY: clean install
+${PROG}: ${OBJS}
+	${CC} ${OBJS} ${LDFLAGS} -o ${PROG}
 
--include ${OBJS:.o=.d}
+.c.o:
+	${CC} -c ${CFLAGS} ${CPPFLAGS} $<
+
+install: ${PROG}
+	install -d ${DESTDIR}${PREFIX}/bin ${DESTDIR}${MANPREFIX}/man1 ${DESTDIR}${MANPREFIX}/man5
+	install -m 755 cwm ${DESTDIR}${PREFIX}/bin
+	install -m 644 cwm.1 ${DESTDIR}${MANPREFIX}/man1
+	install -m 644 cwmrc.5 ${DESTDIR}${MANPREFIX}/man5
+
+release:
+	VERSION=$$(git describe --tags | sed 's/^v//;s/-[^.]*$$//') && \
+	git archive --prefix=cwm-$$VERSION/ -o cwm-$$VERSION.tar.gz HEAD
+
+sign:
+	VERSION=$$(git describe --tags | sed 's/^v//;s/-[^.]*$$//') && \
+	gpg2 --armor --detach-sign cwm-$$VERSION.tar.gz && \
+	signify -S -s ~/.signify/cwm.sec -m cwm-$$VERSION.tar.gz && \
+	sed -i '1cuntrusted comment: verify with cwm.pub' cwm-$$VERSION.tar.gz.sig
+
+.PRECIOUS: parse.c

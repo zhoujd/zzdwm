@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cwm.1,v 1.65 2019/07/09 21:38:44 kn Exp $
+.\"	$OpenBSD$
 .\"
 .\" Copyright (c) 2004,2005 Marius Aamodt Eriksen <marius@monkey.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 9 2019 $
+.Dd $Mdocdate$
 .Dt CWM 1
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@ Specify an alternative configuration file.
 By default,
 .Nm
 loads
-.Pa $XDG_CONFIG_HOME/cwm/cwmrc ,
+.Pa ~/.cwmrc ,
 if present.
 Any error messages from lines in the configuration file will be sent to
 .Em stderr ;
@@ -102,6 +102,10 @@ Label current window.
 Cycle through currently visible windows.
 .It Ic MS-Tab
 Reverse cycle through currently visible windows.
+.It Ic M-grave
+Cycle through currently visible windows of the same window class.
+.It Ic MS-grave
+Reverse cycle through currently visible windows of the same window class.
 .It Ic CM-x
 Close current window.
 .It Ic CM-[n]
@@ -140,6 +144,19 @@ Resize window by a large amount; see
 Spawn
 .Dq exec program
 dialog.
+.It Ic M-period
+Spawn
+.Dq ssh to
+dialog.
+This parses
+.Pa $HOME/.ssh/known_hosts
+to provide host auto-completion.
+.Xr ssh 1
+will be executed via the configured terminal emulator.
+.It Ic CM-w
+Spawn
+.Dq exec WindowManager
+menu, allowing a switch to another window manager.
 .It Ic CMS-r
 Restart.
 .It Ic CMS-q
@@ -190,10 +207,12 @@ This is equivalent to the
 function.
 .Sh SEARCH
 .Nm
-features the ability to search for windows by their current title
-and label.
+features the ability to search for windows by their current title,
+old titles, and by their label.
 The priority for the search results are: label, current title,
-and window class name.
+old titles in reverse order, and finally window class name.
+.Nm
+keeps a history of the 5 previous titles of a window.
 .Pp
 When searching, the leftmost character of the result list may show a
 flag:
@@ -244,15 +263,12 @@ starts on this display unless the
 option is given.
 .El
 .Sh FILES
-.Bl -tag -width "$XDG_CONFIG_HOME/cwm/cwmrcXXX" -compact
-.It Pa $XDG_CONFIG_HOME/cwm/cwmrc
+.Bl -tag -width "~/.cwmrcXX" -compact
+.It Pa ~/.cwmrc
 Default
 .Nm
 configuration file.
 .El
-.Pp
-If $XDG_CONFIG_HOME is unset or empty, it will default to
-.Em ~/.config
 .Sh SEE ALSO
 .Xr cwmrc 5
 .Sh HISTORY

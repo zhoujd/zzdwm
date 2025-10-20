@@ -15,7 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $OpenBSD: conf.c,v 1.253 2021/11/19 19:13:14 okan Exp $
+ * $OpenBSD$
  */
 
 #include <sys/types.h>
@@ -136,9 +136,14 @@ static const struct {
 		(CWM_CYCLE_FORWARD | CWM_CYCLE_INGROUP)) },
 	{ FUNC_SC(window-rcycle-ingroup, client_cycle,
 		(CWM_CYCLE_REVERSE | CWM_CYCLE_INGROUP)) },
+	{ FUNC_SC(window-cycle-inclass, client_cycle,
+		(CWM_CYCLE_FORWARD | CWM_CYCLE_INCLASS)) },
+	{ FUNC_SC(window-rcycle-inclass, client_cycle,
+		(CWM_CYCLE_REVERSE | CWM_CYCLE_INCLASS)) },
 
 	{ FUNC_SC(group-cycle, group_cycle, (CWM_CYCLE_FORWARD)) },
 	{ FUNC_SC(group-rcycle, group_cycle, (CWM_CYCLE_REVERSE)) },
+	{ FUNC_SC(group-last, group_last, 0) },
 	{ FUNC_SC(group-toggle-all, group_toggle_all, 0) },
 	{ FUNC_SC(group-toggle-1, group_toggle, 1) },
 	{ FUNC_SC(group-toggle-2, group_toggle, 2) },
@@ -179,9 +184,11 @@ static const struct {
 
 	{ FUNC_SC(menu-cmd, menu_cmd, 0) },
 	{ FUNC_SC(menu-group, menu_group, 0) },
+	{ FUNC_SC(menu-ssh, menu_ssh, 0) },
 	{ FUNC_SC(menu-window, menu_client, CWM_MENU_WINDOW_ALL) },
 	{ FUNC_SC(menu-window-hidden, menu_client, CWM_MENU_WINDOW_HIDDEN) },
 	{ FUNC_SC(menu-exec, menu_exec, 0) },
+	{ FUNC_SC(menu-exec-wm, menu_wm, 0) },
 
 	{ FUNC_SC(terminal, exec_term, 0) },
 	{ FUNC_SC(lock, exec_lock, 0) },
@@ -208,6 +215,8 @@ static const struct {
 	{ "CM-Return",	"terminal" },
 	{ "CM-Delete",	"lock" },
 	{ "M-question",	"menu-exec" },
+	{ "CM-w",	"menu-exec-wm" },
+	{ "M-period",	"menu-ssh" },
 	{ "M-Return",	"window-hide" },
 	{ "M-Down",	"window-lower" },
 	{ "M-Up",	"window-raise" },
@@ -215,6 +224,8 @@ static const struct {
 	{ "C-slash",	"menu-cmd" },
 	{ "M-Tab",	"window-cycle" },
 	{ "MS-Tab",	"window-rcycle" },
+	{ "M-grave",	"window-cycle-inclass" },
+	{ "MS-grave",	"window-rcycle-inclass" },
 	{ "CM-n",	"window-menu-label" },
 	{ "CM-x",	"window-close" },
 	{ "CM-a",	"group-toggle-all" },
@@ -271,7 +282,6 @@ void
 conf_init(struct conf *c)
 {
 	const char	*home;
-	const char	*xdg_config;
 	struct passwd	*pw;
 	unsigned int	i;
 
@@ -282,6 +292,7 @@ conf_init(struct conf *c)
 	c->vtile = 50;
 	c->snapdist = 0;
 	c->ngroups = 0;
+	c->nameqlen = 5;
 
 	TAILQ_INIT(&c->ignoreq);
 	TAILQ_INIT(&c->autogroupq);
@@ -306,26 +317,23 @@ conf_init(struct conf *c)
 	c->font = xstrdup("sans-serif:pixelsize=14:bold");
 	c->wmname = xstrdup("CWM");
 
-	xdg_config = getenv("XDG_CONFIG_HOME");
-	if ((xdg_config == NULL) || (*xdg_config == '\0')) {
-		home = getenv("HOME");
-		if ((home == NULL) || (*home == '\0')) {
-			pw = getpwuid(getuid());
-			if (pw != NULL && pw->pw_dir != NULL && *pw->pw_dir != '\0')
-				home = pw->pw_dir;
-			else
-				home = "/";
-		}
-		xasprintf(&c->conf_file, "%s/.config/cwm/cwmrc", home);
-	} else {
-		xasprintf(&c->conf_file, "%s/cwm/cwmrc", xdg_config);
+	home = getenv("HOME");
+	if ((home == NULL) || (*home == '\0')) {
+		pw = getpwuid(getuid());
+		if (pw != NULL && pw->pw_dir != NULL && *pw->pw_dir != '\0')
+			home = pw->pw_dir;
+		else
+			home = "/";
 	}
+	xasprintf(&c->conf_file, "%s/%s", home, ".cwmrc");
+	xasprintf(&c->known_hosts, "%s/%s", home, ".ssh/known_hosts");
 }
 
 void
 conf_clear(struct conf *c)
 {
 	struct autogroup	*ag;
+	struct bind_ctx		*kb, *mb;
 	struct winname		*wn;
 	struct cmd_ctx		*cmd, *wm;
 	int			 i;
@@ -342,7 +350,10 @@ conf_clear(struct conf *c)
 		free(wm->path);
 		free(wm);
 	}
-	conf_unbind_key(c, NULL);
+	while ((kb = TAILQ_FIRST(&c->keybindq)) != NULL) {
+		TAILQ_REMOVE(&c->keybindq, kb, entry);
+		free(kb);
+	}
 	while ((ag = TAILQ_FIRST(&c->autogroupq)) != NULL) {
 		TAILQ_REMOVE(&c->autogroupq, ag, entry);
 		free(ag->class);
@@ -354,11 +365,15 @@ conf_clear(struct conf *c)
 		free(wn->name);
 		free(wn);
 	}
-	conf_unbind_mouse(c, NULL);
+	while ((mb = TAILQ_FIRST(&c->mousebindq)) != NULL) {
+		TAILQ_REMOVE(&c->mousebindq, mb, entry);
+		free(mb);
+	}
 	for (i = 0; i < CWM_COLOR_NITEMS; i++)
 		free(c->color[i]);
 
 	free(c->conf_file);
+	free(c->known_hosts);
 	free(c->font);
 	free(c->wmname);
 }
@@ -453,8 +468,6 @@ void
 conf_client(struct client_ctx *cc)
 {
 	struct winname	*wn;
-	unsigned int	 i;
-	XftColor	 xc;
 
 	TAILQ_FOREACH(wn, &Conf.ignoreq, entry) {
 		if (strncasecmp(wn->name, cc->name, strlen(wn->name)) == 0) {
@@ -462,25 +475,6 @@ conf_client(struct client_ctx *cc)
 			break;
 		}
 	}
-
-	for (i = 0; i < nitems(color_binds); i++) {
-		if (i == CWM_COLOR_MENU_FONT_SEL && *Conf.color[i] == '\0') {
-			xu_xorcolor(cc->xftcolor[CWM_COLOR_MENU_BG],
-			    cc->xftcolor[CWM_COLOR_MENU_FG], &xc);
-			xu_xorcolor(cc->xftcolor[CWM_COLOR_MENU_FONT], xc, &xc);
-			if (!XftColorAllocValue(X_Dpy, cc->visual, cc->colormap,
-			    &xc.color, &cc->xftcolor[CWM_COLOR_MENU_FONT_SEL]))
-				warnx("XftColorAllocValue: %s", Conf.color[i]);
-			break;
-		}
-		if (!XftColorAllocName(X_Dpy, cc->visual, cc->colormap,
-		    Conf.color[i], &cc->xftcolor[i])) {
-			warnx("XftColorAllocName: %s", Conf.color[i]);
-			XftColorAllocName(X_Dpy, cc->visual, cc->colormap,
-			    color_binds[i], &cc->xftcolor[i]);
-		}
-	}
-
 }
 
 void
@@ -660,7 +654,7 @@ conf_unbind_mouse(struct conf *c, struct bind_ctx *unbind)
 	struct bind_ctx		*mb = NULL, *mbnxt;
 
 	TAILQ_FOREACH_SAFE(mb, &c->mousebindq, entry, mbnxt) {
-		if ((unbind == NULL) || 
+		if ((unbind == NULL) ||
 		    ((mb->modmask == unbind->modmask) &&
 		     (mb->press.button == unbind->press.button))) {
 			TAILQ_REMOVE(&c->mousebindq, mb, entry);

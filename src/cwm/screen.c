@@ -15,7 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $OpenBSD: screen.c,v 1.97 2020/03/24 14:47:29 okan Exp $
+ * $OpenBSD$
  */
 
 #include <sys/types.h>
@@ -60,6 +60,7 @@ screen_init(int which)
 	xu_ewmh_net_supported_wm_check(sc);
 
 	conf_group(sc);
+	sc->group_last = sc->group_active;
 	screen_update_geometry(sc);
 
 	xu_ewmh_net_desktop_names(sc);
@@ -265,13 +266,13 @@ screen_assert_clients_within(struct screen_ctx *sc)
 }
 
 void
-screen_prop_win_create(struct screen_ctx *sc, struct client_ctx *cc)
+screen_prop_win_create(struct screen_ctx *sc, Window win)
 {
-	sc->prop.win = XCreateSimpleWindow(X_Dpy, cc->win, 0, 0, 1, 1, Conf.bwidth,
-	    cc->xftcolor[CWM_COLOR_MENU_FG].pixel,
-	    cc->xftcolor[CWM_COLOR_MENU_BG].pixel);
+	sc->prop.win = XCreateSimpleWindow(X_Dpy, win, 0, 0, 1, 1, 0,
+	    sc->xftcolor[CWM_COLOR_MENU_BG].pixel,
+	    sc->xftcolor[CWM_COLOR_MENU_BG].pixel);
 	sc->prop.xftdraw = XftDrawCreate(X_Dpy, sc->prop.win,
-	    cc->visual, cc->colormap);
+	    sc->visual, sc->colormap);
 
 	XMapWindow(X_Dpy, sc->prop.win);
 }

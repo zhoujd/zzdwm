@@ -15,7 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $OpenBSD: calmwm.c,v 1.114 2020/03/24 14:48:29 okan Exp $
+ * $OpenBSD$
  */
 
 #include <sys/types.h>
@@ -34,10 +34,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifndef __dead
-#define __dead __attribute__((noreturn))
-#endif
-
 #include "calmwm.h"
 
 Display			*X_Dpy;
@@ -48,7 +44,7 @@ struct screen_q		 Screenq = TAILQ_HEAD_INITIALIZER(Screenq);
 struct conf		 Conf;
 volatile sig_atomic_t	 cwm_status;
 
-__dead void	usage(void);
+void	usage(void);
 static void	sighdlr(int);
 static int	x_errorhandler(Display *, XErrorEvent *);
 static int	x_init(const char *);
@@ -59,7 +55,7 @@ int
 main(int argc, char **argv)
 {
 	char		*display_name = NULL;
-	char		**saved_argv;
+	char		*fallback;
 	int		 ch, xfd, nflag = 0;
 	struct pollfd	 pfd[1];
 
@@ -69,7 +65,8 @@ main(int argc, char **argv)
 
 	conf_init(&Conf);
 
-	saved_argv = argv;
+	fallback = u_argv(argv);
+	Conf.wm_argv = u_argv(argv);
 	while ((ch = getopt(argc, argv, "c:d:nv")) != -1) {
 		switch (ch) {
 		case 'c':
@@ -126,8 +123,9 @@ main(int argc, char **argv)
 	}
 	x_teardown();
 	if (cwm_status == CWM_EXEC_WM) {
-		execvp(saved_argv[0], saved_argv);
-		warnx("failed to re-exec");
+		u_exec(Conf.wm_argv);
+		warnx("'%s' failed to start, starting fallback", Conf.wm_argv);
+		u_exec(fallback);
 	}
 
 	return 0;
@@ -214,7 +212,7 @@ sighdlr(int sig)
 	switch (sig) {
 	case SIGCHLD:
 		/* Collect dead children. */
-		while ((pid = waitpid(WAIT_ANY, &status, WNOHANG)) > 0 ||
+		while ((pid = waitpid(-1, &status, WNOHANG)) > 0 ||
 		    (pid < 0 && errno == EINTR))
 			;
 		break;
@@ -230,7 +228,7 @@ sighdlr(int sig)
 	errno = save_errno;
 }
 
-__dead void
+void
 usage(void)
 {
 	extern char	*__progname;

@@ -15,7 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $OpenBSD: util.c,v 1.26 2020/04/16 17:12:49 tobias Exp $
+ * $OpenBSD$
  */
 
 #include <sys/types.h>
@@ -82,6 +82,30 @@ u_exec(char *argstr)
 	(void)setsid();
 	(void)execvp(args[0], args);
 	warn("%s", s);
+}
+
+char *
+u_argv(char * const *argv)
+{
+	size_t	 siz = 0;
+	int	 i;
+	char	*p;
+
+	if (argv == 0)
+		return NULL;
+
+	for (i = 0; argv[i]; i++)
+		siz += strlen(argv[i]) + 1;
+	if (siz == 0)
+		return NULL;
+
+	p = xmalloc(siz);
+	strlcpy(p, argv[0], siz);
+	for (i = 1; argv[i]; i++) {
+		strlcat(p, " ", siz);
+		strlcat(p, argv[i], siz);
+	}
+	return p;
 }
 
 static void

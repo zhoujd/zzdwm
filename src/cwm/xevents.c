@@ -15,7 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $OpenBSD: xevents.c,v 1.150 2020/03/24 14:47:29 okan Exp $
+ * $OpenBSD$
  */
 
 /*
@@ -410,7 +410,7 @@ xev_handle_clientmessage(XEvent *ee)
 			 * is 0xFFFFFFFF (-1) then the window should appear
 			 * on all desktops, in our case, group 0.
 			 */
-			if (e->data.l[0] == 0xFFFFFFFF)
+			if (e->data.l[0] == (unsigned long)-1)
 				group_movetogroup(cc, 0);
 			else
 				if (e->data.l[0] >= 0 &&
