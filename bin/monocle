@@ -30,11 +30,14 @@ float() {
     local gap=5
     local x=$gap
     local y=$gap
+    local size_x=$(($mw*2/3))
+    local size_y=$(($mh*2/3))
     for win in ${windows[@]}; do
         wmctrl -ir $win -b remove,maximized_vert,maximized_horz
         [ $(($x+$gap)) -gt $mw ] && x=$gap
         [ $(($y+$gap)) -gt $mh ] && y=$gap
         xdotool windowmove $win $x $y
+        xdotool windowsize $win $size_x $size_y
         x=$(($x+$interval))
         y=$(($y+$interval))
     done

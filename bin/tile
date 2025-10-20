@@ -2,7 +2,7 @@
 # tile windows
 
 gap=${WINGAP:-5}
-maxstack=4
+maxstack=8
 mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
 mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
 fw=$(($mw-$gap*2))
