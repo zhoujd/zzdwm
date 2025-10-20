@@ -24,6 +24,23 @@ float() {
     local id=$(xdotool getactivewindow)
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
+    local interval=30
+    local x=0
+    local y=0
+    for win in ${windows[@]}; do
+        wmctrl -ir $win -b remove,maximized_vert,maximized_horz
+        x=$(($x+$interval))
+        y=$(($y+$interval))
+        xdotool windowmove $win $x $y
+    done
+    focus $id
+}
+
+other() {
+    local desktop=$(xdotool get_desktop)
+    local id=$(xdotool getactivewindow)
+    local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
+                         tr -s '[:blank:]' |  awk '{print $1}'))
     for win in ${windows[@]}; do
         wmctrl -ir $win -b remove,maximized_vert,maximized_horz
     done
@@ -36,6 +53,7 @@ usage() {
 $app  {v|h}
 m   -- monocle
 f   -- float
+o   -- other
 EOF
 }
 
@@ -47,6 +65,9 @@ main() {
             ;;
         f )
             float
+            ;;
+        o )
+            other
             ;;
         * )
             usage
