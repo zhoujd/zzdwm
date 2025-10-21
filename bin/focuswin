@@ -25,7 +25,7 @@ app_focus() {
         active_win_id=""
     fi
     # get list of all windows matching with the class above
-    win_list=$(wmctrl -xl | sed 's/[a-zA-Z0-9-]*\.//' | grep -E -i "\s+${app}\s+")
+    win_list=$(wmctrl -xl | sed 's/[a-zA-Z0-9-]*\.//' | grep -i -E "\s+${app}\s+")
     # get next window to focus on, removing id active
     switch_to=$(echo $win_list | sed s/.*$active_win_id// | awk '{print $1}')
     # if the current window is the last in the list ... take the first one
