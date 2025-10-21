@@ -37,9 +37,6 @@ vtile() {
     local id=$(xdotool getactivewindow)
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
-    if [ -z "$id" ]; then
-        id=${windows[0]}
-    fi
     local stacks=()
     for w in ${windows[@]}; do
         if [[ $w -ne $id ]]; then
@@ -72,9 +69,6 @@ htile() {
     local id=$(xdotool getactivewindow)
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
-    if [ -z "$id" ]; then
-        id=${windows[0]}
-    fi
     local stacks=()
     for w in ${windows[@]}; do
         if [[ $w -ne $id ]]; then
