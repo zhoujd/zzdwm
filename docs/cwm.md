@@ -7,6 +7,7 @@ CWM
 ## https://github.com/leahneukirchen/cwm
 ## https://git.oriole.systems/cwm
 ## https://wiki.archlinux.org/title/Cwm
+## https://leahneukirchen.org/releases/
 ```
 
 ## Linux port source
