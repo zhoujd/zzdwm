@@ -13,12 +13,12 @@ monocle() {
     local id=$(xdotool getactivewindow)
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
+    wmctrl -ir $id -b add,maximized_vert,maximized_horz
     for win in ${windows[@]}; do
         if [[ $win -ne $id ]]; then
             wmctrl -ir $win -b add,maximized_vert,maximized_horz
         fi
     done
-    wmctrl -ir $id -b add,maximized_vert,maximized_horz
     focus $id
 }
 
