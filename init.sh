@@ -116,8 +116,8 @@ all() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-Usage: $app {dep|dm|bin|misc|install|-i|build|-b|clean|-c|all|-a}
-dep          --    Install depend package
+Usage: $app {dep|-d|dm|bin|misc|install|-i|build|-b|clean|-c|all|-a}
+dep|-d       --    Install depend package
 dm           --    Install xsession entry
 bin          --    Install bin
 misc         --    Install misc
@@ -129,7 +129,7 @@ EOF
 }
 
 case $1 in
-    dep )
+    dep|-d )
         install_dep
         ;;
     dm )
