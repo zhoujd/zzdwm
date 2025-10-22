@@ -4,15 +4,18 @@ MicroEMACS
 ## URLs
 
 ```
+## https://github.com/bloovis/microemacs.mirror
 ## https://github.com/troglobit/MicroEMACS
 ## https://git.sr.ht/~tekk/microemacs
-## https://github.com/bloovis/microemacs.mirror
-## https://www.bloovis.com/fossil/home/marka/fossils/pe/doc/trunk/www/index.md
 ```
 
 ## Linux editors
 
 ```bash
+## Bloovis MicroEmacs (pe)
+## https://github.com/bloovis/microemacs.mirror
+## https://www.bloovis.com/fossil/home/marka/fossils/pe/doc/trunk/www/index.md
+
 ## Portable Mg
 ## https://github.com/hboetes/mg
 ## https://github.com/hboetes/mg/releases
@@ -22,9 +25,6 @@ $ sudo cp mg-20240709-static-amd64 /usr/local/bin/mg
 ## Micro (GNU) Emacs
 ## https://github.com/troglobit/mg
 ## https://taingram.org/blog/lightweight-emacs-editors.html
-
-## Textadept
-## https://orbitalquark.github.io/textadept/
 
 ## The original MicroEMACS
 ## https://github.com/troglobit/MicroEMACS
