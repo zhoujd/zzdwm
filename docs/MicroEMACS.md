@@ -6,9 +6,7 @@ MicroEMACS
 ```
 ## https://github.com/troglobit/MicroEMACS
 ## https://git.sr.ht/~tekk/microemacs
-## https://www.bloovis.com/cgit/microemacs/
-## https://www.bloovis.com/meguide/
-## https://github.com/bloovis/microemacs
+## https://github.com/bloovis/microemacs.mirror
 ## https://www.bloovis.com/fossil/home/marka/fossils/pe/doc/trunk/www/index.md
 ```
 
@@ -103,4 +101,10 @@ $ bfs -a mec -o me.bin ./mearchive
 or
 $ tfs -a mec ./mearchive
 $ tfs -a mec -o me.bin ./mearchive
+```
+
+## The bloovis (pe) search last
+
+```
+M-H  search-again
 ```
