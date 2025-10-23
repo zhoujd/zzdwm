@@ -1057,3 +1057,6 @@ uclen (const uchar *s)
     n = 1;	/* error */
   return n;
 }
+
+int filefind (int f, int n);
+int viewfile (int f, int n);
