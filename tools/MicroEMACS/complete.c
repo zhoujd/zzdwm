@@ -61,7 +61,7 @@ getfilename(char *prompt, char *buf, int nbuf)
     {
       /* Abort the input? */
       ctrlg(FALSE, 0, KRANDOM);
-      eprintf("");
+      eprintf("Aborted");
       ttflush();
       return ABORT;
     }
@@ -164,7 +164,7 @@ getfilename(char *prompt, char *buf, int nbuf)
 
       if (c != ' ')
       {
-        /* (*term.t_beep) (); */
+        ttbeep();
         nskip = 0;
       }
       while ((c = getc(tmpf)) != EOF && c != '\n'
@@ -174,7 +174,7 @@ getfilename(char *prompt, char *buf, int nbuf)
           buf[cpos++] = c;
       }
       if (c == '*')
-        /* (*term.t_beep) () */;
+        ttbeep();
 
       for (n = 0; n < cpos; n++)
       {
