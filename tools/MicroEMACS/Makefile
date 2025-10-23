@@ -15,7 +15,7 @@ INC = -I$(srcdir) -I$(SYS) -I$(TTY)
 
 CC = gcc
 CFLAGS_DEBUG = -g -DDEBUG=1
-CFLAGS_OPTIMIZE	= -O0 -g
+CFLAGS_OPTIMIZE	= -Os -s
 CFLAGS = $(CFLAGS_OPTIMIZE) -DLINUX $(INC) -Wall
 
 LD = gcc
