@@ -3,15 +3,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "estruct.h"
-#include "edef.h"
-#include "efunc.h"
+#include "def.h"
 
-extern void mlwrite (char *,...);
 extern int ttgetc();
-extern void ttputc();
 extern void ttflush();
 extern int ttcol;
+
+#define CTRL_G 7
+#define CTRL_M 13
+#define mlwrite eprintf
 
 int getfilename(char *, char *, int);
 void outstring(char *);
@@ -62,7 +62,7 @@ int getfilename(char *prompt, char *buf, int nbuf)
 
 		if (c == CTRL_G) {
 			/* Abort the input? */
-			ctrlg(FALSE, 0);
+			ctrlg(FALSE, 0, KRANDOM);
 			ttflush();
 			return ABORT;
 		} else if ((c == 0x7F || c == 0x08)) {
@@ -148,7 +148,7 @@ int getfilename(char *prompt, char *buf, int nbuf)
 			nskip++;
 
 			if (c != ' ') {
-				(*term.t_beep) ();
+				/* (*term.t_beep) (); */
 				nskip = 0;
 			}
 			while ((c = getc(tmpf)) != EOF && c != '\n'
@@ -158,7 +158,7 @@ int getfilename(char *prompt, char *buf, int nbuf)
 					buf[cpos++] = c;
 			}
 			if (c == '*')
-				(*term.t_beep) ();
+				/* (*term.t_beep) () */;
 
 			for (n = 0; n < cpos; n++) {
 				c = buf[n];
@@ -183,7 +183,7 @@ int getfilename(char *prompt, char *buf, int nbuf)
 			if (cpos < nbuf - 1) {
 				/* if a control char */
 				if ((c < ' ') && (c != '\n')) {
-				  (*term.t_beep) ();
+				  /* (*term.t_beep) (); */
 				} else {
 				  buf[cpos++] = c;
 				  ttputc(c);
