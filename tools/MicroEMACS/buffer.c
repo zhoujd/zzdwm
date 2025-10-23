@@ -633,3 +633,53 @@ addwind (EWINDOW *wp, int n /* either +1 or -1 */)
       bp->b_leftcol = wp->w_leftcol;
     }
 }
+
+/*
+ * make buffer BP current
+ */
+int swbuffer (BUFFER *bp)
+{
+  EWINDOW *wp;
+
+  if (--curbp->b_nwnd == 0)
+    {				/* Last use. */
+      curbp->b_dot.p = curwp->w_dot.p;
+      curbp->b_dot.o = curwp->w_dot.o;
+      curbp->b_mark.p = curwp->w_mark.p;
+      curbp->b_mark.o = curwp->w_mark.o;
+    }
+  curbp = bp;			/* Switch. */
+  if (curbp->b_active != TRUE)
+    {				/* buffer not active yet */
+      /* read it in and activate it */
+      readin (curbp->b_fname);
+      curbp->b_dot.p = lforw (curbp->b_linep);
+      curbp->b_dot.o = 0;
+      curbp->b_active = TRUE;
+    }
+  curwp->w_bufp = bp;
+  curwp->w_linep = bp->b_linep;	/* For macros, ignored */
+  curwp->w_flag |= WFMODE | WFFORCE | WFHARD; /* Quite nasty */
+  if (bp->b_nwnd++ == 0)
+    {				/* First use */
+      curwp->w_dot.p = bp->b_dot.p;
+      curwp->w_dot.o = bp->b_dot.o;
+      curwp->w_mark.p = bp->b_mark.p;
+      curwp->w_mark.o = bp->b_mark.o;
+      return (TRUE);
+    }
+  wp = wheadp;			/* Look for old */
+  while (wp != 0)
+    {
+      if (wp != curwp && wp->w_bufp == bp)
+	{
+	  curwp->w_dot.p = wp->w_dot.p;
+	  curwp->w_dot.o = wp->w_dot.o;
+	  curwp->w_mark.p = wp->w_mark.p;
+	  curwp->w_mark.o = wp->w_mark.o;
+	  break;
+	}
+      wp = wp->w_wndp;
+    }
+  return (TRUE);
+}

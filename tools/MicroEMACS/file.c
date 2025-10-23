@@ -78,10 +78,102 @@
 
 int savetabs = 1;		/* TRUE if tabs are preserved when saving files */
 
+#define BFTEMP	0x01		/* Internal temporary buffer */
+
 /*
  * External declarations.
  */
 extern char *fftilde (char *filename);	/* fileio.c */
+extern int getfilename (char *prompt, char *buf, int nbuf);
+extern int swbuffer (BUFFER *bp);
+
+int getfile (char fname[])
+{
+  BUFFER *bp;
+  LINE *lp;
+  char bname[NBUFN];		/* buffer name to put file */
+  int i, s;
+
+  for (bp = bheadp; bp != (BUFFER*)0; bp = bp->b_bufp)
+    {
+      if ((bp->b_flag & BFTEMP) == 0 && strcmp (bp->b_fname, fname) == 0)
+	{
+	  if (--curbp->b_nwnd == 0)
+	    {
+	      curbp->b_dot.o = curwp->w_dot.o;
+	      curbp->b_dot.p = curwp->w_dot.p;
+	      curbp->b_mark.o = curwp->w_mark.o;
+	      curbp->b_mark.p = curwp->w_mark.p;
+	    }
+	  swbuffer (bp);
+	  lp = curwp->w_dot.p;
+	  i = curwp->w_ntrows / 2;
+	  while (i-- && lback (lp) != curbp->b_linep)
+	    lp = lback (lp);
+	  curwp->w_linep = lp;
+	  curwp->w_flag |= WFMODE | WFHARD;
+	  eprintf ("[Old buffer]");
+	  return (TRUE);
+	}
+    }
+  makename (bname, fname);	/* New buffer name */
+  while ((bp = bfind (bname, FALSE)) != (BUFFER*)0)
+    {
+      s = ereply ("Buffer name: ", bname, NBUFN);
+      if (s == ABORT)		/* ^G to just quit */
+	return (s);
+      if (s == FALSE)
+	{			/* CR to clobber it */
+	  makename (bname, fname);
+	  break;
+	}
+    }
+  if (bp == (BUFFER*)0 && (bp = bfind (bname, TRUE)) == (BUFFER*)0)
+    {
+      eprintf ("Cannot create buffer");
+      return (FALSE);
+    }
+  if (--curbp->b_nwnd == 0)
+    {				/* Undisplay */
+      curbp->b_dot.o = curwp->w_dot.o;
+      curbp->b_dot.p = curwp->w_dot.p;
+      curbp->b_mark.o = curwp->w_mark.o;
+      curbp->b_mark.p = curwp->w_mark.p;
+    }
+  curbp = bp;			/* Switch to it */
+  curwp->w_bufp = bp;
+  curbp->b_nwnd++;
+  return (readin (fname));	/* Read it in */
+}
+
+/*
+ * Select a file for editing. Look around to see if you can find the fine in
+ * another buffer; if you can find it just switch to the buffer. If you cannot
+ * find the file, create a new buffer, read in the text, and switch to the new
+ * buffer. Bound to C-X C-F.
+ */
+int filefind (int f, int n)
+{
+  char fname[NFILEN];		/* file user wishes to find */
+  int s;			/* status return */
+
+  if ((s = getfilename("Find File: ", fname, NFILEN)) != TRUE)
+    return (s);
+  return (getfile (fname));
+}
+
+int viewfile (int f, int n)
+{
+  char fname[NFILEN];		/* file user wishes to find */
+  int s;			/* status return */
+
+  if ((s = getfilename("View File: ", fname, NFILEN)) != TRUE)
+    return (s);
+
+  if ( (s = (getfile (fname))) == TRUE)
+    togglereadonly(f,n,0);
+  return s;
+}
 
 /*
  * Read a file into the current
