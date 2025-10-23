@@ -65,7 +65,7 @@ int getfilename(char *prompt, char *buf, int nbuf)
 			ctrlg(FALSE, 0, KRANDOM);
 			ttflush();
 			return ABORT;
-		} else if ((c == 0x7F || c == 0x08)) {
+		} else if ((c == 0x7F || c == 0x08 || c == 0x107)) {
 			/* rubout/erase */
 			if (cpos != 0) {
 				outstring("\b \b");
