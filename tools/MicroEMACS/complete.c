@@ -58,7 +58,7 @@ getfilename(char *prompt, char *buf, int nbuf)
     if (c == CCHR('G')) {
       /* Abort the input? */
       ctrlg(FALSE, 0, KRANDOM);
-      eprintf("Aborted");
+      eprintf("%s^G", prompt);
       ttflush();
       return ABORT;
     } else if ((c == 0x7F || c == 0x08 || c == 0x107)) {
