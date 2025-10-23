@@ -55,7 +55,8 @@ OBJ := \
 	tty.o \
 	ttykbd.o \
 	undo.o \
-	utf8.o
+	utf8.o \
+	complete.o
 
 # How to compile a module.
 
