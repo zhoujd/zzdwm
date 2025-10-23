@@ -28,8 +28,7 @@ getfilename(char *prompt, char *buf, int nbuf)
   /* prompt the user for the input string */
   eprintf(prompt);
 
-  for (;;)
-  {
+  for (;;) {
     if (!didtry)
       nskip = -1;
     didtry = 0;
@@ -42,8 +41,7 @@ getfilename(char *prompt, char *buf, int nbuf)
       c = '\n';
 
     /* if they hit the line terminate, wrap it up */
-    if (c == eolchar)
-    {
+    if (c == eolchar) {
       buf[cpos++] = 0;
 
       /* clear the message line */
@@ -57,75 +55,59 @@ getfilename(char *prompt, char *buf, int nbuf)
       return TRUE;
     }
 
-    if (c == CCHR('G'))
-    {
+    if (c == CCHR('G')) {
       /* Abort the input? */
       ctrlg(FALSE, 0, KRANDOM);
       eprintf("Aborted");
       ttflush();
       return ABORT;
-    }
-    else if ((c == 0x7F || c == 0x08 || c == 0x107))
-    {
+    } else if ((c == 0x7F || c == 0x08 || c == 0x107)) {
       /* rubout/erase */
-      if (cpos != 0)
-      {
+      if (cpos != 0) {
         outstring("\b \b");
         --ttcol;
-        if (buf[--cpos] < 0x20)
-        {
+        if (buf[--cpos] < 0x20) {
           outstring("\b \b");
           --ttcol;
         }
-        if (buf[cpos] == '\n')
-        {
+        if (buf[cpos] == '\n') {
           outstring("\b\b  \b\b");
           ttcol -= 2;
         }
         ttflush();
       }
-    }
-    else if (c == 0x15)
-    {
+    } else if (c == 0x15) {
       /* C-U, kill */
-      while (cpos != 0)
-      {
+      while (cpos != 0) {
         outstring("\b \b");
         --ttcol;
 
-        if (buf[--cpos] < 0x20)
-        {
+        if (buf[--cpos] < 0x20) {
           outstring("\b \b");
           --ttcol;
         }
-        if (buf[cpos] == '\n')
-        {
+        if (buf[cpos] == '\n') {
           outstring("\b\b  \b\b");
           ttcol -= 2;
         }
       }
       ttflush();
-    }
-    else if ((c == 0x09 || c == ' '))
-    {
+    } else if ((c == 0x09 || c == ' ')) {
       /* TAB, complete file name */
       char ffbuf[255];
       int n, iswild = 0;
 
       didtry = 1;
       ocpos = cpos;
-      while (cpos != 0)
-      {
+      while (cpos != 0) {
         outstring("\b \b");
         --ttcol;
 
-        if (buf[--cpos] < 0x20)
-        {
+        if (buf[--cpos] < 0x20) {
           outstring("\b \b");
           --ttcol;
         }
-        if (buf[cpos] == '\n')
-        {
+        if (buf[cpos] == '\n') {
           outstring("\b\b  \b\b");
           ttcol -= 2;
         }
@@ -133,8 +115,7 @@ getfilename(char *prompt, char *buf, int nbuf)
           iswild = 1;
       }
       ttflush();
-      if (nskip < 0)
-      {
+      if (nskip < 0) {
         buf[ocpos] = 0;
         if (tmpf != NULL)
           fclose(tmpf);
@@ -145,8 +126,7 @@ getfilename(char *prompt, char *buf, int nbuf)
           strcat(ffbuf, "*");
         strcat(ffbuf, " >");
         result = mkstemp(tmp);
-        if (result == -1)
-        {
+        if (result == -1) {
           printf("Failed to create temp file\n");
           exit(1);
         }
@@ -162,36 +142,29 @@ getfilename(char *prompt, char *buf, int nbuf)
                && c != ' ');
       nskip++;
 
-      if (c != ' ')
-      {
+      if (c != ' ') {
         ttbeep();
         nskip = 0;
       }
       while ((c = getc(tmpf)) != EOF && c != '\n'
-             && c != ' ' && c != '*')
-      {
+             && c != ' ' && c != '*') {
         if (cpos < nbuf - 1)
           buf[cpos++] = c;
       }
       if (c == '*')
         ttbeep();
 
-      for (n = 0; n < cpos; n++)
-      {
+      for (n = 0; n < cpos; n++) {
         c = buf[n];
-        if ((c < ' ') && (c != '\n'))
-        {
+        if ((c < ' ') && (c != '\n')) {
           outstring("^");
           ++ttcol;
           c ^= 0x40;
         }
 
-        if (c != '\n')
-        {
+        if (c != '\n') {
           ttputc(c);
-        }
-        else
-        {  /* put out <NL> for <ret> */
+        } else {  /* put out <NL> for <ret> */
           outstring("<NL>");
           ttcol += 3;
         }
@@ -200,18 +173,12 @@ getfilename(char *prompt, char *buf, int nbuf)
       ttflush();
       rewind(tmpf);
       unlink(tmp);
-    }
-    else
-    {
-      if (cpos < nbuf - 1)
-      {
+    } else {
+      if (cpos < nbuf - 1) {
         /* if a control char */
-        if ((c < ' ') && (c != '\n'))
-        {
-          /* (*term.t_beep) (); */
-        }
-        else
-        {
+        if ((c < ' ') && (c != '\n')) {
+          ttbeep();
+        } else {
           buf[cpos++] = c;
           ttputc(c);
           ++ttcol;
