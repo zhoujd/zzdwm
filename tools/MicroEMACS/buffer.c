@@ -688,13 +688,13 @@ BUFFER* get_scratch(void)
 {
   BUFFER* bp;
 
-  bp = bfind("*scratch*", FALSE);
+  bp = bfind("main", FALSE);
 
   if (bp != NULL)
 	return bp;
 
   /* create scratch */
-  bp = bfind("*scratch*", TRUE);
+  bp = bfind("main", TRUE);
   return bp;
 }
 

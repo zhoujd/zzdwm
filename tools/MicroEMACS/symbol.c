@@ -179,7 +179,7 @@ KEY key[] = {
   {KCTRL | 'Y',		yank,		"yank"},
   {KCTRL | 'Z',	  jeffexit,	"jeff-exit"},
   {KCTRL | '_',		undo,	"undo"},
-  {KCTLX | KCTRL | 'B', listbuffers,	"display-buffers"},
+  {KCTLX | KCTRL | 'B', buffermenu,	"display-buffers"},
   {KCTLX | KCTRL | 'C', quit,		"quit"},
   {KCTLX | KCTRL | 'E', eecho,		"echo"},
   {KCTLX | KCTRL | 'F', filefind,	"file-find"},
