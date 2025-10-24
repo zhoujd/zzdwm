@@ -61,9 +61,9 @@ int buffermenu(int f, int n)
 	bufptr = 1;
 
 start:
-	listbuffers(f,n, KRANDOM);
+	listbuffers(f, n, KRANDOM);
 	swbuffer(blistp);
-	onlywind(0,0, KRANDOM);
+	onlywind(0, 0, KRANDOM);
 	bufcount = count_buffers();
 
 	if (bufptr > bufcount)
