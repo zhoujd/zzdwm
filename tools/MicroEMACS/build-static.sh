@@ -2,6 +2,7 @@
 
 build() {
     make LDFLAGS=-static DEBUG=no
+    make strip
     echo "Build done"
 }
 

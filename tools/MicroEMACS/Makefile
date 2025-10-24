@@ -87,3 +87,7 @@ uninstall:
 
 clean:
 	rm -f *.[o] $(TARGET)
+
+strip:
+	strip $(TARGET)
+
