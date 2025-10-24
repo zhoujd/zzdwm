@@ -69,10 +69,10 @@
  * Revision 1.4  91/04/19  23:13:17  alexande
  * Added bufsearch() routine, which provides support for autocompletion
  * of buffer names on echo line.
- * 
+ *
  * Revision 1.3  91/01/07  10:27:42  alexande
  * Remove C++ warnings.
- * 
+ *
  * Revision 1.2  89/08/24  10:05:08  alexande
  * Set left column of pop-up buffer list buffer to zero.
  *
@@ -89,6 +89,9 @@ static int getbufn (char bufn[NBUFN]);
 static void intoa (char buf[], int width, long num);
 static int usebuf (BUFFER *bp);
 static int makelist (void);
+int swbuffer (BUFFER *bp);
+BUFFER* get_scratch(void);
+int zotbuf (BUFFER *bp);
 
 /*
  * This command attach a buffer to a window. The
@@ -215,8 +218,7 @@ int
 killbuffer (int f, int n, int k)
 {
   register BUFFER *bp;
-  register BUFFER *bp1;
-  register BUFFER *bp2;
+  register BUFFER *bp_alt;
   register int s;
   char bufn[NBUFN];
 
@@ -228,32 +230,36 @@ killbuffer (int f, int n, int k)
       eprintf ("[Buffer not found]");
       return (TRUE);
     }
-  if (bp->b_nwnd != 0)
-    {				/* Error if on screen.  */
-      eprintf ("Buffer is being displayed");
-      return (FALSE);
-    }
-  if ((s = bclear (bp)) != TRUE)	/* Blow text away.      */
-    return (s);
-  free ((char *) bp->b_linep);	/* Release header line. */
-  bp1 = NULL;			/* Find buffer header.  */
-  bp2 = bheadp;
-  while (bp2 != bp)
-    {
-      bp1 = bp2;
-      bp2 = bp2->b_bufp;
-    }
-  bp2 = bp2->b_bufp;		/* Next one in chain.   */
-  if (bp1 == NULL)		/* Unlink it.           */
-    bheadp = bp2;
-  else
-    bp1->b_bufp = bp2;
-  if (!strcmp (oldbufn, bp->b_bname))	/* same name as old?    */
-    oldbufn[0] = 0;		/* clear old name       */
-  killundo (bp);		/* Free undo records	*/
-  removemode (bp);		/* Free mode record	*/
-  free ((char *) bp);		/* Release buffer block */
-  return (TRUE);
+
+  /* beep if attempt to kill buffer list */
+  if (bp == blistp) {
+    ttbeep();
+    eerase();
+    return FALSE;
+  }
+
+  /* find a buffer to switch to, not this one and not an internal buffer */
+  bp_alt = bheadp;
+  while (bp_alt != NULL)
+  {
+    if (bp_alt != bp && (bp_alt->b_flag & BFTEMP) != BFTEMP)
+      break;
+    bp_alt = bp_alt->b_bufp;
+  }
+
+  /* no alternate buffer, try for scratch or create it */
+  if (bp_alt == NULL) {
+    bp_alt = get_scratch();
+  }
+
+  if (bp_alt == NULL) {
+    return (FALSE);
+  }
+
+  swbuffer(bp_alt);
+  s = zotbuf(bp);
+  eerase();
+  return s;
 }
 
 /*
@@ -719,7 +725,8 @@ BUFFER* get_scratch(void)
 
 /* kill the buffer pointed to by bp
  */
-int zotbuf (BUFFER *bp)
+int
+zotbuf (BUFFER *bp)
 {
   BUFFER *bp1, *bp2;
   int s;
@@ -742,6 +749,8 @@ int zotbuf (BUFFER *bp)
     bheadp = bp2;
   else
     bp1->b_bufp = bp2;
+  killundo (bp);		/* Free undo records	*/
+  removemode (bp);
   free (bp);			/* Release buffer block */
   return (TRUE);
 }
