@@ -651,7 +651,8 @@ addwind (EWINDOW *wp, int n /* either +1 or -1 */)
 /*
  * make buffer BP current
  */
-int swbuffer (BUFFER *bp)
+int
+swbuffer (BUFFER *bp)
 {
   EWINDOW *wp;
 

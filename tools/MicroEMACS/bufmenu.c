@@ -44,7 +44,7 @@ extern BUFFER* get_scratch(void);
 extern int getctl(void);
 extern int filesave (int f, int n, int k);
 
-BUFFER *get_buffer(int );
+BUFFER *get_buffer(int n);
 int buffermenu(int f, int n);
 int valid_buf(BUFFER*);
 int count_buffers(void);
