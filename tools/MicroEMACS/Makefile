@@ -14,10 +14,14 @@ INC = -I$(srcdir) -I$(SYS) -I$(TTY)
 # Compilers, linkers, and their flags.
 
 CC = gcc
-CFLAGS_DEBUG = -g -DDEBUG=1
-#CFLAGS_OPTIMIZE	= -Os -s
-CFLAGS_OPTIMIZE	= -O0 -g
+DEBUG = yes
+ifeq ($(DEBUG), yes)
+CFLAGS_DEBUG = -g -O0 -DDEBUG=1
+CFLAGS = $(CFLAGS_DEBUG) -DLINUX $(INC) -Wall
+else
+CFLAGS_OPTIMIZE = -Os -s
 CFLAGS = $(CFLAGS_OPTIMIZE) -DLINUX $(INC) -Wall
+endif
 
 LD = gcc
 LDFLAGS = -L/usr/lib64/termcap

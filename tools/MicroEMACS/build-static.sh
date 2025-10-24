@@ -1,7 +1,7 @@
 #!/bin/sh
 
 build() {
-    make LDFLAGS=-static
+    make LDFLAGS=-static DEBUG=no
     echo "Build done"
 }
 
