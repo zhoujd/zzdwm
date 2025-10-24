@@ -62,6 +62,7 @@ int buffermenu(int f, int n)
 
 start:
 	listbuffers(f, n, KRANDOM);
+	blistp->b_active = TRUE;
 	swbuffer(blistp);
 	onlywind(0, 0, KRANDOM);
 	bufcount = count_buffers();
