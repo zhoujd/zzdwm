@@ -17,25 +17,32 @@
  */
 #include <stdlib.h>
 #include <string.h>
-#include "estruct.h"
-#include "edef.h"
+//#include "estruct.h"
+//#include "edef.h"
+#include "def.h"
 
-extern int listbuffers(int f, int n);
-extern int onlywind(int f, int n);
-extern int splitwind(int f, int n);
-extern int forwline(int f, int n);
-extern int backline(int f, int n);
-extern int nextwind(int f, int n);
+#define ESC    27
+#define BACKSPACE 127
+#define CTRL_N 14
+#define CTRL_M 13
+#define CTRL_P 16
+
+extern int listbuffers(int f, int n, int k);
+extern int onlywind(int f, int n, int k);
+extern int splitwind(int f, int n, int k);
+extern int forwline(int f, int n, int k);
+extern int backline(int f, int n, int k);
+extern int nextwind(int f, int n, int k);
 
 extern int swbuffer (BUFFER *bp);
 extern void update();
 extern int ttgetc();
-extern void mlwrite(char *,...);
-extern void mlerase(void);
+//extern void eprintf(char *,...);
+extern void eerase(void);
 extern int zotbuf(BUFFER *);
 extern BUFFER* get_scratch(void);
 extern int getctl(void);
-extern int filesave (int f, int n);
+extern int filesave (int f, int n, int k);
 
 BUFFER *get_buffer(int );
 int buffermenu(int f, int n);
@@ -54,22 +61,22 @@ int buffermenu(int f, int n)
 	bufptr = 1;
 
 start:
-	listbuffers(f,n);
+	listbuffers(f,n, KRANDOM);
 	swbuffer(blistp);
-	onlywind(0,0);
+	onlywind(0,0, KRANDOM);
 	bufcount = count_buffers();
 
 	if (bufptr > bufcount)
 		bufptr = bufcount;
 
 	if (bufcount > 0)
-		forwline(0, bufptr + 1);
+		forwline(0, bufptr + 1, KRANDOM);
 	else
-		forwline(0, 2);
+		forwline(0, 2, KRANDOM);
 
 	for (;;)
 	{
-		mlwrite("Buffer Menu: 1,2,s,v,k,q ");
+		eprintf("Buffer Menu: 1,2,s,v,k,q ");
 		update();
 		c = ttgetc();
 
@@ -81,14 +88,14 @@ start:
 			case 'q': case 'Q': case 'x': case 'X':
 				break;
 			default:
-				(*term.t_beep) ();
+				ttbeep();
 				continue;
 			}
 		}
 
 		/*
 		 * pre process escape sequence to get up/down arrows
-		 * convert to CTRL+N, CTRL+P 
+		 * convert to CTRL+N, CTRL+P
 		 */
 		if (c == ESC)
 		{
@@ -100,15 +107,15 @@ start:
 				{
 				case 'A': c = CTRL_P; break;
 				case 'B': c = CTRL_N; break;
-				default: 
-					(*term.t_beep)();
+				default:
+					ttbeep();
 					continue;
 				}
 			}
 			else
 			{
 				k = getctl();
-				(*term.t_beep) ();
+				ttbeep();
 				continue;
 			}
 		}  /* if ESC */
@@ -121,10 +128,10 @@ start:
 		case CTRL_N:
 			if (bufcount == bufptr)
 			{
-				(*term.t_beep) ();
+				ttbeep();
 				break;
 			}
-			forwline(0,1);
+			forwline(0, 1, KRANDOM);
 			bufptr++;
 			break;
 
@@ -134,10 +141,10 @@ start:
 		case BACKSPACE:
 			if (bufptr == 1)
 			{
-				(*term.t_beep) ();
+				ttbeep();
 				break;
 			}
-			backline(0,1);
+			backline(0, 1, KRANDOM);
 			bufptr--;
 			break;
 
@@ -145,22 +152,22 @@ start:
 		case CTRL_M:
 			bp = get_buffer(bufptr);
 			swbuffer(bp);
-			onlywind(0,0);
-			mlerase();
+			onlywind(0, 0, KRANDOM);
+			eerase();
 			return TRUE;
 
 		case '2':
 			bp = get_buffer(bufptr);
 			swbuffer(bp);
-			onlywind(0,0);
+			onlywind(0, 0, KRANDOM);
 			/* need to check or is still valid */
 			if (valid_buf(org_bp) == TRUE && bufcount > 1)
 			{
-				splitwind(0,0);
+				splitwind(0, 0, KRANDOM);
 				swbuffer(org_bp);
-				nextwind(0,0);
+				nextwind(0, 0, KRANDOM);
 			}
-			mlerase();
+			eerase();
 			return TRUE;
 
 			/* save file */
@@ -170,7 +177,7 @@ start:
 			if (bp != NULL)
 			{
 				curbp = bp;
-				(void)filesave(0,0);
+				(void)filesave(0, 0, KRANDOM);
 				curbp = blistp;
 				goto start;
 			}
@@ -206,8 +213,8 @@ start:
 			{
 				bp = get_scratch();
 				swbuffer(bp);
-				onlywind(0,0);
-				mlerase();
+				onlywind(0, 0, KRANDOM);
+				eerase();
 				return TRUE;
 			}
 
@@ -218,18 +225,18 @@ start:
 				bp = get_scratch();
 				swbuffer(bp);
 			}
-			onlywind(0,0);
-			mlerase();
+			onlywind(0, 0, KRANDOM);
+			eerase();
 			return TRUE;
 
 			/* any other key */
 		default:
-			(*term.t_beep) ();
+			ttbeep();
 			break;
 		}
 	}
 
-	mlerase();
+	eerase();
 	return TRUE;
 }
 
@@ -252,7 +259,7 @@ BUFFER *get_buffer(int n)
 			bp = bp->b_bufp;
 			continue;
 		}
-	 
+
 		if (++i == n)
 			return bp;
 
@@ -260,7 +267,7 @@ BUFFER *get_buffer(int n)
 	}
 
 	/* we should never get here */
-	mlwrite("[Fatal: could not find buffer]");
+	eprintf("[Fatal: could not find buffer]");
 	exit(1);
 	return NULL;
 }

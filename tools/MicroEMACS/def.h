@@ -376,6 +376,7 @@ BUFFER;
 #define BFCHG	0x01		/* Changed.                     */
 #define BFBAK	0x02		/* Need to make a backup.       */
 #define BFRO	0x04		/* Read-only.                   */
+#define BFTEMP	0x01	/* Internal temporary buffer    */
 
 /*
  * There is a window structure allocated for

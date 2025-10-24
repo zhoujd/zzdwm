@@ -683,3 +683,47 @@ int swbuffer (BUFFER *bp)
     }
   return (TRUE);
 }
+
+BUFFER* get_scratch(void)
+{
+  BUFFER* bp;
+
+  bp = bfind("*scratch*", FALSE);
+
+  if (bp != NULL)
+	return bp;
+
+  /* create scratch */
+  bp = bfind("*scratch*", TRUE);
+  return bp;
+}
+
+
+/* kill the buffer pointed to by bp
+ */
+int zotbuf (BUFFER *bp)
+{
+  BUFFER *bp1, *bp2;
+  int s;
+
+  /* we ony get here if there is only *scratch* left */
+  if (bp->b_nwnd != 0)
+	return (FALSE); /* fail silently */
+  if ((s = bclear (bp)) != TRUE) /* Blow text away */
+    return (s);
+  free (bp->b_linep);		/* Release header line */
+  bp1 = 0;			/* Find the header */
+  bp2 = bheadp;
+  while (bp2 != bp)
+    {
+      bp1 = bp2;
+      bp2 = bp2->b_bufp;
+    }
+  bp2 = bp2->b_bufp;		/* Next one in chain */
+  if (bp1 == NULL)		/* Unlink it */
+    bheadp = bp2;
+  else
+    bp1->b_bufp = bp2;
+  free (bp);			/* Release buffer block */
+  return (TRUE);
+}

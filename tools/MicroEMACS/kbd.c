@@ -107,7 +107,7 @@ static int ungetchar;		/* the character put back       */
 /*
  * Helper function for getkey.
  */
-static int
+int
 getctl (void)
 {
   register int c;

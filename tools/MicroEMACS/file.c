@@ -78,8 +78,6 @@
 
 int savetabs = 1;		/* TRUE if tabs are preserved when saving files */
 
-#define BFTEMP	0x01		/* Internal temporary buffer */
-
 /*
  * External declarations.
  */
