@@ -222,14 +222,17 @@ killbuffer (int f, int n, int k)
   register int s;
   char bufn[NBUFN];
 
-  if ((s = ereplyf ("Kill buffer: ", bufn, NBUFN, EFNEW | EFCR | EFBUF)) !=
-      TRUE)
-    return (s);
-  if ((bp = bfind (bufn, FALSE)) == NULL)	/* Easy if unknown.     */
-    {
+  s = ereplyf ("Kill buffer [%s]: ", bufn, NBUFN, EFNEW | EFCR | EFBUF, curbp->b_bname);
+  if (s == FALSE)
+    bp = curbp;
+  else if (s == TRUE) {
+    if ((bp = bfind (bufn, FALSE)) == NULL) {	/* Easy if unknown.     */
       eprintf ("[Buffer not found]");
       return (TRUE);
     }
+  } else {
+    return (s);
+  }
 
   /* beep if attempt to kill buffer list */
   if (bp == blistp) {
