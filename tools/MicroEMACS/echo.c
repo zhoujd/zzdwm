@@ -631,7 +631,6 @@ eread (const char *fp, char *buf, int nbuf, int flag, va_list ap)
   int buflen;
   const char *np1;
   register char *np2;
-  char *cp0, *cp1;
   register int i;
   register int c;
   register int nhits;
@@ -809,40 +808,9 @@ eread (const char *fp, char *buf, int nbuf, int flag, va_list ap)
 	  ettflush ();
 	  break;
 
-	case 0x13:		/* Control-S, insert path or pattern */
-	  cp0 = NULL;
-	  if (flag & EFFILE)
-	    {
-	      cp0 = cp1 = &curbp->b_fname[0];
-	      cp1 += strlen (cp1);
-	      while (cp1 != cp0
-#ifdef	BDC0
-		     && cp1[-1] != BDC0
-#endif
-#ifdef	BDC1
-		     && cp1[-1] != BDC1
-#endif
-#ifdef	BDC2
-		     && cp1[-1] != BDC2
-#endif
-		)
-		--cp1;
-	    }
-	  else if (flag & EFPAT)
-	    {
-	      cp0 = (char *)pat;
-	      cp1 = cp0 + strlen (cp0);
-	    }
-	  if (cp0 != NULL)
-	    {
-	      while (cp0 != cp1 && cpos < nbuf - 1)
-		{
-		  memmove (&buf[cpos + 1], &buf[cpos], buflen - cpos);
-		  eputc (buf[cpos++] = *cp0++);
-		  ++buflen;
-		}
-	      ettflush ();
-	    }
+	case 0x12:		/* Control-R */
+	case 0x13:		/* Control-S */
+	  ettflush ();
 	  break;
 
 	case 0x15:		/* C-U, kill line.      */
