@@ -336,16 +336,23 @@ makelist (void)
   if ((s = bclear (blistp)) != TRUE)
     return (s);
   strcpy (blistp->b_fname, "");
-  if (addline    ("C         Size Buffer                           File") == FALSE
-      || addline ("-         ---- ------                           ----") == FALSE)
+  if (addline    ("ACV        Size Buffer                          File") == FALSE
+      || addline ("---        ---- ------                          ----") == FALSE)
     return (FALSE);
   ALLBUF (bp)
   {				/* For all buffers      */
     cp1 = &line[0];		/* Start at left edge   */
+    /* output status of ACTIVE flag (has the file been read in? */
+    if (bp->b_active == TRUE)	 /* "@" if activated */
+      *cp1++ = '@';
+    else
+      *cp1++ = ' ';
+
     if ((bp->b_flag & BFCHG) != 0)	/* "*" if changed       */
       *cp1++ = '*';
     else
       *cp1++ = ' ';
+
     *cp1++ = ' ';		/* Gap.                 */
     nbytes = 0;			/* Count bytes in buf.  */
     lp = firstline (bp);
@@ -455,12 +462,19 @@ bfind (const char *bname, int cflag)
 {
   register BUFFER *bp;
 
-  ALLBUF (bp) if (strcmp (bname, bp->b_bname) == 0)
-    return (bp);
+  ALLBUF (bp)
+  {
+    if (strcmp (bname, bp->b_bname) == 0)
+    {
+      bp->b_active = TRUE;
+      return (bp);
+    }
+  }
   if (cflag != FALSE && (bp = bcreate (bname)) != NULL)
     {
       bp->b_bufp = bheadp;
       bheadp = bp;
+      bp->b_active = TRUE;
     }
   return (bp);
 }
