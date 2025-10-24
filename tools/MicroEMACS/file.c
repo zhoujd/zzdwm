@@ -89,28 +89,14 @@ int
 getfile (char fname[])
 {
   BUFFER *bp;
-  LINE *lp;
   char bname[NBUFN];		/* buffer name to put file */
-  int i, s;
+  int s;
 
   for (bp = bheadp; bp != (BUFFER*)0; bp = bp->b_bufp)
   {
     if ((bp->b_flag & BFTEMP) == 0 && strcmp (bp->b_fname, fname) == 0)
     {
-      if (--curbp->b_nwnd == 0)
-      {
-        curbp->b_dot.o = curwp->w_dot.o;
-        curbp->b_dot.p = curwp->w_dot.p;
-        curbp->b_mark.o = curwp->w_mark.o;
-        curbp->b_mark.p = curwp->w_mark.p;
-      }
       swbuffer (bp);
-      lp = curwp->w_dot.p;
-      i = curwp->w_ntrows / 2;
-      while (i-- && lback (lp) != curbp->b_linep)
-        lp = lback (lp);
-      curwp->w_linep = lp;
-      curwp->w_flag |= WFMODE | WFHARD;
       eprintf ("[Old buffer]");
       return (TRUE);
     }
