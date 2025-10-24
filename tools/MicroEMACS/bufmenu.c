@@ -17,8 +17,6 @@
  */
 #include <stdlib.h>
 #include <string.h>
-//#include "estruct.h"
-//#include "edef.h"
 #include "def.h"
 
 #define ESC    27
@@ -37,7 +35,6 @@ extern int nextwind(int f, int n, int k);
 extern int swbuffer (BUFFER *bp);
 extern void update();
 extern int ttgetc();
-//extern void eprintf(char *,...);
 extern void eerase(void);
 extern int zotbuf(BUFFER *);
 extern BUFFER* get_scratch(void);
@@ -50,7 +47,8 @@ int valid_buf(BUFFER*);
 int count_buffers(void);
 
 
-int buffermenu(int f, int n)
+int
+buffermenu(int f, int n)
 {
 	BUFFER *bp;
 	BUFFER *org_bp = curbp;
@@ -246,7 +244,8 @@ start:
  * been called and the list of buffers displayed.  We walk the list in the
  * same way as makelist.
  */
-BUFFER *get_buffer(int n)
+BUFFER*
+get_buffer(int n)
 {
 	BUFFER *bp;
 	int i = 0;
@@ -278,7 +277,8 @@ BUFFER *get_buffer(int n)
  * makelist has been recently been called and the list of buffers
  * displayed.  We walk the list in the same way as makelist.
  */
-int count_buffers(void)
+int
+count_buffers(void)
 {
 	BUFFER *bp;
 	int count = 0;
@@ -302,7 +302,8 @@ int count_buffers(void)
  * check that the buffer is still in use and in the 
  * list of known buffers
  */
-int valid_buf(BUFFER* bp_try)
+int
+valid_buf(BUFFER* bp_try)
 {
 	BUFFER *bp;
 
