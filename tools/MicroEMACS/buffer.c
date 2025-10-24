@@ -651,10 +651,13 @@ int swbuffer (BUFFER *bp)
   curbp = bp;			/* Switch. */
   if (curbp->b_active != TRUE)
     {				/* buffer not active yet */
-      /* read it in and activate it */
-      readin (curbp->b_fname);
-      curbp->b_dot.p = lforw (curbp->b_linep);
-      curbp->b_dot.o = 0;
+      if (strlen(curbp->b_fname) != 0)
+      {
+        /* read it in and activate it */
+        readin (curbp->b_fname);
+        curbp->b_dot.p = lforw (curbp->b_linep);
+        curbp->b_dot.o = 0;
+      }
       curbp->b_active = TRUE;
     }
   curwp->w_bufp = bp;
