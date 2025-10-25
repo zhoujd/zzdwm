@@ -60,16 +60,16 @@
  *
  * Revision 1.4  91/04/19  23:26:10  alexande
  * Case-fold command is now a toggle if no argument supplied.
- * 
+ *
  * Revision 1.3  91/01/07  10:29:45  alexande
  * Remove C++ warnings.
- * 
+ *
  * Revision 1.2  89/01/13  12:59:49  MGA
  * Changed incremental search to be more like Epsilon.
- * 
+ *
  * Revision 1.1  89/01/13  09:42:09  MGA
  * Initial revision
- * 
+ *
  */
 #include	"def.h"
 #include	"regexp.h"
@@ -524,7 +524,7 @@ dosearch (int dir)
   return status;
 }
 
-/* 
+/*
  * Search again, using the same search string
  * and direction as the last search command. The direction
  * has been saved in "srch_lastdir", so you know which way
@@ -689,7 +689,7 @@ is_find (int dir)
 }
 
 /*
- * Prompt writing routine for the incremental search. 
+ * Prompt writing routine for the incremental search.
  * The "prompt" is just a string. The "flag" determines
  * if a "[ ]" or ":" embelishment is used.
  */
@@ -1179,7 +1179,7 @@ forwsearch (int f, int n, int k)
 
   s = readpattern ("Search");
   switch (s) {
-  case 0x13:
+  case AGAIN:
   case TRUE:
     srch_lastdir = SRCH_FORW;
     return searchagain (f, n, k);
@@ -1203,7 +1203,7 @@ backsearch (int f, int n, int k)
 
   s = readpattern ("Reverse search");
   switch (s) {
-  case 0x12:
+  case AGAIN:
   case TRUE:
     srch_lastdir = SRCH_BACK;
     return searchagain (f, n, k);
