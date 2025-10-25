@@ -156,8 +156,8 @@ showcpos (int f, int n, int k)
       if (ratio == 0 && cchar != 0)	/* Allow 0% only at the */
 	ratio = 1;		/* start of the file.   */
     }
-  eprintf ("[CH:0x%x Line:%d Row:%d Col:%d %d%% of %l]",
-	   cbyte, cline, row, getcolpos (), ratio, nchar);
+  eprintf ("[Line:%d/%d Row:%d Col:%d %d%% of %l CH:0x%x]",
+           cline, nline, row, getcolpos (), ratio, nchar, cbyte);
   return (TRUE);
 }
 
