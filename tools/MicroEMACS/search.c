@@ -879,6 +879,7 @@ isearch (int dir)
 	      return (ABORT);
 	    }
 	  pat[pptr] = '\0';
+	  unicodepat ();
 	  is_lpush ();
 	  if (success != FALSE)
 	    {
