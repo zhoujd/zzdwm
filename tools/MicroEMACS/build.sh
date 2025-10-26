@@ -5,8 +5,21 @@ build() {
     echo "Build done"
 }
 
+release() {
+    make clean
+    make LDFLAGS=-static DEBUG=no
+    make strip
+    ls -lh em
+    echo "Release done"
+}
+
 publish() {
-    docker run -u $(id -u):$(id -g)  -v ./:/app zhoujd/alpine sh -c '
+    local img=zhoujd/alpine
+    local opt=(
+        -u $(id -u):$(id -g)
+        -v ./:/app
+    )
+    docker run ${opt[@]} $img sh -c '
 cd /app
 make clean
 make LDFLAGS=-static DEBUG=no
@@ -30,25 +43,28 @@ install() {
     echo "Install done"
 }
 
-remove() {
+uninstall() {
     if [ "$(whoami)" == "root" ]; then
         make uninstall
     else
         sudo make uninstall
     fi
-    echo "Remove done"
+    echo "Uninstall done"
 }
 
 usage() {
     app=$(basename $0)
     cat <<EOF
-Usage: $app {build|-b|publish|-p|clean|-c|install|-i|remove|-r}
+Usage: $app {build|-b|release|-r|publish|-p|clean|-c|install|-i|uninstall|-u}
 EOF
 }
 
 case $1 in
     build|-b )
         build
+        ;;
+    release|-r )
+        release
         ;;
     publish|-p )
         publish
@@ -59,8 +75,8 @@ case $1 in
     install|-i )
         install
         ;;
-    remove|-r )
-        remove
+    uninstall|-u )
+        uninstall
         ;;
     * )
         usage
