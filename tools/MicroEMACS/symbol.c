@@ -170,14 +170,14 @@ KEY key[] = {
   {KCTRL | 'O',		openline,	"ins-nl-and-backup"},
   {KCTRL | 'P',		backline,	"back-line"},
   {KCTRL | 'Q',		quote,		"quote"},
-  {KCTRL | 'R',		backsearch,	"back-search"},
-  {KCTRL | 'S',		forwsearch,	"forw-search"},
+  {KCTRL | 'R',		backisearch,	"back-i-search"},
+  {KCTRL | 'S',		forwisearch,	"forw-i-search"},
   {KCTRL | 'T',		twiddle,	"twiddle"},
   {KCTRL | 'V',		forwpage,	"forw-page"},
   {KCTRL | 'W',		killregion,	"kill-region"},
   {KCTRL | 'Y',		yank,		"yank"},
-  {KCTRL | 'Z',	  jeffexit,	"jeff-exit"},
-  {KCTRL | '_',		undo,	"undo"},
+  {KCTRL | 'Z',	        jeffexit,	"jeff-exit"},
+  {KCTRL | '_',		undo,	        "undo"},
   {KCTLX | KCTRL | 'B', buffermenu,	"display-buffers"},
   {KCTLX | KCTRL | 'C', quit,		"quit"},
   {KCTLX | KCTRL | 'E', eecho,		"echo"},
@@ -213,8 +213,8 @@ KEY key[] = {
   {KCTLX | 'K',		killbuffer,	"kill-buffer"},
   {KCTLX | 'N',		nextwind,	"forw-window"},
   {KCTLX | 'P',		prevwind,	"back-window"},
-  {KCTLX | 'R',		backisearch,	"back-i-search"},
-  {KCTLX | 'S',		forwisearch,	"forw-i-search"},
+  {KCTLX | 'R',		backsearch,	"back-search"},
+  {KCTLX | 'S',		forwsearch,	"forw-search"},
   {KCTLX | 'U',		undo,		"undo"},
 #if 0
   {KCTLX | 'V',		filevisitreadonly, "file-visit-readonly"},
@@ -287,7 +287,8 @@ KEY key[] = {
   {-1,			rubyload,	"ruby-load"},
 #endif
   {-1,			displaymessage,	"display-message"},
-  {-1,			redo,		"redo"}
+  {-1,			redo,		"redo"},
+  {-1,			viewfile,	"view-file"}
 };
 
 #define	NKEY	(sizeof(key) / sizeof(key[0]))
