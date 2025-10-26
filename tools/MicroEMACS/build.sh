@@ -1,9 +1,19 @@
-#!/bin/sh
+#!/bin/bash
 
 build() {
-    make LDFLAGS=-static DEBUG=no
-    make strip
+    make
     echo "Build done"
+}
+
+publish() {
+    docker run -u $(id -u):$(id -g)  -v ./:/app zhoujd/alpine sh -c '
+cd /app
+make clean
+make LDFLAGS=-static DEBUG=no
+make strip
+ls -lh em
+'
+    echo "Publish done"
 }
 
 clean() {
@@ -32,13 +42,16 @@ remove() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-Usage: $app {build|-b|clean|-c|install|-i|remove|-r}
+Usage: $app {build|-b|publish|-p|clean|-c|install|-i|remove|-r}
 EOF
 }
 
 case $1 in
     build|-b )
         build
+        ;;
+    publish|-p )
+        publish
         ;;
     clean|-c )
         clean
