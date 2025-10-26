@@ -143,7 +143,7 @@ filefind (int f, int n)
   char fname[NFILEN];		/* file user wishes to find */
   int s;			/* status return */
 
-  if ((s = getfilename("Find File: ", fname, NFILEN)) != TRUE)
+  if ((s = getfilename("Find file: ", fname, NFILEN)) != TRUE)
     return (s);
   return (getfile (fname));
 }
@@ -154,11 +154,11 @@ viewfile (int f, int n)
   char fname[NFILEN];		/* file user wishes to find */
   int s;			/* status return */
 
-  if ((s = getfilename("View File: ", fname, NFILEN)) != TRUE)
+  if ((s = getfilename("View file: ", fname, NFILEN)) != TRUE)
     return (s);
 
   if ( (s = (getfile (fname))) == TRUE)
-    togglereadonly(f,n,0);
+    togglereadonly(f, n, 0);
   return s;
 }
 

@@ -191,7 +191,7 @@ KEY key[] = {
   {KCTLX | KCTRL | 'R', fileread,	"file-read"},
   {KCTLX | KCTRL | 'S', filesave,	"file-save"},
   {KCTLX | KCTRL | 'U', upperregion,	"upper-region"},
-  {KCTLX | KCTRL | 'V', viewfile,	"file-visit"},
+  {KCTLX | KCTRL | 'V', filevisit,	"file-visit"},
   {KCTLX | KCTRL | 'W', filewrite,	"file-write"},
   {KCTLX | KCTRL | 'X', swapmark,	"swap-dot-and-mark"},
   {KCTLX | KCTRL | 'Z', shrinkwind,	"shrink-window"},
