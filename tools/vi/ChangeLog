@@ -1,0 +1,5 @@
+[VI in https://git.busybox.net/busybox]
+
+Mon 27 Oct 2025 11:42:20 AM CST
+	* 9443b0bc5 vi: warn about range in ':!' command
+	* 05e5d6a38 vi: Ensure that the edit buffer ends in a newline
