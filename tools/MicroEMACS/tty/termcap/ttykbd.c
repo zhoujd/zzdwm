@@ -35,7 +35,7 @@
  *   it realy does first.
  * ]
  *
- * If XKEYS is defined this routine looks for the following 
+ * If XKEYS is defined this routine looks for the following
  * termcap sequences, which are obtained by "tty.c":
  *
  *	ks	-- start using the function keypad
@@ -86,6 +86,7 @@
  */
 #include	"def.h"
 
+#undef DEBUG /* Undefine the macro */
 #define DEBUG	0
 
 #define SUNOS 	0		/* set to 1 for SunOS, 0 for everybody else */
