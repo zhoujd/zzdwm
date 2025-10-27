@@ -16,16 +16,17 @@ release() {
 publish() {
     local img=zhoujd/alpine
     local opt=(
+        -i # keeps standard input open
         -u $(id -u):$(id -g)
         -v ./:/app
     )
-    docker run ${opt[@]} $img sh -c '
+    docker run ${opt[@]} $img sh <<'EOF'
 cd /app
 make clean
 make LDFLAGS=-static DEBUG=no
 make strip
 ls -lh em
-'
+EOF
     echo "Publish done"
 }
 
