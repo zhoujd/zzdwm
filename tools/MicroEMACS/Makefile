@@ -1,4 +1,4 @@
-# makefile - makefile input file for MicroEMACS.
+# Makefile - makefile input file for MicroEMACS.
 
 # The top-level source directory.
 
@@ -16,11 +16,9 @@ INC = -I$(srcdir) -I$(SYS) -I$(TTY)
 CC = gcc
 DEBUG = yes
 ifeq ($(DEBUG), yes)
-CFLAGS_DEBUG = -g -O0 -DDEBUG=1
-CFLAGS = $(CFLAGS_DEBUG) -DLINUX $(INC) -Wall
+CFLAGS = -g -O0 -DDEBUG=1 -DLINUX $(INC) -Wall
 else
-CFLAGS_OPTIMIZE = -Os -s
-CFLAGS = $(CFLAGS_OPTIMIZE) -DLINUX $(INC) -Wall
+CFLAGS = -Os -s -DLINUX $(INC) -Wall
 endif
 
 LD = gcc
@@ -90,4 +88,3 @@ clean:
 
 strip:
 	strip $(TARGET)
-
