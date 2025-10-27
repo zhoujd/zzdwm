@@ -253,12 +253,6 @@ get_buffer(int n)
   bp = bheadp;
   while (bp != NULL)
     {
-      if ((bp->b_flag & BFTEMP) != 0)
-        {
-          bp = bp->b_bufp;
-          continue;
-        }
-
       if (++i == n)
         return bp;
 
@@ -286,11 +280,6 @@ count_buffers(void)
   bp = bheadp;
   while (bp != NULL)
     {
-      if ((bp->b_flag & BFTEMP) != 0)
-        {
-          bp = bp->b_bufp;
-          continue;
-        }
       count++;
       bp = bp->b_bufp;
     }

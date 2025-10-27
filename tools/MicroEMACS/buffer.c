@@ -245,7 +245,7 @@ killbuffer (int f, int n, int k)
   bp_alt = bheadp;
   while (bp_alt != NULL)
   {
-    if (bp_alt != bp && (bp_alt->b_flag & BFTEMP) != BFTEMP)
+    if (bp_alt != bp)
       break;
     bp_alt = bp_alt->b_bufp;
   }

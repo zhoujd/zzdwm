@@ -94,7 +94,7 @@ getfile (char fname[])
 
   for (bp = bheadp; bp != (BUFFER*)0; bp = bp->b_bufp)
   {
-    if ((bp->b_flag & BFTEMP) == 0 && strcmp (bp->b_fname, fname) == 0)
+    if (strcmp (bp->b_fname, fname) == 0)
     {
       swbuffer (bp);
       eprintf ("[Old buffer]");
