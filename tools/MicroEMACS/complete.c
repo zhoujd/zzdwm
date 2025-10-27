@@ -197,5 +197,5 @@ void
 outstring(char *s)
 {
   while (*s)
-  ttputc(*s++);
+    ttputc(*s++);
 }
