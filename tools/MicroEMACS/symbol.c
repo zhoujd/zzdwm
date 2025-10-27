@@ -176,9 +176,9 @@ KEY key[] = {
   {KCTRL | 'V',		forwpage,	"forw-page"},
   {KCTRL | 'W',		killregion,	"kill-region"},
   {KCTRL | 'Y',		yank,		"yank"},
-  {KCTRL | 'Z',	        jeffexit,	"jeff-exit"},
+  {KCTRL | 'Z',		jeffexit,	"jeff-exit"},
   {KCTRL | '_',		undo,	        "undo"},
-  {KCTLX | KCTRL | 'B', buffermenu,	"display-buffers"},
+  {KCTLX | KCTRL | 'B', buffermenu,	"buffer-menu"},
   {KCTLX | KCTRL | 'C', quit,		"quit"},
   {KCTLX | KCTRL | 'E', eecho,		"echo"},
   {KCTLX | KCTRL | 'F', filefind,	"file-find"},
@@ -287,6 +287,7 @@ KEY key[] = {
   {-1,			rubyload,	"ruby-load"},
 #endif
   {-1,			displaymessage,	"display-message"},
+  {-1,			listbuffers,	"display-buffers"},
   {-1,			redo,		"redo"},
   {-1,			viewfile,	"view-file"}
 };
