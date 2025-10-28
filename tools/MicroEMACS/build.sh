@@ -56,7 +56,7 @@ uninstall() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-Usage: $app {build|-b|release|-r|publish|-p|clean|-c|install|-i|uninstall|-u}
+usage: $app {build|-b|release|-r|publish|-p|clean|-c|install|-i|uninstall|-u}
 EOF
 }
 
