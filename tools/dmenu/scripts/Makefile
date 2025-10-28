@@ -16,9 +16,7 @@ TOOLS := \
 
 .PHONY: all
 all:
-	@echo "Usage:"
-	@echo "sudo make install"
-	@echo "sudo make uninstall"
+	@echo "usage: sudo make {install|uninstall}"
 
 .PHONY: prepare
 prepare:
