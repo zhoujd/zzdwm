@@ -6,43 +6,10 @@ CORE_TOP=$(cd $CORE_ROOT/.. && pwd)
 
 PROJ_ROOT=$CORE_ROOT/tools/MicroEMACS
 
-dep() {
-    echo "Install dep done"
+main() {
+    pushd $PROJ_ROOT >/dev/null
+    ./build.sh "$@"
+    popd >/dev/null
 }
 
-build() {
-    pushd $PROJ_ROOT
-    make
-    sudo make install
-    popd
-    echo "Build done"
-}
-
-clean() {
-    pushd $PROJ_ROOT
-    git clean -dfx
-    popd
-    echo "Clean done"
-}
-
-usage() {
-    app=$(basename $0)
-    cat <<EOF
-usage: $app {dep|build|-b|clean|-c}
-EOF
-}
-
-case $1 in
-    dep )
-        dep
-        ;;
-    build|-b )
-        build
-        ;;
-    clean|-c )
-        clean
-        ;;
-    * )
-        usage
-        ;;
-esac
+main "$@"
