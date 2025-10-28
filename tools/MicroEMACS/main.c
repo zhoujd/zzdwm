@@ -115,9 +115,6 @@ main (int argc, char *argv[])
   register char *arg;
   char *proptr;
   int line = 0;
-#if USE_RUBY
-  int ruby_status;
-#endif
 
   proptr = NULLPTR;		/* profile name         */
   for (n = 1; n < argc; n++)
@@ -235,18 +232,10 @@ main (int argc, char *argv[])
   update ();
   lastflag = 0;			/* Fake last flags.     */
 
-#if USE_RUBY
-  ruby_status = rubyinit (TRUE); /* Attempt to load Ruby support	*/
-#endif
-
   inprof = enoecho = (ffpopen (proptr) == FIOSUC);
   /* open default profile */
   if (!inprof && proptr != NULLPTR)	/* -p option failed?    */
     eprintf ("Unable to open profile %s", proptr);
-#if USE_RUBY
-  else if (ruby_status != TRUE)
-    eprintf (rubyerror ());
-#endif
   else
     eprintf ("");
 
@@ -332,10 +321,6 @@ execute (int c, int f, int n)
       startsaveundo ();
       if (sp->s_macro)
 	status = domacro (sp->s_macro, n);
-#if USE_RUBY
-      else if (sp->s_funcp == NULL)
-	status = rubycall (sp->s_name, f, n);
-#endif
       else
 	status = (*sp->s_funcp) (f, n, c);
       lastflag = thisflag;

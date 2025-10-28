@@ -576,44 +576,6 @@ gnuindent (int f, int n, int k)
 }
 
 /*
- * Similar to indent, but do it according to Ruby conventions.
- * Insert a newline, then enough tabs and spaces to match the indentation
- * of the previous line.  If the previous line starts with a block-start
- * keyword, indent by two spaces. If a two-C-U argument was specified,
- * reduce indentation by two spaces.  Otherwise retain the same indentation.
- */
-int
-rubyindent (int f, int n, int k)
-{
-  int nicol, i;
-  int len = wllength (curwp->w_dot.p);
-
-  /* Find indentation of current line.
-   */
-  nicol = currentindent (&i);
-
-  /* Look at the string following the whitespace in the
-   * current line to determine the indentation of the next line.
-   * If any of certain magic tokens was found, or a single C-U argument
-   * was specified, indent by two spaces.  If a two-C-U argument was
-   * specified, unindent by two spaces.
-   */
-  if ((len > 0 && testline (len - 1, "{"))
-      || testline (i, "def") || testline (i, "if")
-      || testline (i, "when") || testline (i, "for")
-      || testline (i, "else") || testline (i, "class")
-      || testline (i, "module") || (f && (n != 16)))
-    nicol += 2;
-  else if (f && (n == 16))
-    nicol = nicol < 2 ? 0 : nicol - 2;
-
-  /* Insert a newline followed by the correct number of
-     tabs and spaces to get the desired indentation.
-   */
-  return nlindent (nicol, i, f);
-}
-
-/*
  * Similar to indent, but do it according to Borland coding standards.
  * Insert a newline, then enough tabs and spaces to match the indentation
  * of the previous line.  If the previous line starts with "{", or an argument

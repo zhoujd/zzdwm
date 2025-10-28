@@ -96,7 +96,6 @@
 /* #define USE_VMWAREINDENT */	/* Define to use VMware indent	*/
 #define USE_GNUINDENT		/* Define to use gnu indent	*/
 /* #define USE_BORLANDINDENT */	/* Define to use Borland indent	*/
-/* #define USE_RUBYINDENT */	/* Define to use Ruby indent */
 
 #if defined(__linux__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__FreeBSD__)
   #define HAS_CSCOPE 1
@@ -136,31 +135,21 @@ KEY key[] = {
   {KCTRL | 'J',		borlandindent,	"borland-indent"},
   {-1,			gnuindent,	"gnu-indent"},
   {-1,			vmwareindent,	"vmware-indent"},
-  {-1,			rubyindent,	"ruby-indent"},
   {-1,			indent,		"ins-nl-and-indent"},
 #elif defined(USE_GNUINDENT)
   {-1,			borlandindent,	"borland-indent"},
   {KCTRL | 'J',		gnuindent,	"gnu-indent"},
   {-1,			vmwareindent,	"vmware-indent"},
-  {-1,			rubyindent,	"ruby-indent"},
   {-1,			indent,		"ins-nl-and-indent"},
 #elif defined(USE_VMWAREINDENT)
   {-1,			borlandindent,	"borland-indent"},
   {-1,			gnuindent,	"gnu-indent"},
   {KCTRL | 'J',		vmwareindent,	"vmware-indent"},
-  {-1,			rubyindent,	"ruby-indent"},
-  {-1,			indent,		"ins-nl-and-indent"},
-#elif defined(USE_RUBYINDENT)
-  {-1,			borlandindent,	"borland-indent"},
-  {-1,			gnuindent,	"gnu-indent"},
-  {-1,			vmwareindent,	"vmware-indent"},
-  {KCTRL | 'J',		rubyindent,	"ruby-indent"},
   {-1,			indent,		"ins-nl-and-indent"},
 #else
   {-1,			borlandindent,	"borland-indent"},
   {-1,			gnuindent,	"gnu-indent"},
   {-1,			vmwareindent,	"vmware-indent"},
-  {-1,			rubyindent,	"ruby-indent"},
   {KCTRL | 'J',		indent,		"ins-nl-and-indent"},
 #endif
   {KCTRL | 'K',		killline,	"kill-line"},
@@ -281,11 +270,6 @@ KEY key[] = {
   {-1,			nextcscope,	"next-cscope"},
 #endif
   {-1,			mouseevent,	"mouse-event"},
-#if USE_RUBY
-  {-1,			rubystring,	"ruby-string"},
-  {-1,			rubycommand,	"ruby-command"},
-  {-1,			rubyload,	"ruby-load"},
-#endif
   {-1,			displaymessage,	"display-message"},
   {-1,			listbuffers,	"display-buffers"},
   {-1,			redo,		"redo"},

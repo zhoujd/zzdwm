@@ -802,7 +802,6 @@ int indent (int f, int n, int k);	/* Insert CR-LF, then indent    */
 int gnuindent (int f, int n, int k);	/* Indent by GNU coding rules   */
 int borlandindent (int f, int n, int k);/* Indent by Borland rules	*/
 int vmwareindent (int f, int n, int k);	/* Indent by VMware rules	*/
-int rubyindent (int f, int n, int k);	/* Indent by Ruby conventions	*/
 int forwdel (int f, int n, int k);	/* Forward delete               */
 int backdel (int f, int n, int k);	/* Backward delete              */
 int killline (int f, int n, int k);	/* Kill forward                 */
@@ -848,19 +847,6 @@ int regqueryrepl (int f, int n, int k);	/* Regexp query replace         */
 int regrepl (int f, int n, int k);	/* Regexp replace with no query */
 int searchparen (int f, int n, int k);	/* Search for matching paren    */
 int foldcase (int f, int n, int k);	/* Set casefold flag            */
-
-/*
- * Defined by "ruby.c".
- */
-int rubystring (int f, int n, int k);	/* Execute a Ruby string.	*/
-int rubycommand (int f, int n, int k);	/* Define a Ruby command.	*/
-int rubyload (int f, int n, int k);	/* Load a Ruby script.		*/
-
-int rubyinit (int quiet);		/* Initialize Ruby.		*/
-const char * rubyerror (void);		/* Error string from rubyinit	*/
-int rubycall (const char *name, int f,	/* Call a Ruby command.		*/
-	      int n);
-void rubymode (void);			/* Call ruby "initmode"		*/
 
 /*
  * Defined by "spell.c".

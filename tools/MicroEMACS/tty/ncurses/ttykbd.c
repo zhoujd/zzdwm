@@ -135,11 +135,7 @@ ttykeymapinit (void)
   keydup (KF3,		"file-visit");
   keydup (KF4,		"quit");
   keydup (KF5,		"undo");
-#if USE_RUBY
-  keydup (KF6,		"ruby-string");
-#else
   keydup (KF6,		"display-buffers");
-#endif
   keydup (KF7,		"redo");
   keydup (KF8,		"forw-buffer");
   keydup (KF9,		"search-again");

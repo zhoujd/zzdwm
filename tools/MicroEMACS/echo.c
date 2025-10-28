@@ -91,9 +91,7 @@ char choicebuf[NCOL + 1];	/* Line buffer for displaying   */
 
 /*
  * The reply queue contains strings to be returned by eread
- * instead of reading a string from the console.  The Ruby
- * extension places strings here so that commands can be
- * invoked with string parameters without prompting the user.
+ * instead of reading a string from the console.
  */
 #define NQUEUE 10
 static char *replyq[NQUEUE];	/* queue of 10 strings		*/
@@ -533,9 +531,8 @@ nextname (
 }
 
 /*
- * Add another string to the reply queue.  A copy is made of the string
- * so that the caller's string, which is owned by the Ruby extension,
- * can be freed independently.  Return TRUE if success, FALSE otherwise
+ * Add another string to the reply queue.
+ * Return TRUE if success, FALSE otherwise
  * (e.g., if the queue is full).
  */
 int

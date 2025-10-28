@@ -489,21 +489,6 @@ out:
    */
   bp->b_dot.p = lp1;
 
-  /* Set up the mode for this file.
-   */
-#if USE_RUBY
-  /* BUG - if the current buffer is not in the current window,
-   * which can happen when reading in files at startup,
-   * we can't run the Ruby mode code, because it will try to manipulate
-   * the current buffer, and that will cause window data structure
-   * corruption.
-   */
-  if (curwp->w_bufp == curbp)
-  {
-    rubymode();
-  }
-#endif
-
   return (s != FIOERR);		/* False if error.      */
 }
 
