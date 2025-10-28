@@ -88,7 +88,7 @@ hdeck() {
 usage() {
     local app=$(basename $0)
     cat <<EOF
-$app  {v|h}
+$app {v|h}
 v   -- doubledeck
 h   -- zetadeck
 EOF
