@@ -37,7 +37,7 @@ restart() {
 
 usage() {
     cat <<EOF
-Usage: $(basename $0) {dep|-d|config|-c|restart|-r|all|-a}"
+usage: $(basename $0) {dep|-d|config|-c|restart|-r|all|-a}"
 EOF
 }
 

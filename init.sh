@@ -116,7 +116,7 @@ all() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-Usage: $app {dep|-d|dm|bin|misc|install|-i|build|-b|clean|-c|all|-a}
+usage: $app {dep|-d|dm|bin|misc|install|-i|build|-b|clean|-c|all|-a}
 dep|-d       --    Install depend package
 dm           --    Install xsession entry
 bin          --    Install bin

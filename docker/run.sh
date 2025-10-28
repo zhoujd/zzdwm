@@ -56,7 +56,7 @@ clean() {
 usage() {
     local app=$(basename $0)
     cat <<EOF
-Usage: $app {build|-b|run|-r|status|-s|clean|-c|purge}
+usage: $app {build|-b|run|-r|status|-s|clean|-c|purge}
 run|-r   --   {alpine|-a|void|-v}
 EOF
 }
