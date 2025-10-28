@@ -38,7 +38,6 @@ of built-in displays.
 * [GCC Errors]({{< relref "gcc" >}})
 * [Undo]({{< relref "undo" >}})
 * [Profiles]({{< relref "profiles" >}})
-* [Ruby Extensions]({{< relref "ruby" >}})
 * [Modes]({{< relref "modes" >}})
 * [UTF-8 and Unicode]({{< relref "utf8" >}})
 * [Building a MicroEMACS]({{< relref "building" >}})

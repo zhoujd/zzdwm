@@ -154,19 +154,13 @@ changes and quits.
 
     replace-string "plugh\r" "xyzzy\r" file-save quit
 
-Here is a profile that causes the `Control-J` key
-to indent according to Ruby conventions.
-
-    bind-to-key "ruby-indent\r" [C-J]
-
-
 You can automate this kind of global change with the **-p** option
 when you invoke MicroEMACS.  If you name the above profile
 `junk.pro`, you can perform a global change on a file,
 without entering any MicroEMACS commands,
 by invoking MicroEMACS with the following:
 
-    pe -p junk.pro filename
+    me -p junk.pro filename
 
 You can tell MicroEMACS to read a profile at any time, with the
 following command.
