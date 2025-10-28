@@ -105,7 +105,7 @@ auto() {
 usage() {
     local app=$(basename $0)
     cat <<EOF
-$app {1|2|4|9|-h|--help}
+usage: $app {1|2|4|9|-h|--help}
 default: auto mode
 $app 1   --  1x1 mode
 $app 2   --  1x2 mode

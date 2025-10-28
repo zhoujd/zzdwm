@@ -37,7 +37,7 @@ main() {
 
     case $kind in
         --help|-h )
-            echo "Usage: $(basename $0) {left|top|right|bottom|--help|-h}"
+            echo "usage: $(basename $0) {left|top|right|bottom|--help|-h}"
             ;;
         left )
             prepare $id

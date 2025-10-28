@@ -99,7 +99,7 @@ htile() {
 usage() {
     local app=$(basename $0)
     cat <<EOF
-$app {v|h}
+usage: $app {v|h}
 v   -- tile
 h   -- bstack
 EOF

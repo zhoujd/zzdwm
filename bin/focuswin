@@ -1,7 +1,7 @@
 #!/bin/bash
 
 [[ $# -lt 1 ]] && cat <<EOF && exit
-Usage: $(basename $0) {app} [cmd]
+usage: $(basename $0) {app} [cmd]
 EOF
 
 app=${1}

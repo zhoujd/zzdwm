@@ -5,7 +5,7 @@ gap=${WINGAP:-5}
 
 case $1 in
     --help|-h )
-        echo "Usage: $(basename $0) {left|top|right|bottom|--help|-h}"
+        echo "usage: $(basename $0) {left|top|right|bottom|--help|-h}"
         ;;
     left )
         xdotool getactivewindow windowmove $gap y
