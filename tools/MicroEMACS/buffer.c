@@ -345,8 +345,8 @@ makelist (void)
   if ((s = bclear (blistp)) != TRUE)
     return (s);
   strcpy (blistp->b_fname, "");
-  if (addline    ("ACV        Size Buffer                          File") == FALSE
-      || addline ("---        ---- ------                          ----") == FALSE)
+  if (addline    ("ACV         Size Buffer                         File") == FALSE
+      || addline ("---         ---- ------                         ----") == FALSE)
     return (FALSE);
   ALLBUF (bp)
   {				/* For all buffers      */
@@ -359,6 +359,11 @@ makelist (void)
 
     if ((bp->b_flag & BFCHG) != 0)	/* "*" if changed       */
       *cp1++ = '*';
+    else
+      *cp1++ = ' ';
+
+    if ((bp->b_flag & BFRO) != 0)	/* "%" if read-only    */
+      *cp1++ = '%';
     else
       *cp1++ = ' ';
 
