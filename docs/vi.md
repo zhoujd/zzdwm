@@ -1,6 +1,22 @@
 vi
 ==
 
+## URLs
+
+```
+## https://github.com/mhinz/vi-editor-history
+## https://github.com/aligrudi/neatvi
+## https://github.com/lichray/nvi2
+## https://github.com/johnsonjh/OpenVi
+## https://github.com/ibara/oed
+## https://github.com/martanne/vis
+## https://github.com/martinwguy/xvi
+## https://github.com/Cube9999/vi
+## https://github.com/byllgrim/svi
+## https://github.com/byllgrim/mvi
+## https://github.com/skywind3000/zvi
+```
+
 ## Build busybox vi
 
 ```
