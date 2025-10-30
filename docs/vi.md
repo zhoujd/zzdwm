@@ -15,6 +15,7 @@ vi
 ## https://github.com/byllgrim/svi
 ## https://github.com/byllgrim/mvi
 ## https://github.com/skywind3000/zvi
+## https://github.com/lacamera/nvi
 ```
 
 ## Build busybox vi
