@@ -13,7 +13,8 @@ win_class=${1:-$(wmctrl -xl | grep $active_win_id | awk '{print $3}')}
 desktop=$(xdotool get_desktop)
 
 # get list of all windows matching with the class above
-win_list=$(wmctrl -xl | grep -E "\s+${desktop}\s+" | grep -E "\s+${win_class}\s+" | awk '{print $1}')
+win_list=$(wmctrl -xl | grep -E "\s+${desktop}\s+" | \
+               grep -E "\s+${win_class}\s+" | awk '{print $1}')
 
 # get next window to focus on, removing id active
 switch_to=$(echo $win_list | sed s/.*$active_win_id// | awk '{print $1}')
