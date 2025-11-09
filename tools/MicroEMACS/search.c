@@ -791,6 +791,7 @@ isearch (int dir)
 	  curwp->w_flag |= WFMOVE;
 	  srch_lastdir = dir;
 	  ctrlg (FALSE, 0, KRANDOM);
+	  eprintf ("[Aborted]");
 	  return (FALSE);
 
 	case CCHR ('S'):	/* Control-S */
