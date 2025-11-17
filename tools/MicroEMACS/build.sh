@@ -18,14 +18,13 @@ publish() {
     local opt=(
         -i # keeps standard input open
         -u $(id -u):$(id -g)
-        -v ./:/app
+        -v $(pwd):$(pwd)
+        -w $(pwd)
     )
     docker run ${opt[@]} $img sh <<'EOF'
-cd /app
 make clean
 make LDFLAGS=-static DEBUG=no
 make strip
-ls -lh em
 EOF
     echo "Publish done"
 }
