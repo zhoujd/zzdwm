@@ -19,3 +19,10 @@ GCC
 ```
 ## https://gcc.gnu.org/onlinedocs/gcc-7.3.0/gcc/Debugging-Options.html#Debugging-Options
 ```
+
+## Install musl-gcc
+
+```
+$ sudo apt install musl-dev musl-tools musl
+$ musl-gcc -v
+```
