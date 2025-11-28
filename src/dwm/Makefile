@@ -7,8 +7,7 @@ SRC = drw.c dwm.c util.c
 OBJ = ${SRC:.c=.o}
 
 TDIR = themes
-TFILES = custom.h
-THEMES = $(addprefix $(TDIR)/, $(TFILES))
+THEMES = $(wildcard $(TDIR)/*.h)
 
 all: dwm
 
