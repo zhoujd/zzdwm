@@ -6,6 +6,7 @@ vi
 ```
 ## https://github.com/mhinz/vi-editor-history
 ## https://github.com/aligrudi/neatvi
+## https://github.com/kyx0r/nextvi
 ## https://github.com/lichray/nvi2
 ## https://github.com/johnsonjh/OpenVi
 ## https://github.com/ibara/oed
