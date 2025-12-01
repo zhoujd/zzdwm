@@ -21,6 +21,7 @@ bindir := ${prefix}/bin
 
 install: vi
 	mkdir -p "${DESTDIR}${bindir}/"
+	strip vi
 	cp -f vi "${DESTDIR}${bindir}/vi"
 
 -include vi.d

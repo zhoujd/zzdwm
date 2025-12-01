@@ -1841,8 +1841,7 @@ int main(int argc, char *argv[])
 			else if (argv[i][j] == 'v')
 				xvis &= ~4;
 			else {
-				fprintf(stderr, "Unknown option: -%c\n", argv[i][j]);
-				fprintf(stderr, "Nextvi-2.3 Usage: %s [-emsv] [file ...]\n", argv[0]);
+				fprintf(stderr, "Usage: %s [-emsv] [file ...]\n", argv[0]);
 				return EXIT_FAILURE;
 			}
 		}
