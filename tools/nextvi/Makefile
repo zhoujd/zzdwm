@@ -16,17 +16,18 @@ CFLAGS += -MMD
 
 CC = c99
 
-prefix = /usr/local
-bindir := ${prefix}/bin
+PREFIX = /usr/local
 
-install: vi
-	mkdir -p "${DESTDIR}${bindir}/"
+install: strip
+	mkdir -p ${DESTDIR}${PREFIX}/bin
+	cp -f vi ${DESTDIR}${PREFIX}/bin/vi
+
+strip: vi
 	strip vi
-	cp -f vi "${DESTDIR}${bindir}/vi"
 
 -include vi.d
 vi: vi.c
 	${CC} ${CFLAGS} -o $@ vi.c
 
 clean:
-	-rm -f vi vi.d
+	-rm -f vi *.d *.o
