@@ -41,6 +41,7 @@ run() {
 : "${CFLAGS:=-O2}"
 
 CFLAGS="\
+-static \
 -pedantic -Wall -Wextra \
 -Wno-implicit-fallthrough \
 -Wno-missing-field-initializers \
