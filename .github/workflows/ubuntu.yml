@@ -43,23 +43,15 @@ jobs:
       run: make -C tools/dmenu
     - name: Build dwmstatus
       run: make -C tools/dwmstatus
-    - name: Build tabbed
-      run: make -C tools/tabbed
     - name: Build xbanish
       run: make -C tools/xbanish
     - name: Build slock
       run: make -C tools/slock
     - name: Build shotkey
       run: make -C tools/shotkey
-    - name: Build surf
-      run: make -C tools/surf
     - name: Build xcompmgr
       run: make -C tools/xcompmgr
     - name: Build utils
       run: make -C tools/utils
-    - name: Build lemonbar
-      run: make -C tools/lemonbar
     - name: Build detach
       run: make -C tools/detach
-    - name: Build sfm
-      run: make -C tools/sfm
