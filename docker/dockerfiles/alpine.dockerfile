@@ -1,4 +1,5 @@
-FROM ghcr.io/linuxcontainers/alpine
+FROM ghcr.io/linuxcontainers/alpine:latest
+USER root
 RUN apk update --no-cache \
         && apk upgrade --no-cache \
         && apk add \
@@ -6,5 +7,4 @@ RUN apk update --no-cache \
         gcc make libtool autoconf automake \
         git openssh \
         && rm -rf /var/cache/apk/*
-USER root
 CMD ["/bin/sh"]
