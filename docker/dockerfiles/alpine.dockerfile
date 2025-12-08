@@ -7,5 +7,5 @@ RUN apk update --no-cache \
         gcc make libtool autoconf automake \
         git openssh \
         && rm -rf /var/cache/apk/*
-ENV PS1="\w\$ "
+ENV PS1="\w \$ "
 CMD ["/bin/sh"]
