@@ -22,7 +22,7 @@ $ man urclock
 $ man urxvtperl
 ```
 
-## mouse rectangle select
+## Mouse rectangle select
 
 ```
 Hold the Alt key and left-click/drag to get a rectangular selection,
