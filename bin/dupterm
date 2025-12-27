@@ -3,20 +3,34 @@
 TERM_CMD="st"
 PID=$(xprop -id "$(xprop -root | \
        awk '/_NET_ACTIVE_WINDOW\(WINDOW\)/{print $NF}')" | \
-       grep -m 1 PID | \
-       cut -d " " -f 3)
+          grep -m 1 PID | \
+          cut -d " " -f 3)
 PID=$(pstree -lpA "$PID" | \
-       tail -n 1 | awk -F'---' '{print $NF}' | \
-       sed -re 's/[^0-9]//g')
-PCWD=$(readlink /proc/"$PID"/cwd)
-PCMDLINE=$(cat /proc/"$PID"/cmdline | tr '\0' ' ' | \
-            sed -e 's/[[:space:]]*$//')
-PCMD=$(echo "$PCMDLINE" | awk '{print $1}')
+          tail -n 1 | awk -F'---' '{print $NF}' | \
+          sed -re 's/[^0-9]//g')
+FCWD=/proc/"$PID"/cwd
+if [ -e $FCWD ]; then
+    PCWD=$(readlink $FCWD)
+fi
+FCMD=/proc/"$PID"/cmdline
+if [ -e $FCMD ]; then
+    PCMDLINE=$(cat $FCMD | tr '\0' ' ' | \
+                   sed -e 's/[[:space:]]*$//')
+    PCMD=$(echo "$PCMDLINE" | awk '{print $1}')
+fi
 case $PCMD in
     ssh )
-        exec $TERM_CMD -e $PCMDLINE
+        if [ -n "$PCMDLINE" ]; then
+            exec $TERM_CMD -e $PCMDLINE
+        else
+            exec $TERM_CMD
+        fi
         ;;
     * )
-        exec $TERM_CMD -d $PCWD
+        if [ -n "$PCWD" ]; then
+            exec $TERM_CMD -d $PCWD
+        else
+            exec $TERM_CMD
+        fi
         ;;
 esac
