@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CMD="st -d"
+TERM_CMD="st"
 PID=$(xprop -id "$(xprop -root | \
        awk '/_NET_ACTIVE_WINDOW\(WINDOW\)/{print $NF}')" | \
        grep -m 1 PID | \
@@ -8,4 +8,15 @@ PID=$(xprop -id "$(xprop -root | \
 PID=$(pstree -lpA "$PID" | \
        tail -n 1 | awk -F'---' '{print $NF}' | \
        sed -re 's/[^0-9]//g')
-exec $CMD "$(readlink /proc/"$PID"/cwd)"
+PCWD=$(readlink /proc/"$PID"/cwd)
+PCMDLINE=$(cat /proc/"$PID"/cmdline | tr '\0' ' ' | \
+            sed -e 's/[[:space:]]*$//')
+PCMD=$(echo "$PCMDLINE" | awk '{print $1}')
+case $PCMD in
+    ssh )
+        exec $TERM_CMD -e $PCMDLINE
+        ;;
+    * )
+        exec $TERM_CMD -d $PCWD
+        ;;
+esac
