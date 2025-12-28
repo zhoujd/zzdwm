@@ -1,5 +1,8 @@
 #!/bin/bash
 
+title="date:"
+lines=10
+
 mktime() {
     ZONE=$(date +'%Z')
     # If Sunday, show the week number of the next week
@@ -12,12 +15,13 @@ mktime() {
     echo "${ZONE} - ${WEEK} ${TIME}"
 }
 
-OPT=(
-    -l 10
-    -p date:
+opt=(
+    -l $lines
+    -i
+    -p $title
 )
 
-cat <<EOF | dmenu ${OPT[@]}
+cat <<EOF | dmenu ${opt[@]}
 $(TZ="Asia/Shanghai" mktime)
 $(TZ="UTC" mktime)
 $(TZ="America/Los_Angeles" mktime)

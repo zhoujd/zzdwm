@@ -33,7 +33,14 @@ apps=$(echo -n "$apps" | \
                  for(i=0;i<max-cur+1;i++) printf " ";
                  $1=$2="";
                  printf "%s\n", $0}')
-cat <<EOF | dmenu -l $lines -i -ix -p $title
+
+opt=(
+    -l $lines
+    -i
+    -p $title
+)
+
+cat <<EOF | dmenu ${opt[@]}
 desktop - $(echo -n "$apps" | awk '{print $1}')
 class   - $(echo -n "$apps" | awk '{print $2}')
 title   - $(echo -n "$apps" | awk '{$1=$2=""; print $0}' | sed 's/^[ \t]*//')
