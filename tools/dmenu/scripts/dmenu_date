@@ -25,4 +25,5 @@ cat <<EOF | dmenu ${opt[@]}
 $(TZ="Asia/Shanghai" mktime)
 $(TZ="UTC" mktime)
 $(TZ="America/Los_Angeles" mktime)
+$(TZ="America/New_York" mktime)
 EOF
