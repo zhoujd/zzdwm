@@ -11,7 +11,7 @@ mktime() {
     else
         WEEK=$(date +'W%-V')
     fi
-    TIME=$(date +'%a %-e %b %-l:%M %p %Y')
+    TIME=$(date +'%a %-e %b %-l:%M %p %:::z %Y')
     echo "${ZONE} - ${WEEK} ${TIME}"
 }
 
