@@ -34,7 +34,6 @@ apps=$(echo -n "$apps" | \
                  $1=$2="";
                  printf "%s\n", $0}')
 
-
 windowgeometry() {
     kind=$1
     xdotool getactivewindow getwindowgeometry --shell | grep $kind | cut -d= -f2
@@ -55,4 +54,5 @@ y       - $(windowgeometry Y)
 width   - $(windowgeometry WIDTH)
 height  - $(windowgeometry HEIGHT)
 screen  - $(windowgeometry SCREEN)
+WM      - ${wm}
 EOF
