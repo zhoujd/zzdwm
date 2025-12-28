@@ -34,6 +34,12 @@ apps=$(echo -n "$apps" | \
                  $1=$2="";
                  printf "%s\n", $0}')
 
+
+windowgeometry() {
+    kind=$1
+    xdotool getactivewindow getwindowgeometry --shell | grep $kind | cut -d= -f2
+}
+
 opt=(
     -l $lines
     -i
@@ -41,7 +47,12 @@ opt=(
 )
 
 cat <<EOF | dmenu ${opt[@]}
-desktop - $(echo $apps | awk '{print $1}' | sed 's/^[ \t]*//;s/[ \t]*$//')
-class   - $(echo $apps | awk '{print $2}' | sed 's/^[ \t]*//;s/[ \t]*$//')
-title   - $(echo $apps | awk '{$1=$2=""; print $0}' | sed 's/^[ \t]*//;s/[ \t]*$//')
+desktop - $(echo $apps | awk '{print $1}')
+class   - $(echo $apps | awk '{print $2}')
+title   - $(echo $apps | awk '{$1=$2="";print $0}' | sed 's/^[ \t]*//;s/[ \t]*$//')
+x       - $(windowgeometry X)
+y       - $(windowgeometry Y)
+width   - $(windowgeometry WIDTH)
+height  - $(windowgeometry HEIGHT)
+screen  - $(windowgeometry SCREEN)
 EOF
