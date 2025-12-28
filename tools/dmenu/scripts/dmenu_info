@@ -48,7 +48,7 @@ opt=(
 cat <<EOF | dmenu ${opt[@]}
 desktop - $(echo $apps | awk '{print $1}')
 class   - $(echo $apps | awk '{print $2}')
-title   - $(echo $apps | awk '{$1=$2="";print $0}' | sed 's/^[ \t]*//;s/[ \t]*$//')
+title   - $(echo $apps | cut -d ' ' -f 3-)
 x       - $(windowgeometry X)
 y       - $(windowgeometry Y)
 width   - $(windowgeometry WIDTH)
