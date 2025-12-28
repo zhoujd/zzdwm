@@ -2,7 +2,7 @@
 
 # If Sunday, show the week number of the next week
 if [ $(date +'%u') -gt 6 ]; then
-    WEEK=$(date +'W%-V' -d "next monday")
+    WEEK=$(date +'W%-V' -d "next Mon")
 else
     WEEK=$(date +'W%-V')
 fi
