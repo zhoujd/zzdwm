@@ -41,7 +41,7 @@ opt=(
 )
 
 cat <<EOF | dmenu ${opt[@]}
-desktop - $(echo -n "$apps" | awk '{print $1}')
-class   - $(echo -n "$apps" | awk '{print $2}')
-title   - $(echo -n "$apps" | awk '{$1=$2=""; print $0}' | sed 's/^[ \t]*//')
+desktop - $(echo $apps | awk '{print $1}' | sed 's/^[ \t]*//;s/[ \t]*$//')
+class   - $(echo $apps | awk '{print $2}' | sed 's/^[ \t]*//;s/[ \t]*$//')
+title   - $(echo $apps | awk '{$1=$2=""; print $0}' | sed 's/^[ \t]*//;s/[ \t]*$//')
 EOF
