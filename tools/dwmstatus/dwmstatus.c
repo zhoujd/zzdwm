@@ -57,14 +57,14 @@ settz(char *tzname)
 }
 
 char *
-mktimes(char *fmt, char *tzname)
+mkdifftimes(char *fmt, char *tzname, int diff)
 {
 	char buf[129];
 	time_t tim;
 	struct tm *timtm;
 
 	settz(tzname);
-	tim = time(NULL);
+	tim = time(NULL) + diff;
 	timtm = localtime(&tim);
 	if (timtm == NULL)
 		return smprintf("");
@@ -75,6 +75,12 @@ mktimes(char *fmt, char *tzname)
 	}
 
 	return smprintf("%s", buf);
+}
+
+char *
+mktimes(char *fmt, char *tzname)
+{
+	return mkdifftimes(fmt, tzname, 0);
 }
 
 void
@@ -294,9 +300,9 @@ main(void)
 
 		/* If Sunday, show the week number of the next week */
 		if (atoi(dsh) > 6)
-			week = atoi(wsh) + 1;
-		else
-			week = atoi(wsh);
+			wsh=mkdifftimes("%-V", tzsh, 24*3600);
+
+		week = atoi(wsh);
 
 		if (strlen(bat))
 			status = smprintf("B:%s V:%s W%d %s", bat, vol, week, tmsh);
