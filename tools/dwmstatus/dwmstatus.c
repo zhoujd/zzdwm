@@ -296,12 +296,13 @@ main(void)
 		bat = getbattery("/sys/class/power_supply/BAT0");
 		vol = volpercent();
 		tmsh = mktimes("%a %-e %b %-l:%M %p", tzsh);
-		wsh = mktimes("%-V", tzsh);
 		dsh = mktimes("%u", tzsh);
 
 		/* If Sunday, show the week number of the next week */
 		if (atoi(dsh) > 6)
-			wsh=mkdifftimes("%-V", tzsh, 24*3600);
+			wsh = mkdifftimes("%-V", tzsh, 24*3600);
+		else
+			wsh = mktimes("%-V", tzsh);
 
 		week = atoi(wsh);
 
