@@ -1,15 +1,24 @@
 #!/bin/bash
 
-# If Sunday, show the week number of the next week
-if [ $(date +'%u') -gt 6 ]; then
-    WEEK=$(date +'W%-V' -d "next Mon")
-else
-    WEEK=$(date +'W%-V')
-fi
-NOW=$(date +'%a %-e %b %-l:%M %p %Z %Y')
-TM="W${WEEK} ${NOW}"
+mktime() {
+    ZONE=$(date +'%Z')
+    # If Sunday, show the week number of the next week
+    if [ $(date +'%u') -gt 6 ]; then
+        WEEK=$(date +'W%-V' -d "next Mon")
+    else
+        WEEK=$(date +'W%-V')
+    fi
+    TIME=$(date +'%a %-e %b %-l:%M %p %Y')
+    echo "${ZONE} - ${WEEK} ${TIME}"
+}
+
 OPT=(
     -l 10
     -p date:
 )
-echo $TM | dmenu ${OPT[@]}
+
+cat <<EOF | dmenu ${OPT[@]}
+$(TZ="Asia/Shanghai" mktime)
+$(TZ="UTC" mktime)
+$(TZ="America/Los_Angeles" mktime)
+EOF
