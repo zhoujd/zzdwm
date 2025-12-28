@@ -1,8 +1,15 @@
 #!/bin/bash
 
-NOW=$(date +'W%-V %a %-e %b %-l:%M %p %Z %Y')
+# If Sunday, show the week number of the next week
+if [ $(date +'%u') -gt 6 ]; then
+    WEEK=$(date +'W%-V' -d "next monday")
+else
+    WEEK=$(date +'W%-V')
+fi
+NOW=$(date +'%a %-e %b %-l:%M %p %Z %Y')
+TM="W${WEEK} ${NOW}"
 OPT=(
     -l 10
     -p date:
 )
-echo $NOW | dmenu ${OPT[@]}
+echo $TM | dmenu ${OPT[@]}
