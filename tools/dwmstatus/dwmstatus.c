@@ -64,12 +64,13 @@ mkdifftimes(char *fmt, char *tzname, int diff)
 	struct tm *timtm;
 
 	settz(tzname);
-	tim = time(NULL) + diff;
+	tim = time(NULL);
+	tim += diff;
 	timtm = localtime(&tim);
 	if (timtm == NULL)
 		return smprintf("");
 
-	if (!strftime(buf, sizeof(buf)-1, fmt, timtm)) {
+	if (!strftime(buf, sizeof(buf) - 1, fmt, timtm)) {
 		fprintf(stderr, "strftime == 0\n");
 		return smprintf("");
 	}
@@ -115,7 +116,7 @@ readfile(char *base, char *file)
 	if (fd == NULL)
 		return NULL;
 
-	if (fgets(line, sizeof(line)-1, fd) == NULL) {
+	if (fgets(line, sizeof(line) - 1, fd) == NULL) {
 		fclose(fd);
 		return NULL;
 	}
