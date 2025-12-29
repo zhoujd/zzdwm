@@ -4,15 +4,18 @@ title="date:"
 lines=10
 
 mktime() {
-    ZONE=$(date +'%Z')
+    DESC=$1
     # If Sunday, show the week number of the next week
     if [ $(date +'%u') -gt 6 ]; then
         WEEK=$(date +'W%-V' -d "next Mon")
     else
         WEEK=$(date +'W%-V')
     fi
-    TIME=$(date +'%a %-e %b %-l:%M %p %z %Y')
-    echo "${ZONE} - ${WEEK} ${TIME}"
+    TIME=$(date +'%a %-e %b %-l:%M %p %z %Z %Y')
+    # Add spaces to align the DESC
+    MAX=$(echo -n "${DESC}" | awk '{cur=length($1); \
+                                     max=(cur>max?cur:max)} END{print max}')
+    printf "%-3s - %s" "$(echo ${DESC})" "$(echo ${WEEK} ${TIME})"
 }
 
 opt=(
@@ -22,8 +25,8 @@ opt=(
 )
 
 cat <<EOF | dmenu ${opt[@]}
-$(TZ="Asia/Shanghai" mktime)
-$(TZ="UTC" mktime)
-$(TZ="America/Los_Angeles" mktime)
-$(TZ="America/New_York" mktime)
+$(TZ="Asia/Shanghai" mktime "SH")
+$(TZ="UTC" mktime "UT")
+$(TZ="America/Los_Angeles" mktime "LA")
+$(TZ="America/New_York" mktime "NY")
 EOF
