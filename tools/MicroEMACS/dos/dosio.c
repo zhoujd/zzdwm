@@ -309,13 +309,13 @@ ffpopen (fn)
 
   if (fn == NULL)
     {
-      if ((pfp = open ("pe.pro", O_RAW)) >= 0)
+      if ((pfp = open ("me.pro", O_RAW)) >= 0)
 	return (FIOSUC);
       if ((fn = getenv ("HOME")) != NULL)
 	strcpy (newname, fn);
       else
 	newname[0] = 0;
-      strcat (newname, "\\pe.pro");
+      strcat (newname, "\\me.pro");
       fn = newname;
     }
   if ((pfp = open (fn, O_RAW)) < 0)
