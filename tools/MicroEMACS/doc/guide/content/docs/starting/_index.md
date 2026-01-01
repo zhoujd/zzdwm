@@ -10,7 +10,10 @@ title: "Starting"
 
 Start editing by typing the command
 
-    me [-b] [-d] [-x] [-z] [-p profile] filename ...
+    pe [-b] [-d] [-x] [-z] [-p profile] filename ...
+
+(The name `pe` was chosen to avoid confusion with other versions
+of MicroEMACS.  Think of it as an abbreviation of "puny emacs".)
 
 The options -b, -x, -z, and -p are optional.  They have the following
 meanings:

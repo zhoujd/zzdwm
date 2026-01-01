@@ -24,8 +24,8 @@ You can use the **-p profile** option when you invoke MicroEMACS to specify
 the name of the startup profile.  If you don't use this option, MicroEMACS
 will use a default profile name.
 The name of the default
-profile is `ME.PRO` on all systems except UNIX, where it is
-named `.mepro`.  MicroEMACS will look for this profile in the
+profile is `PE.PRO` on all systems except UNIX, where it is
+named `.pepro`.  MicroEMACS will look for this profile in the
 current directory.  If the profile is not found, MicroEMACS will
 look in a second directory, as follows:
 
@@ -154,13 +154,19 @@ changes and quits.
 
     replace-string "plugh\r" "xyzzy\r" file-save quit
 
+Here is a profile that causes the `Control-J` key
+to indent according to Ruby conventions.
+
+    bind-to-key "ruby-indent\r" [C-J]
+
+
 You can automate this kind of global change with the **-p** option
 when you invoke MicroEMACS.  If you name the above profile
 `junk.pro`, you can perform a global change on a file,
 without entering any MicroEMACS commands,
 by invoking MicroEMACS with the following:
 
-    me -p junk.pro filename
+    pe -p junk.pro filename
 
 You can tell MicroEMACS to read a profile at any time, with the
 following command.
