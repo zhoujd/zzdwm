@@ -9,7 +9,6 @@ release() {
     make clean
     make LDFLAGS=-static DEBUG=no
     make strip
-    ls -lh em
     echo "Release done"
 }
 

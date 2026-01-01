@@ -69,7 +69,7 @@ OBJ := \
 
 # How to link MicroEMACS.
 
-TARGET = em
+TARGET = me
 PREFIX = /usr/local
 DEST = $(PREFIX)/bin/$(TARGET)
 
@@ -87,4 +87,4 @@ clean:
 	rm -f *.[o] $(TARGET)
 
 strip:
-	strip $(TARGET)
+	strip -v $(TARGET)
