@@ -23,7 +23,7 @@ install: strip
 	cp -f vi ${DESTDIR}${PREFIX}/bin/vi
 
 strip: vi
-	strip vi
+	strip -v vi
 
 -include vi.d
 vi: vi.c
