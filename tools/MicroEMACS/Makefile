@@ -76,8 +76,10 @@ DEST = $(PREFIX)/bin/$(TARGET)
 $(TARGET): $(OBJ)
 	$(LD) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 
-install: $(TARGET)
-	strip $(TARGET)
+strip: $(TARGET)
+	strip -v $(TARGET)
+
+install: strip
 	cp -p $(TARGET) $(DEST)
 
 uninstall:
@@ -85,6 +87,3 @@ uninstall:
 
 clean:
 	rm -f *.[o] $(TARGET)
-
-strip:
-	strip -v $(TARGET)
