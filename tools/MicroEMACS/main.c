@@ -291,7 +291,9 @@ loop:
 	}
       *kbdmip++ = c;
     }
+  startsaveundo ();
   execute (c, f, n);		/* Do it.               */
+  endsaveundo ();
   replyq_clear ();
   goto loop;
 }
