@@ -757,6 +757,8 @@ zotbuf (BUFFER *bp)
     bheadp = bp2;
   else
     bp1->b_bufp = bp2;
+  if (strcmp (oldbufn, bp->b_bname) == 0)
+    strcpy (oldbufn, "");
   killundo (bp);		/* Free undo records	*/
   removemode (bp);
   free (bp);			/* Release buffer block */
