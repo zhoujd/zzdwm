@@ -198,7 +198,10 @@ buffermenu(int f, int n)
         case 'K':
           bp = get_buffer(bufptr);
           if (bp != NULL)
-            zotbuf(bp);
+            if (eyesno("Kill") == TRUE)
+              {
+                  zotbuf(bp);
+              }
           goto start;
           break;
 

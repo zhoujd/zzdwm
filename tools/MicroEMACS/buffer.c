@@ -741,7 +741,7 @@ zotbuf (BUFFER *bp)
 
   /* we ony get here if there is only *scratch* left */
   if (bp->b_nwnd != 0)
-	return (FALSE); /* fail silently */
+    return (FALSE); /* fail silently */
   if ((s = bclear (bp)) != TRUE) /* Blow text away */
     return (s);
   free (bp->b_linep);		/* Release header line */
