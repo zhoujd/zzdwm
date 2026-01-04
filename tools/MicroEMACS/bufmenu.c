@@ -31,21 +31,20 @@ extern int splitwind(int f, int n, int k);
 extern int forwline(int f, int n, int k);
 extern int backline(int f, int n, int k);
 extern int nextwind(int f, int n, int k);
+extern int filesave (int f, int n, int k);
 
-extern int swbuffer (BUFFER *bp);
+extern int swbuffer (BUFFER *);
 extern void update();
 extern int ttgetc();
 extern void eerase(void);
 extern int zotbuf(BUFFER *);
 extern BUFFER* get_scratch(void);
 extern int getctl(void);
-extern int filesave (int f, int n, int k);
 
 BUFFER *get_buffer(int n);
 int buffermenu(int f, int n);
 int valid_buf(BUFFER*);
 int count_buffers(void);
-
 
 int
 buffermenu(int f, int n)
@@ -200,7 +199,7 @@ buffermenu(int f, int n)
           if (bp != NULL)
             if (eyesno("Kill") == TRUE)
               {
-                  zotbuf(bp);
+                zotbuf(bp);
               }
           goto start;
           break;
