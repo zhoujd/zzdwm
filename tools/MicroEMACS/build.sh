@@ -16,7 +16,7 @@ release() {
 }
 
 publish() {
-    if [ -n "$SCRIPT_IN_DOCKDER" ]; then
+    if [ -n "$INSIDE_DOCKER" ]; then
         echo "Publish in docker run release"
         release
         exit
