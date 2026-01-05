@@ -27,6 +27,6 @@ opt=(
 cat <<EOF | dmenu ${opt[@]}
 $(TZ="Asia/Shanghai" mktime "SH")
 $(TZ="UTC" mktime "UT")
-$(TZ="America/Los_Angeles" mktime "LA")
 $(TZ="America/New_York" mktime "NY")
+$(TZ="America/Los_Angeles" mktime "LA")
 EOF
