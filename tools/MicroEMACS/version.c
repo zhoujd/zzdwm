@@ -33,9 +33,10 @@
  * reasonable (automatic) manner. Perhaps a program
  * that reads "things2do.txt".
  */
-#include	"def.h"
+#include "def.h"
+#include "rev.h"
 
 char *version[] = {
-  "MicroEMACS version 40, static build on Alpine",
+  "MicroEMACS " DATE " " REV,
   NULL
 };

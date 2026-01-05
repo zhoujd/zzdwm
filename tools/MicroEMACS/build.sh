@@ -1,4 +1,7 @@
-#!/bin/bash
+#!/bin/sh
+
+SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+MNT_DIR=$(cd $SCRIPT_DIR/../.. && pwd)
 
 build() {
     make
@@ -13,14 +16,19 @@ release() {
 }
 
 publish() {
-    local img=zhoujd/alpine
-    local opt=(
-        -i # keeps standard input open
-        -u $(id -u):$(id -g)
-        -v $(pwd):$(pwd)
-        -w $(pwd)
-    )
-    docker run ${opt[@]} $img sh <<'EOF'
+    if [ -n "$SCRIPT_IN_DOCKDER" ]; then
+        echo "Publish in docker run release"
+        release
+        exit
+    fi
+    img=zhoujd/alpine
+    opt="
+        -i \
+        -u $(id -u):$(id -g) \
+        -v $MNT_DIR:$MNT_DIR \
+        -w $MNT_DIR/tools/MicroEMACS \
+    "
+    docker run $opt $img sh <<'EOF'
 make clean
 make LDFLAGS=-static DEBUG=no
 make strip

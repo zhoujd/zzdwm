@@ -76,6 +76,11 @@ DEST = $(PREFIX)/bin/$(TARGET)
 $(TARGET): $(OBJ)
 	$(LD) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 
+rev.h:
+	@$(srcdir)/ver.sh
+
+version.o: rev.h
+
 strip: $(TARGET)
 	strip -v $(TARGET)
 
@@ -86,4 +91,4 @@ uninstall:
 	rm -f $(DEST)
 
 clean:
-	rm -f *.[o] $(TARGET)
+	rm -f *.[o] $(TARGET) rev.h
