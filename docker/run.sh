@@ -20,6 +20,7 @@ RUN_PARAM=(
     --privileged=true
     --cap-add=ALL
     -e HOME=$MNT
+    -e SCRIPT_IN_DOCKDER=yes
     -v $TOP:$MNT/$(basename $TOP)
     -w $MNT/$(basename $TOP)
 )
