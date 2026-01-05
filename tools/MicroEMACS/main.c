@@ -404,9 +404,10 @@ bufinit (const char *fname)
 int
 jeffexit (int f, int n, int k)
 {
-  if ((curbp->b_flag & BFCHG) != 0)	/* Changed.             */
+  if ((curbp->b_flag & BFCHG) != 0     /* Changed.             */
+      && strcmp ("main", curbp->b_bname) != 0)
     return (filesave (f, n, KRANDOM));
-  return (spawncli (f, n, KRANDOM));	/* Suspend.             */
+  return (spawncli (f, n, KRANDOM));   /* Suspend.             */
 }
 
 /*
