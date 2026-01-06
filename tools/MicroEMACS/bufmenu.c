@@ -39,8 +39,8 @@ extern int spawncli(int f, int n, int k);	/* Run CLI in a subjob.         */
 extern int jeffexit(int f, int n, int k);	/* Jeff Lomicka style exit.     */
 
 extern int swbuffer (BUFFER *);
-extern void update();
-extern int ttgetc();
+extern void update(void);
+extern int ttgetc(void);
 extern void eerase(void);
 extern int zotbuf(BUFFER *);
 extern BUFFER* get_scratch(void);
@@ -48,7 +48,7 @@ extern int getctl(void);
 
 BUFFER *get_buffer(int n);
 int buffermenu(int f, int n);
-int valid_buf(BUFFER*);
+int valid_buf(BUFFER* bp_try);
 int count_buffers(void);
 
 int
