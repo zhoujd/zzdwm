@@ -1,0 +1,9 @@
+build
+mg-static
+meson.build
+CMakeLists.txt
+.cvsignore
+.gitignore
+.mg
+GNUmakefile
+README.md
