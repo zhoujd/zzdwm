@@ -10,7 +10,7 @@ build() {
 
 release() {
     make clean
-    make LDFLAGS=-static
+    make LDFLAGS=-static CFLAGS="-Os -Wno-cpp"
     strip -v mg
     echo "Release done"
 }
@@ -30,7 +30,7 @@ publish() {
     "
     docker run $opt $img sh <<'EOF'
 make clean
-make LDFLAGS=-static
+make LDFLAGS=-static CFLAGS="-Os -Wno-cpp"
 strip -v mg
 EOF
     echo "Publish done"
