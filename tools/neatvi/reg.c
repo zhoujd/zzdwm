@@ -4,7 +4,7 @@
 #include <string.h>
 #include "vi.h"
 
-static char *bufs[256];
+static char *bufs[512];
 static int lnmode[256];
 
 static char *reg_getraw(int c, int *ln)
