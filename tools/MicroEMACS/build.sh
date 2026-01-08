@@ -2,6 +2,7 @@
 
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 MNT_DIR=$(cd $SCRIPT_DIR/../.. && pwd)
+WS=$MNT_DIR/tools/$(basename $SCRIPT_DIR)
 
 build() {
     make
@@ -26,7 +27,7 @@ publish() {
         -i \
         -u $(id -u):$(id -g) \
         -v $MNT_DIR:$MNT_DIR \
-        -w $MNT_DIR/tools/MicroEMACS \
+        -w $WS \
     "
     docker run $opt $img sh <<'EOF'
 make clean
