@@ -19,7 +19,7 @@
 #include <string.h>
 #include "def.h"
 
-#define ESC    27
+#define ESC 27
 #define BACKSPACE 127
 #define CCHR(x) ((x)-'@')
 #define CTRL_N CCHR('N')
@@ -65,7 +65,6 @@ buffermenu(int f, int n)
  start:
   listbuffers(f, n, KRANDOM);
   swbuffer(blistp);
-  blistp->b_flag |= BFRO; /* add read-only    */
   onlywind(0, 0, KRANDOM);
   bufcount = count_buffers();
 
@@ -79,7 +78,7 @@ buffermenu(int f, int n)
 
   for (;;)
     {
-      eprintf("Buffer Menu: 1,2,s,v,k,q ");
+      eprintf("Buffer Menu: 1,2,s,v,k,q");
       update();
       c = ttgetc();
 
