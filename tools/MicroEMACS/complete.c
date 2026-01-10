@@ -1,3 +1,6 @@
+/*
+ * Filename completion
+ */
 #include <unistd.h>
 #include "def.h"
 
@@ -5,7 +8,7 @@ extern int ttgetc();
 extern void ttflush();
 extern int ttcol;
 
-#define CCHR(x)   ((x)-'@')
+#define CCHR(x) ((x)-'@')
 
 int getfilename(char *, char *, int);
 void outstring(char *);
