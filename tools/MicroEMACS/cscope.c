@@ -118,7 +118,7 @@ open_cscope (void)
 {
   const char *args[5];
 
-  args[0] = "cscope";
+  args[0] = cscope_path;
   args[1] = "-l";
   args[2] = "-k";
   if (noupdatecscope)
@@ -128,7 +128,7 @@ open_cscope (void)
     }
   else
     args[3] = NULL;
-  return openpipe ("cscope", args, &cscope_input, &cscope_output);
+  return openpipe (cscope_path, args, &cscope_input, &cscope_output);
 }
 
 /*

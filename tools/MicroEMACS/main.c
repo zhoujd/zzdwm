@@ -85,6 +85,7 @@ uchar pat[NPAT] = { 0 };	/* Pattern                      */
 SYMBOL *symbol[NSHASH];		/* Symbol table listhead.       */
 int inprof;			/* True if reading profile      */
 int bflag;			/* True if -b option specified  */
+char *cscope_path = "cscope";	/* Name of cscope program	*/
 int noupdatecscope;		/* True if -d option specified	*/
 int mouse;			/* True if -m option specified  */
 int rflag;			/* True if -r option specified  */
@@ -110,7 +111,7 @@ extern char *__progname;
 void
 usage(void)
 {
-  fprintf(stderr, "usage: %s [-234bdrxzh] [-g line] [-p profile] "
+  fprintf(stderr, "usage: %s [-234bcdrxzh] [-g line] [-p profile] "
           "[+line] [file ...] [file:line[:column]]\n",
           __progname);
   exit(0);
@@ -148,6 +149,11 @@ main (int argc, char *argv[])
 	      bflag = TRUE;
 	      break;
 #endif
+	    case 'c':
+	      n++;
+	      if (n < argc)
+		cscope_path = argv[n];
+	      break;
 	    case 'd':
 	      noupdatecscope = TRUE;
 	      break;
@@ -197,8 +203,8 @@ main (int argc, char *argv[])
       arg = argv[n];
       if (arg[0] == '-')
 	{			/* ignore options       */
-	  if (arg[1] == 'p' || arg[1] == 'g')
-	    n++;		/* skip name after -p,-g */
+	  if (arg[1] == 'p' || arg[1] == 'g' || arg[1] == 'c')
+	    n++;		/* skip name after -p,-g,-c */
 	}
       else if (arg[0] != '+')
 	{			/* it's a filename      */
