@@ -111,7 +111,7 @@ void
 usage(void)
 {
   fprintf(stderr, "usage: %s [-234bdrxzh] [-g line] [-p profile] "
-          "[+number] [file ...] [file:line:[columne]]\n",
+          "[+line] [file ...] [file:line:[column]]\n",
           __progname);
   exit(0);
 }
