@@ -101,11 +101,25 @@ static int nbuf;		/* number of buffers    */
  */
 static void bufinit (const char *fname);
 static int execute (int c, int f, int n);
+static void usage(void);
+
+/*
+ * Usage
+ */
+extern char *__progname;
+void
+usage(void)
+{
+  fprintf(stderr, "usage: %s [-234bdrxzh] [-g line] [-p profile] "
+          "[+number] [file ...] [file:line:[columne]]\n",
+          __progname);
+  exit(0);
+}
 
 /*
  * Main program.
  */
-int 
+int
 main (int argc, char *argv[])
 {
   register int c;
@@ -161,6 +175,9 @@ main (int argc, char *argv[])
 	      break;
 	    case 'z':
 	      zflag = TRUE;
+	      break;
+	    case 'h':
+	      usage();
 	      break;
 	    }
 	}
