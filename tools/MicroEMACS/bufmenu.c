@@ -65,6 +65,7 @@ buffermenu(int f, int n)
  start:
   listbuffers(f, n, KRANDOM);
   swbuffer(blistp);
+  blistp->b_flag |= BFRO; /* add read-only    */
   onlywind(0, 0, KRANDOM);
   bufcount = count_buffers();
 
