@@ -31,7 +31,7 @@
 #include <term.h>
 #endif
 
-#ifdef  TIOCGWINSZ
+#ifdef TIOCGWINSZ
 /* #error    blorch; */
 #endif
 

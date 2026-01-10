@@ -178,7 +178,7 @@ void
 setttysize (void)
 {
 
-#ifdef	TIOCGWINSZ
+#ifdef TIOCGWINSZ
   struct winsize ws;
 
   if (ioctl (0, TIOCGWINSZ, (char *) &ws) == 0)

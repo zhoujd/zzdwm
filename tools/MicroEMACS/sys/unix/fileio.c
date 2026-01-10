@@ -248,7 +248,7 @@ fbackupfile (const char *fname)
 void
 adjustcase (char *fn)
 {
-#if	0
+#if 0
   register int c;
 
   while ((c = *fn) != 0)
@@ -449,13 +449,13 @@ fftilde (char *arg)
   if (arg[0] != '~')
     return arg;
   for (user = tail = &arg[1]; *tail != '\0'
-#ifdef	BDC0
+#ifdef BDC0
        && *tail != BDC0
 #endif
-#ifdef	BDC1
+#ifdef BDC1
        && *tail != BDC1
 #endif
-#ifdef	BDC2
+#ifdef BDC2
        && *tail != BDC2
 #endif
        ; tail++)

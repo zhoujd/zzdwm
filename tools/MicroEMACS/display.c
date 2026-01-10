@@ -141,7 +141,7 @@ int leftcol = 0;		/* Left column of window        */
 
 VIDEO *vscreen[NROW - 1];	/* Edge vector, virtual.        */
 VIDEO *pscreen[NROW - 1];	/* Edge vector, physical.       */
-#if	MEMMAP			/* don't need pscreen           */
+#if MEMMAP			/* don't need pscreen           */
 VIDEO video[NROW - 1];		/* Actual screen data.          */
 #else
 VIDEO video[2 * (NROW - 1)];	/* Actual screen data.          */
@@ -156,7 +156,7 @@ int mouse_button;		/* 0=left, 1=middle, 2=right	*/
 int mouse_row;			/* screen row (0 = top)		*/
 int mouse_column;		/* screen column (0 = left)	*/
 
-#if	GOSLING
+#if GOSLING
 /*
  * This matrix is written as an array because
  * we do funny things in the "setscores" routine, which
@@ -204,7 +204,7 @@ vtinit (void)
     {
       vscreen[i] = vp;
       ++vp;
-#if	MEMMAP
+#if MEMMAP
       /* don't need pscreen */
 #else
       pscreen[i] = vp;
@@ -541,7 +541,7 @@ update (void)
       ttflush ();
       return;
     }
-#if	GOSLING
+#if GOSLING
   if (hflag != FALSE)
     {				/* Hard update?         */
       for (i = 0; i < nrow - 1; ++i)
@@ -614,7 +614,7 @@ static void
 ucopy (VIDEO *vvp, VIDEO *pvp)
 {
   vvp->v_flag &= ~VFCHG;	/* Changes done.        */
-#if	MEMMAP
+#if MEMMAP
   /* don't use pscreen */
 #else
   pvp->v_flag = vvp->v_flag;	/* Update model.        */
@@ -637,7 +637,7 @@ ucopy (VIDEO *vvp, VIDEO *pvp)
 static void
 uline (int row, VIDEO *vvp, VIDEO *pvp)
 {
-#if	MEMMAP
+#if MEMMAP
   ttcolor (vvp->v_color);
   putline (row + 1, 1, (const wchar_t *) &vvp->v_text[0]);
 #else
@@ -687,7 +687,7 @@ uline (int row, VIDEO *vvp, VIDEO *pvp)
   /* Alcyon hack */
   ttmove (row, (int) (cp1 - &vvp->v_text[0]));
   ttcolor (vvp->v_color);
-#if	0			/* old code */
+#if 0			/* old code */
   while (cp1 != cp5)
     {
       ttputc (*cp1++);
@@ -763,7 +763,7 @@ modeline (EWINDOW *wp)
   vtepadc ('-');		/* pad out with char  */
 }
 
-#if	GOSLING
+#if GOSLING
 /*
  * Compute the hash code for
  * the line pointed to by the "vp". Recompute

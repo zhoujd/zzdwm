@@ -68,7 +68,7 @@ extern	int	windowcol;
 extern  int     ttrow;
 extern  int     ttcol;
 
-#if     GOSLING
+#if GOSLING
 int     tceeol  =       2;              /* Costs.                       */
 int     tcinsl  =       11;
 int     tcdell  =       11;

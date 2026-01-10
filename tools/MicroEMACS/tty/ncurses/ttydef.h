@@ -33,7 +33,7 @@
  * Termcap function keys.  The last 10 keys correspond to the
  * non-standard termcap entries K0-K9 (instead of k0-k9).
  */
-#ifdef	XKEYS
+#ifdef XKEYS
 /* #define	KFIRST	K01 */
 /* #define	KLAST	K1A */
 

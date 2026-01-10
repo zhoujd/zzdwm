@@ -346,7 +346,7 @@ newline (int f, int n, int k)
     return (FALSE);
   while (n--)
     {
-#if	NLMOVE
+#if NLMOVE
       register LINE *lp;
       lp = curwp->w_dot.p;
       if (wllength (lp) == curwp->w_dot.o

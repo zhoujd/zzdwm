@@ -87,7 +87,7 @@ char PC, *CM, *CE, *UP, *BC, *IM,	/* insert mode */
  *TE,				/* term end --- end using cursor motion */
  *SO, *SE, *CD, *CS,		/* set scroll region                    */
  *SR;				/* back index (used with scroll region  */
-#ifdef	XKEYS
+#ifdef XKEYS
 char *K[NFKEYS],		/* other function key codes             */
  *L[NFKEYS],			/* labels for other functions keys      */
  *KS, *KE,			/* enter keypad mode, exit keypad mode  */
@@ -116,11 +116,11 @@ ttinit (void)
   int cinsl;			/* cost of inserting a line     */
   int cdell;			/* cost of deleting a line      */
   int i;
-#ifdef	XKEYS
+#ifdef XKEYS
   char kname[3], lname[3];
 #endif
 
-#ifdef	VAXC
+#ifdef VAXC
   if ((tv_stype = trnlnm ("TERM")) == NULL)
 #else
   if ((tv_stype = getenv ("TERM")) == NULL)	/* Don't want VAX C getenv() */
@@ -169,7 +169,7 @@ ttinit (void)
   CS = tgetstr ("cs", &p);	/* set scrolling region */
   SR = tgetstr ("sr", &p);
   SG = tgetnum ("sg");		/* standout glitch      */
-#ifdef	XKEYS
+#ifdef XKEYS
   /* get the 10 standard termcap keys */
   strcpy (kname, "kx");
   strcpy (lname, "lx");
@@ -283,7 +283,7 @@ tttidy (void)
 {
   if (TE && *TE)
     putpad (TE);		/* set the term back to normal mode */
-#ifdef	XKEYS
+#ifdef XKEYS
   ttykeymaptidy ();
 #endif
 
@@ -596,7 +596,7 @@ static int cci;
 static int				/* fake char output for charcost() */
 fakec (int c)
 {
-#ifdef	lint
+#ifdef lint
   c++;
 #endif
   cci++;

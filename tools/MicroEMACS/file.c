@@ -561,20 +561,20 @@ makename (char *bname, const char *fname)
   while (*cp1 != 0)
     ++cp1;
   while (cp1 != &fname[0]
-#ifdef	BDC0
+#ifdef BDC0
          && cp1[-1] != BDC0
 #endif
-#ifdef	BDC1
+#ifdef BDC1
          && cp1[-1] != BDC1
 #endif
-#ifdef	BDC2
+#ifdef BDC2
          && cp1[-1] != BDC2
 #endif
     )
     --cp1;
   cp2 = &bname[0];
   while (cp2 != &bname[NBUFN - 1] && *cp1 != 0
-#ifdef	BDC3
+#ifdef BDC3
          && *cp1 != BDC3
 #endif
     )

@@ -214,7 +214,7 @@ static int parse_or_mouse (TRIE first);
 int
 getkbd (void)
 {
-#ifndef	XKEYS
+#ifndef XKEYS
   return (ttgetc ());
 #else
   register TRIE t;

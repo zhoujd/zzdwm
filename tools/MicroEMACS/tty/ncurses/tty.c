@@ -45,7 +45,7 @@ extern  int     tthue;
 /*
  * Local variables.
  */
-#if     GOSLING
+#if GOSLING
 int     tceeol  =       2;              /* Costs.                       */
 int     tcinsl  =       11;
 int     tcdell  =       11;

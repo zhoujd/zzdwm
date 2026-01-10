@@ -48,7 +48,7 @@
 
 #define	NBLOCK	16		/* Line block chunk size        */
 
-#ifndef	KBLOCK
+#ifndef KBLOCK
 #define	KBLOCK	256		/* Kill buffer block size.      */
 #endif
 
