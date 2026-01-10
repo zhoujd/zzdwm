@@ -400,6 +400,7 @@ togglereadonly (int f, int n, int k)
     eprintf ("Buffer is now read-only");
   else
     eprintf ("Buffer is now read-write");
+  updatemode ();		/* Update mode lines    */
   return TRUE;
 }
 

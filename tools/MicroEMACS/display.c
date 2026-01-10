@@ -725,7 +725,9 @@ modeline (EWINDOW *wp)
   vscreen[n]->v_color = CMODE;	/* Mode line color.     */
   bp = wp->w_bufp;
   vtputc ('-');
-  if ((bp->b_flag & BFCHG) != 0)	/* "*" if changed.      */
+  if ((bp->b_flag & BFRO) != 0)	/* "%" if read-only    */
+    vtputc ('%');
+  else if ((bp->b_flag & BFCHG) != 0)	/* "*" if changed.      */
     vtputc ('*');
   else
     vtputc ('-');
