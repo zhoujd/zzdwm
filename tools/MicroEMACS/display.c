@@ -331,6 +331,21 @@ vtstring (const char *s)
   vtputs ((const uchar *)s, strlen (s));
 }
 
+/*
+ * Put a fill end of line with char.
+ */
+static void
+vtepadc (char ch)
+{
+  register int count;
+
+  if (vtcol < leftcol)
+    vtcol = leftcol;
+  if ((count = ncol + leftcol - vtcol) <= 0)
+    return;
+  wmemset (&vttext[vtcol - leftcol], ch, count);
+  vtcol += count;
+}
 
 /*
  * Erase from the end of the
@@ -343,14 +358,7 @@ vtstring (const char *s)
 static void
 vteeol (void)
 {
-  register int count;
-
-  if (vtcol < leftcol)
-    vtcol = leftcol;
-  if ((count = ncol + leftcol - vtcol) <= 0)
-    return;
-  wmemset (&vttext[vtcol - leftcol], ' ', count);
-  vtcol += count;
+  vtepadc(' ');
 }
 
 /*
@@ -716,37 +724,41 @@ modeline (EWINDOW *wp)
 
   vscreen[n]->v_color = CMODE;	/* Mode line color.     */
   bp = wp->w_bufp;
+  vtputc ('-');
   if ((bp->b_flag & BFCHG) != 0)	/* "*" if changed.      */
     vtputc ('*');
   else
-    vtputc (' ');
-  vtstring ("MicroEMACS");
+    vtputc ('-');
+  vtstring (" MicroEMACS ");
   mname = modename (bp);
   if (mname != NULL)
     {
-      vtstring (" (");
+      vtstring ("-- (");
       vtstring (mname);
       vtputc (')');
+      vtstring(" ");
     }
   if (bp->b_bname[0] != 0)
     {				/* Buffer name.         */
-      vtputc (' ');
+      vtstring("-- ");
       vtstring (bp->b_bname);
+      vtstring(" ");
     }
   if (bp->b_fname[0] != 0)
     {				/* File name.           */
-      vtputc (' ');
-      vtstring ("File:");
+      vtstring("-- ");
+      vtstring ("File: ");
       vtstring (bp->b_fname);
+      vtstring (" ");
     }
   if (curmsgf != FALSE		/* Message alert.       */
       && wp->w_wndp == NULL)
     {
       while (vtcol < ncol - 6)
-	vtputc (' ');
-      vtstring ("[Msg]");
+	vtputc ('-');
+      vtstring (" [Msg] ");
     }
-  vteeol ();			/* pad out with blanks  */
+  vtepadc ('-');		/* pad out with char  */
 }
 
 #if	GOSLING
