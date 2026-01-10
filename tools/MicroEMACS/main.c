@@ -143,7 +143,7 @@ main (int argc, char *argv[])
 	    case '4':
 	      npages = arg[1] - '0';
 	      break;
-#if	BACKUP
+#if BACKUP
 	    case 'b':
 	      bflag = TRUE;
 	      break;

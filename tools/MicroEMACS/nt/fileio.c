@@ -280,8 +280,8 @@ int	len;
 		--len;
 	}
 }
-	
-#if	BACKUP
+
+#if BACKUP
 
 /*
  * Make a backup of the given file.  There are two strategies.

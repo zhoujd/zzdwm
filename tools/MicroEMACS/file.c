@@ -236,7 +236,7 @@ insertf (const char *fname)
   dotp = wp->w_dot.p;		/* Save new dot value   */
   doto = wp->w_dot.o;
 
-#if	BACKUP
+#if BACKUP
   bp->b_flag |= BFBAK | BFCHG;	/* Need a backup.       */
 #else
   bp->b_flag |= BFCHG;		/* Need a backup.       */
@@ -446,7 +446,7 @@ readin (const char *fname)
   if ((s = bclear (bp)) != TRUE)	/* Might be old.        */
     return (s);
   lp2 = firstline (bp);			/* Header line          */
-#if	BACKUP
+#if BACKUP
   bp->b_flag &= ~(BFCHG | BFBAK);	/* No change, backup.   */
 #else
   bp->b_flag &= ~BFCHG;			/* No change.           */
@@ -468,7 +468,7 @@ readin (const char *fname)
     lp1->l_fp->l_bp = lp2;
     free (lp1);
   }
-#if	BACKUP
+#if BACKUP
   bp->b_flag |= BFBAK;		/* Need a backup.       */
 #endif
 out:
@@ -760,7 +760,7 @@ filewrite (int f, int n, int k)
     curbp->b_flag &= ~BFCHG;
     updatemode ();		/* Update mode lines.   */
   }
-#if	BACKUP
+#if BACKUP
   curbp->b_flag &= ~BFBAK;	/* No backup.           */
 #endif
   return (s);
@@ -785,7 +785,7 @@ filesave (int f, int n, int k)
     eprintf ("No file name");
     return (FALSE);
   }
-#if	BACKUP
+#if BACKUP
   if (bflag == TRUE && (curbp->b_flag & BFBAK) != 0)
   {
     s = fbackupfile (curbp->b_fname);
@@ -802,7 +802,7 @@ filesave (int f, int n, int k)
     curbp->b_flag &= ~BFCHG;
     updatemode ();		/* Update mode lines.   */
   }
-#if	BACKUP
+#if BACKUP
   curbp->b_flag &= ~BFBAK;	/* No backup.           */
 #endif
   setundochanged ();
@@ -831,7 +831,7 @@ filename (int f, int n, int k)
   expanded_fname = fftilde (fname);
   strcpy (curbp->b_fname, expanded_fname);	/* Fix name.            */
   updatemode ();		/* Update mode lines    */
-#if	BACKUP
+#if BACKUP
   curbp->b_flag &= ~BFBAK;	/* No backup.           */
 #endif
   lchange (WFEDIT);
