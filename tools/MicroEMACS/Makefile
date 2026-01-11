@@ -86,7 +86,7 @@ strip: $(TARGET)
 	strip -v $(TARGET)
 
 install: strip
-	cp -p $(TARGET) $(DEST)
+	cp -f $(TARGET) $(DEST)
 
 uninstall:
 	rm -f $(DEST)
