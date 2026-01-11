@@ -15,10 +15,11 @@ INC = -I$(srcdir) -I$(SYS) -I$(TTY)
 
 CC = gcc
 DEBUG = yes
+CFLAGS = -DLINUX -DBACKUP $(INC) -Wall
 ifeq ($(DEBUG), yes)
-CFLAGS = -g -O0 -DDEBUG=1 -DLINUX -DBACKUP $(INC) -Wall
+CFLAGS := -g -O0 -DDEBUG=1 $(CFLAGS)
 else
-CFLAGS = -Os -s -DLINUX -DBACKUP $(INC) -Wall
+CFLAGS := -Os -s $(CFLAGS)
 endif
 
 LD = gcc
