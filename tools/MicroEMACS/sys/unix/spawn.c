@@ -29,21 +29,21 @@
  * interracts with the job control stuff
  * in the 4.X BSD C shell.
  */
-#include	"def.h"
+#include "def.h"
 
 #ifdef __hpux
 /* Need this kludge to get termios.h to define POSIX functions */
 #define _INCLUDE_POSIX_SOURCE
 #endif
 
-#include	<termios.h>
-#include	<signal.h>
-#include	<stdlib.h>
-#include	<unistd.h>
+#include <termios.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 #if defined(__linux__) || defined(CYGWIN) || defined(__FreeBSD__) || defined(__APPLE__)
-#include	<sys/types.h>
-#include	<sys/wait.h>
-#include	<fcntl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <fcntl.h>
 #endif
 
 extern struct termios oldtty;
@@ -337,10 +337,12 @@ openpipe (const char *program, const char *args[],
 int
 spawncmd (int f, int n, int k)
 {
-  char line[NCOL] = {0};
   register int s;
+  char line[NCOL] = {0};
+
   if ((s = ereply ("! ", line, NCOL - 1)) != TRUE)
     return (s);
+
   ttputc ('\n');                /* Already have '\r'    */
   ttcolor (CTEXT);              /* Normal color.        */
   ttwindow (0, nrow - 1);       /* Full screen scroll.  */
@@ -353,5 +355,6 @@ spawncmd (int f, int n, int k)
   tteeol ();
   ttflush ();
   sgarbf = TRUE;
+
   return (TRUE);
 }
