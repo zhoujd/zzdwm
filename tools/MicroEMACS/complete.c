@@ -48,7 +48,7 @@ getfilename(char *prompt, char *buf, int nbuf)
       buf[cpos++] = 0;
 
       /* clear the message line */
-      eprintf("");
+      eerase ();
       ttflush();
 
       /* if we default the buffer, return FALSE */

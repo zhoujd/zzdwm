@@ -777,6 +777,7 @@ eread (const char *fp, char *buf, int nbuf, int flag, va_list ap)
 	  if ((flag & EFCR) != 0)
 	    {
 	      ettputc (0x0D);
+              eerase ();
 	      ettflush ();
 	    }
 	  goto done;
