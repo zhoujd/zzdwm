@@ -351,7 +351,7 @@ spawncmd (int f, int n, int k)
   system (line);
   ttgetc ();
   ttopen ();
-  tteeol ();
+  eprintf ("");                 /* clear message line   */
   ttflush ();
   sgarbf = TRUE;
   return (TRUE);
