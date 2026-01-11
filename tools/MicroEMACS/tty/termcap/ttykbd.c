@@ -84,14 +84,14 @@
  *	  function key won't work, but it is still put in the table.
  *	]
  */
-#include	"def.h"
+#include "def.h"
 
 #undef DEBUG /* Undefine the macro */
-#define DEBUG	0
+#define DEBUG 0
 
-#define SUNOS 	0		/* set to 1 for SunOS, 0 for everybody else */
+#define SUNOS 0		/* set to 1 for SunOS, 0 for everybody else */
 
-#define	KEY	short
+#define KEY short
 
 /*
  * Default key name table.  Can be overridden by
