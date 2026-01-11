@@ -62,13 +62,13 @@
  *
  * Revision 1.3  91/01/07  10:26:04  alexande
  * Remove C++ warnings.  Add tab size variable.
- * 
+ *
  * Revision 1.2  90/07/03  13:21:05  alexande
  * Changed pat[] to uchar to be consistent with new declaration in def.h.
- * 
+ *
  *
  */
-#include	"def.h"
+#include "def.h"
 
 int thisflag;			/* Flags, this command          */
 int lastflag;			/* Flags, last command          */
@@ -596,6 +596,7 @@ showversion (int f, int n, int k)
     return (TRUE);
   return (readmsg ());
 }
+
 /*
  * Display the message lines.  At present, only the display-version
  * command uses the message system, but other commands
