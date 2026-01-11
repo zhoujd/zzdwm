@@ -153,7 +153,6 @@ typedef unsigned char uchar;
 #define FALSE	0		/* False, no, bad, etc.         */
 #define TRUE	1		/* True, yes, good, etc.        */
 #define ABORT	2		/* Death, ^G, abort, etc.       */
-#define AGAIN	3		/* Agagin, ^S, ^R search, etc.  */
 
 /*
  * These flag bits keep track of

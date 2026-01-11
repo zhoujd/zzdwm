@@ -1179,16 +1179,10 @@ forwsearch (int f, int n, int k)
 {
   register int s;
 
-  s = readpattern ("Search");
-  switch (s) {
-  case AGAIN:
-  case TRUE:
-    srch_lastdir = SRCH_FORW;
-    return searchagain (f, n, k);
-  default:
-    break;
-  }
-  return (s);
+  if ((s = readpattern ("Search")) != TRUE)
+    return (s);
+  srch_lastdir = SRCH_FORW;
+  return searchagain (f, n, k);
 }
 
 /*
@@ -1203,16 +1197,10 @@ backsearch (int f, int n, int k)
 {
   register int s;
 
-  s = readpattern ("Reverse search");
-  switch (s) {
-  case AGAIN:
-  case TRUE:
-    srch_lastdir = SRCH_BACK;
-    return searchagain (f, n, k);
-  default:
-    break;
-  }
-  return (s);
+  if ((s = readpattern ("Reverse search")) != TRUE)
+    return (s);
+  srch_lastdir = SRCH_BACK;
+  return searchagain (f, n, k);
 }
 
 /*

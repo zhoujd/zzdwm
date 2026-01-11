@@ -807,7 +807,8 @@ eread (const char *fp, char *buf, int nbuf, int flag, va_list ap)
 
 	case 0x12:		/* Control-R */
 	case 0x13:		/* Control-S */
-	  return (AGAIN);
+	  ettflush ();
+	  break;
 
 	case 0x15:		/* C-U, kill line.      */
 	  if (buflen == 0)
