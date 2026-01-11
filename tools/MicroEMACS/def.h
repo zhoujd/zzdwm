@@ -858,6 +858,7 @@ int spellregion (int f, int n, int k);	/* Spell-check marked region.	*/
  * Defined by "spawn.c".
  */
 int spawncli (int f, int n, int k);	/* Run CLI in a subjob.         */
+int spawncmd (int f, int n, int k);	/* Run a one-liner in a subjob. */
 
 int spawn (char *program,		/* Spawn a program.		*/
 	   const char *args[]);

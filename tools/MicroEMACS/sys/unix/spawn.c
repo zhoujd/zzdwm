@@ -326,3 +326,32 @@ openpipe (const char *program, const char *args[],
 
   return TRUE;
 }
+
+/*
+ * Run a one-liner in a subjob.
+ * When the command returns, wait for a single
+ * character to be typed, then mark the screen as
+ * garbage so a full repaint is done.
+ * Bound to "C-X !".
+ */
+int
+spawncmd (int f, int n, int k)
+{
+  char line[NCOL] = {0};
+  register int s;
+  if ((s = ereply ("! ", line, NCOL - 1)) != TRUE)
+    return (s);
+  ttputc ('\n');                /* Already have '\r'    */
+  ttcolor (CTEXT);              /* Normal color.        */
+  ttwindow (0, nrow - 1);       /* Full screen scroll.  */
+  ttmove (nrow - 1, 0);         /* Last line.           */
+  ttflush ();
+  ttclose ();
+  system (line);
+  ttgetc ();
+  ttopen ();
+  tteeol ();
+  ttflush ();
+  sgarbf = TRUE;
+  return (TRUE);
+}
