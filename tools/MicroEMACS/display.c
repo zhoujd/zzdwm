@@ -69,17 +69,17 @@
  *
  * Revision 1.3  91/01/07  10:24:00  alexande
  * Remove C++ warnings.  Changes for variable tab size.
- * 
+ *
  * Revision 1.3  90/10/23  17:13:54  alexande
  * Change vttext to unsigned, to allow IBM PC graphical characters.
- * 
+ *
  * Revision 1.2  90/07/03  13:22:11  alexande
  * Changed video buffers to uchar, to avoid sign-extension problems when
  * using funny IBM PC characters that are >=80h.
- * 
+ *
  *
  */
-#include	"def.h"
+#include "def.h"
 
 /*
  * You can change these back to the types
@@ -254,7 +254,7 @@ vtmove (int row, int col)
  * Write a character to the virtual display,
  * dealing with long lines and the display of unprintable
  * things like control characters. Also expand tabs every 8
- * columns. This code only puts printing characters into 
+ * columns. This code only puts printing characters into
  * the virtual display image. Special care must be taken when
  * expanding tabs. On a screen whose width is not a multiple
  * of 8, it is possible for the virtual cursor to hit the
