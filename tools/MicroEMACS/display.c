@@ -748,13 +748,9 @@ modeline (EWINDOW *wp)
     }
   if (bp->b_fname[0] != 0)
     {				/* File name.           */
-      vtstring (" (");
+      vtputc (' ');
+      vtstring ("File:");
       vtstring (bp->b_fname);
-      vtstring (")");
-    }
-  else
-    {
-      vtstring (" ()");
     }
   if (curmsgf != FALSE		/* Message alert.       */
       && wp->w_wndp == NULL)
