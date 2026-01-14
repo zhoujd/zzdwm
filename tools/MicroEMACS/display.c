@@ -717,50 +717,55 @@ modeline (EWINDOW *wp)
   register BUFFER *bp;
   register int n;
   const char *mname;
+  int lchar;	/* character to draw line in buffer with */
 
   n = wp->w_toprow + wp->w_ntrows;	/* Location.            */
   vtmove (n, 0);		/* Seek to right line.  */
   vscreen[n]->v_flag |= (VFCHG | VFHBAD);	/* Recompute, display.  */
-
   vscreen[n]->v_color = CMODE;	/* Mode line color.     */
+  lchar = '-';
   bp = wp->w_bufp;
-  vtputc ('-');
+  vtputc (lchar);
   if ((bp->b_flag & BFRO) != 0)	/* "%" if read-only    */
     vtputc ('%');
   else if ((bp->b_flag & BFCHG) != 0)	/* "*" if changed.      */
     vtputc ('*');
   else
-    vtputc ('-');
-  vtstring (" MicroEMACS ");
+    vtputc (lchar);
+  vtputc (' ');
+  vtstring ("MicroEMACS");
   mname = modename (bp);
   if (mname != NULL)
     {
-      vtstring ("-- (");
+      vtstring (" (");
       vtstring (mname);
       vtputc (')');
-      vtstring(" ");
     }
   if (bp->b_bname[0] != 0)
     {				/* Buffer name.         */
-      vtstring("-- ");
+      vtputc (' ');
       vtstring (bp->b_bname);
-      vtstring(" ");
     }
   if (bp->b_fname[0] != 0)
     {				/* File name.           */
-      vtstring("-- ");
-      vtstring ("File: ");
+      vtstring (" (");
       vtstring (bp->b_fname);
-      vtstring (" ");
+      vtstring (")");
+    }
+  else
+    {
+      vtstring (" ()");
     }
   if (curmsgf != FALSE		/* Message alert.       */
       && wp->w_wndp == NULL)
     {
       while (vtcol < ncol - 6)
-	vtputc ('-');
-      vtstring (" [Msg] ");
+	vtputc (lchar);
+      vtputc (' ');
+      vtstring ("[Msg]");
     }
-  vtepadc ('-');		/* pad out with char  */
+  vtputc (' ');
+  vtepadc (lchar);		/* pad out with char  */
 }
 
 #if GOSLING
