@@ -718,12 +718,14 @@ modeline (EWINDOW *wp)
   register int n;
   const char *mname;
   int lchar;	/* character to draw line in buffer with */
+  char lstr[32] = {0};
 
   n = wp->w_toprow + wp->w_ntrows;	/* Location.            */
   vtmove (n, 0);		/* Seek to right line.  */
   vscreen[n]->v_flag |= (VFCHG | VFHBAD);	/* Recompute, display.  */
   vscreen[n]->v_color = CMODE;	/* Mode line color.     */
   lchar = '-';
+  snprintf(lstr, sizeof(lstr), " %c%c ", lchar, lchar);
   bp = wp->w_bufp;
   vtputc (lchar);
   if ((bp->b_flag & BFRO) != 0)	/* "%" if read-only    */
@@ -737,19 +739,20 @@ modeline (EWINDOW *wp)
   mname = modename (bp);
   if (mname != NULL)
     {
-      vtstring (" (");
+      vtstring (lstr);
+      vtputc ('(');
       vtstring (mname);
       vtputc (')');
     }
   if (bp->b_bname[0] != 0)
     {				/* Buffer name.         */
-      vtputc (' ');
+      vtstring (lstr);
       vtstring (bp->b_bname);
     }
   if (bp->b_fname[0] != 0)
     {				/* File name.           */
-      vtputc (' ');
-      vtstring ("File:");
+      vtstring (lstr);
+      vtstring ("File: ");
       vtstring (bp->b_fname);
     }
   if (curmsgf != FALSE		/* Message alert.       */
@@ -757,7 +760,7 @@ modeline (EWINDOW *wp)
     {
       while (vtcol < ncol - 6)
 	vtputc (lchar);
-      vtputc (' ');
+      vtstring (lstr);
       vtstring ("[Msg]");
     }
   vtputc (' ');
