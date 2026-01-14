@@ -718,14 +718,14 @@ modeline (EWINDOW *wp)
   register int n;
   const char *mname;
   int lchar;	/* character to draw line in buffer with */
-  char lstr[32] = {0};
+  char *lstr;
 
   n = wp->w_toprow + wp->w_ntrows;	/* Location.            */
   vtmove (n, 0);		/* Seek to right line.  */
   vscreen[n]->v_flag |= (VFCHG | VFHBAD);	/* Recompute, display.  */
   vscreen[n]->v_color = CMODE;	/* Mode line color.     */
   lchar = '-';
-  snprintf(lstr, sizeof(lstr), " %c%c ", lchar, lchar);
+  lstr = " -- ";
   bp = wp->w_bufp;
   vtputc (lchar);
   if ((bp->b_flag & BFRO) != 0)	/* "%" if read-only    */
