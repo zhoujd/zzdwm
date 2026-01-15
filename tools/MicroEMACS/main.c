@@ -111,7 +111,7 @@ extern char *__progname;
 void
 usage(void)
 {
-  fprintf(stderr, "usage: %s [-234bcdrxzh] [-g line] [-p profile] "
+  fprintf(stderr, "usage: %s [-234bcdrxz] [-g line] [-p profile] "
           "[+line] [file ...] [file:line[:column]]\n",
           __progname);
   exit(0);
@@ -130,6 +130,14 @@ main (int argc, char *argv[])
   register char *arg;
   char *proptr;
   int line = 0;
+
+  if (argc == 2)
+    {
+      if (strcmp(argv[1], "--help") == 0)
+        {
+          usage();
+        }
+    }
 
   proptr = NULLPTR;		/* profile name         */
   for (n = 1; n < argc; n++)
@@ -181,9 +189,6 @@ main (int argc, char *argv[])
 	      break;
 	    case 'z':
 	      zflag = TRUE;
-	      break;
-	    case 'h':
-	      usage();
 	      break;
 	    }
 	}
