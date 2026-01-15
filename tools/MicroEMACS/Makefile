@@ -6,8 +6,13 @@ srcdir = .
 
 # Directories containing system- and tty-specific source.
 
-SYS = ./sys/unix
+TERMCAP ?= no
+ifeq ($(TERMCAP), yes)
+TTY = ./tty/termcap
+else
 TTY = ./tty/ncurses
+endif
+SYS = ./sys/unix
 VPATH = $(SYS):$(TTY)
 INC = -I$(srcdir) -I$(SYS) -I$(TTY)
 
@@ -23,8 +28,12 @@ CFLAGS := -Os -s $(CFLAGS)
 endif
 
 LD = gcc
+ifeq ($(TERMCAP), yes)
 LDFLAGS = -L/usr/lib64/termcap
+LIBS = -ltermcap
+else
 LIBS = -lncursesw
+endif
 
 # Objects comprising MicroEMACS.
 
