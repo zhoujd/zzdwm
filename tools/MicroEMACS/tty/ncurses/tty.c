@@ -45,12 +45,6 @@ extern  int     tthue;
 /*
  * Local variables.
  */
-#if GOSLING
-int     tceeol  =       2;              /* Costs.                       */
-int     tcinsl  =       11;
-int     tcdell  =       11;
-#endif
-
 int actual_nrow;
 int actual_ncol;
 
