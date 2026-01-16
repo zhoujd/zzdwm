@@ -40,3 +40,10 @@ char *version[] = {
   "MicroEMACS" " " DATE " " REV,
   NULL
 };
+
+/* Print the version string. */
+void
+printversion(void)
+{
+  printf("%s %s %s\n", "MicroEMACS", DATE, REV);
+}
