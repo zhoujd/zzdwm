@@ -3,4 +3,5 @@
 rev.h
 *.o
 me
-
+TAGS
+cscope.out
