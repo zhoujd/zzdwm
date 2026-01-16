@@ -349,7 +349,7 @@ spawncmd (int f, int n, int k)
   ttflush ();
   ttclose ();
   system (line);
-  system ("echo -n \\(End\\)");
+  system ("printf \\(End\\)");
   ttgetc ();
   ttopen ();
   eerase ();
