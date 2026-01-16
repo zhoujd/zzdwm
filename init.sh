@@ -43,7 +43,6 @@ install_bin() {
         $CORE_ROOT/bin/me
         $CORE_ROOT/bin/vi
         $CORE_ROOT/bin/ff
-        $CORE_ROOT/bin/less
         $CORE_ROOT/bin/movewin
         $CORE_ROOT/bin/deckwin
         $CORE_ROOT/bin/focuswin
@@ -51,13 +50,15 @@ install_bin() {
         $CORE_ROOT/bin/monocle
         $CORE_ROOT/bin/grid
         $CORE_ROOT/bin/tile
+        $CORE_ROOT/libexec/utils/less
+        $CORE_ROOT/libexec/utils/etags
         $CORE_ROOT/libexec/wm/startdwm
         $CORE_ROOT/libexec/wm/startcwm
         $CORE_ROOT/libexec/wm/dwm-session
         $CORE_ROOT/libexec/wm/cwm-session
     )
     for app in ${apps[@]}; do
-        sudo cp -fv $app $target
+        sudo cp -fpv $app $target
     done
     echo "Install bin done"
 }
