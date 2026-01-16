@@ -100,7 +100,6 @@ static int nbuf;		/* number of buffers    */
 /*
  * Forward declarations.
  */
-
 extern char *__progname;
 extern void printversion(void);
 
@@ -198,6 +197,9 @@ main (int argc, char *argv[])
 	    case 'z':
 	      zflag = TRUE;
 	      break;
+            default:	/* unknown switch */
+              /* ignore this for now */
+              break;
 	    }
 	}
       else if (arg[0] == '+')
