@@ -45,5 +45,12 @@ char *version[] = {
 void
 printversion(void)
 {
-  printf("%s %s %s\n", "MicroEMACS", DATE, REV);
+  char **cpp;
+  char *cp;
+
+  cpp = &version[0];
+  while ((cp = *cpp++) != NULL)
+    {
+      printf("%s\n", cp);
+    }
 }
