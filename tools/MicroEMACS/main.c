@@ -197,9 +197,9 @@ main (int argc, char *argv[])
 	    case 'z':
 	      zflag = TRUE;
 	      break;
-            default:	/* unknown switch */
-              /* ignore this for now */
-              break;
+	    default:	/* unknown switch */
+	      /* ignore this for now */
+	      break;
 	    }
 	}
       else if (arg[0] == '+')
