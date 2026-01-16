@@ -6,7 +6,6 @@ srcdir = .
 
 # Directories containing system- and tty-specific source.
 
-TERMCAP ?= no
 ifeq ($(TERMCAP), yes)
 TTY = ./tty/termcap
 else
