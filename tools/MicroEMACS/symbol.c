@@ -171,7 +171,11 @@ KEY key[] = {
   {KCTLX | KCTRL | 'B', buffermenu,	"buffer-menu"},
   {KCTLX | KCTRL | 'C', quit,		"quit"},
   {KCTLX | KCTRL | 'E', eecho,		"echo"},
+#ifndef MINGW
   {KCTLX | KCTRL | 'F', filefind,	"file-find"},
+#else
+  {KCTLX | KCTRL | 'F', filename,	"set-file-name"},
+#endif
   {KCTLX | KCTRL | 'I', fileinsert,	"file-insert"},
   {KCTLX | KCTRL | 'L', lowerregion,	"lower-region"},
   {KCTLX | KCTRL | 'N', mvdnwind,	"down-window"},
@@ -276,8 +280,7 @@ KEY key[] = {
   {-1,			displaymessage,	"display-message"},
   {-1,			listbuffers,	"display-buffers"},
   {-1,			redo,		"redo"},
-  {-1,			viewfile,	"view-file"},
-  {-1,			filename,	"set-file-name"}
+  {-1,			viewfile,	"view-file"}
 };
 
 #define	NKEY	(sizeof(key) / sizeof(key[0]))
