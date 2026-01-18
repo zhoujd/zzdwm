@@ -1138,12 +1138,12 @@ regdump (regexp * r)
   while (op != END)
     {				/* While that wasn't END last time... */
       op = OP (s);
-      printf ("%2ld%s", (long)(s - r->program), regprop (s));	/* Where, what. */
+      printf ("%2d%s", s - r->program, regprop (s));	/* Where, what. */
       next = regnext (s);
       if (next == NULL)		/* Next ptr. */
 	printf ("(0)");
       else
-	printf ("(%ld)", (long)((s - r->program) + (next - s)));
+	printf ("(%d)", (s - r->program) + (next - s));
       s += 3;
       if (op == ANYOF || op == ANYBUT || op == EXACTLY)
 	{
