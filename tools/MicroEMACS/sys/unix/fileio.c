@@ -412,7 +412,7 @@ ffsearch (
  */
 int
 ffisdir (
-     const char *name,		/* filename to check */
+     char *name,		/* filename to check */
      int cpos)			/* number of characters in name to check */
 {
   static char fname[NFILEN];	/* temporary buffer */
