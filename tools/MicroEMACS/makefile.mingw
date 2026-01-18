@@ -15,7 +15,7 @@ INC = -I$(srcdir) -I$(SYS) -I$(TTY)
 
 CC = c99
 DEBUG = yes
-CFLAGS = -DLINUX -DMINGW -DBACKUP -D_GNU_SOURCE $(INC) -Wall
+CFLAGS = -DMINGW -DBACKUP $(INC) -Wall
 ifeq ($(DEBUG), yes)
 CFLAGS := -g -O0 -DDEBUG $(CFLAGS)
 else
