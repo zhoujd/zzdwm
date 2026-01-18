@@ -309,7 +309,7 @@ typedef struct SYMBOL
   struct SYMBOL *s_symp;	/* Hash chain.			*/
   short s_nkey;			/* Count of keys bound here.    */
   const char *s_name;		/* Name.                        */
-  int (*s_funcp) ();		/* Function.                    */
+  int (*s_funcp) (int f, int n, int k);		/* Function.                    */
   int *s_macro;			/* Macro definition.            */
 }
 SYMBOL;
@@ -732,7 +732,7 @@ int fbackupfile (const char *fname);	/* Rename file to backup.	*/
 char *ffsearch (const char *name,	/* Find matching filename.	*/
 		int cpos,
 		const char *prev);
-int ffisdir (const char *name, int cpos); /* name[0..cpos-1] is dir?	*/
+int ffisdir (char *name, int cpos); /* name[0..cpos-1] is dir?	*/
 const char * ffexedir (void);		/* Get dir of pe executable.	*/
 
 /*

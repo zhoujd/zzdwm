@@ -100,7 +100,6 @@ static int nbuf;		/* number of buffers    */
 /*
  * Forward declarations.
  */
-extern char *__progname;
 extern void printversion(void);
 
 static void bufinit (const char *fname);
@@ -113,9 +112,8 @@ static void usage(void);
 void
 usage(void)
 {
-  fprintf(stderr, "usage: %s [-234bcdrxz] [-g line] [-p profile] "
-          "[+line] [file ...] [file:line[:column]]\n",
-          __progname);
+  fprintf(stderr, "usage: me [-234bcdrxz] [-g line] [-p profile] "
+          "[+line] [file ...] [file:line[:column]]\n");
   exit(EXIT_SUCCESS);
 }
 

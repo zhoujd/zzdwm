@@ -678,7 +678,7 @@ eread (const char *fp, char *buf, int nbuf, int flag, va_list ap)
 	    {
 	      int dirflag = 0;
 
-	      if ((flag & EFFILE) != 0 && ffisdir (np1, strlen (np1)))
+	      if ((flag & EFFILE) != 0 && ffisdir ((char*)np1, strlen (np1)))
 		dirflag = EFDIR;
 	      if (popup)	/* add to list  */
 		addchoice (np1, flag | dirflag);

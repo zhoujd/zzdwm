@@ -211,7 +211,9 @@ KEY key[] = {
   {-1,			filevisitreadonly, "file-visit-readonly"},
 #endif
   {KCTLX | 'Z',		enlargewind,	"enlarge-window"},
+#ifndef MINGW
   {KCTLX | '!',		spawncmd,       "spawn-command"},
+#endif
   {KMETA | KCTRL | 'E',	gccerror,	"gcc-error"},
   {KMETA | KCTRL | 'F',	foldcase,	"fold-case"},
   {KMETA | KCTRL | 'H', delbword,	"back-del-word"},

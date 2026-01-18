@@ -37,6 +37,16 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef MINGW
+int
+wcwidth(wchar_t c)
+{
+    if (c == 0) return 0;
+    if (c < 32 || (c >= 0x7f && c < 0xa0)) return -1;
+    return 1; // Basic assumption for most characters
+}
+#endif
+
 /*
  * Return true if Unicode character c is a combining character,
  * i.e. is a non-spacing character that combines
