@@ -276,7 +276,8 @@ KEY key[] = {
   {-1,			displaymessage,	"display-message"},
   {-1,			listbuffers,	"display-buffers"},
   {-1,			redo,		"redo"},
-  {-1,			viewfile,	"view-file"}
+  {-1,			viewfile,	"view-file"},
+  {-1,			filename,	"set-file-name"}
 };
 
 #define	NKEY	(sizeof(key) / sizeof(key[0]))
