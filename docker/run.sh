@@ -9,6 +9,7 @@ CTN_USER=$(id -u):$(id -g) ## root
 IMGS=(
     zhoujd/alpine:base
     zhoujd/void-linux:base
+    zhoujd/ubuntu:base
 )
 
 RUN_PARAM=(
@@ -33,6 +34,9 @@ run() {
             ;;
         void|-v )
             img=${IMGS[1]}
+            ;;
+        ubuntu|-u )
+            img=${IMGS[2]}
             ;;
         * )
             img=${IMGS[0]}
@@ -64,7 +68,7 @@ usage() {
     local app=$(basename $0)
     cat <<EOF
 usage: $app {build|-b|run|-r|status|-s|clean|-c|purge}
-run|-r   --   {alpine|-a|void|-v}
+run|-r   --   {alpine|-a|void|-v|ubuntu|-u}
 EOF
 }
 
