@@ -70,8 +70,6 @@ OBJ := \
 # How to link MicroEMACS.
 
 TARGET = me
-PREFIX = /usr/local
-DEST = $(PREFIX)/bin/$(TARGET)
 
 $(TARGET): $(OBJ)
 	$(LD) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
@@ -83,12 +81,6 @@ version.o: rev.h
 
 strip: $(TARGET)
 	strip -v $(TARGET)
-
-install: strip
-	cp -f $(TARGET) $(DEST)
-
-uninstall:
-	rm -f $(DEST)
 
 clean:
 	rm -f *.[o] $(TARGET) rev.h
