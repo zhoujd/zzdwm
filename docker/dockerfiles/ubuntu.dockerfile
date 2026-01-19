@@ -14,3 +14,6 @@ RUN useradd $USER_NAME -m \
     && chmod 0440 /etc/sudoers.d/$USER_NAME
 
 USER $USER_NAME
+RUN cat >> ~/.bashrc <<EOF
+export PS1='\w \$ '
+EOF
