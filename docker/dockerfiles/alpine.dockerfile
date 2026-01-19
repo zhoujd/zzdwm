@@ -1,4 +1,4 @@
-FROM ghcr.io/linuxcontainers/alpine:latest
+FROM ghcr.io/linuxcontainers/alpine:3.20
 USER root
 RUN apk update --no-cache \
         && apk upgrade --no-cache \
