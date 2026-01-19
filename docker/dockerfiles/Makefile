@@ -25,7 +25,7 @@ void-linux-base: void-linux.dockerfile
 
 ubuntu-base: ubuntu.dockerfile
 	docker build $(BUILD_ARG) -t $(Ubuntu_BASE_TAG) -f $< .
-	docker tag $(Void_Linux_BASE_TAG) $(Ubuntu_LATEST_TAG)
+	docker tag $(Ubuntu_BASE_TAG) $(Ubuntu_LATEST_TAG)
 
 .PHONY: clean
 clean:

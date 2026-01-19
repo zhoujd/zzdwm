@@ -8,8 +8,9 @@ RUN apt-get update && apt-get install -y \
     sudo \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd build -m \
-    && echo build ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/build \
-    && chmod 0440 /etc/sudoers.d/build
+ARG USER_NAME=zach
+RUN useradd $USER_NAME -m \
+    && echo $USER_NAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USER_NAME \
+    && chmod 0440 /etc/sudoers.d/$USER_NAME
 
-USER build
+USER $USER_NAME
