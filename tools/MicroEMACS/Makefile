@@ -21,7 +21,7 @@ CC = gcc
 DEBUG = yes
 CFLAGS = -DLINUX -DBACKUP $(INC) -Wall
 ifeq ($(DEBUG), yes)
-CFLAGS := -g -O0 -DDEBUG $(CFLAGS)
+CFLAGS := -g -O0 $(CFLAGS)
 else
 CFLAGS := -Os -s $(CFLAGS)
 endif
