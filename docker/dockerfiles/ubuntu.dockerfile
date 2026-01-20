@@ -1,10 +1,9 @@
 FROM ubuntu:22.04
 
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    musl-tools \
+    build-essential musl-tools \
     python3-docutils \
-    sudo \
+    sudo git \
     && rm -rf /var/lib/apt/lists/*
 
 ARG USER_NAME=zach
@@ -13,8 +12,12 @@ RUN useradd $USER_NAME -m \
     && chmod 0440 /etc/sudoers.d/$USER_NAME
 
 USER $USER_NAME
-RUN cat >> ~/.bashrc <<EOF
+RUN cat > ~/.bashrc <<EOF
+# .bashrc
 
-# Custom PS1
-export PS1='\w \$ '
+# If not running interactively, don't do anything
+[[ \$- != *i* ]] && return
+
+alias ls='ls --color=auto'
+PS1="\w \\$ "
 EOF
