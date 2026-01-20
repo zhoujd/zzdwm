@@ -14,5 +14,7 @@ RUN useradd $USER_NAME -m \
 
 USER $USER_NAME
 RUN cat >> ~/.bashrc <<EOF
+
+# Custom PS1
 export PS1='\w \$ '
 EOF
