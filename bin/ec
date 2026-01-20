@@ -1,9 +1,14 @@
 #!/bin/sh
 
-if [ -z "$DISPLAY" ]; then
-    OPT=-t
+cmd=emacsclient
+hash $cmd 2>/dev/null
+if [ $? -eq 0 ]; then
+    if [ -z "$DISPLAY" ]; then
+        opt=-t
+    else
+        opt=-c
+    fi
+    exec $cmd -n $opt "$@"
 else
-    OPT=-c
+    echo "No $cmd found!"
 fi
-
-exec emacsclient -n $OPT "$@"
