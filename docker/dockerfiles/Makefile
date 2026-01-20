@@ -7,6 +7,7 @@ CTN_USER ?= ${USER}
 IMG_NS ?= zhoujd
 
 BUILD_ARG += ## --rm --no-cache
+BUILD_ARG += --build-arg USER_NAME=$(CTN_USER)
 
 Alpine_BASE_TAG := $(IMG_NS)/alpine:base
 Alpine_LATEST_TAG := $(IMG_NS)/alpine:latest
@@ -37,7 +38,7 @@ clean:
 help:
 	@echo "Usage:"
 	@echo "$$ make"
-	@echo "$$ make CTN_USER=zhoujd"
+	@echo "$$ make CTN_USER=zach"
 	@echo "$$ make clean"
 	@echo "$$ make help"
 	@echo "$$ make alpine-base"
