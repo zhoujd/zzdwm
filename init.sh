@@ -50,7 +50,7 @@ install_dm() {
         $libexec/dm/cwm-session
     )
     for app in ${apps[@]}; do
-        sudo cp -fpv $app $bin
+        sudo cp -fv $app $bin
     done
     echo "Install dm done"
 }
@@ -67,7 +67,7 @@ install_bin() {
         $CORE_ROOT/bin/hexedit
     )
     for app in ${apps[@]}; do
-        sudo cp -fpv $app $bin
+        sudo cp -fv $app $bin
     done
     echo "Install bin done"
 }
