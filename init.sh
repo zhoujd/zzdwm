@@ -42,7 +42,6 @@ install_bin() {
         $CORE_ROOT/bin/ec
         $CORE_ROOT/bin/me
         $CORE_ROOT/bin/vi
-        $CORE_ROOT/bin/ff
         $CORE_ROOT/bin/movewin
         $CORE_ROOT/bin/deckwin
         $CORE_ROOT/bin/focuswin
@@ -50,6 +49,7 @@ install_bin() {
         $CORE_ROOT/bin/monocle
         $CORE_ROOT/bin/grid
         $CORE_ROOT/bin/tile
+        $CORE_ROOT/libexec/utils/ff        
         $CORE_ROOT/libexec/utils/less
         $CORE_ROOT/libexec/utils/etags
         $CORE_ROOT/libexec/wm/startdwm
