@@ -62,7 +62,6 @@ install_bin() {
         $CORE_ROOT/bin/me
         $CORE_ROOT/bin/vi
         $CORE_ROOT/bin/ff
-        $CORE_ROOT/bin/less
         $CORE_ROOT/bin/etags
         $CORE_ROOT/bin/abduco
         $CORE_ROOT/bin/hexedit
