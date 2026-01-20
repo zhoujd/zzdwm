@@ -23,42 +23,52 @@ install_dep() {
 }
 
 install_dm() {
+    echo "Init xsession"
     local target=/usr/share/xsessions
     local dm=$CORE_ROOT/misc/dm
-    echo "Init $target"
     sudo mkdir -p $target
     sudo cp -fv $dm/{dwm,cwm}.desktop $target
+    echo "Init dm"
+    local bin=/usr/local/bin
+    local libexec=$CORE_ROOT/libexec
+    local apps=(
+        $libexec/dm/nextwin
+        $libexec/dm/prevwin
+        $libexec/dm/nextwincd
+        $libexec/dm/prevwincd
+        $libexec/dm/dupterm
+        $libexec/dm/movewin
+        $libexec/dm/deckwin
+        $libexec/dm/focuswin
+        $libexec/dm/doubledeck
+        $libexec/dm/monocle
+        $libexec/dm/grid
+        $libexec/dm/tile
+        $libexec/dm/startdwm
+        $libexec/dm/startcwm
+        $libexec/dm/dwm-session
+        $libexec/dm/cwm-session
+    )
+    for app in ${apps[@]}; do
+        sudo cp -fpv $app $bin
+    done
     echo "Install dm done"
 }
 
 install_bin() {
-    local target=/usr/local/bin
+    local bin=/usr/local/bin
     local apps=(
-        $CORE_ROOT/bin/nextwin
-        $CORE_ROOT/bin/prevwin
-        $CORE_ROOT/bin/nextwincd
-        $CORE_ROOT/bin/prevwincd
-        $CORE_ROOT/bin/dupterm
         $CORE_ROOT/bin/ec
         $CORE_ROOT/bin/me
         $CORE_ROOT/bin/vi
-        $CORE_ROOT/bin/movewin
-        $CORE_ROOT/bin/deckwin
-        $CORE_ROOT/bin/focuswin
-        $CORE_ROOT/bin/doubledeck
-        $CORE_ROOT/bin/monocle
-        $CORE_ROOT/bin/grid
-        $CORE_ROOT/bin/tile
-        $CORE_ROOT/libexec/utils/ff        
-        $CORE_ROOT/libexec/utils/less
-        $CORE_ROOT/libexec/utils/etags
-        $CORE_ROOT/libexec/wm/startdwm
-        $CORE_ROOT/libexec/wm/startcwm
-        $CORE_ROOT/libexec/wm/dwm-session
-        $CORE_ROOT/libexec/wm/cwm-session
+        $CORE_ROOT/bin/ff
+        $CORE_ROOT/bin/less
+        $CORE_ROOT/bin/etags
+        $CORE_ROOT/bin/abduco
+        $CORE_ROOT/bin/hexedit
     )
     for app in ${apps[@]}; do
-        sudo cp -fpv $app $target
+        sudo cp -fpv $app $bin
     done
     echo "Install bin done"
 }
