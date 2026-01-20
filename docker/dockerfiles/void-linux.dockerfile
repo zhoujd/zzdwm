@@ -11,15 +11,6 @@ RUN useradd $USER_NAME -m \
     && chmod 0440 /etc/sudoers.d/$USER_NAME
 
 USER $USER_NAME
-RUN sed -i s/PS1.*// ~/.bashrc
-RUN cat >> ~/.bashrc <<EOF
-# some more ls aliases
-alias ll='ls -alF'
-alias la='ls -A'
-alias l='ls -CF'
-
-# custom PS1
-PS1='\w \$ '
-EOF
+RUN sed -i 's/PS1.*/PS1="\\w \\$ "/g' ~/.bashrc
 
 CMD ["/bin/bash"]
