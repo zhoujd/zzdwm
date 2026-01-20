@@ -5,7 +5,19 @@ RUN apk update --no-cache \
         && apk add \
         libbsd-static libbsd-dev ncurses-dev musl-dev ncurses-static \
         gcc make libtool autoconf automake \
-        git openssh bash \
+        git bash sudo shadow openssh \
         && rm -rf /var/cache/apk/*
-ENV PS1="\w \$ "
-CMD ["/bin/sh"]
+
+ARG USER_NAME=zach
+RUN useradd $USER_NAME -m \
+    && echo $USER_NAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USER_NAME \
+    && chmod 0440 /etc/sudoers.d/$USER_NAME
+
+USER $USER_NAME
+RUN cat > ~/.bashrc <<EOF
+# .bashrc
+alias ls='ls --color=auto'
+PS1="\w \$ "
+EOF
+
+CMD ["/bin/bash"]
