@@ -295,7 +295,7 @@ main(void)
 	for (;;sleep(interval)) {
 		bat = getbattery("/sys/class/power_supply/BAT0");
 		vol = volpercent();
-		tmsh = mktimes("%a %-e %b %-l:%M %p", tzsh);
+		tmsh = mktimes("%a %-e %b %-I:%M %p", tzsh);
 		dsh = mktimes("%u", tzsh);
 
 		/* If Sunday, show the week number of the next week */
