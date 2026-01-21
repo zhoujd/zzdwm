@@ -1,7 +1,7 @@
 # vim:ts=8
 
 CC	?= cc
-CFLAGS	?= -O2
+CFLAGS	?= -O2 -Wno-cpp
 CFLAGS	+= -Wall
 
 PREFIX	?= /usr/local
