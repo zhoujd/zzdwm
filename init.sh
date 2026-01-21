@@ -35,7 +35,7 @@ install_dep() {
                  libXcomposite-devel libXdamage-devel
             echo "Install tool package"
             sudo xbps-install -Sy \
-                 bash-completion wmctrl xdotool psmisc
+                 bash-completion xorg wmctrl xdotool psmisc
             ;;
         * )
             echo "Distro $ID not supported"
