@@ -42,3 +42,21 @@ $ xbps-remove <pkg>
 $ xbps-remove -R <pkg>
 $ xbps-remove -Oo
 ```
+
+## Void Linux Mirrors
+
+```
+## https://xmirror.voidlinux.org
+## https://mirrors.bfsu.edu.cn/voidlinux/
+## https://mirrors.tuna.tsinghua.edu.cn/voidlinux/
+## https://mirror.sjtu.edu.cn/voidlinux/
+
+## Changing Mirrors
+$ sudo mkdir -p /etc/xbps.d
+$ sudo cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
+$ REPO=https://mirrors.tuna.tsinghua.edu.cn/voidlinux
+$ sudo sed -i "s|https://repo-default.voidlinux.org|$REPO|g" /etc/xbps.d/*-repository-*.conf
+
+$ xbps-install -S
+$ xbps-query -L
+```
