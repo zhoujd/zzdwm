@@ -4,21 +4,45 @@ SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 CORE_ROOT=$(cd $SCRIPT_ROOT && pwd)
 CORE_TOP=$(cd $CORE_ROOT/.. && pwd)
 
+source /etc/os-release
+
 install_dep() {
     echo "Install prepare"
-    sudo apt update
-    echo "Install dev package"
-    sudo apt install -y \
-         make gcc g++ yacc \
-         libx11-dev libxft-dev libxinerama-dev libxrender-dev \
-         libasound2-dev \
-         libxfixes-dev libxi-dev libxext-dev \
-         libxrandr-dev \
-         libxcomposite-dev libxdamage-dev \
-         libx11-xcb-dev libxcb-randr0-dev libxcb-xinerama0-dev
-    echo "Install tool package"
-    sudo apt install -y \
-         alsa-utils x11-utils wmctrl xdotool psmisc
+    case $ID in
+        ubuntu|debian )
+            sudo apt update
+            echo "Install dev package"
+            sudo apt install -y \
+                 make gcc g++ yacc \
+                 libx11-dev libxft-dev libxinerama-dev libxrender-dev \
+                 libasound2-dev \
+                 libxfixes-dev libxi-dev libxext-dev \
+                 libxrandr-dev \
+                 libxcomposite-dev libxdamage-dev \
+                 libx11-xcb-dev libxcb-randr0-dev libxcb-xinerama0-dev
+            echo "Install tool package"
+            sudo apt install -y \
+                 alsa-utils x11-utils wmctrl xdotool psmisc
+            ;;
+        void )
+            echo "Install dev package"
+            sudo xbps-install -Sy \
+                 xorg \
+                 libX11-devel libuuid libXft-devel libXinerama-devel \
+                 gd-devel pkg-config \
+                 alsa-lib-devel \
+                 libXrandr-devel byacc \
+                 libXfixes-devel libXi-devel \
+                 libXcomposite-devel libXdamage-devel
+            echo "Install tool package"
+            sudo xbps-install -Sy \
+                 bash-completion wmctrl xdotool psmisc
+            ;;
+        * )
+            echo "Distro $ID not supported"
+            exit 1
+            ;;
+    esac
     echo "Install dep done"
 }
 
@@ -126,8 +150,8 @@ all() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-usage: $app {dep|-d|dm|bin|misc|install|-i|build|-b|clean|-c|all|-a}
-dep|-d       --    Install depend package
+usage: $app {dep|dm|bin|misc|install|-i|build|-b|clean|-c|all|-a}
+dep          --    Install depend package
 dm           --    Install xsession entry
 bin          --    Install bin
 misc         --    Install misc
@@ -139,7 +163,7 @@ EOF
 }
 
 case $1 in
-    dep|-d )
+    dep )
         install_dep
         ;;
     dm )
