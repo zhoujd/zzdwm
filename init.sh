@@ -27,7 +27,6 @@ install_dep() {
         void )
             echo "Install dev package"
             sudo xbps-install -Sy \
-                 xorg \
                  libX11-devel libuuid libXft-devel libXinerama-devel \
                  gd-devel pkg-config \
                  alsa-lib-devel \
@@ -150,9 +149,9 @@ all() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-usage: $app {dep|dm|bin|misc|install|-i|build|-b|clean|-c|all|-a}
-dep          --    Install depend package
-dm           --    Install xsession entry
+usage: $app {dep|-d|dm|bin|misc|install|-i|build|-b|clean|-c|all|-a}
+dep|-d       --    Install depend package
+dm           --    Install xsession
 bin          --    Install bin
 misc         --    Install misc
 install|-i   --    Install all
@@ -163,7 +162,7 @@ EOF
 }
 
 case $1 in
-    dep )
+    dep|-d )
         install_dep
         ;;
     dm )
