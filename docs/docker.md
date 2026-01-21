@@ -60,3 +60,34 @@ $ sudo sed -i "s|https://repo-default.voidlinux.org|$REPO|g" /etc/xbps.d/*-repos
 $ xbps-install -S
 $ xbps-query -L
 ```
+
+## Void Core Xorg & Driver
+
+```
+## 1. Update System
+$ sudo xbps-install -S # Sync repos
+$ sudo xbps-install -u # Update system
+
+## 2. Install Xorg Server & Drivers
+$ sudo xbps-install xorg-server mesa
+
+## 3. Install Display Manager
+sudo xbps-install gdm # For GNOME
+# OR
+sudo xbps-install lightdm # For LXQt/XFCE/etc.
+```
+
+## Void Configure Services
+
+```
+## 1. Enable D-Bus
+$ sudo ln -s /etc/sv/dbus /var/service/
+
+## 2. Enable Display Manager
+$ sudo ln -s /etc/sv/gdm /var/service/ # For GDM
+# OR
+$ sudo ln -s /etc/sv/lightdm /var/service/ # For LightDM
+
+## 3. Enable Network Manager (if using Wi-Fi/NetworkManager)
+$ sudo ln -s /etc/sv/NetworkManager /var/service/
+```
