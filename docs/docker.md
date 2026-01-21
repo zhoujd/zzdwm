@@ -70,6 +70,8 @@ $ sudo xbps-install -u # Update system
 
 ## 2. Install Xorg Server & Drivers
 $ sudo xbps-install xorg-server mesa
+# OR
+$ sudo xbps-install xorg
 
 ## 3. Install Display Manager
 sudo xbps-install gdm # For GNOME
