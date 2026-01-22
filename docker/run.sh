@@ -32,21 +32,29 @@ run() {
     local kind=$1
     case $kind in
         alpine|-a )
+            shift
             img=${IMGS[0]}
             ;;
         void|-v )
+            shift
             img=${IMGS[1]}
             ;;
         ubuntu|-u )
+            shift
             img=${IMGS[2]}
             ;;
         * )
             img=${IMGS[0]}
             ;;
     esac
+    local ext=()
+    if [ "$1" == "--ext" ]; then
+        shift
+        ext+=($@)
+    fi
     docker stop $CTN >/dev/null 2>&1
     docker rm $CTN >/dev/null 2>&1
-    docker run ${RUN_PARAM[@]} $img
+    docker run ${RUN_PARAM[@]} ${ext[@]} $img
     echo "Run Done"
 }
 
