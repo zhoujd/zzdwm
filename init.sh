@@ -7,9 +7,9 @@ CORE_TOP=$(cd $CORE_ROOT/.. && pwd)
 source /etc/os-release
 
 install_dep() {
-    echo "Install prepare"
     case $ID in
         ubuntu|debian )
+            echo "Install prepare"
             sudo apt update
             echo "Install dev package"
             sudo apt install -y \
@@ -25,8 +25,11 @@ install_dep() {
                  alsa-utils x11-utils wmctrl xdotool psmisc
             ;;
         void )
+            echo "Install prepare"
+            sudo xbps-install -yu xbps
             echo "Install dev package"
             sudo xbps-install -Sy \
+                 make gcc byacc \
                  libX11-devel libuuid libXft-devel libXinerama-devel \
                  gd-devel pkg-config \
                  alsa-lib-devel \
