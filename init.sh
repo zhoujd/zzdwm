@@ -26,7 +26,7 @@ install_dep() {
             ;;
         void )
             echo "Install prepare"
-            sudo xbps-install -yu xbps
+            sudo xbps-install -Syu xbps
             echo "Install dev package"
             sudo xbps-install -Sy \
                  make gcc byacc \
