@@ -52,20 +52,27 @@ run() {
         shift
         ext+=($@)
     fi
-    docker stop $CTN >/dev/null 2>&1
-    docker rm $CTN >/dev/null 2>&1
-    docker run ${RUN_PARAM[@]} ${ext[@]} $img
+    docker stop $CTN_NAME >/dev/null 2>&1
+    docker rm $CTN_NAME >/dev/null 2>&1
+    docker run ${RUN_PARAM[@]} ${ext[@]} ${img}
     echo "Run Done"
 }
 
+shell() {
+    local cmd="bash"
+    local opt=(
+        -it
+    )
+    if [ -n "$(docker ps -f "name=${CTN_NAME}" -f "status=running" -q)" ]; then
+        echo "Attach shell to ${CTN_NAME}"
+        docker exec ${opt[@]} ${CTN_NAME} ${cmd}
+    else
+        echo "No ${CTN_NAME} running"
+    fi
+}
+
 status() {
-    echo "[IMG]"
-    for img in ${IMGS[@]}; do
-        docker images | grep $img
-    done
-    echo "[PS]"
-    docker ps -a | grep $CTN
-    echo "Status Done"
+    docker ps -a | grep ${CTN_NAME}
 }
 
 clean() {
@@ -77,8 +84,8 @@ clean() {
 usage() {
     local app=$(basename $0)
     cat <<EOF
-usage: $app {build|-b|run|-r|status|-s|clean|-c|purge}
-run|-r   --   {alpine|-a|void|-v|ubuntu|-u}
+usage: $app {build|-b|run|-r|shell|-s|clean|-c|status|purge}
+run|-r   --   {alpine|-a|void|-v|ubuntu|-u|--ext}
 EOF
 }
 
@@ -90,11 +97,15 @@ case $1 in
         shift
         run "$@"
         ;;
-    status|-s )
-        status
+    shell|-s )
+        shift
+        shell "$@"
         ;;
     clean|-c )
         clean
+        ;;
+    status )
+        status
         ;;
     purge )
         docker system prune -f -a
