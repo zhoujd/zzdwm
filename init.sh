@@ -53,7 +53,7 @@ install_dm() {
     local target=/usr/share/xsessions
     local dm=$CORE_ROOT/misc/dm
     sudo mkdir -p $target
-    sudo cp -fv $dm/{dwm,cwm}.desktop $target
+    sudo cp -fv $dm/{dwm,cwm,bspwm}.desktop $target
     echo "Init dm"
     local bin=/usr/local/bin
     local libexec=$CORE_ROOT/libexec
@@ -75,6 +75,7 @@ install_dm() {
         $libexec/dm/startcwm
         $libexec/dm/dwm-session
         $libexec/dm/cwm-session
+        $libexec/dm/bspwm-session
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $bin
