@@ -47,14 +47,14 @@ run() {
             img=${IMGS[0]}
             ;;
     esac
-    local ext=()
-    if [ "$1" == "--ext" ]; then
+    local add=()
+    if [ "$1" == "+++" ]; then
         shift
-        ext+=($@)
+        add+=($@)
     fi
     docker stop $CTN_NAME >/dev/null 2>&1
     docker rm $CTN_NAME >/dev/null 2>&1
-    docker run ${RUN_PARAM[@]} ${ext[@]} ${img}
+    docker run ${RUN_PARAM[@]} ${add[@]} ${img}
     echo "Run Done"
 }
 
@@ -85,7 +85,7 @@ usage() {
     local app=$(basename $0)
     cat <<EOF
 usage: $app {build|-b|run|-r|shell|-s|clean|-c|status|purge}
-run|-r   --   {alpine|-a|void|-v|ubuntu|-u|--ext}
+run|-r   --   {alpine|-a|void|-v|ubuntu|-u|+++}
 EOF
 }
 
