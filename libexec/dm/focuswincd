@@ -24,8 +24,10 @@ app_focus() {
     if [ "$active_win_id" == "0" ]; then
         active_win_id=""
     fi
+    # get current desktop
+    desktop=$(xdotool get_desktop)
     # get list of all windows matching with the class above
-    win_list=$(wmctrl -xl | sed 's/[a-zA-Z0-9-]*\.//' | \
+    win_list=$(wmctrl -xl | grep -E "\s+${desktop}\s+" | sed 's/[a-zA-Z0-9-]*\.//' | \
                    grep -i -E "\s+${app}\s+" | awk '{print $1}')
     # get next window to focus on, removing id active
     switch_to=$(echo $win_list | sed s/.*$active_win_id// | awk '{print $1}')

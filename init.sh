@@ -62,10 +62,11 @@ install_dm() {
         $libexec/dm/prevwin
         $libexec/dm/nextwincd
         $libexec/dm/prevwincd
+        $libexec/dm/focuswin
+        $libexec/dm/focuswincd
         $libexec/dm/dupterm
         $libexec/dm/movewin
         $libexec/dm/deckwin
-        $libexec/dm/focuswin
         $libexec/dm/doubledeck
         $libexec/dm/monocle
         $libexec/dm/grid
