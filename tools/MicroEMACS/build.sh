@@ -5,36 +5,43 @@ MNT_DIR=$(cd $SCRIPT_DIR/../.. && pwd)
 WS=$MNT_DIR/tools/$(basename $SCRIPT_DIR)
 
 build() {
-    make
+    make $@
     echo "Build done"
+}
+
+debug() {
+    make clean
+    make DEBUG=yes
+    echo "Build debug done"
 }
 
 release() {
     make clean
     make LDFLAGS=-static
     make strip
-    echo "Release done"
+    echo "Build release done"
 }
 
 publish() {
     if [ -n "$INSIDE_DOCKER" ]; then
-        echo "Publish in docker run release"
+        echo "Build release"
         release
-        exit
-    fi
-    img=zhoujd/alpine
-    opt="
-        -i \
-        -u $(id -u):$(id -g) \
-        -v $MNT_DIR:$MNT_DIR \
-        -w $WS \
-    "
-    docker run $opt $img sh <<'EOF'
+    else
+        img=zhoujd/alpine
+        opt="
+            -i \
+            -u $(id -u):$(id -g) \
+            -v $MNT_DIR:$MNT_DIR \
+            -w $WS \
+        "
+        docker run $opt $img sh <<'EOF'
+cat /etc/os-release
 make clean
-make LDFLAGS=-static DEBUG=no
+make LDFLAGS=-static
 make strip
 EOF
-    echo "Publish done"
+    fi
+    echo "Build publish done"
 }
 
 clean() {
@@ -63,13 +70,17 @@ uninstall() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-usage: $app {build|-b|release|-r|publish|-p|clean|-c|install|-i|uninstall|-u}
+usage: $app {build|-b|debug|-d|release|-r|publish|-p|clean|-c|install|-i|uninstall|-u}
 EOF
 }
 
 case $1 in
     build|-b )
-        build
+        shift
+        build "$@"
+        ;;
+    debug|-d )
+        debug
         ;;
     release|-r )
         release
