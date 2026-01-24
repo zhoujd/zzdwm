@@ -7,7 +7,7 @@ if [ "$active_win_id" == "0" ]; then
 fi
 
 # get win_class from active_win_id
-win_class=$(wmctrl -xl | grep $active_win_id | awk '{print $3}')}
+win_class=$(wmctrl -xl | grep $active_win_id | awk '{print $3}')
 
 # get current desktop
 desktop=$(xdotool get_desktop)
