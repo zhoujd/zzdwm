@@ -2,7 +2,7 @@
 
 rev.h
 *.o
+*.exe
 me
-me.exe
 TAGS
 cscope.out
