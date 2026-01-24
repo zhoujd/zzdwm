@@ -18,8 +18,7 @@ INC = -I$(srcdir) -I$(SYS) -I$(TTY)
 # Compilers, linkers, and their flags.
 
 CC = gcc
-DEBUG = yes
-CFLAGS = -DLINUX -DBACKUP $(INC) -Wall
+CFLAGS = -std=c99 -D_POSIX_C_SOURCE=200809L -DLINUX -DBACKUP $(INC) -Wall
 ifeq ($(DEBUG), yes)
 CFLAGS := -g -O0 $(CFLAGS)
 else

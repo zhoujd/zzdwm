@@ -11,7 +11,7 @@ build() {
 
 release() {
     make clean
-    make LDFLAGS=-static DEBUG=no
+    make LDFLAGS=-static
     make strip
     echo "Release done"
 }

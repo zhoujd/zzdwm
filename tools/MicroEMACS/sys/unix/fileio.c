@@ -425,7 +425,7 @@ ffisdir (
   ret = stat (fftilde (fname), &stbuf);	/* get file information */
   if (ret != 0)			/* file doesn't exist?  */
     return FALSE;		/* must not be a dir    */
-  return (stbuf.st_mode & S_IFDIR) != 0;	/* check dir bit        */
+  return (S_ISDIR(stbuf.st_mode)) != 0;	/* check dir bit        */
 }
 
 /*
