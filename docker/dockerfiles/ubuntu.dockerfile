@@ -1,5 +1,10 @@
 FROM ubuntu:22.04
 
+# Use a specific mirror URL
+ARG MIRROR=mirrors.aliyun.com
+RUN sed -i "s/archive.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list && \
+    sed -i "s/security.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list
+
 RUN apt-get update && apt-get install -y \
     build-essential musl-tools \
     python3-docutils \
