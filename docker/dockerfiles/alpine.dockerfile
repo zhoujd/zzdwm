@@ -1,5 +1,11 @@
 FROM ghcr.io/linuxcontainers/alpine:3.20
-USER root
+
+ARG VARIANT=3.20
+RUN cat > /etc/apk/repositories <<EOF
+https://mirrors.tuna.tsinghua.edu.cn/alpine/v$VARIANT/main
+https://mirrors.tuna.tsinghua.edu.cn/alpine/v$VARIANT/community
+EOF
+
 RUN apk update --no-cache \
         && apk upgrade --no-cache \
         && apk add \
