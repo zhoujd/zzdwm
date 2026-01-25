@@ -1,6 +1,7 @@
+ARG VARIANT=3.20
 FROM ghcr.io/linuxcontainers/alpine:3.20
 
-ARG VARIANT=3.20
+ARG VARIANT
 RUN cat > /etc/apk/repositories <<EOF
 https://mirrors.tuna.tsinghua.edu.cn/alpine/v$VARIANT/main
 https://mirrors.tuna.tsinghua.edu.cn/alpine/v$VARIANT/community
