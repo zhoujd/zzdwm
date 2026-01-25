@@ -26,5 +26,5 @@ RUN cat > ~/.bashrc <<EOF
 [[ \$- != *i* ]] && return
 
 alias ls='ls --color=auto'
-PS1="\w \\$ "
+PS1='[\u@\h \W]\$ '
 EOF

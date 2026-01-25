@@ -4,7 +4,7 @@ SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 TOP=$(cd $SCRIPT_ROOT/.. && pwd)
 MNT=$HOME
 CTN_NAME=zz-build-1
-CTN_HOST=$CTN_NAME
+CTN_HOST=build
 CTN_USER=$(id -u):$(id -g) ## root
 
 IMGS=(

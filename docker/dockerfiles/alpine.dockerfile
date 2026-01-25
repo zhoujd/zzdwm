@@ -26,7 +26,7 @@ USER $USER_NAME
 RUN cat > ~/.bashrc <<EOF
 # .bashrc
 alias ls='ls --color=auto'
-PS1="\w \$ "
+PS1='[\u@\h \W]\$ '
 EOF
 
 CMD ["/bin/bash"]

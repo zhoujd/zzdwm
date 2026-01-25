@@ -20,6 +20,5 @@ RUN useradd $USER_NAME -m \
     && chmod 0440 /etc/sudoers.d/$USER_NAME
 
 USER $USER_NAME
-RUN sed -i 's/PS1.*/PS1="\\w \\$ "/g' ~/.bashrc
 
 CMD ["/bin/bash"]
