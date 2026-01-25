@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 ARG VARIANT=3.20
 FROM ghcr.io/linuxcontainers/alpine:3.20
 
