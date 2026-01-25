@@ -1,4 +1,7 @@
-FROM ghcr.io/void-linux/void-musl-full:20260101R1
+# syntax=docker/dockerfile:1
+
+ARG VARIANT=20260101R1
+FROM ghcr.io/void-linux/void-musl-full:$VARIANT
 
 ARG REPO=https://mirrors.tuna.tsinghua.edu.cn/voidlinux
 RUN mkdir -p /etc/xbps.d \

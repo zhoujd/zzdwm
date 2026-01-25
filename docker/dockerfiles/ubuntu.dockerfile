@@ -1,4 +1,7 @@
-FROM ubuntu:22.04
+# syntax=docker/dockerfile:1
+
+ARG VARIANT=22.04
+FROM ubuntu:$VARIANT
 
 ARG MIRROR=mirrors.aliyun.com
 RUN sed -i "s/archive.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list && \
