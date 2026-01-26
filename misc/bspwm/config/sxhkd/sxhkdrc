@@ -1,0 +1,10 @@
+#
+# wm independent hotkeys
+#
+    
+# terminal emulator
+super + c
+   	st
+
+super + e
+   	ec
