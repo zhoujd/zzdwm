@@ -106,9 +106,9 @@ install_misc() {
     ln -sfTv $cwm/cwmrc ~/.cwmrc
 
     echo "Install bspwm config files"
-    local bspwm=$CORE_ROOT/misc/bspwm
-    ln -sfTv $bspwm/config/bspwm ~/.config/bspwm
-    ln -sfTv $bspwm/config/sxhkd ~/.config/sxhkd
+    local config=$CORE_ROOT/misc/config
+    ln -sfTv $config/bspwm ~/.config/bspwm
+    ln -sfTv $config/sxhkd ~/.config/sxhkd
 
     echo "Install misc done"
 }
