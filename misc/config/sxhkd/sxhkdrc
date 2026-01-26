@@ -4,7 +4,48 @@
     
 # terminal emulator
 super + c
-   	st
+    st
 
+# emacsclient
 super + e
-   	ec
+    ec
+
+# quit bspwm
+super + ctrl + q
+    bspc quit
+
+# restart bspwm
+super + ctrl + shift + q
+    bspc wm -r
+
+# close and kill
+super + {_,shift + }x
+    bspc node -{c,k}
+
+# alternate between the tiled and monocle layout
+super + m
+    bspc desktop -l next
+
+# send the newest marked node to the newest preselected node
+super + y
+    bspc node newest.marked.local -n newest.!automatic.local
+
+# swap the current node and the biggest window
+super + g
+    bspc node -s biggest.window
+
+# Focus windows
+super + {h,j,k,l}
+    bspc node -f {west,south,north,east}
+
+# Swap windows
+super + shift + {h,j,k,l}
+    bspc node -s {west,south,north,east}
+
+# Desktop focus
+super + {1-9}
+    bspc desktop -f '^{1-9}'
+
+# Move node to desktop
+super + shift + {1-9}
+    bspc node -d '^{1-9}'
