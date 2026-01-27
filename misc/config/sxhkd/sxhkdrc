@@ -2,35 +2,35 @@
 # wm independent hotkeys
 #
 
-# make sxhkd reload its configuration files:
+# make sxhkd reload its configuration files
 super + ctrl + Escape
     pkill -USR1 -x sxhkd
 
 # st
-super + {_,mod1 + ,ctrl + ,ctrl + shift + }c
+super + {_,alt + ,ctrl + ,ctrl + shift + }c
     {st, dmenu_app st, focuswin st, focuswincd st}
 
 # emacs
-super + {_,mod1 + ,ctrl + ,ctrl + shift + }e
+super + {_,alt + ,ctrl + ,ctrl + shift + }e
     {ec, dmenu_app emacs ec, focuswin emacs ec, focuswincd emacs ec}
 
 # urxvt
-super + {_,mod1 + ,ctrl + ,ctrl + shift + }t
+super + {_,alt + ,ctrl + ,ctrl + shift + }t
     {urxvt, dmenu_app urxvt, focuswin urxvt, focuswincd urxvt}
 
 # google-chrome
-super + {mod1 + ,shift + }g
+super + {alt + ,shift + }g
     {dmenu_app google-chrome, dmenu_drun google-chrome}
 
 # VS code
-super + {mod1 + ,shift + }u
+super + {alt + ,shift + }u
     {dmenu_app code, dmenu_drun code}
 
 # dmenu
-super + mod1 + {w,r,s,p,q}
+super + alt + {w,r,s,p,q}
     {dmenu_win,dmenu_run,dmenu_ssh,dmenu_drun,dmenu_exit}
 
-super + mod1 + {i,y,grave}
+super + alt + {i,y,grave}
     {dmenu_info,dmenu_date,dmenu_menu}
 
 super + {slash,apostrophe,semicolon}
