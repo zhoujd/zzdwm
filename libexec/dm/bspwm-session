@@ -6,7 +6,6 @@ kind=run
 opt=(
     "VBoxClient-all &"
     "blackwalls &"
-    "shotkey &"
     "sxhkd &"
     "xbanish &"
     "xcompmgr &"
