@@ -12,6 +12,9 @@ color activeborder       "#5294E2"
 color inactiveborder     "#565656"
 color urgencyborder      "#cc241d"
 
+# Snap to edge within 5 pixels
+snapdist                 5
+
 # Gaps (top, bottom, left, right)
 gap                      0 0 0 0
 
