@@ -1,143 +1,147 @@
 # OpenBSD's CWM config file
 
 # Sticky groups: uncomment to enable worskpace-like behavior
-sticky                  yes
+sticky                   yes
 
 # Default font
-fontname                "SF Mono:pixelsize=11:bold"
+fontname                 "SF Mono:pixelsize=11:bold"
 
 # Appearance
-borderwidth             1
-color activeborder      "#5294E2"
-color inactiveborder    "#565656"
-color urgencyborder     "#cc241d"
+borderwidth              1
+color activeborder       "#5294E2"
+color inactiveborder     "#565656"
+color urgencyborder      "#cc241d"
 
 # Gaps (top, bottom, left, right)
-gap                     0 0 0 0
+gap                      0 0 0 0
 
 # How many pixels a window gets moved by
-moveamount              1
+moveamount               1
 
 # Key bindings
 
 # Remove all default keybindings
-unbind-key              all
+unbind-key               all
 
 # Toggle visibility of group n, hiding all other groups
-bind-key 4-1            group-only-1
-bind-key 4-2            group-only-2
-bind-key 4-3            group-only-3
-bind-key 4-4            group-only-4
-bind-key 4-5            group-only-5
-bind-key 4-6            group-only-6
-bind-key 4-7            group-only-7
-bind-key 4-8            group-only-8
-bind-key 4-9            group-only-9
+bind-key 4-1             group-only-1
+bind-key 4-2             group-only-2
+bind-key 4-3             group-only-3
+bind-key 4-4             group-only-4
+bind-key 4-5             group-only-5
+bind-key 4-6             group-only-6
+bind-key 4-7             group-only-7
+bind-key 4-8             group-only-8
+bind-key 4-9             group-only-9
 
 # Toggle group n's visibility, without hiding active group
-bind-key 4M-1           group-toggle-1
-bind-key 4M-2           group-toggle-2
-bind-key 4M-3           group-toggle-3
-bind-key 4M-4           group-toggle-4
-bind-key 4M-5           group-toggle-5
-bind-key 4M-6           group-toggle-6
-bind-key 4M-7           group-toggle-7
-bind-key 4M-8           group-toggle-8
-bind-key 4M-9           group-toggle-9
+bind-key 4M-1            group-toggle-1
+bind-key 4M-2            group-toggle-2
+bind-key 4M-3            group-toggle-3
+bind-key 4M-4            group-toggle-4
+bind-key 4M-5            group-toggle-5
+bind-key 4M-6            group-toggle-6
+bind-key 4M-7            group-toggle-7
+bind-key 4M-8            group-toggle-8
+bind-key 4M-9            group-toggle-9
 
 # Move window to group n
-bind-key 4S-1           window-movetogroup-1
-bind-key 4S-2           window-movetogroup-2
-bind-key 4S-3           window-movetogroup-3
-bind-key 4S-4           window-movetogroup-4
-bind-key 4S-5           window-movetogroup-5
-bind-key 4S-6           window-movetogroup-6
-bind-key 4S-7           window-movetogroup-7
-bind-key 4S-8           window-movetogroup-8
-bind-key 4S-9           window-movetogroup-9
-
-# Snap windows
-bind-key 4M-h           window-snap-left
-bind-key 4M-j           window-snap-down
-bind-key 4M-k           window-snap-up
-bind-key 4M-l           window-snap-right
-
-# Maximize windows
-bind-key 4-backslash    window-hmaximize
-bind-key 4S-backslash   window-vmaximize
-
-# Deck windows
-bind-key 4C-h           "deckwin left"
-bind-key 4C-j           "deckwin bottom"
-bind-key 4C-k           "deckwin top"
-bind-key 4C-l           "deckwin right"
-
-# Move windows
-bind-key 4S-h           window-move-left-big
-bind-key 4S-j           window-move-down-big
-bind-key 4S-k           window-move-up-big
-bind-key 4S-l           window-move-right-big
-
-# Resize windows
-bind-key 4SC-h          window-resize-left-big
-bind-key 4SC-j          window-resize-down-big
-bind-key 4SC-k          window-resize-up-big
-bind-key 4SC-l          window-resize-right-big
+bind-key 4S-1            window-movetogroup-1
+bind-key 4S-2            window-movetogroup-2
+bind-key 4S-3            window-movetogroup-3
+bind-key 4S-4            window-movetogroup-4
+bind-key 4S-5            window-movetogroup-5
+bind-key 4S-6            window-movetogroup-6
+bind-key 4S-7            window-movetogroup-7
+bind-key 4S-8            window-movetogroup-8
+bind-key 4S-9            window-movetogroup-9
+                         
+# Snap windows           
+bind-key 4M-h            window-snap-left
+bind-key 4M-j            window-snap-down
+bind-key 4M-k            window-snap-up
+bind-key 4M-l            window-snap-right
+                         
+# Maximize windows       
+bind-key 4-backslash     window-hmaximize
+bind-key 4S-backslash    window-vmaximize
+                         
+# Deck windows           
+bind-key 4C-h            "deckwin left"
+bind-key 4C-j            "deckwin bottom"
+bind-key 4C-k            "deckwin top"
+bind-key 4C-l            "deckwin right"
+                         
+# Move windows           
+bind-key 4S-h            window-move-left-big
+bind-key 4S-j            window-move-down-big
+bind-key 4S-k            window-move-up-big
+bind-key 4S-l            window-move-right-big
+                         
+# Resize windows         
+bind-key 4SC-h           window-resize-left-big
+bind-key 4SC-j           window-resize-down-big
+bind-key 4SC-k           window-resize-up-big
+bind-key 4SC-l           window-resize-right-big
 
 # Toggle visibility of all groups
-bind-key 4-0            group-toggle-all
+bind-key 4-0             group-toggle-all
 
 # Show only the previously active group
-bind-key 4-Tab          group-last
+bind-key 4-Tab           group-last
 
 # Cycle/reverse cycle through groups
-bind-key 4-h            group-cycle
-bind-key 4-l            group-rcycle
+bind-key 4-h             group-cycle
+bind-key 4-l             group-rcycle
+bind-key 4S-bracketleft  group-cycle
+bind-key 4S-bracketright group-rcycle
 
 # Cycle/reverse cycle through windows
-bind-key 4-j            window-cycle
-bind-key 4-k            window-rcycle
+bind-key 4-j             window-cycle
+bind-key 4-k             window-rcycle
+bind-key 4-bracketleft   window-cycle
+bind-key 4-bracketright  window-rcycle
 
-bind-key 4-i            window-raise
-bind-key 4-d            window-lower
+bind-key 4-i             window-raise
+bind-key 4-d             window-lower
 
-bind-key 4S-f           window-fullscreen
-bind-key 4S-m           window-maximize
-bind-key 4S-a           window-hide
-bind-key 4S-s           window-stick
-
-bind-key 4S-x           window-close
-bind-key 4SC-x          group-close
-
-bind-key 4SC-q          restart
-bind-key 4C-q           quit
-
-# Layouts
-bind-key 4-t            "tile v"
-bind-key 4-b            "tile h"
-bind-key 4-f            "monocle f"
-bind-key 4-m            "monocle m"
-bind-key 4-o            "monocle o"
-bind-key 4-g            "grid"
-bind-key 4-x            "doubledeck v"
-bind-key 4-z            "doubledeck h"
-
-# Applications
-bind-key 4-c            "st"
-bind-key 4-e            "ec"
+bind-key 4S-f            window-fullscreen
+bind-key 4S-m            window-maximize
+bind-key 4S-a            window-hide
+bind-key 4S-s            window-stick
+                         
+bind-key 4S-x            window-close
+bind-key 4SC-x           group-close
+                         
+bind-key 4SC-q           restart
+bind-key 4C-q            quit
+                         
+# Layouts                
+bind-key 4-t             "tile v"
+bind-key 4-b             "tile h"
+bind-key 4-f             "monocle f"
+bind-key 4-m             "monocle m"
+bind-key 4-o             "monocle o"
+bind-key 4-g             "grid"
+bind-key 4-x             "doubledeck v"
+bind-key 4-z             "doubledeck h"
+                         
+# Applications           
+bind-key 4-c             "st"
+bind-key 4-e             "ec"
 
 # Cycle/reverse the same window class in group
-bind-key 4-v            "nextwincd"
-bind-key 4S-v           "prevwincd"
+bind-key 4-v             "nextwincd"
+bind-key 4S-v            "prevwincd"
 
 # Remove all mouse default keybindings
 unbind-mouse all
 
 # Mouse
-bind-mouse 4-1          window-move
-bind-mouse 4-3          window-resize
-bind-mouse 4S-1         window-raise
-bind-mouse 4S-3         window-lower
+bind-mouse 4-1           window-move
+bind-mouse 4-3           window-resize
+bind-mouse 4S-1          window-raise
+bind-mouse 4S-3          window-lower
 
 # Ignore, and do not warp to, windows with these names
-ignore                  dmenu
+ignore                   dmenu
