@@ -2,15 +2,27 @@
 # wm independent hotkeys
 #
     
-# terminal emulator
-super + c
-	st
+# st
+super + {_,mod1 + ,ctrl + ,ctrl + shift + }c
+	{st, dmenu_app st, focuswin st, focuswincd st}
 
-# emacsclient
-super + e
-	ec
+# emacs
+super + {_,mod1 + ,ctrl + ,ctrl + shift + }e
+	{ec, dmenu_app emacs ec, focuswin emacs ec, focuswincd emacs ec}
 
-# dmenu hotkeys
+# urxvt
+super + {_,mod1 + ,ctrl + ,ctrl + shift + }t
+	{urxvt, dmenu_app urxvt, focuswin urxvt, focuswincd urxvt}
+
+# google-chrome
+super + {mod1 + ,shift + }g
+	{dmenu_app google-chrome, dmenu_drun google-chrome}
+
+# VS code
+super + {mod1 + ,shift + }u
+	{dmenu_app code, dmenu_drun code}
+
+# dmenu
 super + mod1 + {w,r,s,p,q}
 	{dmenu_win,dmenu_run,dmenu_ssh,dmenu_drun,dmenu_exit}
 
@@ -19,6 +31,22 @@ super + mod1 + {i,y,grave}
 
 super + {slash,apostrophe,semicolon}
 	{dmenu_man,dmenu_desk,dmenu_wincd}
+
+# next/pre window
+super + {_,shift + }n
+	{nextwin, prevwin}
+
+# next/pre windowcd
+super + {_,shift + }v
+	{nextwincd, prevwincd}
+
+# slock
+super + shift + z
+	slock
+
+# dupterm
+super + shift + Return
+	dupterm
 
 # make sxhkd reload its configuration files:
 super + Escape
@@ -37,7 +65,7 @@ super + ctrl + shift + q
 	bspc wm -r
 
 # close and kill
-super + {_,shift + }x
+super + {shift +, ctrl + shift + }x
 	bspc node -{c,k}
 
 # alternate between the tiled and monocle layout
@@ -77,11 +105,11 @@ super + {p,b,comma,period}
 	bspc node -f @{parent,brother,first,second}
 
 # focus the next/previous window in the current desktop
-super + {_,shift + }c
+super + bracket{left,right}
 	bspc node -f {next,prev}.local.!hidden.window
 
 # focus the next/previous desktop in the current monitor
-super + bracket{left,right}
+super + shift + bracket{left,right}
 	bspc desktop -f {prev,next}.local
 
 # focus the last node/desktop
