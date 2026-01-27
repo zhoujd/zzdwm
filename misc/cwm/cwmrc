@@ -93,14 +93,10 @@ bind-key 4-Tab           group-last
 # Cycle/reverse cycle through groups
 bind-key 4-h             group-cycle
 bind-key 4-l             group-rcycle
-bind-key 4S-bracketleft  group-cycle
-bind-key 4S-bracketright group-rcycle
 
 # Cycle/reverse cycle through windows
 bind-key 4-j             window-cycle
 bind-key 4-k             window-rcycle
-bind-key 4-bracketleft   window-cycle
-bind-key 4-bracketright  window-rcycle
 
 bind-key 4-i             window-raise
 bind-key 4-d             window-lower
