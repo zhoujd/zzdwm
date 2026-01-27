@@ -1,7 +1,0 @@
-[Desktop Entry]
-Name=BSPWM Session
-Comment=BSP Window Manager
-Exec=bspwm-session
-Icon=bspwm
-Type=Application
-DesktopNames=BSPWM
