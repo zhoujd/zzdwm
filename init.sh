@@ -92,6 +92,7 @@ install_bin() {
         $CORE_ROOT/bin/etags
         $CORE_ROOT/bin/abduco
         $CORE_ROOT/bin/hexedit
+        $CORE_ROOT/bin/dropbearmulti
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $bin
