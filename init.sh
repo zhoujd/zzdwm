@@ -94,7 +94,6 @@ install_bin() {
         $CORE_ROOT/bin/etags
         $CORE_ROOT/bin/screen
         $CORE_ROOT/bin/busybox
-        $CORE_ROOT/bin/dropbearmulti
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $bin
