@@ -19,6 +19,7 @@ RUN apk update --no-cache \
 
 ARG USER_NAME=zach
 RUN useradd $USER_NAME -m \
+    && addgroup $USER_NAME shadow \
     && echo $USER_NAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USER_NAME \
     && chmod 0440 /etc/sudoers.d/$USER_NAME
 
