@@ -5,7 +5,7 @@ TOP=$(cd $SCRIPT_ROOT/.. && pwd)
 MNT=$HOME
 CTN_NAME=zz-build-1
 CTN_HOST=build
-CTN_USER=$(id -u):$(id -g) ## root
+CTN_USER=zach
 
 IMGS=(
     zhoujd/alpine:base
