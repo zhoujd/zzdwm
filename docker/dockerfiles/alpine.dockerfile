@@ -18,12 +18,18 @@ RUN apk update --no-cache \
     && rm -rf /var/cache/apk/*
 
 ARG USER_NAME=zach
-RUN useradd $USER_NAME -m \
+ARG USER_SHELL=/bin/bash
+RUN adduser -D -s $USER_SHELL $USER_NAME \
     && addgroup $USER_NAME shadow \
+    && addgroup $USER_NAME wheel \
     && echo $USER_NAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USER_NAME \
     && chmod 0440 /etc/sudoers.d/$USER_NAME
 
 USER $USER_NAME
+RUN cat > ~/.profile <<EOF
+[ -f ~/.bashrc ] && . ~/.bashrc
+EOF
+
 RUN cat > ~/.bashrc <<EOF
 # .bashrc
 alias ls='ls --color=auto'

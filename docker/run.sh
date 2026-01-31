@@ -18,7 +18,6 @@ RUN_PARAM=(
     --rm
     --name=$CTN_NAME
     --user=$CTN_USER
-    --group-add root
     --privileged=true
     --cap-add=ALL
     --network=host
