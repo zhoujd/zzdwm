@@ -86,12 +86,12 @@ install_bin() {
     local bin=/usr/local/bin
     local apps=(
         $CORE_ROOT/bin/me
-        $CORE_ROOT/bin/vi
         $CORE_ROOT/bin/ec
-        $CORE_ROOT/bin/ff
         $CORE_ROOT/bin/sc
+        $CORE_ROOT/bin/ag
+        $CORE_ROOT/bin/ff
+        $CORE_ROOT/bin/vi
         $CORE_ROOT/bin/etags
-        $CORE_ROOT/bin/abduco
         $CORE_ROOT/bin/screen
         $CORE_ROOT/bin/busybox
         $CORE_ROOT/bin/dropbearmulti
