@@ -21,6 +21,7 @@ RUN_PARAM=(
     --group-add root
     --privileged=true
     --cap-add=ALL
+    --network=host
     -h $CTN_HOST
     -e HOME=$MNT
     -e INSIDE_DOCKER=yes
