@@ -91,6 +91,7 @@ install_bin() {
         $CORE_ROOT/bin/ff
         $CORE_ROOT/bin/etags
         $CORE_ROOT/bin/abduco
+        $CORE_ROOT/bin/screen
         $CORE_ROOT/bin/busybox
         $CORE_ROOT/bin/dropbearmulti
     )
