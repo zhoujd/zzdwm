@@ -26,7 +26,9 @@ RUN adduser -D -s $USER_SHELL $USER_NAME \
     && chmod 0440 /etc/sudoers.d/$USER_NAME
 
 USER $USER_NAME
+
 RUN cat > ~/.profile <<EOF
+# .profile
 [ -f ~/.bashrc ] && . ~/.bashrc
 EOF
 
