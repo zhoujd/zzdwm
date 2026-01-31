@@ -1,0 +1,19 @@
+#!/bin/bash
+
+opt=(
+  -e \`\`
+  -s bash -l
+  -q
+)
+
+case $1 in
+  -* )
+    screen $1
+    ;;
+  '' )
+    screen ${opt[@]}
+    ;;
+  * )
+    screen ${opt[@]} -r "$1" || screen ${opt[@]} -S "$1"
+    ;;
+esac
