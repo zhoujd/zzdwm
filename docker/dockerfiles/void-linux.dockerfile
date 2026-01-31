@@ -10,12 +10,13 @@ RUN mkdir -p /etc/xbps.d \
     /etc/xbps.d/*-repository-*.conf
 
 RUN xbps-install -Sy gcc make cmake libtool autoconf automake pkg-config \
-    ncurses ncurses-devel wget file upx tar gzip bzip2 sudo \
+    ncurses ncurses-devel wget file upx tar gzip bzip2 sudo shadow \
     openssh git findutils diffutils bash \
     && xbps-remove -Oo
 
 ARG USER_NAME=zach
 RUN useradd $USER_NAME -m \
+    && usermod -aG wheel $USER_NAME \
     && echo $USER_NAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USER_NAME \
     && chmod 0440 /etc/sudoers.d/$USER_NAME
 
