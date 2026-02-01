@@ -2,9 +2,11 @@
 
 SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 TOP=$(cd $SCRIPT_ROOT/.. && pwd)
-MNT=$HOME
+
 CTN_NAME=zz-build-1
 CTN_USER=zach
+MNT=/home/$CTN_USER
+WS=$MNT/$(basename $TOP)
 
 IMGS=(
     zhoujd/alpine:base
@@ -20,10 +22,9 @@ RUN_PARAM=(
     --privileged=true
     --cap-add=ALL
     --network=host
-    -e HOME=$MNT
     -e INSIDE_DOCKER=yes
-    -v $TOP:$MNT/$(basename $TOP)
-    -w $MNT/$(basename $TOP)
+    -v $TOP:$WS
+    -w $WS
 )
 
 run() {
