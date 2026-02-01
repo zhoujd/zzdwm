@@ -8,7 +8,7 @@ opt=(
 
 case $1 in
   -* )
-    screen $1
+    screen "$@"
     ;;
   '' )
     screen ${opt[@]}
