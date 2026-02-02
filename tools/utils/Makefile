@@ -1,37 +1,21 @@
-# vim:ts=8
+## Makefile
 
-CC	?= cc
-CFLAGS	?= -O2
-CFLAGS	+= -Wall
+UTILS := \
+	blackwalls \
+	lsw
 
-PREFIX	?= /usr/local
-BINDIR	?= $(PREFIX)/bin
+all: $(UTILS)
 
-INSTALL_PROGRAM ?= install
+clean: TARGET=clean
+clean: all
 
-X11INC = /usr/X11R6/include
-X11LIB = /usr/X11R6/lib
-
-# includes and libs
-INCLUDES = -I${X11INC}
-LDFLAGS = -L${X11LIB} -lX11
-
-PROG	= blackwalls
-OBJS	= blackwalls.o
-
-all: $(PROG)
-
-$(PROG): $(OBJS)
-	$(CC) $(OBJS) $(LDFLAGS) -o $@
-
-$(OBJS): *.c
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
-
+install: TARGET=install
 install: all
-	mkdir -p $(DESTDIR)$(BINDIR)
-	$(INSTALL_PROGRAM) $(PROG) $(DESTDIR)$(BINDIR)
 
-clean:
-	rm -f $(PROG) $(OBJS)
+uninstall: TARGET=uninstall
+uninstall: all
 
-.PHONY: all install clean
+$(UTILS):
+	$(MAKE) -C $@ $(TARGET)
+
+.PHONY: all install uninstall clean $(UTILS)
