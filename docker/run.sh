@@ -54,7 +54,6 @@ run() {
     docker stop $CTN_NAME >/dev/null 2>&1
     docker rm $CTN_NAME >/dev/null 2>&1
     docker run ${RUN_PARAM[@]} ${add[@]} ${img}
-    echo "Run Done"
 }
 
 shell() {
@@ -75,9 +74,17 @@ status() {
 }
 
 clean() {
-    docker stop $CTN >/dev/null 2>&1
-    docker rm $CTN >/dev/null 2>&1
-    echo "Clean Done"
+    echo "Clean $CTN_NAME"
+    docker stop $CTN_NAME >/dev/null 2>&1
+    docker rm $CTN_NAME >/dev/null 2>&1
+}
+
+purge() {
+    echo "Clean none images"
+    img_list=$(docker images --filter "dangling=true" -q --no-trunc)
+    if [ -n "$img_list" ]; then
+        docker rmi $img_list
+    fi
 }
 
 usage() {
@@ -107,7 +114,7 @@ case $1 in
         status
         ;;
     purge )
-        docker system prune -f -a
+        purge
         ;;
     * )
         usage
