@@ -1,8 +1,7 @@
 ## Makefile
 
 UTILS := \
-	blackwalls \
-	lsw
+	blackwalls
 
 all: $(UTILS)
 
