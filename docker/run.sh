@@ -8,6 +8,9 @@ CTN_USER=zach
 MNT=/home/$CTN_USER
 WS=$MNT/$(basename $TOP)
 
+SSH_RUN="yes"
+SSH_MNT=/home/$CTN_USER/.ssh
+
 IMGS=(
     zhoujd/alpine:base
     zhoujd/void-linux:base
@@ -47,6 +50,9 @@ run() {
             ;;
     esac
     local add=()
+    if [ -n "$SSH_RUN" ]; then
+        add+=(-v ~/.ssh:$SSH_MNT:ro)
+    fi
     if [ "$1" == "+++" ]; then
         shift
         add+=($@)
