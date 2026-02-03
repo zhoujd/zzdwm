@@ -67,6 +67,9 @@ run() {
     local opt=(
         -it
     )
+    if [ -n "$1" ]; then
+        shift
+    fi
     if [ "$1" == "+++" ]; then
         shift
         opt+=($@)
@@ -83,6 +86,9 @@ ssh() {
         -d
         -v ~/.ssh:/home/$CTN_USER/.ssh:ro
     )
+    if [ -n "$1" ]; then
+        shift
+    fi
     if [ "$1" == "+++" ]; then
         shift
         opt+=($@)
