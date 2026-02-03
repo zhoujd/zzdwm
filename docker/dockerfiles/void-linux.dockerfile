@@ -22,4 +22,11 @@ RUN useradd $USER_NAME -m \
 
 USER $USER_NAME
 
+RUN cat > ~/.bashrc <<EOF
+# .bashrc
+alias ls='ls --color=auto'
+TERM=xterm-256color
+PS1='[\u@\h \W]\$ '
+EOF
+
 CMD ["/bin/bash"]

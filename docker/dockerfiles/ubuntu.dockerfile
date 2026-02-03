@@ -28,5 +28,6 @@ RUN cat > ~/.bashrc <<EOF
 [[ \$- != *i* ]] && return
 
 alias ls='ls --color=auto'
+TERM=xterm-256color
 PS1='[\u@\h \W]\$ '
 EOF
