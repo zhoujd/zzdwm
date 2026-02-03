@@ -5,6 +5,8 @@ TOP=$(cd $SCRIPT_ROOT/.. && pwd)
 
 CTN_NAME=zz-build-1
 CTN_USER=zach
+CTN_HOST=build
+
 MNT=/home/$CTN_USER
 WS=$MNT/$(basename $TOP)
 
@@ -25,6 +27,8 @@ RUN_PARAM=(
     --privileged=true
     --cap-add=ALL
     --network=host
+    --add-host="$CTN_HOST:127.0.1.1"
+    -h $CTN_HOST
     -e INSIDE_DOCKER=yes
     -v $TOP:$WS
     -w $WS
