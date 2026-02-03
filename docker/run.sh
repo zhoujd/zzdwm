@@ -79,13 +79,18 @@ status() {
     docker ps -a | grep ${CTN_NAME}
 }
 
-clean() {
-    echo "Clean $CTN_NAME"
+stop() {
+    echo "Stop $CTN_NAME"
     docker stop $CTN_NAME >/dev/null 2>&1
     docker rm $CTN_NAME >/dev/null 2>&1
 }
 
-purge() {
+clean() {
+    echo "Clean rm exit"
+    ps_list=$(docker ps -a | grep Exit )
+    if [ -n "$ps_list" ]; then
+        docker ps -a | grep Exit | cut -d ' ' -f 1 | xargs docker rm
+    fi
     echo "Clean none images"
     img_list=$(docker images --filter "dangling=true" -q --no-trunc)
     if [ -n "$img_list" ]; then
@@ -96,7 +101,7 @@ purge() {
 usage() {
     local app=$(basename $0)
     cat <<EOF
-usage: $app {build|-b|run|-r|shell|-s|clean|-c|status|purge}
+usage: $app {build|-b|run|-r|shell|-s|stop|status|clean}
 run|-r   --   {alpine|-a|void|-v|ubuntu|-u|+++}
 EOF
 }
@@ -113,14 +118,14 @@ case $1 in
         shift
         shell "$@"
         ;;
-    clean|-c )
-        clean
+    stop )
+        stop
         ;;
     status )
         status
         ;;
-    purge )
-        purge
+    clean )
+        clean
         ;;
     * )
         usage
