@@ -50,20 +50,20 @@ run() {
             ;;
     esac
     local add=()
-    if [ -n "$SSH_RUN" ]; then
-        add+=(-v ~/.ssh:$SSH_MNT:ro)
+    if [ -n "${SSH_RUN}" ]; then
+        add+=(-v ~/.ssh:${SSH_MNT}:ro)
     fi
     if [ "$1" == "+++" ]; then
         shift
         add+=($@)
     fi
-    docker stop $CTN_NAME >/dev/null 2>&1
-    docker rm $CTN_NAME >/dev/null 2>&1
+    docker stop ${CTN_NAME} >/dev/null 2>&1
+    docker rm ${CTN_NAME} >/dev/null 2>&1
     docker run ${RUN_PARAM[@]} ${add[@]} ${img}
 }
 
 shell() {
-    local cmd="bash"
+    local cmd="bash -l"
     local opt=(
         -it
     )
