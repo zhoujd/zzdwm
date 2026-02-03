@@ -14,7 +14,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 ARG USER_NAME=zach
-RUN useradd $USER_NAME -m \
+ARG USER_SHELL=/bin/bash
+RUN useradd $USER_NAME -m -s $USER_SHELL \
     && usermod -aG sudo,shadow $USER_NAME \
     && echo $USER_NAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USER_NAME \
     && chmod 0440 /etc/sudoers.d/$USER_NAME
