@@ -35,4 +35,3 @@ EOF
 # Setup entrypoint
 COPY entrypoint.sh /
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["run"]

@@ -14,7 +14,7 @@ setup_help() {
     echo "Usage: $0 {init|run|help}"
 }
 
-CMD=${1:-""}
+CMD=${1:-"run"}
 case "$CMD" in
     "init" )
         setup_sleep
