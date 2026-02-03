@@ -30,9 +30,8 @@ RUN_PARAM=(
     -w $WS
 )
 
-run() {
+choice() {
     local kind=$1
-    local cmd="bash -l"
     case $kind in
         alpine|-a )
             shift
@@ -50,6 +49,13 @@ run() {
             img=${IMGS[0]}
             ;;
     esac
+    echo $img
+}
+
+run() {
+    local kind=$1
+    local cmd="bash -l"
+    local img=$(choice $kind)
     local add=(
         -it
     )
@@ -65,23 +71,7 @@ run() {
 ssh() {
     local kind=$1
     local cmd="run"
-    case $kind in
-        alpine|-a )
-            shift
-            img=${IMGS[0]}
-            ;;
-        void|-v )
-            shift
-            img=${IMGS[1]}
-            ;;
-        ubuntu|-u )
-            shift
-            img=${IMGS[2]}
-            ;;
-        * )
-            img=${IMGS[0]}
-            ;;
-    esac
+    local img=$(choice $kind)
     local add=(
         -d
         -v ~/.ssh:/home/$CTN_USER/.ssh:ro
