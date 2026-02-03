@@ -20,7 +20,7 @@ IMGS=(
 )
 
 RUN_PARAM=(
-    -it
+    -d
     --rm
     --name=$CTN_NAME
     --user=$CTN_USER

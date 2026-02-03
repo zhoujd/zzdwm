@@ -40,4 +40,7 @@ TERM=xterm-256color
 PS1='[\u@\h \W]\$ '
 EOF
 
-CMD ["/bin/bash"]
+# Setup entrypoint
+COPY entrypoint.sh /
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["run"]
