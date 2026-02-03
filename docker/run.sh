@@ -10,9 +10,6 @@ CTN_HOST=build
 MNT=/home/$CTN_USER
 WS=$MNT/$(basename $TOP)
 
-SSH_RUN="yes"
-SSH_MNT=/home/$CTN_USER/.ssh
-
 IMGS=(
     zhoujd/alpine:base
     zhoujd/void-linux:base
@@ -20,7 +17,6 @@ IMGS=(
 )
 
 RUN_PARAM=(
-    -d
     --rm
     --name=$CTN_NAME
     --user=$CTN_USER
@@ -36,6 +32,7 @@ RUN_PARAM=(
 
 run() {
     local kind=$1
+    local cmd="bash -l"
     case $kind in
         alpine|-a )
             shift
@@ -53,17 +50,49 @@ run() {
             img=${IMGS[0]}
             ;;
     esac
-    local add=()
-    if [ -n "${SSH_RUN}" ]; then
-        add+=(-v ~/.ssh:${SSH_MNT}:ro)
-    fi
+    local add=(
+        -it
+    )
     if [ "$1" == "+++" ]; then
         shift
         add+=($@)
     fi
     docker stop ${CTN_NAME} >/dev/null 2>&1
     docker rm ${CTN_NAME} >/dev/null 2>&1
-    docker run ${RUN_PARAM[@]} ${add[@]} ${img}
+    docker run ${RUN_PARAM[@]} ${add[@]} ${img} ${cmd}
+}
+
+ssh() {
+    local kind=$1
+    local cmd="run"
+    case $kind in
+        alpine|-a )
+            shift
+            img=${IMGS[0]}
+            ;;
+        void|-v )
+            shift
+            img=${IMGS[1]}
+            ;;
+        ubuntu|-u )
+            shift
+            img=${IMGS[2]}
+            ;;
+        * )
+            img=${IMGS[0]}
+            ;;
+    esac
+    local add=(
+        -d
+        -v ~/.ssh:/home/$CTN_USER/.ssh:ro
+    )
+    if [ "$1" == "+++" ]; then
+        shift
+        add+=($@)
+    fi
+    docker stop ${CTN_NAME} >/dev/null 2>&1
+    docker rm ${CTN_NAME} >/dev/null 2>&1
+    docker run ${RUN_PARAM[@]} ${add[@]} ${img} ${cmd}
 }
 
 shell() {
@@ -105,8 +134,15 @@ clean() {
 usage() {
     local app=$(basename $0)
     cat <<EOF
-usage: $app {build|-b|run|-r|shell|-s|stop|status|clean}
-run|-r   --   {alpine|-a|void|-v|ubuntu|-u|+++}
+Usage: $app {option}
+Option:
+build|-b      build images
+run|-r        {alpine|-a|void|-v|ubuntu|-u|+++}
+ssh           {alpine|-a|void|-v|ubuntu|-u|+++}
+shell|-s      attach shell
+stop          stop service
+status        show status
+clean         clean resource
 EOF
 }
 
@@ -117,6 +153,10 @@ case $1 in
     run|-r )
         shift
         run "$@"
+        ;;
+    ssh )
+        shift
+        ssh "$@"
         ;;
     shell|-s )
         shift
