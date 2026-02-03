@@ -56,33 +56,33 @@ run() {
     local kind=$1
     local cmd="bash -l"
     local img=$(choice $kind)
-    local add=(
+    local opt=(
         -it
     )
     if [ "$1" == "+++" ]; then
         shift
-        add+=($@)
+        opt+=($@)
     fi
     docker stop ${CTN_NAME} >/dev/null 2>&1
     docker rm ${CTN_NAME} >/dev/null 2>&1
-    docker run ${RUN_PARAM[@]} ${add[@]} ${img} ${cmd}
+    docker run ${RUN_PARAM[@]} ${opt[@]} ${img} ${cmd}
 }
 
 ssh() {
     local kind=$1
     local cmd="run"
     local img=$(choice $kind)
-    local add=(
+    local opt=(
         -d
         -v ~/.ssh:/home/$CTN_USER/.ssh:ro
     )
     if [ "$1" == "+++" ]; then
         shift
-        add+=($@)
+        opt+=($@)
     fi
     docker stop ${CTN_NAME} >/dev/null 2>&1
     docker rm ${CTN_NAME} >/dev/null 2>&1
-    docker run ${RUN_PARAM[@]} ${add[@]} ${img} ${cmd}
+    docker run ${RUN_PARAM[@]} ${opt[@]} ${img} ${cmd}
 }
 
 shell() {
