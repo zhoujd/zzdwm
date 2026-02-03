@@ -52,6 +52,14 @@ choice() {
     echo $img
 }
 
+stop() {
+    if [ -n "$(docker ps -f "name=${CTN_NAME}" -f "status=running" -q)" ]; then
+        echo "Stop $CTN_NAME"
+        docker stop $CTN_NAME >/dev/null 2>&1
+        docker rm $CTN_NAME >/dev/null 2>&1
+    fi
+}
+
 run() {
     local kind=$1
     local cmd="bash -l"
@@ -63,8 +71,7 @@ run() {
         shift
         opt+=($@)
     fi
-    docker stop ${CTN_NAME} >/dev/null 2>&1
-    docker rm ${CTN_NAME} >/dev/null 2>&1
+    stop
     docker run ${RUN_PARAM[@]} ${opt[@]} ${img} ${cmd}
 }
 
@@ -80,8 +87,7 @@ ssh() {
         shift
         opt+=($@)
     fi
-    docker stop ${CTN_NAME} >/dev/null 2>&1
-    docker rm ${CTN_NAME} >/dev/null 2>&1
+    stop
     docker run ${RUN_PARAM[@]} ${opt[@]} ${img} ${cmd}
 }
 
@@ -100,12 +106,6 @@ shell() {
 
 status() {
     docker ps -a | grep ${CTN_NAME}
-}
-
-stop() {
-    echo "Stop $CTN_NAME"
-    docker stop $CTN_NAME >/dev/null 2>&1
-    docker rm $CTN_NAME >/dev/null 2>&1
 }
 
 clean() {
