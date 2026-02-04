@@ -30,8 +30,18 @@ RUN_PARAM=(
     -w $WS
 )
 
-choice() {
+stop() {
+    docker kill ${CTN_NAME} >/dev/null 2>&1 \
+        && echo "Stop ${CTN_NAME} done" \
+        && sleep 1s
+}
+
+run() {
     local kind=$1
+    local cmd="bash -l"
+    local opt=(
+        -it
+    )
     case $kind in
         alpine|-a )
             shift
@@ -49,27 +59,6 @@ choice() {
             img=${IMGS[0]}
             ;;
     esac
-    echo $img
-}
-
-stop() {
-    if [ -n "$(docker ps -f "name=${CTN_NAME}" -f "status=running" -q)" ]; then
-        echo "Stop $CTN_NAME"
-        docker stop $CTN_NAME >/dev/null 2>&1
-        docker rm $CTN_NAME >/dev/null 2>&1
-    fi
-}
-
-run() {
-    local kind=$1
-    local cmd="bash -l"
-    local img=$(choice $kind)
-    local opt=(
-        -it
-    )
-    if [ -n "$1" ]; then
-        shift
-    fi
     if [ "$1" == "+++" ]; then
         shift
         opt+=($@)
@@ -81,14 +70,27 @@ run() {
 ssh() {
     local kind=$1
     local cmd="run"
-    local img=$(choice $kind)
     local opt=(
         -d
         -v ~/.ssh:/home/$CTN_USER/.ssh:ro
     )
-    if [ -n "$1" ]; then
-        shift
-    fi
+    case $kind in
+        alpine|-a )
+            shift
+            img=${IMGS[0]}
+            ;;
+        void|-v )
+            shift
+            img=${IMGS[1]}
+            ;;
+        ubuntu|-u )
+            shift
+            img=${IMGS[2]}
+            ;;
+        * )
+            img=${IMGS[0]}
+            ;;
+    esac
     if [ "$1" == "+++" ]; then
         shift
         opt+=($@)
