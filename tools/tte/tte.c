@@ -1707,23 +1707,8 @@ void editorDrawMessageBar(struct a_buf *ab) {
 }
 
 void editorDrawWelcomeMessage(struct a_buf* ab) {
-    char welcome[80];
-    // Using snprintf to truncate message in case the terminal
-    // is too tiny to handle the entire string.
-    int welcome_len = snprintf(welcome, sizeof(welcome),
-        "tte %s <https://github.com/GrenderG/tte>", TTE_VERSION);
-    if (welcome_len > ec.screen_cols)
-        welcome_len = ec.screen_cols;
-    // Centering the message.
-    int padding = (ec.screen_cols - welcome_len) / 2;
-    // Remember that everything != 0 is true.
-    if (padding) {
-        abufAppend(ab, "~", 1);
-        padding--;
-    }
-    while (padding--)
-        abufAppend(ab, " ", 1);
-    abufAppend(ab, welcome, welcome_len);
+    // Disable welcome message
+    abufAppend(ab, "~", 1);
 }
 
 // The ... argument makes editorSetStatusMessage() a variadic function,
