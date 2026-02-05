@@ -9,6 +9,8 @@ debug: tte.c
 clean:
 	rm -f tte *.o
 
-install: tte
-	sudo cp tte /usr/local/bin/
-	sudo chmod +x /usr/local/bin/
+install:
+	cp -f tte /usr/local/bin/
+
+uninstall:
+	rm -f /usr/local/bin/tte
