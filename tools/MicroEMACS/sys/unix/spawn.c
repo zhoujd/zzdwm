@@ -338,9 +338,9 @@ int
 spawncmd (int f, int n, int k)
 {
   register int s;
-  char line[NCOL] = {0};
+  char line[NCOL];
 
-  if ((s = ereply ("! ", line, NCOL - 1)) != TRUE)
+  if ((s = ereply ("! ", line, sizeof(line))) != TRUE)
     return (s);
   ttputc ('\n');                /* Already have '\r'    */
   ttcolor (CTEXT);              /* Normal color.        */
