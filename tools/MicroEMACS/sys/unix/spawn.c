@@ -349,8 +349,9 @@ spawncmd (int f, int n, int k)
   ttflush ();
   ttclose ();
   system (line);
+  printf ("(End)");
   fflush (stdout);              /* to be sure P.K.      */
-  ttgetc ();
+  while ((s = ttgetc ()) != '\n' && s != ' ') ;
   ttopen ();
   eerase ();
   ttflush ();
