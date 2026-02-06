@@ -102,9 +102,9 @@ getshell (void)
     {
       shellp = getenv ("SHELL");
       if (shellp == NULL)
-	shellp = getenv ("shell");
+        shellp = getenv ("shell");
       if (shellp == NULL)
-	shellp = "/bin/sh";		/* Safer.               */
+        shellp = "/bin/sh";		/* Safer.               */
     }
   return shellp;
 }
@@ -164,21 +164,21 @@ spawn (char *program, const char *args[])
   if (jobcontrol)
     {
       if (epresf != FALSE)
-	{
-	  ttmove (nrow - 1, 0);
-	  tteeol ();
-	  epresf = FALSE;
-	}			/* Csh types a "\n"     */
+        {
+          ttmove (nrow - 1, 0);
+          tteeol ();
+          epresf = FALSE;
+        }			/* Csh types a "\n"     */
       ttmove (nrow - 2, 0);	/* before "Stopped".    */
     }
   else
     {
       ttmove (nrow - 1, 0);
       if (epresf != FALSE)
-	{
-	  tteeol ();
-	  epresf = FALSE;
-	}
+        {
+          tteeol ();
+          epresf = FALSE;
+        }
     }
   ttflush ();
   if (ttold () == FALSE)
@@ -193,22 +193,22 @@ spawn (char *program, const char *args[])
       oqsig = signal (SIGQUIT, SIG_IGN);
       oisig = signal (SIGINT, SIG_IGN);
       if ((pid = fork ()) < 0)
-	{
-	  signal (SIGQUIT, oqsig);
-	  signal (SIGINT, oisig);
-	  eprintf ("Failed to create process");
-	  return (FALSE);
-	}
+        {
+          signal (SIGQUIT, oqsig);
+          signal (SIGINT, oisig);
+          eprintf ("Failed to create process");
+          return (FALSE);
+        }
       if (pid == 0)
-	{
-	  if (program == NULL)
-	    execl (shellp, "sh", "-i", NULL);
-	  else
-	    execvp (program, (char * const *) args);
-	  _exit (0);		/* Should do better!    */
-	}
+        {
+          if (program == NULL)
+            execl (shellp, "sh", "-i", NULL);
+          else
+            execvp (program, (char * const *) args);
+          _exit (0);		/* Should do better!    */
+        }
       while ((wpid = wait (&status)) >= 0 && wpid != pid)
-	;
+        ;
       signal (SIGQUIT, oqsig);
       signal (SIGINT, oisig);
     }
@@ -291,7 +291,7 @@ openpipe (const char *program, const char *args[],
       /* Redirect stderr to /dev/null. */
       devnull = open ("/dev/null", O_WRONLY);
       if (devnull >= 0)
-	dup2 (devnull, 2);
+        dup2 (devnull, 2);
 
       /* Execute the program. */
       execvp (program, (char **)args);
@@ -304,12 +304,12 @@ openpipe (const char *program, const char *args[],
       *infile = fdopen (in_pipe[0], "r");
       *outfile = fdopen (out_pipe[1], "w");
       if (*infile == NULL || *outfile == NULL)
-	{
+        {
 #if TEST
-	  perror ("creating FILEs from pipes");
+          perror ("creating FILEs from pipes");
 #endif
-	  return FALSE;
-	}
+          return FALSE;
+        }
 
       setvbuf (*infile, (char *)NULL, _IOLBF, 0);
       setvbuf (*outfile, (char *)NULL, _IOLBF, 0);
@@ -395,5 +395,44 @@ execprg (int f, int n, int k)
 int
 filterbuffer(int f, int n, int k)
 {
+  register int s;
+  char line[NLINE];
+  char tmp[] = "/tmp/meXXXXXX";
+  int fd;
+
+  if ((s = ereply ("# ", line, sizeof(line))) != TRUE)
+    return (s);
+
+  /* setup temp file */
+  fd = mkstemp (tmp);
+  if (fd == -1) {
+    eprintf ("[Failed to create temp file]");
+    return FALSE;
+  }
+
+  ttputc ('\n');                /* Already have '\r'    */
+  ttcolor (CTEXT);              /* Normal color.        */
+  ttwindow (0, nrow - 1);       /* Full screen scroll.  */
+  ttmove (nrow - 1, 0);         /* Last line.           */
+  ttflush ();
+  ttclose ();
+  strcat (line, " >");
+  strcat (line, tmp);
+  system (line);
+  ttopen ();
+  eerase ();
+  ttflush ();
+  sgarbf = TRUE;
+
+  /* on failure, escape gracefully */
+  if (visit_file (tmp) == FALSE) {
+    eprintf ("[Execution failed]");
+    return FALSE;
+  }
+
+  /* and get rid of the temporary file */
+  unlink (tmp);
+  close (fd);
+
   return (TRUE);
 }
