@@ -349,6 +349,7 @@ spawncmd (int f, int n, int k)
   ttflush ();
   ttclose ();
   system (line);
+  fflush (stdout);              /* to be sure P.K.      */
   ttgetc ();
   ttopen ();
   eerase ();
