@@ -138,6 +138,7 @@ typedef unsigned char uchar;
  * Table sizes, etc.
  */
 #define NSHASH	31		/* Symbol table hash size.      */
+#define NLINE	256		/* Length, input line           */
 #define NFILEN	260		/* Length, file name.           */
 #define NBUFN	32		/* Length, buffer name.         */
 #define NKBDM	256		/* Length, keyboard macro.      */

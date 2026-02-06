@@ -338,7 +338,7 @@ int
 spawncmd (int f, int n, int k)
 {
   register int s;
-  char line[NCOL];
+  char line[NLINE];
 
   if ((s = ereply ("! ", line, sizeof(line))) != TRUE)
     return (s);
@@ -367,7 +367,7 @@ int
 execprg (int f, int n, int k)
 {
   register int s;
-  char line[NCOL];
+  char line[NLINE];
 
   if ((s = ereply ("! ", line, sizeof(line))) != TRUE)
     return (s);
