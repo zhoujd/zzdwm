@@ -403,7 +403,7 @@ filterbuffer(int f, int n, int k)
   if ((s = ereply ("# ", line, sizeof(line))) != TRUE)
     return (s);
 
-  /* setup temp file */
+  /* setup the temporary file */
   fd = mkstemp (tmp);
   if (fd == -1) {
     eprintf ("[Failed to create temp file]");
@@ -424,9 +424,9 @@ filterbuffer(int f, int n, int k)
   ttflush ();
   sgarbf = TRUE;
 
-  /* on failure, escape gracefully */
+  /* visit the temporary file */
   if (visit_file (tmp) == FALSE) {
-    eprintf ("[Execution failed]");
+    eprintf ("[Failed to visit temp file]");
     return FALSE;
   }
 
