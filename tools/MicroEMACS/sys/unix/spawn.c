@@ -349,6 +349,35 @@ spawncmd (int f, int n, int k)
   ttflush ();
   ttclose ();
   system (line);
+  fflush (stdout);              /* to be sure P.K.      */
+  sleep (2);
+  ttopen ();
+  eerase ();
+  ttflush ();
+  sgarbf = TRUE;
+  return (TRUE);
+}
+
+/*
+ * Run an external program with arguments. When it returns, wait for a single
+ * character to be typed, then mark the screen as garbage so a full repaint is
+ * done. Bound to "C-X $".
+ */
+int
+execprg (int f, int n, int k)
+{
+  register int s;
+  char line[NCOL];
+
+  if ((s = ereply ("! ", line, sizeof(line))) != TRUE)
+    return (s);
+  ttputc ('\n');                /* Already have '\r'    */
+  ttcolor (CTEXT);              /* Normal color.        */
+  ttwindow (0, nrow - 1);       /* Full screen scroll.  */
+  ttmove (nrow - 1, 0);         /* Last line.           */
+  ttflush ();
+  ttclose ();
+  system (line);
   printf ("(End)");
   fflush (stdout);              /* to be sure P.K.      */
   while ((s = ttgetc ()) != '\n' && s != ' ') ;
@@ -358,3 +387,4 @@ spawncmd (int f, int n, int k)
   sgarbf = TRUE;
   return (TRUE);
 }
+

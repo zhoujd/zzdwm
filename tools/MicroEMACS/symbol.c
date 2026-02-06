@@ -217,6 +217,7 @@ KEY key[] = {
   {KCTLX | 'Z',		enlargewind,	"enlarge-window"},
 #ifndef MINGW
   {KCTLX | '!',		spawncmd,       "spawn-command"},
+  {KCTLX | '$',		execprg,        "execute-program"},
 #endif
   {KMETA | KCTRL | 'E',	gccerror,	"gcc-error"},
   {KMETA | KCTRL | 'F',	foldcase,	"fold-case"},
