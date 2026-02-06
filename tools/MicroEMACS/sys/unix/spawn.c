@@ -355,7 +355,7 @@ spawncmd (int f, int n, int k)
   eerase ();
   ttflush ();
   sgarbf = TRUE;
-  return (TRUE);
+  return TRUE;
 }
 
 /*
@@ -385,7 +385,7 @@ execprg (int f, int n, int k)
   eerase ();
   ttflush ();
   sgarbf = TRUE;
-  return (TRUE);
+  return TRUE;
 }
 
 /*
@@ -405,10 +405,11 @@ filterbuffer(int f, int n, int k)
 
   /* setup the temporary file */
   fd = mkstemp (tmp);
-  if (fd == -1) {
-    eprintf ("[Failed to create temp file]");
-    return FALSE;
-  }
+  if (fd == -1)
+    {
+      eprintf ("[Failed to create temp file]");
+      return FALSE;
+    }
 
   ttputc ('\n');                /* Already have '\r'    */
   ttcolor (CTEXT);              /* Normal color.        */
@@ -425,14 +426,15 @@ filterbuffer(int f, int n, int k)
   sgarbf = TRUE;
 
   /* visit the temporary file */
-  if (visit_file (tmp) == FALSE) {
-    eprintf ("[Failed to visit temp file]");
-    return FALSE;
-  }
+  if (visit_file (tmp) == FALSE)
+    {
+      eprintf ("[Failed to visit temp file]");
+      return FALSE;
+    }
 
   /* and get rid of the temporary file */
   unlink (tmp);
   close (fd);
 
-  return (TRUE);
+  return TRUE;
 }
