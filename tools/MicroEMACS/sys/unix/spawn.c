@@ -371,7 +371,7 @@ execprg (int f, int n, int k)
   register int s;
   char line[NLINE];
 
-  if ((s = ereply ("$ ", line, sizeof(line))) != TRUE)
+  if ((s = ereply ("! ", line, sizeof(line))) != TRUE)
     return (s);
   ttputc ('\n');                /* Already have '\r'    */
   ttcolor (CTEXT);              /* Normal color.        */
@@ -401,6 +401,7 @@ filterbuffer(int f, int n, int k)
   char buf[NCOL];
   char line[NLINE];
   char tmp[] = "/tmp/meXXXXXX";
+  char sh[] = "bash -c";
   int fd;
 
   if ((s = ereply ("# ", buf, sizeof(buf))) != TRUE)
@@ -420,7 +421,7 @@ filterbuffer(int f, int n, int k)
   ttmove (nrow - 1, 0);         /* Last line.           */
   ttflush ();
   ttclose ();
-  snprintf(line, sizeof(line), "('%s' >%s 2>&1)", buf, tmp);
+  snprintf(line, sizeof(line), "%s '%s >%s 2>&1'", sh, buf, tmp);
   system (line);
   ttopen ();
   eerase ();
