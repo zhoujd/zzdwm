@@ -46,6 +46,8 @@
 #include <fcntl.h>
 #endif
 
+#define NLINE	512		/* Length, command line */
+
 extern struct termios oldtty;
 extern struct termios newtty;
 
@@ -396,11 +398,12 @@ int
 filterbuffer(int f, int n, int k)
 {
   register int s;
+  char buf[NCOL];
   char line[NLINE];
   char tmp[] = "/tmp/meXXXXXX";
   int fd;
 
-  if ((s = ereply ("# ", line, sizeof(line))) != TRUE)
+  if ((s = ereply ("# ", buf, sizeof(buf))) != TRUE)
     return (s);
 
   /* setup the temporary file */
@@ -417,8 +420,7 @@ filterbuffer(int f, int n, int k)
   ttmove (nrow - 1, 0);         /* Last line.           */
   ttflush ();
   ttclose ();
-  strcat (line, " >");
-  strcat (line, tmp);
+  snprintf(line, sizeof(line), "('%s' >%s 2>&1)", buf, tmp);
   system (line);
   ttopen ();
   eerase ();
