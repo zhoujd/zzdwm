@@ -46,13 +46,10 @@
 #include <fcntl.h>
 #endif
 
-#define NLINE	512		/* Length, command line */
-
 extern struct termios oldtty;
 extern struct termios newtty;
 
 static int saw_sigpipe;
-
 
 /*
  * Get the name of the parent process, and return a pointer to a
@@ -340,36 +337,7 @@ int
 spawncmd (int f, int n, int k)
 {
   register int s;
-  char line[NLINE];
-
-  if ((s = ereply ("! ", line, sizeof(line))) != TRUE)
-    return (s);
-  ttputc ('\n');                /* Already have '\r'    */
-  ttcolor (CTEXT);              /* Normal color.        */
-  ttwindow (0, nrow - 1);       /* Full screen scroll.  */
-  ttmove (nrow - 1, 0);         /* Last line.           */
-  ttflush ();
-  ttclose ();
-  system (line);
-  fflush (stdout);              /* to be sure P.K.      */
-  sleep (2);
-  ttopen ();
-  eerase ();
-  ttflush ();
-  sgarbf = TRUE;
-  return TRUE;
-}
-
-/*
- * Run an external program with arguments. When it returns, wait for a single
- * character to be typed, then mark the screen as garbage so a full repaint is
- * done. Bound to "C-X $".
- */
-int
-execprg (int f, int n, int k)
-{
-  register int s;
-  char line[NLINE];
+  char line[NCOL];
 
   if ((s = ereply ("! ", line, sizeof(line))) != TRUE)
     return (s);
@@ -387,58 +355,5 @@ execprg (int f, int n, int k)
   eerase ();
   ttflush ();
   sgarbf = TRUE;
-  return TRUE;
-}
-
-/*
- * filter a buffer through an external program
- * Bound to "^X #"
- */
-int
-filterbuffer(int f, int n, int k)
-{
-  register int s;
-  char line[NLINE];
-  char tmp[] = "/tmp/meXXXXXX";
-  int fd;
-
-  if ((s = ereply ("# ", line, sizeof(line))) != TRUE)
-    return (s);
-
-  /* setup the temporary file */
-  fd = mkstemp (tmp);
-  if (fd == -1)
-    {
-      eprintf ("[Failed to create temp file]");
-      return FALSE;
-    }
-
-  ttputc ('\n');                /* Already have '\r'    */
-  ttcolor (CTEXT);              /* Normal color.        */
-  ttwindow (0, nrow - 1);       /* Full screen scroll.  */
-  ttmove (nrow - 1, 0);         /* Last line.           */
-  ttflush ();
-  ttclose ();
-  strcat (line, " >");
-  strcat (line, tmp);
-  strcat (line, " 2>&1");
-  system (line);
-  fflush (stdout);              /* to be sure P.K.      */
-  ttopen ();
-  eerase ();
-  ttflush ();
-  sgarbf = TRUE;
-
-  /* visit the temporary file */
-  if (visit_file (tmp) == FALSE)
-    {
-      eprintf ("[Failed to visit temp file]");
-      return FALSE;
-    }
-
-  /* and get rid of the temporary file */
-  unlink (tmp);
-  close (fd);
-
   return TRUE;
 }
