@@ -398,13 +398,11 @@ int
 filterbuffer(int f, int n, int k)
 {
   register int s;
-  char buf[NCOL];
   char line[NLINE];
   char tmp[] = "/tmp/meXXXXXX";
-  char sh[] = "bash -c";
   int fd;
 
-  if ((s = ereply ("# ", buf, sizeof(buf))) != TRUE)
+  if ((s = ereply ("# ", line, sizeof(line))) != TRUE)
     return (s);
 
   /* setup the temporary file */
@@ -421,8 +419,11 @@ filterbuffer(int f, int n, int k)
   ttmove (nrow - 1, 0);         /* Last line.           */
   ttflush ();
   ttclose ();
-  snprintf(line, sizeof(line), "%s '%s >%s 2>&1'", sh, buf, tmp);
+  strcat (line, " >");
+  strcat (line, tmp);
+  strcat (line, " 2>&1");
   system (line);
+  fflush (stdout);              /* to be sure P.K.      */
   ttopen ();
   eerase ();
   ttflush ();
