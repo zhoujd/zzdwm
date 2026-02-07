@@ -371,7 +371,7 @@ execprg (int f, int n, int k)
   register int s;
   char line[NLINE];
 
-  if ((s = ereply ("! ", line, sizeof(line))) != TRUE)
+  if ((s = ereply ("$ ", line, sizeof(line))) != TRUE)
     return (s);
   ttputc ('\n');                /* Already have '\r'    */
   ttcolor (CTEXT);              /* Normal color.        */
