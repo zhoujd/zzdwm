@@ -357,3 +357,56 @@ spawncmd (int f, int n, int k)
   sgarbf = TRUE;
   return TRUE;
 }
+
+/*
+ * Run a pipeline in a subjob.
+ * Bound to "^X #"
+ */
+int
+spawnpipe(int f, int n, int k)
+{
+  register int s;
+  char line[NCOL];
+  char tmp[] = "/tmp/meXXXXXX";
+  int fd;
+
+  if ((s = ereply ("# ", line, sizeof(line))) != TRUE)
+    return (s);
+
+  /* setup the temporary file */
+  fd = mkstemp (tmp);
+  if (fd == -1)
+    {
+      eprintf ("[Failed to create temp file]");
+      return FALSE;
+    }
+
+  ttputc ('\n');                /* Already have '\r'    */
+  ttcolor (CTEXT);              /* Normal color.        */
+  ttwindow (0, nrow - 1);       /* Full screen scroll.  */
+  ttmove (nrow - 1, 0);         /* Last line.           */
+  ttflush ();
+  ttclose ();
+  strcat (line, " >");
+  strcat (line, tmp);
+  strcat (line, " 2>&1");
+  system (line);
+  fflush (stdout);              /* to be sure P.K.      */
+  ttopen ();
+  eerase ();
+  ttflush ();
+  sgarbf = TRUE;
+
+  /* visit the temporary file */
+  if (visit_file (tmp) == FALSE)
+    {
+      eprintf ("[Failed to visit temp file]");
+      return FALSE;
+    }
+
+  /* and get rid of the temporary file */
+  unlink (tmp);
+  close (fd);
+
+  return TRUE;
+}
