@@ -46,8 +46,6 @@
 #include <fcntl.h>
 #endif
 
-extern int swbuffer (BUFFER *);
-
 extern struct termios oldtty;
 extern struct termios newtty;
 
@@ -399,14 +397,17 @@ spawnpipe(int f, int n, int k)
   ttflush ();
   sgarbf = TRUE;
 
-  swbuffer(blistp);
-  /* visit the temporary file */
+  /* pop blist buffer */
+  popblist ();
+  curbp = blistp;
+  /* read in the temporary file */
   if (readin (tmp) == FALSE)
     {
       eprintf ("[Failed to visit temp file]");
       return FALSE;
     }
 
+  /* empty blist b_fname */
   strcpy (blistp->b_fname, "");
 
   /* and get rid of the temporary file */
