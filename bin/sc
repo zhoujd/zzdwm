@@ -1,8 +1,9 @@
 #!/bin/bash
 
+cmd="bash -l"
 opt=(
   -e \`\`
-  -s bash -l
+  -s $cmd
   -q
 )
 
