@@ -3,10 +3,13 @@
 gap=${WINGAP:-5}
 active=$(xdotool getactivewindow)
 desktop=$(xdotool get_desktop)
-windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
-               tr -s '[:blank:]' |  awk '{print $1}'))
 mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
 mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
+windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
+               tr -s '[:blank:]' |  awk '{print $1}'))
+
+## Move active window to first place
+windows=("$active", "${windows[@]/$(printf '0x0%x' $active)/}")
 
 focus() {
     local id=$1
