@@ -22,7 +22,7 @@ CFLAGS = -std=c99 -D_POSIX_C_SOURCE=200809L -DLINUX -DBACKUP $(INC) -Wall
 ifeq ($(DEBUG), yes)
 CFLAGS := -g -O0 $(CFLAGS)
 else
-CFLAGS := -Os -s $(CFLAGS)
+CFLAGS := -Os $(CFLAGS)
 endif
 
 LD = gcc
