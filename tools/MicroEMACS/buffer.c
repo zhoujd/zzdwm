@@ -197,6 +197,10 @@ getbufn (char bufn[NBUFN])
 {
   register int s;
 
+  /* disable use blistp buffer */
+  if (strcmp (oldbufn, blistp->b_bname) == 0)
+    strcpy (oldbufn, "");
+
   if ((s = ereplyf ("Use buffer [%s]: ", bufn, NBUFN, EFNEW | EFCR | EFBUF,
 		    oldbufn)) == ABORT)
     return (s);			/* CTRL-G abort         */
