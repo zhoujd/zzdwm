@@ -19,24 +19,24 @@
 
 /*
  * Name:	MicroEMACS
- * 		Ultrix-32 file I/O.
+ *              Ultrix-32 file I/O.
  * Version:	29
  * Last edit:	09-Feb-88
  * By:		Mark Alexander
  *		drivax!alexande
  */
-#include	"def.h"
+#include "def.h"
 
 #ifdef __hpux
 /* Need this kludge to get dirent.h to define DIR structure */
 #define _INCLUDE_POSIX_SOURCE
 #endif
 
-#include	<sys/types.h>
-#include	<sys/stat.h>
-#include	<dirent.h>
-#include	<pwd.h>
-#include	<unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <pwd.h>
+#include <unistd.h>
 
 /*
  * External declarations.
@@ -150,37 +150,37 @@ ffgetline (char **bufp, int *nbytes)
       /*  Delete carriage return if followed by line feed
        */
       if (c == '\r')
-	{			/* carriage return?     */
-	  c = getc (ffp);	/* check next byte      */
-	  if (c != '\n')
-	    {			/* next not line feed?  */
-	      ungetc (c, ffp);	/* put it back          */
-	      c = '\r';		/* put cr into line     */
-	    }
-	}
+        {			/* carriage return?     */
+          c = getc (ffp);	/* check next byte      */
+          if (c != '\n')
+            {			/* next not line feed?  */
+              ungetc (c, ffp);	/* put it back          */
+              c = '\r';		/* put cr into line     */
+            }
+        }
 
       if (c == EOF || c == '\n')	/* end of line/file?    */
-	break;
+        break;
 
       /*  If the buffer is too small, enlarge it.
        */
       if (i >= bufsize)
-	{			/* line full?           */
-	  newbufsize = bufsize + 256;
-	  if (bufsize != 0)
-	    newbuf = realloc (buf, newbufsize);
-	  else
-	    newbuf = malloc (newbufsize);
-	  if (!newbuf)
-	    {
-	      ungetc (c, ffp);	/* put char back        */
-	      eprintf ("Out of memory, line split");
-	      merror = 1;
-	      break;
-	    }
-	  buf = newbuf;
-	  bufsize = newbufsize;
-	}
+        {			/* line full?           */
+          newbufsize = bufsize + 256;
+          if (bufsize != 0)
+            newbuf = realloc (buf, newbufsize);
+          else
+            newbuf = malloc (newbufsize);
+          if (!newbuf)
+            {
+              ungetc (c, ffp);	/* put char back        */
+              eprintf ("Out of memory, line split");
+              merror = 1;
+              break;
+            }
+          buf = newbuf;
+          bufsize = newbufsize;
+        }
       buf[i++] = c;		/* store byte in line   */
     }
   *nbytes = i;			/* return no. of bytes  */
@@ -188,9 +188,9 @@ ffgetline (char **bufp, int *nbytes)
   if (c != '\n')
     {				/* End of file.         */
       if (merror)		/* out of memory?       */
-	return (FIOERR);	/* report error         */
+        return (FIOERR);	/* report error         */
       else
-	return (FIOEOF);	/* normal end of file   */
+        return (FIOEOF);	/* normal end of file   */
     }
   return (FIOSUC);
 }
@@ -226,7 +226,7 @@ fbackupfile (const char *fname)
     {
       strcpy (nname, bname);
       if (nname[strlen (nname) - 1] != '/')
-	strcat (nname, "/");
+        strcat (nname, "/");
       strcat (nname, fname);
     }
   unlink (nname);		/* delete old backup    */
@@ -254,7 +254,7 @@ adjustcase (char *fn)
   while ((c = *fn) != 0)
     {
       if (c >= 'A' && c <= 'Z')
-	*fn = c + 'a' - 'A';
+        *fn = c + 'a' - 'A';
       ++fn;
     }
 #endif
@@ -277,9 +277,9 @@ ffpopen (char *fn)
   if (fn == NULL)
     {
       if ((pfp = fopen (".mepro", "r")) != NULL)
-	return (FIOSUC);
+        return (FIOSUC);
       if ((fn = getenv ("HOME")) == NULL)
-	return (FIOFNF);
+        return (FIOFNF);
       strcpy (newname, fn);
       strcat (newname, "/.mepro");
       fn = newname;
@@ -374,32 +374,32 @@ ffsearch (
   if (prev == NULL)		/* first time through   */
     {
       if (dirp != NULL)
-	closedir (dirp);
+        closedir (dirp);
       strncpy (buf, name, cpos);	/* save the name        */
       for (i = cpos; i > 0; --i)
-	{			/* find end of path     */
-	  c = buf[i - 1];
-	  if (c == '/')
-	    break;
-	}
+        {			/* find end of path     */
+          c = buf[i - 1];
+          if (c == '/')
+            break;
+        }
       pathlen = i;		/* save length of path  */
       if (pathlen == 0)		/* no path specified?   */
-	dirp = opendir (".");	/* open current dir     */
+        dirp = opendir (".");	/* open current dir     */
       else
-	{
-	  buf[pathlen - 1] = '\0';	/* temporarily zap slash */
-	  dirp = opendir (fftilde (buf));
-	  /* open directory       */
-	  buf[pathlen - 1] = c;	/* restore slash */
-	}
+        {
+          buf[pathlen - 1] = '\0';	/* temporarily zap slash */
+          dirp = opendir (fftilde (buf));
+          /* open directory       */
+          buf[pathlen - 1] = c;	/* restore slash */
+        }
       if (dirp == NULL)
-	return (NULL);
+        return (NULL);
     }
   while ((ff = readdir (dirp)) != NULL)	/* find next file       */
     {
       strcpy (&buf[pathlen], ff->d_name);	/* append filename    */
       if (strncmp (buf, name, cpos) == 0)	/* does it match?       */
-	return (buf);		/* return static buffer */
+        return (buf);		/* return static buffer */
     }
   closedir (dirp);
   dirp = NULL;
