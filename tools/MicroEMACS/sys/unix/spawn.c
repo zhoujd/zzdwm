@@ -340,7 +340,9 @@ int
 spawncmd (int f, int n, int k)
 {
   register int s;
-  char line[NCOL] = {0};
+  static char line[NCOL];
+
+  memset (line, 0, sizeof(line));
 
   if ((s = ereply ("! ", line, sizeof(line))) != TRUE)
     return (s);
@@ -370,10 +372,12 @@ spawnpipe(int f, int n, int k)
 {
   register int s;
   register BUFFER *bp;        /* pointer to buffer to zot */
-  char line[NCOL] = {0};
+  static char line[NCOL];
   char tmp[] = "/tmp/meXXXXXX";
   char bname[] = "*bpipe*";
   int fd;
+
+  memset (line, 0, sizeof(line));
 
   if ((s = ereply ("@ ", line, sizeof(line))) != TRUE)
     return (s);
@@ -434,12 +438,14 @@ spawnfilter(int f, int n, int k)
 {
   register int    s;      /* return status from CLI */
   register BUFFER *bp;    /* pointer to buffer to zot */
-  char line[NCOL] = {0};  /* command line to send to shell */
+  static char line[NCOL]; /* command line to send to shell */
   char bname[] = "*bfilter*";
   char filin[] = "/tmp/meXXXXXX";
   char filout[] = "/tmp/meXXXXXX";
   int fdin;
   int fdout;
+
+  memset (line, 0, sizeof(line));
 
   if (curbp->b_flag & BFRO)	/* if buffer is read-only       */
     return FALSE;               /* fail                         */
