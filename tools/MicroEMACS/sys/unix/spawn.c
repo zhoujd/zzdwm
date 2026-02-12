@@ -371,8 +371,10 @@ spawnpipe(int f, int n, int k)
   char line[NCOL];
   char tmp[] = "/tmp/meXXXXXX";
   int fd;
+  char bname[] = "*pipe*";
+  BUFFER *bp;        /* pointer to buffer to zot */
 
-  if ((s = ereply ("# ", line, sizeof(line))) != TRUE)
+  if ((s = ereply ("@ ", line, sizeof(line))) != TRUE)
     return (s);
 
   /* setup the temporary file */
@@ -399,18 +401,19 @@ spawnpipe(int f, int n, int k)
   ttflush ();
   sgarbf = TRUE;
 
-  /* switch blist buffer */
-  swbuffer (blistp);
-
-  /* read in the temporary file */
-  if (readin (tmp) == FALSE)
+  /* readin the temporary file */
+  if ((bp = bfind(bname, TRUE)) != NULL)
     {
-      eprintf ("[Failed to visit temp file]");
-      return FALSE;
+      bclear(bp);
+      swbuffer(bp);
+      if (readin (tmp) == FALSE)
+        {
+          eprintf ("[Failed to visit temp file]");
+          return FALSE;
+        }
+      strcpy (bp->b_bname, bname);
+      strcpy (bp->b_fname, "");
     }
-
-  /* empty blist b_fname */
-  strcpy (blistp->b_fname, "");
 
   /* and get rid of the temporary file */
   unlink (tmp);
