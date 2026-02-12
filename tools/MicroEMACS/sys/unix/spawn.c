@@ -372,7 +372,7 @@ spawnpipe(int f, int n, int k)
   register BUFFER *bp;        /* pointer to buffer to zot */
   static char line[NCOL];
   char tmp[] = "/tmp/meXXXXXX";
-  char bname[] = "*pipe*";
+  char bname[] = "*bpipe*";
   int fd;
 
   if ((s = ereply ("@ ", line, sizeof(line))) != TRUE)
@@ -435,7 +435,7 @@ spawnfilter(int f, int n, int k)
   register int    s;      /* return status from CLI */
   register BUFFER *bp;    /* pointer to buffer to zot */
   static char line[NCOL]; /* command line to send to shell */
-  char bname[] = "*filter*";
+  char bname[] = "*bfilter*";
   char filin[] = "/tmp/meXXXXXX";
   char filout[] = "/tmp/meXXXXXX";
   int fdin;
