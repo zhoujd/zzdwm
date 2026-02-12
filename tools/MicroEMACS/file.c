@@ -656,7 +656,7 @@ expand (const char *text, int *len)
  * "fileio.c" package. The number of lines written is
  * displayed.  Most of the grief is error checking of some sort.
  */
-static int
+int
 writeout (const char *fn)
 {
   register int s;

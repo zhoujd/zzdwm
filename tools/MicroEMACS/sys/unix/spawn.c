@@ -47,6 +47,7 @@
 #endif
 
 extern int swbuffer (BUFFER *bp);
+extern int writeout (const char *fn);
 
 extern struct termios oldtty;
 extern struct termios newtty;
@@ -368,11 +369,11 @@ int
 spawnpipe(int f, int n, int k)
 {
   register int s;
+  register BUFFER *bp;        /* pointer to buffer to zot */
   char line[NCOL];
   char tmp[] = "/tmp/meXXXXXX";
-  int fd;
   char bname[] = "*pipe*";
-  BUFFER *bp;        /* pointer to buffer to zot */
+  int fd;
 
   if ((s = ereply ("@ ", line, sizeof(line))) != TRUE)
     return (s);
@@ -429,5 +430,61 @@ spawnpipe(int f, int n, int k)
 int
 spawnfilter(int f, int n, int k)
 {
-  return TRUE;
+  register int    s;      /* return status from CLI */
+  register BUFFER *bp;    /* pointer to buffer to zot */
+  char filterline[] = " <fltinp >fltout";
+  char line[NCOL + sizeof(filterline) - 1]; /* command line to send to shell */
+  char bname[] = "*filter*";
+  char filnam1[] = "fltinp";
+  char filnam2[] = "fltout";
+
+  if (curbp->b_flag & BFRO)	/* if buffer is read-only       */
+    return FALSE;               /* fail                         */
+
+  if ((s = ereply ("# ", line, sizeof(line))) != TRUE)
+    return (s);
+
+  /* write it out, checking for errors */
+  if (writeout(filnam1) != TRUE)
+    {
+      eprintf("[Cannot write filter file]");
+      return(FALSE);
+    }
+
+  ttputc ('\n');                /* Already have '\r'    */
+  ttcolor (CTEXT);              /* Normal color.        */
+  ttwindow (0, nrow - 1);       /* Full screen scroll.  */
+  ttmove (nrow - 1, 0);         /* Last line.           */
+  ttflush ();
+  ttclose ();
+  strcat (line, filterline);
+  system (line);
+  fflush (stdout);              /* to be sure P.K.      */
+  ttopen ();
+  eerase ();
+  ttflush ();
+  sgarbf = TRUE;
+
+  /* readin the temporary file */
+  if ((bp = bfind(bname, TRUE)) != NULL)
+    {
+      bclear(bp);
+      swbuffer(bp);
+      /* on failure, escape gracefully */
+      if (s != TRUE || ((s = readin(filnam2)) == FALSE))
+        {
+          eprintf("[Execution failed]");
+          goto ret;
+        }
+
+      strcpy (bp->b_bname, bname);
+      strcpy (bp->b_fname, "");
+    }
+
+  s = TRUE;
+ret:
+  /* and get rid of the temporary file */
+  unlink(filnam1);
+  unlink(filnam2);
+  return s;
 }
