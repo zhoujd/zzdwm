@@ -421,3 +421,13 @@ spawnpipe(int f, int n, int k)
 
   return TRUE;
 }
+
+/*
+ * filter a buffer through an external program
+ * Bound to ^X #
+ */
+int
+spawnfilter(int f, int n, int k)
+{
+  return TRUE;
+}

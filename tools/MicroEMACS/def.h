@@ -860,6 +860,7 @@ int spellregion (int f, int n, int k);	/* Spell-check marked region.	*/
 int spawncli (int f, int n, int k);	/* Run CLI in a subjob.         */
 int spawncmd (int f, int n, int k);	/* Run a one-liner in a subjob. */
 int spawnpipe (int f, int n, int k);	/* Pipe a command into a window.*/
+int spawnfilter (int f, int n, int k);	/* Filter a buffer via program. */
 
 int spawn (char *program,		/* Spawn a program.		*/
 	   const char *args[]);

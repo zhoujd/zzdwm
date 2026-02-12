@@ -218,6 +218,7 @@ KEY key[] = {
 #ifndef MINGW
   {KCTLX | '!',		spawncmd,       "spawn-command"},
   {KCTLX | '@',		spawnpipe,      "spawn-pipe"},
+  {KCTLX | '#',		spawnfilter,    "spawn-filter"},
 #endif
   {KMETA | KCTRL | 'E',	gccerror,	"gcc-error"},
   {KMETA | KCTRL | 'F',	foldcase,	"fold-case"},
