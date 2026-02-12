@@ -361,8 +361,8 @@ spawncmd (int f, int n, int k)
 }
 
 /*
- * Run a pipeline in a subjob.
- * Bound to "^X #"
+ * Pipe a one line command into a window
+ * Bound to ^X @
  */
 int
 spawnpipe(int f, int n, int k)
