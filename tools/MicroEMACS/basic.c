@@ -363,6 +363,16 @@ backpage (int f, int n, int k)
     n *= page;			/* to lines.            */
 #endif
   lp = curwp->w_linep;
+
+  /* if we are on the first line as we start... move cursor */
+  if (lback(lp) == curbp->b_linep)
+    {
+      curwp->w_dot.p = lp;
+      curwp->w_dot.o = 0;
+      curwp->w_flag |= WFMOVE;
+      return FALSE;
+    }
+
   while (n-- && lp != firstline (curbp))
     lp = lback (lp);
   curwp->w_linep = lp;
