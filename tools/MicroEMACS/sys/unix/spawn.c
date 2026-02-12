@@ -409,18 +409,20 @@ spawnpipe(int f, int n, int k)
       swbuffer(bp);
       if (readin (tmp) == FALSE)
         {
-          eprintf ("[Failed to visit temp file]");
-          return FALSE;
+          eprintf ("[Failed to readin temp file]");
+          s = FALSE;
+          goto ret;
         }
       strcpy (bp->b_bname, bname);
       strcpy (bp->b_fname, "");
     }
 
+  s = TRUE;
+ret:
   /* and get rid of the temporary file */
   unlink (tmp);
   close (fd);
-
-  return TRUE;
+  return s;
 }
 
 /*
@@ -432,11 +434,12 @@ spawnfilter(int f, int n, int k)
 {
   register int    s;      /* return status from CLI */
   register BUFFER *bp;    /* pointer to buffer to zot */
-  char filterline[] = " <fltinp >fltout";
-  char line[NCOL + sizeof(filterline) - 1]; /* command line to send to shell */
+  char line[NCOL];        /* command line to send to shell */
   char bname[] = "*filter*";
-  char filnam1[] = "fltinp";
-  char filnam2[] = "fltout";
+  char filin[] = "/tmp/meXXXXXX";
+  char filout[] = "/tmp/meXXXXXX";
+  int fdin;
+  int fdout;
 
   if (curbp->b_flag & BFRO)	/* if buffer is read-only       */
     return FALSE;               /* fail                         */
@@ -444,11 +447,27 @@ spawnfilter(int f, int n, int k)
   if ((s = ereply ("# ", line, sizeof(line))) != TRUE)
     return (s);
 
-  /* write it out, checking for errors */
-  if (writeout(filnam1) != TRUE)
+  /* setup the temporary file */
+  fdin = mkstemp (filin);
+  if (fdin == -1)
     {
-      eprintf("[Cannot write filter file]");
-      return(FALSE);
+      eprintf ("[Failed to create temp file]");
+      return FALSE;
+    }
+
+  fdout = mkstemp (filout);
+  if (fdout == -1)
+    {
+      eprintf ("[Failed to create temp file]");
+      return FALSE;
+    }
+
+  /* write it out, checking for errors */
+  if (writeout (filin) != TRUE)
+    {
+      eprintf ("[Cannot write filter file]");
+      s = FALSE;
+      goto ret;
     }
 
   ttputc ('\n');                /* Already have '\r'    */
@@ -457,7 +476,11 @@ spawnfilter(int f, int n, int k)
   ttmove (nrow - 1, 0);         /* Last line.           */
   ttflush ();
   ttclose ();
-  strcat (line, filterline);
+  strcat (line, " <");
+  strcat (line, filin);
+  strcat (line, " >");
+  strcat (line, filout);
+  strcat (line, " 2>&1");
   system (line);
   fflush (stdout);              /* to be sure P.K.      */
   ttopen ();
@@ -468,12 +491,12 @@ spawnfilter(int f, int n, int k)
   /* readin the temporary file */
   if ((bp = bfind(bname, TRUE)) != NULL)
     {
-      bclear(bp);
-      swbuffer(bp);
+      bclear (bp);
+      swbuffer (bp);
       /* on failure, escape gracefully */
-      if (s != TRUE || ((s = readin(filnam2)) == FALSE))
+      if (s != TRUE || ((s = readin (filout)) == FALSE))
         {
-          eprintf("[Execution failed]");
+          eprintf ("[Failed to readin temp file]");
           goto ret;
         }
 
@@ -484,7 +507,9 @@ spawnfilter(int f, int n, int k)
   s = TRUE;
 ret:
   /* and get rid of the temporary file */
-  unlink(filnam1);
-  unlink(filnam2);
+  unlink (filin);
+  unlink (filout);
+  close (fdin);
+  close (fdout);
   return s;
 }
