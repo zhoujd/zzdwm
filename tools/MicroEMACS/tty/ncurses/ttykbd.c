@@ -19,7 +19,7 @@
 
 /*
  * Name:	MicroEMACS
- * 		Ncurses Keyboard
+ *              Ncurses Keyboard
  *
  * By:		Mark Alexander
  *		marka@pobox.com
@@ -28,11 +28,11 @@
  * Revision 1.1  2005-10-18 02:18:44  bloovis
  * New files to implement ncurses screen handling.
  *
- * 
+ *
  */
 
-#include	"def.h"
-#include	<ncurses.h>
+#include "def.h"
+#include <ncurses.h>
 
 #define CTRL(x) ((x) & 0x1f)
 
@@ -41,15 +41,15 @@
  * between KFIRST and KLAST (inclusive). This is used by
  * the key name routine in "kbd.c".
  */
-char	*keystrings[32] = {
-	NULL,		"Up",		"Down",		"Left",
-	"Right",	"PgUp",		"PgDn",		"Home",
-	"End",		"Insert",	"Delete",	"F1",
-	"F2",		"F3",		"F4",		"F5",
-	"F6",		"F7",		"F8",		"F9",
-	"F10",		"S-F1",		"S-F2",		"S-F3",
-	"S-F4",		"S-F5",		"S-F6",		"S-F7",
-	"S-F8",		"S-F9",		"S-F10",	NULL
+char *keystrings[32] = {
+  NULL,         "Up",           "Down",         "Left",
+  "Right",      "PgUp",         "PgDn",         "Home",
+  "End",        "Insert",       "Delete",       "F1",
+  "F2",         "F3",           "F4",           "F5",
+  "F6",         "F7",           "F8",           "F9",
+  "F10",        "S-F1",         "S-F2",         "S-F3",
+  "S-F4",       "S-F5",         "S-F6",         "S-F7",
+  "S-F8",       "S-F9",         "S-F10",        NULL
 };
 
 /*
@@ -60,15 +60,15 @@ char	*keystrings[32] = {
  * the keystrings table above, unmodified by ALT, or CTRL keys.
  * These keys map into the MicroEMACS internal key values K01 to K1F.
  */
-int	specmap[32] = {
-	0,		KEY_UP,		KEY_DOWN,	KEY_LEFT,
-	KEY_RIGHT,	KEY_PPAGE,	KEY_NPAGE,	KEY_HOME,
-	KEY_END,	KEY_IC,		KEY_DC,		KEY_F(1),
-	KEY_F(2),	KEY_F(3),	KEY_F(4),	KEY_F(5),
-	KEY_F(6),	KEY_F(7),	KEY_F(8),	KEY_F(9),
-	KEY_F(10),	KEY_F(11),	KEY_F(12),	KEY_F(13),
-	KEY_F(14),	KEY_F(15),	KEY_F(16),	KEY_F(17),
-	KEY_F(18),	KEY_F(19),	KEY_F(20),	0
+int specmap[32] = {
+  0,		KEY_UP,		KEY_DOWN,	KEY_LEFT,
+  KEY_RIGHT,	KEY_PPAGE,	KEY_NPAGE,	KEY_HOME,
+  KEY_END,	KEY_IC,		KEY_DC,		KEY_F(1),
+  KEY_F(2),	KEY_F(3),	KEY_F(4),	KEY_F(5),
+  KEY_F(6),	KEY_F(7),	KEY_F(8),	KEY_F(9),
+  KEY_F(10),	KEY_F(11),	KEY_F(12),	KEY_F(13),
+  KEY_F(14),	KEY_F(15),	KEY_F(16),	KEY_F(17),
+  KEY_F(18),	KEY_F(19),	KEY_F(20),	0
 };
 
 /*

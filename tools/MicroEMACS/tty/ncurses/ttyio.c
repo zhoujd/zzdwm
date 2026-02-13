@@ -32,15 +32,15 @@
 
 #define _XOPEN_SOURCE_EXTENDED
 
-#include	"def.h"
+#include "def.h"
 
-#include	<errno.h>
-#include	<signal.h>
-#include	<unistd.h>
-#include	<termios.h>
-#include	<sys/ioctl.h>
-#include	<ncurses.h>
-#include	<locale.h>
+#include <errno.h>
+#include <signal.h>
+#include <unistd.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <ncurses.h>
+#include <locale.h>
 
 static struct termios oldtty;	/* Old tty state		*/
 static struct termios newtty;	/* New tty state		*/
@@ -198,20 +198,20 @@ ttputs (const wchar_t *buf, int size)
     {
       wch[0] = buf[i];
       if (modifier != 0)
-	{
-	  wch[1] = modifier;
-	  modifier = 0;
-	  wch[2] = 0;
-	}
+        {
+          wch[1] = modifier;
+          modifier = 0;
+          wch[2] = 0;
+        }
       else
-	{
-	  if (ucombining (wch[0]))
-	    {
-	      modifier = wch[0];
-	      continue;
-	    }
-	  wch[1] = 0;
-	}
+        {
+          if (ucombining (wch[0]))
+            {
+              modifier = wch[0];
+              continue;
+            }
+          wch[1] = 0;
+        }
       setcchar (&wcval[wsize], wch, 0, 0, NULL);
       ++wsize;
     }

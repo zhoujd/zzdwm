@@ -20,7 +20,7 @@
 /*
  * Name:        MicroEMACS
  *              Ncurses text-mode display
- * By:      	Mark Alexander
+ * By:          Mark Alexander
  *              marka@pobox.com
  *
  * $Log: tty.c,v $
@@ -59,9 +59,9 @@ drawborders (void)
   for (row = 0; row < actual_nrow; row++)
     {
       for (col = ncol; col < actual_ncol; col += ncol + 1)
-	{
-	  mvaddch (row, col, ACS_VLINE);
-	}
+        {
+          mvaddch (row, col, ACS_VLINE);
+        }
     }
 }
 
@@ -86,7 +86,7 @@ ttinit (void)
     {
       npages = 1;
     }
-  
+
   new_nrow = nrow * npages;
   new_ncol = (ncol - npages + 1) / npages;
 
@@ -156,7 +156,7 @@ tteeol (void)
 
       get_actual_pos (ttrow, ttcol, &actual_row, &actual_col);
       for (i = ttcol; i < ncol; i++)
-	addch (' ');
+        addch (' ');
       move (actual_row, actual_col);
     }
   else
