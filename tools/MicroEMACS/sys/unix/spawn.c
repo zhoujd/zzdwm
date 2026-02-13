@@ -384,7 +384,7 @@ spawnpipe(int f, int n, int k)
   if ((s = ereply ("@ ", line, sizeof(line))) != TRUE)
     return (s);
 
-  /* setup the temporary file */
+  /* Setup the temporary file */
   fd = mkstemp (tmp);
   if (fd == -1)
     {
@@ -408,7 +408,7 @@ spawnpipe(int f, int n, int k)
   ttflush ();
   sgarbf = TRUE;
 
-  /* readin the temporary file */
+  /* Readin the temporary file */
   if ((bp = bfind(bname, TRUE)) != NULL)
     {
       bclear(bp);
@@ -425,16 +425,16 @@ spawnpipe(int f, int n, int k)
 
   s = TRUE;
 ret:
-  /* Force repaint. */
+  /* Force repaint */
   erefresh (FALSE, 1, 0);
-  /* clean the temporary file */
+  /* Clean the temporary file */
   unlink (tmp);
   close (fd);
   return s;
 }
 
 /*
- * filter a buffer through an external program
+ * Filter a buffer through an external program
  * Bound to ^X #
  */
 int
@@ -457,7 +457,7 @@ spawnfilter(int f, int n, int k)
   if ((s = ereply ("# ", line, sizeof(line))) != TRUE)
     return (s);
 
-  /* setup the temporary file */
+  /* Setup the temporary file */
   fdin = mkstemp (filin);
   if (fdin == -1)
     {
@@ -472,7 +472,7 @@ spawnfilter(int f, int n, int k)
       return FALSE;
     }
 
-  /* write it out, checking for errors */
+  /* Write it out, checking for errors */
   if (writeout (filin) != TRUE)
     {
       eprintf ("[Cannot write filter file]");
@@ -498,12 +498,12 @@ spawnfilter(int f, int n, int k)
   ttflush ();
   sgarbf = TRUE;
 
-  /* readin the temporary file */
+  /* Readin the temporary file */
   if ((bp = bfind(bname, TRUE)) != NULL)
     {
       bclear (bp);
       swbuffer (bp);
-      /* on failure, escape gracefully */
+      /* On failure, escape gracefully */
       if (s != TRUE || ((s = readin (filout)) == FALSE))
         {
           eprintf ("[Failed to readin temp file]");
@@ -516,9 +516,9 @@ spawnfilter(int f, int n, int k)
 
   s = TRUE;
 ret:
-  /* Force repaint. */
+  /* Force repaint */
   erefresh (FALSE, 1, 0);
-  /* clean the temporary file */
+  /* Clean the temporary file */
   unlink (filin);
   unlink (filout);
   close (fdin);
