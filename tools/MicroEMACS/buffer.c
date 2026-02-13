@@ -77,7 +77,7 @@
  * Set left column of pop-up buffer list buffer to zero.
  *
  */
-#include	"def.h"
+#include "def.h"
 
 char oldbufn[NBUFN];		/* name of old buffer   */
 
@@ -179,10 +179,10 @@ usebuf (BUFFER *bp)
   {				/* Look for old.        */
     if (wp != curwp && wp->w_bufp == bp)
       {
-	curwp->w_dot = wp->w_dot;
-	curwp->w_mark = wp->w_mark;
-	curwp->w_leftcol = wp->w_leftcol;
-	break;
+        curwp->w_dot = wp->w_dot;
+        curwp->w_mark = wp->w_mark;
+        curwp->w_leftcol = wp->w_leftcol;
+        break;
       }
   }
   return (TRUE);
@@ -202,7 +202,7 @@ getbufn (char bufn[NBUFN])
     strcpy (oldbufn, "");
 
   if ((s = ereplyf ("Use buffer [%s]: ", bufn, NBUFN, EFNEW | EFCR | EFBUF,
-		    oldbufn)) == ABORT)
+                    oldbufn)) == ABORT)
     return (s);			/* CTRL-G abort         */
   if (s == FALSE || bufn[0] == 0)	/* no name specified?   */
     strcpy (bufn, oldbufn);	/* use old name         */
@@ -302,7 +302,7 @@ popblist (void)
   if (blistp->b_nwnd == 0)
     {				/* Not on screen yet.   */
       if ((wp = wpopup ()) == NULL)
-	return (FALSE);
+        return (FALSE);
       addwind (wp, -1);		/* One less window      */
       wp->w_bufp = blistp;
       ++blistp->b_nwnd;
@@ -311,14 +311,14 @@ popblist (void)
   {				/* Update windows       */
     if (wp->w_bufp == blistp)
       {
-	LINE *lp = firstline (blistp);
-	wp->w_linep = lp;
-	wp->w_dot.p = lp;
-	wp->w_leftcol = 0;
-	wp->w_dot.o = 0;
-	wp->w_mark.p = NULL;
-	wp->w_mark.o = 0;
-	wp->w_flag |= WFMODE | WFHARD;
+        LINE *lp = firstline (blistp);
+        wp->w_linep = lp;
+        wp->w_dot.p = lp;
+        wp->w_leftcol = 0;
+        wp->w_dot.o = 0;
+        wp->w_mark.p = NULL;
+        wp->w_mark.o = 0;
+        wp->w_flag |= WFMODE | WFHARD;
       }
   }
   return (TRUE);
@@ -376,8 +376,8 @@ makelist (void)
     lp = firstline (bp);
     while (lp != bp->b_linep)
       {
-	nbytes += llength (lp) + 1;
-	lp = lforw (lp);
+        nbytes += llength (lp) + 1;
+        lp = lforw (lp);
       }
     intoa (b, 12, nbytes);	/* 6 digit buffer size. */
     cp2 = &b[0];
@@ -390,13 +390,13 @@ makelist (void)
     cp2 = &bp->b_fname[0];	/* File name            */
     if (*cp2 != 0)
       {
-	while (cp1 < &line[1 + 1 + 12 + 1 + NBUFN + 1])
-	  *cp1++ = ' ';
-	while ((c = *cp2++) != 0)
-	  {
-	    if (cp1 < &line[128 - 1])
-	      *cp1++ = c;
-	  }
+        while (cp1 < &line[1 + 1 + 12 + 1 + NBUFN + 1])
+          *cp1++ = ' ';
+        while ((c = *cp2++) != 0)
+          {
+            if (cp1 < &line[128 - 1])
+              *cp1++ = c;
+          }
       }
     *cp1 = 0;			/* Add to the buffer.   */
     if (addline (line) == FALSE)
@@ -518,11 +518,11 @@ bufsearch (
   for (;;)
     {
       if (bp == NULL)
-	return (NULL);
+        return (NULL);
       name = bp->b_bname;
       bp = bp->b_bufp;
       if (strncmp (bname, name, cpos) == 0)
-	return (name);
+        return (name);
     }
 }
 
@@ -625,11 +625,11 @@ bclear (BUFFER *bp)
   {				/* Update all windows   */
     if (wp->w_bufp == bp)	/*  viewing this buffer */
       {
-	wp->w_linep = lp;
-	wp->w_dot.p = lp;
-	wp->w_dot.o = 0;
-	wp->w_mark.p = NULL;
-	wp->w_mark.o = 0;
+        wp->w_linep = lp;
+        wp->w_dot.p = lp;
+        wp->w_dot.o = 0;
+        wp->w_mark.p = NULL;
+        wp->w_mark.o = 0;
       }
   }
   return (TRUE);
@@ -708,13 +708,13 @@ swbuffer (BUFFER *bp)
   while (wp != 0)
     {
       if (wp != curwp && wp->w_bufp == bp)
-	{
-	  curwp->w_dot.p = wp->w_dot.p;
-	  curwp->w_dot.o = wp->w_dot.o;
-	  curwp->w_mark.p = wp->w_mark.p;
-	  curwp->w_mark.o = wp->w_mark.o;
-	  break;
-	}
+        {
+          curwp->w_dot.p = wp->w_dot.p;
+          curwp->w_dot.o = wp->w_dot.o;
+          curwp->w_mark.p = wp->w_mark.p;
+          curwp->w_mark.o = wp->w_mark.o;
+          break;
+        }
       wp = wp->w_wndp;
     }
   return (TRUE);
@@ -727,7 +727,7 @@ BUFFER* get_scratch(void)
   bp = bfind("main", FALSE);
 
   if (bp != NULL)
-	return bp;
+        return bp;
 
   /* create scratch */
   bp = bfind("main", TRUE);
