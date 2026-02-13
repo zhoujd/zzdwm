@@ -21,7 +21,7 @@
  * Termcap/terminfo display driver
  * Adapted from MicroGNU back to MicroEMACS V30 by Mark Alexander 9-27-88.
  *
- * Termcap is a terminal information database and routines to describe 
+ * Termcap is a terminal information database and routines to describe
  * terminals on most UNIX systems.  Many other systems have adopted
  * this as a reasonable way to allow for widly varying and ever changing
  * varieties of terminal types.  This should be used where practical.
@@ -48,8 +48,8 @@
  *	be based on cost rather than the assuption that scrolling
  *	region operations look better.
  */
-#include	"def.h"
-#include	<termcap.h>
+#include "def.h"
+#include <termcap.h>
 
 #define	BEL	0x07		/* BEL character.               */
 #define	LF	0x0A		/* Line feed.                   */
@@ -94,7 +94,7 @@ char *K[NFKEYS],		/* other function key codes             */
  *KH, *KU, *KD, *KL, *KR;	/* home, arrow keys                    */
 #endif
 int SG;				/* number of glitches, 0 for invisable, -1 for none     */
-	/* (yes virginia, there are terminals with invisible glitches)  */
+        /* (yes virginia, there are terminals with invisible glitches)  */
 
 /*
  * Initialize the terminal when the editor
@@ -323,7 +323,7 @@ tteeol (void)
     {
       register int i = ncol - ttcol;
       while (i--)
-	ttputc (' ');
+        ttputc (' ');
       ttrow = ttcol = HUGE;
     }
 }
@@ -340,16 +340,16 @@ tteeop (void)
     {
       putpad (CE);
       if (insdel)
-	ttdell (ttrow + 1, LI, LI - ttrow - 1);
+        ttdell (ttrow + 1, LI, LI - ttrow - 1);
       else
-	{			/* do it by hand */
-	  register int line;
-	  for (line = ttrow + 1; line <= LI; ++line)
-	    {
-	      ttmove (line, 0);
-	      tteeol ();
-	    }
-	}
+        {			/* do it by hand */
+          register int line;
+          for (line = ttrow + 1; line <= LI; ++line)
+            {
+              ttmove (line, 0);
+              tteeol ();
+            }
+        }
       ttrow = ttcol = HUGE;
     }
 }
@@ -360,7 +360,7 @@ tteeop (void)
 void
 ttbeep (void)
 {
-/*	ttputc (BEL); */
+  /* ttputc (BEL); */
   ttflush ();
 }
 
@@ -388,7 +388,7 @@ ttinsl (int row, int bot, int nchunk)
       ttwindow (row, bot);
       ttmove (row, 0);
       while (nchunk--)
-	putpad (SR);
+        putpad (SR);
       ttnowindow ();
       return;
     }
@@ -396,16 +396,16 @@ ttinsl (int row, int bot, int nchunk)
     {
       ttmove (1 + bot - nchunk, 0);
       if (pDL)
-	putpad (tgoto (pDL, 0, nchunk));
+        putpad (tgoto (pDL, 0, nchunk));
       else
-	for (i = 0; i < nchunk; i++)	/* For all lines in the chunk   */
-	  putpad (DL);
+        for (i = 0; i < nchunk; i++)	/* For all lines in the chunk   */
+          putpad (DL);
       ttmove (row, 0);
       if (pAL)
-	putpad (tgoto (pAL, 0, nchunk));
+        putpad (tgoto (pAL, 0, nchunk));
       else
-	for (i = 0; i < nchunk; i++)	/* For all lines in the chunk   */
-	  putpad (AL);
+        for (i = 0; i < nchunk; i++)	/* For all lines in the chunk   */
+          putpad (AL);
       ttrow = HUGE;
       ttcol = HUGE;
     }
@@ -415,9 +415,9 @@ ttinsl (int row, int bot, int nchunk)
 
 /*
  * Delete nchunk line(s) from "row", replacing the
- * bottom line on the screen with a blank line. 
- * Unless we're using the scrolling region, this is 
- * done with a crafty sequences of insert and delete 
+ * bottom line on the screen with a blank line.
+ * Unless we're using the scrolling region, this is
+ * done with a crafty sequences of insert and delete
  * lines.  The presence of the echo area makes a
  * boundry condition go away.
  */
@@ -437,23 +437,23 @@ ttdell (int row, int bot, int nchunk)
       ttwindow (row, bot);
       ttmove (bot, 0);
       while (nchunk--)
-	ttputc (LF);
+        ttputc (LF);
       ttnowindow ();
     }
   else if (insdel)
     {
       ttmove (row, 0);		/* Else use insert/delete line  */
       if (pDL)
-	putpad (tgoto (pDL, 0, nchunk));
+        putpad (tgoto (pDL, 0, nchunk));
       else
-	for (i = 0; i < nchunk; i++)	/* For all lines in the chunk   */
-	  putpad (DL);
+        for (i = 0; i < nchunk; i++)	/* For all lines in the chunk   */
+          putpad (DL);
       ttmove (1 + bot - nchunk, 0);
       if (pAL)
-	putpad (tgoto (pAL, 0, nchunk));
+        putpad (tgoto (pAL, 0, nchunk));
       else
-	for (i = 0; i < nchunk; i++)	/* For all lines in the chunk   */
-	  putpad (AL);
+        for (i = 0; i < nchunk; i++)	/* For all lines in the chunk   */
+          putpad (AL);
       ttrow = HUGE;
       ttcol = HUGE;
     }
@@ -471,7 +471,7 @@ ttdell (int row, int bot, int nchunk)
  * to ensure that the next call to "ttmove" does
  * not turn into a no-op (the window adjustment
  * moves the cursor).
- * 
+ *
  */
 void
 ttwindow (int top, int bot)
@@ -490,7 +490,7 @@ ttwindow (int top, int bot)
  * Switch to full screen scroll. This is
  * used by "spawn.c" just before is suspends the
  * editor, and by "display.c" when it is getting ready
- * to exit.  This function gets to full screen scroll 
+ * to exit.  This function gets to full screen scroll
  * by telling the terminal to set a scrolling regin
  * that is LI or nrow rows high, whichever is larger.
  * This behavior seems to work right on systems
@@ -524,13 +524,13 @@ ttcolor (int color)
   if (color != tthue)
     {
       if (color == CTEXT)
-	{			/* Normal video.        */
-	  putpad (SE);
-	}
+        {			/* Normal video.        */
+          putpad (SE);
+        }
       else if (color == CMODE)
-	{			/* Reverse video.       */
-	  putpad (SO);
-	}
+        {			/* Reverse video.       */
+          putpad (SO);
+        }
       tthue = color;		/* Save the color.      */
     }
 }
