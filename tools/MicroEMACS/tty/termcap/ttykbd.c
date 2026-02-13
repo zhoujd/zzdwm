@@ -76,7 +76,7 @@
  *	sequence (including arrow keys) this code has a very nasty
  *	side effect of eating that key.  For example, on an Adds viewpoint
  *	60, six normal control characters are eaten if you have defined
- *	XKEYS and put the keys in the termcap.  More than a little 
+ *	XKEYS and put the keys in the termcap.  More than a little
  *	creativity is needed because ^U is one of the arrow keys, and
  *	prefixes aren't bindable.
  *
@@ -104,14 +104,14 @@
 /* key sequences (from tty.c) */
 extern char *K[], *L[], *KS, *KE, *KH, *KU, *KD, *KL, *KR;
 char *keystrings[32] = {
-  NULL, "Up", "Down", "Left",
-  "Right", "PgUp", "PgDn", "Home",
-  "End", "Insert", "Delete", "F1",
-  "F2", "F3", "F4", "F5",
-  "F6", "F7", "F8", "F9",
-  "F10", "S-F1", "S-F2", "S-F3",
-  "S-F4", "S-F5", "S-F6", "S-F7",
-  "S-F8", "S-F9", "S-F10", "mouse"
+  NULL,    "Up",     "Down",   "Left",
+  "Right", "PgUp",   "PgDn",   "Home",
+  "End",   "Insert", "Delete", "F1",
+  "F2",    "F3",     "F4",     "F5",
+  "F6",    "F7",     "F8",     "F9",
+  "F10",   "S-F1",   "S-F2",   "S-F3",
+  "S-F4",  "S-F5",   "S-F6",   "S-F7",
+  "S-F8",  "S-F9",   "S-F10",  "mouse"
 };
 
 /* The character sequences produced by the various keys
@@ -120,23 +120,23 @@ char *keystrings[32] = {
  */
 #if SUNOS
 char *keycodes[32] = {
-/*80*/ NULL, "\033OA", "\033OB", "\033OD",
-/*84*/ "\033OC", "\033[5~", "\033[6~", "\033O\377",
-/*88*/ "\033O\020", "\033[2~", NULL, "\033OP",
-/*8c*/ "\033OQ", "\033OR", "\033OS", "\033OT",
-  "\033On", "\033Os", "\033Ow", "\033Ox",
-  "\033Oy", NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL
+/*80*/ NULL,        "\033OA", "\033OB",   "\033OD",
+/*84*/ "\033OC",    "\033[5~", "\033[6~", "\033O\377",
+/*88*/ "\033O\020", "\033[2~", NULL,      "\033OP",
+/*8c*/ "\033OQ",    "\033OR", "\033OS",   "\033OT",
+  "\033On", "\033Os", "\033Ow",   "\033Ox",
+  "\033Oy", NULL,     NULL,       NULL,
+  NULL,     NULL, NULL, NULL,
+  NULL,     NULL, NULL, NULL
 };
 
 #else
 
 char *keycodes[32] = {
-/*80*/ NULL, "\033OA", "\033OB", "\033OD",
+/*80*/ NULL,     "\033OA",  "\033OB",  "\033OD",
 /*84*/ "\033OC", "\033[5~", "\033[6~", "\033OH",
-/*88*/ "\033OF", "\033[2~", NULL, "\033OP",
-/*8c*/ "\033OQ", "\033OR", "\033OS", "\033[15~",
+/*88*/ "\033OF", "\033[2~", NULL,      "\033OP",
+/*8c*/ "\033OQ", "\033OR", "\033OS",   "\033[15~",
   "\033[17~", "\033[18~", "\033[19~", "\033[20~",
   "\033[21~", "\033[23~", "\033[24~", "\033[25~",
   "\033[26~", "\033[28~", "\033[29~", "\033[31~",
@@ -227,27 +227,27 @@ getkbd (void)
   for (t = keywords; t->type == NODE; t = t->sibling)
     if (t->value == c)
       {				/* possible function key sequence  */
-	if (c != METACH)
-	  return parse_or_mouse (t->child);
-	else
-	  {			/* maybe sequence, maybe META char */
-	    c = ttgetc ();
+        if (c != METACH)
+          return parse_or_mouse (t->child);
+        else
+          {			/* maybe sequence, maybe META char */
+            c = ttgetc ();
 #if DEBUG
-	    fprintf (stderr, "getkbd(2): c = %x\n", c);
+            fprintf (stderr, "getkbd(2): c = %x\n", c);
 #endif
-	    for (t = t->child; t->type == NODE; t = t->sibling)
-	      if (t->value == c)
-		return parse_or_mouse (t->child);
-	    /* METACH-METACH -> METACH */
-	    if (c == METACH)
-	      return (METACH);
-	    /* Else make c into a META character */
-	    if (CISLOWER (c) != FALSE)
-	      c = CTOUPPER (c);
-	    if (c >= 0x00 && c <= 0x1F)
-	      c = KCTRL | (c + '@');
-	    return (KMETA | c);
-	  }
+            for (t = t->child; t->type == NODE; t = t->sibling)
+              if (t->value == c)
+                return parse_or_mouse (t->child);
+            /* METACH-METACH -> METACH */
+            if (c == METACH)
+              return (METACH);
+            /* Else make c into a META character */
+            if (CISLOWER (c) != FALSE)
+              c = CTOUPPER (c);
+            if (c >= 0x00 && c <= 0x1F)
+              c = KCTRL | (c + '@');
+            return (KMETA | c);
+          }
       }
   return (c);
 #endif
@@ -277,10 +277,10 @@ parse (first)
     if (t->value == c)
       {
 #if DEBUG
-	fprintf (stderr, "parse() returning parse(t->child = %p)\n",
-		 t->child);
+        fprintf (stderr, "parse() returning parse(t->child = %p)\n",
+                 t->child);
 #endif
-	return (parse (t->child));	/* try next level   */
+        return (parse (t->child));	/* try next level   */
       }
 #if DEBUG
   fprintf (stderr, "parse() returning c = %x\n", c);
@@ -302,14 +302,14 @@ parse_or_mouse (TRIE first)
       mouse_row    = ttgetc () - ' ' - 1;
 #if DEBUG
       fprintf (stderr, "button %d, row %d, column %d\n",
-	       mouse_button, mouse_row, mouse_column);
+               mouse_button, mouse_row, mouse_column);
 #endif
     }
   return c;
 }
 
 /*
- * If XKEYS is defined, get key definitions from the termcap 
+ * If XKEYS is defined, get key definitions from the termcap
  * entry and put them in the parse table.
  */
 void
@@ -337,11 +337,11 @@ ttykeymapinit (void)
   for (i = 0; i < NFKEYS; i++)
     {
       if (L[i] && *L[i])	/* record new name */
-	keystrings[(KF0 - KFIRST) + i] = L[i];
+        keystrings[(KF0 - KFIRST) + i] = L[i];
       if (K[i] && *K[i])
-	adddict (K[i], (KEY) (KF0 + i));
+        adddict (K[i], (KEY) (KF0 + i));
       else
-	adddict (keycodes[KF0 - KFIRST + i], KF0 + i);
+        adddict (keycodes[KF0 - KFIRST + i], KF0 + i);
     }
 
   /*
@@ -526,8 +526,8 @@ tinsert (const char *kstring, KEY kcode, TRIE first)
   for (p = first; p->type == NODE; p = p->sibling)
     if (p->value == key)
       {
-	match = p;
-	break;
+        match = p;
+        break;
       }
 
   if (match == NULL)
@@ -555,32 +555,32 @@ tprint (TRIE p, int level)
   while (p->type != SENTINEL)
     {
       for (i = 0; i < level * 2; i++)
-	fputc (' ', stderr);
+        fputc (' ', stderr);
       c = p->value;
       if (p->type == VALUE)
-	fprintf (stderr, "value 0x%x\n", c);
+        fprintf (stderr, "value 0x%x\n", c);
       else
-	{
-	  if (c < 0x20)
-	    {
-	      buf[0] = '^';
-	      buf[1] = c + '@';
-	      buf[2] = '\0';
-	    }
-	  else if (c >= 0x7f)
-	    {
-	      buf[0] = '?';
-	      buf[1] = '?';
-	      buf[2] = '\0';
-	    }
-	  else
-	    {
-	      buf[0] = c;
-	      buf[1] = '\0';
-	    }
-	  fprintf (stderr, "%s (0x%x)\n", buf, c);
-	  tprint (p->child, level + 1);
-	}
+        {
+          if (c < 0x20)
+            {
+              buf[0] = '^';
+              buf[1] = c + '@';
+              buf[2] = '\0';
+            }
+          else if (c >= 0x7f)
+            {
+              buf[0] = '?';
+              buf[1] = '?';
+              buf[2] = '\0';
+            }
+          else
+            {
+              buf[0] = c;
+              buf[1] = '\0';
+            }
+          fprintf (stderr, "%s (0x%x)\n", buf, c);
+          tprint (p->child, level + 1);
+        }
       p = p->sibling;
     }
 }

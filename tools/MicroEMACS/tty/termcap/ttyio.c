@@ -30,7 +30,7 @@
  * keyboard characters, and write characters to
  * the display in a barely buffered fashion.
  */
-#include	"def.h"
+#include "def.h"
 
 #ifdef __hpux
 /* Need this kludge to get dirent.h to define POSIX stuff */
@@ -39,17 +39,17 @@
 #define _INCLUDE_XOPEN_SOURCE
 #endif
 
-#include	<errno.h>
-#include	<unistd.h>
-#include	<sys/ioctl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
 #ifdef sun
-#include	<sys/filio.h>
+#include <sys/filio.h>
 #endif
 #if HAVE_UNISTD_H
-#include        <unistd.h>
+#include <unistd.h>
 #endif
-#include	<termios.h>
-#include	<termcap.h>
+#include <termios.h>
+#include <termcap.h>
 
 /* The following kludge is for SunOS */
 #ifndef _POSIX_VDISABLE
@@ -192,8 +192,8 @@ setttysize (void)
 #endif
     if ((nrow = tgetnum ("li")) <= 0 || (ncol = tgetnum ("co")) <= 0)
       {
-	nrow = 24;
-	ncol = 80;
+        nrow = 24;
+        ncol = 80;
       }
   if (nrow > NROW)		/* Don't crash if the   */
     nrow = NROW;		/* termcap entry is     */
@@ -245,7 +245,7 @@ ttputc (int c)
   for (i = 0; i < len; i++)
     {
       if (nobuf >= NOBUF)
-	ttflush ();
+        ttflush ();
       obuf[nobuf++] = buf[i];
     }
   return c;
@@ -272,7 +272,7 @@ ttflush (void)
   if (nobuf != 0)
     {
       if (write (1, obuf, nobuf) != nobuf)
-	fprintf (stderr, "Write error!\n");
+        fprintf (stderr, "Write error!\n");
       nobuf = 0;
     }
 }
@@ -296,10 +296,10 @@ ttgetc (void)
   for (i = 1; i < len; i++)
     {
       if ((ret = read (0, &buf[i], 1)) != 1)
-	{
-	  /* fprintf(stderr,"read returned %d, errno = %d\n", ret, errno); */
-	  break;
-	}
+        {
+          /* fprintf(stderr,"read returned %d, errno = %d\n", ret, errno); */
+          break;
+        }
     }
   return ugetc (buf, 0, NULL);
 }
