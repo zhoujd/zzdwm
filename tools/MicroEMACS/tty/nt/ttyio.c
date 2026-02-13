@@ -53,8 +53,8 @@
 /* Variables that MicroEMACS uses for screen size.  Initialized by
  * ttopen().
  */
-int nrow = 25;          /* Terminal size, rows.     		*/
-int ncol = 80;          /* Terminal size, columns.  		*/
+int nrow = 25;          /* Terminal size, rows.                 */
+int ncol = 80;          /* Terminal size, columns.              */
 int npages = 1;		/* Number of pages on terminal.		*/
 int windowrow;		/* Row in buffer of top window line.	*/
 int windowcol;		/* Column in buffer of top window line.	*/
@@ -68,36 +68,37 @@ static DWORD  conmode;
  * Apparently, OS/2 doesn't allow control-BREAK to be disabled
  * when the keyboard is in binary mode, using signal.
  */
-void ttopen()
+void
+ttopen()
 {
-    CONSOLE_SCREEN_BUFFER_INFO binfo;
-    CONSOLE_CURSOR_INFO cinfo;
+  CONSOLE_SCREEN_BUFFER_INFO binfo;
+  CONSOLE_CURSOR_INFO cinfo;
 
-    /* Get handles for console output and input
-     */
-    hout = GetStdHandle(STD_OUTPUT_HANDLE);
-    hin =  GetStdHandle(STD_INPUT_HANDLE);
+  /* Get handles for console output and input
+   */
+  hout = GetStdHandle(STD_OUTPUT_HANDLE);
+  hin =  GetStdHandle(STD_INPUT_HANDLE);
 
-    /* Save current keyboard mode, then disable line editing.
-     */
-    GetConsoleMode(hin, &conmode);
-    SetConsoleMode(hin, 0);         /* disable line mode */
+  /* Save current keyboard mode, then disable line editing.
+   */
+  GetConsoleMode(hin, &conmode);
+  SetConsoleMode(hin, 0);         /* disable line mode */
 
-    /* Get screen size.
-     */
-    if (GetConsoleScreenBufferInfo(hout, &binfo) == TRUE)
+  /* Get screen size.
+   */
+  if (GetConsoleScreenBufferInfo(hout, &binfo) == TRUE)
     {
-	windowrow = binfo.srWindow.Top;
-	windowcol = binfo.srWindow.Left;
-        nrow = binfo.srWindow.Bottom - windowrow + 1;
-        ncol = binfo.srWindow.Right  - windowcol + 1;
+      windowrow = binfo.srWindow.Top;
+      windowcol = binfo.srWindow.Left;
+      nrow = binfo.srWindow.Bottom - windowrow + 1;
+      ncol = binfo.srWindow.Right  - windowcol + 1;
     }
 
-    /* Set block cursor
-     */
-    cinfo.dwSize = 100;     /* make it 100% visible */
-    cinfo.bVisible = TRUE;
-    SetConsoleCursorInfo(hout, &cinfo);
+  /* Set block cursor
+   */
+  cinfo.dwSize = 100;     /* make it 100% visible */
+  cinfo.bVisible = TRUE;
+  SetConsoleCursorInfo(hout, &cinfo);
 }
 
 
@@ -107,7 +108,8 @@ void ttopen()
  * FALSE otherwise.
  */
 
-int ttold (void)
+int
+ttold (void)
 {
   return SetConsoleMode(hin, conmode) != 0;
 }
@@ -119,7 +121,8 @@ int ttold (void)
  * FALSE otherwise.
  */
 
-int ttnew (void)
+int
+ttnew (void)
 {
   return SetConsoleMode(hin, 0) != 0;         /* disable line mode */
 }
@@ -128,22 +131,25 @@ int ttnew (void)
 /*
  * Restore video system, control-break flag.
  */
-void ttclose()
+void
+ttclose()
 {
-    SetConsoleMode(hin, conmode);
+  SetConsoleMode(hin, conmode);
 }
 
 /*
  * No operation in MS-DOS.
  */
-void ttflush()
+void
+ttflush()
 {
 }
 
 /*
  * Read character.
  */
-int ttgetc()
+int
+ttgetc()
 {
 #ifndef __BORLANDC__
   DWORD nread;
@@ -154,40 +160,40 @@ int ttgetc()
   for (;;)
     {
       if (!ReadConsoleInput(hin, &ir, 1, &nread))
-	return 0;
+        return 0;
       if (ir.EventType != KEY_EVENT)
-	continue;
+        continue;
       ker = &ir.Event.KeyEvent;
       if (!ker->bKeyDown)
-	continue;
+        continue;
       ch = ker->uChar.AsciiChar;
       if (ch != 0)
-	{
-	  if (ch == 0x20 && (ker->dwControlKeyState & (LEFT_CTRL_PRESSED |
+        {
+          if (ch == 0x20 && (ker->dwControlKeyState & (LEFT_CTRL_PRESSED |
                              RIGHT_CTRL_PRESSED)) != 0)
-	    {
-	      ch = 0;
-	    }
+            {
+              ch = 0;
+            }
             return ch;
-	}
+        }
       else
-	{
-	  ch = ker->wVirtualScanCode;
-	  int shifted = ker->dwControlKeyState & SHIFT_PRESSED;
-	  if (ch >= 0x3b && ch <= 0x44)
-	    {
-	      /* Function keys.  Test for shifted state. */
-	      if (shifted)
-		return (ch - 0x3b + 0x54) | 0x100;
-	      else
-		return ch | 0x100;
-	    }
+        {
+          ch = ker->wVirtualScanCode;
+          int shifted = ker->dwControlKeyState & SHIFT_PRESSED;
+          if (ch >= 0x3b && ch <= 0x44)
+            {
+              /* Function keys.  Test for shifted state. */
+              if (shifted)
+                return (ch - 0x3b + 0x54) | 0x100;
+              else
+                return ch | 0x100;
+            }
           else if ((ch >= 0x47 && ch <= 0x53) ||
                    (ch >= 0x57 && ch <= 0x58))
-	    {
-	      /* Direction keys, or F11-F12. */
-	      return ch | 0x100;
-	    }
+            {
+              /* Direction keys, or F11-F12. */
+              return ch | 0x100;
+            }
         }
     }
 
@@ -195,14 +201,14 @@ int ttgetc()
 #else
     int ch;
     if ((ch = getch()) == 0)		/* extended key */
-    {
-	if ((ch = getch()) == 3)	/* null? */
-	    return 0;			/* convert to 0 */
-	else
-	    return (ch + 0x100);	/* flag this as extended key */
-    }
+      {
+        if ((ch = getch()) == 3)	/* null? */
+            return 0;			/* convert to 0 */
+        else
+            return (ch + 0x100);	/* flag this as extended key */
+      }
     else
-	return (ch);			/* normal key */
+      return (ch);			/* normal key */
 #endif
 }
 
@@ -210,13 +216,14 @@ int ttgetc()
  * Check for the presence of a keyboard character.
  * Return TRUE if a key is already in the queue.
  */
-int ttstat()
+int
+ttstat()
 {
 #if 0
-    KBDKEYINFO  kinfo;
+  KBDKEYINFO  kinfo;
 
-    return (KbdPeek(&kinfo,0) == 0);
+  return (KbdPeek(&kinfo,0) == 0);
 #else
-    return 0;
+  return 0;
 #endif
 }
