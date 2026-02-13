@@ -346,6 +346,7 @@ spawncmd (int f, int n, int k)
 
   if ((s = ereply ("! ", line, sizeof(line))) != TRUE)
     return (s);
+
   ttputc ('\n');                /* Already have '\r'    */
   ttcolor (CTEXT);              /* Normal color.        */
   ttwindow (0, nrow - 1);       /* Full screen scroll.  */
@@ -360,6 +361,7 @@ spawncmd (int f, int n, int k)
   eerase ();
   ttflush ();
   sgarbf = TRUE;
+
   return TRUE;
 }
 
@@ -402,6 +404,9 @@ spawnpipe(int f, int n, int k)
   system (line);
   fflush (stdout);              /* to be sure P.K.      */
   ttopen ();
+  eerase ();
+  ttflush ();
+  sgarbf = TRUE;
 
   /* readin the temporary file */
   if ((bp = bfind(bname, TRUE)) != NULL)
@@ -420,9 +425,8 @@ spawnpipe(int f, int n, int k)
 
   s = TRUE;
 ret:
-  eerase ();
-  ttflush ();
-  sgarbf = TRUE;
+  /* Force repaint. */
+  erefresh (FALSE, 1, 0);
   /* clean the temporary file */
   unlink (tmp);
   close (fd);
@@ -490,6 +494,9 @@ spawnfilter(int f, int n, int k)
   system (line);
   fflush (stdout);              /* to be sure P.K.      */
   ttopen ();
+  eerase ();
+  ttflush ();
+  sgarbf = TRUE;
 
   /* readin the temporary file */
   if ((bp = bfind(bname, TRUE)) != NULL)
@@ -509,9 +516,8 @@ spawnfilter(int f, int n, int k)
 
   s = TRUE;
 ret:
-  eerase ();
-  ttflush ();
-  sgarbf = TRUE;
+  /* Force repaint. */
+  erefresh (FALSE, 1, 0);
   /* clean the temporary file */
   unlink (filin);
   unlink (filout);
