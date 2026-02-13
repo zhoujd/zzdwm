@@ -36,8 +36,8 @@ extern int attnorm;	/* In tty.c */
 /* Variables that MicroEMACS uses for screen size.  Initialized by
  * ttopen().
  */
-int nrow = 25;          /* Terminal size, rows.     		*/
-int ncol = 80;          /* Terminal size, columns.  		*/
+int nrow = 25;          /* Terminal size, rows.                 */
+int ncol = 80;          /* Terminal size, columns.              */
 int npages = 1;		/* Number of pages on terminal.		*/
 int windowrow;		/* Row in buffer of top window line.	*/
 int windowcol;		/* Column in buffer of top window line.	*/
@@ -122,9 +122,9 @@ ttgetc (void)
   if ((ch = _getch ()) == 0 || ch == 0xe0)	/* extended key */
     {
       if ((ch = _getch ()) == 3)	/* null? */
-	return 0;			/* convert to 0 */
+        return 0;			/* convert to 0 */
       else
-	return (ch + 0x100);	/* flag this as extended key */
+        return (ch + 0x100);	/* flag this as extended key */
     }
   else
     return (ch);			/* normal key */
@@ -179,7 +179,7 @@ ttinsertc (int c)
       &fill))
     ttputc ('!');
   else
-    ttputc (c); 
+    ttputc (c);
   return c;
 }
 

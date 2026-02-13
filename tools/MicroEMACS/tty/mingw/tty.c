@@ -28,39 +28,37 @@
 #endif
 
 #include <io.h>
-
 #include "def.h"
 
-#define BEL     0x07                    /* BEL character.               */
+#define BEL 0x07                   /* BEL character.               */
 
-static  int     ttattr;                 /* creen attributes     	*/
+static int ttattr;                 /* creen attributes             */
+static int attinv  = 0x70;         /* attributes for inverse video */
+       int attnorm = 7;            /* attributes for normal video  */
 
-static  int     attinv = 0x70;          /* attributes for inverse video */
-	int     attnorm = 7;            /* attributes for normal video  */
-
-extern  int     tttop;
-extern  int     ttbot;
-extern  int     tthue;
+extern int tttop;
+extern int ttbot;
+extern int tthue;
 
 /* Variables from ttyio.c */
-extern	int	windowrow;
-extern	int	windowcol;
-extern  int     ttrow;
-extern  int     ttcol;
+extern int windowrow;
+extern int windowcol;
+extern int ttrow;
+extern int ttcol;
 
 #if GOSLING
-int     tceeol  =       2;              /* Costs.                       */
-int     tcinsl  =       11;
-int     tcdell  =       11;
+int tceeol = 2;                    /* Costs.                       */
+int tcinsl = 11;
+int tcdell = 11;
 #endif
 
 /*
  * Forward declarations.
  */
 #if 0
-void    ttinit(), tttidy(), ttmove(), tteeol(), tteeop(), ttbeep(),
-    waittick(), ttwindow(), ttnowindow(), ttcolor(), ttresize(),
-    ttputc(), putline();
+void ttinit(), tttidy(), ttmove(), tteeol(), tteeop(), ttbeep(),
+     waittick(), ttwindow(), ttnowindow(), ttcolor(), ttresize(),
+     ttputc(), putline();
 #endif
 
 static HANDLE hout, hin;
@@ -91,8 +89,8 @@ ttinit (void)
     {
       attnorm = buf.Attributes;		  /* current attributes   */
       attinv  = (attnorm & 0x88)          /* blink, invert bits   */
-	      | ((attnorm >> 4) & 0x07)   /* foreground color     */
-	      | ((attnorm << 4) & 0x70);  /* background color     */
+              | ((attnorm >> 4) & 0x07)   /* foreground color     */
+              | ((attnorm << 4) & 0x70);  /* background color     */
       ttcolor (CTEXT);
     }
 }
@@ -120,9 +118,9 @@ ttmove (int row, int col)
   if (ttrow!=row || ttcol!=col)
     {
       if (row > nrow)
-	row = nrow;
+        row = nrow;
       if (col > ncol)
-	col = ncol;
+        col = ncol;
       coord.X = col + windowcol;
       coord.Y = row + windowrow;
       SetConsoleCursorPosition (hout, coord);
@@ -171,12 +169,12 @@ tteeop (void)
    */
   SetConsoleTextAttribute (hout, ttattr);
   while (coord.Y < ttrow + windowrow)
-    {   
+    {
       while (coord.X < ttcol + windowcol)
         {
-	  WriteConsoleOutputCharacter (hout, &space, 1,
-				       coord, &nwritten);
-	  coord.X++;
+          WriteConsoleOutputCharacter (hout, &space, 1,
+                                       coord, &nwritten);
+          coord.X++;
         }
       coord.X = windowcol;
       coord.Y++;

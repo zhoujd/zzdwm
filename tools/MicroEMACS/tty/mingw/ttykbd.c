@@ -17,22 +17,22 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include	"def.h"
+#include "def.h"
 
 /*
  * Names for the keys with basic keycode
  * between KFIRST and KLAST (inclusive). This is used by
  * the key name routine in "kbd.c".
  */
-char	*keystrings[32] = {
-	NULL,		"Up",		"Down",		"Left",
-	"Right",	"PgUp",		"PgDn",		"Home",
-	"End",		"Insert",	"Delete",	"F1",
-	"F2",		"F3",		"F4",		"F5",
-	"F6",		"F7",		"F8",		"F9",
-	"F10",		"S-F1",		"S-F2",		"S-F3",
-	"S-F4",		"S-F5",		"S-F6",		"S-F7",
-	"S-F8",		"S-F9",		"F11",		"F12"
+char *keystrings[32] = {
+  NULL,		"Up",		"Down",		"Left",
+  "Right",	"PgUp",		"PgDn",		"Home",
+  "End",	"Insert",	"Delete",	"F1",
+  "F2",		"F3",		"F4",		"F5",
+  "F6",		"F7",		"F8",		"F9",
+  "F10",	"S-F1",		"S-F2",		"S-F3",
+  "S-F4",	"S-F5",		"S-F6",		"S-F7",
+  "S-F8",	"S-F9",		"F11",		"F12"
 };
 
 /*
@@ -43,41 +43,41 @@ char	*keystrings[32] = {
  * the keystrings table above, unmodified by ALT, or CTRL keys.
  * These keys map into the MicroEMACS internal key values K01 to K1F.
  */
-int	specmap[32] = {
-	0,		0x148,		0x150,		0x14b,
-	0x14d,		0x149,		0x151,		0x147,
-	0x14f,		0x152,		0x153,		0x13b,
-	0x13c,		0x13d,		0x13e,		0x13f,
-	0x140,		0x141,		0x142,		0x143,
-	0x144,		0x154,		0x155,		0x156,
-	0x157,		0x158,		0x159,		0x15a,
-	0x15b,		0x15c,		0x185,		0x186
+int specmap[32] = {
+  0,		0x148,		0x150,		0x14b,
+  0x14d,	0x149,		0x151,		0x147,
+  0x14f,	0x152,		0x153,		0x13b,
+  0x13c,	0x13d,		0x13e,		0x13f,
+  0x140,	0x141,		0x142,		0x143,
+  0x144,	0x154,		0x155,		0x156,
+  0x157,	0x158,		0x159,		0x15a,
+  0x15b,	0x15c,		0x185,		0x186
 };
 
 /* This table gives the values of the special function keys when modified
  * by the ALT key.  Note that S-F1 through S-F10 cannot be modified
  * by ALT and are not in this table.  This is a BIOS limitation.
  */
-int	altmap[21] = {
-	0,		0,		0,		0,
-	0,		0,		0,		0,
-	0,		0,		0,		0x168,
-	0x169,		0x16a,		0x16b,		0x16c,
-	0x16d,		0x16e,		0x16f,		0x170,
-	0x171
+int altmap[21] = {
+  0,		0,		0,		0,
+  0,		0,		0,		0,
+  0,		0,		0,		0x168,
+  0x169,	0x16a,		0x16b,		0x16c,
+  0x16d,	0x16e,		0x16f,		0x170,
+  0x171
 };
 
 /* This table gives the values of the special function keys when modified
  * by the CTRL key.  Note that S-F1 through S-F10 cannot be modified
  * by CTRL and are not in this table.  This is a BIOS limitation.
  */
-int	ctrlmap[21] = {
-	0,		0,		0,		0x173,
-	0x174,		0x184,		0x176,		0x177,
-	0x175,		0,		0,		0x15e,
-	0x15f,		0x160,		0x161,		0x162,
-	0x163,		0x164,		0x165,		0x166,
-	0x167
+int ctrlmap[21] = {
+  0,		0,		0,		0x173,
+  0x174,	0x184,		0x176,		0x177,
+  0x175,	0,		0,		0x15e,
+  0x15f,	0x160,		0x161,		0x162,
+  0x163,	0x164,		0x165,		0x166,
+  0x167
 };
 
 /*
@@ -87,10 +87,10 @@ int	ctrlmap[21] = {
  */
 int altaz[26] =
 {
-	0x11E,	0x130,	0x12E,	0x120,	0x112,	0x121,	0x122,	0x123,
-	0x117,	0x124,	0x125,	0x126,	0x132,	0x131,	0x118,	0x119,
-	0x110,	0x113,	0x11F,	0x114,	0x116,	0x12F,	0x111,	0x12D,
-	0x115,	0x12C
+  0x11E, 0x130,	0x12E,	0x120,	0x112,	0x121,	0x122,	0x123,
+  0x117, 0x124,	0x125,	0x126,	0x132,	0x131,	0x118,	0x119,
+  0x110, 0x113,	0x11F,	0x114,	0x116,	0x12F,	0x111,	0x12D,
+  0x115, 0x12C
 };
 
 /*
@@ -100,8 +100,8 @@ int altaz[26] =
  */
 int alt09[10] =
 {
-	0x181,	0x178,	0x179,	0x17a,	0x17b,
-	0x17c,	0x17d,	0x17e,	0x17f,	0x180
+  0x181, 0x178,	0x179,	0x17a,	0x17b,
+  0x17c, 0x17d,	0x17e,	0x17f,	0x180
 };
 
 /*
@@ -119,12 +119,12 @@ getkbd (void)
   register int	i;
 
   c = ttgetc ();
-  if (c < 0x100)				/* normal key?		*/
-	  return (c);			/* just return it	*/
+  if (c < 0x100)			/* normal key?		*/
+          return (c);			/* just return it	*/
 
   for (i = 0; i < 32; i++)		/* search SPECIAL map	*/
     if (c == specmap[i])		/* found it?		*/
-      return (KFIRST + i);	/* return internal code */
+      return (KFIRST + i);              /* return internal code */
 
   for (i = 0; i < 21; i++)		/* search ALT map	*/
     if (c == altmap[i])
@@ -198,7 +198,7 @@ ttykeymapinit (void)
   for (i = 0xA0; i < 0xFF; ++i)
     {
       if (getbinding (i) != NULL)
-	abort ();
+        abort ();
       setbinding (i, sp);
     }
 }
