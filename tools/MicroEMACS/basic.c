@@ -33,7 +33,7 @@
  * mark. Only moves between lines, which might make the
  * current buffer framing bad, are hard.
  */
-#include	"def.h"
+#include "def.h"
 
 /*
  * Go to beginning of line.
