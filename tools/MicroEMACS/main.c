@@ -113,8 +113,7 @@ void
 usage(void)
 {
   fprintf(stderr, "usage: me [-234bcdrxz] [-g line] [-p profile] "
-          "[+line] [file ...] [file:line[:column]]\n");
-  exit(EXIT_SUCCESS);
+          "[+[line]] [file ...] [file:line[:column]]\n");
 }
 
 /*
@@ -130,12 +129,14 @@ main (int argc, char *argv[])
   register char *arg;
   char *proptr;
   int line = 0;
+  int gotoflag = FALSE;
 
   if (argc == 2)
     {
       if (strcmp(argv[1], "--help") == 0)
         {
           usage();
+          exit(EXIT_SUCCESS);
         }
       if (strcmp(argv[1], "--version") == 0)
         {
@@ -173,7 +174,10 @@ main (int argc, char *argv[])
             case 'g':
               n++;
               if (n < argc)
-                line = atoi (argv[n]);
+                {
+                  gotoflag = TRUE;
+                  line = atoi (argv[n]);
+                }
               break;
             case 'm':
               mouse = TRUE;
@@ -202,6 +206,7 @@ main (int argc, char *argv[])
         }
       else if (arg[0] == '+')
         {
+          gotoflag = TRUE;
           line = atoi (&arg[1]);
         }
     }
@@ -231,6 +236,7 @@ main (int argc, char *argv[])
           char * colon = strchr (arg, ':');
           if (colon != NULL && colon[1] >= '0' && colon[1] <= '9')
             {
+              gotoflag = TRUE;
               *colon = '\0';
               lp = colon + 1;
               colon = strchr (lp, ':');
@@ -244,7 +250,7 @@ main (int argc, char *argv[])
           bufinit (arg);	/* make buffer & window */
           //update ();
           readin (arg);		/* read in the file     */
-          if (line != 0)	/* goto line specified  */
+          if (gotoflag)		/* goto line specified  */
             {
               gotoline (TRUE, line, 0);
               line = 0;

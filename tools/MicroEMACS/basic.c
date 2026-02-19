@@ -453,7 +453,13 @@ gotoline (int f, int n, int k)
 	return (s);
       n = atoi (buf);
     }
-  if (n <= 0)
+  /* Handle the case where the user may be passed something like this:
+   *  filename +
+   * In this case we just go to the end of the buffer.
+   */
+  if (n == 0)
+    return gotoeob(f, n, k);
+  if (n < 0)
     {
       eprintf ("Bad line");
       return (FALSE);
