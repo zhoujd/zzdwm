@@ -32,8 +32,8 @@
  * and let me ask some questions the standard macros (in
  * ctype.h) don't let you ask.
  */
-#include	"def.h"
-#include	<wctype.h>
+#include "def.h"
+#include <wctype.h>
 
 /*
  * These flags, and the macros below them,
@@ -65,38 +65,38 @@
  * standard "ctype" macros cannot ask.
  */
 char cinfo[128] = {
-	_C,		_C,		_C,		_C,	/* 0x0X	*/
-	_C,		_C,		_C,		_C,
-	_C,		_C,		_C,		_C,
-	_C,		_C,		_C,		_C,
-	_C,		_C,		_C,		_C,	/* 0x1X	*/
-	_C,		_C,		_C,		_C,
-	_C,		_C,		_C,		_C,
-	_C,		_C,		_C,		_C,
-	0,		_P,		0,		0,	/* 0x2X	*/
-	_W,		0,		0,		_W,
-	0,		0,		0,		0,
-	0,		0,		_P,		0,
-	_W,		_W,		_W,		_W,	/* 0x3X	*/
-	_W,		_W,		_W,		_W,
-	_W,		_W,		0,		0,
-	0,		0,		0,		_P,
-	0,		_U|_W,		_U|_W,		_U|_W,	/* 0x4X	*/
-	_U|_W,		_U|_W,		_U|_W,		_U|_W,
-	_U|_W,		_U|_W,		_U|_W,		_U|_W,
-	_U|_W,		_U|_W,		_U|_W,		_U|_W,
-	_U|_W,		_U|_W,		_U|_W,		_U|_W,	/* 0x5X	*/
-	_U|_W,		_U|_W,		_U|_W,		_U|_W,
-	_U|_W,		_U|_W,		_U|_W,		0,
-	0,		0,		0,		_W,
-	0,		_L|_W,		_L|_W,		_L|_W,	/* 0x6X	*/
-	_L|_W,		_L|_W,		_L|_W,		_L|_W,
-	_L|_W,		_L|_W,		_L|_W,		_L|_W,
-	_L|_W,		_L|_W,		_L|_W,		_L|_W,
-	_L|_W,		_L|_W,		_L|_W,		_L|_W,	/* 0x7X	*/
-	_L|_W,		_L|_W,		_L|_W,		_L|_W,
-	_L|_W,		_L|_W,		_L|_W,		0,
-	0,		0,		0,		_C,
+        _C,		_C,		_C,		_C,	/* 0x0X	*/
+        _C,		_C,		_C,		_C,
+        _C,		_C,		_C,		_C,
+        _C,		_C,		_C,		_C,
+        _C,		_C,		_C,		_C,	/* 0x1X	*/
+        _C,		_C,		_C,		_C,
+        _C,		_C,		_C,		_C,
+        _C,		_C,		_C,		_C,
+        0,		_P,		0,		0,	/* 0x2X	*/
+        _W,		0,		0,		_W,
+        0,		0,		0,		0,
+        0,		0,		_P,		0,
+        _W,		_W,		_W,		_W,	/* 0x3X	*/
+        _W,		_W,		_W,		_W,
+        _W,		_W,		0,		0,
+        0,		0,		0,		_P,
+        0,		_U|_W,		_U|_W,		_U|_W,	/* 0x4X	*/
+        _U|_W,		_U|_W,		_U|_W,		_U|_W,
+        _U|_W,		_U|_W,		_U|_W,		_U|_W,
+        _U|_W,		_U|_W,		_U|_W,		_U|_W,
+        _U|_W,		_U|_W,		_U|_W,		_U|_W,	/* 0x5X	*/
+        _U|_W,		_U|_W,		_U|_W,		_U|_W,
+        _U|_W,		_U|_W,		_U|_W,		0,
+        0,		0,		0,		_W,
+        0,		_L|_W,		_L|_W,		_L|_W,	/* 0x6X	*/
+        _L|_W,		_L|_W,		_L|_W,		_L|_W,
+        _L|_W,		_L|_W,		_L|_W,		_L|_W,
+        _L|_W,		_L|_W,		_L|_W,		_L|_W,
+        _L|_W,		_L|_W,		_L|_W,		_L|_W,	/* 0x7X	*/
+        _L|_W,		_L|_W,		_L|_W,		_L|_W,
+        _L|_W,		_L|_W,		_L|_W,		0,
+        0,		0,		0,		_C,
 };
 
 
@@ -123,9 +123,9 @@ upmapinit (void)
   for (i = 0; i < 128; i++)
     {
       if (AISLOWER (i) && casefold)
-	upmap[i] = ATOUPPER (i);
+        upmap[i] = ATOUPPER (i);
       else
-	upmap[i] = i;
+        upmap[i] = i;
     }
 }
 
