@@ -149,61 +149,61 @@ main (int argc, char *argv[])
     {				/* Search for options   */
       arg = argv[n];
       if (arg[0] == '-')
-	{
-	  switch (arg[1])
-	    {
-	    case '2':
-	    case '3':
-	    case '4':
-	      npages = arg[1] - '0';
-	      break;
+        {
+          switch (arg[1])
+            {
+            case '2':
+            case '3':
+            case '4':
+              npages = arg[1] - '0';
+              break;
 #if BACKUP
-	    case 'b':
-	      bflag = TRUE;
-	      break;
+            case 'b':
+              bflag = TRUE;
+              break;
 #endif
-	    case 'c':
-	      n++;
-	      if (n < argc)
-		cscope_path = argv[n];
-	      break;
-	    case 'd':
-	      noupdatecscope = TRUE;
-	      break;
-	    case 'g':
-	      n++;
-	      if (n < argc)
-		line = atoi (argv[n]);
-	      break;
-	    case 'm':
-	      mouse = TRUE;
-	      break;
-	    case 'p':
-	      n++;
-	      if (n < argc)
-		{
-		  proptr = argv[n];
-		  adjustcase (proptr);
-		}
-	      break;
-	    case 'r':
-	      rflag = TRUE;
-	      break;
-	    case 'x':
-	      xflag = TRUE;
-	      break;
-	    case 'z':
-	      zflag = TRUE;
-	      break;
-	    default:	/* unknown switch */
-	      /* ignore this for now */
-	      break;
-	    }
-	}
+            case 'c':
+              n++;
+              if (n < argc)
+                cscope_path = argv[n];
+              break;
+            case 'd':
+              noupdatecscope = TRUE;
+              break;
+            case 'g':
+              n++;
+              if (n < argc)
+                line = atoi (argv[n]);
+              break;
+            case 'm':
+              mouse = TRUE;
+              break;
+            case 'p':
+              n++;
+              if (n < argc)
+                {
+                  proptr = argv[n];
+                  adjustcase (proptr);
+                }
+              break;
+            case 'r':
+              rflag = TRUE;
+              break;
+            case 'x':
+              xflag = TRUE;
+              break;
+            case 'z':
+              zflag = TRUE;
+              break;
+            default:	/* unknown switch */
+              /* ignore this for now */
+              break;
+            }
+        }
       else if (arg[0] == '+')
-	{
-	  line = atoi (&arg[1]);
-	}
+        {
+          line = atoi (&arg[1]);
+        }
     }
   vtinit ();			/* Virtual terminal.    */
   if ((blistp = bcreate ("*blist*")) == NULL)	/* Special list buffer. */
@@ -215,49 +215,49 @@ main (int argc, char *argv[])
     {				/* Read in files        */
       arg = argv[n];
       if (arg[0] == '-')
-	{			/* ignore options       */
-	  if (arg[1] == 'p' || arg[1] == 'g' || arg[1] == 'c')
-	    n++;		/* skip name after -p,-g,-c */
-	}
+        {			/* ignore options       */
+          if (arg[1] == 'p' || arg[1] == 'g' || arg[1] == 'c')
+            n++;		/* skip name after -p,-g,-c */
+        }
       else if (arg[0] != '+')
-	{			/* it's a filename      */
-	  /* If the filename is followed by :N, where N is a decimal number,
-	   * go to the specified line number in the file.  If the line
-	   * number is also followed by :N, go to the specified column.
-	   */
-	  int column = 0;
-	  const char *lp;	/* pointer to line number */
+        {			/* it's a filename      */
+          /* If the filename is followed by :N, where N is a decimal number,
+           * go to the specified line number in the file.  If the line
+           * number is also followed by :N, go to the specified column.
+           */
+          int column = 0;
+          const char *lp;	/* pointer to line number */
 
-	  char * colon = strchr (arg, ':');
-	  if (colon != NULL && colon[1] >= '0' && colon[1] <= '9')
-	    {
-	      *colon = '\0';
-	      lp = colon + 1;
-	      colon = strchr (lp, ':');
-	      if (colon != NULL && colon[1] >= '0' && colon[1] <= '9')
-		{
-		  *colon = '\0';
-		  column = atoi (colon + 1);
-		}
-	      line = atoi (lp);
-	    }
-	  bufinit (arg);	/* make buffer & window */
-//	  update ();
-	  readin (arg);		/* read in the file     */
-	  if (line != 0)	/* goto line specified  */
-	    {
-	      gotoline (TRUE, line, 0);
-	      line = 0;
-	      if (column != 0)
-		forwchar (TRUE, column - 1, KRANDOM);
-	    }
-	}
+          char * colon = strchr (arg, ':');
+          if (colon != NULL && colon[1] >= '0' && colon[1] <= '9')
+            {
+              *colon = '\0';
+              lp = colon + 1;
+              colon = strchr (lp, ':');
+              if (colon != NULL && colon[1] >= '0' && colon[1] <= '9')
+                {
+                  *colon = '\0';
+                  column = atoi (colon + 1);
+                }
+              line = atoi (lp);
+            }
+          bufinit (arg);	/* make buffer & window */
+          //update ();
+          readin (arg);		/* read in the file     */
+          if (line != 0)	/* goto line specified  */
+            {
+              gotoline (TRUE, line, 0);
+              line = 0;
+              if (column != 0)
+                forwchar (TRUE, column - 1, KRANDOM);
+            }
+        }
     }
 
   if (nbuf == 0)
     {				/* no files read in?    */
       bufinit ("main");		/* make an empty buffer */
-//      update ();
+      //update ();
     }
   else
     {
@@ -283,7 +283,7 @@ loop:
     {				/* Stuff on echo line?  */
       eerase ();		/* Get rid of echo line */
       if (!inprof && !ttstat ())
-	update ();
+        update ();
     }
   f = FALSE;
   n = 1;
@@ -292,39 +292,39 @@ loop:
       f = TRUE;
       n = 4;
       while ((c = getkey ()) == (KCTRL | 'U'))
-	n *= 4;
+        n *= 4;
       if ((c >= '0' && c <= '9') || c == '-')
-	{
-	  if (c == '-')
-	    {
-	      n = 0;
-	      mflag = TRUE;
-	    }
-	  else
-	    {
-	      n = c - '0';
-	      mflag = FALSE;
-	    }
-	  while ((c = getkey ()) >= '0' && c <= '9')
-	    n = 10 * n + c - '0';
-	  if (mflag != FALSE)
-	    n = n == 0 ? -1 : -n;
-	}
+        {
+          if (c == '-')
+            {
+              n = 0;
+              mflag = TRUE;
+            }
+          else
+            {
+              n = c - '0';
+              mflag = FALSE;
+            }
+          while ((c = getkey ()) >= '0' && c <= '9')
+            n = 10 * n + c - '0';
+          if (mflag != FALSE)
+            n = n == 0 ? -1 : -n;
+        }
       if (n == -n && n != 0)	/* if n == 0x8000       */
-	n = 1;			/* change it to default */
+        n = 1;			/* change it to default */
     }
   if (kbdmip != NULL)
     {				/* Save macro strokes.  */
       if (c != (KCTLX | ')') && kbdmip > &kbdm[NKBDM - 6])
-	{
-	  ctrlg (FALSE, 0, KRANDOM);
-	  goto loop;
-	}
+        {
+          ctrlg (FALSE, 0, KRANDOM);
+          goto loop;
+        }
       if (f != FALSE)
-	{
-	  *kbdmip++ = (KCTRL | 'U');
-	  *kbdmip++ = n;
-	}
+        {
+          *kbdmip++ = (KCTRL | 'U');
+          *kbdmip++ = n;
+        }
       *kbdmip++ = c;
     }
   startsaveundo ();
@@ -358,9 +358,9 @@ execute (int c, int f, int n)
       thisflag = 0;
       startsaveundo ();
       if (sp->s_macro)
-	status = domacro (sp->s_macro, n);
+        status = domacro (sp->s_macro, n);
       else
-	status = (*sp->s_funcp) (f, n, c);
+        status = (*sp->s_funcp) (f, n, c);
       lastflag = thisflag;
       endsaveundo ();
       return (status);
@@ -393,7 +393,7 @@ bufinit (const char *fname)
       strcat (bname, ".0");	/* Append modifier      */
       mod = &bname[strlen (bname) - 1];	/* Point to '0' at end  */
       while (bfind (bname, FALSE))	/* While still conflicts */
-	(*mod)++;		/* Bump the modifier    */
+        (*mod)++;		/* Bump the modifier    */
     }
   if ((bp = bfind (bname, TRUE)) == NULL)	/* Create text buffer.  */
     abort ();
@@ -401,19 +401,19 @@ bufinit (const char *fname)
   if (++nbuf <= 2)		/* If 2 or less buffers */
     {				/* Get a new window     */
       if ((wp = (EWINDOW *) malloc (sizeof (EWINDOW))) == NULL)
-	abort ();		/* Out of memory        */
+        abort ();		/* Out of memory        */
       curwp = wp;		/* Current window       */
       if (nbuf == 1)		/* First window?        */
-	{
-	  wheadp = wp;
-	  wp->w_toprow = 0;
-	}
+        {
+          wheadp = wp;
+          wp->w_toprow = 0;
+        }
       else			/* Second window.   */
-	{
-	  wheadp->w_wndp = wp;
-	  wp->w_toprow = nrow / 2;	/* 2nd half of screen   */
-	  wheadp->w_ntrows = wp->w_toprow - 1;	/* shrink  */
-	}			/* 1 = mode line        */
+        {
+          wheadp->w_wndp = wp;
+          wp->w_toprow = nrow / 2;	/* 2nd half of screen   */
+          wheadp->w_ntrows = wp->w_toprow - 1;	/* shrink  */
+        }			/* 1 = mode line        */
       wp->w_ntrows = nrow - wp->w_toprow - 2;	/* 2 = mode,echo */
       wp->w_wndp = NULL;	/* Initialize window.   */
       wp->w_bufp = bp;
@@ -548,17 +548,17 @@ domacro (int *macrop, int n)
     {
       kbdmop = macrop;
       do
-	{
-	  af = FALSE;
-	  an = 1;
-	  if ((c = *kbdmop++) == (KCTRL | 'U'))
-	    {
-	      af = TRUE;
-	      an = *kbdmop++;
-	      c = *kbdmop++;
-	    }
-	  s = TRUE;
-	}
+        {
+          af = FALSE;
+          an = 1;
+          if ((c = *kbdmop++) == (KCTRL | 'U'))
+            {
+              af = TRUE;
+              an = *kbdmop++;
+              c = *kbdmop++;
+            }
+          s = TRUE;
+        }
       while (c != (KCTLX | ')') && (s = execute (c, af, an)) == TRUE);
       kbdmop = NULL;
     }
@@ -603,7 +603,7 @@ showversion (int f, int n, int k)
   while ((cp = *cpp++) != NULL)
     {
       if (writemsg (cp) == FALSE)
-	return (FALSE);
+        return (FALSE);
     }
   if (f != FALSE)		/* No display if arg.   */
     return (TRUE);
