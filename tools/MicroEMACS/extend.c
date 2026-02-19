@@ -27,7 +27,7 @@
  * By:		Mark Alexander
  *		drivax!alexande
  */
-#include	"def.h"
+#include "def.h"
 
 /*
  * This function modifies the keyboard
@@ -69,10 +69,10 @@ bindtokey (int f, int n, int k)
   if (kbdmip != NULL)
     {				/* Save key in macro.   */
       if (kbdmip > &kbdm[NKBDM - 2])
-	{
-	  ctrlg (FALSE, 0, KRANDOM);
-	  return (FALSE);
-	}
+        {
+          ctrlg (FALSE, 0, KRANDOM);
+          return (FALSE);
+        }
       *kbdmip++ = c;
     }
   setbinding (c, sp);
@@ -98,16 +98,16 @@ extend (int f, int n, int k)
   if ((sp = symlookup (xname)) != NULL)
     {
       if (sp->s_macro)
-	{
-	  if (kbdmip != NULL || kbdmop != NULL)
-	    {
-	      eprintf ("Not now");
-	      return (FALSE);
-	    }
-	  return (domacro (sp->s_macro, n));
-	}
+        {
+          if (kbdmip != NULL || kbdmop != NULL)
+            {
+              eprintf ("Not now");
+              return (FALSE);
+            }
+          return (domacro (sp->s_macro, n));
+        }
       else
-	return ((*sp->s_funcp) (f, n, KRANDOM));
+        return ((*sp->s_funcp) (f, n, KRANDOM));
     }
   eprintf ("Unknown extended command");
   return (ABORT);
@@ -220,13 +220,13 @@ outdec (int n)
     {
       n = -n;
       if (outchar ('-') == FALSE)
-	return (FALSE);
+        return (FALSE);
     }
   for (i = 6; i > 0;)
     {
       buf[--i] = (n % 10) + '0';
       if ((n /= 10) == 0)
-	break;
+        break;
     }
   while (i < 6)
     if (outchar (buf[i++]) == FALSE)
@@ -291,15 +291,15 @@ insertmacro (int f, int n, int k)
       /* See if the symbol exists, and if it is a named macro.
        */
       if ((sp = symlookup (xname)) == NULL)
-	{
-	  eprintf ("No such symbol.");
-	  return (FALSE);
-	}
+        {
+          eprintf ("No such symbol.");
+          return (FALSE);
+        }
       if ((mp = sp->s_macro) == NULL)
-	{
-	  eprintf ("Not a named macro.");
-	  return (FALSE);
-	}
+        {
+          eprintf ("Not a named macro.");
+          return (FALSE);
+        }
     }
 
   /* Insert the text of each character in the macro into the
@@ -311,61 +311,61 @@ insertmacro (int f, int n, int k)
   for (k = KCTLX | '(';; k = *mp++)
     {
       if (k > 0x00 && k <= 0x1F)	/* Relocate control.    */
-	k = KCTRL | (k + '@');
+        k = KCTRL | (k + '@');
       ekeyname (xname, k);	/* Get key name.        */
       if ((k >= 0x20 && k <= 0x7e) || (strlen (xname) <= 1))
-	{			/* Simple ASCII?        */
-	  if (outstrchr (k) == FALSE)
-	    return (FALSE);
-	}
+        {			/* Simple ASCII?        */
+          if (outstrchr (k) == FALSE)
+            return (FALSE);
+        }
       else if (k == 0)
-	{			/* Null: end of string  */
-	  if (outstrchr ('\\') == FALSE)
-	    return (FALSE);
-	  if (outstrchr ('r') == FALSE)
-	    return (FALSE);
-	  if (flushstring () == FALSE)
-	    return (FALSE);
-	}
+        {			/* Null: end of string  */
+          if (outstrchr ('\\') == FALSE)
+            return (FALSE);
+          if (outstrchr ('r') == FALSE)
+            return (FALSE);
+          if (flushstring () == FALSE)
+            return (FALSE);
+        }
       else if (k == (KCTRL | 'U'))
-	{			/* Control-U arg prefix */
-	  if (flushstring () == FALSE)
-	    return (FALSE);	/* Flush prev. string.  */
-	  if (outdec (*mp++) == FALSE)
-	    return (FALSE);	/* Output argument      */
-	}
+        {			/* Control-U arg prefix */
+          if (flushstring () == FALSE)
+            return (FALSE);	/* Flush prev. string.  */
+          if (outdec (*mp++) == FALSE)
+            return (FALSE);	/* Output argument      */
+        }
       else
-	{			/* Not a simple key.    */
-	  if (flushstring () == FALSE)
-	    return (FALSE);	/* Flush prev. string.  */
-	  if (outchar ('[') == FALSE)
-	    return (FALSE);	/* Opening bracket.     */
-	  if (outbuf (xname) == FALSE)
-	    return (FALSE);	/* Write out key name,  */
-	  if (outchar (']') == FALSE)
-	    return (FALSE);	/* Closing bracket.     */
-	  if (outspace () == FALSE)
-	    return (FALSE);	/* followed by a space. */
-	}
+        {			/* Not a simple key.    */
+          if (flushstring () == FALSE)
+            return (FALSE);	/* Flush prev. string.  */
+          if (outchar ('[') == FALSE)
+            return (FALSE);	/* Opening bracket.     */
+          if (outbuf (xname) == FALSE)
+            return (FALSE);	/* Write out key name,  */
+          if (outchar (']') == FALSE)
+            return (FALSE);	/* Closing bracket.     */
+          if (outspace () == FALSE)
+            return (FALSE);	/* followed by a space. */
+        }
       if (k == (KCTLX | ')'))	/* End of macro?        */
-	break;
+        break;
     }
   if (flushstring () == FALSE)	/* Flush last string.   */
     return (FALSE);
   if (named)
     {				/* A named macro?       */
       if (outbuf ("name-macro") == FALSE)
-	return (FALSE);		/* Bind macro to name.  */
+        return (FALSE);		/* Bind macro to name.  */
       if (outspace () == FALSE)
-	return (FALSE);		/* followed by a space. */
+        return (FALSE);		/* followed by a space. */
       if (outchar ('"') == FALSE)	/* Opening quote.       */
-	return (FALSE);
+        return (FALSE);
       if (outbuf (sp->s_name) == FALSE)	/* Output symbol name.  */
-	return (FALSE);
+        return (FALSE);
       if (outbuf ("\\r\"") == FALSE)	/* Append carriage ret. */
-	return (FALSE);
+        return (FALSE);
       if (flush () == FALSE)	/* Flush symbol name.   */
-	return (FALSE);
+        return (FALSE);
     }
   return (lnewline ());		/* Blank line.          */
 }
