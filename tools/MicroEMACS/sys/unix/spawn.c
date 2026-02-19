@@ -404,9 +404,6 @@ spawnpipe(int f, int n, int k)
   system (line);
   fflush (stdout);              /* to be sure P.K.      */
   ttopen ();
-  eerase ();
-  ttflush ();
-  sgarbf = TRUE;
 
   /* Readin the temporary file */
   if ((bp = bfind(bname, TRUE)) != NULL)
@@ -426,7 +423,9 @@ spawnpipe(int f, int n, int k)
   s = TRUE;
 ret:
   /* Force repaint */
-  erefresh (FALSE, 1, 0);
+  eerase ();
+  ttflush ();
+  sgarbf = TRUE;
   /* Clean the temporary file */
   unlink (tmp);
   close (fd);
@@ -494,9 +493,6 @@ spawnfilter(int f, int n, int k)
   system (line);
   fflush (stdout);              /* to be sure P.K.      */
   ttopen ();
-  eerase ();
-  ttflush ();
-  sgarbf = TRUE;
 
   /* Readin the temporary file */
   if ((bp = bfind(bname, TRUE)) != NULL)
@@ -517,7 +513,9 @@ spawnfilter(int f, int n, int k)
   s = TRUE;
 ret:
   /* Force repaint */
-  erefresh (FALSE, 1, 0);
+  eerase ();
+  ttflush ();
+  sgarbf = TRUE;
   /* Clean the temporary file */
   unlink (filin);
   unlink (filout);
