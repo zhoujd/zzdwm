@@ -326,7 +326,7 @@ ffpclose (void)
 int
 ffjopen (void)
 {
-  if ((jfp = fopen (".pejou", "w")) == NULL)
+  if ((jfp = fopen (".mejou", "w")) == NULL)
     {
       eprintf ("Cannot open journal file for writing");
       return (FIOERR);

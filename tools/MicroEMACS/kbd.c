@@ -46,18 +46,18 @@
  * Revision 1.4  91/02/06  09:27:26  alexande
  * Use egetfname() instead of ereply() when prompting for profile name,
  * to allow auto completion of filename.
- * 
+ *
  * Revision 1.3  91/01/07  10:30:01  alexande
  * Remove C++ warnings.
- * 
+ *
  * Revision 1.2  89/01/13  13:01:09  MGA
  * Added ungetinp() routine to push back input.  Used by incremental search.
- * 
+ *
  * Revision 1.1  89/01/13  10:01:44  MGA
  * Initial revision
- * 
+ *
  */
-#include	"def.h"
+#include "def.h"
 
 /*
  * Next token from profile input: a sequence of MicroEMACS 32-bit
@@ -203,15 +203,15 @@ ekeyname (char *cp, int k)
   if ((k & KCHAR) >= KFIRST && (k & KCHAR) <= KLAST)
     {
       if ((np = keystrings[(k & KCHAR) - KFIRST]) != NULL)
-	{
-	  if ((k & KCTRL) != 0)
-	    {
-	      *cp++ = 'C';
-	      *cp++ = '-';
-	    }
-	  strcpy (cp, np);
-	  return;
-	}
+        {
+          if ((k & KCTRL) != 0)
+            {
+              *cp++ = 'C';
+              *cp++ = '-';
+            }
+          strcpy (cp, np);
+          return;
+        }
     }
 
   /* Look it up in the special table.
@@ -219,32 +219,32 @@ ekeyname (char *cp, int k)
   for (i = 0; i < SPECSIZE; i++)
     {
       if (k == spectab[i].st_value)
-	{
-	  np = spectab[i].st_name;
-	  break;
-	}
+        {
+          np = spectab[i].st_name;
+          break;
+        }
     }
 
   if (i == SPECSIZE)
     {				/* Not a special        */
       if ((k & KCTRL) != 0)
-	{			/* Add C- mark.         */
-	  *cp++ = 'C';
-	  *cp++ = '-';
-	}
+        {			/* Add C- mark.         */
+          *cp++ = 'C';
+          *cp++ = '-';
+        }
       np = &nbuf[0];
       if (((k & KCHAR) >= 0x20 && (k & KCHAR) <= 0x7E)
-	  || ((k & KCHAR) >= 0xA0 && (k & KCHAR) <= 0xFE))
-	{
-	  nbuf[0] = k & KCHAR;	/* Graphic.             */
-	  nbuf[1] = 0;
-	}
+          || ((k & KCHAR) >= 0xA0 && (k & KCHAR) <= 0xFE))
+        {
+          nbuf[0] = k & KCHAR;	/* Graphic.             */
+          nbuf[1] = 0;
+        }
       else
-	{			/* Non graphic.         */
-	  nbuf[0] = hex[(k >> 4) & 0x0F];
-	  nbuf[1] = hex[k & 0x0F];
-	  nbuf[2] = 0;
-	}
+        {			/* Non graphic.         */
+          nbuf[0] = hex[(k >> 4) & 0x0F];
+          nbuf[1] = hex[k & 0x0F];
+          nbuf[2] = 0;
+        }
     }
   strcpy (cp, np);
 }
@@ -276,7 +276,7 @@ getpchar (char *cptr)
   if ((s = ffpread (cptr)) != FIOSUC)
     {				/* read next byte OK?   */
       if (s == FIOERR)
-	eprintf ("Profile read error.");
+        eprintf ("Profile read error.");
       return (FALSE);
     }
   else
@@ -300,36 +300,36 @@ getpstring ()
   while (c != '"')
     {				/* read to next quote   */
       if (c == '\\')
-	{			/* escape code?         */
-	  if (!getpchar (&c))
-	    return (FALSE);
-	  switch (c)
-	    {
-	    case 'r':
-	      c = '\r';
-	      break;
-	    case 'n':
-	      c = '\n';
-	      break;
-	    case 't':
-	      c = '\t';
-	      break;
-	    case 'b':
-	      c = '\b';
-	      break;
-	    case 'f':
-	      c = '\f';
-	      break;
-	    }
-	}
+        {			/* escape code?         */
+          if (!getpchar (&c))
+            return (FALSE);
+          switch (c)
+            {
+            case 'r':
+              c = '\r';
+              break;
+            case 'n':
+              c = '\n';
+              break;
+            case 't':
+              c = '\t';
+              break;
+            case 'b':
+              c = '\b';
+              break;
+            case 'f':
+              c = '\f';
+              break;
+            }
+        }
       if (plength == PSIZE)
-	{
-	  eprintf ("Token longer than %d bytes in profile.", PSIZE);
-	  return (FALSE);
-	}
+        {
+          eprintf ("Token longer than %d bytes in profile.", PSIZE);
+          return (FALSE);
+        }
       ptoken[plength++] = c;	/* store the character  */
       if (!getpchar (&c))	/* get the next char    */
-	return (FALSE);
+        return (FALSE);
     }
 
   if (plength == 0)
@@ -374,16 +374,16 @@ eqtoken (
   for (i = pindex; *s; s++, i++)
     {
       if (!CEQ (ptoken[i], *s))
-	{			/* chars don't match?   */
-	  c1 = ptoken[i];	/* fold case            */
-	  if (c1 >= 'a' && c1 <= 'z')
-	    c1 = CTOUPPER (c1);
-	  c2 = *s;
-	  if (c2 >= 'a' && c2 <= 'z')
-	    c2 = CTOUPPER (c2);
-	  if (c1 != c2)
-	    return (FALSE);	/* they don't match     */
-	}
+        {			/* chars don't match?   */
+          c1 = ptoken[i];	/* fold case            */
+          if (c1 >= 'a' && c1 <= 'z')
+            c1 = CTOUPPER (c1);
+          c2 = *s;
+          if (c2 >= 'a' && c2 <= 'z')
+            c2 = CTOUPPER (c2);
+          if (c1 != c2)
+            return (FALSE);	/* they don't match     */
+        }
     }
   pindex = i;			/* they match!          */
   return (TRUE);
@@ -408,14 +408,14 @@ getpkey (void)
   while (c != ']')
     {				/* read to next quote   */
       if (plength == PSIZE)
-	{
-	  eprintf ("Key name longer than %d bytes in profile.", PSIZE);
-	  return (FALSE);
-	}
+        {
+          eprintf ("Key name longer than %d bytes in profile.", PSIZE);
+          return (FALSE);
+        }
       asciiname[plength] = c;	/* save it for message  */
       ptoken[plength++] = c;	/* store the character  */
       if (!getpchar (&c))	/* get the next char    */
-	return (FALSE);
+        return (FALSE);
     }
 
   if (plength == 0)
@@ -447,14 +447,14 @@ getpkey (void)
   for (i = 0; i < 32; i++)
     {
       if (keystrings[i] != NULL)
-	{
-	  if (eqtoken (keystrings[i], left))
-	    {
-	      key |= (KFIRST + i);
-	      found = TRUE;
-	      break;
-	    }
-	}
+        {
+          if (eqtoken (keystrings[i], left))
+            {
+              key |= (KFIRST + i);
+              found = TRUE;
+              break;
+            }
+        }
     }
 
   /* If we can't find it in keystrings, look in our special
@@ -463,14 +463,14 @@ getpkey (void)
   if (!found)
     {				/* not found?   */
       for (i = 0; i < SPECSIZE; i++)
-	{			/* try spectab  */
-	  if (eqtoken (spectab[i].st_name, left))
-	    {
-	      key |= spectab[i].st_value;
-	      found = TRUE;
-	      break;
-	    }
-	}
+        {			/* try spectab  */
+          if (eqtoken (spectab[i].st_name, left))
+            {
+              key |= spectab[i].st_value;
+              found = TRUE;
+              break;
+            }
+        }
     }
 
   /* Key name not found in either table, must be single character.
@@ -478,10 +478,10 @@ getpkey (void)
   if (!found)
     {
       if (left != 1)
-	{
-	  eprintf ("Bad key name in profile: %s", asciiname);
-	  return (FALSE);
-	}
+        {
+          eprintf ("Bad key name in profile: %s", asciiname);
+          return (FALSE);
+        }
       key |= upmap[ptoken[pindex]];	/* OR in the ascii key  */
     }
 
@@ -507,13 +507,13 @@ getpnum (char c)
   while (!prowhite (c))
     {
       if (plength == PSIZE)
-	{
-	  eprintf ("Number longer than %d bytes in profile.", PSIZE);
-	  return (FALSE);
-	}
+        {
+          eprintf ("Number longer than %d bytes in profile.", PSIZE);
+          return (FALSE);
+        }
       ptoken[plength++] = c;	/* store the character  */
       if (!getpchar (&c))	/* get the next char    */
-	return (FALSE);
+        return (FALSE);
     }
   return (TRUE);
 }
@@ -531,14 +531,14 @@ getpfunc (char c)
   while (!prowhite (c))
     {
       if (plength == PSIZE - 1)
-	{
-	  eprintf ("Function name longer than %d bytes in profile.",
-		   PSIZE - 2);
-	  return (FALSE);
-	}
+        {
+          eprintf ("Function name longer than %d bytes in profile.",
+                   PSIZE - 2);
+          return (FALSE);
+        }
       ptoken[plength++] = c;	/* store the character  */
       if (!getpchar (&c))	/* get the next char    */
-	return (FALSE);
+        return (FALSE);
     }
   ptoken[plength++] = '\r';
   return (TRUE);
@@ -556,9 +556,9 @@ getptoken (void)
   for (;;)
     {				/* skip white space     */
       if (!getpchar (&c))	/* get next character   */
-	return (FALSE);		/* error                */
+        return (FALSE);		/* error                */
       if (!prowhite (c))
-	break;
+        break;
     }
   pindex = plength = 0;
   if (c == '"')			/* quoted string?       */
@@ -584,11 +584,11 @@ getinp (void)
   if (pindex >= plength)
     {				/* time to read token?  */
       if (!getptoken ())
-	{			/* no more tokens?      */
-	  exitprofile ();	/* close the profile    */
-	  update ();		/* restore cursor       */
-	  return (getkbd ());	/* read keyboard        */
-	}
+        {			/* no more tokens?      */
+          exitprofile ();	/* close the profile    */
+          update ();		/* restore cursor       */
+          return (getkbd ());	/* read keyboard        */
+        }
     }
   return (ptoken[pindex++]);	/* next token char      */
 }
