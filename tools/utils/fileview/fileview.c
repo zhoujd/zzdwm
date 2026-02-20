@@ -19,12 +19,12 @@
 //	revised on: 07 JUN 2006 -- removed reliance on 'ncurses'
 //----------------------------------------------------------------
 
-#define _LARGEFILE64_SOURCE // Required for prototype visibility
+#define _FILE_OFFSET_BITS 64 // for lseek() transparently aliased to lseek64()
 
 #include <stdio.h>	// for printf(), perror(), fflush()
 #include <fcntl.h>	// for open()
 #include <string.h>	// for strncpy()
-#include <unistd.h>	// for read(), lseek64()
+#include <unistd.h>	// for read()
 #include <stdlib.h>	// for exit()
 #include <termios.h>	// for tcgetattr(), tcsetattr()
 
@@ -64,7 +64,7 @@ int main( int argc, char *argv[] )
 	if ( fd < 0 ) { perror( filename ); exit(1); }
 
 	// obtain the filesize (if possible)
-	long long	filesize = lseek64( fd, 0LL, SEEK_END );
+	long long	filesize = lseek( fd, 0LL, SEEK_END );
 	if ( filesize < 0LL )
 		{
 		fprintf( stderr, "cannot locate \'end-of-file\' \n" );
@@ -116,7 +116,7 @@ int main( int argc, char *argv[] )
 		else if ( pageincr > incmax ) pageincr = incmax;
 
 		// get current location of file-pointer position
-		location = lseek64( fd, position, SEEK_SET );
+		location = lseek( fd, position, SEEK_SET );
 
 		// try to fill 'buffer[]' with data from the file
 		char	*where = buffer;
