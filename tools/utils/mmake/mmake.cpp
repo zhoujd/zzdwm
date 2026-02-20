@@ -66,11 +66,13 @@ int main( int argc, char **argv )
 	fprintf( fp, "default:\t" );
 	fprintf( fp, "\n\t$(MAKE) -C $(KDIR) M=$(PWD) modules ");
 	fprintf( fp, "\n\trm -r -f .tmp_versions *.mod.c .*.cmd *.o " );
-	//fprintf( fp, "Modules.symvers " );  // <-- added 7/27/2006
 	fprintf( fp, "*.symvers " );  // <-- added 5/31/2007
 	fprintf( fp, "\n" );
 	fprintf( fp, "\nendif" );
 	fprintf( fp, "\n\n" );
+	fprintf( fp, "clean:\t" );
+	fprintf( fp, "\n\trm -r -f *.ko *.mod *.order" );
+	fprintf( fp, "\n" );
 	fclose( fp );
 
 	// execute the 'make' utility using our just-created 'Makefile'
