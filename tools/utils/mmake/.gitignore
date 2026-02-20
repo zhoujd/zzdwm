@@ -1,0 +1,6 @@
+## .gitignore
+
+*.ko
+*.o
+*.mod
+*.order
