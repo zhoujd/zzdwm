@@ -63,7 +63,7 @@ int main( int argc, char *argv[] )
 	if ( fd < 0 ) { perror( filename ); exit(1); }
 
 	// obtain the filesize (if possible)
-	long long	filesize = lseek64( fd, 0LL, SEEK_END );
+	long long	filesize = lseek( fd, 0LL, SEEK_END );
 	if ( filesize < 0LL )
 		{
 		fprintf( stderr, "cannot locate \'end-of-file\' \n" );
@@ -100,7 +100,6 @@ int main( int argc, char *argv[] )
 
 	// main loop to navigate the file
 	long long	pageincr = incmin;
-	long long	lineincr = 16LL;
 	long long	position = 0LL;
 	long long	location = 0LL;
 	int		format = 1;
@@ -116,7 +115,7 @@ int main( int argc, char *argv[] )
 		else if ( pageincr > incmax ) pageincr = incmax;
 
 		// get current location of file-pointer position
-		location = lseek64( fd, position, SEEK_SET );
+		location = lseek( fd, position, SEEK_SET );
 
 		// try to fill 'buffer[]' with data from the file
 		char	*where = buffer;
@@ -128,7 +127,6 @@ int main( int argc, char *argv[] )
 			to_read -= nbytes;
 			where += nbytes;
 			}
-		int	datalen = BUFSIZE - to_read;
 
 		// display the data just read into the 'buffer[]' array
 		unsigned char		*bp;
@@ -258,7 +256,7 @@ int main( int argc, char *argv[] )
 					}
 				if (( ch < 0x20 )||( ch > 0x7E )) continue;
 				inbuf[ i++ ] = ch;
-				printf( "%c", ch );
+				printf( "%c", (char)ch );
 				fflush( stdout );
 				}
 			printf( "\e[%d;%dH%70s", 23, COL, " " );
