@@ -19,6 +19,8 @@
 //	revised on: 07 JUN 2006 -- removed reliance on 'ncurses'
 //----------------------------------------------------------------
 
+#define _LARGEFILE64_SOURCE // Required for prototype visibility
+
 #include <stdio.h>	// for printf(), perror(), fflush()
 #include <fcntl.h>	// for open()
 #include <string.h>	// for strncpy()
@@ -46,7 +48,6 @@
 #define KB_END  0x00345B1B
 #define KB_DEL  0x00335B1B
 
-
 char progname[] = "FILEVIEW";
 char filename[ MAXNAME + 1 ];
 char buffer[ BUFSIZE ];
@@ -63,7 +64,7 @@ int main( int argc, char *argv[] )
 	if ( fd < 0 ) { perror( filename ); exit(1); }
 
 	// obtain the filesize (if possible)
-	long long	filesize = lseek( fd, 0LL, SEEK_END );
+	long long	filesize = lseek64( fd, 0LL, SEEK_END );
 	if ( filesize < 0LL )
 		{
 		fprintf( stderr, "cannot locate \'end-of-file\' \n" );
@@ -115,7 +116,7 @@ int main( int argc, char *argv[] )
 		else if ( pageincr > incmax ) pageincr = incmax;
 
 		// get current location of file-pointer position
-		location = lseek( fd, position, SEEK_SET );
+		location = lseek64( fd, position, SEEK_SET );
 
 		// try to fill 'buffer[]' with data from the file
 		char	*where = buffer;
