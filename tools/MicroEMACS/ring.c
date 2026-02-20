@@ -31,7 +31,7 @@
  * a mark on a ring, and popping a mark off the ring.
  *
  */
-#include	"def.h"
+#include "def.h"
 
 static POS nullpos = { NULL, 0 };
 
