@@ -113,8 +113,8 @@ void
 usage(void)
 {
   fprintf(stderr,
-          "usage: me [-234bcdrxz] [-g line] [-p profile] [+[line]]\n"
-          "          [file[:line[:column]] ...]\n");
+          "usage: me [-234bdrxz] [-c cscope_path] [-g line] [-p profile] [-t tabsize]\n"
+          "          [+[line]] [file[:line[:column]] ...]\n");
 }
 
 /*
@@ -194,6 +194,15 @@ main (int argc, char *argv[])
             case 'r':
               rflag = TRUE;
               break;
+            case 't':
+              n++;
+              if (n < argc)
+                {
+                  tabsize = atoi (argv[n]);
+                  if (tabsize < 1 || tabsize > 8)
+                    tabsize = 8;
+                }
+              break;
             case 'x':
               xflag = TRUE;
               break;
@@ -222,8 +231,17 @@ main (int argc, char *argv[])
       arg = argv[n];
       if (arg[0] == '-')
         {			/* ignore options       */
-          if (arg[1] == 'p' || arg[1] == 'g' || arg[1] == 'c')
-            n++;		/* skip name after -p,-g,-c */
+          switch (arg[1])
+            {
+            case 'c':
+            case 'g':
+            case 'p':
+            case 't':
+              n++;		/* skip name options    */
+              break;
+            default:
+              break;
+            }
         }
       else if (arg[0] != '+')
         {			/* it's a filename      */
