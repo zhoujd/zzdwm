@@ -29,9 +29,9 @@ CFLAGS := -Os $(CFLAGS)
 endif
 
 LD = gcc
+LDFLAGS = -s
 ifeq ($(TERMCAP), yes)
-LDFLAGS = -L/usr/lib64/termcap
-LIBS = -ltermcap
+LIBS = -L/usr/lib64/termcap -ltermcap
 else
 LIBS = -lncursesw
 endif
