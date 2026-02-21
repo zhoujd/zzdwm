@@ -1,11 +1,13 @@
 #!/bin/sh
 
-# Helper function.
+file=${1:-"version.h"}
+
+# Helper function
 available() { command -v "${1:?}" >/dev/null; }
 
-echo "#define DATE \"`date +%Y-%m-%d`\"" >rev.h
+echo "#define DATE \"`date +%Y-%m-%d`\"" >$file
 if available git ; then
-  git rev-parse HEAD  | sed -n 's/^\(.......\).*/#define REV "git-\1"/p' >>rev.h
+  git rev-parse HEAD  | sed -n 's/^\(.......\).*/#define REV "git-\1"/p' >>$file
 else
-  echo "#define REV \"unknown\"" >>rev.h
+  echo "#define REV \"unknown\"" >>$file
 fi

@@ -91,7 +91,7 @@ $(TARGET): $(OBJ)
 	$(LD) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 
 rev.h:
-	@$(srcdir)/ver.sh
+	@$(srcdir)/ver.sh $@
 
 version.o: rev.h
 
