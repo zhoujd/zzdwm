@@ -17,7 +17,7 @@ debug() {
 
 release() {
     make clean
-    make LDFLAGS=-static
+    make STATIC=yes
     make strip
     echo "Build release done"
 }
@@ -37,7 +37,7 @@ publish() {
         docker run $opt $img sh <<'EOF'
 cat /etc/os-release
 make clean
-make LDFLAGS=-static
+make STATIC=yes
 make strip
 EOF
     fi
