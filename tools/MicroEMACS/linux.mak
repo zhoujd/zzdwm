@@ -19,7 +19,9 @@ INC = -I$(srcdir) -I$(SYS) -I$(TTY)
 
 CC = gcc
 CFLAGS = -std=c99 -D_POSIX_C_SOURCE=200809L -DLINUX -DBACKUP $(INC) \
-         -Wall -Wextra -pedantic -Wno-unused-parameter -Wno-implicit-fallthrough
+         -Wall -Wextra -pedantic \
+         -Wno-unused-parameter \
+         -Wno-implicit-fallthrough
 ifeq ($(DEBUG), yes)
 CFLAGS := -g -O0 $(CFLAGS)
 else
