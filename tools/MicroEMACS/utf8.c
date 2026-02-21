@@ -55,11 +55,11 @@ wcwidth(wchar_t c)
 int
 ucombining (wchar_t c)
 {
-  return ((c >= 0x300  && c <= 0x36f) ||
-	  (c >= 0x1ab0 && c <= 0x1aff) ||
-	  (c >= 0x1dc0 && c <= 0x1dff) ||
-	  (c >= 0x20d0 && c <= 0x20ff) ||
-	  (c >= 0xfe20 && c <= 0xfe2f));
+  return ((c >= 0x300  && c <= 0x36f)  ||
+          (c >= 0x1ab0 && c <= 0x1aff) ||
+          (c >= 0x1dc0 && c <= 0x1dff) ||
+          (c >= 0x20d0 && c <= 0x20ff) ||
+          (c >= 0xfe20 && c <= 0xfe2f));
 }
 
 /*
@@ -156,27 +156,27 @@ ugetc (const uchar *s, int n, int *len)
   if (c < 0x80)
     {
       if (len)
-	*len = 1;
+        *len = 1;
       return c;
     }
   if (c >= 0xc0 && c <= 0xdf)
     {
       if (len)
-	*len = 2;
+        *len = 2;
       return ((int)(c & 0x1f) << 6) + (int)(s[1] & 0x3f);
     }
   if (c >= 0xe0 && c <= 0xef)
     {
       if (len)
-	*len = 3;
+        *len = 3;
       return ((int)(c & 0xf) << 12) +
              ((int)(s[1] & 0x3f) << 6) +
-	     (int)(s[2] & 0x3f);
+             (int)(s[2] & 0x3f);
     }
   if (c >= 0xf0 && c <= 0xf7)
     {
       if (len)
-	*len = 4;
+        *len = 4;
       return ((int)(c & 0x7) << 18) +
              ((int)(s[1] & 0x3f) << 12) +
              ((int)(s[2] & 0x3f) << 6) +
@@ -185,7 +185,7 @@ ugetc (const uchar *s, int n, int *len)
   if (c >= 0xf8 && c <= 0xfb)
     {
       if (len)
-	*len = 5;
+        *len = 5;
       return ((int)(c & 0x3) << 24) +
              ((int)(s[1] & 0x3f) << 18) +
              ((int)(s[2] & 0x3f) << 12) +
@@ -195,7 +195,7 @@ ugetc (const uchar *s, int n, int *len)
   if (c >= 0xfc && c <= 0xfd)
     {
       if (len)
-	*len = 6;
+        *len = 6;
       return ((int)(c & 0x1) << 30) +
              ((int)(s[1] & 0x3f) << 24) +
              ((int)(s[2] & 0x3f) << 18) +
@@ -222,7 +222,7 @@ ugetprevc (const uchar *s, int *len)
   } while ((*s & 0xc0) == 0x80);
   return ugetc (s, 0, len);
 }
-  
+
 /*
  * Convert a Unicode character c to UTF-8, writing the
  * characters to s; s must be at least 6 bytes long.
@@ -313,15 +313,15 @@ unicode (int f, int n, int k)
     {
       s = sscanf (p, " %x%n", &c[count], &len);
       if (s != 1)
-	{
-	  eprintf("Illegal hex number: %s", p);
-	  return FALSE;
-	}
+        {
+          eprintf("Illegal hex number: %s", p);
+          return FALSE;
+        }
     }
   for (i = 0; i < count; i++)
     {
       if (linsert (1, c[i], NULL) == FALSE)
-	return FALSE;
+        return FALSE;
     }
   return TRUE;
 }
@@ -333,11 +333,11 @@ int
 main(int argc, char *argv[])
 {
   static uchar s[] = { 'a', '=', 0xc3, 0xa4, ',', 'i', '=', 0xe2, 0x88, 0xab, ',',
-                      '+', '=', 0xf0, 0x90, 0x80, 0x8f, ',',
-		      'j', '=', 0xf0, 0x9f, 0x82, 0xab, '.',
-		      'a', '=', 0xc3, 0xa4, ',', 'i', '=', 0xe2, 0x88, 0xab, ',',
-                      '+', '=', 0xf0, 0x90, 0x80, 0x8f, ',',
-		      'j', '=', 0xf0, 0x9f, 0x82, 0xab, '.', 0 };
+                       '+', '=', 0xf0, 0x90, 0x80, 0x8f, ',',
+                       'j', '=', 0xf0, 0x9f, 0x82, 0xab, '.',
+                       'a', '=', 0xc3, 0xa4, ',', 'i', '=', 0xe2, 0x88, 0xab, ',',
+                       '+', '=', 0xf0, 0x90, 0x80, 0x8f, ',',
+                       'j', '=', 0xf0, 0x9f, 0x82, 0xab, '.', 0 };
 
   wchar_t c;
   int i, len;
