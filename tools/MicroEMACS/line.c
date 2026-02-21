@@ -44,7 +44,7 @@
  * dot and mark values in the buffer headers are
  * nonsense.
  */
-#include	"def.h"
+#include "def.h"
 
 #define	NBLOCK	16		/* Line block chunk size        */
 
@@ -141,29 +141,29 @@ lfree (lp)
       wp->w_savep = lp->l_fp;
     if (wp->w_dot.p == lp)
       {
-	wp->w_dot.p = lp->l_fp;
-	wp->w_dot.o = 0;
+        wp->w_dot.p = lp->l_fp;
+        wp->w_dot.o = 0;
       }
     if (wp->w_mark.p == lp)
       {
-	wp->w_mark.p = lp->l_fp;
-	wp->w_mark.o = 0;
+        wp->w_mark.p = lp->l_fp;
+        wp->w_mark.o = 0;
       }
   }
   ALLBUF (bp)
   {
     if (bp->b_nwnd == 0)
       {
-	if (bp->b_dot.p == lp)
-	  {
-	    bp->b_dot.p = lp->l_fp;
-	    bp->b_dot.o = 0;
-	  }
-	if (bp->b_mark.p == lp)
-	  {
-	    bp->b_mark.p = lp->l_fp;
-	    bp->b_mark.o = 0;
-	  }
+        if (bp->b_dot.p == lp)
+          {
+            bp->b_dot.p = lp->l_fp;
+            bp->b_dot.o = 0;
+          }
+        if (bp->b_mark.p == lp)
+          {
+            bp->b_mark.p = lp->l_fp;
+            bp->b_mark.o = 0;
+          }
       }
   }
   lp->l_bp->l_fp = lp->l_fp;
@@ -196,9 +196,9 @@ lchange (int flag)
   {
     if (wp->w_bufp == curbp)
       {				/* Same buffer?         */
-	wp->w_flag |= flag;
-	if (wp != curwp)	/* Different window?    */
-	  wp->w_flag |= WFHARD;
+        wp->w_flag |= flag;
+        if (wp != curwp)	/* Different window?    */
+          wp->w_flag |= WFHARD;
       }
   }
 }
@@ -217,11 +217,11 @@ adjustforinsert (const POS *oldpos, LINE *newlp, int nchars, EWINDOW *wp)
       POS *pos = &wp->w_ring.m_ring[i];
 
       if (pos->p == oldpos->p)
-	{
-	  pos->p = newlp;
-	  if (pos->o > oldpos->o)
-	    pos->o += nchars;
-	}
+        {
+          pos->p = newlp;
+          if (pos->o > oldpos->o)
+            pos->o += nchars;
+        }
     }
 }
 
@@ -282,12 +282,12 @@ linsert (int n, int c, char *s)
   if (dot.p == curbp->b_linep)
     {				/* At the end: special  */
       if (offset != 0)
-	{
-	  eprintf ("bug: linsert");
-	  return (FALSE);
-	}
+        {
+          eprintf ("bug: linsert");
+          return (FALSE);
+        }
       if ((lp2 = lalloc (bytes)) == NULL)	/* Allocate new line    */
-	return (FALSE);
+        return (FALSE);
       lp3 = dot.p->l_bp;		/* Previous line        */
       lp3->l_fp = lp2;			/* Link in              */
       lp2->l_fp = dot.p;
@@ -297,10 +297,10 @@ linsert (int n, int c, char *s)
   else if (dot.p->l_used + bytes > dot.p->l_size)
     {					/* Hard: reallocate     */
       if ((lp2 = lalloc (dot.p->l_used + bytes)) == NULL)
-	return (FALSE);
+        return (FALSE);
       memcpy (&lp2->l_text[0], &dot.p->l_text[0], offset);
       memcpy (&lp2->l_text[offset + bytes], &dot.p->l_text[offset],
-	      dot.p->l_used - offset);	/* make room            */
+              dot.p->l_used - offset);	/* make room            */
       dot.p->l_bp->l_fp = lp2;
       lp2->l_fp = dot.p->l_fp;
       dot.p->l_fp->l_bp = lp2;
@@ -311,7 +311,7 @@ linsert (int n, int c, char *s)
     {				/* Easy: in place       */
       lp2 = dot.p;		/* Pretend new line     */
       memmove (&dot.p->l_text[offset + bytes], &dot.p->l_text[offset],
-	       dot.p->l_used - offset);	/* make room            */
+               dot.p->l_used - offset);	/* make room            */
       lp2->l_used += bytes;		/* bump length up       */
     }
 
@@ -320,7 +320,7 @@ linsert (int n, int c, char *s)
       int i, o;
 
       for (i = 0, o = offset; i < chars; i++, o += buflen)
-	memcpy (&lp2->l_text[o], buf, buflen);	/* fill the characters  */
+        memcpy (&lp2->l_text[o], buf, buflen);	/* fill the characters  */
     }
   else
     memcpy (&lp2->l_text[offset], s, bytes);	/* copy the characters  */
@@ -333,9 +333,9 @@ linsert (int n, int c, char *s)
       wp->w_savep = lp2;
     if (wp->w_dot.p == dot.p)
       {
-	wp->w_dot.p = lp2;
-	if (wp == curwp || wp->w_dot.o > dot.o)
-	  wp->w_dot.o += chars;
+        wp->w_dot.p = lp2;
+        if (wp == curwp || wp->w_dot.o > dot.o)
+          wp->w_dot.o += chars;
       }
     adjustforinsert (&dot, lp2, chars, wp);
   }
@@ -358,21 +358,21 @@ insertwithnl (const char *s, int len)
     {
       const char *nl = memchr (s, '\n', end - s);
       if (nl == NULL)
-	{
-	  status = linsert (end - s, 0, (char *) s);
-	  s = end;
-	}
+        {
+          status = linsert (end - s, 0, (char *) s);
+          s = end;
+        }
       else
-	{
-	  if (nl != s)
-	    {
-	      status = linsert (nl - s, 0, (char *) s);
-	      if (status != TRUE)
-		break;
-	    }
-	  status = lnewline ();
-	  s = nl + 1;
-	}
+        {
+          if (nl != s)
+            {
+              status = linsert (nl - s, 0, (char *) s);
+              if (status != TRUE)
+                break;
+            }
+          status = lnewline ();
+          s = nl + 1;
+        }
     }
   return status;
 }
@@ -392,17 +392,17 @@ adjustfornewline (const POS *oldpos, LINE *newlp, EWINDOW *wp)
       POS *pos;
 
       if (i == wp->w_ring.m_count)
-	pos = &wp->w_dot;
+        pos = &wp->w_dot;
       else
-	pos = &wp->w_ring.m_ring[i];
+        pos = &wp->w_ring.m_ring[i];
 
       if (pos->p == oldpos->p)
-	{
-	  if (pos->o < oldpos->o)
-	    pos->p = newlp;
-	  else
-	    pos->o -= oldpos->o;
-	}
+        {
+          if (pos->o < oldpos->o)
+            pos->p = newlp;
+          else
+            pos->o -= oldpos->o;
+        }
     }
 }
 
@@ -476,18 +476,18 @@ adjustfordelete (POS *oldpos, int nchars, EWINDOW *wp)
       POS *pos;
 
       if (i == wp->w_ring.m_count)
-	pos = &wp->w_dot;
+        pos = &wp->w_dot;
       else
-	pos = &wp->w_ring.m_ring[i];
+        pos = &wp->w_ring.m_ring[i];
 
       if (pos->p == oldpos->p && pos->o >= oldpos->o)
-	{
-	  int o = pos->o - nchars;
-	  if (o < oldpos->o)
-	    pos->o = oldpos->o;
-	  else
-	    pos->o = o;
-	}
+        {
+          int o = pos->o - nchars;
+          if (o < oldpos->o)
+            pos->o = oldpos->o;
+          else
+            pos->o = o;
+        }
     }
 }
 
@@ -523,7 +523,7 @@ ldelete (int n, int kflag)
     {
       dot = curwp->w_dot;
       if (dot.p == curbp->b_linep)	/* Hit end of buffer.   */
-	return (FALSE);
+        return (FALSE);
 
       /* Get pointer to first byte of the UTF-8 character
        * indexed by dot.  Then get the number of UTF-8 characters
@@ -534,31 +534,31 @@ ldelete (int n, int kflag)
       bytes = end - cp1;
       chars = unslen (cp1, bytes);
       if (chars > n)
-	{
-	  chars = n;
-	  bytes = unblen (cp1, chars);
-	}
+        {
+          chars = n;
+          bytes = unblen (cp1, chars);
+        }
       if (chars == 0)
-	{			/* End of line, merge.  */
-	  lchange (WFHARD);
-	  if (ldelnewline () == FALSE
-	      || (kflag != FALSE && kinsert ("\n", 1) == FALSE))
-	    return (FALSE);
+        {			/* End of line, merge.  */
+          lchange (WFHARD);
+          if (ldelnewline () == FALSE
+              || (kflag != FALSE && kinsert ("\n", 1) == FALSE))
+            return (FALSE);
           saveundo(UDELETE, NULL, 1, 1, "\n");
-	  --n;
-	  continue;
-	}
+          --n;
+          continue;
+        }
       lchange (WFEDIT);
       cp2 = cp1 + bytes;			/* Scrunch text.        */
       if (kflag != FALSE)	/* Kill?                */
-	if (kinsert ((const char *) cp1, bytes) == FALSE)
-	  return (FALSE);
+        if (kinsert ((const char *) cp1, bytes) == FALSE)
+          return (FALSE);
       saveundo(UDELETE, NULL, chars, bytes, cp1);
       memmove (cp1, cp2, end - cp2);
       dot.p->l_used -= bytes;
       ALLWIND (wp)
       {				/* Fix windows          */
-	adjustfordelete (&dot, chars, wp);
+        adjustfordelete (&dot, chars, wp);
       }
       n -= chars;
     }
@@ -579,17 +579,17 @@ adjustfordelnewline (LINE *lp1, LINE *lp2, LINE *newlp, EWINDOW *wp)
       POS *pos;
 
       if (i == wp->w_ring.m_count)
-	pos = &wp->w_dot;
+        pos = &wp->w_dot;
       else
-	pos = &wp->w_ring.m_ring[i];
+        pos = &wp->w_ring.m_ring[i];
 
       if (pos->p == lp1)
-	pos->p = newlp;
+        pos->p = newlp;
       else if (pos->p == lp2)
-	{
-	  pos->p = newlp;
-	  pos->o += lp1->l_used;
-	}
+        {
+          pos->p = newlp;
+          pos->o += lp1->l_used;
+        }
     }
 }
 
@@ -622,20 +622,20 @@ ldelnewline (void)
       memcpy (&lp1->l_text[lp1->l_used], &lp2->l_text[0], lp2->l_used);	/* copy bytes up        */
       ALLWIND (wp)
       {
-	if (wp->w_linep == lp2)
-	  wp->w_linep = lp1;
-	if (wp->w_savep == lp2)
-	  wp->w_savep = lp1;
-	if (wp->w_dot.p == lp2)
-	  {
-	    wp->w_dot.p = lp1;
-	    wp->w_dot.o += chars;
-	  }
-	if (wp->w_mark.p == lp2)
-	  {
-	    wp->w_mark.p = lp1;
-	    wp->w_mark.o += chars;
-	  }
+        if (wp->w_linep == lp2)
+          wp->w_linep = lp1;
+        if (wp->w_savep == lp2)
+          wp->w_savep = lp1;
+        if (wp->w_dot.p == lp2)
+          {
+            wp->w_dot.p = lp1;
+            wp->w_dot.o += chars;
+          }
+        if (wp->w_mark.p == lp2)
+          {
+            wp->w_mark.p = lp1;
+            wp->w_mark.o += chars;
+          }
       }
       lp1->l_used += lp2->l_used;
       lp1->l_fp = lp2->l_fp;
@@ -733,13 +733,13 @@ lreplace (
     {
       rtype = UPPER | LOWER;
       if (curwp->w_dot.o + 1 < wllength (curwp->w_dot.p))
-	{
-	  c = wlgetc (curwp->w_dot.p, curwp->w_dot.o + 1);
-	  if (CISUPPER (c) != FALSE)
-	    {
-	      rtype = UPPER;
-	    }
-	}
+        {
+          c = wlgetc (curwp->w_dot.p, curwp->w_dot.o + 1);
+          if (CISUPPER (c) != FALSE)
+            {
+              rtype = UPPER;
+            }
+        }
     }
 
   /*
@@ -755,7 +755,7 @@ lreplace (
   else if (plen < rlen)
     {
       if (linsert (rlen - plen, ' ', NULLPTR) == FALSE)
-	return (FALSE);
+        return (FALSE);
     }
   curwp->w_dot.o = doto;
   saveundo (UMOVE, &curwp->w_dot);
@@ -771,32 +771,32 @@ lreplace (
       c = ugetc ((const uchar *) st, 0, &clen);
       st += clen;
       if ((rtype & UPPER) != 0 && CISLOWER (c) != 0)
-	c = CTOUPPER (c);
+        c = CTOUPPER (c);
       if (rtype == (UPPER | LOWER))
-	rtype = LOWER;
+        rtype = LOWER;
       if (c == '\n')
-	{
-	  if (curwp->w_dot.o == wllength (curwp->w_dot.p))
-	    forwchar (FALSE, 1, KRANDOM);
-	  else
-	    {
-	      ldelete (1, FALSE);
-	      lnewline ();
-	    }
-	}
+        {
+          if (curwp->w_dot.o == wllength (curwp->w_dot.p))
+            forwchar (FALSE, 1, KRANDOM);
+          else
+            {
+              ldelete (1, FALSE);
+              lnewline ();
+            }
+        }
       else if (curwp->w_dot.p == curbp->b_linep)
-	{
-	  linsert (1, c, NULLPTR);
-	}
+        {
+          linsert (1, c, NULLPTR);
+        }
       else if (curwp->w_dot.o == wllength (curwp->w_dot.p))
-	{
-	  ldelete (1, FALSE);
-	  linsert (1, c, NULLPTR);
-	}
+        {
+          ldelete (1, FALSE);
+          linsert (1, c, NULLPTR);
+        }
       else
-	{
-	  lputc (curwp->w_dot, c);
-	}
+        {
+          lputc (curwp->w_dot, c);
+        }
     }
 
   lchange (WFHARD);
@@ -851,24 +851,24 @@ kinsert (const char *s, int n)
     {
 #if REALLOC
       if (kbufp == NULL)
-	nbufp = malloc (ksize + n + KBLOCK);
+        nbufp = malloc (ksize + n + KBLOCK);
       else
-	nbufp = realloc (kbufp, ksize + n + KBLOCK);
+        nbufp = realloc (kbufp, ksize + n + KBLOCK);
       if (nbufp == NULL)
-	{
+        {
 #else
       if ((nbufp = realloc (kbufp, ksize + n + KBLOCK)) == NULL)
-	{
+        {
 #endif
-	  eprintf ("Not enough memory for kill buffer");
-	  return (FALSE);
-	}
+          eprintf ("Not enough memory for kill buffer");
+          return (FALSE);
+        }
 #if !REALLOC
       if (kbufp != NULL)
-	{
-	  memcpy (nbufp, kbufp, ksize);
-	  free ((char *) kbufp);
-	}
+        {
+          memcpy (nbufp, kbufp, ksize);
+          free ((char *) kbufp);
+        }
 #endif
       kbufp = nbufp;
       ksize += n + KBLOCK;
