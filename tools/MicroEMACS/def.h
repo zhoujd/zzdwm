@@ -103,18 +103,18 @@
  *
  * Revision 1.4  91/04/19  23:29:31  alexande
  * Add EFBUF echo flag for autocompletion of buffer names.
- * 
+ *
  * Revision 1.3  91/02/06  09:24:07  alexande
  * Added EFFILE echo flag for auto filename completion.  Added
  * declarations of variables for tab-related commands.
- * 
+ *
  * Revision 1.3  90/10/23  17:15:06  alexande
  * Took out NLINE; arbitrarily long lines are allowed now.
- * 
+ *
  * Revision 1.2  90/07/03  13:20:06  alexande
  * Added definition of uchar (unsigned char).  Changed IS??? macros to
  * mask off high byte of character.  Changed LINE.l_text to uchar.
- * 
+ *
  *
  */
 #include	<stdio.h>
@@ -130,7 +130,7 @@
 typedef unsigned char uchar;
 
 #define NLMOVE	0		/* C-M moves to next line if at */
-				/* eol and next line is blank   */
+                                /* eol and next line is blank   */
 #define CVMVAS	1		/* C-V, M-V work in pages.      */
 #define BACKUP	1		/* Make backup file.            */
 
@@ -613,7 +613,7 @@ int prevbuffer (int f, int n, int k);	/* Switch to previous buffer.   */
 int killbuffer (int f, int n, int k);	/* Make a buffer go away.       */
 
 BUFFER * bfind (const char *bname, int cflag);
-					/* Search for buffer by name	*/
+                                        /* Search for buffer by name	*/
 BUFFER * bcreate (const char *bname);	/* Create buffer by name	*/
 int popblist (void);			/* Display special buffer.	*/
 int bclear (BUFFER *bp);		/* Blow away all text in buffer	*/
@@ -665,10 +665,10 @@ int ereplyf (const char *fp, char *buf, int nbuf, int flag, ...);
 void eformat (const char *fp, va_list ap);
 void eprintf (const char *, ...);
 int egetfname (const char *fp, char *buf, int nbuf);
-					/* Read filename from echo line	*/
+                                        /* Read filename from echo line	*/
 int eread (const char *fp, char *buf, int nbuf, int flag, va_list ap);
 int ereadv (const char *fp, char *buf, int nbuf, int flag, ...);
-					/* Read input from echo line.	*/
+                                        /* Read input from echo line.	*/
 int eyesno (const char *sp);		/* Ask "yes" or "no" question.	*/
 void eputc (int c);			/* Put a character to screen.	*/
 void einsertc (int c);			/* Insert a character on screen	*/
@@ -693,21 +693,21 @@ int fileread (int f, int n, int k);	/* Get a file, read only        */
 int fileinsert (int f, int n, int k);	/* Insert a file, read only     */
 int filevisit (int f, int n, int k);	/* Get a file, read write       */
 int filevisitreadonly (int f, int n, int k);
-					/* Get a file, read only        */
+                                        /* Get a file, read only        */
 int togglereadonly (int f, int n, int k);
-					/* Toggle buffer readonly flag  */
+                                        /* Toggle buffer readonly flag  */
 int filewrite (int f, int n, int k);	/* Write a file                 */
 int filesave (int f, int n, int k);	/* Save current file            */
 int filename (int f, int n, int k);	/* Adjust file name             */
 int setsavetabs (int f, int n, int k);	/* Set tab save flag            */
 
 void makename (char *bname, const char *fname);
-					/* Make buffer name from fname	*/
+                                        /* Make buffer name from fname	*/
 int readin (const char *fname);		/* Read file into cur. buffer.	*/
 int visit_file (char *fname);
 int checkreadonly (void);		/* Is current buffer readonly?	*/
 int readlines (LINE *lp2, int *statptr);
-					/* Read lines from file.	*/
+                                        /* Read lines from file.	*/
 void updatemode (void);			/* Update mode lines.		*/
 
 /*
@@ -716,9 +716,9 @@ void updatemode (void);			/* Update mode lines.		*/
 int ffropen (const char *fn);		/* Open file for reading.	*/
 int ffwopen (const char *fn);		/* Open file for writing.	*/
 int ffgetline (char **bufp, int *nbytes);
-					/* Read a line from the file.	*/
+                                        /* Read a line from the file.	*/
 int ffputline (const char *buf, int nbuf, int nl);
-					/* Write line to the file.	*/
+                                        /* Write line to the file.	*/
 int ffclose (void);			/* Close a file.		*/
 int ffpopen (char *fn);			/* Open profile			*/
 int ffpread (char *cp);			/* Read byte from profile	*/
@@ -727,9 +727,9 @@ void adjustcase (char *fn);		/* Adjust case of filename.	*/
 char * fftilde (char *arg);		/* Expand ~ in filename.	*/
 int fbackupfile (const char *fname);	/* Rename file to backup.	*/
 char *ffsearch (const char *name,	/* Find matching filename.	*/
-		int cpos,
-		const char *prev);
-int ffisdir (char *name, int cpos); 	/* name[0..cpos-1] is dir?	*/
+                int cpos,
+                const char *prev);
+int ffisdir (char *name, int cpos);     /* name[0..cpos-1] is dir?	*/
 const char * ffexedir (void);		/* Get dir of pe executable.	*/
 
 /*
@@ -749,13 +749,13 @@ LINE * lalloc (int used);		/* Allocate line.		*/
 LINE * lallocx (int used);		/* Allocate line w/o round-up.	*/
 int linsert (int n, int c, char *s);	/* Insert char(s) at dot	*/
 int insertwithnl (const char *s, int len);
-					/* Insert string with newlines.	*/
+                                        /* Insert string with newlines.	*/
 void lputc (POS p, wchar_t c);		/* Replace char at p with c.	*/
 int lnewline (void);			/* Insert newline.		*/
 void lchange (int flag);		/* Change buffer flag.		*/
 int ldelete (int n, int kflag);		/* Delete n bytes at dot.	*/
 int lreplace (int plen, const char *st, int f);
-					/* Replace chars at dot		*/
+                                        /* Replace chars at dot		*/
 int kinsert (const char *s, int n);	/* Insert text in kill buffer	*/
 void kdelete (void);			/* Delete text in kill buffer	*/
 
@@ -770,9 +770,9 @@ int ctlxe (int f, int n, int k);	/* Execute macro                */
 int jeffexit (int f, int n, int k);	/* Jeff Lomicka style exit.     */
 int showversion (int f, int n, int k);	/* Show version numbers, etc.   */
 int displaymessage (int f, int n, int k);
-					/* Display message lines.	*/
+                                        /* Display message lines.	*/
 
-int domacro (int *macrop, int n);	/* Execute macro.	        */
+int domacro (int *macrop, int n);	/* Execute macro.               */
 
 /*
  * Defined by "paragraph.c"
@@ -809,7 +809,7 @@ int checkheap (int f, int n, int k);	/* Check for heap corruption    */
 
 int getcolpos (void);			/* Return cur. column pos.	*/
 int kremove (int n, uchar *buf);	/* Remove n'th UTF-8 char from	*/
-					/*  kill buffer, return length.	*/
+                                        /*  kill buffer, return length.	*/
 /*
  * Defined by "region.c".
  */
@@ -860,11 +860,11 @@ int spawnpipe (int f, int n, int k);	/* Pipe a command into a window.*/
 int spawnfilter (int f, int n, int k);	/* Filter a buffer via program. */
 
 int spawn (char *program,		/* Spawn a program.		*/
-	   const char *args[]);
+           const char *args[]);
 int openpipe (const char *program,	/* Open a two-way pipe.		*/
-	      const char *args[],
-	      FILE **infile,
-	      FILE **outfile);
+              const char *args[],
+              FILE **infile,
+              FILE **outfile);
 
 /*
  * Defined by "symbol.c".
@@ -873,10 +873,10 @@ int namemacro (int f, int n, int k);	/* Assign a name to cur. macro  */
 
 void keymapinit ();
 void keyadd (int new,			/* Add a function, bind to key	*/
-	     int (*funcp) (),
-	     const char *name);
+             int (*funcp) (),
+             const char *name);
 void keydup (int new,			/* Bind key to existing func.	*/
-	     const char *name);
+             const char *name);
 SYMBOL *symlookup (const char *cp);	/* Symbol table lookup		*/
 int getbindingforcmd (const char *s);	/* Find key bound to cmd. name	*/
 SYMBOL *getbinding (int key);		/* Get symbol bound to key	*/
@@ -885,8 +885,8 @@ void setmodebinding (int key,
                      SYMBOL *sym);	/* Add key binding to mode	*/
 int wallchart (int f, int n, int k);	/* Make wall chart.             */
 const char * symsearch (const char *sname, /* Search for symbol.	*/
-			int cpos,
-			const char *prev);
+                        int cpos,
+                        const char *prev);
 void createmode (const char *name);	/* Set mode for current buffer	*/
 void removemode (BUFFER *bp);		/* Remove mode for a buffer	*/
 const char * modename (BUFFER *bp);	/* Return name for current mode	*/
@@ -900,15 +900,15 @@ int gccerror (int f, int n, int k);	/* Find line in gcc error	*/
 
 tagfile * findtagfile (const char *name);
 tagref * addtagref (const char *string, tagfile *file, int line, long offset,
-		    int exact);
+                    int exact);
 int searchtag (int f, int n, int (*prep)(const char *string),
-	       const char *tagtype);
+               const char *tagtype);
 
 void getcursorword (char *buffer,	/* Get word under cursor.	*/
-		    int size,
-		    int alpha);
+                    int size,
+                    int alpha);
 int inwordpos (struct LINE *linep,	/* Word char at pos?		*/
-	       int doto, int alpha);
+               int doto, int alpha);
 
 /*
  * Defined by "tty.c".
@@ -999,20 +999,20 @@ void setundochanged (void);		/* Set buffer changed flags.	*/
  * Defined by "utf8.c".
  */
 const uchar * ugetcptr (const uchar *s, int n);
-					/* Addr of nth UTF-8 char in s	*/
+                                        /* Addr of nth UTF-8 char in s	*/
 int uoffset (const uchar *s, int n);	/* Offset of nth UTF-8 char in s */
 int uslen (const uchar *s);		/* # of UTF-8 chars in		*/
-					/*  null-terminated string s	*/
+                                        /*  null-terminated string s	*/
 int unslen (const uchar *s, int n);	/* # of UTF-8 chars in string s	*/
-					/*  of length n			*/
+                                        /*  of length n			*/
 int unblen (const uchar *s, int n);	/* # of bytes in next n UTF-8	*/
-					/*  chars in s			*/
+                                        /*  chars in s			*/
 wchar_t ugetc (const uchar *s, int n, int *len);
-					/* Get nth UTF-8 character in s	*/
-					/*  as 32-bit Unicode		*/
+                                        /* Get nth UTF-8 character in s	*/
+                                        /*  as 32-bit Unicode		*/
 wchar_t ugetprevc (const uchar *s, int *len);
-					/* Get UTF-8 character previous	*/
-					/*  to s as 32-bit Unicode	*/
+                                        /* Get UTF-8 character previous	*/
+                                        /*  to s as 32-bit Unicode	*/
 int ucombining (wchar_t c);		/* c is a combining char?	*/
 int uputc (wchar_t c, unsigned char *s);/* Convert Unicode to UTF-8	*/
 int uwidth (wchar_t c);			/* Display length of c		*/
