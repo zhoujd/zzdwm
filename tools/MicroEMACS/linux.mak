@@ -86,14 +86,15 @@ OBJ := \
 TARGET = me
 PREFIX = /usr/local
 DEST = $(PREFIX)/bin/$(TARGET)
+REV = rev.h
 
 $(TARGET): $(OBJ)
 	$(LD) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 
-rev.h:
+$(REV):
 	@$(srcdir)/ver.sh $@
 
-version.o: rev.h
+version.o: $(REV)
 
 strip: $(TARGET)
 	strip -v $(TARGET)
@@ -105,4 +106,4 @@ uninstall:
 	rm -f $(DEST)
 
 clean:
-	rm -f *.[o] $(TARGET) rev.h
+	rm -f *.[o] $(TARGET) $(REV)

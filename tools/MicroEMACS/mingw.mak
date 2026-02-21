@@ -73,17 +73,18 @@ OBJ := \
 # How to link MicroEMACS.
 
 TARGET = me.exe
+REV = rev.h
 
 $(TARGET): $(OBJ)
 	$(LD) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 
-rev.h:
-	@$(srcdir)/ver.sh
+$(REV):
+	@$(srcdir)/ver.sh $@
 
-version.o: rev.h
+version.o: $(REV)
 
 strip: $(TARGET)
 	strip -v $(TARGET)
 
 clean:
-	rm -f *.[o] $(TARGET) rev.h
+	rm -f *.[o] $(TARGET) $(REV)
