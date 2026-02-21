@@ -290,7 +290,7 @@ putbytes (const char *s, int len)
     {
       if (cindex == sizeof (cbuf))
 	{			/* buffer full? */
-	  if (write (ffp, cbuf, sizeof (cbuf)) < sizeof (cbuf))
+	  if (write (ffp, cbuf, sizeof (cbuf)) < (int) sizeof (cbuf))
 	    status = -1;	/* disk full    */
 	  cindex = 0;
 	}
