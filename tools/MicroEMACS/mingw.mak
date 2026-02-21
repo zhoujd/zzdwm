@@ -14,7 +14,10 @@ INC = -I$(srcdir) -I$(SYS) -I$(TTY)
 # Compilers, linkers, and their flags.
 
 CC = gcc
-CFLAGS = -std=c99 -D_POSIX_C_SOURCE=200809L -DMINGW -DBACKUP $(INC) -Wall
+CFLAGS = -std=c99 -D_POSIX_C_SOURCE=200809L -DMINGW -DBACKUP $(INC) \
+         -Wall -Wextra -pedantic \
+         -Wno-unused-parameter \
+         -Wno-implicit-fallthrough
 ifeq ($(DEBUG), yes)
 CFLAGS := -g -O0 $(CFLAGS)
 else
