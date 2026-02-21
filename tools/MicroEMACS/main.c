@@ -112,8 +112,9 @@ static void usage(void);
 void
 usage(void)
 {
-  fprintf(stderr, "usage: me [-234bcdrxz] [-g line] [-p profile] "
-          "[+[line]] [file ...] [file:line[:column]]\n");
+  fprintf(stderr,
+          "usage: me [-234bcdrxz] [-g line] [-p profile] [+[line]]\n"
+          "          [file[:line[:column]] ...]\n");
 }
 
 /*
