@@ -23,5 +23,4 @@ uninstall: all
 strip: TARGET=strip
 strip: all
 
-
 .PHONY: all clean install uninstall strip
