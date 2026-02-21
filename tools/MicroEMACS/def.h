@@ -308,7 +308,7 @@ typedef struct SYMBOL
   struct SYMBOL *s_symp;	/* Hash chain.			*/
   short s_nkey;			/* Count of keys bound here.    */
   const char *s_name;		/* Name.                        */
-  int (*s_funcp) (int f, int n, int k);		/* Function.                    */
+  int (*s_funcp) (int f, int n, int k); /* Function.            */
   int *s_macro;			/* Macro definition.            */
 }
 SYMBOL;
@@ -545,11 +545,9 @@ extern int fillcol;
 extern int tabsize;
 extern int savetabs;
 
-
 /*
  * Useful macros for running down the buffer and window lists.
  */
-
 #define	ALLWIND(wp)	for (wp=wheadp;wp;wp=wp->w_wndp)
 #define ALLBUF(bp)	for (bp=bheadp;bp;bp=bp->b_bufp)
 
@@ -622,7 +620,7 @@ int bclear (BUFFER *bp);		/* Blow away all text in buffer	*/
 int anycb (void);			/* Look for changed buffers.	*/
 int addline (const char *text);		/* Append text to list buffer.	*/
 void addwind (EWINDOW *wp, int n);	/* Bump ref. count for window.	*/
-const char * bufsearch (		/* Find buffer with partial name. */
+const char * bufsearch (		/* Find buffer with partial name*/
      const char *bname,
      int cpos,
      const char *prev);
@@ -675,7 +673,7 @@ int eyesno (const char *sp);		/* Ask "yes" or "no" question.	*/
 void eputc (int c);			/* Put a character to screen.	*/
 void einsertc (int c);			/* Insert a character on screen	*/
 void eputs (const char *s);		/* Put a string to screen.	*/
-void eerase (void);			/* Erase the echo line.		*/ 
+void eerase (void);			/* Erase the echo line.		*/
 
 int replyq_put (const char *s);		/* Add string to reply queue.	*/
 void replyq_clear (void);		/* Clear the reply queue.	*/
@@ -731,7 +729,7 @@ int fbackupfile (const char *fname);	/* Rename file to backup.	*/
 char *ffsearch (const char *name,	/* Find matching filename.	*/
 		int cpos,
 		const char *prev);
-int ffisdir (char *name, int cpos); /* name[0..cpos-1] is dir?	*/
+int ffisdir (char *name, int cpos); 	/* name[0..cpos-1] is dir?	*/
 const char * ffexedir (void);		/* Get dir of pe executable.	*/
 
 /*
@@ -742,7 +740,7 @@ int readprofile (int f, int n, int k);	/* Read profile command file    */
 int getinp (void);			/* Get next input char.		*/
 void ungetinp (int c);			/* Put back one input char.	*/
 int getkey (void);			/* Get next keyboard char.	*/
-void ekeyname (char *cp, int k);		/* Convert key code to name	*/
+void ekeyname (char *cp, int k);	/* Convert key code to name	*/
 
 /*
  * Defined by "line.c".
@@ -774,7 +772,7 @@ int showversion (int f, int n, int k);	/* Show version numbers, etc.   */
 int displaymessage (int f, int n, int k);
 					/* Display message lines.	*/
 
-int domacro (int *macrop, int n);	/* Execute macro.	*/
+int domacro (int *macrop, int n);	/* Execute macro.	        */
 
 /*
  * Defined by "paragraph.c"
@@ -874,10 +872,10 @@ int openpipe (const char *program,	/* Open a two-way pipe.		*/
 int namemacro (int f, int n, int k);	/* Assign a name to cur. macro  */
 
 void keymapinit ();
-void keyadd (int new,		/* Add a function, bind to key	*/
+void keyadd (int new,			/* Add a function, bind to key	*/
 	     int (*funcp) (),
 	     const char *name);
-void keydup (int new,		/* Bind key to existing func.	*/
+void keydup (int new,			/* Bind key to existing func.	*/
 	     const char *name);
 SYMBOL *symlookup (const char *cp);	/* Symbol table lookup		*/
 int getbindingforcmd (const char *s);	/* Find key bound to cmd. name	*/
@@ -1048,8 +1046,8 @@ uclen (const uchar *s)
 }
 
 /* Find file */
-int filefind (int f, int n);
-int viewfile (int f, int n);
+int filefind (int f, int n, int k);
+int viewfile (int f, int n, int k);
 
 /* Buffer Menu */
-int buffermenu (int f, int n);
+int buffermenu (int f, int n, int k);

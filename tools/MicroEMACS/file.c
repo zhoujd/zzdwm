@@ -74,7 +74,7 @@
  *
  *
  */
-#include	"def.h"
+#include "def.h"
 
 int savetabs = 1;		/* TRUE if tabs are preserved when saving files */
 
@@ -138,7 +138,7 @@ getfile (char fname[])
  * buffer. Bound to C-X C-F.
  */
 int
-filefind (int f, int n)
+filefind (int f, int n, int k)
 {
   char fname[NFILEN];		/* file user wishes to find */
   int s;			/* status return */
@@ -149,7 +149,7 @@ filefind (int f, int n)
 }
 
 int
-viewfile (int f, int n)
+viewfile (int f, int n, int k)
 {
   char fname[NFILEN];		/* file user wishes to find */
   int s;			/* status return */

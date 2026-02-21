@@ -46,23 +46,23 @@ extern int zotbuf(BUFFER *);
 extern BUFFER* get_scratch(void);
 extern int getctl(void);
 
+int buffermenu(int f, int n, int k);
 BUFFER *get_buffer(int n);
-int buffermenu(int f, int n);
 int valid_buf(BUFFER* bp_try);
 int count_buffers(void);
 
 int
-buffermenu(int f, int n)
+buffermenu(int f, int n, int k)
 {
   BUFFER *bp;
   BUFFER *org_bp = curbp;
-  int c,k;
+  int c, l;
   int bufptr;
   int bufcount = 0;
 
   bufptr = 1;
 
- start:
+start:
   listbuffers(f, n, KRANDOM);
   swbuffer(blistp);
   onlywind(0, 0, KRANDOM);
@@ -101,11 +101,11 @@ buffermenu(int f, int n)
        */
       if (c == ESC)
         {
-          k = getctl();
-          if (k == '[')
+          l = getctl();
+          if (l == '[')
             {
-              k = getctl();
-              switch(k)
+              l = getctl();
+              switch(l)
                 {
                 case 'A': c = CTRL_P; break;
                 case 'B': c = CTRL_N; break;
@@ -116,7 +116,7 @@ buffermenu(int f, int n)
             }
           else
             {
-              k = getctl();
+              l = getctl();
               ttbeep();
               continue;
             }
