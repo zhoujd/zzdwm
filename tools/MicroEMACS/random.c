@@ -787,7 +787,7 @@ yank (int f, int n, int k)
 	    }
 	  else
 	    {			/* Not newline  */
-	      if (j + ulen >= sizeof (lbuf))
+	      if ((size_t)(j + ulen) >= sizeof (lbuf))
 		{		/* Need flush?  */
 		  linsert (j, 0, lbuf);
 		  j = 0;

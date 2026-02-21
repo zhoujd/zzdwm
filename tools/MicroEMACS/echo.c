@@ -513,7 +513,7 @@ getxtra (const char *sp1, const char *sp2, int cpos)
 /*
  * Find the next matching file or command name.
  */
-const static char *
+static const char *
 nextname (
      const char *buf,		/* name to match */
      int cpos,			/* no. of characters to match */

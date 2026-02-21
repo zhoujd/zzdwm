@@ -293,8 +293,6 @@ typedef enum UKIND
   UDELETE,			/* Delete string		*/
 } UKIND;
 
-typedef struct UNDOSTACK UNDOSTACK;
-
 /*
  * The symbol table links editing functions
  * to names. Entries in the key map point at the symbol

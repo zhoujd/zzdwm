@@ -236,7 +236,7 @@ regcomp (const char *exp)
   regnpar = 1;
   regsize = 0L;
   regcode = &regdummy;
-  regc (MAGIC);
+  regc ((char)MAGIC);
   if (reg (0, &flags) == NULL)
     return (NULL);
 
@@ -253,7 +253,7 @@ regcomp (const char *exp)
   regparse = exp;
   regnpar = 1;
   regcode = r->program;
-  regc (MAGIC);
+  regc ((char)MAGIC);
   if (reg (0, &flags) == NULL)
     return (NULL);
 
@@ -286,7 +286,7 @@ regcomp (const char *exp)
 	  longest = NULL;
 	  len = 0;
 	  for (; scan != NULL; scan = regnext (scan))
-	    if (OP (scan) == EXACTLY && strlen (OPERAND (scan)) >= len)
+	    if (OP (scan) == EXACTLY && strlen (OPERAND (scan)) >= (size_t)len)
 	      {
 		longest = OPERAND (scan);
 		len = strlen (OPERAND (scan));

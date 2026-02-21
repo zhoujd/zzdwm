@@ -365,7 +365,7 @@ eqtoken (
 {
   register int i, c1, c2;
 
-  if (strlen (s) != toklen)	/* sizes must match     */
+  if (strlen (s) != (size_t)toklen)	/* sizes must match     */
     return (FALSE);
   while (prowhite (ptoken[pindex]) && pindex < plength)
     pindex++;			/* skip whitespace      */
