@@ -199,9 +199,7 @@ main (int argc, char *argv[])
               if (n < argc)
                 {
                   tabsize = atoi (argv[n]);
-                  if (tabsize < 1)
-                    tabsize = 1;
-                  if (tabsize > 8)
+                  if (tabsize < 2 || tabsize > 32)
                     tabsize = 8;
                 }
               break;
