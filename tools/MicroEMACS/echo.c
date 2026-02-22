@@ -60,24 +60,24 @@
  * Minor improvements to autocompletion.
  * Add feature from Epsilon: if control-S is entered when prompted for
  * a filename, the path of the current buffer is inserted.
- * 
+ *
  * Revision 1.5  91/04/19  23:17:03  alexande
  * Added support for autocompletion of buffer names, and popup
  * window showing choices for autocompletion.
- * 
+ *
  * Revision 1.4  91/02/14  16:44:38  alexande
  * Convert all VARARGS routines to use <stdarg.h> or <varargs.h>.
  * Fixed bug in nextname() that caused crash on SunOS.
- * 
+ *
  * Revision 1.3  91/02/06  09:13:08  alexande
  * Add egetfname() function, which allows automatic filename completion.
- * 
+ *
  * Revision 1.1  90/05/30  15:17:40  alexande
  * Initial revision
- * 
+ *
  *
  */
-#include	"def.h"
+#include "def.h"
 
 int epresf = FALSE;		/* Stuff in echo line flag.     */
 int enoecho = FALSE;		/* True if echo line disabled   */
@@ -87,7 +87,7 @@ int newmsgf = FALSE;		/* New alert state.             */
 
 char msg[NMSG];			/* Random message storage.      */
 char choicebuf[NCOL + 1];	/* Line buffer for displaying   */
-				/*  autocompletion choices      */
+                                /*  autocompletion choices      */
 
 /*
  * The reply queue contains strings to be returned by eread
@@ -216,55 +216,55 @@ readmsg (void)
     {
       ettmove (nrow - 1, 0);	/* Display 1 line.      */
       while (i < nmsg && (c = msg[i++]) != '\n')
-	eputc (c);
+        eputc (c);
       etteeol ();
       ettmove (nrow - 1, 0);	/* Looks nice.          */
       ettflush ();
       for (;;)
-	{			/* Editing loop.        */
-	  c = getinp ();
-	  switch (c)
-	    {
-	    case 0x0E:		/* ^N                   */
-	    case 0x20:		/* SP                   */
-	    case 0x0D:		/* CR                   */
-	      break;
+        {			/* Editing loop.        */
+          c = getinp ();
+          switch (c)
+            {
+            case 0x0E:		/* ^N                   */
+            case 0x20:		/* SP                   */
+            case 0x0D:		/* CR                   */
+              break;
 
-	    case 0x10:		/* ^P                   */
-	    case 0x08:		/* BS                   */
-	      do
-		{
-		  --i;
-		}
-	      while (i != 0 && msg[i - 1] != '\n');
-	      if (i != 0)
-		{
-		  do
-		    {		/* Back up 1 line.      */
-		      --i;
-		    }
-		  while (i != 0 && msg[i - 1] != '\n');
-		}
-	      break;
+            case 0x10:		/* ^P                   */
+            case 0x08:		/* BS                   */
+              do
+                {
+                  --i;
+                }
+              while (i != 0 && msg[i - 1] != '\n');
+              if (i != 0)
+                {
+                  do
+                    {		/* Back up 1 line.      */
+                      --i;
+                    }
+                  while (i != 0 && msg[i - 1] != '\n');
+                }
+              break;
 
-	    case 0x03:		/* ^C                   */
-	      j = 0;		/* Eat what we read.    */
-	      while (i < nmsg)
-		msg[j++] = msg[i++];
-	      nmsg = j;
-	      eerase ();
-	      return (TRUE);
+            case 0x03:		/* ^C                   */
+              j = 0;		/* Eat what we read.    */
+              while (i < nmsg)
+                msg[j++] = msg[i++];
+              nmsg = j;
+              eerase ();
+              return (TRUE);
 
-	    case 0x07:		/* ^G                   */
-	      ettbeep ();
-	      eerase ();
-	      return (ABORT);
+            case 0x07:		/* ^G                   */
+              ettbeep ();
+              eerase ();
+              return (ABORT);
 
-	    default:		/* Loop on the rest.    */
-	      continue;
-	    }
-	  break;
-	}
+            default:		/* Loop on the rest.    */
+              continue;
+            }
+          break;
+        }
     }
   nmsg = 0;			/* Flow off the end.    */
   eerase ();
@@ -330,14 +330,14 @@ eyesno (const char *sp)
     {
       s = ereply ("%s [y/n]? ", buf, sizeof (buf), sp);
       if (s == ABORT)
-	return (ABORT);
+        return (ABORT);
       if (s != FALSE)
-	{
-	  if (buf[0] == 'y' || buf[0] == 'Y')
-	    return (TRUE);
-	  if (buf[0] == 'n' || buf[0] == 'N')
-	    return (FALSE);
-	}
+        {
+          if (buf[0] == 'y' || buf[0] == 'Y')
+            return (TRUE);
+          if (buf[0] == 'n' || buf[0] == 'N')
+            return (FALSE);
+        }
     }
 }
 
@@ -440,7 +440,7 @@ addchoice (const
     {				/* Filename?            */
       makename (bname, name);	/* Strip out the path   */
       if (flag & EFDIR)
-	strcat (bname, "/");
+        strcat (bname, "/");
       name = bname;
     }
   len1 = strlen (choicebuf);
@@ -472,7 +472,7 @@ showchoices ()
   if (choicebuf[0] == '\0')
     {				/* no choices?          */
       if (blistp->b_nwnd == 0)	/* not being displayed? */
-	return;			/* don't pop up choices */
+        return;			/* don't pop up choices */
       addline ("(no choices)");	/* display empty list   */
     }
   if (addline (choicebuf) == FALSE)
@@ -502,9 +502,9 @@ getxtra (const char *sp1, const char *sp2, int cpos)
   for (;;)
     {
       if (sp1[i] != sp2[i])
-	break;
+        break;
       if (sp1[i] == '\0')
-	break;
+        break;
       ++i;
     }
   return (i - cpos);
@@ -599,14 +599,14 @@ setcolumn (const char *buf, int oldcpos, int newcpos)
   while (TRUE)
     {
       if (i == oldcpos)
-	oldcol = col;
+        oldcol = col;
       if (i == newcpos)
-	newcol = col;
+        newcol = col;
       if (i >= oldcpos && i >= newcpos)
-	break;
+        break;
       ++col;
       if (CISCTRL (buf[i]))
-	++col;
+        ++col;
       ++i;
     }
   ttmove (ttrow, ttcol + newcol - oldcol);
@@ -643,7 +643,7 @@ eread (const char *fp, char *buf, int nbuf, int flag, va_list ap)
   if (kbdmop != NULL)
     {				/* In a macro.          */
       while ((c = *kbdmop++) != '\0' && cpos < nbuf - 1)
-	buf[cpos++] = c;
+        buf[cpos++] = c;
       buf[cpos] = '\0';
       goto done;
     }
@@ -665,183 +665,183 @@ eread (const char *fp, char *buf, int nbuf, int flag, va_list ap)
        * pop up a list of choices.
        */
       if ((c == ' ' || c == '\t' || c == '?' || c == '\004')
-	  && (flag & (EFAUTO | EFFILE | EFBUF)) != 0)
-	{
-	  int popup;
+          && (flag & (EFAUTO | EFFILE | EFBUF)) != 0)
+        {
+          int popup;
 
-	  if ((popup = (c == '?' || c == '\004')) != FALSE)
-	    startchoices ();	/* start choice list    */
-	  nhits = 0;
-	  nxtra = HUGE;
-	  np2 = NULL;
-	  while ((np1 = nextname (buf, cpos, np2, flag)) != NULL)
-	    {
-	      int dirflag = 0;
+          if ((popup = (c == '?' || c == '\004')) != FALSE)
+            startchoices ();	/* start choice list    */
+          nhits = 0;
+          nxtra = HUGE;
+          np2 = NULL;
+          while ((np1 = nextname (buf, cpos, np2, flag)) != NULL)
+            {
+              int dirflag = 0;
 
-	      if ((flag & EFFILE) != 0 && ffisdir ((char*)np1, strlen (np1)))
-		dirflag = EFDIR;
-	      if (popup)	/* add to list  */
-		addchoice (np1, flag | dirflag);
-	      if (nhits++ == 0)
-		{
-		  strcpy (savebuf, np1);
-		  np2 = savebuf;
-		}
-	      if ((bxtra = getxtra (np2, np1, cpos)) < nxtra)
-		nxtra = bxtra;
-	    }
-	  if (nhits == 0)
-	    {			/* No completion.       */
-	      if (popup)
-		showchoices ();
-	      else
-		ettbeep ();	/* Ring bell    */
-	      continue;
-	    }
-	  for (i = 0; i < nxtra && cpos < nbuf - 1; ++i)
-	    {
-	      c = np2[cpos];
-	      memmove (&buf[cpos + 1], &buf[cpos], buflen - cpos);
-	      buf[cpos++] = c;
-	      ++buflen;
-	      einsertc (c);
-	    }
-	  ettflush ();
+              if ((flag & EFFILE) != 0 && ffisdir ((char*)np1, strlen (np1)))
+                dirflag = EFDIR;
+              if (popup)	/* add to list  */
+                addchoice (np1, flag | dirflag);
+              if (nhits++ == 0)
+                {
+                  strcpy (savebuf, np1);
+                  np2 = savebuf;
+                }
+              if ((bxtra = getxtra (np2, np1, cpos)) < nxtra)
+                nxtra = bxtra;
+            }
+          if (nhits == 0)
+            {			/* No completion.       */
+              if (popup)
+                showchoices ();
+              else
+                ettbeep ();	/* Ring bell    */
+              continue;
+            }
+          for (i = 0; i < nxtra && cpos < nbuf - 1; ++i)
+            {
+              c = np2[cpos];
+              memmove (&buf[cpos + 1], &buf[cpos], buflen - cpos);
+              buf[cpos++] = c;
+              ++buflen;
+              einsertc (c);
+            }
+          ettflush ();
 
-	  /* Don't fake a carriage return if there's more
-	   * than one choice.
-	   */
-	  if (nhits != 1)
-	    {
-	      if (popup)	/* Display choices      */
-		showchoices ();
-	      continue;
-	    }
-	  if ((flag & EFFILE) != 0)
-	    /* Fake a space if ordinary file,
-	     * or a slash if directory.
-	     */
-	    c = ffisdir (buf, cpos) ? '/' : ' ';
-	  else
-	    c = 0x0D;		/* Fake a CR            */
-	}
+          /* Don't fake a carriage return if there's more
+           * than one choice.
+           */
+          if (nhits != 1)
+            {
+              if (popup)	/* Display choices      */
+                showchoices ();
+              continue;
+            }
+          if ((flag & EFFILE) != 0)
+            /* Fake a space if ordinary file,
+             * or a slash if directory.
+             */
+            c = ffisdir (buf, cpos) ? '/' : ' ';
+          else
+            c = 0x0D;		/* Fake a CR            */
+        }
       switch (c)
-	{
+        {
         case 0x01:		/* Control-A, go to start */
-	  setcolumn (buf, cpos, 0);
-	  cpos = 0;
-	  ettflush ();
-	  break;
+          setcolumn (buf, cpos, 0);
+          cpos = 0;
+          ettflush ();
+          break;
 
-	case 0x02:		/* Control-B, move back */
-	  if (cpos > 0)
-	    {
-	      setcolumn (buf, cpos, cpos - 1);
-	      --cpos;
-	      ettflush ();
-	    }
-	  break;
+        case 0x02:		/* Control-B, move back */
+          if (cpos > 0)
+            {
+              setcolumn (buf, cpos, cpos - 1);
+              --cpos;
+              ettflush ();
+            }
+          break;
 
-	case 0x05:		/* Control-E, go to end	*/
-	  setcolumn (buf, cpos, buflen);
-	  cpos = buflen;
-	  ettflush ();
-	  break;
+        case 0x05:		/* Control-E, go to end	*/
+          setcolumn (buf, cpos, buflen);
+          cpos = buflen;
+          ettflush ();
+          break;
 
-	case 0x06:		/* Control-F, move forward */
-	  if (cpos < buflen)
-	    {
-	      setcolumn (buf, cpos, cpos + 1);
-	      ++cpos;
-	      ettflush ();
-	    }
-	  break;
+        case 0x06:		/* Control-F, move forward */
+          if (cpos < buflen)
+            {
+              setcolumn (buf, cpos, cpos + 1);
+              ++cpos;
+              ettflush ();
+            }
+          break;
 
-	case 0x0D:		/* Return, done.        */
-	  if ((flag & EFFILE) != 0)
-	    while (buflen > 0 && buf[buflen - 1] == ' ')
-	      buflen--;		/* Zap trailing spaces  */
-	  buf[buflen] = '\0';
-	  if (kbdmip != NULL)
-	    {
-	      if (kbdmip + cpos + 1 > &kbdm[NKBDM - 3])
-		{
-		  (void) ctrlg (FALSE, 0, KRANDOM);
-		  ettflush ();
-		  return (ABORT);
-		}
-	      for (i = 0; i < cpos; ++i)
-		*kbdmip++ = buf[i];
-	      *kbdmip++ = '\0';
-	    }
-	  if ((flag & EFCR) != 0)
-	    {
-	      ettputc (0x0D);
+        case 0x0D:		/* Return, done.        */
+          if ((flag & EFFILE) != 0)
+            while (buflen > 0 && buf[buflen - 1] == ' ')
+              buflen--;		/* Zap trailing spaces  */
+          buf[buflen] = '\0';
+          if (kbdmip != NULL)
+            {
+              if (kbdmip + cpos + 1 > &kbdm[NKBDM - 3])
+                {
+                  (void) ctrlg (FALSE, 0, KRANDOM);
+                  ettflush ();
+                  return (ABORT);
+                }
+              for (i = 0; i < cpos; ++i)
+                *kbdmip++ = buf[i];
+              *kbdmip++ = '\0';
+            }
+          if ((flag & EFCR) != 0)
+            {
+              ettputc (0x0D);
               eerase ();
-	      ettflush ();
-	    }
-	  goto done;
+              ettflush ();
+            }
+          goto done;
 
-	case 0x07:		/* Bell, abort.         */
-	  eputc (0x07);
-	  (void) ctrlg (FALSE, 0, KRANDOM);
-	  ettflush ();
-	  return (ABORT);
+        case 0x07:		/* Bell, abort.         */
+          eputc (0x07);
+          (void) ctrlg (FALSE, 0, KRANDOM);
+          ettflush ();
+          return (ABORT);
 
-	case 0x7F:		/* Rubout, erase.       */
-	case 0x08:		/* Backspace, erase.    */
-	  if (cpos == 0)
-	    break;
-	  setcolumn (buf, cpos, cpos - 1);
-	  --cpos;
-	  /* drop into Control-D */
-	case 0x04:		/* Control-D, delete. */
-	  if (cpos == buflen)
-	    break;
-	  ettdelc ();
-	  if (CISCTRL (buf[cpos]))
-	    ettdelc ();
-	  memmove (&buf[cpos], &buf[cpos + 1], buflen - cpos);
-	  --buflen;
-	  ettflush ();
-	  break;
+        case 0x7F:		/* Rubout, erase.       */
+        case 0x08:		/* Backspace, erase.    */
+          if (cpos == 0)
+            break;
+          setcolumn (buf, cpos, cpos - 1);
+          --cpos;
+          /* drop into Control-D */
+        case 0x04:		/* Control-D, delete. */
+          if (cpos == buflen)
+            break;
+          ettdelc ();
+          if (CISCTRL (buf[cpos]))
+            ettdelc ();
+          memmove (&buf[cpos], &buf[cpos + 1], buflen - cpos);
+          --buflen;
+          ettflush ();
+          break;
 
-	case 0x12:		/* Control-R */
-	case 0x13:		/* Control-S */
-	  ettflush ();
-	  break;
+        case 0x12:		/* Control-R */
+        case 0x13:		/* Control-S */
+          ettflush ();
+          break;
 
-	case 0x15:		/* C-U, kill line.      */
-	  if (buflen == 0)
-	    break;
-	  setcolumn (buf, cpos, 0);
-	  etteeol ();
-	  cpos = buflen = 0;
-	  ettflush ();
-	  break;
+        case 0x15:		/* C-U, kill line.      */
+          if (buflen == 0)
+            break;
+          setcolumn (buf, cpos, 0);
+          etteeol ();
+          cpos = buflen = 0;
+          ettflush ();
+          break;
 
-	case 0x0b:		/* C-K, kill to end of line */
-	  if (cpos == buflen)
-	    break;
-	  etteeol ();
-	  buflen = cpos;
-	  ettflush ();
-	  break;
+        case 0x0b:		/* C-K, kill to end of line */
+          if (cpos == buflen)
+            break;
+          etteeol ();
+          buflen = cpos;
+          ettflush ();
+          break;
 
-	case 0x11:		/* Control-Q - quote    */
-	  c = getinp ();	/* drop into default    */
-	default:		/* All the rest.        */
-	  ulen = uputc (c, ubuf);
-	  if (cpos + ulen < nbuf)
-	    {
-	      memmove (&buf[cpos + ulen], &buf[cpos], buflen - cpos);
-	      memcpy (&buf[cpos], ubuf, ulen);
-	      cpos += ulen;
-	      buflen += ulen;
-	      einsertc (c);
-	      ettflush ();
-	    }
-	}
+        case 0x11:		/* Control-Q - quote    */
+          c = getinp ();	/* drop into default    */
+        default:		/* All the rest.        */
+          ulen = uputc (c, ubuf);
+          if (cpos + ulen < nbuf)
+            {
+              memmove (&buf[cpos + ulen], &buf[cpos], buflen - cpos);
+              memcpy (&buf[cpos], ubuf, ulen);
+              cpos += ulen;
+              buflen += ulen;
+              einsertc (c);
+              ettflush ();
+            }
+        }
     }
 done:
   if (buf[0] == '\0')
@@ -960,40 +960,40 @@ eformat (const char *fp, va_list ap)
   while ((c = *fp++) != '\0')
     {
       if (c != '%')
-	eputc (c);
+        eputc (c);
       else
-	{
-	  c = *fp++;
-	  switch (c)
-	    {
-	    case 'd':
-	      eputi (va_arg (ap, int), 10);
-	      break;
+        {
+          c = *fp++;
+          switch (c)
+            {
+            case 'd':
+              eputi (va_arg (ap, int), 10);
+              break;
 
-	    case 'l':
-	      eputl (va_arg (ap, long), 10);
-	      break;
+            case 'l':
+              eputl (va_arg (ap, long), 10);
+              break;
 
-	    case 'x':
-	      eputi (va_arg (ap, int), 16);
-	      break;
+            case 'x':
+              eputi (va_arg (ap, int), 16);
+              break;
 
-	    case 'X':
-	      eputl (va_arg (ap, long), 16);
-	      break;
+            case 'X':
+              eputl (va_arg (ap, long), 16);
+              break;
 
-	    case 'o':
-	      eputi (va_arg (ap, int), 8);
-	      break;
+            case 'o':
+              eputi (va_arg (ap, int), 8);
+              break;
 
-	    case 's':
-	      eputs (va_arg (ap, char *));
-	      break;
+            case 's':
+              eputs (va_arg (ap, char *));
+              break;
 
-	    default:
-	      eputc (c);
-	    }
-	}
+            default:
+              eputc (c);
+            }
+        }
     }
 }
 
@@ -1027,10 +1027,10 @@ eputc (int c)
   if (ttcol < ncol)
     {
       if (CISCTRL (c) != FALSE)
-	{
-	  eputc ('^');
-	  c ^= 0x40;
-	}
+        {
+          eputc ('^');
+          c ^= 0x40;
+        }
       ettputc (c);
       ++ttcol;
     }
@@ -1046,10 +1046,10 @@ einsertc (int c)
   if (ttcol < ncol)
     {
       if (CISCTRL (c) != FALSE)
-	{
-	  einsertc ('^');
-	  c ^= 0x40;
-	}
+        {
+          einsertc ('^');
+          c ^= 0x40;
+        }
       ettinsertc (c);
       ++ttcol;
     }
