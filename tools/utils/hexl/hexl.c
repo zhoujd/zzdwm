@@ -55,10 +55,10 @@ static void usage()
            "usage: %s [option] [file]\n"
            "option:\n"
            "  -hex  hex dump\n"
-           "  -group-by-8-bits\n"
-           "  -group-by-16-bits\n"
-           "  -group-by-32-bits\n"
-           "  -group-by-64-bits\n"
+           "  -g1 || -group-by-8-bits\n"
+           "  -g2 || -group-by-16-bits\n"
+           "  -g4 || -group-by-32-bits\n"
+           "  -g8 || -group-by-64-bits\n"
            "  -iso  iso character set.\n"
            "  -un || -de from hexl format to binary.\n"
            "  --  End switch list.\n"
@@ -107,13 +107,13 @@ main (int argc, char **argv)
       /* Hex is the default and is only base supported.  */;
     else if (!strcmp (*argv, "-iso"))
       iso_flag = true;
-    else if (!strcmp (*argv, "-group-by-8-bits"))
+    else if (!strcmp (*argv, "-group-by-8-bits") || !strcmp (*argv, "-g1"))
       group_by = 0x00;
-    else if (!strcmp (*argv, "-group-by-16-bits"))
+    else if (!strcmp (*argv, "-group-by-16-bits") || !strcmp (*argv, "-g2"))
       group_by = 0x01;
-    else if (!strcmp (*argv, "-group-by-32-bits"))
+    else if (!strcmp (*argv, "-group-by-32-bits") || !strcmp (*argv, "-g4"))
       group_by = 0x03;
-    else if (!strcmp (*argv, "-group-by-64-bits"))
+    else if (!strcmp (*argv, "-group-by-64-bits") || !strcmp (*argv, "-g8"))
       group_by = 0x07;
     else if (!strcmp (*argv, "-h"))
     {
