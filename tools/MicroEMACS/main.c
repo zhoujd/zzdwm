@@ -113,7 +113,7 @@ void
 usage(void)
 {
   fprintf(stderr,
-          "usage: me [-234bdrxz] [-c cscope_path] [-g line] [-p profile] [-t tabsize]\n"
+          "usage: me [-234bdmrxz] [-c path] [-g line] [-p profile] [-t size]\n"
           "          [+[line]] [file[:line[:column]] ...]\n");
 }
 
