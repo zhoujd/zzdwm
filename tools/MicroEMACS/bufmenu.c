@@ -25,6 +25,7 @@
 #define CTRL_N CCHR('N')
 #define CTRL_M CCHR('M')
 #define CTRL_P CCHR('P')
+#define CTRL_H CCHR('H')
 
 extern int listbuffers(int f, int n, int k);
 extern int onlywind(int f, int n, int k);
@@ -136,6 +137,7 @@ start:
         case 'p':
         case 'P':
         case CTRL_P:
+        case CTRL_H:
         case BACKSPACE:
           if (bufptr == 1)
             {
