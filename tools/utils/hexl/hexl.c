@@ -54,17 +54,17 @@ static void usage()
   fprintf (stderr,
            "usage: %s [option] [file]\n"
            "option:\n"
-           "  -hex  hex dump\n"
-           "  -g1 || -group-by-8-bits\n"
-           "  -g2 || -group-by-16-bits\n"
-           "  -g4 || -group-by-32-bits\n"
-           "  -g8 || -group-by-64-bits\n"
-           "  -iso  iso character set.\n"
-           "  -un || -de from hexl format to binary.\n"
-           "  --  End switch list.\n"
-           "  <filename>  dump filename\n"
-           "  -  (as filename == stdin)\n"
-           "  -h  print help\n"
+           "-hex  hex dump.\n"
+           "-iso  iso character set.\n"
+           "-g1 || -group-by-8-bits\n"
+           "-g2 || -group-by-16-bits\n"
+           "-g4 || -group-by-32-bits\n"
+           "-g8 || -group-by-64-bits\n"
+           "-un || -de  from hexl format to binary.\n"
+           "--  End switch list.\n"
+           "<filename>  dump filename.\n"
+           "-  (as filename == stdin)\n"
+           "-h  print help\n"
            , progname);
 }
 
