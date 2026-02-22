@@ -11,7 +11,7 @@ INSTALL_PROGRAM ?= install
 
 # includes and libs
 INCLUDES =
-LDFLAGS = -static
+LDFLAGS = -static -s
 
 PROG	= fileview
 OBJS	= fileview.o

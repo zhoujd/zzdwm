@@ -53,11 +53,16 @@ char filename[ MAXNAME + 1 ];
 char buffer[ BUFSIZE ];
 char outline[ 80 ];
 
+void usage(char *app)
+{
+  fprintf( stderr, "usage: %s [file]\n", app );
+}
+
 int main( int argc, char *argv[] )
 {
 	// setup the filename (if supplied), else terminate
 	if ( argc > 1 ) strncpy( filename, argv[1], MAXNAME );
- 	else { fprintf( stderr, "argument needed\n" ); exit(1); }
+ 	else { usage(argv[0]); exit(1); }
 
 	// open the file for reading
 	int	fd = open( filename, O_RDONLY );
@@ -238,7 +243,6 @@ int main( int argc, char *argv[] )
 			fflush( stdout );
 			{
 			char	inbuf[ 16 ] = {0};
-				//tcsetattr( STDIN_FILENO, TCSANOW, &tty_orig );
 			int	i = 0;
 			while ( i < 15 )
 				{
