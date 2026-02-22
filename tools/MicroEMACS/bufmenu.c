@@ -25,8 +25,6 @@
 #define CTRL_N CCHR('N')
 #define CTRL_M CCHR('M')
 #define CTRL_P CCHR('P')
-#define CTRL_C CCHR('C')
-#define CTRL_Z CCHR('Z')
 
 extern int listbuffers(int f, int n, int k);
 extern int onlywind(int f, int n, int k);
@@ -35,8 +33,6 @@ extern int forwline(int f, int n, int k);
 extern int backline(int f, int n, int k);
 extern int nextwind(int f, int n, int k);
 extern int filesave(int f, int n, int k);
-extern int spawncli(int f, int n, int k);	/* Run CLI in a subjob.         */
-extern int jeffexit(int f, int n, int k);	/* Jeff Lomicka style exit.     */
 
 extern int swbuffer (BUFFER *);
 extern void update(void);
@@ -124,12 +120,6 @@ start:
 
       switch (c)
         {
-        case CTRL_C:
-          spawncli(0, 0, KRANDOM);
-          break;
-        case CTRL_Z:
-          jeffexit(0, 0, KRANDOM);
-          break;
         case 'n':
         case 'N':
         case ' ':
