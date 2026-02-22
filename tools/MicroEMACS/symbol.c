@@ -79,19 +79,19 @@
  * Added set-overstrike command.  Bind set-save-tabs to M-I.
  * Move support for autocompletion of symbol names from echo.c
  * to new routine symsearch() in this module.
- * 
+ *
  * Revision 1.3  91/01/07  10:29:21  alexande
  * Remove C++ warnings.  Add set-tab-size command.
- * 
+ *
  * Revision 1.2  89/01/13  13:01:33  MGA
  * Added getbinding() routine to look up a key binding.  Used by
  * incremental search.
- * 
+ *
  * Revision 1.1  89/01/13  11:07:38  MGA
  * Initial revision
  *
  */
-#include	"def.h"
+#include "def.h"
 
 /* #define USE_VMWAREINDENT */	/* Define to use VMware indent	*/
 #define USE_GNUINDENT		/* Define to use gnu indent	*/
@@ -167,7 +167,7 @@ KEY key[] = {
   {KCTRL | 'W',		killregion,	"kill-region"},
   {KCTRL | 'Y',		yank,		"yank"},
   {KCTRL | 'Z',		jeffexit,	"jeff-exit"},
-  {KCTRL | '_',		undo,	        "undo"},
+  {KCTRL | '_',		undo,           "undo"},
   {KCTLX | KCTRL | 'B', buffermenu,	"buffer-menu"},
   {KCTLX | KCTRL | 'C', quit,		"quit"},
   {KCTLX | KCTRL | 'E', eecho,		"echo"},
@@ -403,8 +403,8 @@ addbinding (int key, SYMBOL *sym, BINDING **table)
   for (bp1 = table[hash]; bp1 != NULL; bp1 = bp1->bi_next)
     if (bp1->bi_key == key)
       {
-	bp = bp1;
-	break;
+        bp = bp1;
+        break;
       }
   if (bp != NULL)
     --bp->bi_symbol->s_nkey;	/* Unbind from old symbol */
@@ -413,7 +413,7 @@ addbinding (int key, SYMBOL *sym, BINDING **table)
       /* Create a new binding, insert into hash chain. */
       bp = calloc (1, sizeof (*bp));
       if (bp == NULL)
-	abort ();
+        abort ();
       bp->bi_next = table[hash];
       bp->bi_key = key;
       table[hash] = bp;
@@ -460,7 +460,7 @@ symlookup (const char *cp)
   while (sp != NULL)
     {
       if (strcmp (cp, sp->s_name) == 0)
-	return (sp);
+        return (sp);
       sp = sp->s_symp;
     }
   return (NULL);
@@ -502,7 +502,7 @@ keymapinit ()
   for (i = 0x20; i < 0x7F; ++i)
     {
       if (getbinding (i) != NULL)
-	abort ();
+        abort ();
       setbinding (i, sp);
     }
   ttykeymapinit ();
@@ -543,7 +543,7 @@ keyadd (
   if (new >= 0)
     {				/* Bind this key.       */
       if (getbinding (new) != NULL)
-	abort ();
+        abort ();
       setbinding (new, sp);
     }
 }
@@ -583,8 +583,8 @@ getbindingforcmd (const char *s)
   for (hash = 0; hash < NSHASH; hash++)
     {
       for (bp = binding[hash]; bp != NULL; bp = bp->bi_next)
-	if (bp->bi_symbol == sp)
-	  return bp->bi_key;
+        if (bp->bi_symbol == sp)
+          return bp->bi_key;
     }
   return (-1);
 }
@@ -641,32 +641,32 @@ namemacro (int f, int n, int k)
       /* Allocate a new symbol structure.
        */
       if ((sp = (SYMBOL *) malloc (sizeof (SYMBOL))) == NULL)
-	{
-	  eprintf ("Out of memory.");
-	  free (mp);
-	  return (FALSE);
-	}
+        {
+          eprintf ("Out of memory.");
+          free (mp);
+          return (FALSE);
+        }
 
       /* Copy the symbol name and add the symbol to the hash chain.
        */
       if ((sp->s_name = strdup (xname)) == NULL)
-	{
-	  eprintf ("Out of memory.");
-	  free (mp);
-	  free (sp);
-	  return (FALSE);
-	}
+        {
+          eprintf ("Out of memory.");
+          free (mp);
+          free (sp);
+          return (FALSE);
+        }
       sp->s_nkey = 0;
       addsym (sp);
     }
   else
     {				/* Symbol exists.       */
       if (sp->s_macro == NULL)
-	{			/* Symbol isn't macro?  */
-	  eprintf ("Symbol is already defined.");
-	  free (mp);
-	  return (FALSE);
-	}
+        {			/* Symbol isn't macro?  */
+          eprintf ("Symbol is already defined.");
+          free (mp);
+          return (FALSE);
+        }
       free (sp->s_macro);	/* Get rid of old macro */
     }
 
@@ -699,15 +699,15 @@ symsearch (
   for (;;)
     {
       while (sp == NULL)
-	{
-	  if (h == NSHASH)	/* tried all hash chains */
-	    return (NULL);
-	  sp = symbol[h++];	/* next hash chain      */
-	}
+        {
+          if (h == NSHASH)	/* tried all hash chains */
+            return (NULL);
+          sp = symbol[h++];	/* next hash chain      */
+        }
       name = sp->s_name;	/* save name            */
       sp = sp->s_symp;		/* skip to next symbol  */
       if (strncmp (sname, name, cpos) == 0)
-	return (name);
+        return (name);
     }
 }
 
@@ -728,33 +728,33 @@ sortblist (void)
     {
       swapped = FALSE;
       for (lp = firstline (blistp);
-	   lp != blistp->b_linep &&
-	   (next = lforw (lp)) != blistp->b_linep;
-	   lp = next)
-	{
-	  int len, nlen;
+           lp != blistp->b_linep &&
+           (next = lforw (lp)) != blistp->b_linep;
+           lp = next)
+        {
+          int len, nlen;
 
-	  len = llength (lp);
-	  nlen = llength (next);
-	  if (len > nlen)
-	    len = nlen;
-	  if (strncmp ((const char *) lgets (lp),
-	               (const char *) lgets (next), len) > 0)
-	    {
-	      /* Swap lp and next.
-	       */
-	      lback (lforw (next)) = lp;
-	      lforw (lp) = lforw (next);
-	      lforw (lback (lp)) = next;
-	      lback (next) = lback (lp);
-	      lback (lp) = next;
-	      lforw (next) = lp;
-	      swapped = TRUE;
-	      next = lp;
-	    }
-	}
+          len = llength (lp);
+          nlen = llength (next);
+          if (len > nlen)
+            len = nlen;
+          if (strncmp ((const char *) lgets (lp),
+                       (const char *) lgets (next), len) > 0)
+            {
+              /* Swap lp and next.
+               */
+              lback (lforw (next)) = lp;
+              lforw (lp) = lforw (next);
+              lforw (lback (lp)) = next;
+              lback (next) = lback (lp);
+              lback (lp) = next;
+              lforw (next) = lp;
+              swapped = TRUE;
+              next = lp;
+            }
+        }
       if (!swapped)
-	done = TRUE;
+        done = TRUE;
     }
 }
 
@@ -779,7 +779,7 @@ showbindings (int f, int mode)
   if (mode == TRUE)
     {
       if (curbp == NULL || curbp->b_mode == NULL)
-	return TRUE;
+        return TRUE;
       table = curbp->b_mode->m_binding;
     }
   else
@@ -787,24 +787,24 @@ showbindings (int f, int mode)
   for (hash = 0; hash < NSHASH; hash++)
     {
       for (bp = table[hash]; bp != NULL; bp = bp->bi_next)
-	{
-	  key = bp->bi_key;
-	  sp = bp->bi_symbol;
-	  if (f != FALSE || strcmp (sp->s_name, "ins-self") != 0)
-	    {
-	      ekeyname (buf, key);
-	      cp1 = &buf[0];	/* Find end.            */
-	      while (*cp1 != '\0')
-		++cp1;
-	      while (cp1 < &buf[16])	/* Goto column 16.      */
-		*cp1++ = ' ';
-	      strcpy (cp1, sp->s_name);	/* Add function name.   */
-	      if (mode)
-		strcat (cp1++, "+");
-	      if (addline (buf) == FALSE)
-		return (FALSE);
-	    }
-	}
+        {
+          key = bp->bi_key;
+          sp = bp->bi_symbol;
+          if (f != FALSE || strcmp (sp->s_name, "ins-self") != 0)
+            {
+              ekeyname (buf, key);
+              cp1 = &buf[0];	/* Find end.            */
+              while (*cp1 != '\0')
+                ++cp1;
+              while (cp1 < &buf[16])	/* Goto column 16.      */
+                *cp1++ = ' ';
+              strcpy (cp1, sp->s_name);	/* Add function name.   */
+              if (mode)
+                strcat (cp1++, "+");
+              if (addline (buf) == FALSE)
+                return (FALSE);
+            }
+        }
     }
   return TRUE;
 }
@@ -854,10 +854,10 @@ removemode (BUFFER *bp)
       BINDING *b, *next;
 
       for (b = m->m_binding[i]; b != NULL; b = next)
-	{
-	  next = b->bi_next;
-	  free (b);
-	}
+        {
+          next = b->bi_next;
+          free (b);
+        }
     }
   bp->b_mode = NULL;
 }
