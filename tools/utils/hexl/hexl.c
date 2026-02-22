@@ -49,6 +49,25 @@ hexchar (int c)
   return c - ('0' <= c && c <= '9' ? '0' : 'a' - 10);
 }
 
+static void usage()
+{
+  fprintf (stderr,
+           "usage: %s [option] [file]\n"
+           "option:\n"
+           "  -hex  hex dump\n"
+           "  -group-by-8-bits\n"
+           "  -group-by-16-bits\n"
+           "  -group-by-32-bits\n"
+           "  -group-by-64-bits\n"
+           "  -iso  iso character set.\n"
+           "  -un || -de from hexl format to binary.\n"
+           "  --  End switch list.\n"
+           "  <filename>  dump filename\n"
+           "  -  (as filename == stdin)\n"
+           "  -h  print help\n"
+           , progname);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -96,11 +115,14 @@ main (int argc, char **argv)
       group_by = 0x03;
     else if (!strcmp (*argv, "-group-by-64-bits"))
       group_by = 0x07;
+    else if (!strcmp (*argv, "-h"))
+    {
+      usage();
+      return EXIT_SUCCESS;
+    }
     else
     {
-      fprintf (stderr, "%s: invalid switch: \"%s\".\n", progname,
-               *argv);
-      fprintf (stderr, "usage: %s [-de] [-iso]\n", progname);
+      usage();
       return EXIT_FAILURE;
     }
   }
