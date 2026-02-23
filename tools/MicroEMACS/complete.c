@@ -1,8 +1,8 @@
 /*
  * Filename completion
  */
-#include <unistd.h>
 #include "def.h"
+#include <unistd.h>
 
 extern int ttgetc();
 extern void ttflush();
