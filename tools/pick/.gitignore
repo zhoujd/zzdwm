@@ -1,0 +1,6 @@
+config.h
+config.log
+config.mk
+*.o
+*.d
+pick
