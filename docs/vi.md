@@ -30,8 +30,8 @@ $ git clone https://git.busybox.net/busybox
 $ cd busybox
 
 ## Config for static VI
-## 1:setting->static build
-## 2:editor->vi
+## 1:Setting -> Build Options -> Build static library
+## 2:Editor -> vi
 $ make allnoconfig
 $ make menuconfig
 
