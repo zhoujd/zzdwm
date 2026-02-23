@@ -1,0 +1,5 @@
+## .gitigore
+
+*.o
+*.a
+mk
