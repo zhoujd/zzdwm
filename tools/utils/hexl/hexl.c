@@ -24,17 +24,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#ifndef O_BINARY
-# define O_BINARY 0
-#endif
-
 static char *progname;
-
-static int
-set_binary_mode (int fd, int mode)
-{
-  return O_BINARY;
-}
 
 static _Noreturn void
 output_error (void)
@@ -101,7 +91,6 @@ main (int argc, char **argv)
     else if (!strcmp (*argv, "-un") || !strcmp (*argv, "-de"))
     {
       un_flag = true;
-      set_binary_mode (fileno (stdout), O_BINARY);
     }
     else if (!strcmp (*argv, "-hex"))
       /* Hex is the default and is only base supported.  */;
@@ -136,8 +125,6 @@ main (int argc, char **argv)
     if (!strcmp (filename, "-"))
     {
       fp = stdin;
-      if (!un_flag)
-        set_binary_mode (fileno (stdin), O_BINARY);
     }
     else
     {
