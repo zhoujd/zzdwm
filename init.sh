@@ -89,8 +89,8 @@ install_bin() {
         $CORE_ROOT/bin/ec
         $CORE_ROOT/bin/sc
         $CORE_ROOT/bin/ag
-        $CORE_ROOT/bin/ff
         $CORE_ROOT/bin/vi
+        $CORE_ROOT/bin/fzy
         $CORE_ROOT/bin/less
         $CORE_ROOT/bin/etags
         $CORE_ROOT/bin/screen
