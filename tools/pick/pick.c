@@ -45,6 +45,7 @@ enum key {
 	END = 20,
 	HOME = 21,
 	PRINTABLE = 22,
+	CTRL_G = 23,
 };
 
 struct choice {
@@ -333,6 +334,7 @@ selected_choice(void)
 			choices.v[choices.length].description = "";
 			return &choices.v[choices.length];
 		case CTRL_C:
+		case CTRL_G:
 			return NULL;
 		case CTRL_Z:
 			tty_restore(0);
@@ -888,6 +890,7 @@ get_key(const char **key)
 		KEY(CTRL_A,	"\001"),
 		TIO(CTRL_C,	VINTR),
 		KEY(CTRL_E,	"\005"),
+		KEY(CTRL_G,	"\007"),
 		KEY(CTRL_K,	"\013"),
 		KEY(CTRL_L,	"\014"),
 		KEY(CTRL_O,	"\017"),
