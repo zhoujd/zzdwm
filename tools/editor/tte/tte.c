@@ -189,7 +189,7 @@ char* C_HL_keywords[] = {
     "volatile", "register", "sizeof", "typedef", "union", "goto", "const", "auto",
     "#define", "#if", "#endif", "#error", "#ifdef", "#ifndef", "#undef",
     "asm" /* in stdbool.h  */ , "bool" , "true" , "fasle" , "inline" ,
-    
+
     // C++
     "class" , "namespace" , "using" , "catch" , "delete" , "explicit" ,
     "export" , "friend" , "mutable" , "new" , "public" , "protected" ,
