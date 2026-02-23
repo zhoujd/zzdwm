@@ -99,7 +99,7 @@ static volatile sig_atomic_t	 gotsigwinch;
 static unsigned int		 choices_lines, tty_columns, tty_lines;
 static int			 descriptions;
 static int			 sort = 1;
-static int			 use_alternate_screen = 1;
+static int			 use_alternate_screen = 0;
 static int			 use_keypad = 1;
 
 int
