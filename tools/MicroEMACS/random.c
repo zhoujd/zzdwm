@@ -102,6 +102,7 @@ showcpos (int f, int n, int k)
   register int cbyte;
   register int ratio;
   register int row;
+  register int nrow;
 
   clp = firstline (curbp);	/* Collect the data.    */
   dotp = curwp->w_dot.p;
@@ -149,6 +150,7 @@ showcpos (int f, int n, int k)
       clp = lforw (clp);
     }
   ++row;			/* Convert to origin 1. */
+  nrow = curwp->w_ntrows;
   ratio = 0;			/* Ratio before dot.    */
   if (nchar != 0)
     {
@@ -156,8 +158,9 @@ showcpos (int f, int n, int k)
       if (ratio == 0 && cchar != 0)	/* Allow 0% only at the */
         ratio = 1;		/* start of the file.   */
     }
-  eprintf ("[Line:%d/%d Row:%d Col:%d/%d %d%% of %l CH:0x%x]",
-           cline, nline, row, getcolpos (), getcol (), ratio, nchar, cbyte);
+  eprintf ("[Line:%d/%d Row:%d/%d Col:%d/%d Ch:%d/%l (%d%%) CH:%d (0x%x)]",
+           cline, nline, row, nrow, getcolpos (), getcol (),
+           cchar, nchar, ratio, cbyte, cbyte);
   return (TRUE);
 }
 
