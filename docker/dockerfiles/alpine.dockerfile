@@ -15,7 +15,7 @@ RUN apk update --no-cache \
     && apk add \
     libbsd-static libbsd-dev ncurses-dev musl-dev ncurses-static \
     gcc make libtool autoconf automake \
-    git bash sudo shadow openssh \
+    git bash sudo shadow openssh file \
     && rm -rf /var/cache/apk/*
 
 ARG USER_NAME=zach
