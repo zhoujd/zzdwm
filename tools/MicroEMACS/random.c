@@ -108,7 +108,7 @@ showcpos (int f, int n, int k)
   doto = curwp->w_dot.o;
   cchar = nchar = 0;
   nline = 0;
-  cline = 1;
+  cline = 0;
   cbyte = '\n';
   for (;;)
     {
@@ -156,9 +156,32 @@ showcpos (int f, int n, int k)
       if (ratio == 0 && cchar != 0)	/* Allow 0% only at the */
         ratio = 1;		/* start of the file.   */
     }
-  eprintf ("[Line:%d/%d Row:%d Col:%d %d%% of %l CH:0x%x]",
-           cline, nline, row, getcolpos (), ratio, nchar, cbyte);
+  eprintf ("[Line:%d/%d Row:%d Col:%d/%d %d%% of %l CH:0x%x]",
+           cline, nline, row, getcolpos (), getcol (), ratio, nchar, cbyte);
   return (TRUE);
+}
+
+/*
+ * Return the current column counts, taking into account tabs
+ * and control characters.  The colum returned is normalized to
+ * column one origin.
+ */
+int
+getcol (void)
+{
+  register int col, i, c;
+
+  col = 0;			/* Determine column.    */
+  for (i = 0; i < wllength (curwp->w_dot.p); ++i)
+    {
+      c = wlgetc (curwp->w_dot.p, i);
+      if (c == '\t')
+        col += (tabsize - col % tabsize) - 1;
+      else if (c < 0x80 && CISCTRL (c) != FALSE)
+        ++col;
+      ++col;
+    }
+  return (col + 1);		/* Convert to origin 1. */
 }
 
 /*

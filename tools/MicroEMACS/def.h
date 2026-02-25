@@ -808,6 +808,7 @@ int setoverstrike (int f, int n, int k);/* set overstrike mode          */
 int checkheap (int f, int n, int k);	/* Check for heap corruption    */
 
 int getcolpos (void);			/* Return cur. column pos.	*/
+int getcol (void);			/* Return cur. column counts.   */
 int kremove (int n, uchar *buf);	/* Remove n'th UTF-8 char from	*/
                                         /*  kill buffer, return length.	*/
 /*
