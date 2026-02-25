@@ -64,19 +64,19 @@
  *
  * Revision 1.5  91/04/19  23:24:09  alexande
  * Added support for overstrike mode.
- * 
+ *
  * Revision 1.4  91/02/08  11:30:14  alexande
  * Showcpos() printed garbage line number if executed in empty buffer.
- * 
+ *
  * Revision 1.3  91/01/07  10:24:44  alexande
  * Changes for variable tab size.
- * 
+ *
  * Revision 1.2  90/07/03  13:21:38  alexande
  * Fixed new bug in [C-X =] where cursor was always moved to end of line.
- * 
+ *
  *
  */
-#include	"def.h"
+#include "def.h"
 
 int overstrike = 0;		/* TRUE if in overstrike mode */
 
@@ -113,17 +113,17 @@ showcpos (int f, int n, int k)
   for (;;)
     {
       if (clp == curbp->b_linep)
-	break;
+        break;
       ++nline;			/* Count a line.        */
       if (clp == dotp)
-	{
-	  cline = nline;
-	  cchar = nchar + doto;
-	  if (doto == wllength (clp))
-	    cbyte = '\n';
-	  else
-	    cbyte = wlgetc (clp, doto);
-	}
+        {
+          cline = nline;
+          cchar = nchar + doto;
+          if (doto == wllength (clp))
+            cbyte = '\n';
+          else
+            cbyte = wlgetc (clp, doto);
+        }
       nchar += wllength (clp) + 1;	/* Count characters     */
 #ifdef __TURBOC__
       nchar++;			/* Count carriage return */
@@ -154,7 +154,7 @@ showcpos (int f, int n, int k)
     {
       ratio = (100L * cchar) / nchar;
       if (ratio == 0 && cchar != 0)	/* Allow 0% only at the */
-	ratio = 1;		/* start of the file.   */
+        ratio = 1;		/* start of the file.   */
     }
   eprintf ("[Line:%d/%d Row:%d Col:%d %d%% of %l CH:0x%x]",
            cline, nline, row, getcolpos (), ratio, nchar, cbyte);
@@ -176,9 +176,9 @@ getcolpos (void)
     {
       c = wlgetc (curwp->w_dot.p, i);
       if (c == '\t')
-	col += (tabsize - col % tabsize) - 1;
+        col += (tabsize - col % tabsize) - 1;
       else if (c < 0x80 && CISCTRL (c) != FALSE)
-	++col;
+        ++col;
       ++col;
     }
   return (col + 1);		/* Convert to origin 1. */
@@ -242,14 +242,14 @@ quote (int f, int n, int k)
     {
       c = getinp ();
       if (kbdmip != NULL)
-	{
-	  if (kbdmip > &kbdm[NKBDM - 4])
-	    {
-	      ctrlg (FALSE, 0, KRANDOM);
-	      return (ABORT);
-	    }
-	  *kbdmip++ = c;
-	}
+        {
+          if (kbdmip > &kbdm[NKBDM - 4])
+            {
+              ctrlg (FALSE, 0, KRANDOM);
+              return (ABORT);
+            }
+          *kbdmip++ = c;
+        }
     }
   if (n < 0)
     return (FALSE);
@@ -258,9 +258,9 @@ quote (int f, int n, int k)
   if (c == '\n')
     {
       do
-	{
-	  s = lnewline ();
-	}
+        {
+          s = lnewline ();
+        }
       while (s == TRUE && --n);
       return (s);
     }
@@ -350,16 +350,16 @@ newline (int f, int n, int k)
       register LINE *lp;
       lp = curwp->w_dot.p;
       if (wllength (lp) == curwp->w_dot.o
-	  && lp != curbp->b_linep
-	  && lp != lastline (curbp) && wllength (lforw (lp)) == 0)
-	{
-	  if ((s = forwchar (FALSE, 1, KRANDOM)) != TRUE)
-	    return (s);
-	}
+          && lp != curbp->b_linep
+          && lp != lastline (curbp) && wllength (lforw (lp)) == 0)
+        {
+          if ((s = forwchar (FALSE, 1, KRANDOM)) != TRUE)
+            return (s);
+        }
       else
 #endif
       if ((s = lnewline ()) != TRUE)
-	return (s);
+        return (s);
     }
   return (TRUE);
 }
@@ -419,9 +419,9 @@ delwhite (int f, int n, int k)
   while (curwp->w_dot.o != 0)
     {
       if ((c = lgetc (curwp->w_dot.p, curwp->w_dot.o - 1)) != ' ' && c != '\t')
-	break;
+        break;
       if (backchar (FALSE, 1, KRANDOM) == FALSE)
-	break;
+        break;
     }
 
   /* Delete all the whitespace found, then insert a single space.
@@ -460,9 +460,9 @@ currentindent (int *offset)
     {
       c = lgetc (curwp->w_dot.p, i);
       if (c != ' ' && c != '\t')
-	break;
+        break;
       if (c == '\t')
-	nicol += (tabsize - nicol % tabsize) - 1;
+        nicol += (tabsize - nicol % tabsize) - 1;
       ++nicol;
     }
   *offset = i;
@@ -489,17 +489,17 @@ nlindent (int nicol, int nonwhitepos, int f)
   if (linelen != 0 && nonwhitepos == linelen)
     {
       if (gotobol (FALSE, 1, KRANDOM) == FALSE)
-	return FALSE;
+        return FALSE;
       saveundo (UMOVE, &curwp->w_dot);
       if (ldelete (linelen, FALSE) == FALSE)
-	return FALSE;
+        return FALSE;
       if (f == FALSE && lnewline () == FALSE)
-	return FALSE;
+        return FALSE;
     }
   else
     {
       if (lnewline () == FALSE)
-	return FALSE;
+        return FALSE;
     }
 
   /* Adjust the indentation of the current line.
@@ -709,32 +709,32 @@ killline (int f, int n, int k)
     {
       chunk = wllength (curwp->w_dot.p) - curwp->w_dot.o;
       if (chunk == 0)
-	chunk = 1;
+        chunk = 1;
     }
   else if (n > 0)
     {
       chunk = wllength (curwp->w_dot.p) - curwp->w_dot.o + 1;
       nextp = lforw (curwp->w_dot.p);
       while (--n)
-	{
-	  if (nextp == curbp->b_linep)
-	    return (FALSE);
-	  chunk += wllength (nextp) + 1;
-	  nextp = lforw (nextp);
-	}
+        {
+          if (nextp == curbp->b_linep)
+            return (FALSE);
+          chunk += wllength (nextp) + 1;
+          nextp = lforw (nextp);
+        }
     }
   else
     {				/* n <= 0               */
       chunk = curwp->w_dot.o;
       curwp->w_dot.o = 0;
       while (n++)
-	{
-	  if (curwp->w_dot.p == firstline (curbp))
-	    break;
-	  curwp->w_dot.p = lback (curwp->w_dot.p);
-	  curwp->w_flag |= WFMOVE;
-	  chunk += wllength (curwp->w_dot.p) + 1;
-	}
+        {
+          if (curwp->w_dot.p == firstline (curbp))
+            break;
+          curwp->w_dot.p = lback (curwp->w_dot.p);
+          curwp->w_flag |= WFMOVE;
+          chunk += wllength (curwp->w_dot.p) + 1;
+        }
     }
   return (ldelete (chunk, TRUE));
 }
@@ -772,40 +772,40 @@ yank (int f, int n, int k)
     {
       i = j = 0;
       while ((ulen = kremove (i, ubuf)) > 0)
-	{
-	  c = ubuf[0];
-	  if (c == '\n')
-	    {			/* Newline is special   */
-	      if (j > 0)
-		{		/* Flush the buffer.    */
-		  linsert (j, 0, lbuf);
-		  j = 0;
-		}
-	      if (newline (FALSE, 1, KRANDOM) == FALSE)
-		return (FALSE);
-	      ++nline;
-	    }
-	  else
-	    {			/* Not newline  */
-	      if ((size_t)(j + ulen) >= sizeof (lbuf))
-		{		/* Need flush?  */
-		  linsert (j, 0, lbuf);
-		  j = 0;
-		}
-	      /* Buffer it    */
-	      memcpy (&lbuf[j], ubuf, ulen);
-	      j += ulen;
-	    }
-	  ++i;
-	}
+        {
+          c = ubuf[0];
+          if (c == '\n')
+            {			/* Newline is special   */
+              if (j > 0)
+                {		/* Flush the buffer.    */
+                  linsert (j, 0, lbuf);
+                  j = 0;
+                }
+              if (newline (FALSE, 1, KRANDOM) == FALSE)
+                return (FALSE);
+              ++nline;
+            }
+          else
+            {			/* Not newline  */
+              if ((size_t)(j + ulen) >= sizeof (lbuf))
+                {		/* Need flush?  */
+                  linsert (j, 0, lbuf);
+                  j = 0;
+                }
+              /* Buffer it    */
+              memcpy (&lbuf[j], ubuf, ulen);
+              j += ulen;
+            }
+          ++i;
+        }
       if (j > 0)		/* Flush the buffer.    */
-	linsert (j, 0, lbuf);
+        linsert (j, 0, lbuf);
     }
   lp = curwp->w_linep;		/* Cosmetic adjustment  */
   if (curwp->w_dot.p == lp)
     {				/* if offscreen insert. */
       while (nline-- && lp != firstline (curbp))
-	lp = lback (lp);
+        lp = lback (lp);
       curwp->w_linep = lp;	/* Adjust framing.      */
       curwp->w_flag |= WFHARD;
     }
