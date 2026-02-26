@@ -759,9 +759,9 @@ modeline (EWINDOW *wp)
   if (curmsgf != FALSE		/* Message alert.       */
       && wp->w_wndp == NULL)
     {
-      while (vtcol < ncol - 6)
+      while (vtcol < ncol - 9)
         vtputc (lchar);
-      vtstring (lstr);
+      vtputc (' ');
       vtstring ("[Msg]");
     }
 
@@ -775,7 +775,7 @@ modeline (EWINDOW *wp)
       int rows = curwp->w_ntrows;
       char *msg = NULL;
 
-      vtcol = ncol - 7;	/* strlen(" top ") plus a couple */
+      vtcol = ncol - 9;	/* strlen(" top ") plus a couple */
       while (rows--)
         {
           lp = lforw(lp);
@@ -826,9 +826,9 @@ modeline (EWINDOW *wp)
         }
       if (msg)
         {
-          vtputc (' ');
+          vtstring (" [");
           vtstring (msg);
-          vtputc (' ');
+          vtstring ("] ");
         }
     }
 }
