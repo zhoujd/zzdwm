@@ -719,6 +719,7 @@ modeline (EWINDOW *wp)
   const char *mname;
   int lchar;	/* character to draw line in buffer with */
   char *lstr;
+  int visible = TRUE;	/* Visable. */
 
   n = wp->w_toprow + wp->w_ntrows;	/* Location.            */
   vtmove (n, 0);		/* Seek to right line.  */
@@ -752,9 +753,8 @@ modeline (EWINDOW *wp)
   if (bp->b_fname[0] != 0)
     {				/* File name.           */
       vtstring (lstr);
-      vtstring ("(");
+      vtstring ("File: ");
       vtstring (bp->b_fname);
-      vtstring (")");
     }
   if (curmsgf != FALSE		/* Message alert.       */
       && wp->w_wndp == NULL)
@@ -768,67 +768,69 @@ modeline (EWINDOW *wp)
   vtputc (' ');
   vtepadc (lchar);		/* pad out with char  */
 
-  { /* determine if top line, bottom line, or both are visible */
-    LINE *lp = curwp->w_linep;
-    int rows = curwp->w_ntrows;
-    char *msg = NULL;
+  /* Determine if top line, bottom line, or both are visible */
+  if (visible)
+    {
+      LINE *lp = curwp->w_linep;
+      int rows = curwp->w_ntrows;
+      char *msg = NULL;
 
-    vtcol = ncol - 8;	/* strlen(" top ") plus a couple */
-    while (rows--)
-      {
-        lp = lforw(lp);
-        if (lp == curbp->b_linep)
-          {
-            msg = "Bot";
-            break;
-          }
-      }
-    if (lback(curwp->w_linep) == curwp->w_bufp->b_linep)
-      {
-        if (msg)
-          msg = "All";
-        else
-          msg = "Top";
-      }
-    if (!msg)
-      {
-        LINE *lp;
-        int numlines, predlines, ratio;
-        char tline[32];	/* buffer for part of mode line */
-
-        lp = lforw(bp->b_linep);
-        numlines = 0;
-        predlines = 0;
-        while (lp != bp->b_linep)
-          {
-            if (lp == wp->w_linep) {
-              predlines = numlines;
+      vtcol = ncol - 7;	/* strlen(" top ") plus a couple */
+      while (rows--)
+        {
+          lp = lforw(lp);
+          if (lp == curbp->b_linep)
+            {
+              msg = "Bot";
+              break;
             }
-            ++numlines;
-            lp = lforw(lp);
-          }
-        if (wp->w_dot.p == bp->b_linep)
-          {
-            msg = "Bot";
-          }
-        else
-          {
-            ratio = 0;
-            if (numlines != 0)
-              ratio = (100L * predlines) / numlines;
-            if (ratio > 99)
-              ratio = 99;
-            snprintf(tline, sizeof(tline), "%2d%%", ratio);
-            msg = tline;
-          }
-      }
-    if (msg)
-      {
-        vtputc (' ');
-        vtstring (msg);
-        vtstring (lstr);
-      }
-  }
+        }
+      if (lback(curwp->w_linep) == curwp->w_bufp->b_linep)
+        {
+          if (msg)
+            msg = "All";
+          else
+            msg = "Top";
+        }
+      if (!msg)
+        {
+          LINE *lp;
+          int numlines, predlines, ratio;
+          char tline[32];	/* buffer for part of mode line */
+
+          lp = lforw(bp->b_linep);
+          numlines = 0;
+          predlines = 0;
+          while (lp != bp->b_linep)
+            {
+              if (lp == wp->w_linep) {
+                predlines = numlines;
+              }
+              ++numlines;
+              lp = lforw(lp);
+            }
+          if (wp->w_dot.p == bp->b_linep)
+            {
+              msg = "Bot";
+            }
+          else
+            {
+              ratio = 0;
+              if (numlines != 0)
+                ratio = (100L * predlines) / numlines;
+              if (ratio > 99)
+                ratio = 99;
+              snprintf(tline, sizeof(tline), "%2d%%", ratio);
+              msg = tline;
+            }
+        }
+      if (msg)
+        {
+          vtputc (' ');
+          vtstring (msg);
+          vtputc (' ');
+        }
+    }
 }
 
 #if GOSLING
