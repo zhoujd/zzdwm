@@ -277,7 +277,7 @@ vtputc (int c)
   else
     {
       if (vtcol >= leftcol)
-	vttext[vtcol - leftcol] = c;
+        vttext[vtcol - leftcol] = c;
       vtcol++;
     }
 }
@@ -301,23 +301,23 @@ vtputs (const uchar *s, int n)
       c = ugetc (s, 0, &ulen);
       s += ulen;
       if (vtcol >= leftcol + ncol)
-	{
-	  vttext[ncol - 1] = '$';
-	  return;
-	}
+        {
+          vttext[ncol - 1] = '$';
+          return;
+        }
       else if (c == '\t')
-	vtputs (spaces, tabsize - (vtcol % tabsize));
+        vtputs (spaces, tabsize - (vtcol % tabsize));
       else if (c < 0x80 && CISCTRL (c) != FALSE)
-	{
-	  vtputc ('^');
-	  vtputc (c ^ 0x40);
-	}
+        {
+          vtputc ('^');
+          vtputc (c ^ 0x40);
+        }
       else
-	{
-	  if (vtcol >= leftcol)
-	    vttext[vtcol - leftcol] = c;
-	  vtcol++;
-	}
+        {
+          if (vtcol >= leftcol)
+            vttext[vtcol - leftcol] = c;
+          vtcol++;
+        }
     }
 }
 
@@ -391,7 +391,7 @@ update (void)
   if (curmsgf != FALSE || newmsgf != FALSE)
     {
       ALLWIND (wp)		/* For all windows.     */
-	wp->w_flag |= WFMODE;	/* Must do mode lines.  */
+        wp->w_flag |= WFMODE;	/* Must do mode lines.  */
     }
   curmsgf = newmsgf;		/* Sync. up right now.  */
 
@@ -406,11 +406,11 @@ update (void)
       c = ugetc (s, 0, &ulen);
       s += ulen;
       if (c == '\t')
-	curcol += (tabsize - curcol % tabsize);
+        curcol += (tabsize - curcol % tabsize);
       else if (c < 0x80 && CISCTRL (c) != FALSE)
-	curcol += 2;
+        curcol += 2;
       else
-	curcol += uwidth(c);
+        curcol += uwidth(c);
     }
   if (curcol >= ncol + curwp->w_leftcol)
     {				/* need scroll right?   */
@@ -420,9 +420,9 @@ update (void)
   else if (curcol < curwp->w_leftcol)
     {				/* need scroll left?    */
       if (curcol < ncol / 2)	/* near left end?       */
-	curwp->w_leftcol = 0;	/* put left edge at 0   */
+        curwp->w_leftcol = 0;	/* put left edge at 0   */
       else
-	curwp->w_leftcol = curcol - ncol / 2;
+        curwp->w_leftcol = curcol - ncol / 2;
       curwp->w_flag |= WFHARD;	/* force redraw         */
     }
   curcol -= curwp->w_leftcol;	/* adjust column        */
@@ -433,87 +433,87 @@ update (void)
   ALLWIND(wp)
     {
       if (wp->w_flag != 0)
-	{			/* Need update.         */
-	  if ((wp->w_flag & WFFORCE) == 0)
-	    {
-	      /* See if the dot is visible.		*/
-	      lp = wp->w_linep;
-	      for (i = 0; i < wp->w_ntrows; ++i)
-		{
-		  if (lp == wp->w_dot.p)
-		    goto out;
-		  if (lp == wp->w_bufp->b_linep)
-		    break;
-		  lp = lforw (lp);
-		}
-	    }
-	  i = wp->w_force;	/* Reframe this one.    */
-	  if (i > 0)
-	    {
-	      --i;
-	      if (i >= wp->w_ntrows)
-		i = wp->w_ntrows - 1;
-	    }
-	  else if (i < 0)
-	    {
-	      i += wp->w_ntrows;
-	      if (i < 0)
-		i = 0;
-	    }
-	  else
-	    i = wp->w_ntrows / 2;
-	  lp = wp->w_dot.p;
-	  while (i != 0 && lp != firstline (wp->w_bufp))
-	    {
-	      --i;
-	      lp = lback (lp);
-	    }
-	  wp->w_linep = lp;
-	  wp->w_flag |= WFHARD;	/* Force full.          */
-	out:
-	  lp = wp->w_linep;	/* Try reduced update.  */
-	  i = wp->w_toprow;
-	  if ((wp->w_flag & ~WFMODE) == WFEDIT)
-	    {
-	      while (lp != wp->w_dot.p)
-		{
-		  ++i;
-		  lp = lforw (lp);
-		}
-	      vscreen[i]->v_color = CTEXT;
-	      vscreen[i]->v_flag |= (VFCHG | VFHBAD);
-	      leftcol = wp->w_leftcol;
-	      vtmove (i, 0);
-	      vtputs (lgets (lp), llength (lp));
-	      vteeol ();
-	      leftcol = 0;
-	    }
-	  else if ((wp->w_flag & (WFEDIT | WFHARD)) != 0)
-	    {
+        {			/* Need update.         */
+          if ((wp->w_flag & WFFORCE) == 0)
+            {
+              /* See if the dot is visible.		*/
+              lp = wp->w_linep;
+              for (i = 0; i < wp->w_ntrows; ++i)
+                {
+                  if (lp == wp->w_dot.p)
+                    goto out;
+                  if (lp == wp->w_bufp->b_linep)
+                    break;
+                  lp = lforw (lp);
+                }
+            }
+          i = wp->w_force;	/* Reframe this one.    */
+          if (i > 0)
+            {
+              --i;
+              if (i >= wp->w_ntrows)
+                i = wp->w_ntrows - 1;
+            }
+          else if (i < 0)
+            {
+              i += wp->w_ntrows;
+              if (i < 0)
+                i = 0;
+            }
+          else
+            i = wp->w_ntrows / 2;
+          lp = wp->w_dot.p;
+          while (i != 0 && lp != firstline (wp->w_bufp))
+            {
+              --i;
+              lp = lback (lp);
+            }
+          wp->w_linep = lp;
+          wp->w_flag |= WFHARD;	/* Force full.          */
+        out:
+          lp = wp->w_linep;	/* Try reduced update.  */
+          i = wp->w_toprow;
+          if ((wp->w_flag & ~WFMODE) == WFEDIT)
+            {
+              while (lp != wp->w_dot.p)
+                {
+                  ++i;
+                  lp = lforw (lp);
+                }
+              vscreen[i]->v_color = CTEXT;
+              vscreen[i]->v_flag |= (VFCHG | VFHBAD);
+              leftcol = wp->w_leftcol;
+              vtmove (i, 0);
+              vtputs (lgets (lp), llength (lp));
+              vteeol ();
+              leftcol = 0;
+            }
+          else if ((wp->w_flag & (WFEDIT | WFHARD)) != 0)
+            {
 #if GOSLING
-	      hflag = TRUE;
+              hflag = TRUE;
 #endif
-	      leftcol = wp->w_leftcol;
-	      while (i < wp->w_toprow + wp->w_ntrows)
-		{
-		  vscreen[i]->v_color = CTEXT;
-		  vscreen[i]->v_flag |= (VFCHG | VFHBAD);
-		  vtmove (i, 0);
-		  if (lp != wp->w_bufp->b_linep)
-		    {
-		      vtputs (lgets (lp), llength (lp));
-		      lp = lforw (lp);
-		    }
-		  vteeol ();
-		  ++i;
-		}
-	      leftcol = 0;
-	    }
-	  if ((wp->w_flag & (WFMODE | WFHARD)) != 0)
-	    modeline (wp);
-	  wp->w_flag = 0;
-	  wp->w_force = 0;
-	}
+              leftcol = wp->w_leftcol;
+              while (i < wp->w_toprow + wp->w_ntrows)
+                {
+                  vscreen[i]->v_color = CTEXT;
+                  vscreen[i]->v_flag |= (VFCHG | VFHBAD);
+                  vtmove (i, 0);
+                  if (lp != wp->w_bufp->b_linep)
+                    {
+                      vtputs (lgets (lp), llength (lp));
+                      lp = lforw (lp);
+                    }
+                  vteeol ();
+                  ++i;
+                }
+              leftcol = 0;
+            }
+          if ((wp->w_flag & (WFMODE | WFHARD)) != 0)
+            modeline (wp);
+          wp->w_flag = 0;
+          wp->w_force = 0;
+        }
     }
   lp = curwp->w_linep;		/* Cursor location.     */
   currow = curwp->w_toprow;
@@ -533,10 +533,10 @@ update (void)
       ttmove (0, 0);
       tteeop ();
       for (i = 0; i < nrow - 1; ++i)
-	{
-	  uline (i, vscreen[i], &blanks);
-	  ucopy (vscreen[i], pscreen[i]);
-	}
+        {
+          uline (i, vscreen[i], &blanks);
+          ucopy (vscreen[i], pscreen[i]);
+        }
       ttmove (currow, curcol);
       ttflush ();
       return;
@@ -545,44 +545,44 @@ update (void)
   if (hflag != FALSE)
     {				/* Hard update?         */
       for (i = 0; i < nrow - 1; ++i)
-	{			/* Compute hash data.   */
-	  hash (vscreen[i]);
-	  hash (pscreen[i]);
-	}
+        {			/* Compute hash data.   */
+          hash (vscreen[i]);
+          hash (pscreen[i]);
+        }
       offs = 0;			/* Get top match.       */
       while (offs != nrow - 1)
-	{
-	  vp1 = vscreen[offs];
-	  vp2 = pscreen[offs];
-	  if (vp1->v_color != vp2->v_color || vp1->v_hash != vp2->v_hash)
-	    break;
-	  uline (offs, vp1, vp2);
-	  ucopy (vp1, vp2);
-	  ++offs;
-	}
+        {
+          vp1 = vscreen[offs];
+          vp2 = pscreen[offs];
+          if (vp1->v_color != vp2->v_color || vp1->v_hash != vp2->v_hash)
+            break;
+          uline (offs, vp1, vp2);
+          ucopy (vp1, vp2);
+          ++offs;
+        }
       if (offs == nrow - 1)
-	{			/* Might get it all.    */
-	  ttmove (currow, curcol);
-	  ttflush ();
-	  return;
-	}
+        {			/* Might get it all.    */
+          ttmove (currow, curcol);
+          ttflush ();
+          return;
+        }
       size = nrow - 1;		/* Get bottom match.    */
       while (size != offs)
-	{
-	  vp1 = vscreen[size - 1];
-	  vp2 = pscreen[size - 1];
-	  if (vp1->v_color != vp2->v_color || vp1->v_hash != vp2->v_hash)
-	    break;
-	  uline (size - 1, vp1, vp2);
-	  ucopy (vp1, vp2);
-	  --size;
-	}
+        {
+          vp1 = vscreen[size - 1];
+          vp2 = pscreen[size - 1];
+          if (vp1->v_color != vp2->v_color || vp1->v_hash != vp2->v_hash)
+            break;
+          uline (size - 1, vp1, vp2);
+          ucopy (vp1, vp2);
+          --size;
+        }
       if ((size -= offs) == 0)	/* Get screen size.     */
-	abort ();
+        abort ();
       setscores (offs, size);	/* Do hard update.      */
       traceback (offs, size, size, size);
       for (i = 0; i < size; ++i)
-	ucopy (vscreen[offs + i], pscreen[offs + i]);
+        ucopy (vscreen[offs + i], pscreen[offs + i]);
       ttmove (currow, curcol);
       ttflush ();
       return;
@@ -593,10 +593,10 @@ update (void)
       vp1 = vscreen[i];
       vp2 = pscreen[i];
       if ((vp1->v_flag & VFCHG) != 0)
-	{
-	  uline (i, vp1, vp2);
-	  ucopy (vp1, vp2);
-	}
+        {
+          uline (i, vp1, vp2);
+          ucopy (vp1, vp2);
+        }
     }
   ttmove (currow, curcol);
   ttflush ();
@@ -673,16 +673,16 @@ uline (int row, VIDEO *vvp, VIDEO *pvp)
       --cp3;
       --cp4;
       if (cp3[0] != ' ')	/* Note non-blanks in   */
-	nbflag = TRUE;		/* the right match.     */
+        nbflag = TRUE;		/* the right match.     */
     }
   cp5 = cp3;			/* Is erase good?       */
   if (nbflag == FALSE && vvp->v_color == CTEXT)
     {
       while (cp5 != cp1 && cp5[-1] == ' ')
-	--cp5;
+        --cp5;
       /* Alcyon hack */
       if ((int) (cp3 - cp5) <= tceeol)
-	cp5 = cp3;
+        cp5 = cp3;
     }
   /* Alcyon hack */
   ttmove (row, (int) (cp1 - &vvp->v_text[0]));
@@ -760,7 +760,7 @@ modeline (EWINDOW *wp)
       && wp->w_wndp == NULL)
     {
       while (vtcol < ncol - 6)
-	vtputc (lchar);
+        vtputc (lchar);
       vtstring (lstr);
       vtstring ("[Msg]");
     }
@@ -855,14 +855,14 @@ hash (VIDEO *vp)
     {				/* Hash bad.            */
       s = &vp->v_text[ncol - 1];
       for (i = ncol; i != 0; --i, --s)
-	if (*s != ' ')
-	  break;
+        if (*s != ' ')
+          break;
       n = ncol - i;		/* Erase cheaper?       */
       if (n > tceeol)
-	n = tceeol;
+        n = tceeol;
       vp->v_cost = i + n;	/* Bytes + blanks.      */
       for (n = 0; i != 0; --i, --s)
-	n = (n << 5) + n + *s;
+        n = (n << 5) + n + *s;
       vp->v_hash = n;		/* Hash code.           */
       vp->v_flag &= ~VFHBAD;	/* Flag as all done.    */
     }
@@ -940,36 +940,36 @@ setscores (int offs, int size)
       sp = sp1;
       vp = &vbase[1];
       for (j = 1; j <= size; ++j)
-	{
-	  sp->s_itrace = i - 1;
-	  sp->s_jtrace = j;
-	  bestcost = (sp - NROW)->s_cost;
-	  if (j != size)	/* Cd(A[i])=0 @ Dis.    */
-	    bestcost += tcdell[1];
-	  tempcost = (sp - 1)->s_cost;
-	  tempcost += (*vp)->v_cost;
-	  if (i != size)	/* Ci(B[j])=0 @ Dsj.    */
-	    tempcost += tcinsl[1];
-	  if (tempcost < bestcost)
-	    {
-	      sp->s_itrace = i;
-	      sp->s_jtrace = j - 1;
-	      bestcost = tempcost;
-	    }
-	  tempcost = (sp - NROW - 1)->s_cost;
-	  if ((*pp)->v_color != (*vp)->v_color
-	      || (*pp)->v_hash != (*vp)->v_hash)
-	    tempcost += (*vp)->v_cost;
-	  if (tempcost < bestcost)
-	    {
-	      sp->s_itrace = i - 1;
-	      sp->s_jtrace = j - 1;
-	      bestcost = tempcost;
-	    }
-	  sp->s_cost = bestcost;
-	  ++sp;			/* Next column.         */
-	  ++vp;
-	}
+        {
+          sp->s_itrace = i - 1;
+          sp->s_jtrace = j;
+          bestcost = (sp - NROW)->s_cost;
+          if (j != size)	/* Cd(A[i])=0 @ Dis.    */
+            bestcost += tcdell[1];
+          tempcost = (sp - 1)->s_cost;
+          tempcost += (*vp)->v_cost;
+          if (i != size)	/* Ci(B[j])=0 @ Dsj.    */
+            tempcost += tcinsl[1];
+          if (tempcost < bestcost)
+            {
+              sp->s_itrace = i;
+              sp->s_jtrace = j - 1;
+              bestcost = tempcost;
+            }
+          tempcost = (sp - NROW - 1)->s_cost;
+          if ((*pp)->v_color != (*vp)->v_color
+              || (*pp)->v_hash != (*vp)->v_hash)
+            tempcost += (*vp)->v_cost;
+          if (tempcost < bestcost)
+            {
+              sp->s_itrace = i - 1;
+              sp->s_jtrace = j - 1;
+              bestcost = tempcost;
+            }
+          sp->s_cost = bestcost;
+          ++sp;			/* Next column.         */
+          ++vp;
+        }
       ++pp;
       sp1 += NROW;		/* Next row.            */
     }
@@ -1005,28 +1005,28 @@ traceback (int offs, int size, int i, int j)
     {				/* [i, j-1]             */
       ninsl = 0;		/* Collect inserts.     */
       if (i != size)
-	ninsl = 1;
+        ninsl = 1;
       ndraw = 1;
       while (itrace != 0 || jtrace != 0)
-	{
-	  if (score[(NROW * itrace) + jtrace].s_itrace != itrace)
-	    break;
-	  jtrace = score[(NROW * itrace) + jtrace].s_jtrace;
-	  if (i != size)
-	    ++ninsl;
-	  ++ndraw;
-	}
+        {
+          if (score[(NROW * itrace) + jtrace].s_itrace != itrace)
+            break;
+          jtrace = score[(NROW * itrace) + jtrace].s_jtrace;
+          if (i != size)
+            ++ninsl;
+          ++ndraw;
+        }
       traceback (offs, size, itrace, jtrace);
       if (ninsl != 0)
-	{
-	  ttcolor (CTEXT);
-	  ttinsl (offs + j - ninsl, offs + size - 1, ninsl);
-	}
+        {
+          ttcolor (CTEXT);
+          ttinsl (offs + j - ninsl, offs + size - 1, ninsl);
+        }
       do
-	{			/* B[j], A[j] blank.    */
-	  k = offs + j - ndraw;
-	  uline (k, vscreen[k], &blanks);
-	}
+        {			/* B[j], A[j] blank.    */
+          k = offs + j - ndraw;
+          uline (k, vscreen[k], &blanks);
+        }
       while (--ndraw);
       return;
     }
@@ -1034,20 +1034,20 @@ traceback (int offs, int size, int i, int j)
     {				/* [i-1, j]             */
       ndell = 0;		/* Collect deletes.     */
       if (j != size)
-	ndell = 1;
+        ndell = 1;
       while (itrace != 0 || jtrace != 0)
-	{
-	  if (score[(NROW * itrace) + jtrace].s_jtrace != jtrace)
-	    break;
-	  itrace = score[(NROW * itrace) + jtrace].s_itrace;
-	  if (j != size)
-	    ++ndell;
-	}
+        {
+          if (score[(NROW * itrace) + jtrace].s_jtrace != jtrace)
+            break;
+          itrace = score[(NROW * itrace) + jtrace].s_itrace;
+          if (j != size)
+            ++ndell;
+        }
       if (ndell != 0)
-	{
-	  ttcolor (CTEXT);
-	  ttdell (offs + i - ndell, offs + size - 1, ndell);
-	}
+        {
+          ttcolor (CTEXT);
+          ttdell (offs + i - ndell, offs + size - 1, ndell);
+        }
       traceback (offs, size, itrace, jtrace);
       return;
     }
@@ -1064,6 +1064,6 @@ int
 mouseevent (int f, int n, int k)
 {
   eprintf ("[Mouse button %d, row %d, column %d]",
-	   mouse_button, mouse_row, mouse_column);
+           mouse_button, mouse_row, mouse_column);
   return (TRUE);
 }
