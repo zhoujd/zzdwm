@@ -774,53 +774,60 @@ modeline (EWINDOW *wp)
     char *msg = NULL;
 
     vtcol = ncol - 8;	/* strlen(" top ") plus a couple */
-    while (rows--) {
-      lp = lforw(lp);
-      if (lp == curbp->b_linep) {
-        msg = "Bot";
-        break;
-      }
-    }
-    if (lback(curwp->w_linep) == curwp->w_bufp->b_linep) {
-      if (msg) {
-        msg = "All";
-      } else {
-        msg = "Top";
-      }
-    }
-    if (!msg) {
-      LINE *lp;
-      int numlines, predlines, ratio;
-      char tline[32];	/* buffer for part of mode line */
-
-      lp = lforw(bp->b_linep);
-      numlines = 0;
-      predlines = 0;
-      while (lp != bp->b_linep) {
-        if (lp == wp->w_linep) {
-          predlines = numlines;
-        }
-        ++numlines;
+    while (rows--)
+      {
         lp = lforw(lp);
+        if (lp == curbp->b_linep)
+          {
+            msg = "Bot";
+            break;
+          }
       }
-      if (wp->w_dot.p == bp->b_linep) {
-        msg = "Bot";
-      } else {
-        ratio = 0;
-        if (numlines != 0)
-          ratio =
-            (100L * predlines) / numlines;
-        if (ratio > 99)
-          ratio = 99;
-        snprintf(tline, sizeof(tline), "%2d%%", ratio);
-        msg = tline;
+    if (lback(curwp->w_linep) == curwp->w_bufp->b_linep)
+      {
+        if (msg)
+          msg = "All";
+        else
+          msg = "Top";
       }
-    }
-    if (msg) {
-      vtputc (' ');
-      vtstring (msg);
-      vtstring (lstr);
-    }
+    if (!msg)
+      {
+        LINE *lp;
+        int numlines, predlines, ratio;
+        char tline[32];	/* buffer for part of mode line */
+
+        lp = lforw(bp->b_linep);
+        numlines = 0;
+        predlines = 0;
+        while (lp != bp->b_linep)
+          {
+            if (lp == wp->w_linep) {
+              predlines = numlines;
+            }
+            ++numlines;
+            lp = lforw(lp);
+          }
+        if (wp->w_dot.p == bp->b_linep)
+          {
+            msg = "Bot";
+          }
+        else
+          {
+            ratio = 0;
+            if (numlines != 0)
+              ratio = (100L * predlines) / numlines;
+            if (ratio > 99)
+              ratio = 99;
+            snprintf(tline, sizeof(tline), "%2d%%", ratio);
+            msg = tline;
+          }
+      }
+    if (msg)
+      {
+        vtputc (' ');
+        vtstring (msg);
+        vtstring (lstr);
+      }
   }
 }
 
