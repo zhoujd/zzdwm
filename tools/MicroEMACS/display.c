@@ -282,7 +282,6 @@ vtputc (int c)
     }
 }
 
-
 /*
  * Write a string to the virtual display.  Essentially similar
  * to vtputc(), except that a string and count are the parameters
@@ -345,6 +344,66 @@ vtepadc (char ch)
     return;
   wmemset (&vttext[vtcol - leftcol], ch, count);
   vtcol += count;
+}
+
+/*
+ * Determine if top line, bottom line, or both are visible.
+ */
+static char*
+vismsg (EWINDOW *wp)
+{
+  BUFFER *bp = wp->w_bufp;
+  LINE *lp = curwp->w_linep;
+  int rows = curwp->w_ntrows;
+  int numlines, predlines, ratio;
+  char *msg = NULL;
+  static char tline[32];
+
+  while (rows--)
+    {
+      lp = lforw(lp);
+      if (lp == curbp->b_linep)
+        {
+          msg = "[Bot]";
+          break;
+        }
+    }
+  if (lback(curwp->w_linep) == curwp->w_bufp->b_linep)
+    {
+      if (msg)
+        msg = "[All]";
+      else
+        msg = "[Top]";
+    }
+  if (!msg)
+    {
+      lp = lforw(bp->b_linep);
+      numlines = 0;
+      predlines = 0;
+      while (lp != bp->b_linep)
+        {
+          if (lp == wp->w_linep) {
+            predlines = numlines;
+          }
+          ++numlines;
+          lp = lforw(lp);
+        }
+      if (wp->w_dot.p == bp->b_linep)
+        {
+          msg = "[Bot]";
+        }
+      else
+        {
+          ratio = 0;
+          if (numlines != 0)
+            ratio = (100L * predlines) / numlines;
+          if (ratio > 99)
+            ratio = 99;
+          snprintf(tline, sizeof(tline), "[%2d%%]", ratio);
+          msg = tline;
+        }
+    }
+  return msg;
 }
 
 /*
@@ -759,78 +818,28 @@ modeline (EWINDOW *wp)
   if (curmsgf != FALSE		/* Message alert.       */
       && wp->w_wndp == NULL)
     {
+      vtputc (' ');
       while (vtcol < ncol - 9)
         vtputc (lchar);
       vtputc (' ');
       vtstring ("[Msg]");
     }
 
-  vtputc (' ');
-  vtepadc (lchar);		/* pad out with char  */
-
-  /* Determine if top line, bottom line, or both are visible */
   if (visible)
     {
-      LINE *lp = curwp->w_linep;
-      int rows = curwp->w_ntrows;
-      char *msg = NULL;
-
-      vtcol = ncol - 9;	/* strlen(" top ") plus a couple */
-      while (rows--)
+      char *vis = vismsg (wp);
+      if (vis != NULL)
         {
-          lp = lforw(lp);
-          if (lp == curbp->b_linep)
-            {
-              msg = "Bot";
-              break;
-            }
-        }
-      if (lback(curwp->w_linep) == curwp->w_bufp->b_linep)
-        {
-          if (msg)
-            msg = "All";
-          else
-            msg = "Top";
-        }
-      if (!msg)
-        {
-          LINE *lp;
-          int numlines, predlines, ratio;
-          char tline[32];	/* buffer for part of mode line */
-
-          lp = lforw(bp->b_linep);
-          numlines = 0;
-          predlines = 0;
-          while (lp != bp->b_linep)
-            {
-              if (lp == wp->w_linep) {
-                predlines = numlines;
-              }
-              ++numlines;
-              lp = lforw(lp);
-            }
-          if (wp->w_dot.p == bp->b_linep)
-            {
-              msg = "Bot";
-            }
-          else
-            {
-              ratio = 0;
-              if (numlines != 0)
-                ratio = (100L * predlines) / numlines;
-              if (ratio > 99)
-                ratio = 99;
-              snprintf(tline, sizeof(tline), "%2d%%", ratio);
-              msg = tline;
-            }
-        }
-      if (msg)
-        {
-          vtstring (" [");
-          vtstring (msg);
-          vtstring ("] ");
+          vtputc (' ');
+          while (vtcol < ncol - 9)
+            vtputc (lchar);
+          vtputc (' ');
+          vtstring (vis);
         }
     }
+
+  vtputc (' ');
+  vtepadc (lchar);		/* pad out with char  */
 }
 
 #if GOSLING
