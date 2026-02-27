@@ -103,11 +103,13 @@ static void chgsize P_((TWIN *tw, int newheight, ELVBOOL winch));
 static void cursorshape P_((ELVCURSOR shape));
 
 /* termcap values */
+#if !defined(__linux__)
+       char	PC;		  /* :pc=: pad character (not a string var!) */
+       char	*UP;		/* :up=: move cursor up */
+#endif
 static ELVBOOL	AM;		/* :am:  boolean: auto margins? */
 static ELVBOOL	PT;		/* :pt:  boolean: physical tabs? */
-       char	PC;		/* :pc=: pad character (not a string var!) */
 static char	*VB;		/* :vb=: visible bell */
-       char	*UP;		/* :up=: move cursor up */
 static char	*AF;		/* :AF=: change the foreground color */
 static char	*SO;		/* :so=: standout start */
 static char	*SE;		/* :se=: standout end */
