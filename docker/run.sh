@@ -140,7 +140,7 @@ ssh           {alpine|-a|void|-v|ubuntu|-u|+++}
 shell|-s      attach shell
 stop          stop service
 status        show status
-clean         clean resource
+clean|-c      clean
 EOF
 }
 
@@ -166,7 +166,7 @@ case $1 in
     status )
         status
         ;;
-    clean )
+    clean|-c )
         clean
         ;;
     * )
