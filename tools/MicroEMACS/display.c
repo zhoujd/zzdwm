@@ -128,6 +128,7 @@ typedef struct
 SCORE;
 
 int sgarbf = TRUE;		/* TRUE if screen is garbage.   */
+int visf = FALSE;		/* TRUE if show visable.        */
 int vtrow = 0;			/* Virtual cursor row.          */
 int vtcol = 0;			/* Virtual cursor column.       */
 wchar_t *vttext;		/* &(vscreen[vtrow]->v_text[0]) */
@@ -778,7 +779,6 @@ modeline (EWINDOW *wp)
   const char *mname;
   int lchar;	/* character to draw line in buffer with */
   char *lstr;
-  int visible = TRUE;	/* Visable. */
 
   n = wp->w_toprow + wp->w_ntrows;	/* Location.            */
   vtmove (n, 0);		/* Seek to right line.  */
@@ -825,7 +825,7 @@ modeline (EWINDOW *wp)
       vtstring ("[Msg]");
     }
 
-  if (visible)
+  if (visf != FALSE)		/* Show All/Top/Bot.    */
     {
       char *vis = vismsg (wp);
       if (vis != NULL)
@@ -839,7 +839,7 @@ modeline (EWINDOW *wp)
     }
 
   vtputc (' ');
-  vtepadc (lchar);		/* pad out with char  */
+  vtepadc (lchar);		/* Pad out with char.  */
 }
 
 #if GOSLING
