@@ -95,6 +95,7 @@ install_bin() {
         $CORE_ROOT/bin/screen
         $CORE_ROOT/bin/busybox
         $CORE_ROOT/bin/fileview
+        $CORE_ROOT/bin/xxd
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $bin
