@@ -35,6 +35,9 @@ endif
 
 CURSES_LIBS:= $(shell $(PKG_CONFIG) --libs ncurses)
 ifeq ($(CURSES_LIBS),)
+CURSES_LIBS:= $(shell $(PKG_CONFIG) --libs ncursesw)
+endif
+ifeq ($(CURSES_LIBS),)
   $(error You probably need to install "libncurses5-dev" or "libncurses6-devel" or something like that.)
 endif
 

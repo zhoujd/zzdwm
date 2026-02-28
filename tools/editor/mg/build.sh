@@ -2,6 +2,8 @@
 
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
+. /etc/os-release
+
 build() {
     make
     echo "Build done"
@@ -9,7 +11,15 @@ build() {
 
 release() {
     make clean
-    make LDFLAGS="-static -s" CFLAGS="-Os -Wno-cpp"
+    case $ID in
+      alpine|void )
+        LDFLAGS="-static -s"
+        ;;
+      * )
+        LDFLAGS=
+        ;;
+    esac
+    make LDFLAGS="$LDFLAGS" CFLAGS="-Os -Wno-cpp"
     echo "Release done"
 }
 
