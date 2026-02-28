@@ -578,7 +578,7 @@ char * replyq_get (char *buf, int nbuf)
     return NULL;
   s = replyq[replyq_index];
   ++replyq_index;
-  strncpy (buf, s, nbuf);
+  snprintf(buf, nbuf, "%s", s);
   free (s);
   return buf;
 }
