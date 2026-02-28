@@ -192,6 +192,7 @@ ttputs (const wchar_t *buf, int size)
   int i;
   int wsize = 0;
 
+  /* Init wcval */
   memset (wcval, 0 , sizeof(wcval));
 
   for (i = 0; i < size; i++)

@@ -251,6 +251,7 @@ char *buf;
     static CHAR_INFO cinfo[NCOL];
     int i;
 
+    /* Init cinfo */
     memset (cinfo, 0, sizeof(cinfo));
 
     /* Adjust row and col to zero-based values.
