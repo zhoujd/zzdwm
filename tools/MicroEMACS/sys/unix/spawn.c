@@ -342,10 +342,12 @@ spawncmd (int f, int n, int k)
   register int s;
   static char line[NLINE];
 
-  memset (line, 0, sizeof(line));
-
   if ((s = ereply ("! ", line, sizeof(line))) != TRUE)
     return (s);
+
+  /* Force repaint */
+  eerase ();
+  sgarbf = TRUE;
 
   ttputc ('\n');                /* Already have '\r'    */
   ttcolor (CTEXT);              /* Normal color.        */
@@ -358,9 +360,6 @@ spawncmd (int f, int n, int k)
   fflush (stdout);              /* to be sure P.K.      */
   while ((s = ttgetc ()) != '\n' && s != ' ') ;
   ttopen ();
-  eerase ();
-  ttflush ();
-  sgarbf = TRUE;
 
   return TRUE;
 }
@@ -370,7 +369,7 @@ spawncmd (int f, int n, int k)
  * Bound to ^X @
  */
 int
-spawnpipe(int f, int n, int k)
+spawnpipe (int f, int n, int k)
 {
   register int s;
   register BUFFER *bp;        /* pointer to buffer to zot */
@@ -379,10 +378,12 @@ spawnpipe(int f, int n, int k)
   char bname[] = "*pipe*";
   int fd;
 
-  memset (line, 0, sizeof(line));
-
   if ((s = ereply ("@ ", line, sizeof(line))) != TRUE)
     return (s);
+
+  /* Force repaint */
+  eerase ();
+  sgarbf = TRUE;
 
   /* Setup the temporary file */
   fd = mkstemp (tmp);
@@ -392,18 +393,12 @@ spawnpipe(int f, int n, int k)
       return FALSE;
     }
 
-  ttputc ('\n');                /* Already have '\r'    */
-  ttcolor (CTEXT);              /* Normal color.        */
-  ttwindow (0, nrow - 1);       /* Full screen scroll.  */
-  ttmove (nrow - 1, 0);         /* Last line.           */
-  ttflush ();
-  ttclose ();
+  /* Run the command */
   strcat (line, " >");
   strcat (line, tmp);
   strcat (line, " 2>&1");
   system (line);
   fflush (stdout);              /* to be sure P.K.      */
-  ttopen ();
 
   /* Readin the temporary file */
   if ((bp = bfind(bname, TRUE)) != NULL)
@@ -422,10 +417,6 @@ spawnpipe(int f, int n, int k)
 
   s = TRUE;
 ret:
-  /* Force repaint */
-  eerase ();
-  ttflush ();
-  sgarbf = TRUE;
   /* Clean the temporary file */
   unlink (tmp);
   close (fd);
@@ -437,7 +428,7 @@ ret:
  * Bound to ^X #
  */
 int
-spawnfilter(int f, int n, int k)
+spawnfilter (int f, int n, int k)
 {
   register int    s;       /* return status from CLI */
   register BUFFER *bp;     /* pointer to buffer to zot */
@@ -448,13 +439,15 @@ spawnfilter(int f, int n, int k)
   int fdin;
   int fdout;
 
-  memset (line, 0, sizeof(line));
-
   if (curbp->b_flag & BFRO)	/* if buffer is read-only       */
     return FALSE;               /* fail                         */
 
   if ((s = ereply ("# ", line, sizeof(line))) != TRUE)
     return (s);
+
+  /* Force repaint */
+  eerase ();
+  sgarbf = TRUE;
 
   /* Setup the temporary file */
   fdin = mkstemp (filin);
@@ -479,12 +472,7 @@ spawnfilter(int f, int n, int k)
       goto ret;
     }
 
-  ttputc ('\n');                /* Already have '\r'    */
-  ttcolor (CTEXT);              /* Normal color.        */
-  ttwindow (0, nrow - 1);       /* Full screen scroll.  */
-  ttmove (nrow - 1, 0);         /* Last line.           */
-  ttflush ();
-  ttclose ();
+  /* Run the command */
   strcat (line, " <");
   strcat (line, filin);
   strcat (line, " >");
@@ -492,7 +480,6 @@ spawnfilter(int f, int n, int k)
   strcat (line, " 2>&1");
   system (line);
   fflush (stdout);              /* to be sure P.K.      */
-  ttopen ();
 
   /* Readin the temporary file */
   if ((bp = bfind(bname, TRUE)) != NULL)
@@ -512,10 +499,6 @@ spawnfilter(int f, int n, int k)
 
   s = TRUE;
 ret:
-  /* Force repaint */
-  eerase ();
-  ttflush ();
-  sgarbf = TRUE;
   /* Clean the temporary file */
   unlink (filin);
   unlink (filout);
