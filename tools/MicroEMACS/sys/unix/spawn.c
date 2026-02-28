@@ -394,17 +394,16 @@ spawnpipe (int f, int n, int k)
     }
 
   /* Run the command */
-  strcat (line, " >");
-  strcat (line, tmp);
-  strcat (line, " 2>&1");
+  snprintf(line + strlen(line), sizeof(line) - strlen(line),
+           " >%s 2>&1", tmp);
   system (line);
   fflush (stdout);              /* to be sure P.K.      */
 
   /* Readin the temporary file */
-  if ((bp = bfind(bname, TRUE)) != NULL)
+  if ((bp = bfind (bname, TRUE)) != NULL)
     {
-      bclear(bp);
-      swbuffer(bp);
+      bclear (bp);
+      swbuffer (bp);
       if (readin (tmp) == FALSE)
         {
           eprintf ("[Failed to readin temp file]");
@@ -473,16 +472,13 @@ spawnfilter (int f, int n, int k)
     }
 
   /* Run the command */
-  strcat (line, " <");
-  strcat (line, filin);
-  strcat (line, " >");
-  strcat (line, filout);
-  strcat (line, " 2>&1");
+  snprintf(line + strlen(line), sizeof(line) - strlen(line),
+           " <%s >%s 2>&1", filin, filout);
   system (line);
   fflush (stdout);              /* to be sure P.K.      */
 
   /* Readin the temporary file */
-  if ((bp = bfind(bname, TRUE)) != NULL)
+  if ((bp = bfind (bname, TRUE)) != NULL)
     {
       bclear (bp);
       swbuffer (bp);
