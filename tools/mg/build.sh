@@ -1,9 +1,6 @@
 #!/bin/sh
 
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
-MNT_DIR=$(cd $SCRIPT_DIR/../.. && pwd)
-WS=$MNT_DIR/tools/$(basename $SCRIPT_DIR)
-TG=mg
 
 build() {
     make
@@ -12,31 +9,8 @@ build() {
 
 release() {
     make clean
-    make LDFLAGS=-static CFLAGS="-Os -Wno-cpp"
-    strip -v $TG
+    make LDFLAGS="-static -s" CFLAGS="-Os -Wno-cpp"
     echo "Release done"
-}
-
-publish() {
-    if [ -n "$INSIDE_DOCKER" ]; then
-        echo "Publish in docker run release"
-        release
-        exit
-    fi
-    img=zhoujd/alpine
-    opt="
-        -i \
-        -u $(id -u):$(id -g) \
-        -e TG=$TG \
-        -v $MNT_DIR:$MNT_DIR \
-        -w $WS \
-    "
-    docker run $opt $img sh <<'EOF'
-make clean
-make LDFLAGS=-static CFLAGS="-Os -Wno-cpp"
-strip -v $TG
-EOF
-    echo "Publish done"
 }
 
 clean() {
@@ -65,7 +39,7 @@ uninstall() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-usage: $app {build|-b|release|-r|publish|-p|clean|-c|install|-i|uninstall|-u}
+usage: $app {build|-b|release|-r|clean|-c|install|-i|uninstall|-u}
 EOF
 }
 
@@ -75,9 +49,6 @@ case $1 in
         ;;
     release|-r )
         release
-        ;;
-    publish|-p )
-        publish
         ;;
     clean|-c )
         clean
