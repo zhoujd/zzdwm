@@ -15,10 +15,12 @@
  * variable.  Others (particularly ncurses) forbid it.  The nice ones
  * supply one if you don't, so they'll work either way.
  */
+#if !defined(__linux__)
 #ifdef NEED_BC
        char	*BC;	/* :bc=: move cursor left */
 #else
 extern char	*BC;	/* :bc=: move cursor left */
+#endif
 #endif
 
 /* HP-UX, and maybe some others, require the application code to supply
