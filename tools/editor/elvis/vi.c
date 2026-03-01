@@ -1760,7 +1760,7 @@ void vipush(win, flags, cursor)
 	win->state->perform = _viperform;
 	win->state->shape = shape;
 	win->state->info = safealloc(1, sizeof (VIINFO));
-	win->state->modename = viiscmd(win) ? "Command" : "One Cmd";
+	win->state->modename = viiscmd(win) ? " - " : "One Cmd";
 	win->state->mapflags |= MAP_COMMAND;
 	viinitcmd((VIINFO *)win->state->info);
 

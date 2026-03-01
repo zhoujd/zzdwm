@@ -1129,12 +1129,12 @@ void inputpush(win, flags, mode)
 	if (mode == 'R')
 	{
 		((INPUTINFO *)win->state->info)->replacing = ElvTrue;
-		win->state->modename = "Replace";
+		win->state->modename = " R ";
 	}
 	else
 	{
 		((INPUTINFO *)win->state->info)->replacing = ElvFalse;
-		win->state->modename = " Input ";
+		win->state->modename = " I ";
 	}
 }
 
@@ -1177,7 +1177,7 @@ void inputtoggle(win, mode)
 	}
 	else
 	{
-		state->modename = " Input";
+		state->modename = " I";
 	}
 }
 
