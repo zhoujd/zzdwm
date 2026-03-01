@@ -644,7 +644,7 @@ RESULT	ex_file(xinf)
 		{
 			if (markbuffer(xinf->window->cursor) == buf && o_buflines(buf) > 0)
 			{
-				msg(MSG_INFO, "[dd](filename)(readonly?\" [READONLY]\")(modified?\" [MODIFIED]\")(!edited?\" [NOT EDITED]\")(newfile?\" [NEW FILE]\") ($1 * 100 / $2)%",
+				msg(MSG_INFO, "[dd](filename)(readonly?\" [READONLY]\")(modified?\" [MODIFIED]\")(!edited?\" [NOT EDITED]\")(newfile?\" [NEW FILE]\") $1/$2 ($1 * 100 / $2)%",
 					lnum, o_buflines(buf));
 			}
 			else
