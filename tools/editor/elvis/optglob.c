@@ -324,7 +324,7 @@ void optglobinit()
 #ifdef FEATURE_LISTCHARS
 	(void)dmnlistchars('<', -1L, 0, NULL, NULL);
 #endif
-	optpreset(o_cleantext, toCHAR("long"), OPT_HIDE);
+	optpreset(o_cleantext, toCHAR("long,bs,ex"), OPT_HIDE);
 	optpreset(o_filenamerules, toCHAR("tilde,dollar,paren,wildcard,special,space"), OPT_HIDE);
 	optpreset(o_initializing, ElvTrue, OPT_HIDE|OPT_LOCK);
 	optpreset(o_persistfile, NULL, OPT_HIDE | OPT_UNSAFE);
