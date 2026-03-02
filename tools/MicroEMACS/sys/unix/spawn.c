@@ -98,7 +98,7 @@ getparent (void)
 static const char *
 getshell (void)
 {
-  static const char *shellp = NULL;	/* Saved "SHELL" name.          */
+  static const char *shellp = NULL;	/* Saved "SHELL" name.  */
 
   if (shellp == NULL)
     {
@@ -514,7 +514,7 @@ changewd (int f, int n, int k)
 {
   register int s;
   static char line[NLINE];
-  static char cwd[NMSG];
+  static char cwd[512];
 
   s = ereply ("Path: ", line, sizeof(line));
   if (s == FALSE)
@@ -528,12 +528,12 @@ changewd (int f, int n, int k)
     {
       if (line[0] == '~')
         {
-          if (line[1] == '/' || line[1] == '\0')
-            snprintf(cwd, sizeof(cwd),
-                     "%s/%s", getenv ("HOME"), line + 2);
+          if (line[1] == '/')
+            snprintf(cwd, sizeof(cwd), "%s/%s", getenv ("HOME"), line + 2);
+          else if (line[1] == '\0')
+            snprintf(cwd, sizeof(cwd), "%s", getenv ("HOME"));
           else
-            snprintf(cwd, sizeof(cwd),
-                     "%s/%s", "/home", line + 1);
+            snprintf(cwd, sizeof(cwd), "%s/%s", "/home", line + 1);
         }
       else
         {
