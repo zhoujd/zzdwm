@@ -71,7 +71,7 @@ void usage()
 	fprintf(stderr, "    -i chars   allow chars in indentation, in addition to space and tab\n");
 	fprintf(stderr, "    -C         for C/C++ comments, like \"-c -i'/*'\"\n");
 	fprintf(stderr, "    -M         for email messages with > quoting, like \"-i'>'\"\n");
-	fprintf(stderr, "Report bugs to kirkenda@cs.pdx.edu");
+	fprintf(stderr, "Report bugs to kirkenda@cs.pdx.edu\n");
 	exit(2);
 }
 
