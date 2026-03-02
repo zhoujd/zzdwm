@@ -502,3 +502,47 @@ ret:
   close (fdout);
   return s;
 }
+
+/*
+ * Change work directory
+ * Bound to "C-X $".
+ */
+int
+changedir (int f, int n, int k)
+{
+  register int s;
+  static char line[NLINE];
+  static char cwd[NFILEN];
+
+  s = ereply ("CD: ", line, sizeof(line));
+  if (s == FALSE)
+    {
+      if (getcwd(cwd, sizeof(cwd)) != NULL)
+        eprintf("CWD: %s", cwd);
+      else
+        eprintf("Failed to run getcwd");
+    }
+  else if (s == TRUE)
+    {
+      if (line[0] == '~')
+        {
+          if (line[1] == '/')
+            snprintf(cwd, sizeof(cwd), "%s/%s", getenv ("HOME"), line + 2);
+          else
+            snprintf(cwd, sizeof(cwd), "%s", getenv ("HOME"));
+        }
+      else
+        {
+          snprintf(cwd, sizeof(cwd), "%s", line);
+        }
+      if (chdir(cwd) == 0)
+        eprintf("CWD: %s", cwd);
+      else
+        eprintf("Failed to CD: %s", cwd);
+    }
+  else
+    {
+      return (s);
+    }
+  return TRUE;
+}
