@@ -747,6 +747,7 @@ void ekeyname (char *cp, int k);	/* Convert key code to name	*/
  */
 LINE * lalloc (int used);		/* Allocate line.		*/
 LINE * lallocx (int used);		/* Allocate line w/o round-up.	*/
+int insspace(int f, int n, int k);      /* insert spaces forward.       */
 int linsert (int n, int c, char *s);	/* Insert char(s) at dot	*/
 int insertwithnl (const char *s, int len);
                                         /* Insert string with newlines.	*/

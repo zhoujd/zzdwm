@@ -226,6 +226,19 @@ adjustforinsert (const POS *oldpos, LINE *newlp, int nchars, EWINDOW *wp)
 }
 
 /*
+ * insert spaces forward into text
+ *
+ * int f, n;		default flag and numeric argument
+ */
+int
+insspace(int f, int n, int k)
+{
+  linsert(n, ' ', NULLPTR);
+  backchar(f, n, k);
+  return TRUE;
+}
+
+/*
  * If the string pointer "s" is NULL,
  * insert "n" copies of the Uncode character "c", converted to UTF-8
  * at the current location of dot.  Otherwise,

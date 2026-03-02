@@ -125,6 +125,7 @@ KEY key[] = {
   {KCTRL | '@',		setmark,	"set-mark"},
   {KCTRL | 'A',		gotobol,	"goto-bol"},
   {KCTRL | 'B',		backchar,	"back-char"},
+  {KCTRL | 'C',		insspace,	"ins-space"},
   {KCTRL | 'D',		forwdel,	"forw-del-char"},
   {KCTRL | 'E',		gotoeol,	"goto-eol"},
   {KCTRL | 'F',		forwchar,	"forw-char"},
