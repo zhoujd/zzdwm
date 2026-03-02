@@ -378,7 +378,7 @@ spawnpipe (int f, int n, int k)
   char bname[] = "*pipe*";
   int fd;
 
-  if ((s = ereply ("@ ", line, sizeof(line))) != TRUE)
+  if ((s = ereply ("Pipe: ", line, sizeof(line))) != TRUE)
     return (s);
 
   /* Setup the temporary file */
@@ -510,13 +510,13 @@ ret:
  * Bound to "C-X $".
  */
 int
-changedir (int f, int n, int k)
+changewd (int f, int n, int k)
 {
   register int s;
   static char line[NLINE];
-  static char cwd[NFILEN];
+  static char cwd[NMSG];
 
-  s = ereply ("$ ", line, sizeof(line));
+  s = ereply ("Path: ", line, sizeof(line));
   if (s == FALSE)
     {
       if (getcwd(cwd, sizeof(cwd)) != NULL)
@@ -528,12 +528,12 @@ changedir (int f, int n, int k)
     {
       if (line[0] == '~')
         {
-          if (line[1] == '/')
+          if (line[1] == '/' || line[1] == '\0')
             snprintf(cwd, sizeof(cwd),
                      "%s/%s", getenv ("HOME"), line + 2);
           else
             snprintf(cwd, sizeof(cwd),
-                     "/home/%s", line + 1);
+                     "%s/%s", "/home", line + 1);
         }
       else
         {

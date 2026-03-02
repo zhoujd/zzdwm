@@ -216,10 +216,10 @@ KEY key[] = {
 #endif
   {KCTLX | 'Z',		enlargewind,	"enlarge-window"},
 #ifndef MINGW
-  {KCTLX | '!',		spawncmd,       "spawn-command"},
-  {KCTLX | '@',		spawnpipe,      "spawn-pipe"},
-  {KCTLX | '#',		spawnfilter,    "spawn-filter"},
-  {KCTLX | '$',		changedir,      "change-directory"},
+  {KCTLX | '!',		spawncmd,       "cmd"},
+  {KCTLX | '@',		spawnpipe,      "pipe"},
+  {KCTLX | '#',		spawnfilter,    "filter"},
+  {KCTLX | '$',		changewd,       "cd"},
 #endif
   {KMETA | KCTRL | 'E',	gccerror,	"gcc-error"},
   {KMETA | KCTRL | 'F',	foldcase,	"fold-case"},
