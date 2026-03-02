@@ -376,27 +376,32 @@ spawnpipe (int f, int n, int k)
   static char line[NLINE];
   char tmp[] = "/tmp/meXXXXXX";
   char bname[] = "*pipe*";
-  int fd;
+  int fd = -1;
 
-  if ((s = ereply ("@ ", line, sizeof(line))) != TRUE)
+  if ((s = ereply ("Pipe: ", line, sizeof(line))) != TRUE)
     return (s);
-
-  /* Force repaint */
-  eerase ();
-  sgarbf = TRUE;
 
   /* Setup the temporary file */
   fd = mkstemp (tmp);
   if (fd == -1)
     {
-      eprintf ("[Failed to create temp file]");
-      return FALSE;
+      s = FALSE;
+      goto ret;
+    }
+  if (unlink (tmp) == -1)
+    {
+      s = FALSE;
+      goto ret;
     }
 
   /* Run the command */
   snprintf(line + strlen(line), sizeof(line) - strlen(line),
            " >%s 2>&1", tmp);
-  system (line);
+  if (system (line) == -1)
+    {
+      s = FALSE;
+      goto ret;
+    }
   fflush (stdout);              /* to be sure P.K.      */
 
   /* Readin the temporary file */
@@ -406,7 +411,6 @@ spawnpipe (int f, int n, int k)
       swbuffer (bp);
       if (readin (tmp) == FALSE)
         {
-          eprintf ("[Failed to readin temp file]");
           s = FALSE;
           goto ret;
         }
@@ -414,12 +418,13 @@ spawnpipe (int f, int n, int k)
       strcpy (bp->b_fname, "");
     }
 
-  s = TRUE;
 ret:
+  if (s == FALSE)
+    sgarbf = TRUE;
   /* Clean the temporary file */
-  unlink (tmp);
-  close (fd);
-  return s;
+  if (fd != -1)
+    close (fd);
+  return TRUE;
 }
 
 /*
@@ -435,8 +440,8 @@ spawnfilter (int f, int n, int k)
   char bname[] = "*filter*";
   char filin[] = "/tmp/meXXXXXX";
   char filout[] = "/tmp/meXXXXXX";
-  int fdin;
-  int fdout;
+  int fdin = -1;
+  int fdout = -1;
 
   if (curbp->b_flag & BFRO)	/* if buffer is read-only       */
     return FALSE;               /* fail                         */
@@ -444,29 +449,34 @@ spawnfilter (int f, int n, int k)
   if ((s = ereply ("# ", line, sizeof(line))) != TRUE)
     return (s);
 
-  /* Force repaint */
-  eerase ();
-  sgarbf = TRUE;
-
   /* Setup the temporary file */
   fdin = mkstemp (filin);
   if (fdin == -1)
     {
-      eprintf ("[Failed to create temp file]");
-      return FALSE;
+      s = FALSE;
+      goto ret;
+    }
+  if (unlink (filin) == -1)
+    {
+      s = FALSE;
+      goto ret;
     }
 
   fdout = mkstemp (filout);
   if (fdout == -1)
     {
-      eprintf ("[Failed to create temp file]");
-      return FALSE;
+      s = FALSE;
+      goto ret;
+    }
+  if (unlink (filout) == -1)
+    {
+      s = FALSE;
+      goto ret;
     }
 
   /* Write it out, checking for errors */
   if (writeout (filin) != TRUE)
     {
-      eprintf ("[Cannot write filter file]");
       s = FALSE;
       goto ret;
     }
@@ -474,7 +484,11 @@ spawnfilter (int f, int n, int k)
   /* Run the command */
   snprintf(line + strlen(line), sizeof(line) - strlen(line),
            " <%s >%s 2>&1", filin, filout);
-  system (line);
+  if (system (line) == -1)
+    {
+      s = FALSE;
+      goto ret;
+    }
   fflush (stdout);              /* to be sure P.K.      */
 
   /* Readin the temporary file */
@@ -483,24 +497,24 @@ spawnfilter (int f, int n, int k)
       bclear (bp);
       swbuffer (bp);
       /* On failure, escape gracefully */
-      if (s != TRUE || ((s = readin (filout)) == FALSE))
+      if (readin (filout) == FALSE)
         {
-          eprintf ("[Failed to readin temp file]");
+          s = FALSE;
           goto ret;
         }
-
       strcpy (bp->b_bname, bname);
       strcpy (bp->b_fname, "");
     }
 
-  s = TRUE;
 ret:
+  if (s == FALSE)
+    sgarbf = TRUE;
   /* Clean the temporary file */
-  unlink (filin);
-  unlink (filout);
-  close (fdin);
-  close (fdout);
-  return s;
+  if (fdin != -1)
+    close (fdin);
+  if (fdout != -1)
+    close (fdout);
+  return TRUE;
 }
 
 /*
@@ -520,7 +534,7 @@ changedir (int f, int n, int k)
       if (getcwd(cwd, sizeof(cwd)) != NULL)
         eprintf("CWD: %s", cwd);
       else
-        eprintf("Failed to run getcwd");
+        sgarbf = TRUE;
     }
   else if (s == TRUE)
     {
@@ -538,7 +552,7 @@ changedir (int f, int n, int k)
       if (chdir(cwd) == 0)
         eprintf("CWD: %s", cwd);
       else
-        eprintf("Failed to CD: %s", cwd);
+        sgarbf = TRUE;
     }
   else
     {
