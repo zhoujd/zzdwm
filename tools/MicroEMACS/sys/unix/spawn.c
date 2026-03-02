@@ -376,14 +376,13 @@ spawnpipe (int f, int n, int k)
   static char line[NLINE];
   char tmp[] = "/tmp/meXXXXXX";
   char bname[] = "*pipe*";
-  int fd = -1;
+  int fd;
 
-  if ((s = ereply ("Pipe: ", line, sizeof(line))) != TRUE)
+  if ((s = ereply ("@ ", line, sizeof(line))) != TRUE)
     return (s);
 
   /* Setup the temporary file */
-  fd = mkstemp (tmp);
-  if (fd == -1)
+  if ((fd = mkstemp (tmp)) == -1)
     {
       s = FALSE;
       goto ret;
@@ -440,8 +439,8 @@ spawnfilter (int f, int n, int k)
   char bname[] = "*filter*";
   char filin[] = "/tmp/meXXXXXX";
   char filout[] = "/tmp/meXXXXXX";
-  int fdin = -1;
-  int fdout = -1;
+  int fdin;
+  int fdout;
 
   if (curbp->b_flag & BFRO)	/* if buffer is read-only       */
     return FALSE;               /* fail                         */
@@ -450,25 +449,14 @@ spawnfilter (int f, int n, int k)
     return (s);
 
   /* Setup the temporary file */
-  fdin = mkstemp (filin);
-  if (fdin == -1)
+  if ((fdin = mkstemp (filin)) == -1 ||
+      (fdout = mkstemp (filout)) == -1)
     {
       s = FALSE;
       goto ret;
     }
-  if (unlink (filin) == -1)
-    {
-      s = FALSE;
-      goto ret;
-    }
-
-  fdout = mkstemp (filout);
-  if (fdout == -1)
-    {
-      s = FALSE;
-      goto ret;
-    }
-  if (unlink (filout) == -1)
+  if (unlink (filin) == -1 ||
+      unlink (filout) == -1)
     {
       s = FALSE;
       goto ret;
@@ -528,7 +516,7 @@ changedir (int f, int n, int k)
   static char line[NLINE];
   static char cwd[NFILEN];
 
-  s = ereply ("CD: ", line, sizeof(line));
+  s = ereply ("$ ", line, sizeof(line));
   if (s == FALSE)
     {
       if (getcwd(cwd, sizeof(cwd)) != NULL)
@@ -541,9 +529,11 @@ changedir (int f, int n, int k)
       if (line[0] == '~')
         {
           if (line[1] == '/')
-            snprintf(cwd, sizeof(cwd), "%s/%s", getenv ("HOME"), line + 2);
+            snprintf(cwd, sizeof(cwd),
+                     "%s/%s", getenv ("HOME"), line + 2);
           else
-            snprintf(cwd, sizeof(cwd), "%s", getenv ("HOME"));
+            snprintf(cwd, sizeof(cwd),
+                     "/home/%s", line + 1);
         }
       else
         {
