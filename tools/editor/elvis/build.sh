@@ -2,32 +2,27 @@
 
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
+. /etc/os-release
+
 build() {
-    $SCRIPT_DIR/configure --without-x
+    ./configure --without-x
     make clean
-    make "$@"
+    make CC="gcc -O0 -g"
     echo "Build done"
 }
 
-debug() {
-    $SCRIPT_DIR/configure --without-x
-    make clean
-    make CC="gcc -O0 -g"
-    echo "Build debug done"
-}
-
 release() {
-    $SCRIPT_DIR/configure --without-x
+    ./configure --without-x
     make clean
-    make CC="gcc -Os -s"
+    case $ID in
+        alpine )
+            make CC="gcc -Os -s -static"
+            ;;
+        * )
+            make CC="gcc -Os -s"
+            ;;
+    esac
     echo "Build release done"
-}
-
-publish() {
-    $SCRIPT_DIR/configure --without-x
-    make clean
-    make CC="gcc -Os -s -static"
-    echo "Build publish done"
 }
 
 clean() {
@@ -56,23 +51,16 @@ uninstall() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-usage: $app {build|-b|debug|-d|release|-r|publish|-p|clean|-c|install|-i|uninstall|-u}
+usage: $app {build|-b|release|-r|clean|-c|install|-i|uninstall|-u}
 EOF
 }
 
 case $1 in
     build|-b )
-        shift
-        build "$@"
-        ;;
-    debug|-d )
-        debug
+        build
         ;;
     release|-r )
         release
-        ;;
-    publish|-p )
-        publish 
         ;;
     clean|-c )
         clean
