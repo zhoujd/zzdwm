@@ -365,7 +365,7 @@ spawncmd (int f, int n, int k)
 
 /*
  * Pipe a one line command into a window
- * Bound to ^X @
+ * Bound to "C-X @"
  */
 int
 spawnpipe (int f, int n, int k)
@@ -417,7 +417,7 @@ end:
 
 /*
  * Filter a buffer through an external program
- * Bound to ^X #
+ * Bound to "C-X #"
  */
 int
 spawnfilter (int f, int n, int k)
@@ -490,7 +490,7 @@ changewd (int f, int n, int k)
 {
   register int s;
   static char line[NLINE];
-  static char cwd[512];
+  static char cwd[NSTRING];
   int ret = FALSE;
 
   s = ereply ("Path: ", line, sizeof(line));
