@@ -375,21 +375,23 @@ spawnpipe (int f, int n, int k)
   static char line[NLINE];
   char tmp[] = "/tmp/meXXXXXX";
   char bname[] = "*pipe*";
-  int fd;
+  int fd = -1;
 
   if ((s = ereply ("Pipe: ", line, sizeof(line))) != TRUE)
     return (s);
 
+  /* Force repaint */
+  eerase ();
+  sgarbf = TRUE;
+
   /* Setup the temporary file */
   if ((fd = mkstemp (tmp)) == -1)
     {
-      s = FALSE;
-      goto ret;
+      goto end;
     }
   if (unlink (tmp) == -1)
     {
-      s = FALSE;
-      goto ret;
+      goto end;
     }
 
   /* Run the command */
@@ -397,8 +399,7 @@ spawnpipe (int f, int n, int k)
            " >%s 2>&1", tmp);
   if (system (line) == -1)
     {
-      s = FALSE;
-      goto ret;
+      goto end;
     }
   fflush (stdout);              /* to be sure P.K.      */
 
@@ -409,16 +410,13 @@ spawnpipe (int f, int n, int k)
       swbuffer (bp);
       if (readin (tmp) == FALSE)
         {
-          s = FALSE;
-          goto ret;
+          goto end;
         }
       strcpy (bp->b_bname, bname);
       strcpy (bp->b_fname, "");
     }
 
-ret:
-  if (s == FALSE)
-    sgarbf = TRUE;
+end:
   /* Clean the temporary file */
   if (fd != -1)
     close (fd);
@@ -438,8 +436,8 @@ spawnfilter (int f, int n, int k)
   char bname[] = "*filter*";
   char filin[] = "/tmp/meXXXXXX";
   char filout[] = "/tmp/meXXXXXX";
-  int fdin;
-  int fdout;
+  int fdin = -1;
+  int fdout = -1;
 
   if (curbp->b_flag & BFRO)	/* if buffer is read-only       */
     return FALSE;               /* fail                         */
@@ -447,25 +445,26 @@ spawnfilter (int f, int n, int k)
   if ((s = ereply ("# ", line, sizeof(line))) != TRUE)
     return (s);
 
+  /* Force repaint */
+  eerase ();
+  sgarbf = TRUE;
+
   /* Setup the temporary file */
   if ((fdin = mkstemp (filin)) == -1 ||
       (fdout = mkstemp (filout)) == -1)
     {
-      s = FALSE;
-      goto ret;
+      goto end;
     }
   if (unlink (filin) == -1 ||
       unlink (filout) == -1)
     {
-      s = FALSE;
-      goto ret;
+      goto end;
     }
 
   /* Write it out, checking for errors */
   if (writeout (filin) != TRUE)
     {
-      s = FALSE;
-      goto ret;
+      goto end;
     }
 
   /* Run the command */
@@ -473,8 +472,7 @@ spawnfilter (int f, int n, int k)
            " <%s >%s 2>&1", filin, filout);
   if (system (line) == -1)
     {
-      s = FALSE;
-      goto ret;
+      goto end;
     }
   fflush (stdout);              /* to be sure P.K.      */
 
@@ -486,16 +484,13 @@ spawnfilter (int f, int n, int k)
       /* On failure, escape gracefully */
       if (readin (filout) == FALSE)
         {
-          s = FALSE;
-          goto ret;
+          goto end;
         }
       strcpy (bp->b_bname, bname);
       strcpy (bp->b_fname, "");
     }
 
-ret:
-  if (s == FALSE)
-    sgarbf = TRUE;
+end:
   /* Clean the temporary file */
   if (fdin != -1)
     close (fdin);
@@ -514,6 +509,7 @@ changewd (int f, int n, int k)
   register int s;
   static char line[NLINE];
   static char cwd[512];
+  int ret = FALSE;
 
   s = ereply ("Path: ", line, sizeof(line));
   if (s == FALSE)
@@ -521,7 +517,9 @@ changewd (int f, int n, int k)
       if (getcwd(cwd, sizeof(cwd)) != NULL)
         eprintf("CWD: %s", cwd);
       else
-        sgarbf = TRUE;
+      {
+        goto end;
+      }
     }
   else if (s == TRUE)
     {
@@ -541,11 +539,21 @@ changewd (int f, int n, int k)
       if (chdir(cwd) == 0)
         eprintf("CWD: %s", cwd);
       else
-        sgarbf = TRUE;
+        {
+          goto end;
+        }
     }
   else
     {
       return (s);
+    }
+  ret = TRUE;
+
+end:
+  if (ret == FALSE)
+    {
+      eerase ();
+      sgarbf = TRUE;
     }
   return TRUE;
 }
