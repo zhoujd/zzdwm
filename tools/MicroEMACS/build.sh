@@ -4,6 +4,8 @@ SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 MNT_DIR=$(cd $SCRIPT_DIR/../.. && pwd)
 WS=$MNT_DIR/tools/$(basename $SCRIPT_DIR)
 
+. /etc/os-release
+
 build() {
     make $@
     echo "Build done"
@@ -17,7 +19,14 @@ debug() {
 
 release() {
     make clean
-    make STATIC=yes
+    case $ID in
+        alpine )
+            make STATIC=yes
+            ;;
+        * )
+            make
+            ;;
+    esac
     make strip
     echo "Build release done"
 }
