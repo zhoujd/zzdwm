@@ -37,12 +37,10 @@ publish() {
         release
     else
         img=zhoujd/alpine
-        opt="
-            -i \
-            -u $(id -u):$(id -g) \
-            -v $MNT_DIR:$MNT_DIR \
-            -w $WS \
-        "
+        opt="$opt -i"
+        opt="$opt -u $(id -u):$(id -g)"
+        opt="$opt -v $MNT_DIR:$MNT_DIR"
+        opt="$opt -w $WS"
         docker run $opt $img sh <<'EOF'
 cat /etc/os-release
 make clean
