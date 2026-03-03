@@ -230,7 +230,7 @@ spawn (char *program, const char *args[])
  * implies that you are using job control, then MicroEMACS
  * moves the cursor to a nice place and sends itself a
  * stop signal. If you are using another shell it runs
- * a subshell using fork/exec.  Bound to "C-C".
+ * a subshell using fork/exec.  Bound to "C-X C".
  */
 int
 spawncli (int f, int n, int k)
@@ -386,21 +386,15 @@ spawnpipe (int f, int n, int k)
 
   /* Setup the temporary file */
   if ((fd = mkstemp (tmp)) == -1)
-    {
-      goto end;
-    }
+    goto end;
   if (unlink (tmp) == -1)
-    {
-      goto end;
-    }
+    goto end;
 
   /* Run the command */
   snprintf(line + strlen(line), sizeof(line) - strlen(line),
            " >%s 2>&1", tmp);
   if (system (line) == -1)
-    {
-      goto end;
-    }
+    goto end;
   fflush (stdout);              /* to be sure P.K.      */
 
   /* Readin the temporary file */
@@ -409,9 +403,7 @@ spawnpipe (int f, int n, int k)
       bclear (bp);
       swbuffer (bp);
       if (readin (tmp) == FALSE)
-        {
-          goto end;
-        }
+        goto end;
       strcpy (bp->b_bname, bname);
       strcpy (bp->b_fname, "");
     }
@@ -452,28 +444,20 @@ spawnfilter (int f, int n, int k)
   /* Setup the temporary file */
   if ((fdin = mkstemp (filin)) == -1 ||
       (fdout = mkstemp (filout)) == -1)
-    {
-      goto end;
-    }
+    goto end;
   if (unlink (filin) == -1 ||
       unlink (filout) == -1)
-    {
-      goto end;
-    }
+    goto end;
 
   /* Write it out, checking for errors */
   if (writeout (filin) != TRUE)
-    {
-      goto end;
-    }
+    goto end;
 
   /* Run the command */
   snprintf(line + strlen(line), sizeof(line) - strlen(line),
            " <%s >%s 2>&1", filin, filout);
   if (system (line) == -1)
-    {
-      goto end;
-    }
+    goto end;
   fflush (stdout);              /* to be sure P.K.      */
 
   /* Readin the temporary file */
@@ -483,9 +467,7 @@ spawnfilter (int f, int n, int k)
       swbuffer (bp);
       /* On failure, escape gracefully */
       if (readin (filout) == FALSE)
-        {
-          goto end;
-        }
+        goto end;
       strcpy (bp->b_bname, bname);
       strcpy (bp->b_fname, "");
     }
@@ -517,9 +499,7 @@ changewd (int f, int n, int k)
       if (getcwd(cwd, sizeof(cwd)) != NULL)
         eprintf("CWD: %s", cwd);
       else
-      {
         goto end;
-      }
     }
   else if (s == TRUE)
     {
@@ -533,20 +513,16 @@ changewd (int f, int n, int k)
             snprintf(cwd, sizeof(cwd), "%s/%s", "/home", line + 1);
         }
       else
-        {
-          snprintf(cwd, sizeof(cwd), "%s", line);
-        }
+        snprintf(cwd, sizeof(cwd), "%s", line);
+
       if (chdir(cwd) == 0)
         eprintf("CWD: %s", cwd);
       else
-        {
-          goto end;
-        }
+        goto end;
     }
   else
-    {
-      return (s);
-    }
+    return (s);
+
   ret = TRUE;
 
 end:
