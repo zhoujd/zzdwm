@@ -272,7 +272,7 @@ main (int argc, char *argv[])
   for (i = 1; i < argc; i++)
     {
       const char *search_string = argv[i];
-      int n = cscope_search (search_string);
+      int n = cscope_search ('0', search_string);
       printf ("%d matches for %s:\n", n, search_string);
       while (n-- > 0)
 	{
