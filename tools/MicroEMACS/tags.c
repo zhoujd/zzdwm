@@ -20,7 +20,7 @@
 /* $Header: /exit14/home/marka/tools/pe/RCS/tags.c,v 1.1 2007/01/17 20:51:17 marka Exp marka $
  *
  * Name:	MicroEMACS
- * 		Tagscommands.
+ *              Tagscommands.
  * Version:	1
  * By:		marka@pepper.com (Mark Alexander)
  *
@@ -171,7 +171,7 @@ findtagfile (const char *name)
  */
 tagref *
 addtagref (const char *string, tagfile *file, int line, long offset,
-	   int exact)
+           int exact)
 {
   int len = strlen (string) + 1;
   tagref *newref, *prev, *next;
@@ -183,11 +183,11 @@ addtagref (const char *string, tagfile *file, int line, long offset,
        next = next->next)
     {
       if (file == next->file &&
-	  line == next->line)
-	{
-	  eprintf ("Duplicated tag %s:%d", file->fname, line);
-	  return next;
-	}
+          line == next->line)
+        {
+          eprintf ("Duplicated tag %s:%d", file->fname, line);
+          return next;
+        }
     }
 
   /* Allocate space for the tag reference and
@@ -215,14 +215,14 @@ addtagref (const char *string, tagfile *file, int line, long offset,
   if (exact)
     {
       for (prev = &tagreflist, next = tagreflist.next;
-	   next->exact != 0;
-	   prev = next, next = next->next)
-	;
+           next->exact != 0;
+           prev = next, next = next->next)
+        ;
       newref->next = next;
       newref->prev = prev;
       prev->next = next->prev = newref;
     }
-  else      
+  else
     {
       newref->next = &tagreflist;
       newref->prev = tagreflist.prev;
@@ -272,7 +272,7 @@ readtagfile (char *fname)
     {
       s = ffgetline (&line, &nbytes);	/* read next line       */
       if (s != FIOSUC && nbytes == 0)	/* True end-of-file?    */
-	break;
+        break;
       line[nbytes] = '\0';	/* terminate the line   */
 
       /* A line consisting of a form feed indicates
@@ -280,84 +280,84 @@ readtagfile (char *fname)
        * line will give the filename.
        */
       if (line[0] == '\f')
-	{			/* form feed?           */
-	  istagline = FALSE;	/* next line is filename */
-	  continue;
-	}
+        {			/* form feed?           */
+          istagline = FALSE;	/* next line is filename */
+          continue;
+        }
       if (istagline)
-	{			/* this is a tag line   */
+        {			/* this is a tag line   */
 
-	  /* There must have been a previous file line.
-	   */
-	  if (curfile == NULL)
-	    {
-	      eprintf ("Reference without file");
-	      break;
-	    }
+          /* There must have been a previous file line.
+           */
+          if (curfile == NULL)
+            {
+              eprintf ("Reference without file");
+              break;
+            }
 
-	  /* The tag string is terminated by a rubout.
-	   */
-	  if ((eol = strchr (line, 0x7f)) == NULL)
-	    {
-	      eprintf ("Tag line missing 0x7f");
-	      s = FIOERR;
-	      break;
-	    }
-	  *eol++ = '\0';	/* skip over rubout, terminate string */
+          /* The tag string is terminated by a rubout.
+           */
+          if ((eol = strchr (line, 0x7f)) == NULL)
+            {
+              eprintf ("Tag line missing 0x7f");
+              s = FIOERR;
+              break;
+            }
+          *eol++ = '\0';	/* skip over rubout, terminate string */
 
-	  /* The tag string is followed by the line number
-	   * and file offset.  However, definitions of macros
-	   * that take arguments are followed by the non-
-	   * parenthesized macro name terminated by a Control-A.
-	   * For now, ignore this and skip past the Control-A.
-	   */
-	  if ((tmp = strchr (eol, '\001')) != NULL)
-	    eol = tmp + 1;	/* skip past control-A */
-	  lineno = strtol (eol, &eol, 10);
-	  if (lineno == 0 || *eol != ',')
-	    {
-	      eprintf ("Badly formed line number for %s", line);
-	      /* s = FIOERR; */
-	      /* break; */
-	      continue;
-	    }
-	  eol++;		/* skip over comma */
-	  offset = strtol (eol, NULL, 10);
+          /* The tag string is followed by the line number
+           * and file offset.  However, definitions of macros
+           * that take arguments are followed by the non-
+           * parenthesized macro name terminated by a Control-A.
+           * For now, ignore this and skip past the Control-A.
+           */
+          if ((tmp = strchr (eol, '\001')) != NULL)
+            eol = tmp + 1;	/* skip past control-A */
+          lineno = strtol (eol, &eol, 10);
+          if (lineno == 0 || *eol != ',')
+            {
+              eprintf ("Badly formed line number for %s", line);
+              /* s = FIOERR; */
+              /* break; */
+              continue;
+            }
+          eol++;		/* skip over comma */
+          offset = strtol (eol, NULL, 10);
 
-	  /* Add this to the end of the list of references.
-	   */
-	  if ((newref = addtagref (line, curfile, lineno, offset, 0)) == NULL)
-	    {
-	      eprintf ("Unable to allocate tagref");
-	      s = FIOERR;
-	      break;
-	    }
-	}
+          /* Add this to the end of the list of references.
+           */
+          if ((newref = addtagref (line, curfile, lineno, offset, 0)) == NULL)
+            {
+              eprintf ("Unable to allocate tagref");
+              s = FIOERR;
+              break;
+            }
+        }
       else
-	{
-	  /* This is a file line, not a tag line, so must create new
-	  * file record. Filename is followed by a comma and the
-	   * number of characters to skip to get
-	   * to the next control-L.  Make a copy of the
-	   * filename but ignore the number of characters.
-	   */
-	  if ((eol = strrchr (line, ',')) == NULL)
-	    {
-	      eprintf ("Filename not followed by comma");
-	      s = FIOERR;
-	      break;
-	    }
-	  *eol = '\0';		/* null-terminate the filename */
+        {
+          /* This is a file line, not a tag line, so must create new
+           * file record. Filename is followed by a comma and the
+           * number of characters to skip to get
+           * to the next control-L.  Make a copy of the
+           * filename but ignore the number of characters.
+           */
+          if ((eol = strrchr (line, ',')) == NULL)
+            {
+              eprintf ("Filename not followed by comma");
+              s = FIOERR;
+              break;
+            }
+          *eol = '\0';		/* null-terminate the filename */
 
-	  if ((curfile = addtagfile (line)) == NULL)
-	    {
-	      eprintf ("Unable to allocate file struct");
-	      s = FIOERR;
-	      break;
-	    }
+          if ((curfile = addtagfile (line)) == NULL)
+            {
+              eprintf ("Unable to allocate file struct");
+              s = FIOERR;
+              break;
+            }
 
-	  istagline = TRUE;	/* next line is a tag line */
-	}
+          istagline = TRUE;	/* next line is a tag line */
+        }
 
     }
   while (s == FIOSUC);		/* until error or EOF   */
@@ -485,18 +485,18 @@ searchtag (int f, int n, prepfunc prep, const char * tagtype)
        */
       s = ereply ("Find %s [%s]: ", tpat, NPAT, tagtype, tagpat);
       if (s == TRUE)		/* Specified            */
-	strcpy (tagpat, tpat);
+        strcpy (tagpat, tpat);
       else if (s == FALSE && tagpat[0] != 0)	/* CR, but old one      */
-	s = TRUE;
+        s = TRUE;
       if (s != TRUE)
-	return s;
+        return s;
 
       /* Prepare things for an initial search.  This gives the
        * caller an opportunity to prime the tag list based on the
        * string specified by the user.
        */
       if (prep (tagpat) == FALSE)
-	return FALSE;
+        return FALSE;
 
 #if DPRINT
       report = fopen ("report", "w");
@@ -512,9 +512,9 @@ searchtag (int f, int n, prepfunc prep, const char * tagtype)
   while (r != &tagreflist)
     {
       dprintf ((report, "Ref %s, line %ld, offset %ld, file %s\n",
-		r->string, r->line, r->offset, r->file->tf->fname));
+                r->string, r->line, r->offset, r->file->tf->fname));
       if (strstr (r->string, tagpat) != NULL)
-	break;
+        break;
       r = n >= 0 ? r->next : r->prev;	/* skip to next tag */
     }
   if (r == &tagreflist)
@@ -596,64 +596,64 @@ gccerror (int f, int n, int k)
        * and that it starts with the pattern filename:line:column: .
        */
       if (strncmp ((const char *) copy, pfx, pfxlen) != 0 &&
-	  sscanf ((const char *) copy, fmt, filename, &line, &column, &chars) == 3)
-	{
-	  /* Move cursor past the filename:line:column.
-	   */
-	  curwp->w_dot.p = lp;
-	  curwp->w_dot.o = unslen (str, chars);
-	  curwp->w_flag |= WFMOVE;
+          sscanf ((const char *) copy, fmt, filename, &line, &column, &chars) == 3)
+        {
+          /* Move cursor past the filename:line:column.
+           */
+          curwp->w_dot.p = lp;
+          curwp->w_dot.o = unslen (str, chars);
+          curwp->w_flag |= WFMOVE;
 
-	  /* Check if file exists.
-	   */
-	  if (access (filename, R_OK) != F_OK)
-	    {
-	      eprintf ("Cannot read '%s'", filename);
-	      free (copy);
-	      return FALSE;
-	    }
+          /* Check if file exists.
+           */
+          if (access (filename, R_OK) != F_OK)
+            {
+              eprintf ("Cannot read '%s'", filename);
+              free (copy);
+              return FALSE;
+            }
 
-	  /* Pop up a window and read the indicated file into it.
-	   */
-	  if ((wp = wpopup ()) == NULL)
-	    {
-	      free (copy);
-	      return FALSE;
-	    }
-	  curwp = wp;
-	  if (visit_file (filename) == FALSE)
-	    {
-	      free (copy);
-	      return FALSE;
-	    }
+          /* Pop up a window and read the indicated file into it.
+           */
+          if ((wp = wpopup ()) == NULL)
+            {
+              free (copy);
+              return FALSE;
+            }
+          curwp = wp;
+          if (visit_file (filename) == FALSE)
+            {
+              free (copy);
+              return FALSE;
+            }
 
-	  /* Move to the indicated line and column.
-	   */
-	  if (gotoline (TRUE, line, 0) == FALSE)
-	    {
-	      free (copy);
-	      return FALSE;
-	    }
-	  wlen = wllength (curwp->w_dot.p);
-	  if (column >= wlen)
-	    curwp->w_dot.o = wlen;
-	  else
-	    curwp->w_dot.o = column - 1;
+          /* Move to the indicated line and column.
+           */
+          if (gotoline (TRUE, line, 0) == FALSE)
+            {
+              free (copy);
+              return FALSE;
+            }
+          wlen = wllength (curwp->w_dot.p);
+          if (column >= wlen)
+            curwp->w_dot.o = wlen;
+          else
+            curwp->w_dot.o = column - 1;
 
-	  /* Put as much of the error message as will fit
-	   * on the echo line.
-	   */
-	  len = len - chars;
-	  str = copy + chars;
-	  if (unslen (str, len) > ncol)
-	    {
-	      len = uoffset (str, ncol);
-	      str[len] = '\0';
-	    }
-	  eprintf ("%s", str);
-	  free (copy);
-	  return TRUE;
-	}
+          /* Put as much of the error message as will fit
+           * on the echo line.
+           */
+          len = len - chars;
+          str = copy + chars;
+          if (unslen (str, len) > ncol)
+            {
+              len = uoffset (str, ncol);
+              str[len] = '\0';
+            }
+          eprintf ("%s", str);
+          free (copy);
+          return TRUE;
+        }
       lp = lforw (lp);
     }
   eprintf ("gcc error not found");
