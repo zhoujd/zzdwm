@@ -1,7 +1,8 @@
 #!/bin/bash
 
 echo "=== EWMH Desktop Properties ==="
-echo "Number of desktops:"
+
+echo -e "\nNumber of desktops:"
 xprop -root _NET_NUMBER_OF_DESKTOPS
 
 echo -e "\nCurrent desktop:"
