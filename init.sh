@@ -92,11 +92,14 @@ install_bin() {
         $CORE_ROOT/bin/less
         $CORE_ROOT/bin/pick
         $CORE_ROOT/bin/etags
+        $CORE_ROOT/bin/cscope
         $CORE_ROOT/bin/screen
         $CORE_ROOT/bin/busybox
         $CORE_ROOT/bin/fileview
         $CORE_ROOT/bin/xxd
         $CORE_ROOT/bin/elvis
+        $CORE_ROOT/bin/ctags
+        $CORE_ROOT/bin/ref
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $bin
