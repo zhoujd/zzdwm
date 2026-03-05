@@ -5,4 +5,5 @@ rev.h
 *.exe
 me
 TAGS
+tags
 cscope.out
