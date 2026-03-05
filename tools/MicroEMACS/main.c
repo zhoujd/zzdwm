@@ -110,7 +110,7 @@ static void usage(void);
  * Usage
  */
 void
-usage(void)
+usage (void)
 {
   fprintf(stderr,
           "usage: me [-234bdmrxz] [-c path] [-g line] [-p profile] [-t size]\n"
