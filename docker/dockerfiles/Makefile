@@ -30,9 +30,9 @@ ubuntu-base: ubuntu.dockerfile
 
 .PHONY: clean
 clean:
-	-docker rmi $(Alpine_BASE_TAG)
-	-docker rmi $(Void_Linux_BASE_TAG)
-	-docker rmi $(Ubuntu_BASE_TAG)
+	-docker rmi $(Alpine_BASE_TAG) $(Alpine_LATEST_TAG)
+	-docker rmi $(Void_Linux_BASE_TAG) $(Void_Linux_LATEST_TAG)
+	-docker rmi $(Ubuntu_BASE_TAG) $(Ubuntu_LATEST_TAG)
 
 .PHONY: help
 help:

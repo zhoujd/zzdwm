@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
 
 ARG VARIANT=20260101R1
-FROM ghcr.io/void-linux/void-musl-full:$VARIANT
+ARG PLATFORM=linux/amd64
+FROM --platform=$PLATFORM ghcr.io/void-linux/void-musl-full:$VARIANT
 
 ARG REPO=https://mirrors.tuna.tsinghua.edu.cn/voidlinux
 RUN mkdir -p /etc/xbps.d \
