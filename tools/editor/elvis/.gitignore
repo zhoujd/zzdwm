@@ -13,3 +13,4 @@ ref
 elvis*.rpm
 elvis*.tar.gz
 tags
+cscope.out
