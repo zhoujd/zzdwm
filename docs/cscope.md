@@ -7,7 +7,7 @@ cscope
 ## https://cscope.sourceforge.net/
 ```
 
-## Static build
+## Static build with VoidLinux
 
 ```
 $ cd docker
