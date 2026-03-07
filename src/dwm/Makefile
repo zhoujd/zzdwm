@@ -8,22 +8,28 @@ OBJ = ${SRC:.c=.o}
 
 TDIR = themes
 THEMES = $(wildcard $(TDIR)/*.h)
+REV = rev.h
 
 all: dwm
 
 .c.o:
 	${CC} -c ${CFLAGS} $<
 
+dwm.o: $(REV)
+
 ${OBJ}: config.h config.mk
 
 config.h: config.def.h $(THEMES)
 	cp config.def.h $@
 
+$(REV):
+	@./ver.sh $@
+
 dwm: ${OBJ}
 	${CC} -o $@ ${OBJ} ${LDFLAGS}
 
 clean:
-	rm -f dwm ${OBJ} dwm-${VERSION}.tar.gz config.h
+	rm -f dwm ${OBJ} dwm-${VERSION}.tar.gz config.h $(REV)
 
 dist: clean
 	mkdir -p dwm-${VERSION}

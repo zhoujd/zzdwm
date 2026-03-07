@@ -1,6 +1,7 @@
 ## .gitignore
 
 config.h
+rev.h
 *.o
 dwm
 transient
