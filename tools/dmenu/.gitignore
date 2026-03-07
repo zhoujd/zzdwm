@@ -1,6 +1,7 @@
 ## .gitignore
 
 config.h
+rev.h
 *.o
 dmenu
 stest

@@ -8,14 +8,20 @@ OBJ = $(SRC:.c=.o)
 
 TDIR = themes
 THEMES = $(wildcard $(TDIR)/*.h)
+REV = rev.h
 
 all: dmenu stest
 
 .c.o:
 	$(CC) -c $(CFLAGS) $<
 
+dmenu.o: $(REV)
+
 config.h: config.def.h $(THEMES)
 	cp config.def.h $@
+
+$(REV):
+	@./ver.sh $@
 
 $(OBJ): arg.h config.h config.mk drw.h
 
@@ -26,7 +32,7 @@ stest: stest.o
 	$(CC) -o $@ stest.o $(LDFLAGS)
 
 clean:
-	rm -f dmenu stest $(OBJ) dmenu-$(VERSION).tar.gz config.h
+	rm -f dmenu stest $(OBJ) dmenu-$(VERSION).tar.gz config.h $(REV)
 
 dist: clean
 	mkdir -p dmenu-$(VERSION)
