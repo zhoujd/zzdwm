@@ -18,6 +18,9 @@ release() {
         alpine )
             make CC="gcc -Os -s -static"
             ;;
+        void )
+            make CC="gcc -Os -s -static"
+            ;;
         * )
             make CC="gcc -Os -s"
             ;;
