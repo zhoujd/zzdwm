@@ -1,3 +1,6 @@
 ## .gitignore
 
 *.o
+TAGS
+tags
+cscope.out
