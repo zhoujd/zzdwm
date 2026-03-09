@@ -22,7 +22,7 @@ install_dep() {
                  libx11-xcb-dev libxcb-randr0-dev libxcb-xinerama0-dev
             echo "Install tool package"
             sudo apt install -y \
-                 alsa-utils x11-utils wmctrl xdotool psmisc
+                 alsa-utils x11-utils wmctrl xdotool psmisc gnupg2
             ;;
         void )
             echo "Install prepare"
@@ -38,7 +38,7 @@ install_dep() {
                  libXcomposite-devel libXdamage-devel
             echo "Install tool package"
             sudo xbps-install -Sy \
-                 bash-completion xorg wmctrl xdotool psmisc
+                 bash-completion xorg wmctrl xdotool psmisc gnupg2
             ;;
         * )
             echo "Distro $ID not supported"
