@@ -62,7 +62,7 @@ main(int argc, char **argv)
 
 	if (argc == 2) {
 		if (strcmp(argv[1], "--version") == 0) {
-			(void)fprintf(stderr, "%s %s %s\n", argv[0], DATE, REV);
+			(void)fprintf(stderr, "%s " VERSION " %s %s\n", argv[0], DATE, REV);
 			exit(0);
 		}
 	}

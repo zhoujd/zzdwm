@@ -2,6 +2,7 @@
 # uses pkg-config, DESTDIR and PREFIX
 
 PROG=		cwm
+VERSION=	7.4
 
 PREFIX?=	/usr/local
 
@@ -18,13 +19,14 @@ PKG_CONFIG?=	pkg-config
 
 CPPFLAGS+=	`${PKG_CONFIG} --cflags x11 xft xrandr`
 
-CFLAGS?=	-Wall -O2 -g -D_GNU_SOURCE -Wno-format-truncation
+CFLAGS?=	-Wall -O2 -g -D_GNU_SOURCE -DVERSION=\"${VERSION}\" \
+		-Wno-format-truncation
 
 LDFLAGS+=	`${PKG_CONFIG} --libs x11 xft xrandr`
 
 MANPREFIX?=	${PREFIX}/share/man
 
-REV=	rev.h
+REV=		rev.h
 
 all: ${PROG}
 
@@ -49,13 +51,11 @@ install: ${PROG}
 	install -m 644 cwmrc.5 ${DESTDIR}${MANPREFIX}/man5
 
 release:
-	VERSION=$$(git describe --tags | sed 's/^v//;s/-[^.]*$$//') && \
-	git archive --prefix=cwm-$$VERSION/ -o cwm-$$VERSION.tar.gz HEAD
+	git archive --prefix=cwm-${VERSION}/ -o cwm-${VERSION}.tar.gz HEAD
 
 sign:
-	VERSION=$$(git describe --tags | sed 's/^v//;s/-[^.]*$$//') && \
-	gpg2 --armor --detach-sign cwm-$$VERSION.tar.gz && \
-	signify -S -s ~/.signify/cwm.sec -m cwm-$$VERSION.tar.gz && \
-	sed -i '1cuntrusted comment: verify with cwm.pub' cwm-$$VERSION.tar.gz.sig
+	gpg2 --armor --detach-sign cwm-${VERSION}.tar.gz && \
+	signify -S -s ~/.signify/cwm.sec -m cwm-${VERSION}.tar.gz && \
+	sed -i '1cuntrusted comment: verify with cwm.pub' cwm-${VERSION}.tar.gz.sig
 
 .PRECIOUS: parse.c
