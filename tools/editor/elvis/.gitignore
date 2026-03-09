@@ -1,6 +1,7 @@
 Makefile
 *.o
 config.h
+rev.h
 config.stat
 ctags
 doc/elvfmt.man

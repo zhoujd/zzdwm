@@ -7,6 +7,7 @@
 char id_main[] = "$Id: main.c,v 2.77 2004/03/19 23:10:12 steve Exp $";
 #endif
 #include <time.h> /* for time(), used to seed the random number generator */
+#include "rev.h"
 
 #if USE_PROTOTYPES
 static void usage(char *hint);
@@ -464,25 +465,7 @@ static int choosegui(argc, argv)
 		 || !strcmp(argv[i], "--version")
 		 || !strcmp(argv[i], "-v"))
 		{
-			msg(MSG_INFO, "[s]elvis $1", VERSION);
-#ifdef COPY1
-			msg(MSG_INFO, "[s]$1", COPY1);
-#endif
-#ifdef COPY2
-			msg(MSG_INFO, "[s]$1", COPY2);
-#endif
-#ifdef COPY3
-			msg(MSG_INFO, "[s]$1", COPY3);
-#endif
-#ifdef COPY4
-			msg(MSG_INFO, "[s]$1", COPY4);
-#endif
-#ifdef COPY5
-			msg(MSG_INFO, "[s]$1", COPY5);
-#endif
-#ifdef PORTEDBY
-			msg(MSG_INFO, "[s]$1", PORTEDBY);
-#endif
+			msg(MSG_INFO, "[sss]elvis $1 $2 $3", VERSION, DATE, REV);
 			exit(0);
 		}
 		else if (!strcmp(argv[i], "-help")	/* old GNU */

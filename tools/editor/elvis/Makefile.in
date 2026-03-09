@@ -169,8 +169,14 @@ DISTRIB=elvis-$(VERSION)$(PRERELEASE)
 DOSEXE=exedos
 WIN32EXE=exewin32
 OS2EXE=exeos2
+REV=rev.h
 
 all: $(ALL)
+
+$(REV):
+	@./ver.sh $@
+
+main.o: $(REV)
 
 every: $(EVERY)
 
