@@ -8,6 +8,7 @@ CWM
 ## https://git.oriole.systems/cwm
 ## https://wiki.archlinux.org/title/Cwm
 ## https://leahneukirchen.org/releases/
+## https://leahneukirchen.org/releases/cwm-7.4.tar.gz
 ```
 
 ## Linux port source
@@ -50,4 +51,11 @@ $ git clone https://git.oriole.systems/cwm
 If you hold alt while repeatedly pressing tab, you'll cycle through the visible windows,
 but if you release both alt and tab, and then press them again,
 the previously focused window will become focused again.
+```
+
+## Port of some non-standard OpenBSD tools to Linux
+
+```
+## https://github.com/leahneukirchen/outils
+$ git clone https://github.com/leahneukirchen/outils
 ```
