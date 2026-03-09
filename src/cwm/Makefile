@@ -24,16 +24,23 @@ LDFLAGS+=	`${PKG_CONFIG} --libs x11 xft xrandr`
 
 MANPREFIX?=	${PREFIX}/share/man
 
+REV=	rev.h
+
 all: ${PROG}
 
 clean:
-	rm -f ${OBJS} ${PROG} parse.c
+	rm -f ${OBJS} ${PROG} parse.c $(REV)
 
 ${PROG}: ${OBJS}
 	${CC} ${OBJS} ${LDFLAGS} -o ${PROG}
 
 .c.o:
 	${CC} -c ${CFLAGS} ${CPPFLAGS} $<
+
+calmwm.o: $(REV)
+
+$(REV):
+	@./ver.sh $@
 
 install: ${PROG}
 	install -d ${DESTDIR}${PREFIX}/bin ${DESTDIR}${MANPREFIX}/man1 ${DESTDIR}${MANPREFIX}/man5

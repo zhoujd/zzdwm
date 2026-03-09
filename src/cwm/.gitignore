@@ -2,4 +2,5 @@
 
 cwm
 parse.c
+rev.h
 *.o

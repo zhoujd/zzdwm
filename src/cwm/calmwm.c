@@ -35,6 +35,7 @@
 #include <unistd.h>
 
 #include "calmwm.h"
+#include "rev.h"
 
 Display			*X_Dpy;
 Time			 Last_Event_Time = CurrentTime;
@@ -58,6 +59,13 @@ main(int argc, char **argv)
 	char		*fallback;
 	int		 ch, xfd, nflag = 0;
 	struct pollfd	 pfd[1];
+
+	if (argc == 2) {
+		if (strcmp(argv[1], "--version") == 0) {
+			(void)fprintf(stderr, "%s %s %s\n", argv[0], DATE, REV);
+			exit(0);
+		}
+	}
 
 	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
 		warnx("no locale support");
