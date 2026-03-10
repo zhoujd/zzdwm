@@ -20,10 +20,12 @@ debug() {
 release() {
     make clean
     case $ID in
-        alpine )
+        alpine|void )
+            echo "Release static build on $ID"
             make STATIC=yes
             ;;
         * )
+            echo "Release build on $ID"
             make
             ;;
     esac
