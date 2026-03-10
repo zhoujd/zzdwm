@@ -15,13 +15,12 @@ release() {
     ./configure --without-x
     make clean
     case $ID in
-        alpine )
-            make CC="gcc -Os -s -static"
-            ;;
-        void )
+        alpine|void )
+            echo "Release static build on $ID"
             make CC="gcc -Os -s -static"
             ;;
         * )
+            echo "Release build on $ID"
             make CC="gcc -Os -s"
             ;;
     esac
