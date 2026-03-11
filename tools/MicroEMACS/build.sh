@@ -21,16 +21,14 @@ release() {
     make clean
     case $ID in
         alpine|void )
-            echo "Release static build on $ID"
             make STATIC=yes
             ;;
         * )
-            echo "Release build on $ID"
             make
             ;;
     esac
     make strip
-    echo "Build release done"
+    echo "Build release on $ID done"
 }
 
 publish() {
