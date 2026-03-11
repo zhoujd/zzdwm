@@ -1,8 +1,8 @@
 #!/bin/sh
 
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
-MNT_DIR=$(cd $SCRIPT_DIR/../.. && pwd)
-WS=$MNT_DIR/tools/$(basename $SCRIPT_DIR)
+MNT_DIR=$(git rev-parse --show-toplevel)
+WS=$SCRIPT_DIR
 
 . /etc/os-release
 
