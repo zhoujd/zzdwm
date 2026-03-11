@@ -1,6 +1,8 @@
 #!/bin/sh
 
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+MNT_DIR=$(git rev-parse --show-toplevel)
+WS=$SCRIPT_DIR
 
 . /etc/os-release
 
@@ -16,15 +18,35 @@ release() {
     make clean
     case $ID in
         alpine|void )
-            echo "Release static build on $ID"
             make CC="gcc -Os -s -static"
             ;;
         * )
-            echo "Release build on $ID"
             make CC="gcc -Os -s"
             ;;
     esac
-    echo "Build release done"
+    echo "Build release on $ID done"
+}
+
+publish() {
+    if [ -n "$INSIDE_DOCKER" ]; then
+        echo "Build release"
+        release
+    else
+        img=zhoujd/alpine
+        opt="
+            -i
+            -u $(id -u):$(id -g)
+            -v $MNT_DIR:$MNT_DIR
+            -w $WS
+            "
+        docker run $opt $img sh <<'EOF'
+cat /etc/os-release
+./configure --without-x
+make clean
+make CC="gcc -Os -s -static"
+EOF
+    fi
+    echo "Build publish done"
 }
 
 clean() {
@@ -53,7 +75,7 @@ uninstall() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-usage: $app {build|-b|release|-r|clean|-c|install|-i|uninstall|-u}
+usage: $app {build|-b|release|-r|publish|-p|clean|-c|install|-i|uninstall|-u}
 EOF
 }
 
@@ -63,6 +85,9 @@ case $1 in
         ;;
     release|-r )
         release
+        ;;
+    publish|-p )
+        publish
         ;;
     clean|-c )
         clean
