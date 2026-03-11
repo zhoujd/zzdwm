@@ -1,6 +1,8 @@
 #!/bin/sh
 
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+MNT_DIR=$(git rev-parse --show-toplevel)
+WS=$SCRIPT_DIR
 
 . /etc/os-release
 
@@ -20,7 +22,28 @@ release() {
         ;;
     esac
     make LDFLAGS="$LDFLAGS" CFLAGS="-Os -Wno-cpp"
-    echo "Release done"
+    echo "Build release on $ID done"
+}
+
+publish() {
+    if [ -n "$INSIDE_DOCKER" ]; then
+        echo "Build release"
+        release
+    else
+        img=zhoujd/alpine
+        opt="
+            -i
+            -u $(id -u):$(id -g)
+            -v $MNT_DIR:$MNT_DIR
+            -w $WS
+            "
+        docker run $opt $img sh <<'EOF'
+cat /etc/os-release
+make clean
+make LDFLAGS="-static -s" CFLAGS="-Os -Wno-cpp"
+EOF
+    fi
+    echo "Build publish done"
 }
 
 clean() {
@@ -49,7 +72,7 @@ uninstall() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-usage: $app {build|-b|release|-r|clean|-c|install|-i|uninstall|-u}
+usage: $app {build|-b|release|-r|publish|-p|clean|-c|install|-i|uninstall|-u}
 EOF
 }
 
@@ -60,7 +83,10 @@ case $1 in
     release|-r )
         release
         ;;
-    clean|-c )
+   publish|-p )
+        publish
+        ;;
+     clean|-c )
         clean
         ;;
     install|-i )
