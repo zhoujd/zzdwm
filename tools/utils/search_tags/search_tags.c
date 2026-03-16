@@ -5,12 +5,29 @@
 #include <string.h>
 #include <unistd.h>
 
-#define TAGS_FILE "TAGS"
+void usage(char *app)
+{
+	fprintf(stderr,
+		"usage: %s [file]\n"
+		"file:\n"
+		"TAGS        etags file\n"
+		"tags        ctags file\n"
+		"cscope.out  cscope file\n"
+		, app);
+}
 
 int main(int argc, char* argv[])
 {
 	char path[4096];
+	char file[256];
+
+	if (argc != 2) {
+		usage(argv[0]);
+		exit(1);
+	}
 	
+	snprintf(file, sizeof(file), "%s", argv[1]);
+
 	// Get current work directory
 	if (getcwd(path, sizeof(path)) == NULL) {
 		perror("getcwd");
@@ -19,11 +36,11 @@ int main(int argc, char* argv[])
 
 	while (1) {
 		char tags_path[4096];
-		snprintf(tags_path, sizeof(tags_path), "%s/%s", path, TAGS_FILE);
+		snprintf(tags_path, sizeof(tags_path), "%s/%s", path, file);
 
 		// Check if file exists
 		if (access(tags_path, R_OK) == 0) {
-			printf("Found TAGS at %s\n", tags_path );
+			printf("Found %s at %s\n", file, tags_path);
 			return 0;
 		}
 
@@ -42,6 +59,6 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	printf("TAGS file not found in current or parent directories.\n");
+	printf("File %s not found in current or parent directories.\n", file);
 	return 1;
 }
