@@ -860,6 +860,14 @@ isearch (int dir)
 	  c = getinp ();
 	  goto addchar;
 
+	case KUP:		/* UP    */
+	case KDOWN:		/* Down  */
+	case KLEFT:		/* LEFT  */
+	case KRIGHT:		/* Right */
+	  ungetinp (c);		/* push back input */
+	  curwp->w_flag |= WFMOVE;
+	  return (TRUE);
+
 	default:
 	  if (CISCTRL (c) != FALSE)
 	    {
