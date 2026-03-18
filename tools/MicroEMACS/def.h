@@ -545,6 +545,7 @@ extern int casefold;
 extern int fillcol;
 extern int tabsize;
 extern int savetabs;
+extern int visflag;
 
 /*
  * Useful macros for running down the buffer and window lists.
