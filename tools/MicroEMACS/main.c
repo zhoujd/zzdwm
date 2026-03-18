@@ -205,7 +205,7 @@ main (int argc, char *argv[])
                 }
               break;
             case 'v':
-              visflag = TRUE;
+              visflag = !visflag;
               break;
             case 'x':
               xflag = TRUE;
