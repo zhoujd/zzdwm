@@ -1075,3 +1075,14 @@ mouseevent (int f, int n, int k)
            mouse_button, mouse_row, mouse_column);
   return (TRUE);
 }
+
+/*
+ * Show visable on modeline.
+ */
+int
+showvisable (int f, int n, int k)
+{
+  visflag = !visflag;
+  updatemode ();               /* Update mode lines    */
+  return (TRUE);
+}
