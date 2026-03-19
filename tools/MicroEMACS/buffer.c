@@ -784,7 +784,7 @@ namebuffer(int f, int n, int k)
 
 ask:
   /* prompt for and get the new buffer name */
-  if ((s = ereply ("Change buffer name to: ", bufn, sizeof(bufn))) != TRUE)
+  if ((s = ereply ("Name: ", bufn, sizeof(bufn))) != TRUE)
     return (s);
 
   /* and check for duplicates */
