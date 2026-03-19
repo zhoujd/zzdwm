@@ -166,7 +166,7 @@ KEY key[] = {
   {KCTRL | 'V',		forwpage,	"forw-page"},
   {KCTRL | 'W',		killregion,	"kill-region"},
   {KCTRL | 'Y',		yank,		"yank"},
-  {KCTRL | 'Z',		jeffexit,	"jeff-exit"},
+  {KCTRL | 'Z',		backpage,	"back-page"},
   {KCTRL | '_',		undo,           "undo"},
   {KCTLX | KCTRL | 'B', buffermenu,	"buffer-menu"},
   {KCTLX | KCTRL | 'C', quit,		"quit"},
@@ -281,6 +281,7 @@ KEY key[] = {
   {-1,			nextcscope,	"next-cscope"},
 #endif
   {-1,			mouseevent,	"mouse-event"},
+  {-1,			jeffexit,	"jeff-exit"},
   {-1,			displaymessage,	"display-message"},
   {-1,			listbuffers,	"display-buffers"},
   {-1,			showvisable,    "display-visable"},
