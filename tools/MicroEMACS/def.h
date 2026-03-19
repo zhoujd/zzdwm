@@ -1053,7 +1053,7 @@ uclen (const uchar *s)
 }
 
 /* Find file */
-int filefind (int f, int n, int k);
+int findfile (int f, int n, int k);
 int viewfile (int f, int n, int k);
 
 /* Buffer Menu */

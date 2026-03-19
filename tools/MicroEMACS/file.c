@@ -138,7 +138,7 @@ getfile (char fname[])
  * buffer. Bound to C-X C-F.
  */
 int
-filefind (int f, int n, int k)
+findfile (int f, int n, int k)
 {
   char fname[NFILEN];		/* file user wishes to find */
   int s;			/* status return */

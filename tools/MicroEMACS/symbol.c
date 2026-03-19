@@ -172,8 +172,10 @@ KEY key[] = {
   {KCTLX | KCTRL | 'C', quit,		"quit"},
   {KCTLX | KCTRL | 'E', eecho,		"echo"},
 #ifndef MINGW
-  {KCTLX | KCTRL | 'F', filefind,	"file-find"},
+  {KCTLX | KCTRL | 'F', findfile,	"find-file"},
+  {-1,                  filename,	"set-file-name"},
 #else
+  {-1,                  findfile,	"find-file"},
   {KCTLX | KCTRL | 'F', filename,	"set-file-name"},
 #endif
   {KCTLX | KCTRL | 'I', fileinsert,	"file-insert"},
