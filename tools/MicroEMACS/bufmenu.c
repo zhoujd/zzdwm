@@ -15,8 +15,7 @@
  * q,Q,x,X exit buffer menu
  *
  */
-#include <stdlib.h>
-#include <string.h>
+
 #include "def.h"
 
 #define ESC 27
