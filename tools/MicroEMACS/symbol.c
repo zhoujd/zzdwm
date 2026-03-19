@@ -226,6 +226,7 @@ KEY key[] = {
   {KMETA | KCTRL | 'F',	foldcase,	"fold-case"},
   {KMETA | KCTRL | 'H', delbword,	"back-del-word"},
   {KMETA | KCTRL | 'I', settabsize,	"set-tab-size"},
+  {KMETA | KCTRL | 'N', namebuffer,	"set-buffer-name"},
   {KMETA | KCTRL | 'R', backregsearch,	"back-regexp-search"},
   {KMETA | KCTRL | 'S', forwregsearch,	"forw-regexp-search"},
   {KMETA | KCTRL | 'U', unicode,	"unicode"},

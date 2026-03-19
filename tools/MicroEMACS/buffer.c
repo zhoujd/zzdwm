@@ -720,6 +720,9 @@ swbuffer (BUFFER *bp)
   return (TRUE);
 }
 
+/*
+ * get scratch buffer
+ */
 BUFFER* get_scratch(void)
 {
   BUFFER* bp;
@@ -734,8 +737,8 @@ BUFFER* get_scratch(void)
   return bp;
 }
 
-
-/* kill the buffer pointed to by bp
+/*
+ * kill the buffer pointed to by bp
  */
 int
 zotbuf (BUFFER *bp)
@@ -767,4 +770,38 @@ zotbuf (BUFFER *bp)
   removemode (bp);
   free (bp);			/* Release buffer block */
   return (TRUE);
+}
+
+/*
+ * rename the current buffer
+ */
+int
+namebuffer(int f, int n, int k)
+{
+  register int s;
+  BUFFER *bp;		/* pointer to scan through all buffers */
+  char bufn[NBUFN];	/* buffer to hold buffer name */
+
+ask:
+  /* prompt for and get the new buffer name */
+  if ((s = ereply ("Change buffer name to: ", bufn, sizeof(bufn))) != TRUE)
+    return (s);
+
+  /* and check for duplicates */
+  bp = bheadp;
+  while (bp != NULL)
+    {
+      if (bp != curbp)
+        {
+          /* if the names the same */
+          if (strcmp(bufn, bp->b_bname) == 0)
+            goto ask;	/* try again */
+        }
+      bp = bp->b_bufp;	/* onward */
+    }
+
+  strcpy(curbp->b_bname, bufn);	/* copy buffer name to structure */
+  curwp->w_flag |= WFMODE;	/* make mode line replot */
+  eerase();
+  return TRUE;
 }

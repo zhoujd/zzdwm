@@ -613,6 +613,7 @@ int usebuffer (int f, int n, int k);	/* Switch a window to a buffer  */
 int nextbuffer (int f, int n, int k);	/* Switch to next buffer.       */
 int prevbuffer (int f, int n, int k);	/* Switch to previous buffer.   */
 int killbuffer (int f, int n, int k);	/* Make a buffer go away.       */
+int namebuffer (int f, int n, int k);	/* Rename a buffer.             */
 
 BUFFER * bfind (const char *bname, int cflag);
                                         /* Search for buffer by name	*/
