@@ -250,6 +250,7 @@ KEY key[] = {
 #ifndef MINGW
   {KMETA | '$',		spellword,	"spell-word"},
 #endif
+  {KMETA | '~',		unmark,		"umark-buffer"},
   {KMETA | 'B',		backword,	"back-word"},
   {KMETA | 'C',		capword,	"cap-word"},
   {KMETA | 'D',		delfword,	"forw-del-word"},
