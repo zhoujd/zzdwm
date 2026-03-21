@@ -20,7 +20,6 @@
 
 #define ESC 27
 #define BACKSPACE 127
-#define CCHR(x) ((x)-'@')
 #define CTRL_N CCHR('N')
 #define CTRL_M CCHR('M')
 #define CTRL_P CCHR('P')

@@ -71,10 +71,8 @@
  * Initial revision
  *
  */
-#include	"def.h"
-#include	"regexp.h"
-
-#define CCHR(x)		((x)-'@')
+#include "def.h"
+#include "regexp.h"
 
 #define SRCH_BEGIN	(0)	/* Search sub-codes.    */
 #define	SRCH_FORW	(-1)
