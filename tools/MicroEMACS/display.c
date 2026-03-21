@@ -128,6 +128,7 @@ typedef struct
 SCORE;
 
 int sgarbf = TRUE;		/* TRUE if screen is garbage.   */
+int visflag = FALSE;		/* TRUE if show visable.        */
 int vtrow = 0;			/* Virtual cursor row.          */
 int vtcol = 0;			/* Virtual cursor column.       */
 wchar_t *vttext;		/* &(vscreen[vtrow]->v_text[0]) */

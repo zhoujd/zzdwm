@@ -94,7 +94,6 @@ int zflag;			/* True if -z option specified  */
 int casefold = TRUE;		/* True if searches fold case   */
 int fillcol = 70;		/* Fill column for paragraphs.  */
 int tabsize = 8;		/* No. of columns for a tab     */
-int visflag = FALSE;		/* TRUE if show visable.        */
 
 static int nbuf;		/* number of buffers    */
 
@@ -114,7 +113,7 @@ void
 usage (void)
 {
   fprintf(stderr,
-          "usage: me [-234bdmrvxz] [-c path] [-g line] [-p profile] [-t size]\n"
+          "usage: me [-234bdmrxz] [-c path] [-g line] [-p profile] [-t size]\n"
           "          [+[line]] [file[:line[:column]] ...]\n");
 }
 
@@ -203,9 +202,6 @@ main (int argc, char *argv[])
                   if (tabsize < 2 || tabsize > 32)
                     tabsize = 8;
                 }
-              break;
-            case 'v':
-              visflag = !visflag;
               break;
             case 'x':
               xflag = TRUE;
