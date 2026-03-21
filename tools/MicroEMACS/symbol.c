@@ -269,6 +269,7 @@ KEY key[] = {
   {KMETA | 'V',		backpage,	"back-page"},
   {KMETA | 'W',		copyregion,	"copy-region"},
   {KMETA | 'X',		extend,		"extended-command"},
+  {KMETA | 'Z',		quickexit,	"quick-quit"},
   {-1,			help,		"help"},
   {-1,			wallchart,	"display-bindings"},
   {-1,			bindtokey,	"bind-to-key"},
