@@ -805,3 +805,14 @@ ask:
   eerase();
   return TRUE;
 }
+
+/*
+ * unmark the current buffers change flag
+ */
+int
+unmark(int f, int n, int k)
+{
+  curbp->b_flag &= ~BFCHG;
+  curwp->w_flag |= WFMODE;
+  return TRUE;
+}
