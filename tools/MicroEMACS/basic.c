@@ -458,7 +458,7 @@ gotoline (int f, int n, int k)
    * In this case we just go to the end of the buffer.
    */
   if (n == 0)
-    return gotoeob(f, n, k);
+    return gotoeob (f, n, k);
   if (n < 0)
     {
       eprintf ("Bad line");
