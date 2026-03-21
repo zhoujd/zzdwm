@@ -93,7 +93,7 @@ getfilename(char *prompt, char *buf, int nbuf)
         }
       }
       ttflush();
-    } else if ((c == 0x09 || c == ' ')) {
+    } else if ((c == 0x09 || c == ' ' || c == '?')) {
       /* TAB, complete file name */
       char ffbuf[255];
       int n, iswild = 0;
