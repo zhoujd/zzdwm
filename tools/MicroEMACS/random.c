@@ -890,3 +890,47 @@ checkheap (int f, int n, int k)
 #endif
   return (TRUE);
 }
+
+/*
+ * trim trailing whitespace from the point to eol
+ */
+int
+trim (int f, int n, int k)
+{
+  LINE *lp;	/* current line pointer */
+  int offset;	/* original line offset position */
+  int length;	/* current length */
+  int inc;	/* increment to next line [sgn(n)] */
+
+  if (curbp->b_flag & BFRO)	/* if buffer is read-only       */
+    return FALSE;               /* fail                         */
+
+  if (f == FALSE)
+    n = 1;
+
+  /* loop thru trimming n lines */
+  inc = ((n > 0) ? 1 : -1);
+  while (n)
+    {
+      lp = curwp->w_dot.p;	/* find current line text */
+      offset = curwp->w_dot.o;	/* save original offset */
+      length = lp->l_used;	/* find current length */
+
+      /* trim the current line */
+      while (length > offset)
+        {
+          if (lgetc(lp, length - 1) != ' ' &&
+              lgetc(lp, length - 1) != '\t')
+            break;
+          length--;
+        }
+      lp->l_used = length;
+
+      /* advance/or back to the next line */
+      forwline(TRUE, inc, KRANDOM);
+      n -= inc;
+    }
+  lchange(WFEDIT);
+  thisflag &= ~CFCPCN;	/* flag that this resets the goal column */
+  return TRUE;
+}

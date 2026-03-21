@@ -230,6 +230,7 @@ KEY key[] = {
   {KMETA | KCTRL | 'I', settabsize,	"set-tab-size"},
   {KMETA | KCTRL | 'R', backregsearch,	"back-regexp-search"},
   {KMETA | KCTRL | 'S', forwregsearch,	"forw-regexp-search"},
+  {KMETA | KCTRL | 'T', trim,		"trim-line"},
   {KMETA | KCTRL | 'U', unicode,	"unicode"},
   {KMETA | KCTRL | 'V', showversion,	"display-version"},
   {KMETA | KCTRL | 'W', killpara,	"kill-paragraph"},
