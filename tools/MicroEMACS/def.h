@@ -778,6 +778,7 @@ int displaymessage (int f, int n, int k);
                                         /* Display message lines.	*/
 
 int domacro (int *macrop, int n);	/* Execute macro.               */
+int quickexit(int f, int n, int k);	/* Quick style exit.            */
 
 /*
  * Defined by "paragraph.c"

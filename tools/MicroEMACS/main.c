@@ -645,3 +645,37 @@ displaymessage (int f, int n, int k)
 {
   return (readmsg ());
 }
+
+/*
+ * Fancy quit command, as implemented by Norm. If the any buffer has
+ * changed do a write on that buffer and exit emacs, otherwise simply exit.
+ */
+int
+quickexit(int f, int n, int k)
+{
+  BUFFER *bp;	/* scanning pointer to buffers */
+  BUFFER *oldcb;	/* original current buffer */
+  int status;
+
+  oldcb = curbp;		/* save in case we fail */
+  bp = bheadp;
+  while (bp != NULL)
+    {
+      if ((bp->b_flag & BFCHG) != 0)	/* Changed.             */
+        {
+          curbp = bp;	/* make that buffer cur */
+          if (strlen(bp->b_fname) != 0)
+            {
+              eprintf("(Saving %s)", bp->b_fname);
+              if ((status = filesave(f, n, k)) != TRUE)
+                {
+                  curbp = oldcb;	/* restore curbp */
+                  return status;
+                }
+            }
+        }
+      bp = bp->b_bufp;	/* on to the next buffer */
+    }
+  quit(f, n, k);		/* conditionally quit   */
+  return TRUE;
+}
