@@ -79,15 +79,15 @@ erefresh (int f, int n, int k)
     {
       wp = wheadp;		/* Find last.           */
       while (wp->w_wndp != NULL)
-	wp = wp->w_wndp;
+        wp = wp->w_wndp;
       if (nrow < wp->w_toprow + 3)
-	{			/* Check if too small.  */
-	  eprintf ("Display unusable");
-	  return (FALSE);
-	}
+        {			/* Check if too small.  */
+          eprintf ("Display unusable");
+          return (FALSE);
+        }
       wp->w_ntrows = nrow - wp->w_toprow - 2;
       ALLWIND (wp)		/* Redraw all.          */
-	wp->w_flag |= WFMODE | WFHARD;
+        wp->w_flag |= WFMODE | WFHARD;
       update ();
       eprintf ("[New size %d by %d]", nrow, ncol);
       erefresh (FALSE, 1, 0);  /* force refresh */
@@ -173,21 +173,21 @@ mvupwind (int f, int n, int k)
   if (n < 0)
     {
       while (n++ && lp != lastline (curbp))
-	lp = lforw (lp);
+        lp = lforw (lp);
     }
   else
     {
       while (n-- && lp != firstline (curbp))
-	lp = lback (lp);
+        lp = lback (lp);
     }
   curwp->w_linep = lp;
   curwp->w_flag |= WFHARD;	/* Mode line is OK.     */
   for (i = 0; i < curwp->w_ntrows; ++i)
     {
       if (lp == curwp->w_dot.p)
-	return (TRUE);
+        return (TRUE);
       if (lp == lastline (curbp))
-	break;
+        break;
       lp = lforw (lp);
     }
   lp = curwp->w_linep;
@@ -294,7 +294,7 @@ splitwind (int f, int n, int k)
   if (ntrd <= ntru)
     {				/* Old is upper window. */
       if (ntrd == ntru)		/* Hit mode line.       */
-	lp = lforw (lp);
+        lp = lforw (lp);
       curwp->w_ntrows = ntru;
       wp->w_wndp = curwp->w_wndp;
       curwp->w_wndp = wp;
@@ -306,14 +306,14 @@ splitwind (int f, int n, int k)
       wp1 = NULL;
       wp2 = wheadp;
       while (wp2 != curwp)
-	{
-	  wp1 = wp2;
-	  wp2 = wp2->w_wndp;
-	}
+        {
+          wp1 = wp2;
+          wp2 = wp2->w_wndp;
+        }
       if (wp1 == NULL)
-	wheadp = wp;
+        wheadp = wp;
       else
-	wp1->w_wndp = wp;
+        wp1->w_wndp = wp;
       wp->w_wndp = curwp;
       wp->w_toprow = curwp->w_toprow;
       wp->w_ntrows = ntru;
@@ -321,7 +321,7 @@ splitwind (int f, int n, int k)
       curwp->w_toprow += ntru;
       curwp->w_ntrows = ntrl;
       while (ntru--)
-	lp = lforw (lp);
+        lp = lforw (lp);
     }
   curwp->w_linep = lp;		/* Adjust the top lines */
   wp->w_linep = lp;		/* if necessary.        */
@@ -357,7 +357,7 @@ enlargewind (int f, int n, int k)
     {
       adjwp = wheadp;
       while (adjwp->w_wndp != curwp)
-	adjwp = adjwp->w_wndp;
+        adjwp = adjwp->w_wndp;
     }
   if (adjwp->w_ntrows <= n)
     {
@@ -368,7 +368,7 @@ enlargewind (int f, int n, int k)
     {				/* Shrink below.        */
       lp = adjwp->w_linep;
       for (i = 0; i < n && lp != lastline (adjwp->w_bufp); ++i)
-	lp = lforw (lp);
+        lp = lforw (lp);
       adjwp->w_linep = lp;
       adjwp->w_toprow += n;
     }
@@ -376,7 +376,7 @@ enlargewind (int f, int n, int k)
     {				/* Shrink above.        */
       lp = curwp->w_linep;
       for (i = 0; i < n && lp != firstline (curbp); ++i)
-	lp = lback (lp);
+        lp = lback (lp);
       curwp->w_linep = lp;
       curwp->w_toprow -= n;
     }
@@ -411,7 +411,7 @@ shrinkwind (int f, int n, int k)
     {
       adjwp = wheadp;
       while (adjwp->w_wndp != curwp)
-	adjwp = adjwp->w_wndp;
+        adjwp = adjwp->w_wndp;
     }
   if (curwp->w_ntrows <= n)
     {
@@ -422,7 +422,7 @@ shrinkwind (int f, int n, int k)
     {				/* Grow below.          */
       lp = adjwp->w_linep;
       for (i = 0; i < n && lp != firstline (adjwp->w_bufp); ++i)
-	lp = lback (lp);
+        lp = lback (lp);
       adjwp->w_linep = lp;
       adjwp->w_toprow -= n;
     }
@@ -430,7 +430,7 @@ shrinkwind (int f, int n, int k)
     {				/* Grow above.          */
       lp = curwp->w_linep;
       for (i = 0; i < n && lp != lastline (curbp); ++i)
-	lp = lforw (lp);
+        lp = lforw (lp);
       curwp->w_linep = lp;
       curwp->w_toprow += n;
     }
@@ -467,16 +467,16 @@ balancewindows (int f, int n, int k)
   ALLWIND(wp)
     {
       if (wp->w_wndp == NULL)
-	size = nrow - toprow - 2;
+        size = nrow - toprow - 2;
       if (size < wp->w_ntrows)
-	{
-	  /* Shrink this window. */
-	  n = wp->w_ntrows - size;
-	  lp = wp->w_linep;
-	  for (i = 0; i < n && lp != lastline (wp->w_bufp); ++i)
-	    lp = lforw (lp);
-	  wp->w_linep = lp;
-	}
+        {
+          /* Shrink this window. */
+          n = wp->w_ntrows - size;
+          lp = wp->w_linep;
+          for (i = 0; i < n && lp != lastline (wp->w_bufp); ++i)
+            lp = lforw (lp);
+          wp->w_linep = lp;
+        }
       wp->w_toprow = toprow;
       wp->w_ntrows = size;
       wp->w_flag |= WFMODE | WFHARD;
@@ -504,4 +504,28 @@ wpopup (void)
   while (wp != NULL && wp == curwp)
     wp = wp->w_wndp;
   return (wp);
+}
+
+/*
+ * Scroll the next window up (back) a page
+ */
+int
+scrnextup (int f, int n, int k)
+{
+  nextwind(FALSE, 1, k);
+  backpage(f, n, k);
+  prevwind(FALSE, 1, k);
+  return TRUE;
+}
+
+/*
+ * Scroll the next window down (forward) a page
+ */
+int
+scrnextdw (int f, int n, int k)
+{
+  nextwind(FALSE, 1, k);
+  forwpage(f, n, k);
+  prevwind(FALSE, 1, k);
+  return TRUE;
 }

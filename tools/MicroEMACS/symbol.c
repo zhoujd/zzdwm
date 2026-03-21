@@ -232,8 +232,9 @@ KEY key[] = {
   {KMETA | KCTRL | 'S', forwregsearch,	"forw-regexp-search"},
   {KMETA | KCTRL | 'T', trim,		"trim-line"},
   {KMETA | KCTRL | 'U', unicode,	"unicode"},
-  {KMETA | KCTRL | 'V', showversion,	"display-version"},
+  {KMETA | KCTRL | 'V', scrnextdw,	"scroll-next-down"},
   {KMETA | KCTRL | 'W', killpara,	"kill-paragraph"},
+  {KMETA | KCTRL | 'Z', scrnextup,	"scroll-next-up"},
   {KMETA | '.',		findtag,	"find-tag"},
 #if HAS_CSCOPE
   {KMETA | ',',		findcscope,	"find-cscope"},
@@ -286,6 +287,7 @@ KEY key[] = {
 #endif
   {-1,			mouseevent,	"mouse-event"},
   {-1,			jeffexit,	"jeff-exit"},
+  {-1,			showversion,	"display-version"},
   {-1,			displaymessage,	"display-message"},
   {-1,			listbuffers,	"display-buffers"},
   {-1,			showvisable,    "display-visable"},

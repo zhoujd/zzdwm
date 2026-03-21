@@ -972,6 +972,8 @@ int splitwind (int f, int n, int k);	/* Split current window         */
 int enlargewind (int f, int n, int k);	/* Enlarge display window.      */
 int shrinkwind (int f, int n, int k);	/* Shrink window.               */
 int balancewindows (int f, int n, int k);/* Balance all windows.        */
+int scrnextup (int f, int n, int k);	/* Scroll the next window up.   */
+int scrnextdw (int f, int n, int k);	/* scroll the next window down. */
 
 /*
  * Defined by "word.c".
