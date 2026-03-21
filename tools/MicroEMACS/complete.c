@@ -8,8 +8,6 @@ extern int ttgetc();
 extern void ttflush();
 extern int ttcol;
 
-#define CCHR(x) ((x)-'@')
-
 int getfilename(char *, char *, int);
 void outstring(char *);
 

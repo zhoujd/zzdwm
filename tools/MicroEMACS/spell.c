@@ -19,8 +19,6 @@
 
 #include "def.h"
 
-#define CCHR(x) ((x)-'@')
-
 /*
  * Local variables.
  */
