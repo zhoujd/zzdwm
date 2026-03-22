@@ -240,9 +240,10 @@ killbuffer (int f, int n, int k)
 
   /* beep if attempt to kill buffer list */
   if (bp == blistp) {
-    ttbeep();
+    bp_alt = get_scratch();
+    swbuffer(bp_alt);
     eerase();
-    return FALSE;
+    return (TRUE);
   }
 
   /* find a buffer to switch to, not this one and not an internal buffer */
