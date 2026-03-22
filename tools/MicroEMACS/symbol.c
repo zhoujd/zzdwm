@@ -106,13 +106,12 @@
 /*
  * Key binding structure.
  */
-typedef struct
+typedef struct KEY
 {
   int k_key;			/* Key to bind.                 */
   int (*k_funcp) ();		/* Function.                    */
   char *k_name;			/* Function name string.        */
-}
-KEY;
+} KEY;
 
 /*
  * Default key binding table. This contains
