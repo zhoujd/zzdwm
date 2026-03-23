@@ -533,3 +533,60 @@ end:
     }
   return TRUE;
 }
+
+/*
+ * List current directory
+ * Bound to "C-X d".
+ */
+int
+dired (int f, int n, int k)
+{
+  register int s;
+  register BUFFER *bp;        /* pointer to buffer to zot */
+  static char line[NLINE];
+  static char cmd[NSTRING];
+  char tmp[] = "/tmp/meXXXXXX";
+  char bname[] = "*dired*";
+  int fd = -1;
+
+  s = ereply ("Dired: ", line, sizeof(line));
+  if (s == FALSE)
+    snprintf(line, sizeof(line), ".");
+  else if (s == ABORT)
+    return s;
+
+  /* Force repaint */
+  eerase ();
+  sgarbf = TRUE;
+
+  /* Setup the temporary file */
+  if ((fd = mkstemp (tmp)) == -1)
+    goto end;
+  if (unlink (tmp) == -1)
+    goto end;
+
+  /* Run the command */
+  snprintf(cmd, sizeof(cmd),
+           "ls %s -aBhl --group-directories-first >%s 2>&1",
+           line, tmp);
+  if (system (cmd) == -1)
+    goto end;
+  fflush (stdout);              /* to be sure P.K.      */
+
+  /* Readin the temporary file */
+  if ((bp = bfind (bname, TRUE)) != NULL)
+    {
+      bclear (bp);
+      swbuffer (bp);
+      if (readin (tmp) == FALSE)
+        goto end;
+      strcpy (bp->b_bname, bname);
+      strcpy (bp->b_fname, "");
+    }
+
+end:
+  /* Clean the temporary file */
+  if (fd != -1)
+    close (fd);
+  return TRUE;
+}

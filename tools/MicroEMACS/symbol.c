@@ -198,6 +198,9 @@ KEY key[] = {
   {KCTLX | '2',		splitwind,	"split-window"},
   {KCTLX | 'B',		usebuffer,	"use-buffer"},
   {KCTLX | 'C',		spawncli,	"spawn-cli"},
+#ifndef MINGW
+  {KCTLX | 'D',		dired,		"list-directory"},
+#endif
   {KCTLX | 'E',		ctlxe,		"execute-macro"},
   {KCTLX | 'F',		readprofile,	"read-profile"},
   {KCTLX | 'G',		gotoline,	"goto-line"},
