@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 CORE_ROOT=$(cd $SCRIPT_ROOT && pwd)
@@ -173,7 +174,8 @@ all|-a       --    Init all
 EOF
 }
 
-case $1 in
+CMD=${1:-""}
+case $CMD in
     dep )
         install_dep
         ;;
