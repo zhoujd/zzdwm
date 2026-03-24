@@ -490,34 +490,23 @@ changewd (int f, int n, int k)
 {
   register int s;
   static char line[NLINE];
-  static char buf[NLINE*2];
+  char *dname;
   int ret = FALSE;
 
   s = ereply ("Path: ", line, sizeof(line));
   if (s == FALSE)
     {
-      if (getcwd(buf, sizeof(buf)) != NULL)
-        eprintf("CWD: %s", buf);
+      if (getcwd(line, sizeof(line)) != NULL)
+        eprintf("CWD: %s", line);
       else
         goto end;
     }
   else if (s == TRUE)
     {
-      if (line[0] == '~')
-        {
-          if (line[1] == '/')
-            snprintf(buf, sizeof(buf), "%s/%s", getenv ("HOME"), line + 2);
-          else if (line[1] == '\0')
-            snprintf(buf, sizeof(buf), "%s", getenv ("HOME"));
-          else
-            snprintf(buf, sizeof(buf), "%s/%s", "/home", line + 1);
-        }
-      else
-        snprintf(buf, sizeof(buf), "%s", line);
-
-      if (chdir(buf) != 0)
+      dname = fftilde(line);
+      if (chdir(dname) != 0)
         goto end;
-      eprintf("CWD: %s", buf);
+      eprintf("CWD: %s", dname);
     }
   else
     return (s);

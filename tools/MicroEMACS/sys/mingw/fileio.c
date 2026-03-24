@@ -489,3 +489,17 @@ ffsearch (const char *name,	/* filename to search for */
   dirp = NULL;
   return (NULL);		/* no more files        */
 }
+
+/*
+ * Check fname if a valid file name
+ */
+int
+checkfname (char *fname)
+{
+  if (fname[strlen (fname) - 1] == '/')
+    {
+      eprintf ("[Bad file name]");
+      return (FALSE);
+    }
+  return (TRUE);
+}

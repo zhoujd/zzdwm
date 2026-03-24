@@ -516,3 +516,17 @@ ffexedir (void)
   return path;
 #endif
 }
+
+/*
+ * Check fname if a valid file name
+ */
+int
+checkfname (char *fname)
+{
+  if (fname[strlen (fname) - 1] == '/')
+    {
+      eprintf ("[Bad file name]");
+      return (FALSE);
+    }
+  return (TRUE);
+}
