@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 TOP=$(cd $SCRIPT_ROOT/.. && pwd)
@@ -144,7 +145,8 @@ clean|-c      clean
 EOF
 }
 
-case $1 in
+CMD=${1:-""}
+case $CMD in
     build|-b )
         make -C dockerfiles
         ;;
