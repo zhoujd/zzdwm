@@ -424,7 +424,7 @@ spawnfilter (int f, int n, int k)
 {
   register int    s;       /* return status from CLI */
   register BUFFER *bp;     /* pointer to buffer to zot */
-  static char line[NLINE]; /* command line to send to shell */
+  static char line[NLINE];
   char bname[] = "*filter*";
   char filin[] = "/tmp/meXXXXXX";
   char filout[] = "/tmp/meXXXXXX";
@@ -490,14 +490,14 @@ changewd (int f, int n, int k)
 {
   register int s;
   static char line[NLINE];
-  static char cwd[NSTRING];
+  static char buf[NLINE*2];
   int ret = FALSE;
 
   s = ereply ("Path: ", line, sizeof(line));
   if (s == FALSE)
     {
-      if (getcwd(cwd, sizeof(cwd)) != NULL)
-        eprintf("CWD: %s", cwd);
+      if (getcwd(buf, sizeof(buf)) != NULL)
+        eprintf("CWD: %s", buf);
       else
         goto end;
     }
@@ -506,19 +506,18 @@ changewd (int f, int n, int k)
       if (line[0] == '~')
         {
           if (line[1] == '/')
-            snprintf(cwd, sizeof(cwd), "%s/%s", getenv ("HOME"), line + 2);
+            snprintf(buf, sizeof(buf), "%s/%s", getenv ("HOME"), line + 2);
           else if (line[1] == '\0')
-            snprintf(cwd, sizeof(cwd), "%s", getenv ("HOME"));
+            snprintf(buf, sizeof(buf), "%s", getenv ("HOME"));
           else
-            snprintf(cwd, sizeof(cwd), "%s/%s", "/home", line + 1);
+            snprintf(buf, sizeof(buf), "%s/%s", "/home", line + 1);
         }
       else
-        snprintf(cwd, sizeof(cwd), "%s", line);
+        snprintf(buf, sizeof(buf), "%s", line);
 
-      if (chdir(cwd) == 0)
-        eprintf("CWD: %s", cwd);
-      else
+      if (chdir(buf) != 0)
         goto end;
+      eprintf("CWD: %s", buf);
     }
   else
     return (s);
@@ -544,7 +543,7 @@ dired (int f, int n, int k)
   register int s;
   register BUFFER *bp;        /* pointer to buffer to zot */
   static char line[NLINE];
-  static char cmd[NSTRING];
+  static char buf[NLINE*3];
   char tmp[] = "/tmp/meXXXXXX";
   char bname[] = "*dired*";
   int fd = -1;
@@ -566,10 +565,10 @@ dired (int f, int n, int k)
     goto end;
 
   /* Run the command */
-  snprintf(cmd, sizeof(cmd),
-           "ls %s -aBhl --group-directories-first >%s 2>&1",
-           line, tmp);
-  if (system (cmd) == -1)
+  snprintf(buf, sizeof(buf),
+           "(realpath %s && ls %s -aBhl --group-directories-first) >%s 2>&1",
+           line, line, tmp);
+  if (system (buf) == -1)
     goto end;
   fflush (stdout);              /* to be sure P.K.      */
 

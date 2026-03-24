@@ -199,7 +199,7 @@ KEY key[] = {
   {KCTLX | 'B',		usebuffer,	"use-buffer"},
   {KCTLX | 'C',		spawncli,	"spawn-cli"},
 #ifndef MINGW
-  {KCTLX | 'D',		dired,		"list-directory"},
+  {KCTLX | 'D',		dired,		"dired"},
 #endif
   {KCTLX | 'E',		ctlxe,		"execute-macro"},
   {KCTLX | 'F',		readprofile,	"read-profile"},
