@@ -214,11 +214,7 @@ KEY key[] = {
   {KCTLX | 'R',		backsearch,	"back-search"},
   {KCTLX | 'S',		forwsearch,	"forw-search"},
   {KCTLX | 'U',		undo,		"undo"},
-#if 0
-  {KCTLX | 'V',		filevisitreadonly, "file-visit-readonly"},
-#else
-  {-1,			filevisitreadonly, "file-visit-readonly"},
-#endif
+  {KCTLX | 'V',		showversion,	"display-version"},
   {KCTLX | 'Z',		enlargewind,	"enlarge-window"},
 #ifndef MINGW
   {KCTLX | '!',		spawncmd,       "cmd"},
@@ -291,12 +287,12 @@ KEY key[] = {
 #endif
   {-1,			mouseevent,	"mouse-event"},
   {-1,			jeffexit,	"jeff-exit"},
-  {-1,			showversion,	"display-version"},
   {-1,			displaymessage,	"display-message"},
   {-1,			listbuffers,	"display-buffers"},
   {-1,			showvisable,    "display-visable"},
   {-1,			setnewline,	"set-newline"},
   {-1,			redo,		"redo"},
+  {-1,			filevisitreadonly, "file-visit-readonly"},
   {-1,			viewfile,	"view-file"}
 };
 
