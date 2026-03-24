@@ -295,6 +295,7 @@ KEY key[] = {
   {-1,			displaymessage,	"display-message"},
   {-1,			listbuffers,	"display-buffers"},
   {-1,			showvisable,    "display-visable"},
+  {-1,			setnewline,	"set-newline"},
   {-1,			redo,		"redo"},
   {-1,			viewfile,	"view-file"}
 };

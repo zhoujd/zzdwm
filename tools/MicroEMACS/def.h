@@ -703,6 +703,7 @@ int filewrite (int f, int n, int k);	/* Write a file                 */
 int filesave (int f, int n, int k);	/* Save current file            */
 int filename (int f, int n, int k);	/* Adjust file name             */
 int setsavetabs (int f, int n, int k);	/* Set tab save flag            */
+int setnewline (int f, int n, int k);	/* Set auto newline flag        */
 
 void makename (char *bname, const char *fname);
                                         /* Make buffer name from fname	*/

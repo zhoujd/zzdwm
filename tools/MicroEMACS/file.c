@@ -876,3 +876,15 @@ setsavetabs (int f, int n, int k)
            savetabs ? "" : "not ");
   return (TRUE);
 }
+
+/*
+ * Set auto add newline flag.
+ */
+int
+setnewline (int f, int n, int k)
+{
+  autonewline = !autonewline;
+  eprintf ("[Newline will %sbe added to end of file]",
+           autonewline ? "" : "not ");
+  return (TRUE);
+}
