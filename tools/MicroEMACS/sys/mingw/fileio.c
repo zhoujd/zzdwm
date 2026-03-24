@@ -17,12 +17,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include	"def.h"
-#include	<dirent.h>
-#include	<io.h>
-#include	<fcntl.h>
-#include	<sys/types.h>
-#include	<sys/stat.h>
+#include "def.h"
+#include <dirent.h>
+#include <io.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 char *getenv ();
 
@@ -491,12 +491,13 @@ ffsearch (const char *name,	/* filename to search for */
 }
 
 /*
- * Check fname if a valid file name
+ * Check intput file name if a valid file name
  */
 int
-checkfname (char *fname)
+ffcheckname (char *filename)
 {
-  if (fname[strlen (fname) - 1] == '/')
+  /* check last character */
+  if (filename[strlen (filename) - 1] == '/')
     {
       eprintf ("[Bad file name]");
       return (FALSE);

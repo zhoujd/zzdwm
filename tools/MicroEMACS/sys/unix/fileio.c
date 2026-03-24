@@ -518,12 +518,13 @@ ffexedir (void)
 }
 
 /*
- * Check fname if a valid file name
+ * Check input file name if a valid file name
  */
 int
-checkfname (char *fname)
+ffcheckname (char *filename)
 {
-  if (fname[strlen (fname) - 1] == '/')
+  /* check last character */
+  if (filename[strlen (filename) - 1] == '/')
     {
       eprintf ("[Bad file name]");
       return (FALSE);

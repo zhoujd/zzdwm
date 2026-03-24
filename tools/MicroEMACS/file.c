@@ -82,9 +82,9 @@ int savetabs = 1;		/* TRUE if tabs are preserved when saving files */
  * External declarations.
  */
 extern char *fftilde (char *filename);	/* fileio.c */
+extern int ffcheckname (char *filename);
 extern int getfilename (char *prompt, char *buf, int nbuf);
 extern int swbuffer (BUFFER *bp);
-extern int checkfname (char *fname);
 
 int
 getfile (char fname[])
@@ -146,11 +146,8 @@ findfile (int f, int n, int k)
 
   if ((s = getfilename("Find file: ", fname, NFILEN)) != TRUE)
     return (s);
-
-  /* fname check */
-  if (checkfname (fname) == FALSE)
+  if (ffcheckname (fname) == FALSE)
     return (FALSE);
-
   return (getfile (fname));
 }
 
@@ -162,11 +159,8 @@ viewfile (int f, int n, int k)
 
   if ((s = getfilename("View file: ", fname, NFILEN)) != TRUE)
     return (s);
-
-  /* fname check */
-  if (checkfname (fname) == FALSE)
+  if (ffcheckname (fname) == FALSE)
     return (FALSE);
-
   if ( (s = (getfile (fname))) == TRUE)
     togglereadonly(f, n, 0);
   return s;
@@ -187,11 +181,8 @@ fileread (int f, int n, int k)
 
   if ((s = egetfname ("Read file: ", fname, NFILEN)) != TRUE)
     return (s);
-
-  /* fname check */
-  if (checkfname (fname) == FALSE)
+  if (ffcheckname (fname) == FALSE)
     return (FALSE);
-
   adjustcase (fname);
   expanded_fname = fftilde (fname);
   return (readin (expanded_fname));
@@ -286,11 +277,8 @@ fileinsert (int f, int n, int k)
 
   if ((s = egetfname ("Insert file: ", fname, NFILEN)) != TRUE)
     return (s);
-
-  /* fname check */
-  if (checkfname (fname) == FALSE)
+  if (ffcheckname (fname) == FALSE)
     return (FALSE);
-
   adjustcase (fname);
   expanded_fname = fftilde (fname);
   return (insertf (expanded_fname));
@@ -322,8 +310,7 @@ visit_file (char *fname)
   char bname[NBUFN];
   char *expanded_fname;
 
-  /* fname check */
-  if (checkfname (fname) == FALSE)
+  if (ffcheckname (fname) == FALSE)
     return (FALSE);
 
   adjustcase (fname);
@@ -777,11 +764,8 @@ filewrite (int f, int n, int k)
 
   if ((s = egetfname ("Write file: ", fname, NFILEN)) != TRUE)
     return (s);
-
-  /* fname check */
-  if (checkfname (fname) == FALSE)
+  if (ffcheckname (fname) == FALSE)
     return (FALSE);
-
   adjustcase (fname);
   expanded_fname = fftilde (fname);
   if ((s = writeout (expanded_fname)) == TRUE)
@@ -857,11 +841,8 @@ filename (int f, int n, int k)
 
   if ((s = egetfname ("Name: ", fname, NFILEN)) == ABORT)
     return (s);
-
-  /* fname check */
-  if (checkfname (fname) == FALSE)
+  if (ffcheckname (fname) == FALSE)
     return (FALSE);
-
   adjustcase (fname);
   expanded_fname = fftilde (fname);
   strcpy (curbp->b_fname, expanded_fname);	/* Fix name.            */
