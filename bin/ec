@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cmd=emacsclient
+cmd=${cmd:-"emacsclient"}
 hash $cmd 2>/dev/null
 if [ $? -eq 0 ]; then
     if [ -z "$DISPLAY" ]; then

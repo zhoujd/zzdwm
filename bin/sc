@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cmd="bash -l"
+cmd=${cmd:-"bash -l"}
 opt=(
   -e \`\`
   -s $cmd
