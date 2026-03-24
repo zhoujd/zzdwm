@@ -351,7 +351,8 @@ spawncmd (int f, int n, int k)
   ttmove (nrow - 1, 0);         /* Last line.           */
   ttflush ();
   ttclose ();
-  if (system (line)){}
+  if (system (line) == -1)
+    eprintf("Failed to call system");
   printf ("(End)");
   fflush (stdout);              /* to be sure P.K.      */
   while ((s = ttgetc ()) != EOF && s != '\n');
