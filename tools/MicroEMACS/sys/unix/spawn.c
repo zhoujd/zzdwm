@@ -351,15 +351,15 @@ spawncmd (int f, int n, int k)
   ttmove (nrow - 1, 0);         /* Last line.           */
   ttflush ();
   ttclose ();
-  system (line);
+  if (system (line)){}
   printf ("(End)");
   fflush (stdout);              /* to be sure P.K.      */
   while ((s = ttgetc ()) != EOF && s != '\n');
   ttopen ();
   ttflush ();
+  /* Force repaint */
   eerase ();
   sgarbf = TRUE;
-
   return TRUE;
 }
 
