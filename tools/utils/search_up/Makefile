@@ -1,9 +1,9 @@
 ## Makefile
 
-search_tags: search_tags.c
+search_up: search_up.c
 
 CFLAGS := --static
 LDFLAGS := -Os -s
 
 clean:
-	rm -f search_tags *.o
+	rm -f search_up *.o
