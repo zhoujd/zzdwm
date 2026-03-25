@@ -905,6 +905,10 @@ const char * modename (BUFFER *bp);	/* Return name for current mode	*/
  */
 int findtag (int f, int n, int k);	/* Search for a tag             */
 int freetags (int f, int n, int k);	/* Free up tag list		*/
+
+/*
+ * Defined by "error.c".
+ */
 int gccerror (int f, int n, int k);	/* Find line in gcc error	*/
 
 tagfile * findtagfile (const char *name);

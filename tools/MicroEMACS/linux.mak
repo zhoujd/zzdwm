@@ -74,7 +74,8 @@ OBJ := \
 	undo.o \
 	utf8.o \
 	complete.o \
-	bufmenu.o
+	bufmenu.o \
+	error.o
 
 # How to compile a module.
 
