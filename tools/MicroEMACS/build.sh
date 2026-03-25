@@ -3,11 +3,20 @@
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 MNT_DIR=$(git rev-parse --show-toplevel)
 WS=$SCRIPT_DIR
+TM=test.mak
 
 . /etc/os-release
 
 build() {
-    make $@
+    case ${1:-""} in
+        test|-t )
+            shift
+            make -f $TM $@
+            ;;
+        * )
+            make $@
+            ;;
+    esac
     echo "Build done"
 }
 
@@ -54,7 +63,14 @@ EOF
 }
 
 clean() {
-    make clean
+    case ${1:-""} in
+        test|-t )
+            make -f $TM clean
+            ;;
+        * )
+            make clean
+            ;;
+    esac
     echo "Clean done"
 }
 
@@ -79,7 +95,15 @@ uninstall() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-usage: $app {build|-b|debug|-d|release|-r|publish|-p|clean|-c|install|-i|uninstall|-u}
+usage: $app {option}
+option:
+build|-b            build {test|-t}
+clean|-c            clean {test|-t}
+debug|-d            debug
+release|-r          release
+publish|-p          publish
+install|-i          install
+uninstall|-u        uninstall
 EOF
 }
 
@@ -98,7 +122,8 @@ case $1 in
         publish
         ;;
     clean|-c )
-        clean
+        shift
+        clean "$@"
         ;;
     install|-i )
         install
