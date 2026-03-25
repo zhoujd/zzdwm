@@ -1,9 +1,10 @@
-/* error.c */
+/*
+ * Filename error.c
+ */
+#include "def.h"
+#include <string.h>
+#include <unistd.h>
 
-#include	"def.h"
-#include	<string.h>
-#include	<unistd.h>
- 
 /*
  * Visit the file and line mentioned in the next gcc error message in the
  * current buffer.

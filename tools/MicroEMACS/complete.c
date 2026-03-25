@@ -1,5 +1,5 @@
 /*
- * Filename completion
+ * Filename completion.c
  */
 #include "def.h"
 #include <unistd.h>

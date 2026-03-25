@@ -56,9 +56,9 @@
  * Initial revision
  *
  */
-#include	"def.h"
-#include	<string.h>
-#include	<unistd.h>
+#include "def.h"
+#include <string.h>
+#include <unistd.h>
 
 #define DPRINT 0	/* Set to 0 to enable debug output to a file */
 
