@@ -194,6 +194,7 @@ KEY key[] = {
   {KCTLX | '=',         showcpos,          "display-position"},
   {KCTLX | '(',         ctlxlp,            "start-macro"},
   {KCTLX | ')',         ctlxrp,            "end-macro"},
+  {KCTLX | '0',         zapwind,           "zap-window"},
   {KCTLX | '1',         onlywind,          "only-window"},
   {KCTLX | '2',         splitwind,         "split-window"},
   {KCTLX | 'B',         usebuffer,         "use-buffer"},

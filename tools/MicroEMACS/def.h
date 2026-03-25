@@ -971,6 +971,7 @@ int mvdnwind (int f, int n, int k);	/* Move window down             */
 int mvupwind (int f, int n, int k);	/* Move window up               */
 int onlywind (int f, int n, int k);	/* Make current window only one */
 int splitwind (int f, int n, int k);	/* Split current window         */
+int zapwind (int f, int n, int k);	/* Delete the current window.   */
 int enlargewind (int f, int n, int k);	/* Enlarge display window.      */
 int shrinkwind (int f, int n, int k);	/* Shrink window.               */
 int balancewindows (int f, int n, int k);/* Balance all windows.        */

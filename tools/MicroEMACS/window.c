@@ -27,7 +27,7 @@
  * Modified by:	Mark Alexander
  *		drivax!alexande
  */
-#include	"def.h"
+#include "def.h"
 
 /*
  * Reposition dot in the current
@@ -528,4 +528,86 @@ scrnextdw (int f, int n, int k)
   forwpage(f, n, k);
   prevwind(FALSE, 1, k);
   return TRUE;
+}
+
+/*
+ * Remove a window specified from the screen, giving the space that it
+ * vacates to the window above it, if any, or the window below it otherwise.
+ * If this is the only window, don't remove it at all, but show a message.
+ * Try to leave the dot where it was on the physical screen.
+ */
+static int
+zappwind(EWINDOW *twp)
+{
+  register EWINDOW *wp;
+  register EWINDOW *pp;
+
+  pp = NULL;
+  wp = wheadp;
+
+  while (wp != twp)
+    {
+      pp = wp;
+      if ((wp = wp->w_wndp) == NULL)
+        {
+          return FALSE;
+        }
+    }
+
+  if (pp == NULL)
+    {		/* if first window...	*/
+      register int i;
+      register LINE	*lp;
+      LINE		*elp;
+
+      if ((pp = wp->w_wndp) == NULL)
+        {
+          wp->w_flag = WFMODE|WFHARD;
+          eprintf("[Only one window]");
+          return FALSE;	/* Only window	*/
+        }
+      wheadp = pp;
+      i = pp->w_toprow - wp->w_toprow;
+      lp = pp->w_linep;
+      elp = pp->w_bufp->b_linep;
+      while (i > 0 && lback(lp) != elp)
+        {
+          --i;
+          lp = lback(lp);
+        }
+      pp->w_linep = lp;
+      pp->w_toprow = wp->w_toprow;
+    }
+  else
+    {		/* Not first window...	*/
+      pp->w_wndp = wp->w_wndp;
+    }
+  if (wp == curwp)
+    {
+      curwp = pp;
+      curbp = pp->w_bufp;
+    }
+  pp->w_ntrows += wp->w_ntrows + 1;
+  if (--wp->w_bufp->b_nwnd <= 0)
+    {
+      register BUFFER *bp = wp->w_bufp;
+      bp->b_dot.p  = wp->w_dot.p;
+      bp->b_dot.o  = wp->w_dot.o;
+      bp->b_mark.p = wp->w_mark.p;
+      bp->b_mark.o = wp->w_mark.o;
+    }
+  free((char *) wp);
+  pp->w_flag |= WFMODE|WFHARD;
+  return TRUE;
+}
+
+/*
+ * This command deletes the current window from the screen unless it is
+ * the only window.  It uses zappwind(), above.
+ * Bound to "C-X 0".
+ */
+int
+zapwind (int f, int n, int k)
+{
+  return zappwind(curwp);
 }
