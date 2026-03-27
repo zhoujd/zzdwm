@@ -112,9 +112,9 @@ static void usage(void);
 void
 usage (void)
 {
-  fprintf(stderr,
-          "usage: me [-234bdmrxz] [-c path] [-g line] [-p profile] [-t size]\n"
-          "          [+[line]] [file[:line[:column]] ...]\n");
+  fprintf (stderr,
+           "usage: me [-234bdmrxz] [-c path] [-g line] [-p profile] [-t size]\n"
+           "          [+[line]] [file[:line[:column]] ...]\n");
 }
 
 /*
@@ -134,15 +134,15 @@ main (int argc, char *argv[])
 
   if (argc == 2)
     {
-      if (strcmp(argv[1], "--help") == 0)
+      if (strcmp (argv[1], "--help") == 0)
         {
-          usage();
-          exit(EXIT_SUCCESS);
+          usage ();
+          exit (EXIT_SUCCESS);
         }
-      if (strcmp(argv[1], "--version") == 0)
+      if (strcmp (argv[1], "--version") == 0)
         {
-          printversion();
-          exit(EXIT_SUCCESS);
+          printversion ();
+          exit (EXIT_SUCCESS);
         }
     }
 
@@ -651,7 +651,7 @@ displaymessage (int f, int n, int k)
  * changed do a write on that buffer and exit emacs, otherwise simply exit.
  */
 int
-quickexit(int f, int n, int k)
+quickexit (int f, int n, int k)
 {
   BUFFER *bp;	/* scanning pointer to buffers */
   BUFFER *oldcb;	/* original current buffer */

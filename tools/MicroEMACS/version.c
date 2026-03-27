@@ -43,7 +43,7 @@ char *version[] = {
 
 /* Print the version string. */
 void
-printversion(void)
+printversion (void)
 {
   char **cpp;
   char *cp;
