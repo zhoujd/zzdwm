@@ -1,6 +1,6 @@
 ## Test Makefile
 
-TARGET = utf8 regtest tcap
+TARGET = utf8 regtest tcap reftag
 
 CC = gcc
 
@@ -14,6 +14,9 @@ regtest: regtest.c regsub.c regexp.c regexp.h
 
 tcap: tcap.c
 	$(CC) -o $@ $^ -lncursesw
+
+reftag: reftag.c
+	$(CC) -o $@ $^
 
 clean:
 	rm -f $(TARGET)
