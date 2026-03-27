@@ -442,7 +442,7 @@ searchtag (prepfunc prep, const char *tagpat)
     {
       if (strstr (r->string, tagpat) != NULL)
       {
-        printf ("%s:%ld\n"
+        printf ("%s:%d\n"
                 "  %s\n\n",
                 r->file->fname, r->line,
                 r->string);
