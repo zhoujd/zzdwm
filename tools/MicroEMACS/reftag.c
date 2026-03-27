@@ -424,7 +424,7 @@ int
 searchtag (prepfunc prep, const char *tagpat)
 {
   tagref *r;			/* current tag          */
-  int bfound = FALSE;
+  int matches = 0;
 
   /* Prepare things for an initial search.  This gives the
    * caller an opportunity to prime the tag list based on the
@@ -442,17 +442,15 @@ searchtag (prepfunc prep, const char *tagpat)
     {
       if (strstr (r->string, tagpat) != NULL)
       {
-        printf ("Ref %s, file %s, line %ld, offset %ld\n",
-                r->string, r->file->fname, r->line, r->offset);
-        bfound = TRUE;
+        printf ("%s:%ld\n"
+                "  %s\n\n",
+                r->file->fname, r->line,
+                r->string);
+        matches++;
       }
       r = r->next;	/* skip to next tag */
     }
-  if (r == &tagreflist && bfound == FALSE)
-    {
-      printf ("No tags for %s\n", tagpat);
-      return FALSE;
-    }
+  printf ("Found %d match(es)\n", matches);
   return TRUE;
 }
 
