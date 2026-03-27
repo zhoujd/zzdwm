@@ -464,8 +464,10 @@ main (int argc, char* argv[])
 {
   if (argc != 2)
    {
-     printf("usage: %s {query}\n", argv[0]);
-     return 1;
+     printf ("Usage: reftag {PATTERN}\n"
+             "Example:\n"
+             "  reftag main\n");
+     return FALSE;
    }
   return searchtag (preptag, argv[1]);
 }
