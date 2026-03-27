@@ -13,6 +13,7 @@ build() {
             shift
             make -f $TM $@
             ;;
+        -* ) ;;
         * )
             make $@
             ;;
