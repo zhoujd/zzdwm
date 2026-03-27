@@ -70,7 +70,7 @@ char *fftilde (char * arg)
  * Determine whether the first 'cpos' characters in the file 'name' refer
  * to a directory or not.  Return TRUE if it is a directory.
  */
-int ffisdir(name, cpos)
+int ffisdir (name, cpos)
 char *name;		/* filename to check */
 int cpos;		/* number of characters in name to check */
 {
@@ -90,7 +90,7 @@ int cpos;		/* number of characters in name to check */
  * Open a file for reading.  Used for text files, not profile files.
  */
 int
-ffropen(const char *fn)
+ffropen (const char *fn)
 {
 	writing = FALSE;
 	if ((ffp = open(fn,O_RDONLY|O_BINARY)) < 0)
@@ -105,7 +105,7 @@ ffropen(const char *fn)
  * FALSE on error (cannot create).
  */
 int
-ffwopen(const char *fn)
+ffwopen (const char *fn)
 {
 	if ((ffp = open(fn,O_TRUNC|O_WRONLY|O_CREAT|O_BINARY,S_IREAD|S_IWRITE)) < 0) {
 		eprintf("Cannot open file for writing");
@@ -121,7 +121,7 @@ ffwopen(const char *fn)
  * Should look at the status.
  */
 int
-ffclose()
+ffclose ()
 {
 	char c;
 
@@ -156,7 +156,7 @@ ffclose()
  * says whether to terminate the line with a newline.
  */
 int
-ffputline(const char *buf, int nbuf, int nl)
+ffputline (const char *buf, int nbuf, int nl)
 {
 	putbyte(buf,nbuf);
 	if ((status >= 0) && nl)
@@ -181,7 +181,7 @@ ffputline(const char *buf, int nbuf, int nl)
  * VMS systems with DECnet).  Return the address of the local
  * buffer to *buf, and the number of bytes read to *nbytes.
  */
-ffgetline(bufp,nbytes)
+ffgetline (bufp, nbytes)
 char	**bufp;
 int	*nbytes;
 {
@@ -248,7 +248,7 @@ int	*nbytes;
 /*
  * Fill the input file buffer, return the first character from it.
  */
-fillbuf()
+fillbuf ()
 {
 	if ((status = read(ffp,cbuf,sizeof(cbuf))) <= 0)
 	{
@@ -265,7 +265,7 @@ fillbuf()
 /*
  * Put a string of bytes to the output file.  Use our own buffering for speed.
  */
-void putbyte(s,len)
+void putbyte (s, len)
 char	*s;
 int	len;
 {
@@ -293,7 +293,7 @@ int	len;
  * disk volume; we'd have to copy the whole file.
  */
 int
-fbackupfile(const char *fname)
+fbackupfile (const char *fname)
 {
 	char	nname[NFILEN];		/* new name			*/
 	register char	*p;
@@ -333,7 +333,8 @@ fbackupfile(const char *fname)
  * On UNIX file names are dual case, so we leave
  * everything alone.
  */
-void adjustcase(char *fn)
+void 
+adjustcase (char *fn)
 {
 #if 0
 	register int	c;
@@ -356,7 +357,7 @@ void adjustcase(char *fn)
  * to be filtered out even in CR/LF combinations.
  */
 int
-ffpopen(char *fn)
+ffpopen (char *fn)
 {
 	static char newname[NFILEN];
 
@@ -383,7 +384,7 @@ ffpopen(char *fn)
  * profiles don't have to be efficient.
  */
 int
-ffpread(char *cp)
+ffpread (char *cp)
 {
 	register int  c;
 
@@ -409,7 +410,7 @@ ffpread(char *cp)
  */
 
 int
-ffpclose()
+ffpclose ()
 {
 	close(pfp);
 	return (FIOSUC);
@@ -423,7 +424,8 @@ ffpclose()
  * on each call.  If 'prev' is NULL, this is the first search for
  * the file.
  */
-char *ffsearch(name,cpos,prev)
+char *
+ffsearch (name, cpos, prev)
 char *name;		/* filename to search for */
 int cpos;		/* number of characters in name to match */
 char *prev;		/* previous matching name */
