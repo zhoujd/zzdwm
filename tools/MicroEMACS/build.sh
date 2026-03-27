@@ -7,13 +7,31 @@ TM=test.mak
 
 . /etc/os-release
 
+usage() {
+    app=$(basename $0)
+    cat <<EOF
+usage: $app {option}
+option:
+build|-b            build {test|-t}
+clean|-c            clean {test|-t}
+debug|-d            debug
+release|-r          release
+publish|-p          publish
+install|-i          install
+uninstall|-u        uninstall
+EOF
+}
+
 build() {
     case ${1:-""} in
         test|-t )
             shift
             make -f $TM $@
             ;;
-        -* ) ;;
+        -* )
+            usage
+            exit 1
+            ;;
         * )
             make $@
             ;;
@@ -68,6 +86,9 @@ clean() {
         test|-t )
             make -f $TM clean
             ;;
+        -* )
+            usage
+            ;;
         * )
             make clean
             ;;
@@ -91,21 +112,6 @@ uninstall() {
         sudo make uninstall
     fi
     echo "Uninstall done"
-}
-
-usage() {
-    app=$(basename $0)
-    cat <<EOF
-usage: $app {option}
-option:
-build|-b            build {test|-t}
-clean|-c            clean {test|-t}
-debug|-d            debug
-release|-r          release
-publish|-p          publish
-install|-i          install
-uninstall|-u        uninstall
-EOF
 }
 
 case $1 in
