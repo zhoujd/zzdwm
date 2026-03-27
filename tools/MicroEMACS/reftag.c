@@ -1,5 +1,5 @@
 /*
- * reftag.c
+ * reftag.c - Search definitions in Emacs TAGS file
  */
 
 #include <string.h>
@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define NPAT   256
 #define FALSE	0		/* False, no, bad, etc.         */
 #define TRUE	1		/* True, yes, good, etc.        */
 
@@ -50,12 +49,12 @@ tagref tagreflist = {		/* list of all tags             */
   NULL				/* file pointer                 */
 };
 
-static FILE *ffp;		/* text, profile, and journal files     */
+static FILE *ffp;		/* text files                   */
 /*
  * Buffer for ffgetline.  Dynamically allocated to handle any line length.
  */
-static char *buf;		/* dynamic line buffer */
-static int bufsize;		/* size of line buffer */
+static char *buf;		/* dynamic line buffer          */
+static int bufsize;		/* size of line buffer          */
 
 /*
  * File I/O.
@@ -77,17 +76,7 @@ ffropen (const char *fn)
 }
 
 /*
- * Read a line from a file, and store the bytes
- * in a local buffer. Stop on end of file or end of
- * line. Don't get upset by files that don't have an end of
- * line on the last line; this seem to be common on CP/M-86 and
- * MS-DOS (the suspected culprit is VAX/VMS kermit, but this
- * has not been confirmed. If this is sufficiently researched
- * it may be possible to pull this kludge). Delete any CR
- * followed by an LF. This is mainly for runoff documents,
- * both on VMS and on Ultrix (they get copied over from
- * VMS systems with DECnet).  Return the address of the local
- * buffer to *buf, and the number of bytes read to *nbytes.
+ * Read a line from a file
  */
 int
 ffgetline (char **bufp, int *nbytes)
@@ -116,7 +105,7 @@ ffgetline (char **bufp, int *nbytes)
             }
         }
 
-      if (c == EOF || c == '\n')	/* end of line/file?    */
+      if (c == EOF || c == '\n') /* end of line/file?   */
         break;
 
       /*  If the buffer is too small, enlarge it.
@@ -411,14 +400,7 @@ preptag (const char *string)
 }
 
 /*
- * Prompt the user for a tag string to search for, and call the
- * caller-specified 'prep' function to prime the tag list for
- * an initial search.  Then search the tag list for the string,
- * and if found, read in the file given in the tag, and position
- * the cursor at the tag's line number.  If an argument is
- * given (f is TRUE), search for the next occurrence of the most recent tag
- * string specified.  If the argument (n) is negative, search
- * for the previous occurrence of the tag string.
+ * Search the tags on input
  */
 int
 searchtag (prepfunc prep, const char *tagpat)
@@ -448,7 +430,7 @@ searchtag (prepfunc prep, const char *tagpat)
                 r->string);
         matches++;
       }
-      r = r->next;	/* skip to next tag */
+      r = r->next;
     }
   printf ("Found %d match(es)\n", matches);
   return TRUE;
@@ -465,7 +447,7 @@ main (int argc, char* argv[])
      printf ("Usage: reftag {PATTERN}\n"
              "Example:\n"
              "  reftag main\n");
-     return FALSE;
+     exit (EXIT_FAILURE);
    }
   return searchtag (preptag, argv[1]);
 }
