@@ -2,7 +2,12 @@
 
 TARGET = utf8 regtest tcap reftag
 CFLAGS := -Os
+
+ifeq ($(INSIDE_DOCKER), yes)
 LDFLAGS := -static -s
+else
+LDFLAGS := -s
+endif
 
 CC = gcc
 
