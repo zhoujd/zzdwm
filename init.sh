@@ -101,6 +101,7 @@ install_bin() {
         $CORE_ROOT/bin/elvis
         $CORE_ROOT/bin/ctags
         $CORE_ROOT/bin/ref
+        $CORE_ROOT/bin/reftag
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $bin
