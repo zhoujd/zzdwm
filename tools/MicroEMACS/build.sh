@@ -12,8 +12,8 @@ usage() {
     cat <<EOF
 usage: $app {option}
 option:
-build|-b            build {test|-t}
-clean|-c            clean {test|-t}
+build|-b            build {test|-t|all|-a}
+clean|-c            clean {test|-t|all|-a}
 debug|-d            debug
 release|-r          release
 publish|-p          publish
@@ -27,6 +27,10 @@ build() {
         test|-t )
             shift
             make -f $TM $@
+            ;;
+        all|-a )
+            make
+            make -f $TM
             ;;
         -* )
             usage
@@ -84,6 +88,10 @@ EOF
 clean() {
     case ${1:-""} in
         test|-t )
+            make -f $TM clean
+            ;;
+        all|-a )
+            make clean
             make -f $TM clean
             ;;
         -* )
