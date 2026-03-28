@@ -354,22 +354,22 @@ static char*
 vismsg (EWINDOW *wp)
 {
   BUFFER *bp = wp->w_bufp;
-  LINE *lp = curwp->w_linep;
-  int rows = curwp->w_ntrows;
-  int numlines, predlines, ratio;
+  LINE *lp = wp->w_linep;
+  int rows = wp->w_ntrows;
   char *msg = NULL;
-  static char tline[32];
+  int numlines, predlines, ratio;
+  char tline[32];
 
   while (rows--)
     {
       lp = lforw(lp);
-      if (lp == curbp->b_linep)
+      if (lp == bp->b_linep)
         {
           msg = "[Bot]";
           break;
         }
     }
-  if (lback(curwp->w_linep) == curwp->w_bufp->b_linep)
+  if (lback(wp->w_linep) == wp->w_bufp->b_linep)
     {
       if (msg)
         msg = "[All]";
@@ -404,7 +404,7 @@ vismsg (EWINDOW *wp)
           msg = tline;
         }
     }
-  return msg;
+  return strdup (msg);
 }
 
 /*
@@ -850,6 +850,7 @@ modeline (EWINDOW *wp)
             vtputc (lchar);
           vtputc (' ');
           vtstring (vis);
+          free (vis);
         }
     }
 
