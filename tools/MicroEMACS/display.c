@@ -784,8 +784,16 @@ modeline (EWINDOW *wp)
   vtmove (n, 0);		/* Seek to right line.  */
   vscreen[n]->v_flag |= (VFCHG | VFHBAD);	/* Recompute, display.  */
   vscreen[n]->v_color = CMODE;	/* Mode line color.     */
-  lchar = '-';
-  lstr = " -- ";
+  if (wp == curwp)			/* mark the current buffer */
+    {
+      lchar = '-';
+      lstr = " -- ";
+    }
+  else
+    {
+      lchar = ' ';
+      lstr = "    ";
+    }
   bp = wp->w_bufp;
   vtputc (lchar);
   if ((bp->b_flag & BFRO) != 0)	/* "%" if read-only    */
