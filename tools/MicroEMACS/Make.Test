@@ -26,4 +26,4 @@ reftag: reftag.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 clean:
-	rm -f $(TARGET)
+	rm -f *.[o] $(TARGET)

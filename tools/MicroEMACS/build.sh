@@ -3,7 +3,7 @@
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 MNT_DIR=$(git rev-parse --show-toplevel)
 WS=$SCRIPT_DIR
-TM=test.mak
+TM=Make.Test
 
 . /etc/os-release
 
