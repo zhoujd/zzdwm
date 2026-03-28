@@ -112,6 +112,7 @@ nextwind (int f, int n, int k)
     wp = wheadp;
   curwp = wp;
   curbp = wp->w_bufp;
+  updatemode ();
   return (TRUE);
 }
 
@@ -136,6 +137,7 @@ prevwind (int f, int n, int k)
     wp1 = wp1->w_wndp;
   curwp = wp1;
   curbp = wp1->w_bufp;
+  updatemode ();
   return (TRUE);
 }
 

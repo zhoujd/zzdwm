@@ -596,19 +596,6 @@ makename (char *bname, const char *fname)
 }
 
 /*
- * Update the mode lines for all windows viewing the current buffer.
- */
-void
-updatemode (void)
-{
-  register EWINDOW *wp;
-
-  ALLWIND (wp)			/* Update mode lines.   */
-    if (wp->w_bufp == curbp)
-      wp->w_flag |= WFMODE;
-}
-
-/*
  * This function expands tabs in a line of text, storing the resulting
  * text in a dynamically allocated buffer.  The address of the buffer
  * is returned.  The buffer is overwritten on each call to this function.

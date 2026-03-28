@@ -422,6 +422,19 @@ vteeol (void)
 }
 
 /*
+ * Update the mode lines for all windows viewing the current buffer.
+ */
+void
+updatemode (void)
+{
+  register EWINDOW *wp;
+
+  ALLWIND (wp)			/* Update mode lines.   */
+    if (wp->w_bufp == curbp)
+      wp->w_flag |= WFMODE;
+}
+
+/*
  * Make sure that the display is
  * right. This is a three part process. First,
  * scan through all of the windows looking for dirty
