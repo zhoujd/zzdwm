@@ -71,7 +71,7 @@ FLAGI=-I
 # ctags and elvtags are the same program under different names.  The $(EXE) on
 # the end is just in case this Makefile is reconfigured for an operating
 # system which requires the EXE macro to be something like ".exe".
-ALL=elvis$(EXE) ref$(EXE) elvtags$(EXE) elvfmt$(EXE) elvgdb$(EXE)
+ALL=elvis$(EXE) ref$(EXE) elvtags$(EXE) fmt$(EXE) elvfmt$(EXE) elvgdb$(EXE)
 
 ################################################################################
 # The installation directories are relative to this
