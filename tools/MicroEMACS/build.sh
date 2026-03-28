@@ -5,7 +5,7 @@ MNT_DIR=$(git rev-parse --show-toplevel)
 WS=$SCRIPT_DIR
 TM=Make.Test
 
-. /etc/os-release
+[ -f /etc/os-release ] && . /etc/os-release
 
 usage() {
     app=$(basename $0)
