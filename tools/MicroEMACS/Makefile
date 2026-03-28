@@ -3,9 +3,9 @@
 OS = $(shell uname -s)
 
 ifeq ($(OS), Linux)
-MF = linux.mak
+MF = Make.Linux
 else
-MF = mingw.mak
+MF = Make.Mingw
 endif
 
 all:
