@@ -23,4 +23,9 @@ uninstall: all
 strip: TARGET=strip
 strip: all
 
-.PHONY: all clean install uninstall strip
+help:
+	@echo "make MF=Make.Linux"
+	@echo "make MF=Make.Mingw"
+	@echo "make MF=Make.Test"
+
+.PHONY: all clean install uninstall strip help
