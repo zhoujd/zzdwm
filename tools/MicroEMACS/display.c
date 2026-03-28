@@ -422,7 +422,7 @@ vteeol (void)
 }
 
 /*
- * Update the mode lines for all windows viewing the current buffer.
+ * Update the mode lines for all windows.
  */
 void
 updatemode (void)
@@ -430,8 +430,7 @@ updatemode (void)
   register EWINDOW *wp;
 
   ALLWIND (wp)			/* Update mode lines.   */
-    if (wp->w_bufp == curbp)
-      wp->w_flag |= WFMODE;
+    wp->w_flag |= WFMODE;
 }
 
 /*
@@ -791,22 +790,17 @@ modeline (EWINDOW *wp)
   register int n;
   const char *mname;
   int lchar;	/* character to draw line in buffer with */
-  char *lstr;
+  char lstr[32];
 
   n = wp->w_toprow + wp->w_ntrows;	/* Location.            */
   vtmove (n, 0);		/* Seek to right line.  */
   vscreen[n]->v_flag |= (VFCHG | VFHBAD);	/* Recompute, display.  */
   vscreen[n]->v_color = CMODE;	/* Mode line color.     */
   if (wp == curwp)			/* mark the current buffer */
-    {
-      lchar = '-';
-      lstr = " -- ";
-    }
+    lchar = '-';
   else
-    {
-      lchar = ' ';
-      lstr = "    ";
-    }
+    lchar = ' ';
+  snprintf (lstr, sizeof(lstr), " %c%c ", lchar, lchar);
   bp = wp->w_bufp;
   vtputc (lchar);
   if ((bp->b_flag & BFRO) != 0)	/* "%" if read-only    */
