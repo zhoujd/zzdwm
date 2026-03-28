@@ -104,7 +104,7 @@ extern void printversion(void);
 
 static void bufinit (const char *fname);
 static int execute (int c, int f, int n);
-static void usage(void);
+static void usage (void);
 
 /*
  * Usage
