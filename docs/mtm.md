@@ -19,7 +19,7 @@ $ apk add ncurses-dev
 $ apk info -qL ncurses-dev
 $ git clone https://github.com/deadpixi/mtm
 $ cd mtm
-$ make HEADERS='-DNCURSESW_INCLUDE_H="<ncurses.h>"'
+$ make LDFLAGS=-static HEADERS='-DNCURSESW_INCLUDE_H="<ncurses.h>"'
 ```
 
 ## Usage guide
