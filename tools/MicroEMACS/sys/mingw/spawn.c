@@ -44,7 +44,7 @@ spawncli (int f, int n, int k)
     {				/* Try to find it.      */
       cspec = getenv ("COMSPEC");
       if (cspec == NULL)
-	cspec = "/c/WINDOWS/system32/cmd.exe";
+        cspec = "/c/WINDOWS/system32/cmd.exe";
     }
   spawnlp (0, cspec, cspec, "", "", NULLPTR);
   ttopen ();

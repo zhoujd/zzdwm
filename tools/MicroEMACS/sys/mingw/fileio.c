@@ -137,10 +137,10 @@ ffclose (void)
 	status = write (ffp, cbuf, cindex);	/* flush output */
       close (ffp);
       if (status < cindex)
-	{
-	  eprintf ("File write error");
-	  return (FIOERR);
-	}
+        {
+          eprintf ("File write error");
+          return (FIOERR);
+        }
       else
 	return (FIOSUC);
     }
@@ -148,10 +148,10 @@ ffclose (void)
     {				/* open for read        */
       close (ffp);
       if (bufsize)
-	{			/* free line buffer     */
-	  free (buf);
-	  bufsize = 0;
-	}
+        {			/* free line buffer     */
+          free (buf);
+          bufsize = 0;
+        }
       return (FIOSUC);		/* ignore errors        */
     }
 }
@@ -187,7 +187,7 @@ fillbuf (void)
   if ((status = read (ffp, cbuf, sizeof (cbuf))) <= 0)
     {
       if (status < 0)
-	eprintf ("File read error.");
+        eprintf ("File read error.");
       return (EOF);
     }
   cindex = 0;
@@ -227,44 +227,44 @@ ffgetline (char **bufp, int *nbytes)
       /*  Delete carriage return if followed by line feed
        */
       if (c == '\r')
-	{			/* carriage return?     */
-	  c = getbyte ();	/* check next byte      */
-	  if (c != '\n')
-	    {			/* next not line feed?  */
-	      ungetbyte (c);	/* put it back          */
-	      c = '\r';		/* put cr into line     */
-	    }
-	}
+        {			/* carriage return?     */
+          c = getbyte ();	/* check next byte      */
+          if (c != '\n')
+            {			/* next not line feed?  */
+              ungetbyte (c);	/* put it back          */
+              c = '\r';		/* put cr into line     */
+            }
+        }
 
       /*  Check for terminating character or end of file
        */
       if (c == CTRLZ && zflag)
-	{			/* old eof character?   */
-	  c = EOF;
-	  break;
-	}
+        {			/* old eof character?   */
+          c = EOF;
+          break;
+        }
       if (c == EOF || c == '\n')	/* end of line/file?    */
 	break;
 
       /*  If the buffer is too small, enlarge it.
        */
       if (i >= bufsize)
-	{			/* line full?           */
-	  newbufsize = bufsize + 256;
-	  if (bufsize != 0)
-	    newbuf = realloc (buf, newbufsize);
-	  else
-	    newbuf = malloc (newbufsize);
-	  if (!newbuf)
-	    {
-	      ungetbyte (c);	/* put char back        */
-	      eprintf ("Out of memory, line split");
-	      merror = 1;
-	      break;
-	    }
-	  buf = newbuf;
-	  bufsize = newbufsize;
-	}
+        {			/* line full?           */
+          newbufsize = bufsize + 256;
+          if (bufsize != 0)
+            newbuf = realloc (buf, newbufsize);
+          else
+            newbuf = malloc (newbufsize);
+          if (!newbuf)
+            {
+              ungetbyte (c);	/* put char back        */
+              eprintf ("Out of memory, line split");
+              merror = 1;
+              break;
+            }
+          buf = newbuf;
+          bufsize = newbufsize;
+        }
       buf[i++] = c;		/* store byte in line   */
     }
   *nbytes = i;			/* return no. of bytes  */
@@ -272,9 +272,9 @@ ffgetline (char **bufp, int *nbytes)
   if (c != '\n')
     {				/* End of file.         */
       if (merror)		/* out of memory?       */
-	return (FIOERR);	/* report error         */
+        return (FIOERR);	/* report error         */
       else
-	return (FIOEOF);	/* normal end of file   */
+        return (FIOEOF);	/* normal end of file   */
     }
   return (FIOSUC);
 }
@@ -289,11 +289,11 @@ putbytes (const char *s, int len)
   while (len)
     {
       if (cindex == sizeof (cbuf))
-	{			/* buffer full? */
-	  if (write (ffp, cbuf, sizeof (cbuf)) < (int) sizeof (cbuf))
-	    status = -1;	/* disk full    */
-	  cindex = 0;
-	}
+        {			/* buffer full? */
+          if (write (ffp, cbuf, sizeof (cbuf)) < (int) sizeof (cbuf))
+            status = -1;	/* disk full    */
+          cindex = 0;
+        }
       cbuf[cindex++] = *s++;
       --len;
     }
@@ -326,7 +326,7 @@ fbackupfile (const char *fname)
     {
       strcpy (nname, fname);
       for (p = nname; *p && *p != '.'; p++)
-	;			/* search for extension */
+        ;			/* search for extension */
       strcpy (p, ".BAK");	/* use .BAK extension   */
     }
   else
@@ -334,7 +334,7 @@ fbackupfile (const char *fname)
       strcpy (nname, bname);
       lastc = nname[strlen (nname) - 1];	/* get last character   */
       if (lastc != '\\' && lastc != '/')
-	strcat (nname, "\\");
+        strcat (nname, "\\");
       strcat (nname, fname);
     }
   unlink (nname);		/* delete old backup    */
@@ -385,11 +385,11 @@ ffpopen (char *fn)
   if (fn == NULL)
     {
       if ((pfp = open ("me.pro", O_RDONLY)) >= 0)
-	return (FIOSUC);
+        return (FIOSUC);
       if ((fn = getenv ("HOME")) != NULL)
-	strcpy (newname, fn);
+        strcpy (newname, fn);
       else
-	newname[0] = 0;
+        newname[0] = 0;
       strcat (newname, "\\me.pro");
       fn = newname;
     }
@@ -411,12 +411,12 @@ ffpread (char *cp)
   if (pindex == psize)		/* buffer exhausted     */
     {
       if ((status = read (pfp, pbuf, sizeof (pbuf))) <= 0)
-	{
-	  if (status < 0)
-	    return (FIOERR);
-	  else
-	    return (FIOEOF);
-	}
+        {
+          if (status < 0)
+            return (FIOERR);
+          else
+            return (FIOEOF);
+        }
       pindex = 0;
       psize = status;
     }
@@ -461,20 +461,20 @@ ffsearch (const char *name,	/* filename to search for */
 	closedir (dirp);
       strncpy (buf, name, cpos);	/* save the name        */
       for (i = cpos; i > 0; --i)
-	{			/* find end of path     */
-	  c = buf[i - 1];
-	  if (c == ':' || c == '/' || c == '\\')
-	    break;
-	}
+        {			/* find end of path     */
+          c = buf[i - 1];
+          if (c == ':' || c == '/' || c == '\\')
+            break;
+        }
       pathlen = i;		/* save length of path  */
       if (pathlen == 0)		/* no path specified?   */
 	dirp = opendir (".");	/* open current dir     */
       else
-	{
-	  buf[pathlen - 1] = '\0';	/* temporarily zap slash */
-	  dirp = opendir (buf);	/* open directory       */
-	  buf[pathlen - 1] = c;	/* restore slash */
-	}
+        {
+          buf[pathlen - 1] = '\0';	/* temporarily zap slash */
+          dirp = opendir (buf);	/* open directory       */
+          buf[pathlen - 1] = c;	/* restore slash */
+        }
       if (dirp == NULL)
 	return (NULL);
     }
@@ -483,7 +483,7 @@ ffsearch (const char *name,	/* filename to search for */
       strcpy (&buf[pathlen], ff->d_name);	/* append filename    */
       strlwr (buf);		/* lower-case it        */
       if (strncmp (buf, name, cpos) == 0)	/* if it matches,       */
-	return (buf);		/* return static buffer */
+        return (buf);		/* return static buffer */
     }
   closedir (dirp);
   dirp = NULL;
