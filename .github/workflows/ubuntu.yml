@@ -45,13 +45,11 @@ jobs:
       run: make -C tools/dwmstatus
     - name: Build xbanish
       run: make -C tools/xbanish
+    - name: Build xcompmgr
+      run: make -C tools/xcompmgr
     - name: Build slock
       run: make -C tools/slock
     - name: Build shotkey
       run: make -C tools/shotkey
-    - name: Build xcompmgr
-      run: make -C tools/xcompmgr
     - name: Build utils
       run: make -C tools/utils
-    - name: Build detach
-      run: make -C tools/detach
