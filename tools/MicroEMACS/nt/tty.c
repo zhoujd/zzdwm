@@ -55,7 +55,7 @@ int     tcdell  =       11;
  * Forward declarations.
  */
 #if 0
-void    ttinit(), tttidy(), ttmove(), tteeol(), tteeop(), ttbeep(),
+void ttinit(), tttidy(), ttmove(), tteeol(), tteeop(), ttbeep(),
     waittick(), ttwindow(), ttnowindow(), ttcolor(), ttresize(),
     ttputc(), putline();
 #endif
@@ -111,11 +111,12 @@ void ttmove(row, col)
 {
     COORD coord;
 
-    if (ttrow!=row || ttcol!=col) {
-	if (row > nrow)
+    if (ttrow!=row || ttcol!=col)
+    {
+        if (row > nrow)
             row = nrow;
-	if (col > ncol)
-	    col = ncol;
+        if (col > ncol)
+            col = ncol;
         coord.X = col + windowcol;
         coord.Y = row + windowrow;
         SetConsoleCursorPosition(hout, coord);
@@ -162,7 +163,7 @@ void tteeop()
      */
     SetConsoleTextAttribute(hout, ttattr);
     while (coord.Y < ttrow + windowrow)
-    {   
+    {
         while (coord.X < ttcol + windowcol)
         {
             WriteConsoleOutputCharacter(hout, &space, 1,
@@ -217,11 +218,11 @@ int     color;
 void ttresize()
 {
 #if 0
-        qvmode(f);
-        nrow = nrow;
-        ncol = ncol;
-        if (nrow >= 43)                         /* high res screen?     */
-                qvcursor(2);                    /* block cursor         */
+    qvmode(f);
+    nrow = nrow;
+    ncol = ncol;
+    if (nrow >= 43)                     /* high res screen?     */
+        qvcursor(2);                    /* block cursor         */
 #endif
 }
 

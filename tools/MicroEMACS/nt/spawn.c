@@ -6,13 +6,13 @@
  * By:		Mark Alexander
  *		drivax!alexande
  */
-#include	"def.h"
+#include "def.h"
 
-#include	<process.h>
+#include <process.h>
 
 /* extern char *getenv(char *); */
 
-char	*cspec	= NULL; 			/* Command string.	*/
+char *cspec	= NULL; 			/* Command string.	*/
 
 /*
  * Create a subjob with a copy

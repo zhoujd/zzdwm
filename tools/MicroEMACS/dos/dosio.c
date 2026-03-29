@@ -76,17 +76,17 @@ ffclose ()
   if (writing)
     {				/* open for write?      */
       if (zflag)
-	putbyte ("\32", 1);	/* write a CTRLZ        */
+        putbyte ("\32", 1);	/* write a CTRLZ        */
       if (status >= 0)		/* write OK?            */
-	status = write (ffp, cbuf, cindex);	/* flush output */
+        status = write (ffp, cbuf, cindex);	/* flush output */
       close (ffp);
       if (status < cindex)
-	{
-	  eprintf ("File write error");
-	  return (FIOERR);
-	}
+        {
+          eprintf ("File write error");
+          return (FIOERR);
+        }
       else
-	return (FIOSUC);
+        return (FIOSUC);
     }
   else
     {				/* open for read        */
@@ -129,8 +129,7 @@ ffputline (const char *buf, int nbuf, int nl)
  * both on VMS and on Ultrix (they get copied over from
  * VMS systems with DECnet).
  */
-ffgetline (buf, nbuf)
-     register char buf[];
+ffgetline (char *buf, int nbuf)
 {
   register int c;
   register int i;
@@ -143,36 +142,36 @@ ffgetline (buf, nbuf)
       /*  Delete carriage return if followed by line feed
        */
       if (c == '\r')
-	{			/* carriage return?     */
-	  c = getbyte ();	/* check next byte      */
-	  if (c != '\n')
-	    {			/* next not line feed?  */
-	      ungetbyte (c);	/* put it back          */
-	      c = '\r';		/* put cr into line     */
-	    }
-	}
+        {			/* carriage return?     */
+          c = getbyte ();	/* check next byte      */
+          if (c != '\n')
+            {			/* next not line feed?  */
+              ungetbyte (c);	/* put it back          */
+              c = '\r';		/* put cr into line     */
+            }
+        }
 
       /*  Check for terminating character or end of file
        */
       if (c == CTRLZ && zflag)
-	{			/* old eof character?   */
-	  c = EOF;
-	  break;
-	}
+        {			/* old eof character?   */
+          c = EOF;
+          break;
+        }
       if (c == EOF || c == '\n')	/* end of line/file?    */
-	break;
+        break;
 
       /*  Chop line in pieces if it is too long, otherwise
        *  store the byte into the line and continue looping.
        */
       if (i >= nbuf - 1)
-	{			/* line full?           */
-	  ungetbyte (c);	/* put the byte back    */
-	  eprintf ("File has long line");
-	  longline = TRUE;
-	  c = '\n';		/* fake a new line      */
-	  break;
-	}
+        {			/* line full?           */
+          ungetbyte (c);	/* put the byte back    */
+          eprintf ("File has long line");
+          longline = TRUE;
+          c = '\n';		/* fake a new line      */
+          break;
+        }
 
       buf[i++] = c;		/* store byte in line   */
     }
@@ -180,9 +179,9 @@ ffgetline (buf, nbuf)
   if (c != '\n')
     {				/* End of file.         */
       if (longline)		/* file had long line?  */
-	return (FIOERR);	/* report error         */
+        return (FIOERR);	/* report error         */
       else
-	return (FIOEOF);	/* normal end of file   */
+        return (FIOEOF);	/* normal end of file   */
     }
   return (FIOSUC);
 }
@@ -195,7 +194,7 @@ fillbuf ()
   if ((status = read (ffp, cbuf, sizeof (cbuf))) <= 0)
     {
       if (status < 0)
-	eprintf ("File read error.");
+        eprintf ("File read error.");
       return (EOF);
     }
   cindex = 0;
@@ -215,11 +214,11 @@ putbyte (s, len)
   while (len)
     {
       if (cindex == sizeof (cbuf))
-	{			/* buffer full? */
-	  if (write (ffp, cbuf, sizeof (cbuf)) < sizeof (cbuf))
-	    status = -1;	/* disk full    */
-	  cindex = 0;
-	}
+        {			/* buffer full? */
+          if (write (ffp, cbuf, sizeof (cbuf)) < sizeof (cbuf))
+            status = -1;	/* disk full    */
+          cindex = 0;
+        }
       cbuf[cindex++] = *s++;
       --len;
     }
@@ -260,7 +259,7 @@ fbackupfile (const char *fname)
       strcpy (nname, bname);
       lastc = nname[strlen (nname) - 1];	/* get last character   */
       if (lastc != '\\' && lastc != '/')
-	strcat (nname, "\\");
+        strcat (nname, "\\");
       strcat (nname, fname);
     }
   unlink (nname);		/* delete old backup    */
@@ -288,7 +287,7 @@ adjustcase (fn)
   while ((c = *fn) != 0)
     {
       if (c >= 'A' && c <= 'Z')
-	*fn = c + 'a' - 'A';
+        *fn = c + 'a' - 'A';
       ++fn;
     }
 }
@@ -310,11 +309,11 @@ ffpopen (fn)
   if (fn == NULL)
     {
       if ((pfp = open ("me.pro", O_RAW)) >= 0)
-	return (FIOSUC);
+        return (FIOSUC);
       if ((fn = getenv ("HOME")) != NULL)
-	strcpy (newname, fn);
+        strcpy (newname, fn);
       else
-	newname[0] = 0;
+        newname[0] = 0;
       strcat (newname, "\\me.pro");
       fn = newname;
     }
@@ -338,12 +337,12 @@ ffpread (cp)
   if (pindex == psize)		/* buffer exhausted     */
     {
       if ((status = read (pfp, pbuf, sizeof (pbuf))) <= 0)
-	{
-	  if (status < 0)
-	    return (FIOERR);
-	  else
-	    return (FIOEOF);
-	}
+        {
+          if (status < 0)
+            return (FIOERR);
+          else
+            return (FIOEOF);
+        }
       pindex = 0;
       psize = status;
     }

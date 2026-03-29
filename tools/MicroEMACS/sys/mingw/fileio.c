@@ -458,7 +458,7 @@ ffsearch (const char *name,	/* filename to search for */
   if (prev == NULL)		/* first time through   */
     {
       if (dirp != NULL)
-	closedir (dirp);
+        closedir (dirp);
       strncpy (buf, name, cpos);	/* save the name        */
       for (i = cpos; i > 0; --i)
         {			/* find end of path     */
@@ -468,7 +468,7 @@ ffsearch (const char *name,	/* filename to search for */
         }
       pathlen = i;		/* save length of path  */
       if (pathlen == 0)		/* no path specified?   */
-	dirp = opendir (".");	/* open current dir     */
+        dirp = opendir (".");	/* open current dir     */
       else
         {
           buf[pathlen - 1] = '\0';	/* temporarily zap slash */
@@ -476,7 +476,7 @@ ffsearch (const char *name,	/* filename to search for */
           buf[pathlen - 1] = c;	/* restore slash */
         }
       if (dirp == NULL)
-	return (NULL);
+        return (NULL);
     }
   while ((ff = readdir (dirp)) != NULL)	/* find next file       */
     {

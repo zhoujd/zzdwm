@@ -25,9 +25,9 @@
  * By:		Mark Alexander
  *		drivax!alexande
  */
-#define	PCC	1		/* "[]" gets an error.          */
-#define	KBLOCK	8192		/* Kill grow.                   */
-#define	GOOD	0		/* Good exit status.            */
+#define	PCC	    1		        /* "[]" gets an error.          */
+#define	KBLOCK	8192	        /* Kill grow.                   */
+#define	GOOD	0		        /* Good exit status.            */
 #define NULLPTR ((char *) 0)	/* Portable NULL pointer for    */
 					/*  use in function calls       */
 /*
@@ -38,4 +38,4 @@
  * stops at end of string (or at the next BDC3 character,
  * if defined). BDC2 and BDC3 are mainly for VMS.
  */
-#define	BDC1	'/'		/* Buffer names.                */
+#define	BDC1	'/'		        /* Buffer names.                */

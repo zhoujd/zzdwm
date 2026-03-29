@@ -17,10 +17,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define LARGE	0			/* Large model. 		*/
-#define PCC	1			/* "[]" will work.              */
-#define GOOD	0			/* not in Lattice stdio.h	*/
-#define NULLPTR	((char *) 0)		/* Portable null pointer	*/
+#define LARGE	0			    /* Large model. 		    */
+#define PCC	    1			    /* "[]" will work.          */
+#define GOOD	0			    /* not in Lattice stdio.h	*/
+#define NULLPTR	((char *) 0)	/* Portable null pointer	*/
 /*
  * Macros used by the buffer name making code.
  * Start at the end of the file name, scan to the left
@@ -29,6 +29,6 @@
  * stops at end of string (or at the next BDC3 character,
  * if defined). BDC2 and BDC3 are mainly for VMS.
  */
-#define BDC0	':'                     /* Buffer names.                */
+#define BDC0	':'             /* Buffer names.            */
 #define BDC1	'\\'
 #define BDC2	'/'

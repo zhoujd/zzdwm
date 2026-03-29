@@ -35,13 +35,13 @@ char *cspec = NULL;		/* Command string.      */
 int
 spawncli (int f, int n, int k)
 {
-  ttcolor (CTEXT);		/* Normal color.        */
+  ttcolor (CTEXT);		    /* Normal color.        */
   ttwindow (0, nrow - 1);	/* Full screen scroll.  */
   ttmove (nrow - 1, 0);		/* Last line.           */
   ttflush ();
   ttclose ();
   if (cspec == NULL)
-    {				/* Try to find it.      */
+    {                     /* Try to find it.      */
       cspec = getenv ("COMSPEC");
       if (cspec == NULL)
         cspec = "/c/WINDOWS/system32/cmd.exe";
