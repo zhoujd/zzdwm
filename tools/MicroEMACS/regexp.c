@@ -269,9 +269,9 @@ regcomp (const char *exp)
 
       /* Starting-point info. */
       if (OP (scan) == EXACTLY)
-	r->regstart = *OPERAND (scan);
+	      r->regstart = *OPERAND (scan);
       else if (OP (scan) == BOL)
-	r->reganch++;
+	      r->reganch++;
 
       /*
        * If there's something expensive in the r.e., find the
@@ -282,18 +282,18 @@ regcomp (const char *exp)
        * strong reason, but sufficient in the absence of others.
        */
       if (flags & SPSTART)
-	{
-	  longest = NULL;
-	  len = 0;
-	  for (; scan != NULL; scan = regnext (scan))
-	    if (OP (scan) == EXACTLY && strlen (OPERAND (scan)) >= (size_t)len)
-	      {
-		longest = OPERAND (scan);
-		len = strlen (OPERAND (scan));
-	      }
-	  r->regmust = longest;
-	  r->regmlen = len;
-	}
+        {
+          longest = NULL;
+          len = 0;
+          for (; scan != NULL; scan = regnext (scan))
+            if (OP (scan) == EXACTLY && strlen (OPERAND (scan)) >= (size_t)len)
+              {
+          longest = OPERAND (scan);
+          len = strlen (OPERAND (scan));
+              }
+          r->regmust = longest;
+          r->regmlen = len;
+        }
     }
 
   return (r);
@@ -402,12 +402,12 @@ regbranch (int *flagp)
     {
       latest = regpiece (&flags);
       if (latest == NULL)
-	return (NULL);
+	      return (NULL);
       *flagp |= flags & HASWIDTH;
       if (chain == NULL)	/* First piece. */
-	*flagp |= flags & SPSTART;
+	      *flagp |= flags & SPSTART;
       else
-	regtail (chain, latest);
+	      regtail (chain, latest);
       chain = latest;
     }
   if (chain == NULL)		/* Loop ran zero times. */
@@ -582,26 +582,26 @@ regatom (int *flagp)
       break;
     default:
       {
-	register int len;
-	register char ender;
+        register int len;
+        register char ender;
 
-	regparse--;
-	len = strcspn (regparse, META);
-	if (len <= 0)
-	  FAIL ("internal disaster");
-	ender = *(regparse + len);
-	if (len > 1 && ISMULT (ender))
-	  len--;		/* Back off clear of ?+* operand. */
-	*flagp |= HASWIDTH;
-	if (len == 1)
-	  *flagp |= SIMPLE;
-	ret = regnode (EXACTLY);
-	while (len > 0)
-	  {
-	    regc (*regparse++);
-	    len--;
-	  }
-	regc ('\0');
+        regparse--;
+        len = strcspn (regparse, META);
+        if (len <= 0)
+          FAIL ("internal disaster");
+        ender = *(regparse + len);
+        if (len > 1 && ISMULT (ender))
+          len--;		/* Back off clear of ?+* operand. */
+        *flagp |= HASWIDTH;
+        if (len == 1)
+          *flagp |= SIMPLE;
+        ret = regnode (EXACTLY);
+        while (len > 0)
+          {
+            regc (*regparse++);
+            len--;
+          }
+        regc ('\0');
       }
       break;
     }
@@ -695,7 +695,7 @@ regtail (char *p, char *val)
     {
       temp = regnext (scan);
       if (temp == NULL)
-	break;
+	      break;
       scan = temp;
     }
 
@@ -771,11 +771,11 @@ regexec (regexp * prog, const char *string)
     {
       s = string;
       while ((s = strchr (s, prog->regmust[0])) != NULL)
-	{
-	  if (strncmp (s, prog->regmust, prog->regmlen) == 0)
-	    break;		/* Found it. */
-	  s++;
-	}
+        {
+          if (strncmp (s, prog->regmust, prog->regmlen) == 0)
+            break;		/* Found it. */
+          s++;
+        }
       if (s == NULL)		/* Not present. */
 	return (0);
     }
@@ -1069,24 +1069,24 @@ regrepeat (char *p)
       break;
     case EXACTLY:
       while (*opnd == *scan)
-	{
-	  count++;
-	  scan++;
-	}
+        {
+          count++;
+          scan++;
+        }
       break;
     case ANYOF:
       while (*scan != '\0' && strchr (opnd, *scan) != NULL)
-	{
-	  count++;
-	  scan++;
-	}
+        {
+          count++;
+          scan++;
+        }
       break;
     case ANYBUT:
       while (*scan != '\0' && strchr (opnd, *scan) == NULL)
-	{
-	  count++;
-	  scan++;
-	}
+        {
+          count++;
+          scan++;
+        }
       break;
     default:			/* Oh dear.  Called inappropriately. */
       regerror ("internal foulup");
@@ -1138,20 +1138,20 @@ regdump (regexp *r)
       printf ("%2d%s", (int)(s - r->program), regprop (s));	/* Where, what. */
       next = regnext (s);
       if (next == NULL)		/* Next ptr. */
-	printf ("(0)");
+	      printf ("(0)");
       else
-	printf ("(%d)", (int)((s - r->program) + (next - s)));
+	      printf ("(%d)", (int)((s - r->program) + (next - s)));
       s += 3;
       if (op == ANYOF || op == ANYBUT || op == EXACTLY)
-	{
-	  /* Literal string, where present. */
-	  while (*s != '\0')
-	    {
-	      putchar (*s);
-	      s++;
-	    }
-	  s++;
-	}
+        {
+          /* Literal string, where present. */
+          while (*s != '\0')
+            {
+              putchar (*s);
+              s++;
+            }
+          s++;
+        }
       putchar ('\n');
     }
 

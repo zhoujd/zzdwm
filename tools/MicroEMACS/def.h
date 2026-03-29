@@ -297,7 +297,8 @@ typedef enum UKIND
   UMOVE,			/* Move to (line #, offset)	*/
   UINSERT,			/* Insert string		*/
   UDELETE,			/* Delete string		*/
-} UKIND;
+}
+UKIND;
 
 /*
  * The symbol table links editing functions
@@ -316,7 +317,8 @@ typedef struct SYMBOL
   const char *s_name;		/* Name.                        */
   int (*s_funcp) (int f, int n, int k); /* Function.            */
   int *s_macro;			/* Macro definition.            */
-} SYMBOL;
+}
+SYMBOL;
 
 /*
  * A text position consists of a line pointer and an offset
@@ -333,7 +335,8 @@ typedef struct POS
 {
   struct LINE *p;
   int o;
-} POS;
+}
+POS;
 
 /*
  * A mark ring saves the 16 most recent locations of the mark;
@@ -344,7 +347,8 @@ typedef struct MARKRING
 {
   int m_count;			/* Number of marks pushed	*/
   POS m_ring[RINGSIZE];		/* Stack of marks		*/
-} MARKRING;
+}
+MARKRING;
 
 /*
  * Text is kept in buffers. A buffer header, described
@@ -370,7 +374,8 @@ typedef struct BUFFER
   char b_bname[NBUFN];		/* Buffer name                  */
   struct MODE *b_mode;		/* Emacs-like major mode	*/
   char b_active;		/* window activated flag */
-} BUFFER;
+}
+BUFFER;
 
 #define b_mark b_ring.m_ring[0] /* Current "mark" position	*/
 #define firstline(bp) (lforw((bp)->b_linep))
@@ -403,7 +408,8 @@ typedef struct EWINDOW
   char w_force;			/* If NZ, forcing row.          */
   char w_flag;			/* Flags.                       */
   int w_leftcol;		/* left column of window        */
-} EWINDOW;
+}
+EWINDOW;
 
 #define w_mark w_ring.m_ring[0] /* Current "mark" position	*/
 
@@ -436,7 +442,8 @@ typedef struct
 {
   struct POS r_pos;		/* Origin position		*/
   int r_size;			/* Length in characters.        */
-} REGION;
+}
+REGION;
 
 /*
  * All text is kept in circularly linked
@@ -457,7 +464,8 @@ typedef struct LINE
   int l_size;			/* Allocated size               */
   int l_used;			/* Used size                    */
   uchar l_text[];		/* A bunch of characters.       */
-} LINE;
+}
+LINE;
 
 /*
  * Size of the line header with the l_text.
@@ -571,14 +579,16 @@ typedef struct tagref
   struct tagref *next;		/* next tag in this file        */
   struct tagref *prev;		/* previous tag in this file    */
   struct tagfile *file;		/* file containing this tag     */
-} tagref;
+}
+tagref;
 
 typedef struct tagfile
 {
   char *fname;			/* name of file                 */
   struct tagfile *next;		/* next file on list            */
   struct tagfile *prev;		/* previous file on list        */
-} tagfile;
+}
+tagfile;
 
 
 /*

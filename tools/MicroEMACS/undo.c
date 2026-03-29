@@ -550,35 +550,35 @@ undostep (UNDO *up)
       if (up->o > wllength (curwp->w_dot.p))
 	eprintf ("Offset too large");
       else
-	{
-	  curwp->w_dot.o = up->o;
-	  curwp->w_flag |= WFMOVE;
-	}
+        {
+          curwp->w_dot.o = up->o;
+          curwp->w_flag |= WFMOVE;
+        }
     }
 
   if (status == TRUE)
     {
       switch (ukind (up))
-	{
-	case UMOVE:
-	  break;
+        {
+        case UMOVE:
+          break;
 
-	case UDELETE:
-	  {
-	    const uchar *s = up->u.del.s;
-	    status = insertwithnl ((const char *) s, up->u.del.bytes);
-	    break;
-	  }
+        case UDELETE:
+          {
+            const uchar *s = up->u.del.s;
+            status = insertwithnl ((const char *) s, up->u.del.bytes);
+            break;
+          }
 
-	case UINSERT:
-	  status = ldelete (up->u.ins.chars, FALSE);
-	  break;
+        case UINSERT:
+          status = ldelete (up->u.ins.chars, FALSE);
+          break;
 
-	default:
-	  eprintf ("Unknown undo kind 0x%x", up->kind);
-	  status = FALSE;
-	  break;
-	}
+        default:
+          eprintf ("Unknown undo kind 0x%x", up->kind);
+          status = FALSE;
+          break;
+        }
     }
 
   return status;
@@ -630,12 +630,12 @@ undo (int f, int n, int k)
       while (start > g->undos && start->l == NOLINE)
 	--start;
       for (up = start; up != end; up++)
-	{
-	  int s = undostep (up);
+        {
+          int s = undostep (up);
 
-	  if (s != TRUE)
-	    status = s;
-	}
+          if (s != TRUE)
+            status = s;
+        }
       end = start;
       --start;
     }
@@ -670,37 +670,37 @@ redostep (UNDO *up)
     {
       status = gotoline (TRUE, up->l + 1, KRANDOM);
       if (up->o > wllength (curwp->w_dot.p))
-	eprintf ("Offset too large");
+        eprintf ("Offset too large");
       else
-	{
-	  curwp->w_dot.o = up->o;
-	  curwp->w_flag |= WFMOVE;
-	}
+        {
+          curwp->w_dot.o = up->o;
+          curwp->w_flag |= WFMOVE;
+        }
       curwp->w_flag |= WFMOVE;
     }
 
   if (status == TRUE)
     {
       switch (ukind (up))
-	{
-	case UMOVE:
-	  break;
+        {
+        case UMOVE:
+          break;
 
-	case UDELETE:
-	  {
-	    status = ldelete (up->u.del.chars, FALSE);
-	    break;
-	  }
+        case UDELETE:
+          {
+            status = ldelete (up->u.del.chars, FALSE);
+            break;
+          }
 
-	case UINSERT:
-	  status = insertwithnl ((const char *) up->u.ins.s, up->u.ins.bytes);
-	  break;
+        case UINSERT:
+          status = insertwithnl ((const char *) up->u.ins.s, up->u.ins.bytes);
+          break;
 
-	default:
-	  eprintf ("Unknown undo kind 0x%x", up->kind);
-	  status = FALSE;
-	  break;
-	}
+        default:
+          eprintf ("Unknown undo kind 0x%x", up->kind);
+          status = FALSE;
+          break;
+        }
     }
 
   return status;
@@ -741,7 +741,7 @@ redo (int f, int n, int k)
       int s = redostep (up);
 
       if (s != TRUE)
-	status = s;
+        status = s;
     }
 
   /* Set the buffer change flag.
@@ -771,9 +771,9 @@ printstring (const uchar *s, int bytes)
     {
       uchar c = *s;
       if (c == '\n')
-	printf ("\\n");
+        printf ("\\n");
       else
-	printf ("%c", c);
+        printf ("%c", c);
       --bytes;
       ++s;
     }
@@ -794,8 +794,8 @@ printone (UNDO *up)
     {
     case UDELETE:
       {
-	printf ("Delete string: ");
-	printstring (up->u.del.s, up->u.del.bytes);
+        printf ("Delete string: ");
+        printstring (up->u.del.s, up->u.del.bytes);
         break;
       }
 
@@ -840,7 +840,7 @@ printundo (void)
       printf ("%d:\r\n", level);
       end = &g->undos[g->next];
       for (up = &g->undos[0]; up != end; up++)
-	printone (up);
+        printone (up);
       ++level;
     }
 }

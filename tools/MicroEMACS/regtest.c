@@ -49,27 +49,27 @@ main (int argc, const char *argv[])
   if (i != 0)
     {
       for (i = 0; i < NSUBEXP; i++)
-	{
-	  start = r->startp[i];
-	  if (start == NULL)
-	    continue;
-	  end = r->endp[i];
-	  len = end - start;
-	  copy = malloc (len + 1);
-	  strncpy (copy, start, len);
-	  copy[len] = '\0';
-	  printf("group %d = \"%s\"\n", i, copy);
-	  if (i == 0)
-	    match = copy;
-	  else
-	    free (copy);
-	}
+        {
+          start = r->startp[i];
+          if (start == NULL)
+            continue;
+          end = r->endp[i];
+          len = end - start;
+          copy = malloc (len + 1);
+          strncpy (copy, start, len);
+          copy[len] = '\0';
+          printf("group %d = \"%s\"\n", i, copy);
+          if (i == 0)
+            match = copy;
+          else
+            free (copy);
+        }
 
       /* Do the substitution */
       if (regsub (r, repl, dest, sizeof (dest)))
-	printf ("Replaced '%s' with '%s' using replacement pattern '%s'\n", match, dest, repl);
+        printf ("Replaced '%s' with '%s' using replacement pattern '%s'\n", match, dest, repl);
       else
-	printf ("Error in replacement pattern '%s'\n", repl);
+        printf ("Error in replacement pattern '%s'\n", repl);
     }
   return 0;
 }

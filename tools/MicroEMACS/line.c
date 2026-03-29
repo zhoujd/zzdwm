@@ -280,7 +280,7 @@ linsert (int n, int c, char *s)
       bytes = n;
       saveundo (UINSERT, NULL, 1, chars, bytes, s);
     }
- else
+  else
     {
       /* Convert character to UTF-8, store in buf. Set chars to
        * total number of characters to insert.  Set bytes to total number

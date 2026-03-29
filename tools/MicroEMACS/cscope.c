@@ -150,8 +150,8 @@ prepcscope (char field, const char *string, int delete)
   if (cscope_input == NULL)
     if (open_cscope () == FALSE)
       {
-	eprintf ("Unable to open a pipe to cscope");
-	return FALSE;
+        eprintf ("Unable to open a pipe to cscope");
+        return FALSE;
       }
 
   /* If delete flag is TRUE, free up any existing tags from a previous search.
@@ -175,10 +175,10 @@ prepcscope (char field, const char *string, int delete)
        */
       f = findtagfile (filename);
       if (f == NULL)
-	{
-	  eprintf ("Unable to create file structure");
-	  return FALSE;
-	}
+        {
+          eprintf ("Unable to create file structure");
+          return FALSE;
+        }
 
       /* If the search string is the same as the name of the function where this
        * reference was found, this must be the definition of the function,
@@ -189,10 +189,10 @@ prepcscope (char field, const char *string, int delete)
       /* Add a tag entry to the list.
        */
       if (addtagref (string, f, line, 0L, exact) == NULL)
-	{
-	  eprintf ("Unable to create tag structure");
-	  return FALSE;
-	}
+        {
+          eprintf ("Unable to create tag structure");
+          return FALSE;
+        }
     }
 
   return TRUE;
@@ -275,10 +275,10 @@ main (int argc, char *argv[])
       int n = cscope_search ('0', search_string);
       printf ("%d matches for %s:\n", n, search_string);
       while (n-- > 0)
-	{
-	  next_match (filename, where, &line);
-	  printf ("%s:%d in %s\n", filename, line, where);
-	}
+        {
+          next_match (filename, where, &line);
+          printf ("%s:%d in %s\n", filename, line, where);
+        }
     }
   return 0;
 }

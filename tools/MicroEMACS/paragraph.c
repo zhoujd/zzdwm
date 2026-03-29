@@ -48,10 +48,10 @@
  *
  * Revision 1.3  91/01/07  10:25:00  alexande
  * Changes for variable tab size.
- * 
+ *
  * Revision 1.2  90/07/03  13:25:28  alexande
  * Eliminate Turbo C warning.
- * 
+ *
  *
  */
 #include "def.h"
@@ -123,8 +123,8 @@ gotoeop (int f, int n, int k)
       /* Find the first word on/after the current line */
       curwp->w_dot.o = 0;
       while (forwchar (FALSE, 1, KRANDOM))
-	if (inword ())
-	  break;
+      if (inword ())
+        break;
       curwp->w_dot.o = 0;
       curwp->w_dot.p = lforw (curwp->w_dot.p);
 
@@ -132,15 +132,15 @@ gotoeop (int f, int n, int k)
        * described above.
        */
       while (curwp->w_dot.p != curbp->b_linep)
-	{
-	  if (llength (curwp->w_dot.p) == 0)
-	    break;
-	  c = lgetc (curwp->w_dot.p, 0);
-	  if (c == ' ' || c == '\t' || c == '@' || c == '.')
-	    break;
-	  else
-	    curwp->w_dot.p = lforw (curwp->w_dot.p);
-	}
+        {
+          if (llength (curwp->w_dot.p) == 0)
+            break;
+          c = lgetc (curwp->w_dot.p, 0);
+          if (c == ' ' || c == '\t' || c == '@' || c == '.')
+            break;
+          else
+            curwp->w_dot.p = lforw (curwp->w_dot.p);
+        }
     }
   if (curwp->w_dot.p == curbp->b_linep)	/* at end of buffer?    */
     backchar (FALSE, 1, KRANDOM);	/* back up to prev line */
@@ -196,82 +196,82 @@ fillpara (int f, int n, int k)
       /* get the next character in the paragraph
        */
       if ((eolflag = (curwp->w_dot.o == wllength (curwp->w_dot.p))) == TRUE)
-	{
-	  c = ' ';
-	  if (lforw (curwp->w_dot.p) == eopline)
-	    eopflag = TRUE;
-	}
+        {
+          c = ' ';
+          if (lforw (curwp->w_dot.p) == eopline)
+            eopflag = TRUE;
+        }
       else
-	c = wlgetc (curwp->w_dot.p, curwp->w_dot.o);
+	      c = wlgetc (curwp->w_dot.p, curwp->w_dot.o);
 
       /* and then delete it
        */
       if (ldelete (1, FALSE) == FALSE)
-	return (FALSE);
+	      return (FALSE);
 
       /* if not a separator, just add it in
        */
       if (c != ' ' && c != '\t')
-	{
-	  if (wordlen < MAXWORD - 1)
-	    wbuf[wordlen++] = c;
-	  else
-	    {
-	      /* You lose chars beyond MAXWORD if the word
-	       * is to long. I'm to lazy to fix it now; it
-	       * just silently truncated the word before, so
-	       * I get to feel smug.
-	       */
-	      eprintf ("Word too long!");
-	    }
-	}
+        {
+          if (wordlen < MAXWORD - 1)
+            wbuf[wordlen++] = c;
+          else
+            {
+              /* You lose chars beyond MAXWORD if the word
+              * is to long. I'm to lazy to fix it now; it
+              * just silently truncated the word before, so
+              * I get to feel smug.
+              */
+              eprintf ("Word too long!");
+            }
+        }
       else if (wordlen)
-	{
-	  /* calculate tentative new length with word added
-	   */
-	  newlength = clength + 1 + wordlen;
+        {
+          /* calculate tentative new length with word added
+          */
+          newlength = clength + 1 + wordlen;
 
-	  /* if at end of line or at doublespace and previous
-	   * character was one of '.','?','!' doublespace here.
-	   */
-	  if ((eolflag || curwp->w_dot.o == wllength (curwp->w_dot.p)
-	       || (c = wlgetc (curwp->w_dot.p, curwp->w_dot.o)) == ' '
-	       || c == '\t')
-	      && CISEOSP (wbuf[wordlen - 1]) && wordlen < MAXWORD - 1)
-	    wbuf[wordlen++] = ' ';
+          /* if at end of line or at doublespace and previous
+          * character was one of '.','?','!' doublespace here.
+          */
+          if ((eolflag || curwp->w_dot.o == wllength (curwp->w_dot.p)
+              || (c = wlgetc (curwp->w_dot.p, curwp->w_dot.o)) == ' '
+              || c == '\t')
+              && CISEOSP (wbuf[wordlen - 1]) && wordlen < MAXWORD - 1)
+            wbuf[wordlen++] = ' ';
 
-	  /* at a word break with a word waiting
-	   */
-	  if (newlength <= fillcol)
-	    {
-	      /* add word to current line */
-	      if (!firstflag)
-		{
-		  linsert (1, ' ', NULLPTR);
-		  ++clength;
-		}
-	      firstflag = FALSE;
-	    }
-	  else
-	    {
-	      if (curwp->w_dot.o > 0 &&
-		  wlgetc (curwp->w_dot.p, curwp->w_dot.o - 1) == ' ')
-		{
-		  curwp->w_dot.o -= 1;
-		  saveundo (UMOVE, &curwp->w_dot);
-		  ldelete (1, FALSE);
-		}
-	      /* start a new line */
-	      lnewline ();
-	      clength = 0;
-	    }
+          /* at a word break with a word waiting
+          */
+          if (newlength <= fillcol)
+            {
+              /* add word to current line */
+              if (!firstflag)
+          {
+            linsert (1, ' ', NULLPTR);
+            ++clength;
+          }
+              firstflag = FALSE;
+            }
+          else
+            {
+              if (curwp->w_dot.o > 0 &&
+            wlgetc (curwp->w_dot.p, curwp->w_dot.o - 1) == ' ')
+          {
+            curwp->w_dot.o -= 1;
+            saveundo (UMOVE, &curwp->w_dot);
+            ldelete (1, FALSE);
+          }
+              /* start a new line */
+              lnewline ();
+              clength = 0;
+            }
 
-	  /* and add the word in in either case */
-	  for (i = 0; i < wordlen; i++)
-	    linsert (1, wbuf[i], NULLPTR);
-	  clength += wordlen;
-	  wordlen = 0;
-	}
+          /* and add the word in in either case */
+          for (i = 0; i < wordlen; i++)
+            linsert (1, wbuf[i], NULLPTR);
+          clength += wordlen;
+          wordlen = 0;
+        }
     }
   /* and add a last newline for the end of our new paragraph */
   lnewline ();
@@ -288,7 +288,7 @@ fillpara (int f, int n, int k)
     {
       c = wlgetc (curwp->w_dot.p, curwp->w_dot.o - 1);
       if (c == ' ')
-	backdel (FALSE, 1, KRANDOM);
+	      backdel (FALSE, 1, KRANDOM);
     }
 
   return (TRUE);
@@ -317,7 +317,7 @@ killpara (int f, int n, int k)
 
       /* and delete it */
       if ((status = killregion (FALSE, 1, KRANDOM)) != TRUE)
-	return (status);
+	      return (status);
 
       /* and clean up the 2 extra lines */
       ldelete (1, TRUE);
@@ -339,12 +339,12 @@ fillword (int f, int n, int k)
   for (i = col = 0; col <= fillcol; ++i, ++col)
     {
       if (i == curwp->w_dot.o)
-	return selfinsert (f, n, k);
+	      return selfinsert (f, n, k);
       c = lgetc (curwp->w_dot.p, i);
       if (c == '\t')
-	col += (tabsize - col % tabsize) - 1;
+	      col += (tabsize - col % tabsize) - 1;
       else if (CISCTRL (c) != FALSE)
-	++col;
+	      ++col;
     }
   if (curwp->w_dot.o != wllength (curwp->w_dot.p))
     {
@@ -358,7 +358,7 @@ fillword (int f, int n, int k)
   if ((c = lgetc (curwp->w_dot.p, curwp->w_dot.o)) != ' ' && c != '\t')
     do
       {
-	backchar (FALSE, 1, KRANDOM);
+	      backchar (FALSE, 1, KRANDOM);
       }
     while ((c = lgetc (curwp->w_dot.p, curwp->w_dot.o)) != ' '
 	   && c != '\t' && curwp->w_dot.o > 0);
@@ -366,7 +366,7 @@ fillword (int f, int n, int k)
   if (curwp->w_dot.o == 0)
     do
       {
-	forwchar (FALSE, 1, KRANDOM);
+	      forwchar (FALSE, 1, KRANDOM);
       }
     while ((c = lgetc (curwp->w_dot.p, curwp->w_dot.o)) != ' '
 	   && c != '\t' && curwp->w_dot.o < wllength (curwp->w_dot.p));

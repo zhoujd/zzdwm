@@ -61,15 +61,15 @@ backchar (int f, int n, int k)
   while (n--)
     {
       if (curwp->w_dot.o == 0)
-	{
-	  if ((lp = lback (curwp->w_dot.p)) == curbp->b_linep)
-	    return (FALSE);
-	  curwp->w_dot.p = lp;
-	  curwp->w_dot.o = wllength (lp);
-	  curwp->w_flag |= WFMOVE;
-	}
+        {
+          if ((lp = lback (curwp->w_dot.p)) == curbp->b_linep)
+            return (FALSE);
+          curwp->w_dot.p = lp;
+          curwp->w_dot.o = wllength (lp);
+          curwp->w_flag |= WFMOVE;
+        }
       else
-	curwp->w_dot.o--;
+        curwp->w_dot.o--;
     }
   return (TRUE);
 }
@@ -100,17 +100,17 @@ forwchar (int f, int n, int k)
   while (n--)
     {
       if (curwp->w_dot.o == wllength (curwp->w_dot.p))
-	{
-	  if (curwp->w_dot.p == curbp->b_linep)
-	    return (FALSE);
-	  if ((lp = lforw (curwp->w_dot.p)) == curbp->b_linep)
-	    return (FALSE);
-	  curwp->w_dot.p = lp;
-	  curwp->w_dot.o = 0;
-	  curwp->w_flag |= WFMOVE;
-	}
+        {
+          if (curwp->w_dot.p == curbp->b_linep)
+            return (FALSE);
+          if ((lp = lforw (curwp->w_dot.p)) == curbp->b_linep)
+            return (FALSE);
+          curwp->w_dot.p = lp;
+          curwp->w_dot.o = 0;
+          curwp->w_flag |= WFMOVE;
+        }
       else
-	curwp->w_dot.o++;
+        curwp->w_dot.o++;
     }
   return (TRUE);
 }
@@ -182,12 +182,12 @@ getgoal (LINE *dlp)
       c = ugetc (s, 0, &ulen);
       newcol = col;
       if (c == '\t')
-	newcol += tabsize - newcol % tabsize - 1;
+        newcol += tabsize - newcol % tabsize - 1;
       else if (c < 0x80 && CISCTRL (c) != FALSE)
-	++newcol;
+        ++newcol;
       ++newcol;
       if (newcol > curgoal)
-	break;
+        break;
       col = newcol;
       ++dbo;
       s += ulen;
@@ -281,9 +281,9 @@ checkdot (void)
   while (total-- && lp != curbp->b_linep)
     {
       if (lp == dotp)		/* is dot in window?    */
-	return;			/* yes - do nothing     */
+        return;			  /* yes - do nothing     */
       if (total == half)	/* halfway point?       */
-	newdotp = lp;		/* this is new dot      */
+        newdotp = lp;		/* this is new dot      */
       lp = lforw (lp);		/* move forward         */
     }
 
@@ -394,15 +394,15 @@ setmark (int f, int n, int k)
     {
       pushmark (curwp->w_dot);
       if (kbdmop == NULL)
-	eprintf ("[Mark set]");
+        eprintf ("[Mark set]");
     }
   else
     {
       if (curwp->w_mark.p == NULL)
-	{
-	  eprintf ("No mark in this window");
-	  return (FALSE);
-	}
+        {
+          eprintf ("No mark in this window");
+          return (FALSE);
+        }
       curwp->w_dot = popmark ();
       curwp->w_flag |= WFMOVE;
     }
@@ -450,7 +450,7 @@ gotoline (int f, int n, int k)
   if (f == FALSE)
     {
       if ((s = ereply ("Goto line: ", buf, sizeof (buf))) != TRUE)
-	return (s);
+        return (s);
       n = atoi (buf);
     }
   /* Handle the case where the user may be passed something like this:

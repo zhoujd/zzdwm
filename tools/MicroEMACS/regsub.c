@@ -76,41 +76,41 @@ regsub (const regexp * rp, const char *source, char *dest, int destlen)
   while ((c = *src++) != '\0')
     {
       if (c == '&')
-	no = 0;
+        no = 0;
       else if (c == '\\' && isdigit (*src))
-	no = *src++ - '0';
+        no = *src++ - '0';
       else
-	no = -1;
+        no = -1;
 
       if (no < 0)
-	{			/* Ordinary character. */
-	  if (c == '\\' && (*src == '\\' || *src == '&'))
-	    c = *src++;
-	  if (dst >= end)
-	    {
-	      regerror ("destination buffer too small");
-	      return 0;
-	    }
-	  *dst++ = c;
-	}
+        {			/* Ordinary character. */
+          if (c == '\\' && (*src == '\\' || *src == '&'))
+            c = *src++;
+          if (dst >= end)
+            {
+              regerror ("destination buffer too small");
+              return 0;
+            }
+          *dst++ = c;
+        }
       else if (prog->startp[no] != NULL && prog->endp[no] != NULL &&
 	       prog->endp[no] > prog->startp[no])
-	{
-	  len = prog->endp[no] - prog->startp[no];
-	  if (dst + len >= end)
-	    {
-	      regerror ("destination buffer too small");
-	      return 0;
-	    }
+        {
+          len = prog->endp[no] - prog->startp[no];
+          if (dst + len >= end)
+            {
+              regerror ("destination buffer too small");
+              return 0;
+            }
 
-	  (void) strncpy (dst, prog->startp[no], len);
-	  dst += len;
-	  if (*(dst - 1) == '\0')
-	    {			/* strncpy hit NUL. */
-	      regerror ("damaged match string");
-	      return 0;
-	    }
-	}
+          (void) strncpy (dst, prog->startp[no], len);
+          dst += len;
+          if (*(dst - 1) == '\0')
+            {			/* strncpy hit NUL. */
+              regerror ("damaged match string");
+              return 0;
+            }
+        }
     }
 
   if (dst >= end)

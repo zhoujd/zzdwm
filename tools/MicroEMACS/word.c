@@ -53,15 +53,15 @@ backword (int f, int n, int k)
   while (n--)
     {
       while (inword () == FALSE)
-	{
-	  if (backchar (FALSE, 1, KRANDOM) == FALSE)
-	    return (FALSE);
-	}
+        {
+          if (backchar (FALSE, 1, KRANDOM) == FALSE)
+            return (FALSE);
+        }
       while (inword () != FALSE)
-	{
-	  if (backchar (FALSE, 1, KRANDOM) == FALSE)
-	    return (FALSE);
-	}
+        {
+          if (backchar (FALSE, 1, KRANDOM) == FALSE)
+            return (FALSE);
+        }
     }
   return (forwchar (FALSE, 1, KRANDOM));
 }
@@ -80,15 +80,15 @@ forwword (int f, int n, int k)
   while (n--)
     {
       while (inword () == FALSE)
-	{
-	  if (forwchar (FALSE, 1, KRANDOM) == FALSE)
-	    return (FALSE);
-	}
+        {
+          if (forwchar (FALSE, 1, KRANDOM) == FALSE)
+            return (FALSE);
+        }
       while (inword () != FALSE)
-	{
-	  if (forwchar (FALSE, 1, KRANDOM) == FALSE)
-	    return (FALSE);
-	}
+        {
+          if (forwchar (FALSE, 1, KRANDOM) == FALSE)
+            return (FALSE);
+        }
     }
   return (TRUE);
 }
@@ -113,22 +113,22 @@ upperword (int f, int n, int k)
   while (n--)
     {
       while (inword () == FALSE)
-	{
-	  if (forwchar (FALSE, 1, KRANDOM) == FALSE)
-	    return (FALSE);
-	}
+        {
+          if (forwchar (FALSE, 1, KRANDOM) == FALSE)
+            return (FALSE);
+        }
       while (inword () != FALSE)
-	{
-	  c = wlgetc (curwp->w_dot.p, curwp->w_dot.o);
-	  if (CISLOWER (c) != FALSE)
-	    {
-	      c = CTOUPPER (c);
-	      lputc (curwp->w_dot, c);
-	      lchange (WFHARD);
-	    }
-	  else if (forwchar (FALSE, 1, KRANDOM) == FALSE)
-	    return (FALSE);
-	}
+        {
+          c = wlgetc (curwp->w_dot.p, curwp->w_dot.o);
+          if (CISLOWER (c) != FALSE)
+            {
+              c = CTOUPPER (c);
+              lputc (curwp->w_dot, c);
+              lchange (WFHARD);
+            }
+          else if (forwchar (FALSE, 1, KRANDOM) == FALSE)
+            return (FALSE);
+        }
     }
   return (TRUE);
 }
@@ -152,22 +152,22 @@ lowerword (int f, int n, int k)
   while (n--)
     {
       while (inword () == FALSE)
-	{
-	  if (forwchar (FALSE, 1, KRANDOM) == FALSE)
-	    return (FALSE);
-	}
+        {
+          if (forwchar (FALSE, 1, KRANDOM) == FALSE)
+            return (FALSE);
+        }
       while (inword () != FALSE)
-	{
-	  c = wlgetc (curwp->w_dot.p, curwp->w_dot.o);
-	  if (CISUPPER (c) != FALSE)
-	    {
-	      c = CTOLOWER (c);
-	      lputc (curwp->w_dot, c);
-	      lchange (WFHARD);
-	    }
-	  else if (forwchar (FALSE, 1, KRANDOM) == FALSE)
-	    return (FALSE);
-	}
+        {
+          c = wlgetc (curwp->w_dot.p, curwp->w_dot.o);
+          if (CISUPPER (c) != FALSE)
+            {
+              c = CTOLOWER (c);
+              lputc (curwp->w_dot, c);
+              lchange (WFHARD);
+            }
+          else if (forwchar (FALSE, 1, KRANDOM) == FALSE)
+            return (FALSE);
+        }
     }
   return (TRUE);
 }
@@ -192,34 +192,34 @@ capword (int f, int n, int k)
   while (n--)
     {
       while (inword () == FALSE)
-	{
-	  if (forwchar (FALSE, 1, KRANDOM) == FALSE)
-	    return (FALSE);
-	}
+        {
+          if (forwchar (FALSE, 1, KRANDOM) == FALSE)
+            return (FALSE);
+        }
       if (inword () != FALSE)
-	{
-	  c = wlgetc (curwp->w_dot.p, curwp->w_dot.o);
-	  if (CISLOWER (c) != FALSE)
-	    {
-	      c = CTOUPPER (c);
-	      lputc (curwp->w_dot, c);
-	      lchange (WFHARD);
-	    }
-	  else if (forwchar (FALSE, 1, KRANDOM) == FALSE)
-	    return (FALSE);
-	  while (inword () != FALSE)
-	    {
-	      c = wlgetc (curwp->w_dot.p, curwp->w_dot.o);
-	      if (CISUPPER (c) != FALSE)
-		{
-		  c = CTOLOWER (c);
-		  lputc (curwp->w_dot, c);
-		  lchange (WFHARD);
-		}
-	      else if (forwchar (FALSE, 1, KRANDOM) == FALSE)
-		return (FALSE);
-	    }
-	}
+        {
+          c = wlgetc (curwp->w_dot.p, curwp->w_dot.o);
+          if (CISLOWER (c) != FALSE)
+            {
+              c = CTOUPPER (c);
+              lputc (curwp->w_dot, c);
+              lchange (WFHARD);
+            }
+          else if (forwchar (FALSE, 1, KRANDOM) == FALSE)
+            return (FALSE);
+          while (inword () != FALSE)
+            {
+              c = wlgetc (curwp->w_dot.p, curwp->w_dot.o);
+              if (CISUPPER (c) != FALSE)
+          {
+            c = CTOLOWER (c);
+            lputc (curwp->w_dot, c);
+            lchange (WFHARD);
+          }
+              else if (forwchar (FALSE, 1, KRANDOM) == FALSE)
+          return (FALSE);
+            }
+        }
     }
   return (TRUE);
 }
@@ -247,17 +247,17 @@ delfword (int f, int n, int k)
   while (n--)
     {
       while (inword () == FALSE)
-	{
-	  if (forwchar (FALSE, 1, KRANDOM) == FALSE)
-	    goto out;		/* Hit end of buffer.   */
-	  ++size;
-	}
+        {
+          if (forwchar (FALSE, 1, KRANDOM) == FALSE)
+            goto out;		/* Hit end of buffer.   */
+          ++size;
+        }
       while (inword () != FALSE)
-	{
-	  if (forwchar (FALSE, 1, KRANDOM) == FALSE)
-	    goto out;		/* Hit end of buffer.   */
-	  ++size;
-	}
+        {
+          if (forwchar (FALSE, 1, KRANDOM) == FALSE)
+            goto out;		/* Hit end of buffer.   */
+          ++size;
+        }
     }
 out:
   curwp->w_dot.p = dotp;
@@ -291,17 +291,17 @@ delbword (int f, int n, int k)
   while (n--)
     {
       while (inword () == FALSE)
-	{
-	  if (backchar (FALSE, 1, KRANDOM) == FALSE)
-	    goto out;		/* Hit buffer start.    */
-	  ++size;
-	}
+        {
+          if (backchar (FALSE, 1, KRANDOM) == FALSE)
+            goto out;		/* Hit buffer start.    */
+          ++size;
+        }
       while (inword () != FALSE)
-	{
-	  if (backchar (FALSE, 1, KRANDOM) == FALSE)
-	    goto out;		/* Hit buffer start.    */
-	  ++size;
-	}
+        {
+          if (backchar (FALSE, 1, KRANDOM) == FALSE)
+            goto out;		/* Hit buffer start.    */
+          ++size;
+        }
     }
   if (forwchar (FALSE, 1, KRANDOM) == FALSE)
     return (FALSE);

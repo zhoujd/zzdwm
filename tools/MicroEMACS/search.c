@@ -203,28 +203,28 @@ doregsrch (int dir)
       /* Make a copy of the line in the temporary buffer.
        */
       if (dir == SRCH_REGFORW)
-	{
-	  line = lgets (clp) + offset;
-	  linelen = llength (clp) - offset;
-	}
+        {
+          line = lgets (clp) + offset;
+          linelen = llength (clp) - offset;
+        }
       else
-	{
-	  line = lgets (clp);
-	  linelen = offset;
-	}
+        {
+          line = lgets (clp);
+          linelen = offset;
+        }
       if (linelen + 1 > buflen)
-	{
-	  uchar *newbuf;
+        {
+          uchar *newbuf;
 
-	  buflen = linelen + 1;
-	  newbuf = realloc (buf, buflen);
-	  if (newbuf == NULL)
-	    {
-	      eprintf ("Can't allocate %d bytes for searching", buflen);
-	      return (FALSE);
-	    }
-	  buf = newbuf;
-	}
+          buflen = linelen + 1;
+          newbuf = realloc (buf, buflen);
+          if (newbuf == NULL)
+            {
+              eprintf ("Can't allocate %d bytes for searching", buflen);
+              return (FALSE);
+            }
+          buf = newbuf;
+        }
       memcpy (buf, line, linelen);
       buf[linelen] = '\0';
 
@@ -234,32 +234,32 @@ doregsrch (int dir)
        * and set the dot to that location.
        */
       if (regexec (regpat, (const char *) buf))
-	{
-	  curwp->w_dot.p = clp;
-	  if (dir == SRCH_REGFORW)
-	    curwp->w_dot.o = unslen (buf, regpat->endp[0] - (char *) buf) + cbo;
-	  else
-	    curwp->w_dot.o = unslen (buf, regpat->startp[0] - (char *) buf);
-	  curwp->w_flag |= WFMOVE;
-	  return (TRUE);
-	}
+        {
+          curwp->w_dot.p = clp;
+          if (dir == SRCH_REGFORW)
+            curwp->w_dot.o = unslen (buf, regpat->endp[0] - (char *) buf) + cbo;
+          else
+            curwp->w_dot.o = unslen (buf, regpat->startp[0] - (char *) buf);
+          curwp->w_flag |= WFMOVE;
+          return (TRUE);
+        }
 
       /* Try again in the next line.
        */
       if (dir == SRCH_REGFORW)
-	{
-	  clp = lforw (clp);
-	  cbo = 0;
-	}
+        {
+          clp = lforw (clp);
+          cbo = 0;
+        }
       else
-	{
-	  clp = lback (clp);
-	  cbo = wllength (clp);
-	}
+        {
+          clp = lback (clp);
+          cbo = wllength (clp);
+        }
       if (clp == lastline)
-	{
-	  return (FALSE);
-	}
+        {
+          return (FALSE);
+        }
     }
 }
 
@@ -356,48 +356,48 @@ forwsrch (void)
     {
     fail:
       if (cptr >= cend)
-	{
-	  if ((clp = lforw (clp)) == lastline)
-	    return (FALSE);
-	  cend = lend (clp);
-	  cbo = 0;
-	  cptr = wlgetcptr (clp, cbo);
-	  if (upat[0] != '\n')
-	    goto fail;
-	}
+        {
+          if ((clp = lforw (clp)) == lastline)
+            return (FALSE);
+          cend = lend (clp);
+          cbo = 0;
+          cptr = wlgetcptr (clp, cbo);
+          if (upat[0] != '\n')
+            goto fail;
+        }
       else
-	{
-	  uc = ugetc (cptr, 0, &ulen);
-	  cptr += ulen;
-	  ++cbo;
-	  if (!CEQ (uc, upat[0]))
-	    goto fail;
-	}
+        {
+          uc = ugetc (cptr, 0, &ulen);
+          cptr += ulen;
+          ++cbo;
+          if (!CEQ (uc, upat[0]))
+            goto fail;
+        }
       tlp = clp;
       tbo = cbo;
       tptr = cptr;
       tend = cend;
       for (pp = 1; pp < patlen; pp++)
-	{
-	  if (tptr >= tend)
-	    {
-	      if ((tlp = lforw (tlp)) == lastline)
-		return (FALSE);
-	      if (upat[pp] != '\n')
-		goto fail;
-	      tend = lend (tlp);
-	      tbo = 0;
-	      tptr = lgets (tlp);
-	    }
-	  else
-	    {
-	      uc = ugetc (tptr, 0, &ulen);
-	      if (!CEQ (uc, upat[pp]))
-		goto fail;
-	      tptr += ulen;
-	      ++tbo;
-	    }
-	}
+        {
+          if (tptr >= tend)
+            {
+              if ((tlp = lforw (tlp)) == lastline)
+          return (FALSE);
+              if (upat[pp] != '\n')
+          goto fail;
+              tend = lend (tlp);
+              tbo = 0;
+              tptr = lgets (tlp);
+            }
+          else
+            {
+              uc = ugetc (tptr, 0, &ulen);
+              if (!CEQ (uc, upat[pp]))
+          goto fail;
+              tptr += ulen;
+              ++tbo;
+            }
+        }
       curwp->w_dot.p = tlp;
       curwp->w_dot.o = tbo;
       curwp->w_flag |= WFMOVE;
@@ -437,46 +437,46 @@ backsrch (void)
     {
     fail:
       if (cbo == 0)
-	{
-	  if ((clp = lback (clp)) == lastline)
-	    return (FALSE);
-	  cbo = wllength (clp);
-	  cptr = wlgetcptr (clp, cbo);
-	  if (upat[epp] != '\n')
-	    goto fail;
-	}
+        {
+          if ((clp = lback (clp)) == lastline)
+            return (FALSE);
+          cbo = wllength (clp);
+          cptr = wlgetcptr (clp, cbo);
+          if (upat[epp] != '\n')
+            goto fail;
+        }
       else
-	{
-	  uc = ugetprevc (cptr, &ulen);
-	  cptr -= ulen;
-	  --cbo;
-	  if (!CEQ (uc, upat[epp]))
-	    goto fail;
-	}
+        {
+          uc = ugetprevc (cptr, &ulen);
+          cptr -= ulen;
+          --cbo;
+          if (!CEQ (uc, upat[epp]))
+            goto fail;
+        }
       tlp = clp;
       tbo = cbo;
       tptr = cptr;
       pp = epp;
       while (pp != 0)
-	{
-	  if (tbo == 0)
-	    {
-	      if ((tlp = lback (tlp)) == lastline)
-		return (FALSE);
-	      tbo = wllength (tlp);
-	      tptr = lend (tlp);
-	      if (upat[--pp] != '\n')
-		goto fail;
-	    }
-	  else
-	    {
-	      uc = ugetprevc (tptr, &ulen);
-	      if (!CEQ (uc, upat[--pp]))
-		goto fail;
-	      tptr -= ulen;
-	      --tbo;
-	    }
-	}
+        {
+          if (tbo == 0)
+            {
+              if ((tlp = lback (tlp)) == lastline)
+          return (FALSE);
+              tbo = wllength (tlp);
+              tptr = lend (tlp);
+              if (upat[--pp] != '\n')
+          goto fail;
+            }
+          else
+            {
+              uc = ugetprevc (tptr, &ulen);
+              if (!CEQ (uc, upat[--pp]))
+          goto fail;
+              tptr -= ulen;
+              --tbo;
+            }
+        }
       curwp->w_dot.p = tlp;
       curwp->w_dot.o = tbo;
       curwp->w_flag |= WFMOVE;
@@ -660,25 +660,25 @@ is_find (int dir)
   if (plen != 0)
     {
       if (dir == SRCH_FORW || dir == SRCH_NEXT)
-	{
-	  backchar (FALSE, plen, KRANDOM);
-	  if (forwsrch () == FALSE)
-	    {
-	      forwchar (FALSE, plen, KRANDOM);
-	      return (FALSE);
-	    }
-	  return (TRUE);
-	}
+        {
+          backchar (FALSE, plen, KRANDOM);
+          if (forwsrch () == FALSE)
+            {
+              forwchar (FALSE, plen, KRANDOM);
+              return (FALSE);
+            }
+          return (TRUE);
+        }
       if (dir == SRCH_BACK || dir == SRCH_PREV)
-	{
-	  forwchar (FALSE, plen, KRANDOM);
-	  if (backsrch () == FALSE)
-	    {
-	      backchar (FALSE, plen, KRANDOM);
-	      return (FALSE);
-	    }
-	  return (TRUE);
-	}
+        {
+          forwchar (FALSE, plen, KRANDOM);
+          if (backsrch () == FALSE)
+            {
+              backchar (FALSE, plen, KRANDOM);
+              return (FALSE);
+            }
+          return (TRUE);
+        }
       eprintf ("bad call to is_find");
       ctrlg (FALSE, 0, KRANDOM);
       return (FALSE);
@@ -714,16 +714,16 @@ is_prompt (int dir, int flag, int success)
   if (dir == SRCH_FORW)
     {
       if (success != FALSE)
-	is_dspl ("i-search forward", flag);
+        is_dspl ("i-search forward", flag);
       else
-	is_dspl ("failing i-search forward", flag);
+        is_dspl ("failing i-search forward", flag);
     }
   else if (dir == SRCH_BACK)
     {
       if (success != FALSE)
-	is_dspl ("i-search backward", flag);
+        is_dspl ("i-search backward", flag);
       else
-	is_dspl ("failing i-search backward", flag);
+        is_dspl ("failing i-search backward", flag);
     }
 }
 
@@ -772,137 +772,137 @@ isearch (int dir)
       update ();
       c = getinp ();
       if (c == fkey)
-	c = CCHR ('S');
+        c = CCHR ('S');
       else if (c == bkey)
-	c = CCHR ('R');
+        c = CCHR ('R');
       switch (c)
-	{
-	case METACH:		/* ESC */
-	case CCHR ('M'):	/* carriage return */
-	  srch_lastdir = dir;
-	  eprintf ("[Done]");
-	  return (TRUE);
+        {
+        case METACH:		/* ESC */
+        case CCHR ('M'):	/* carriage return */
+          srch_lastdir = dir;
+          eprintf ("[Done]");
+          return (TRUE);
 
-	case CCHR ('G'):	/* Control-G */
-	  curwp->w_dot.p = clp;
-	  curwp->w_dot.o = cbo;
-	  curwp->w_flag |= WFMOVE;
-	  srch_lastdir = dir;
-	  ctrlg (FALSE, 0, KRANDOM);
-	  eprintf ("[Aborted]");
-	  return (FALSE);
+        case CCHR ('G'):	/* Control-G */
+          curwp->w_dot.p = clp;
+          curwp->w_dot.o = cbo;
+          curwp->w_flag |= WFMOVE;
+          srch_lastdir = dir;
+          ctrlg (FALSE, 0, KRANDOM);
+          eprintf ("[Aborted]");
+          return (FALSE);
 
-	case CCHR ('S'):	/* Control-S */
-	  if (dir == SRCH_BACK)
-	    {
-	      dir = SRCH_FORW;
-	      is_lpush ();
-	      is_cpush (SRCH_FORW);
-	      success = TRUE;
-	    }
-	  if (success == FALSE && dir == SRCH_FORW)
-	    break;
-	  is_lpush ();
-	  forwchar (FALSE, 1, KRANDOM);
-	  if (is_find (SRCH_NEXT) != FALSE)
-	    {
-	      is_cpush (SRCH_NEXT);
-	      pptr = strlen ((const char *) pat);
-	    }
-	  else
-	    {
-	      backchar (FALSE, 1, KRANDOM);
-	      ttbeep ();
-	      success = FALSE;
-	    }
-	  is_prompt (dir, FALSE, success);
-	  break;
+        case CCHR ('S'):	/* Control-S */
+          if (dir == SRCH_BACK)
+            {
+              dir = SRCH_FORW;
+              is_lpush ();
+              is_cpush (SRCH_FORW);
+              success = TRUE;
+            }
+          if (success == FALSE && dir == SRCH_FORW)
+            break;
+          is_lpush ();
+          forwchar (FALSE, 1, KRANDOM);
+          if (is_find (SRCH_NEXT) != FALSE)
+            {
+              is_cpush (SRCH_NEXT);
+              pptr = strlen ((const char *) pat);
+            }
+          else
+            {
+              backchar (FALSE, 1, KRANDOM);
+              ttbeep ();
+              success = FALSE;
+            }
+          is_prompt (dir, FALSE, success);
+          break;
 
-	case CCHR ('R'):
-	  if (dir == SRCH_FORW)
-	    {
-	      dir = SRCH_BACK;
-	      is_lpush ();
-	      is_cpush (SRCH_BACK);
-	      success = TRUE;
-	    }
-	  if (success == FALSE && dir == SRCH_BACK)
-	    break;
-	  is_lpush ();
-	  backchar (FALSE, 1, KRANDOM);
-	  if (is_find (SRCH_PREV) != FALSE)
-	    {
-	      is_cpush (SRCH_PREV);
-	      pptr = strlen ((const char *) pat);
-	    }
-	  else
-	    {
-	      forwchar (FALSE, 1, KRANDOM);
-	      ttbeep ();
-	      success = FALSE;
-	    }
-	  is_prompt (dir, FALSE, success);
-	  break;
+        case CCHR ('R'):
+          if (dir == SRCH_FORW)
+            {
+              dir = SRCH_BACK;
+              is_lpush ();
+              is_cpush (SRCH_BACK);
+              success = TRUE;
+            }
+          if (success == FALSE && dir == SRCH_BACK)
+            break;
+          is_lpush ();
+          backchar (FALSE, 1, KRANDOM);
+          if (is_find (SRCH_PREV) != FALSE)
+            {
+              is_cpush (SRCH_PREV);
+              pptr = strlen ((const char *) pat);
+            }
+          else
+            {
+              forwchar (FALSE, 1, KRANDOM);
+              ttbeep ();
+              success = FALSE;
+            }
+          is_prompt (dir, FALSE, success);
+          break;
 
-	case CCHR ('H'):
-	case 0x7F:
-	  if (is_undo (&pptr, &dir) != TRUE)
-	    return (ABORT);
-	  if (is_peek () != SRCH_ACCM)
-	    success = TRUE;
-	  is_prompt (dir, FALSE, success);
-	  break;
+        case CCHR ('H'):
+        case 0x7F:
+          if (is_undo (&pptr, &dir) != TRUE)
+            return (ABORT);
+          if (is_peek () != SRCH_ACCM)
+            success = TRUE;
+          is_prompt (dir, FALSE, success);
+          break;
 
-	case CCHR ('^'):
-	case CCHR ('Q'):
-	  c = getinp ();
-	  goto addchar;
+        case CCHR ('^'):
+        case CCHR ('Q'):
+          c = getinp ();
+          goto addchar;
 
-	case KUP:		/* UP    */
-	case KDOWN:		/* Down  */
-	case KLEFT:		/* LEFT  */
-	case KRIGHT:		/* Right */
-	  ungetinp (c);		/* push back input */
-	  curwp->w_flag |= WFMOVE;
-	  return (TRUE);
+        case KUP:		/* UP    */
+        case KDOWN:		/* Down  */
+        case KLEFT:		/* LEFT  */
+        case KRIGHT:		/* Right */
+          ungetinp (c);		/* push back input */
+          curwp->w_flag |= WFMOVE;
+          return (TRUE);
 
-	default:
-	  if (CISCTRL (c) != FALSE)
-	    {
-	      ungetinp (c);	/* push back input */
-	      curwp->w_flag |= WFMOVE;
-	      return (success);
-	    }
-	addchar:
-	  if (pptr == -1)
-	    pptr = 0;
-	  if (pptr == 0)
-	    success = TRUE;
-	  pat[pptr++] = c;
-	  if (pptr == NPAT)
-	    {
-	      eprintf ("Pattern too long");
-	      ctrlg (FALSE, 0, KRANDOM);
-	      return (ABORT);
-	    }
-	  pat[pptr] = '\0';
-	  unicodepat ();
-	  is_lpush ();
-	  if (success != FALSE)
-	    {
-	      if (is_find (dir) != FALSE)
-		is_cpush (c);
-	      else
-		{
-		  success = FALSE;
-		  ttbeep ();
-		  is_cpush (SRCH_ACCM);
-		}
-	    }
-	  else
-	    is_cpush (SRCH_ACCM);
-	  is_prompt (dir, FALSE, success);
-	}
+        default:
+          if (CISCTRL (c) != FALSE)
+            {
+              ungetinp (c);	/* push back input */
+              curwp->w_flag |= WFMOVE;
+              return (success);
+            }
+        addchar:
+          if (pptr == -1)
+            pptr = 0;
+          if (pptr == 0)
+            success = TRUE;
+          pat[pptr++] = c;
+          if (pptr == NPAT)
+            {
+              eprintf ("Pattern too long");
+              ctrlg (FALSE, 0, KRANDOM);
+              return (ABORT);
+            }
+          pat[pptr] = '\0';
+          unicodepat ();
+          is_lpush ();
+          if (success != FALSE)
+            {
+              if (is_find (dir) != FALSE)
+                is_cpush (c);
+              else
+                {
+                  success = FALSE;
+                  ttbeep ();
+                  is_cpush (SRCH_ACCM);
+                }
+            }
+          else
+            is_cpush (SRCH_ACCM);
+          is_prompt (dir, FALSE, success);
+        }
     }
 }
 
@@ -946,14 +946,14 @@ getrepl (int dir, char *news, char *sub, int sublen, int *plen)
     case SRCH_REGFORW:
     case SRCH_REGBACK:
       if (regpat == NULL)
-	{
-	  eprintf ("No regular expression!");
-	  str = news;
-	}
+        {
+          eprintf ("No regular expression!");
+          str = news;
+        }
       if (regsub (regpat, news, sub, sublen))
-	str = sub;
+        str = sub;
       else
-	str = news;
+        str = news;
       break;
     default:
       eprintf ("Illegal search direction %d\n", dir);
@@ -1036,59 +1036,59 @@ searchandreplace (int f, int query, int dir)
     {
     retry:
       if (!inprof)
-	update ();		/* show current position        */
+	      update ();		/* show current position        */
       if (query)
-	c = getinp ();
+	      c = getinp ();
       else
-	c = '!';
+	      c = '!';
       switch (c)
-	{
-	case ' ':
-	case ',':
-	case 'y':
-	case 'Y':
-	  curwp->w_savep = clp;
-	  repl = getrepl (dir, news, sub, sizeof (sub), &plen);
-	  if (lreplace (plen, repl, f) == FALSE)
-	    return (FALSE);
-	  rcnt++;
-	  clp = curwp->w_savep;
-	  break;
+        {
+        case ' ':
+        case ',':
+        case 'y':
+        case 'Y':
+          curwp->w_savep = clp;
+          repl = getrepl (dir, news, sub, sizeof (sub), &plen);
+          if (lreplace (plen, repl, f) == FALSE)
+            return (FALSE);
+          rcnt++;
+          clp = curwp->w_savep;
+          break;
 
-	case '.':
-	  curwp->w_savep = clp;
-	  repl = getrepl (dir, news, sub, sizeof (sub), &plen);
-	  if (lreplace (plen, repl, f) == FALSE)
-	    return (FALSE);
-	  rcnt++;
-	  clp = curwp->w_savep;
-	  goto stopsearch;
+        case '.':
+          curwp->w_savep = clp;
+          repl = getrepl (dir, news, sub, sizeof (sub), &plen);
+          if (lreplace (plen, repl, f) == FALSE)
+            return (FALSE);
+          rcnt++;
+          clp = curwp->w_savep;
+          goto stopsearch;
 
-	case CCHR ('G'):
-	  ctrlg (FALSE, 0, KRANDOM);
-	  goto stopsearch;
+        case CCHR ('G'):
+          ctrlg (FALSE, 0, KRANDOM);
+          goto stopsearch;
 
-	case '!':
-	  do
-	    {
-	      curwp->w_savep = clp;
-	      repl = getrepl (dir, news, sub, sizeof (sub), &plen);
-	      if (lreplace (plen, repl, f) == FALSE)
-		return (FALSE);
-	      rcnt++;
-	      clp = curwp->w_savep;
-	    }
-	  while (dosearch (dir) == TRUE);
-	  goto stopsearch;
+        case '!':
+          do
+            {
+              curwp->w_savep = clp;
+              repl = getrepl (dir, news, sub, sizeof (sub), &plen);
+              if (lreplace (plen, repl, f) == FALSE)
+          return (FALSE);
+              rcnt++;
+              clp = curwp->w_savep;
+            }
+          while (dosearch (dir) == TRUE);
+          goto stopsearch;
 
-	case 'n':
-	  break;
+        case 'n':
+          break;
 
-	default:
-	  eprintf
-	    ("<SP>[,Yy] replace, [.] rep-end, [n] don't, [!] repl rest [C-G] quit");
-	  goto retry;
-	}
+        default:
+          eprintf
+            ("<SP>[,Yy] replace, [.] rep-end, [n] don't, [!] repl rest [C-G] quit");
+          goto retry;
+        }
     }
 stopsearch:
   curwp->w_dot.p = clp;
@@ -1368,48 +1368,48 @@ searchparen (int f, int n, int k)
   while (1)
     {
       if (forward)
-	{
-	  if (cbo >= len)
-	    {			/* proceed to next line */
-	      clp = lforw (clp);
-	      if (clp == curbp->b_linep)
-		break;		/* if end of buffer     */
-	      len = wllength (clp);
-	      cbo = 0;
-	    }
-	  else
-	    cbo++;
-	}
+        {
+          if (cbo >= len)
+            {			/* proceed to next line */
+              clp = lforw (clp);
+              if (clp == curbp->b_linep)
+          break;		/* if end of buffer     */
+              len = wllength (clp);
+              cbo = 0;
+            }
+          else
+            cbo++;
+        }
       else
-	{			/* backward */
-	  if (cbo == 0)
-	    {
-	      clp = lback (clp);
-	      if (clp == curbp->b_linep)
-		break;
-	      len = wllength (clp);
-	      cbo = len;
-	    }
-	  else
-	    --cbo;
-	}
+        {			/* backward */
+          if (cbo == 0)
+            {
+              clp = lback (clp);
+              if (clp == curbp->b_linep)
+          break;
+              len = wllength (clp);
+              cbo = len;
+            }
+          else
+            --cbo;
+        }
 
       ch = (cbo < len) ? lgetc (clp, cbo) : '\n';
       if (!searchignore (ch, forward))
-	{
-	  if (CEQ (ch, chdec))
-	    {
-	      if (count-- == 0)
-		{		/* We've found it   */
-		  curwp->w_dot.p = clp;
-		  curwp->w_dot.o = cbo;
-		  curwp->w_flag |= WFMOVE;
-		  return (TRUE);
-		}
-	    }
-	  else if (CEQ (ch, chinc))
-	    count++;
-	}
+        {
+          if (CEQ (ch, chdec))
+            {
+              if (count-- == 0)
+          {		/* We've found it   */
+            curwp->w_dot.p = clp;
+            curwp->w_dot.o = cbo;
+            curwp->w_flag |= WFMOVE;
+            return (TRUE);
+          }
+            }
+          else if (CEQ (ch, chinc))
+            count++;
+        }
     }
   eprintf ("Not found");
   return (FALSE);

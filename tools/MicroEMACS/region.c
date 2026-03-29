@@ -102,27 +102,27 @@ getregion (REGION *rp)
   while (flp != curbp->b_linep || blp != firstline (curbp))
     {
       if (flp != curbp->b_linep)
-	{
-	  flp = lforw (flp);
-	  if (flp == curwp->w_mark.p)
-	    {
-	      rp->r_pos.p = curwp->w_dot.p;
-	      rp->r_pos.o = curwp->w_dot.o;
-	      return (setsize (rp, fsize + curwp->w_mark.o));
-	    }
-	  fsize += wllength (flp) + 1;
-	}
+        {
+          flp = lforw (flp);
+          if (flp == curwp->w_mark.p)
+            {
+              rp->r_pos.p = curwp->w_dot.p;
+              rp->r_pos.o = curwp->w_dot.o;
+              return (setsize (rp, fsize + curwp->w_mark.o));
+            }
+          fsize += wllength (flp) + 1;
+        }
       if (blp != firstline (curbp))
-	{
-	  blp = lback (blp);
-	  bsize += wllength (blp) + 1;
-	  if (blp == curwp->w_mark.p)
-	    {
-	      rp->r_pos.p = blp;
-	      rp->r_pos.o = curwp->w_mark.o;
-	      return (setsize (rp, bsize - curwp->w_mark.o));
-	    }
-	}
+        {
+          blp = lback (blp);
+          bsize += wllength (blp) + 1;
+          if (blp == curwp->w_mark.p)
+            {
+              rp->r_pos.p = blp;
+              rp->r_pos.o = curwp->w_mark.o;
+              return (setsize (rp, bsize - curwp->w_mark.o));
+            }
+        }
     }
   eprintf ("Bug: lost mark");	/* Gak!                 */
   return (FALSE);
@@ -172,28 +172,28 @@ copyregion (int f, int n, int k)
   while (region.r_size > 0)
     {
       if (loffs == wllength (linep))
-	{			/* End of line.         */
-	  if (kinsert ("\n", 1) != TRUE)
-	    return (FALSE);
-	  linep = lforw (linep);
-	  loffs = 0;
-	  region.r_size--;
-	}
+        {			/* End of line.         */
+          if (kinsert ("\n", 1) != TRUE)
+            return (FALSE);
+          linep = lforw (linep);
+          loffs = 0;
+          region.r_size--;
+        }
       else
-	{			/* Middle of line.      */
-	  const uchar *cptr;
-	  int bytes;
+        {			/* Middle of line.      */
+          const uchar *cptr;
+          int bytes;
 
           chunk = wllength (linep) - loffs;
-	  if (chunk > region.r_size)
-	    chunk = region.r_size;
-	  cptr = wlgetcptr (linep, loffs);
-	  bytes = unblen (cptr, chunk);
-	  if (kinsert ((char *) cptr, bytes) != TRUE)
-	    return (FALSE);
-	  loffs += chunk;
-	  region.r_size -= chunk;
-	}
+          if (chunk > region.r_size)
+            chunk = region.r_size;
+          cptr = wlgetcptr (linep, loffs);
+          bytes = unblen (cptr, chunk);
+          if (kinsert ((char *) cptr, bytes) != TRUE)
+            return (FALSE);
+          loffs += chunk;
+          region.r_size -= chunk;
+        }
     }
   eprintf ("[Region copied]");
   return (TRUE);
@@ -204,7 +204,7 @@ copyregion (int f, int n, int k)
  * case characters in the region to lower case. Use
  * the region code to set the limits. Scan the buffer,
  * doing the changes. Call "lchange" to ensure that
- * redisplay is done in all buffers. 
+ * redisplay is done in all buffers.
  */
 int
 lowerregion (int f, int n, int k)
@@ -226,23 +226,23 @@ lowerregion (int f, int n, int k)
   while (region.r_size--)
     {
       if (loffs == wllength (linep))
-	{
-	  linep = lforw (linep);
-	  loffs = 0;
-	}
+        {
+          linep = lforw (linep);
+          loffs = 0;
+        }
       else
-	{
-	  c = wlgetc (linep, loffs);
-	  if (CISUPPER (c) != FALSE)
-	    {
-	      POS pos;
+        {
+          c = wlgetc (linep, loffs);
+          if (CISUPPER (c) != FALSE)
+            {
+              POS pos;
 
-	      pos.p = linep;
-	      pos.o = loffs;
-	      lputc (pos, CTOLOWER (c));
-	    }
-	  ++loffs;
-	}
+              pos.p = linep;
+              pos.o = loffs;
+              lputc (pos, CTOLOWER (c));
+            }
+          ++loffs;
+        }
     }
   return (TRUE);
 }
@@ -252,7 +252,7 @@ lowerregion (int f, int n, int k)
  * case characters in the region to upper case. Use
  * the region code to set the limits. Scan the buffer,
  * doing the changes. Call "lchange" to ensure that
- * redisplay is done in all buffers. 
+ * redisplay is done in all buffers.
  */
 int
 upperregion (int f, int n, int k)
@@ -274,23 +274,23 @@ upperregion (int f, int n, int k)
   while (region.r_size--)
     {
       if (loffs == wllength (linep))
-	{
-	  linep = lforw (linep);
-	  loffs = 0;
-	}
+        {
+          linep = lforw (linep);
+          loffs = 0;
+        }
       else
-	{
-	  c = wlgetc (linep, loffs);
-	  if (CISLOWER (c) != FALSE)
-	    {
-	      POS pos;
+        {
+          c = wlgetc (linep, loffs);
+          if (CISLOWER (c) != FALSE)
+            {
+              POS pos;
 
-	      pos.p = linep;
-	      pos.o = loffs;
-	      lputc (pos, CTOUPPER (c));
-	    }
-	  ++loffs;
-	}
+              pos.p = linep;
+              pos.o = loffs;
+              lputc (pos, CTOUPPER (c));
+            }
+          ++loffs;
+        }
     }
   return (TRUE);
 }
@@ -299,7 +299,7 @@ upperregion (int f, int n, int k)
  * Indent region. Adjust the indentation of the lines
  * in the region by the number of spaces in the argument.
  * Call "lchange" to ensure that
- * redisplay is done in all buffers. 
+ * redisplay is done in all buffers.
  */
 int
 indentregion (int f, int n, int k)
@@ -329,28 +329,28 @@ indentregion (int f, int n, int k)
       /* Find the indentation level of this line.
        */
       for (i = 0; i < llen; ++i)
-	{
-	  c = wlgetc (curwp->w_dot.p, i);
-	  if (c != ' ' && c != '\t')
-	    break;
-	  if (c == '\t')
-	    nicol += (tabsize - nicol % tabsize) - 1;
-	  ++nicol;
-	}
+        {
+          c = wlgetc (curwp->w_dot.p, i);
+          if (c != ' ' && c != '\t')
+            break;
+          if (c == '\t')
+            nicol += (tabsize - nicol % tabsize) - 1;
+          ++nicol;
+        }
 
       /* Delete the leading white space in this line, and replace
        * it with enough tabs and spaces to add the specified
        * indentation.  */
       if (llen != 0 && (nicol += n) >= 0)
-	{
-	  ldelete (i, FALSE);
-	  if ((i = nicol / tabsize) != 0
-	      && linsert (i, '\t', NULLPTR) == FALSE)
-	    return (FALSE);
-	  if ((i = nicol % tabsize) != 0
-	      && linsert (i, ' ', NULLPTR) == FALSE)
-	    return (FALSE);
-	}
+        {
+          ldelete (i, FALSE);
+          if ((i = nicol / tabsize) != 0
+              && linsert (i, '\t', NULLPTR) == FALSE)
+            return (FALSE);
+          if ((i = nicol % tabsize) != 0
+              && linsert (i, ' ', NULLPTR) == FALSE)
+            return (FALSE);
+        }
       curwp->w_dot.p = lforw (curwp->w_dot.p);
       curwp->w_dot.o = 0;
     }
