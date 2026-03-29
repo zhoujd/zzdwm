@@ -19,10 +19,10 @@
 
 /* $Header: /exit14/home/marka/tools/pe/RCS/symbol.c,v 1.1 2006/09/15 16:29:46 marka Exp marka $
  *
- * Name:	MicroEMACS
- *		Symbol table stuff.
- * Version:	29
- * Modified by:	Mark Alexander (amdahl!drivax!alexande)
+ * Name:        MicroEMACS
+ *              Symbol table stuff.
+ * Version:     29
+ * Modified by: Mark Alexander (amdahl!drivax!alexande)
  *
  * Symbol tables, and keymap setup.
  * The terminal specific parts of building the
@@ -93,9 +93,9 @@
  */
 #include "def.h"
 
-/* #define USE_VMWAREINDENT */	/* Define to use VMware indent	*/
-#define USE_GNUINDENT		/* Define to use gnu indent	*/
-/* #define USE_BORLANDINDENT */	/* Define to use Borland indent	*/
+/* #define USE_VMWAREINDENT */  /* Define to use VMware indent  */
+#define USE_GNUINDENT           /* Define to use gnu indent     */
+/* #define USE_BORLANDINDENT */ /* Define to use Borland indent */
 
 #if defined(__linux__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__FreeBSD__)
   #define HAS_CSCOPE 1
@@ -108,9 +108,9 @@
  */
 typedef struct KEY
 {
-  int k_key;			/* Key to bind.                 */
-  int (*k_funcp) ();		/* Function.                    */
-  char *k_name;			/* Function name string.        */
+  int k_key;                    /* Key to bind.                 */
+  int (*k_funcp) ();            /* Function.                    */
+  char *k_name;                 /* Function name string.        */
 } KEY;
 
 /*
@@ -297,8 +297,7 @@ KEY key[] = {
   {-1,                  viewfile,          "view-file"}
 };
 
-#define	NKEY	(sizeof(key) / sizeof(key[0]))
-
+#define NKEY    (sizeof(key) / sizeof(key[0]))
 
 /*
  * Structure used to store key bindings in a hash table;
@@ -306,12 +305,12 @@ KEY key[] = {
  */
 typedef struct BINDING
 {
-  struct BINDING *bi_next;		/* Next binding in list		*/
-  int bi_key;				/* Key value			*/
-  SYMBOL *bi_symbol;			/* Pointer to symbol		*/
+  struct BINDING *bi_next;              /* Next binding in list         */
+  int bi_key;                           /* Key value                    */
+  SYMBOL *bi_symbol;                    /* Pointer to symbol            */
 } BINDING;
 
-static BINDING *binding[NSHASH];	/* Key bindings.                */
+static BINDING *binding[NSHASH];        /* Key bindings.                */
 
 /*
  * A mode is a string containing the name of the mode, and
@@ -378,7 +377,7 @@ findbinding (int key, BINDING **table)
   for (bp = table[hash]; bp != NULL; bp = bp->bi_next)
     if (bp->bi_key == key)
       return bp->bi_symbol;
-  return NULL;		/* not found */
+  return NULL;          /* not found */
 }
 
 /*
@@ -419,7 +418,7 @@ addbinding (int key, SYMBOL *sym, BINDING **table)
         break;
       }
   if (bp != NULL)
-    --bp->bi_symbol->s_nkey;	/* Unbind from old symbol */
+    --bp->bi_symbol->s_nkey;    /* Unbind from old symbol */
   else
     {
       /* Create a new binding, insert into hash chain. */
@@ -430,7 +429,7 @@ addbinding (int key, SYMBOL *sym, BINDING **table)
       bp->bi_key = key;
       table[hash] = bp;
     }
-  bp->bi_symbol = sym;		/* Bind to new symbol */
+  bp->bi_symbol = sym;          /* Bind to new symbol */
   ++sym->s_nkey;
 }
 
@@ -502,10 +501,10 @@ keymapinit ()
   keydup (0x7F, "back-del-char");
   keydup (KMETA | ' ', "set-mark");
   keydup (KMETA | '%', "query-replace");
-  keydup (KCTLX | 'Q', "quote");	/* For terminals   */
-  keydup (KMETA | 'S', "forw-search");	/*  using xon/xoff */
+  keydup (KCTLX | 'Q', "quote");        /* For terminals   */
+  keydup (KMETA | 'S', "forw-search");  /*  using xon/xoff */
   keydup (KMETA | 0x7F, "back-del-word");
-  keydup (KCTLX | 'O', "forw-window");	/* like MINCE */
+  keydup (KCTLX | 'O', "forw-window");  /* like MINCE */
   /*
    * Should be bound by "tab" already.
    */
@@ -551,9 +550,9 @@ keyadd (
   sp->s_name = name;
   sp->s_funcp = funcp;
   sp->s_macro = NULL;
-  addsym (sp);			/* Add symbol to hash chain.	*/
+  addsym (sp);                  /* Add symbol to hash chain.    */
   if (new >= 0)
-    {				/* Bind this key.       */
+    {                           /* Bind this key.       */
       if (getbinding (new) != NULL)
         abort ();
       setbinding (new, sp);
@@ -612,11 +611,11 @@ getbindingforcmd (const char *s)
 int
 namemacro (int f, int n, int k)
 {
-  register SYMBOL *sp;		/* Symbol name pointer. */
-  register int *mp;		/* Macro pointer.       */
-  char xname[NXNAME];		/* Symbol name.         */
-  register int msize;		/* Size of macro.       */
-  register int s;		/* Status code.         */
+  register SYMBOL *sp;          /* Symbol name pointer. */
+  register int *mp;             /* Macro pointer.       */
+  char xname[NXNAME];           /* Symbol name.         */
+  register int msize;           /* Size of macro.       */
+  register int s;               /* Status code.         */
 
   /* Can't do this while executing or defining a macro.
    */
@@ -643,7 +642,7 @@ namemacro (int f, int n, int k)
       eprintf ("Out of memory.");
       return (FALSE);
     }
-  memcpy (mp, kbdm, msize);	/* Copy the macro       */
+  memcpy (mp, kbdm, msize);     /* Copy the macro       */
 
   /* See if the symbol already exists.  If it doesn't, create
    * a new symbol; otherwise reuse it if it isn't a function.
@@ -672,18 +671,18 @@ namemacro (int f, int n, int k)
       addsym (sp);
     }
   else
-    {				/* Symbol exists.       */
+    {                           /* Symbol exists.       */
       if (sp->s_macro == NULL)
-        {			/* Symbol isn't macro?  */
+        {                       /* Symbol isn't macro?  */
           eprintf ("Symbol is already defined.");
           free (mp);
           return (FALSE);
         }
-      free (sp->s_macro);	/* Get rid of old macro */
+      free (sp->s_macro);       /* Get rid of old macro */
     }
 
-  sp->s_macro = mp;		/* Set the macro ptr.   */
-  return (TRUE);		/* Successful return.   */
+  sp->s_macro = mp;             /* Set the macro ptr.   */
+  return (TRUE);                /* Successful return.   */
 }
 
 /*
@@ -695,16 +694,16 @@ namemacro (int f, int n, int k)
  */
 const char *
 symsearch (
-     const char *sname,		/* partial symbol name to match         */
-     int cpos,			/* number of characters in symbol name  */
-     const char *prev)		/* NULL if starting from beginning      */
+     const char *sname,         /* partial symbol name to match         */
+     int cpos,                  /* number of characters in symbol name  */
+     const char *prev)          /* NULL if starting from beginning      */
 {
   static int h;
   static SYMBOL *sp;
   const char *name;
 
   if (prev == NULL)
-    {				/* restart search at beginning?         */
+    {                           /* restart search at beginning?         */
       h = 0;
       sp = NULL;
     }
@@ -712,12 +711,12 @@ symsearch (
     {
       while (sp == NULL)
         {
-          if (h == NSHASH)	/* tried all hash chains */
+          if (h == NSHASH)      /* tried all hash chains */
             return (NULL);
-          sp = symbol[h++];	/* next hash chain      */
+          sp = symbol[h++];     /* next hash chain      */
         }
-      name = sp->s_name;	/* save name            */
-      sp = sp->s_symp;		/* skip to next symbol  */
+      name = sp->s_name;        /* save name            */
+      sp = sp->s_symp;          /* skip to next symbol  */
       if (strncmp (sname, name, cpos) == 0)
         return (name);
     }
@@ -805,12 +804,12 @@ showbindings (int f, int mode)
           if (f != FALSE || strcmp (sp->s_name, "ins-self") != 0)
             {
               ekeyname (buf, key);
-              cp1 = &buf[0];	/* Find end.            */
+              cp1 = &buf[0];    /* Find end.            */
               while (*cp1 != '\0')
                 ++cp1;
-              while (cp1 < &buf[16])	/* Goto column 16.      */
+              while (cp1 < &buf[16])    /* Goto column 16.      */
                 *cp1++ = ' ';
-              strcpy (cp1, sp->s_name);	/* Add function name.   */
+              strcpy (cp1, sp->s_name); /* Add function name.   */
               if (mode)
                 strcat (cp1++, "+");
               if (addline (buf) == FALSE)
@@ -834,7 +833,7 @@ wallchart (int f, int n, int k)
 {
   register int s;
 
-  if ((s = bclear (blistp)) != TRUE)	/* Clear it out.        */
+  if ((s = bclear (blistp)) != TRUE)    /* Clear it out.        */
     return (s);
   strcpy (blistp->b_fname, "");
   if (showbindings (f, FALSE) != TRUE)
@@ -902,7 +901,7 @@ createmode (const char *name)
       return;
     }
   curbp->b_mode = m;
-  curwp->w_flag |= WFMODE;	/* Force redisplay of mode line */
+  curwp->w_flag |= WFMODE;      /* Force redisplay of mode line */
 }
 
 /*
