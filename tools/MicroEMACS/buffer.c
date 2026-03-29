@@ -731,7 +731,10 @@ BUFFER* get_scratch(void)
   bp = bfind("main", FALSE);
 
   if (bp != NULL)
-        return bp;
+    {
+      strcpy(bp->b_fname, "");
+      return bp;
+    }
 
   /* create scratch */
   bp = bfind("main", TRUE);
