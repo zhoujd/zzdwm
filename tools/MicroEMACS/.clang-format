@@ -1,0 +1,10 @@
+## MicroEMACS clang-format file
+
+---
+BasedOnStyle: GNU
+ColumnLimit: 120
+IndentWidth: 2
+TabWidth: 4
+UseCRLF: false
+UseTab: Never
+---
