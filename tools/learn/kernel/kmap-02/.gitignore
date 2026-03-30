@@ -1,0 +1,8 @@
+## .gitignore
+
+*.ko
+*.o
+*.o.d
+*.mod
+*.order
+Makefile
