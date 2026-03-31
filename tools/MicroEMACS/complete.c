@@ -7,6 +7,7 @@
 extern int ttgetc();
 extern void ttflush();
 extern int ttcol;
+extern int gettempfile (char *path, int size, const char *prefix);
 
 int getfilename(char *, char *, int);
 void outstring(char *);
@@ -22,8 +23,6 @@ getfilename(char *prompt, char *buf, int nbuf)
   int ocpos, nskip = 0, didtry = 0;
   int eolchar = '\n';
   int result = 0;
-
-  static char tmp[] = "/tmp/meXXXXXX";
   FILE *tmpf = NULL;
 
   /* prompt the user for the input string */
@@ -95,7 +94,8 @@ getfilename(char *prompt, char *buf, int nbuf)
       ttflush();
     } else if ((c == 0x09 || c == ' ' || c == '?')) {
       /* TAB, complete file name */
-      char ffbuf[255];
+      static char ffbuf[255];
+      static char tmp[255];
       int n, iswild = 0;
 
       didtry = 1;
@@ -120,12 +120,13 @@ getfilename(char *prompt, char *buf, int nbuf)
         buf[ocpos] = 0;
         if (tmpf != NULL)
           fclose(tmpf);
-        strcpy(tmp, "/tmp/meXXXXXX");
         strcpy(ffbuf, "echo ");
         strcat(ffbuf, buf);
         if (!iswild)
           strcat(ffbuf, "*");
         strcat(ffbuf, " >");
+        if (!gettempfile (tmp, sizeof(tmp), "me"))
+          return FALSE;
         result = mkstemp(tmp);
         if (result == -1) {
           printf("Failed to create temp file\n");
