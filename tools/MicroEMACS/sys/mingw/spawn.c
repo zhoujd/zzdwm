@@ -63,3 +63,14 @@ openpipe (const char *program, const char *args[],
 {
   return FALSE;			/* not implemented yet on Windows */
 }
+
+/*
+ * Create temp file path
+ */
+int
+gettempfile (char *path, int size, const char *prefix)
+{
+  const char *tmp = getenv("TMP");
+  snprintf(path, size, "%s/%sXXXXXX", tmp, prefix);
+  return TRUE;
+}

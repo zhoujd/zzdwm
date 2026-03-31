@@ -330,6 +330,16 @@ openpipe (const char *program, const char *args[],
 }
 
 /*
+ * Create temp file path
+ */
+int
+gettempfile (char *path, int size, const char *prefix)
+{
+  snprintf(path, size, "/tmp/%sXXXXXX", prefix);
+  return TRUE;
+}
+
+/*
  * Run a one-liner in a subjob.
  * When the command returns, wait for a single
  * character to be typed, then mark the screen as
