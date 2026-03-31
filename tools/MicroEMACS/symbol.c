@@ -172,9 +172,7 @@ KEY key[] = {
   {KCTLX | KCTRL | 'E', eecho,             "echo"},
 #ifndef MINGW
   {KCTLX | KCTRL | 'F', findfile,          "find-file"},
-  {-1,                  filename,          "set-file-name"},
 #else
-  {-1,                  findfile,          "find-file"},
   {KCTLX | KCTRL | 'F', filename,          "set-file-name"},
 #endif
   {KCTLX | KCTRL | 'I', fileinsert,        "file-insert"},
@@ -240,6 +238,7 @@ KEY key[] = {
   {KMETA | ',',         findcscope,        "find-cscope"},
 #endif
   {KMETA | '!',         reposition,        "reposition-window"},
+  {KMETA | '@',         filename,          "set-file-name"},
   {KMETA | '>',         gotoeob,           "goto-eob"},
   {KMETA | '<',         gotobob,           "goto-bob"},
   {KMETA | '[',         gotobop,           "back-paragraph"},
