@@ -413,6 +413,7 @@ bufinit (const char *fname)
   LINE *lp;
 
   makename (bname, fname);	/* Get buffer name      */
+  unqname (bname);
   if (bfind (bname, FALSE))	/* if names conflict    */
     {
       strcat (bname, ".0");	/* Append modifier      */

@@ -87,6 +87,31 @@ extern int ffcheckname (char *filename);
 extern int getfilename (char *prompt, char *buf, int nbuf);
 extern int swbuffer (BUFFER *bp);
 
+/*
+ * make sure a buffer name is unique
+ */
+void
+unqname (char *name)
+{
+  char *sp;
+
+  /* check to see if it is in the buffer list */
+  while (bfind(name, FALSE) != NULL)
+    {
+      /* go to the end of the name */
+      sp = name;
+      while (*sp)
+        ++sp;
+      if (sp == name || (*(sp - 1) < '0' || *(sp - 1) > '8'))
+        {
+          *sp++ = '0';
+          *sp = 0;
+        }
+      else
+        *(--sp) += 1;
+    }
+}
+
 int
 getfile (char fname[])
 {
@@ -104,6 +129,7 @@ getfile (char fname[])
         }
     }
   makename (bname, fname);	/* New buffer name */
+  unqname (bname);
   while ((bp = bfind (bname, FALSE)) != (BUFFER*)0)
     {
       s = ereply ("Buffer name: ", bname, NBUFN);
@@ -112,6 +138,7 @@ getfile (char fname[])
       if (s == FALSE)
         {			/* CR to clobber it */
           makename (bname, fname);
+          unqname (bname);
           break;
         }
     }
@@ -348,6 +375,7 @@ visit_file (char *fname)
         }
     }
   makename (bname, expanded_fname);	/* New buffer name.     */
+  unqname (bname);
   while ((bp = bfind (bname, FALSE)) != NULL)
     {
       s = ereply ("Buffer name: ", bname, NBUFN);
