@@ -6,6 +6,23 @@
 #include <unistd.h>
 
 /*
+ * Find a window associated with the buffer list.
+ */
+EWINDOW *wfind(BUFFER *bp)
+{
+  register EWINDOW *wp;
+
+  wp = wheadp;
+  while (wp != NULL)
+    {
+      if (wp->w_bufp == bp)
+        return wp;
+      wp = wp->w_wndp;
+    }
+  return NULL;
+}
+
+/*
  * Visit the file and line mentioned in the next gcc error message in the
  * current buffer.
  */
