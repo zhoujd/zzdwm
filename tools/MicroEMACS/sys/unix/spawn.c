@@ -355,6 +355,11 @@ spawncmd (int f, int n, int k)
   if ((s = ereply ("! ", line, sizeof(line))) != TRUE)
     return (s);
 
+  /* Force repaint */
+  eerase ();
+  sgarbf = TRUE;
+
+  /* Run the command */
   ttputc ('\n');                /* Already have '\r'    */
   ttcolor (CTEXT);              /* Normal color.        */
   ttwindow (0, nrow - 1);       /* Full screen scroll.  */
@@ -368,9 +373,6 @@ spawncmd (int f, int n, int k)
   while ((s = ttgetc ()) != EOF && s != '\n');
   ttopen ();
   ttflush ();
-  /* Force repaint */
-  eerase ();
-  sgarbf = TRUE;
   return TRUE;
 }
 
