@@ -62,6 +62,8 @@ Key keys[] = {
   { MODKEY|Mod1Mask,              XK_s,          cmd("dmenu_ssh &") },
   { MODKEY,                       XK_w,          cmd("dmenu_win &") },
   { MODKEY|Mod1Mask,              XK_w,          cmd("dmenu_win &") },
+  { MODKEY|ShiftMask,             XK_w,          cmd("dmenu_wincd &") },
+  { MODKEY|Mod1Mask|ShiftMask,    XK_w,          cmd("dmenu_wincd &") },
   { MODKEY,                       XK_p,          cmd("dmenu_drun &") },
   { MODKEY|Mod1Mask,              XK_p,          cmd("dmenu_drun &") },
   { MODKEY,                       XK_q,          cmd("dmenu_exit &") },
