@@ -3,14 +3,15 @@
 PREFIX := /usr/local
 TOOLS := \
 	dmenu_app \
+	dmenu_appcd \
 	dmenu_drun \
 	dmenu_exit \
 	dmenu_man \
 	dmenu_menu \
 	dmenu_ssh \
 	dmenu_win \
-	dmenu_desk \
 	dmenu_wincd \
+	dmenu_desk \
 	dmenu_info \
 	dmenu_date
 
