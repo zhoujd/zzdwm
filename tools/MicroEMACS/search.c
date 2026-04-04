@@ -881,8 +881,8 @@ isearch (int dir)
           goto addchar;
 
         case CCHR ('U'):
-          while (pptr)
-            pat[--pptr] = '\0';
+          memset (pat, 0, NPAT);
+          pptr = 0;
           is_prompt (dir, FALSE, success);
           break;
 
