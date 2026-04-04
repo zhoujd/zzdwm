@@ -531,8 +531,30 @@ dosearch (int dir)
 int
 searchagain (int f, int n, int k)
 {
-  int status = dosearch (srch_lastdir);
+  int dir = srch_lastdir;
+  int status;
 
+  if (f == TRUE) /* C-U */
+    {
+      switch (dir)
+        {
+        case SRCH_FORW:
+          dir = SRCH_BACK;
+          break;
+        case SRCH_BACK:
+          dir = SRCH_FORW;
+          break;
+        case SRCH_REGFORW:
+          dir = SRCH_REGBACK;
+          break;
+        case SRCH_REGBACK:
+          dir = SRCH_REGFORW;
+          break;
+        default:
+          break;
+        }
+    }
+  status = dosearch (dir);
   if (status == FALSE)
     eprintf ("Not found");
   else if (status == ABORT)
