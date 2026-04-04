@@ -806,11 +806,6 @@ eread (const char *fp, char *buf, int nbuf, int flag, va_list ap)
           ettflush ();
           break;
 
-        case 0x12:		/* Control-R */
-        case 0x13:		/* Control-S */
-          ettflush ();
-          break;
-
         case 0x15:		/* C-U, kill line.      */
           if (buflen == 0)
             break;
