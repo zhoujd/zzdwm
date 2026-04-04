@@ -880,6 +880,13 @@ isearch (int dir)
           c = getinp ();
           goto addchar;
 
+        case CCHR ('U'):
+          while (pptr)
+            pat[--pptr] = '\0';
+          is_prompt (dir, FALSE, success);
+          break;
+
+        case KDEL:		/* DEL   */
         case KUP:		/* UP    */
         case KDOWN:		/* Down  */
         case KLEFT:		/* LEFT  */
