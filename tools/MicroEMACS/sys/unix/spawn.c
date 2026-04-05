@@ -496,11 +496,11 @@ end:
 }
 
 /*
- * Change work directory
+ * Change current work directory
  * Bound to "C-X $".
  */
 int
-changewd (int f, int n, int k)
+changecwd (int f, int n, int k)
 {
   register int s;
   static char line[NLINE];
