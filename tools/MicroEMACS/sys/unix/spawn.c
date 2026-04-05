@@ -335,7 +335,7 @@ openpipe (const char *program, const char *args[],
 int
 gettempfile (char *path, int size, const char *prefix)
 {
-  snprintf(path, size, "/tmp/%sXXXXXX", prefix);
+  snprintf (path, size, "/tmp/%sXXXXXX", prefix);
   return TRUE;
 }
 
@@ -367,7 +367,7 @@ spawncmd (int f, int n, int k)
   ttflush ();
   ttclose ();
   if (system (line) == -1)
-    printf("Failed to call system");
+    printf ("Failed to call system");
   else
     printf ("(End)");
   fflush (stdout);              /* to be sure P.K.      */
@@ -405,8 +405,8 @@ spawnpipe (int f, int n, int k)
     goto end;
 
   /* Run the command */
-  snprintf(line + strlen(line), sizeof(line) - strlen(line),
-           " >%s 2>&1", tmp);
+  snprintf (line + strlen(line), sizeof(line) - strlen(line),
+            " >%s 2>&1", tmp);
   if (system (line) == -1)
     goto end;
   fflush (stdout);              /* to be sure P.K.      */
@@ -468,8 +468,8 @@ spawnfilter (int f, int n, int k)
     goto end;
 
   /* Run the command */
-  snprintf(line + strlen(line), sizeof(line) - strlen(line),
-           " <%s >%s 2>&1", filin, filout);
+  snprintf (line + strlen(line), sizeof(line) - strlen(line),
+            " <%s >%s 2>&1", filin, filout);
   if (system (line) == -1)
     goto end;
   fflush (stdout);              /* to be sure P.K.      */
@@ -510,22 +510,22 @@ changecwd (int f, int n, int k)
   s = ereply ("Path: ", line, sizeof(line));
   if (s == FALSE)
     {
-      if (getcwd(line, sizeof(line)) == NULL)
+      if (getcwd (line, sizeof(line)) == NULL)
         {
-          eprintf("Failed to getcwd.");
+          eprintf ("Failed to getcwd.");
           goto end;
         }
-      eprintf("CWD: %s", line);
+      eprintf ("CWD: %s", line);
     }
   else if (s == TRUE)
     {
-      dname = fftilde(line);
-      if (chdir(dname) != 0)
+      dname = fftilde (line);
+      if (chdir (dname) != 0)
         {
-          eprintf("Failed to chdir.");
+          eprintf ("Failed to chdir.");
           goto end;
         }
-      eprintf("CWD: %s", dname);
+      eprintf ("CWD: %s", dname);
     }
   else
     return (s);
@@ -559,7 +559,7 @@ dired (int f, int n, int k)
 
   s = ereply ("Dired: ", line, sizeof(line));
   if (s == FALSE)
-    snprintf(line, sizeof(line), ".");
+    snprintf (line, sizeof(line), ".");
   else if (s == ABORT)
     return s;
 
@@ -574,9 +574,9 @@ dired (int f, int n, int k)
     goto end;
 
   /* Run the command */
-  snprintf(buf, sizeof(buf),
-           "(realpath %s && ls %s %s) >%s 2>&1",
-           line, line, lpar, tmp);
+  snprintf (buf, sizeof(buf),
+            "(realpath %s && ls %s %s) >%s 2>&1",
+            line, line, lpar, tmp);
   if (system (buf) == -1)
     goto end;
   fflush (stdout);              /* to be sure P.K.      */
