@@ -510,16 +510,21 @@ changecwd (int f, int n, int k)
   s = ereply ("Path: ", line, sizeof(line));
   if (s == FALSE)
     {
-      if (getcwd(line, sizeof(line)) != NULL)
-        eprintf("CWD: %s", line);
-      else
-        goto end;
+      if (getcwd(line, sizeof(line)) == NULL)
+        {
+          eprintf("Failed to getcwd.");
+          goto end;
+        }
+      eprintf("CWD: %s", line);
     }
   else if (s == TRUE)
     {
       dname = fftilde(line);
       if (chdir(dname) != 0)
-        goto end;
+        {
+          eprintf("Failed to chdir.");
+          goto end;
+        }
       eprintf("CWD: %s", dname);
     }
   else
