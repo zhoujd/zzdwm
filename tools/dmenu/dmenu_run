@@ -1,7 +1,8 @@
 #!/bin/sh
 
 # dmenu_run improved
-# command ending with '!', is started in the terminal.
+# command ending with '!', is started in the terminal w/ exit pause.
+# command ending with '!!', is started in the terminal w/o exit pause.
 
 title="run:"
 term_cmd=${TERM_CMD:-"st -e"}
@@ -9,7 +10,8 @@ sh_cmd=${SH_CMD:-"/bin/bash -c"}
 cmd="$(dmenu_path | dmenu -i -l 10 -p $title "$@")"
 
 case $cmd in
-    '')  ;;
-    *\!) exec ${term_cmd} ${sh_cmd} "${cmd%?}; read" ;;
-    *)   exec ${cmd} ;;
+    '' )   ;;
+    *\!! ) exec ${term_cmd} ${sh_cmd} "${cmd%??}" ;;
+    *\! )  exec ${term_cmd} ${sh_cmd} "${cmd%?}; read" ;;
+    * )    exec ${sh_cmd} "${cmd}" ;;
 esac
