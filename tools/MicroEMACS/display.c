@@ -365,20 +365,23 @@ vismsg (EWINDOW *wp)
       lp = lforw(lp);
       if (lp == bp->b_linep)
         {
-          msg = "[Bot]";
+          msg = "bot";
           break;
         }
     }
-  if (lback(wp->w_linep) == wp->w_bufp->b_linep)
+  if (lback (wp->w_linep) == wp->w_bufp->b_linep)
     {
       if (msg)
-        msg = "[All]";
+        if (wllength (wp->w_linep) == 0)
+          msg = "emp";
+        else
+          msg = "all";
       else
-        msg = "[Top]";
+        msg = "top";
     }
   if (!msg)
     {
-      lp = lforw(bp->b_linep);
+      lp = lforw (bp->b_linep);
       numlines = 0;
       predlines = 0;
       while (lp != bp->b_linep)
@@ -387,11 +390,11 @@ vismsg (EWINDOW *wp)
             predlines = numlines;
           }
           ++numlines;
-          lp = lforw(lp);
+          lp = lforw (lp);
         }
       if (wp->w_dot.p == bp->b_linep)
         {
-          msg = "[Bot]";
+          msg = "bot";
         }
       else
         {
@@ -400,7 +403,7 @@ vismsg (EWINDOW *wp)
             ratio = (100L * predlines) / numlines;
           if (ratio > 99)
             ratio = 99;
-          snprintf(tline, sizeof(tline), "[%2d%%]", ratio);
+          snprintf (tline, sizeof (tline), "%2d%%", ratio);
           msg = tline;
         }
     }
@@ -846,7 +849,7 @@ modeline (EWINDOW *wp)
       if (vis != NULL)
         {
           vtputc (' ');
-          while (vtcol < ncol - 9)
+          while (vtcol < ncol - 7)
             vtputc (lchar);
           vtputc (' ');
           vtstring (vis);
