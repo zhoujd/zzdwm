@@ -469,7 +469,7 @@ spawnfilter (int f, int n, int k)
 
   /* Run the command */
   snprintf (line + strlen(line), sizeof(line) - strlen(line),
-            " <%s >%s 2>&1", filin, filout);
+            " %s >%s 2>&1", filin, filout);
   if (system (line) == -1)
     goto end;
   fflush (stdout);              /* to be sure P.K.      */
