@@ -605,6 +605,9 @@ undo (int f, int n, int k)
   UNDOGROUP *g;
   int status = TRUE;
 
+  if (f == TRUE) /* C-U */
+    return redo (FALSE, n, k);
+
   /* Get the last undo group on the list, or error out
    * if the list is empty.
    */
@@ -718,6 +721,9 @@ redo (int f, int n, int k)
   UNDOSTACK *st;
   UNDOGROUP *g;
   int status = TRUE;
+
+  if (f == TRUE) /* C-U */
+    return undo (FALSE, n, k);
 
   /* Get the top undo group on the redo stack, or error out
    * if the stack is empty.
