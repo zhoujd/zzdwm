@@ -214,6 +214,7 @@ KEY key[] = {
   {KCTLX | 'S',         forwsearch,        "forw-search"},
   {KCTLX | 'U',         undo,              "undo"},
   {KCTLX | 'V',         showversion,       "display-version"},
+  {KCTLX | 'X',         nextbuffer,        "forw-buffer"},
   {KCTLX | 'Z',         enlargewind,       "enlarge-window"},
 #ifndef MINGW
   {KCTLX | '!',         spawncmd,          "cmd"},
@@ -278,7 +279,6 @@ KEY key[] = {
   {-1,                  fillword,          "ins-self-with-wrap"},
   {-1,                  setfillcol,        "set-fill-column"},
   {-1,                  delwhite,          "just-one-space"},
-  {-1,                  nextbuffer,        "forw-buffer"},
   {-1,                  prevbuffer,        "back-buffer"},
   {-1,                  insertmacro,       "ins-macro"},
   {-1,                  setoverstrike,     "set-overstrike"},

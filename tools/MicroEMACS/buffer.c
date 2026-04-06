@@ -125,6 +125,8 @@ nextbuffer (int f, int n, int k)
 {
   register BUFFER *bp;
 
+  if (f == TRUE) /* C-U */
+    return prevbuffer (FALSE, n, k);
   if ((bp = curbp->b_bufp) == NULL)
     bp = bheadp;
   return (usebuf (bp));
@@ -143,6 +145,8 @@ prevbuffer (int f, int n, int k)
   register BUFFER *bp1;
   register BUFFER *bp2;
 
+  if (f == TRUE) /* C-U */
+    return nextbuffer (FALSE, n, k);
   bp1 = bheadp;
   bp2 = curbp;
   if (bp1 == bp2)
