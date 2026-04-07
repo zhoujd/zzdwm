@@ -367,7 +367,7 @@ spawncmd (int f, int n, int k)
   ttflush ();
   ttclose ();
   if (system (line) == -1)
-    printf ("Failed to call system");
+    printf ("Failed on system %s\n", line);
   else
     printf ("(End)");
   fflush (stdout);              /* to be sure P.K.      */
@@ -408,7 +408,10 @@ spawnpipe (int f, int n, int k)
   snprintf (line + strlen(line), sizeof(line) - strlen(line),
             " >%s 2>&1", tmp);
   if (system (line) == -1)
-    goto end;
+    {
+      printf ("Failed on system %s\n", line);
+      goto end;
+    }
   fflush (stdout);              /* to be sure P.K.      */
 
   /* Readin the temporary file */
@@ -471,7 +474,10 @@ spawnfilter (int f, int n, int k)
   snprintf (line + strlen(line), sizeof(line) - strlen(line),
             " %s >%s 2>&1", filin, filout);
   if (system (line) == -1)
-    goto end;
+    {
+      printf ("Failed on system %s\n", line);
+      goto end;
+    }
   fflush (stdout);              /* to be sure P.K.      */
 
   /* Readin the temporary file */
