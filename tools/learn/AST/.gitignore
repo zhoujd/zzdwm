@@ -1,0 +1,4 @@
+## .gitignore
+
+ast_example
+*.o
