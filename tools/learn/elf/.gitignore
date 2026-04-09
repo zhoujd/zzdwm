@@ -1,0 +1,4 @@
+## .gitignore
+
+elf_parser
+*.o
