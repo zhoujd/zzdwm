@@ -1,9 +1,12 @@
 ## Makefile
 
-search_up: search_up.c
+TARGET = search_up
 
+CC := gcc
 CFLAGS := --static
 LDFLAGS := -Os -s
 
+$(TARGET): $(TARGET).c
+
 clean:
-	rm -f search_up *.o
+	rm -f $(TARGET) *.o
