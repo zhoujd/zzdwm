@@ -335,7 +335,15 @@ openpipe (const char *program, const char *args[],
 int
 gettempfile (char *path, int size, const char *prefix)
 {
-  snprintf (path, size, "/tmp/%sXXXXXX", prefix);
+  static const char *tmp = NULL;	/* Saved "TMP" name.    */
+
+  if (tmp == NULL)
+    {
+      tmp = getenv ("TMPDIR");
+      if (tmp == NULL)
+        tmp = "/tmp";			/* Safer.               */
+    }
+  snprintf (path, size, "%s/%sXXXXXX", tmp, prefix);
   return TRUE;
 }
 

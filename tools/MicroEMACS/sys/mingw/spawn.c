@@ -70,7 +70,16 @@ openpipe (const char *program, const char *args[],
 int
 gettempfile (char *path, int size, const char *prefix)
 {
-  const char *tmp = getenv("TMP");
+  static const char *tmp = NULL;	/* Saved "TMP" name.    */
+
+  if (tmp == NULL)
+    {
+      tmp = getenv ("TMP");
+      if (tmp == NULL)
+        tmp = getenv ("TEMP");
+      if (tmp == NULL)
+        tmp = "./tmp";			/* Safer.               */
+    }
   snprintf(path, size, "%s/%sXXXXXX", tmp, prefix);
   return TRUE;
 }
