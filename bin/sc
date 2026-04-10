@@ -12,9 +12,9 @@ case $1 in
     screen "$@"
     ;;
   '' )
-    screen ${opt[@]}
+    screen "${opt[@]}"
     ;;
   * )
-    screen ${opt[@]} -r "$1" || screen ${opt[@]} -S "$1"
+    screen "${opt[@]}" -r "$1" || screen "${opt[@]}" -S "$1"
     ;;
 esac
