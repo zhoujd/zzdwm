@@ -5,6 +5,6 @@ BasedOnStyle: GNU
 ColumnLimit: 120
 IndentWidth: 2
 TabWidth: 4
-UseCRLF: false
 UseTab: Never
+UseCRLF: false
 ---
