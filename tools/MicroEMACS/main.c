@@ -114,7 +114,7 @@ usage (void)
 {
   fprintf (stderr,
            "usage: me [-234bdmrxz] [-c path] [-g line] [-p profile] [-t size]\n"
-           "          [+[line]] [file[:line[:column]] ...]\n");
+           "          [+[line]] [file(s)[:line[:column]] ...]\n");
 }
 
 /*
