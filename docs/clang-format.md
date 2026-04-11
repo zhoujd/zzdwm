@@ -18,3 +18,21 @@ AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: false
 ---
 ```
+
+## BS_Custom example
+
+```
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass:            true/false
+  AfterControlStatement: true/false
+  AfterEnum:             true/false
+  AfterFunction:         true/false
+  AfterNamespace:        true/false
+  AfterObjCDeclaration:  true/false
+  AfterStruct:           true/false
+  AfterUnion:            true/false
+  BeforeCatch:           true/false
+  BeforeElse:            true/false
+  IndentBraces:          true/false
+```
