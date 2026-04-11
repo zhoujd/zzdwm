@@ -714,6 +714,8 @@ int filesave (int f, int n, int k);	/* Save current file            */
 int filename (int f, int n, int k);	/* Adjust file name             */
 int setsavetabs (int f, int n, int k);	/* Set tab save flag            */
 int setnewline (int f, int n, int k);	/* Set auto newline flag        */
+int findfile (int f, int n, int k);	/* Find file                    */
+int viewfile (int f, int n, int k);	/* View file                    */
 
 void makename (char *bname, const char *fname);
                                         /* Make buffer name from fname	*/
@@ -1072,9 +1074,12 @@ uclen (const uchar *s)
   return n;
 }
 
-/* Find file */
-int findfile (int f, int n, int k);
-int viewfile (int f, int n, int k);
-
-/* Buffer Menu */
+/*
+ * Defined by "bufmenu.c".
+ */
 int buffermenu (int f, int n, int k);
+
+/*
+ * Defined by "version.c".
+ */
+void printversion(void);

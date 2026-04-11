@@ -100,8 +100,6 @@ static int nbuf;		/* number of buffers    */
 /*
  * Forward declarations.
  */
-extern void printversion(void);
-
 static void bufinit (const char *fname);
 static int execute (int c, int f, int n);
 static void usage (void);
