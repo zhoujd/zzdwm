@@ -4,19 +4,19 @@
 #include "def.h"
 #include <unistd.h>
 
-extern int ttgetc();
-extern void ttflush();
+extern int ttgetc ();
+extern void ttflush ();
 extern int ttcol;
 extern int gettempfile (char *path, int size, const char *prefix);
 
-int getfilename(char *, char *, int);
-void outstring(char *);
+int getfilename (char *, char *, int);
+void outstring (char *);
 
 /*
  * basic filename completion, based on code in uemacs/PK
  */
 int
-getfilename(char *prompt, char *buf, int nbuf)
+getfilename (char *prompt, char *buf, int nbuf)
 {
   int cpos = 0; /* current character position in string */
   int c;
@@ -26,169 +26,201 @@ getfilename(char *prompt, char *buf, int nbuf)
   FILE *tmpf = NULL;
 
   /* prompt the user for the input string */
-  eprintf(prompt);
+  eprintf (prompt);
 
-  for (;;) {
-    if (!didtry)
-      nskip = -1;
-    didtry = 0;
+  for (;;)
+    {
+      if (!didtry)
+        nskip = -1;
+      didtry = 0;
 
-    /* get a character from the user */
-    c = ttgetc();
+      /* get a character from the user */
+      c = ttgetc ();
 
-    /* If it is a <ret>, change it to a <NL> */
-    if (c == CCHR('M'))
-      c = '\n';
+      /* If it is a <ret>, change it to a <NL> */
+      if (c == CCHR ('M'))
+        c = '\n';
 
-    /* if they hit the line terminate, wrap it up */
-    if (c == eolchar) {
-      buf[cpos++] = 0;
+      /* if they hit the line terminate, wrap it up */
+      if (c == eolchar)
+        {
+          buf[cpos++] = 0;
 
-      /* clear the message line */
-      eerase ();
-      ttflush();
+          /* clear the message line */
+          eerase ();
+          ttflush ();
 
-      /* if we default the buffer, return FALSE */
-      if (buf[0] == 0)
-        return FALSE;
+          /* if we default the buffer, return FALSE */
+          if (buf[0] == 0)
+            return FALSE;
 
-      return TRUE;
+          return TRUE;
+        }
+
+      if (c == CCHR ('G'))
+        {
+          /* Abort the input? */
+          ctrlg (FALSE, 0, KRANDOM);
+          ttputc (c);
+          ttflush ();
+          return ABORT;
+        }
+      else if ((c == 0x7F || c == 0x08 || c == 0x107))
+        {
+          /* rubout/erase */
+          if (cpos != 0)
+            {
+              outstring ("\b \b");
+              --ttcol;
+              if (buf[--cpos] < 0x20)
+                {
+                  outstring ("\b \b");
+                  --ttcol;
+                }
+              if (buf[cpos] == '\n')
+                {
+                  outstring ("\b\b  \b\b");
+                  ttcol -= 2;
+                }
+              ttflush ();
+            }
+        }
+      else if (c == 0x15)
+        {
+          /* C-U, kill */
+          while (cpos != 0)
+            {
+              outstring ("\b \b");
+              --ttcol;
+
+              if (buf[--cpos] < 0x20)
+                {
+                  outstring ("\b \b");
+                  --ttcol;
+                }
+              if (buf[cpos] == '\n')
+                {
+                  outstring ("\b\b  \b\b");
+                  ttcol -= 2;
+                }
+            }
+          ttflush ();
+        }
+      else if ((c == 0x09 || c == ' ' || c == '?'))
+        {
+          /* TAB, complete file name */
+          static char ffbuf[255];
+          static char tmp[255];
+          int n, iswild = 0;
+
+          didtry = 1;
+          ocpos = cpos;
+          while (cpos != 0)
+            {
+              outstring ("\b \b");
+              --ttcol;
+
+              if (buf[--cpos] < 0x20)
+                {
+                  outstring ("\b \b");
+                  --ttcol;
+                }
+              if (buf[cpos] == '\n')
+                {
+                  outstring ("\b\b  \b\b");
+                  ttcol -= 2;
+                }
+              if (buf[cpos] == '*' || buf[cpos] == '?')
+                iswild = 1;
+            }
+          ttflush ();
+          if (nskip < 0)
+            {
+              buf[ocpos] = 0;
+              if (tmpf != NULL)
+                fclose (tmpf);
+              strcpy (ffbuf, "echo ");
+              strcat (ffbuf, buf);
+              if (!iswild)
+                strcat (ffbuf, "*");
+              strcat (ffbuf, " >");
+              if (!gettempfile (tmp, sizeof (tmp), "me"))
+                return FALSE;
+              result = mkstemp (tmp);
+              if (result == -1)
+                {
+                  printf ("Failed to create temp file\n");
+                  exit (1);
+                }
+              strcat (ffbuf, tmp);
+              strcat (ffbuf, " 2>&1");
+              result = system (ffbuf);
+              tmpf = fopen (tmp, "r");
+              nskip = 0;
+            }
+          c = ' ';
+          for (n = nskip; n > 0; n--)
+            while ((c = getc (tmpf)) != EOF && c != ' ')
+              ;
+          nskip++;
+
+          if (c != ' ')
+            {
+              ttbeep ();
+              nskip = 0;
+            }
+          while ((c = getc (tmpf)) != EOF && c != '\n' && c != ' ' && c != '*')
+            {
+              if (cpos < nbuf - 1)
+                buf[cpos++] = c;
+            }
+          if (c == '*')
+            ttbeep ();
+
+          for (n = 0; n < cpos; n++)
+            {
+              c = buf[n];
+              if ((c < ' ') && (c != '\n'))
+                {
+                  outstring ("^");
+                  ++ttcol;
+                  c ^= 0x40;
+                }
+
+              if (c != '\n')
+                {
+                  ttputc (c);
+                }
+              else
+                { /* put out <NL> for <ret> */
+                  outstring ("<NL>");
+                  ttcol += 3;
+                }
+              ++ttcol;
+            }
+          ttflush ();
+          rewind (tmpf);
+          unlink (tmp);
+        }
+      else
+        {
+          if (cpos < nbuf - 1)
+            {
+              /* if a control char */
+              if ((c < ' ') && (c != '\n'))
+                {
+                  ttbeep ();
+                }
+              else
+                {
+                  buf[cpos++] = c;
+                  ttputc (c);
+                  ++ttcol;
+                  ttflush ();
+                }
+            }
+        }
     }
-
-    if (c == CCHR('G')) {
-      /* Abort the input? */
-      ctrlg(FALSE, 0, KRANDOM);
-      ttputc(c);
-      ttflush();
-      return ABORT;
-    } else if ((c == 0x7F || c == 0x08 || c == 0x107)) {
-      /* rubout/erase */
-      if (cpos != 0) {
-        outstring("\b \b");
-        --ttcol;
-        if (buf[--cpos] < 0x20) {
-          outstring("\b \b");
-          --ttcol;
-        }
-        if (buf[cpos] == '\n') {
-          outstring("\b\b  \b\b");
-          ttcol -= 2;
-        }
-        ttflush();
-      }
-    } else if (c == 0x15) {
-      /* C-U, kill */
-      while (cpos != 0) {
-        outstring("\b \b");
-        --ttcol;
-
-        if (buf[--cpos] < 0x20) {
-          outstring("\b \b");
-          --ttcol;
-        }
-        if (buf[cpos] == '\n') {
-          outstring("\b\b  \b\b");
-          ttcol -= 2;
-        }
-      }
-      ttflush();
-    } else if ((c == 0x09 || c == ' ' || c == '?')) {
-      /* TAB, complete file name */
-      static char ffbuf[255];
-      static char tmp[255];
-      int n, iswild = 0;
-
-      didtry = 1;
-      ocpos = cpos;
-      while (cpos != 0) {
-        outstring("\b \b");
-        --ttcol;
-
-        if (buf[--cpos] < 0x20) {
-          outstring("\b \b");
-          --ttcol;
-        }
-        if (buf[cpos] == '\n') {
-          outstring("\b\b  \b\b");
-          ttcol -= 2;
-        }
-        if (buf[cpos] == '*' || buf[cpos] == '?')
-          iswild = 1;
-      }
-      ttflush();
-      if (nskip < 0) {
-        buf[ocpos] = 0;
-        if (tmpf != NULL)
-          fclose(tmpf);
-        strcpy(ffbuf, "echo ");
-        strcat(ffbuf, buf);
-        if (!iswild)
-          strcat(ffbuf, "*");
-        strcat(ffbuf, " >");
-        if (!gettempfile (tmp, sizeof(tmp), "me"))
-          return FALSE;
-        result = mkstemp(tmp);
-        if (result == -1) {
-          printf("Failed to create temp file\n");
-          exit(1);
-        }
-        strcat(ffbuf, tmp);
-        strcat(ffbuf, " 2>&1");
-        result = system(ffbuf);
-        tmpf = fopen(tmp, "r");
-        nskip = 0;
-      }
-      c = ' ';
-      for (n = nskip; n > 0; n--)
-        while ((c = getc(tmpf)) != EOF
-               && c != ' ');
-      nskip++;
-
-      if (c != ' ') {
-        ttbeep();
-        nskip = 0;
-      }
-      while ((c = getc(tmpf)) != EOF && c != '\n'
-             && c != ' ' && c != '*') {
-        if (cpos < nbuf - 1)
-          buf[cpos++] = c;
-      }
-      if (c == '*')
-        ttbeep();
-
-      for (n = 0; n < cpos; n++) {
-        c = buf[n];
-        if ((c < ' ') && (c != '\n')) {
-          outstring("^");
-          ++ttcol;
-          c ^= 0x40;
-        }
-
-        if (c != '\n') {
-          ttputc(c);
-        } else {  /* put out <NL> for <ret> */
-          outstring("<NL>");
-          ttcol += 3;
-        }
-        ++ttcol;
-      }
-      ttflush();
-      rewind(tmpf);
-      unlink(tmp);
-    } else {
-      if (cpos < nbuf - 1) {
-        /* if a control char */
-        if ((c < ' ') && (c != '\n')) {
-          ttbeep();
-        } else {
-          buf[cpos++] = c;
-          ttputc(c);
-          ++ttcol;
-          ttflush();
-        }
-      }
-    }
-  }
 }
 
 /*
@@ -196,8 +228,8 @@ getfilename(char *prompt, char *buf, int nbuf)
  * char *s;   string to output
  */
 void
-outstring(char *s)
+outstring (char *s)
 {
   while (*s)
-    ttputc(*s++);
+    ttputc (*s++);
 }
