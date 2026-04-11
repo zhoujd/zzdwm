@@ -483,6 +483,8 @@ readin (const char *fname)
   register LINE *lp2;
   int s;
 
+  if (ffcheckname ((char*)fname) == FALSE)
+    return (FALSE);
   bp = curbp;				/* Cheap.               */
   if ((s = bclear (bp)) != TRUE)	/* Might be old.        */
     return (s);
