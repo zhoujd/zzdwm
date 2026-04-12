@@ -16,5 +16,15 @@ defflow off
 defshell -bash
 term screen-256color
 termcapinfo st* ti@:te@
+bind ^h
+bind h
+bind ^Q
+bind q
+bind ^S
+bind s
+bind ^X
+bind x
+bind ^Z
+bind z
 EOF
 screen -c "$tmpfile" $@
