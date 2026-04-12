@@ -1,20 +1,15 @@
 #!/bin/bash
 
-cmd=${cmd:-"bash -l"}
-opt=(
-  -e \`\`
-  -s $cmd
-  -q
-)
-
-case $1 in
-  -* )
-    screen "$@"
-    ;;
-  '' )
-    screen "${opt[@]}"
-    ;;
-  * )
-    screen "${opt[@]}" -r "$1" || screen "${opt[@]}" -S "$1"
-    ;;
-esac
+tmpfile=$(mktemp /tmp/screen-pipe.XXXXXX)
+trap 'rm "$tmpfile"' 0 1 15
+cat > "$tmpfile" <<EOF
+escape \`\`
+startup_message off
+vbell off
+altscreen on
+defutf8 on
+defshell -bash
+term screen-256color
+termcapinfo st* ti@:te@
+EOF
+screen -c $tmpfile $@
