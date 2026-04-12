@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 tmpfile=$(mktemp /tmp/screen-pipe.XXXXXX)
 trap 'rm "$tmpfile"' 0 1 15
@@ -17,4 +17,4 @@ defshell -bash
 term screen-256color
 termcapinfo st* ti@:te@
 EOF
-screen -c $tmpfile $@
+screen -c "$tmpfile" $@
