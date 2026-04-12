@@ -5,6 +5,9 @@ trap 'rm "$tmpfile"' 0 1 15
 cat > "$tmpfile" <<EOF
 escape \`\`
 startup_message off
+bell_msg ""
+vbell_msg ""
+bell off
 vbell off
 altscreen on
 defutf8 on
