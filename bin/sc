@@ -10,13 +10,17 @@ vbell_msg ""
 bell off
 vbell off
 altscreen on
+maptimeout 0
+msgwait 3
 defutf8 on
 deflogin off
 defflow off
 defshell -bash
 term screen-256color
 termcapinfo st* ti@:te@
-bind ^h
+bind ^G
+bind g
+bind ^H
 bind h
 bind ^Q
 bind q
@@ -26,5 +30,9 @@ bind ^X
 bind x
 bind ^Z
 bind z
+bind c screen 1
+bind ^c screen 1
+bind 0 select 10
+screen 1
 EOF
 screen -c "$tmpfile" $@
