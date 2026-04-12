@@ -372,11 +372,6 @@ spawncmd (int f, int n, int k)
   ttcolor (CTEXT);              /* Normal color.        */
   ttwindow (0, nrow - 1);       /* Full screen scroll.  */
   ttmove (nrow - 1, 0);         /* Last line.           */
-  if (epresf != FALSE)
-    {
-      tteeol ();
-      epresf = FALSE;
-    }
   ttflush ();
   ttclose ();
   if (system (line) == -1)
@@ -387,28 +382,6 @@ spawncmd (int f, int n, int k)
   while ((s = ttgetc ()) != EOF && s != '\n');
   ttopen ();
   ttflush ();
-  return TRUE;
-}
-
-int
-openshell (int f, int n, int k)
-{
-  const char *cp = getshell();
-
-  ttwindow (0, nrow - 1);       /* Full screen scroll.  */
-  ttmove (nrow - 1, 0);         /* Last line.           */
-  if (epresf != FALSE)
-    {
-      tteeol ();
-      epresf = FALSE;
-    }
-  ttflush ();
-  ttclose ();
-  if (system (cp) == -1)
-    printf ("Failed on system\n");
-  sgarbf = TRUE;
-  usleep (200);
-  ttopen ();
   return TRUE;
 }
 
