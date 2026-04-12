@@ -71,7 +71,7 @@ setttysize (void)
 void
 ttopen (void)
 {
-  setlocale (LC_ALL, "");
+  setlocale (LC_CTYPE, "");
   tcgetattr (0, &oldtty);
   initscr ();			/* initialize the curses library */
   keypad (stdscr, TRUE);	/* enable keyboard mapping */
