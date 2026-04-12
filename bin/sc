@@ -8,6 +8,8 @@ startup_message off
 vbell off
 altscreen on
 defutf8 on
+deflogin off
+defflow off
 defshell -bash
 term screen-256color
 termcapinfo st* ti@:te@
