@@ -880,6 +880,7 @@ int spawnpipe (int f, int n, int k);	/* Pipe a command into a window.*/
 int spawnfilter (int f, int n, int k);	/* Filter a buffer via program. */
 int changecwd (int f, int n, int k);	/* Change current directory.    */
 int dired (int f, int n, int k);	/* List current directory.      */
+int openshell (int f, int n, int k);    /* Open shell in a subjub.      */
 
 int spawn (char *program,		/* Spawn a program.		*/
            const char *args[]);
