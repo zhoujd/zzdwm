@@ -12,7 +12,7 @@ cscope
 ```
 $ cd docker
 $ ./run -r -v
-$ cd tools/utils/cscope
+$ cd tools/cscope
 $ ./configure LDFLAGS="-static -s"
 $ make -j4
 $ file src/cscope
