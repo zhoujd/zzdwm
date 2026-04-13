@@ -77,10 +77,11 @@ typedef int32_t socklen_t;
 #  include "daemon.h"
 #endif
 
-#ifdef HAVE___PROGNAME
-extern char *__progname;
-#else
-char *__progname;
+#ifdef __linux__
+    extern char *__progname;
+#elif defined(__APPLE__)
+    #include <crt_externs.h>
+    #define __progname (*_NSGetProgname())
 #endif
 
 const char *rcsid = "$Id: autossh.c,v 1.91 2019/01/05 01:23:39 harding Exp $";
