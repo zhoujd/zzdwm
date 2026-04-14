@@ -58,3 +58,10 @@ $ cp busybox_VI vi
 ## Remap this particular sequence to a key-combination
 :nnoremap <C-l> y5l
 ```
+
+## Elvis
+
+```
+https://sourceforge.net/projects/elvis-vi-editor/files/
+https://sourceforge.net/projects/elvis-vi-editor/files/elvis-2.2_0.tar.gz
+```
