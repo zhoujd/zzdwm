@@ -62,6 +62,10 @@ $ cp busybox_VI vi
 ## Elvis
 
 ```
+## 2.2.0
 https://sourceforge.net/projects/elvis-vi-editor/files/
 https://sourceforge.net/projects/elvis-vi-editor/files/elvis-2.2_0.tar.gz
+
+## 2.2.2
+https://github.com/kirkendall/elvis
 ```
