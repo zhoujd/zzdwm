@@ -8,7 +8,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_lowbuf[] = "$Id: lowbuf.c,v 2.46 2003/10/17 17:41:23 steve Exp $";
+char id_lowbuf[] = "$Id: lowbuf.c,v 2.47 2006/12/01 23:09:36 steve Exp $";
 #endif
 
 /* These control the sizes of some tiny caches for storing line offsets and
@@ -378,7 +378,7 @@ static void helpinit(bufinfo, bufproc)
 	/* if it is damaged, skip it */
 	if (checksum(binfo) != binfo->bufinfo.checksum)
 	{
-		fprintf(stderr, "found a bad version of \"%s\"\n", binfo->bufinfo.name);
+		fprintf(stderr, "found a bad version of \"%s\"\n", tochar8(binfo->bufinfo.name));
 		sesunlock(bufinfo, ElvFalse);
 		return;
 	}
@@ -411,7 +411,7 @@ static void helpinit(bufinfo, bufproc)
 	}
 
 	/* let the BUFFER module initialize itself */
-	(*bufproc)(bufinfo, nchars, nlines, binfo->bufinfo.changes, binfo->bufinfo.prevloc, toCHAR(binfo->bufinfo.name));
+	(*bufproc)(bufinfo, nchars, nlines, binfo->bufinfo.changes, binfo->bufinfo.prevloc, binfo->bufinfo.name);
 
 	/* unlock the bufinfo block */
 	sesunlock(bufinfo, ElvFalse);
@@ -487,7 +487,7 @@ void lowinit(bufproc)
 
 /* Create a new buffer in the session file */
 BLKNO lowalloc(name)
-	char	*name;	/* name of the buffer to create */
+	CHAR	*name;	/* name of the buffer to create */
 {
 	BLKNO	bufinfo;
 	BLKNO	super;
@@ -506,7 +506,7 @@ BLKNO lowalloc(name)
 	blk->bufinfo.prevloc = 0L;
 	blk->bufinfo.reserved = 0;
 	blk->bufinfo.first = 0;
-	strncpy(blk->bufinfo.name, name, (size_t)SES_MAXBUFINFO);
+	CHARncpy(blk->bufinfo.name, name, (size_t)SES_MAXBUFINFO);
 	blk->bufinfo.checksum = checksum(blk);
 
 	/* Unlock the block */
@@ -1088,6 +1088,10 @@ register int	i;
 	int	j;
 
 	safeinspect();
+
+	/* if nothing to insert, then do nothing */
+	if (newlen == 0L)
+		return 0L;
 
 #if LINECACHE
 	clobbercache(dst);

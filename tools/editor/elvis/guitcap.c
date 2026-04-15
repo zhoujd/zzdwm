@@ -15,12 +15,10 @@
  * variable.  Others (particularly ncurses) forbid it.  The nice ones
  * supply one if you don't, so they'll work either way.
  */
-#if !defined(__linux__)
 #ifdef NEED_BC
        char	*BC;	/* :bc=: move cursor left */
 #else
 extern char	*BC;	/* :bc=: move cursor left */
-#endif
 #endif
 
 /* HP-UX, and maybe some others, require the application code to supply
@@ -64,7 +62,7 @@ static TWIN	*current;	/* window with keyboard focus */
 
 #if USE_PROTOTYPES
 static ELVBOOL clrtoeol(GUIWIN *gw);
-static ELVBOOL color(int fontcode, CHAR *colornam, ELVBOOL isfg, long *colorptr, unsigned char rgb[3]);
+static ELVBOOL color(_ELVFACE_ fontcode, CHAR *colornam, ELVBOOL isfg, long *colorptr, unsigned char rgb[3]);
 static ELVBOOL creategw(char *name,char * attributes);
 static ELVBOOL focusgw(GUIWIN *gw);
 static ELVBOOL scroll(GUIWIN *gw, int qty, ELVBOOL notlast);
@@ -105,21 +103,19 @@ static void chgsize P_((TWIN *tw, int newheight, ELVBOOL winch));
 static void cursorshape P_((ELVCURSOR shape));
 
 /* termcap values */
-#if !defined(__linux__)
-       char	PC;		  /* :pc=: pad character (not a string var!) */
-       char	*UP;		/* :up=: move cursor up */
-#endif
 static ELVBOOL	AM;		/* :am:  boolean: auto margins? */
 static ELVBOOL	PT;		/* :pt:  boolean: physical tabs? */
+       char	PC;		/* :pc=: pad character (not a string var!) */
 static char	*VB;		/* :vb=: visible bell */
+       char	*UP;		/* :up=: move cursor up */
 static char	*AF;		/* :AF=: change the foreground color */
 static char	*SO;		/* :so=: standout start */
 static char	*SE;		/* :se=: standout end */
 static char	*US;		/* :us=: underline start */
 static char	*UE;		/* :ue=: underline end */
 static char	*MD;		/* :md=: bold start */
-static char	*ME;		/* :me=: bold and half-bright end */
-static char	*MH;		/* :mh=: half-bright start */
+static char	*ME;		/* :me=: bold end */
+static char	*MH;		/* :mh=: half-bright start (end with :me=:) */
 static char	*CM;		/* :cm=: cursor movement */
 static char	*DO;		/* :do=: move down one line */
 static char	*DOmany;	/* :DO=: move down many lines */
@@ -325,8 +321,8 @@ static void change(fg, bg, bits)
 		return;
 
 	/* If foreground is set to a bright color, then we want to convert it
-	 * to either white + bold (if bold was already set), or
-	 * to a dim color + bold (if bold wasn't set already).
+	 * to either a dim color + bold (if bold wasn't set already), or to
+	 * white + bold (if bold was already set).
 	 */
 	if (fgcolored && fg >= 10)
 	{
@@ -336,10 +332,6 @@ static void change(fg, bg, bits)
 			fg -= 10, bits |= COLOR_BOLD;
 	}
 
-	/* Italic is disabled if "nottyitalic" */
-	if (!o_ttyitalic)
-		bits &= ~COLOR_ITALIC;
-
 	/* Italics are shown via underlining, if there is no :mh=: string */
 	if (!MH && (bits & COLOR_ITALIC))
 		bits = (bits & ~COLOR_ITALIC) | COLOR_UNDERLINED;
@@ -348,6 +340,10 @@ static void change(fg, bg, bits)
 	/* If "nottyitalic", then never use underline ever */
 	if (!o_ttyunderline && (!o_ttyitalic || bgcolored))
 		bits &= ~COLOR_UNDERLINED;
+
+	/* Italic is disabled if "nottyitalic" */
+	if (!o_ttyitalic)
+		bits &= ~COLOR_ITALIC;
 
 	/* Termcap doesn't allow bold & italics to mix.  If attempting to mix,
 	 * then use plain bold.
@@ -455,13 +451,9 @@ void ttysuspend()
 	if (KE) tputs(KE, 1, ttych);	/* restore keypad mode */
 	if (RC) tputs(RC, 1, ttych);	/* restore cursor & attributes */
 
-	/* no cursor movement for terminals with te capability */
-	if (!TE)
-	{
-		/* Move the cursor to the bottom of the screen */
-		tputs(tgoto(CM, 0, (int)o_ttyrows - 1), 0, ttych);
-		ttych('\n');
-	}
+	/* Move the cursor to the bottom of the screen */
+	tputs(tgoto(CM, 0, (int)o_ttyrows - 1), 0, ttych);
+	ttych('\n');
 	ttyflush();
 
 	/* change the terminal mode back the way it was */
@@ -617,14 +609,14 @@ static char *manynames(names)
 static void starttcap()
 {
 	static char	cbmem[800];
-	char		*str = NULL;
+	char		*str;
 	int		i;
 
 	/* make sure TERM variable is set */
 	o_term = toCHAR(ttytermtype());
 	if (!o_term)
 	{
-		o_term = toCHAR("unknown");
+		o_term = toLCHAR("unknown");
 	}
 	optflags(o_term) |= OPT_SET|OPT_LOCK|OPT_NODFLT;
 
@@ -640,8 +632,8 @@ static void starttcap()
 	{
 		o_background = 'd';	/* "dark" */
 		if (getenv("WINDOWID") != NULL
-		 || !CHARcmp(o_term, toCHAR("kvt"))
-		 || !CHARcmp(o_term, toCHAR("xterm"))
+		 || !CHARcmp(o_term, toLCHAR("kvt"))
+		 || !CHARcmp(o_term, toLCHAR("xterm"))
 		 || ((str = strrchr(tochar8(o_term), '-')) != NULL
 			&& str[1] == 'r'))
 		{
@@ -2089,7 +2081,7 @@ static int keylabel(given, givenlen, label, rawptr)
 
 /* This function defines colors for fonts */
 static ELVBOOL color(fontcode, colornam, isfg, colorptr, rgb)
-	int	fontcode;	/* name of font being changed */
+	_ELVFACE_ fontcode;	/* name of font being changed */
 	CHAR	*colornam;	/* name of new color */
 	ELVBOOL	isfg;		/* ElvTrue for foreground, ElvFalse for background */
 	long	*colorptr;	/* where to store the color number */

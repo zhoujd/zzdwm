@@ -4,7 +4,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_dmnormal[] = "$Id: dmnormal.c,v 2.64 2004/03/19 16:21:25 steve Exp $";
+char id_dmnormal[] = "$Id: dmnormal.c,v 2.66 2011/12/15 17:55:12 steve Exp $";
 #endif
 #include <time.h>
 
@@ -15,7 +15,7 @@ static MARK move(WINDOW w, MARK from, long linedelta, long column, ELVBOOL cmd);
 static MARK wordmove(MARK cursor, long count, ELVBOOL backward, ELVBOOL whitespace);
 static long mark2col(WINDOW w, MARK mark, ELVBOOL cmd);
 static MARK setup(WINDOW win, MARK top, long cursor, MARK bottom, DMINFO *info);
-static MARK image(WINDOW w, MARK line, DMINFO *info, void (*draw)(CHAR *p, long qty, _char_ font, long offset));
+static MARK image(WINDOW w, MARK line, DMINFO *info, void (*draw)(CHAR *p, long qty, _ELVFACE_ font, long offset));
 static void indent(WINDOW w, MARK line, long linedelta);
 static MARK tagnext(MARK cursor);
 # ifdef FEATURE_TAGS
@@ -27,7 +27,7 @@ static MARK tagnext(MARK cursor);
 # endif
 # ifdef FEATURE_LPR
   static void header (WINDOW w, int pagenum, DMINFO *info,
-		void (*draw)(CHAR *p, long qty, _char_ font, long offset));
+		void (*draw)(CHAR *p, long qty, _ELVFACE_ font, long offset));
 # endif
 #endif
 
@@ -97,7 +97,7 @@ int dmnlistchars(ch, offset, col, tabstop, draw)
 	long	offset;	/* offset of character */
 	long	col;	/* column number, or (when ch=' ') number of spaces */
 	short	*tabstop;/* tabstop columns -- value of o_tabstop() */
-	void	(*draw) P_((CHAR *p, long qty, _char_ font, long offst));
+	void	(*draw) P_((CHAR *p, long qty, _ELVFACE_ font, long offst));
 {
 	CHAR	caret[3];
 	CHAR	*string = NULL;
@@ -252,19 +252,19 @@ static DMINFO *init(win)
 	/* if first time, then find the "fold" font */
 	if (!font_fold)
 	{
-		font_fold = colorfind(toCHAR("fold"));
-		colorset(font_fold, toCHAR("bold boxed"), ElvFalse);
+		font_fold = colorfind(toLCHAR("fold"));
+		colorset(font_fold, toLCHAR("bold boxed"), ElvFalse);
 	}
 #endif
 
 	/* if first time, then find the "specialkey" font */
 	if (!font_specialkey)
 	{
-		font_specialkey = colorfind(toCHAR("specialkey"));
-		colorset(font_specialkey, toCHAR("bold boxed"), ElvFalse);
+		font_specialkey = colorfind(toLCHAR("specialkey"));
+		colorset(font_specialkey, toLCHAR("bold boxed"), ElvFalse);
 #ifdef FEATURE_LISTCHARS
-		font_extends = colorfind(toCHAR("extends"));
-		colorset(font_extends, toCHAR("like specialkey boxed"), ElvFalse);
+		font_extends = colorfind(toLCHAR("extends"));
+		colorset(font_extends, toLCHAR("like specialkey boxed"), ElvFalse);
 #endif
 	}
 
@@ -683,7 +683,7 @@ static MARK image(w, line, info, draw)
 	WINDOW	w;		/* window where drawing will go */
 	MARK	line;		/* start of line to draw next */
 	DMINFO	*info;		/* window-specific info about mode */
-	void	(*draw)P_((CHAR *p, long qty, _char_ font, long offset));
+	void	(*draw)P_((CHAR *p, long qty, _ELVFACE_ font, long offset));
 				/* function for drawing a single character */
 {
 	int	col;
@@ -728,7 +728,7 @@ static MARK image(w, line, info, draw)
 		(*draw)(fold->name, CHARlen(fold->name), font_fold, startoffset);
 
 		/* output a newline */
-		(*draw)(toCHAR("\n"), 1, font_fold, markoffset(fold->to));
+		(*draw)(toLCHAR("\n"), 1, font_fold, markoffset(fold->to));
 
 		/* next line starts after the fold */
 		(void) marktmp(tmp, markbuffer(fold->to), markoffset(fold->to) + 1);
@@ -843,11 +843,11 @@ static MARK image(w, line, info, draw)
 	}
 
 	/* end the line */
-	if (o_list(w) && !w->state->acton && (!cp || *cp == '\n'))
+	if (o_list(w) && !w->state->acton && cp && *cp == '\n')
 	{
 		col += dmnlistchars(*cp, offset, col, o_tabstop(markbuffer(w->cursor)), draw);
 	}
-	(*draw)(cp ? cp : toCHAR("\n"), 1, 0, offset);
+	(*draw)(cp ? cp : toLCHAR("\n"), 1, 0, offset);
 	if (cp)
 	{
 		offset++;
@@ -1113,7 +1113,7 @@ static void header(w, pagenum, info, draw)
 	WINDOW	w;	/* window from which we're printing */
 	int	pagenum;/* page number */
 	DMINFO	*info;	/* drawing state */
-	void	(*draw)P_((CHAR *p, long qty, _char_ font, long offset));
+	void	(*draw)P_((CHAR *p, long qty, _ELVFACE_ font, long offset));
 {
 	CHAR	pg[20];	/* page number, as a text string */
 	CHAR	*title;	/* title of the document */
@@ -1139,8 +1139,8 @@ static void header(w, pagenum, info, draw)
 	/* if first time, then find font_header */
 	if (!font_header)
 	{
-		font_header = colorfind(toCHAR("header"));
-		colorset(font_header, toCHAR("underlined"), ElvFalse);
+		font_header = colorfind(toLCHAR("header"));
+		colorset(font_header, toLCHAR("underlined"), ElvFalse);
 	}
 
 	/* convert page number to text */

@@ -673,7 +673,7 @@ RESULT vitextobj(win, vinf, from, to)
 	 * blocks in a consistent way.
 	 */
 	oldmatchchar = o_matchchar;
-	o_matchchar = toCHAR("{}[]()<>");
+	o_matchchar = toLCHAR("{}[]()<>");
 
 	/* change b, B, or l to the equivelent block or field delimiter */
 	if (vinf->key2 == 'b')
@@ -1225,7 +1225,7 @@ RESULT	viperform(win, vinf)
 	 */
 	if (o_bufchars(markbuffer(state->cursor)) == 0 && !(flags & WHEN_EMPTY))
 	{
-		bufreplace(marktmp(from, markbuffer(state->cursor), 0L), &from, toCHAR("\n"), 1L);
+		bufreplace(marktmp(from, markbuffer(state->cursor), 0L), &from, toLCHAR("\n"), 1L);
 		o_modified(markbuffer(state->cursor)) = ElvFalse;
 	}
 
@@ -1760,12 +1760,9 @@ void vipush(win, flags, cursor)
 	win->state->perform = _viperform;
 	win->state->shape = shape;
 	win->state->info = safealloc(1, sizeof (VIINFO));
-	win->state->modename = viiscmd(win) ? " - " : "One Cmd";
+	win->state->modename = viiscmd(win) ? "Command" : "One Cmd";
 	win->state->mapflags |= MAP_COMMAND;
 	viinitcmd((VIINFO *)win->state->info);
-
-	/* default ruler/showmode */
-	o_ruler(win) = o_showmode(win) = ElvTrue;
 
 	/* if a specific cursor was given, use it */
 	if (cursor)
@@ -1865,14 +1862,14 @@ static	CHAR	stdname[12];
 	{
 		if (!strchr(TEXTOBJECTS, key2) && !elvpunct(key2))
 			return NULL;
-		CHARcpy(stdname, toCHAR("textobject"));
+		CHARcpy(stdname, toLCHAR("textobject"));
 	}
 	else
 	{
 		memset(stdname, 0, sizeof stdname);
 		if (key >= 0x80)
 		{
-			CHARcpy(stdname, toCHAR("g"));
+			CHARcpy(stdname, toLCHAR("g"));
 			key = ELVUNG(key);
 		}
 		if (vikeys[key].helptopic)

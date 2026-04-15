@@ -122,7 +122,7 @@ void morepush(win, special)
 	/* Create the "more" buffer, and put the prompt into it */
 	buf = bufalloc(toCHAR(MORE_BUF), 0, ElvTrue);
 	bufreplace(marktmp(from, buf, 0), marktmp(to, buf, o_bufchars(buf)),
-		toCHAR("Hit <Enter> to continue\n"), 24);
+		toLCHAR("Hit <Enter> to continue\n"), 24);
 
 	/* Push the state.  Make sure this keystate will be popped after
 	 * a single command (keystroke)

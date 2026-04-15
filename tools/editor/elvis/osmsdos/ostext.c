@@ -73,7 +73,7 @@ void txtclose(void)
  * Should perform any necessary translations for converting
  * elvis' idea of text into the local OS's idea of text.
  */
-int txtwrite(CHAR *buf, int nbytes)
+int txtwrite(char *buf, int nbytes)
 {
 	return write(fd, buf, nbytes);
 }
@@ -82,7 +82,7 @@ int txtwrite(CHAR *buf, int nbytes)
  * number to read.  Returns the number of characters actually read
  * after any conversions such as CRLF->LF translation.
  */
-int txtread(CHAR *buf, int nbytes)
+int txtread(char *buf, int nbytes)
 {
 	return read(fd, buf, nbytes);
 }

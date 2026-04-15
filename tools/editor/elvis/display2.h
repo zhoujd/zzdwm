@@ -33,9 +33,9 @@ struct dispmode_s
 	MARK	(*wordmove) P_((MARK from, long count, ELVBOOL backward, ELVBOOL whitespace));
 	MARK	(*setup) P_((WINDOW w, MARK top, long cursor, MARK bottom, DMINFO *info));
 	MARK	(*image) P_((WINDOW w, MARK line, DMINFO *info,
-			void (*draw)(CHAR *p, long qty, _char_ font, long offset)));
+			void (*draw)(CHAR *p, long qty, _ELVFACE_ font, long offset)));
 	void	(*header) P_((WINDOW w, int pagenum, DMINFO *info,
-			void (*draw)(CHAR *p, long qty, _char_ font, long offset)));
+			void (*draw)(CHAR *p, long qty, _ELVFACE_ font, long offset)));
 	void	(*indent) P_((WINDOW w, MARK line, long linedelta));
 	CHAR	*(*tagatcursor) P_((WINDOW win, MARK cursor));
 	MARK	(*tagload) P_((CHAR *tagname, MARK from));
@@ -79,7 +79,7 @@ extern ELVBOOL	dmskeyword P_((WINDOW win, CHAR *word));
 extern void	dmssmartargs P_((WINDOW win));
 # endif
 #endif
-extern int	dmnlistchars P_((_CHAR_ ch, long offset, long col, short *tabstop, void(*draw)(CHAR *p, long qty, _char_ font, long offset)));
+extern int	dmnlistchars P_((_CHAR_ ch, long offset, long col, short *tabstop, void(*draw)(CHAR *p, long qty, _ELVFACE_ font, long offset)));
 
 
 END_EXTERNC

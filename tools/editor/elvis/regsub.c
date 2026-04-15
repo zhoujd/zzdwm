@@ -6,7 +6,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_regsub[] = "$Id: regsub.c,v 2.22 2003/10/17 17:41:23 steve Exp $";
+char id_regsub[] = "$Id: regsub.c,v 2.23 2011/12/15 17:53:34 steve Exp $";
 #endif
 
 /* Allocate a new copy of the replacement string, with all ~'s replaced by
@@ -253,7 +253,7 @@ CHAR *regsub(re, newp, doit)
 		/* if there is nothing to copy, loop */
 		if (markoffset(&cpy) < 0)
 		{
-			msg(MSG_ERROR, "[d]too few \\\\\\(\\\\\\)s to use \\\\$1", cval);
+			msg(MSG_ERROR, "[d]too few \\\\(\\\\)s to use \\\\$1", cval);
 			if (inst)
 				safefree(inst);
 			return NULL;

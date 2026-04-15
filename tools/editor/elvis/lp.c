@@ -6,7 +6,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_lp[] = "$Id: lp.c,v 2.39 2003/10/17 17:41:23 steve Exp $";
+char id_lp[] = "$Id: lp.c,v 2.41 2011/12/15 17:55:12 steve Exp $";
 #endif
 #ifdef FEATURE_LPR
 
@@ -16,7 +16,7 @@ static LPTYPE *findtype(char *name);
 static void dummyprt(_CHAR_ ch);
 # endif
 static void prtchar(_CHAR_ ch);
-static void draw(CHAR *p, long qty, _char_ font, long offset);
+static void draw(CHAR *p, long qty, _ELVFACE_ font, long offset);
 #endif
 
 
@@ -130,7 +130,7 @@ static LPTYPE *findtype(name)
  * consideration the "lpcolor" and "lpcontrast" options.
  */
 unsigned char *lpfg(fontcode)
-	_char_	fontcode;
+	_ELVFACE_	fontcode;
 {
 	static unsigned char rgb[3];
 	int	i, j;
@@ -187,7 +187,7 @@ static void prtchar(ch)
 static void draw(p, qty, font, offset)
 	CHAR	*p;	/* character to be output */
 	long	qty;	/* number of characters to be output */
-	_char_	font;	/* font of character */
+	_ELVFACE_ font;	/* font of character */
 	long	offset;	/* buffer offset of ch, or -1 if not from buffer */
 {
 	WINDOW	win;
@@ -369,7 +369,7 @@ RESULT lp(win, top, bottom, force)
 		}
 		if (out[0] == '>' && out[1] == '>')
 			out += 2, rwa = 'a';
-		if (!ioopen(out, rwa, ElvTrue, force, 'b'))
+		if (!ioopen(out, rwa, ElvTrue, force, 'l', 'b'))
 		{
 			goto Error;
 		}

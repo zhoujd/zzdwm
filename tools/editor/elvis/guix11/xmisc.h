@@ -29,5 +29,5 @@ X_LOADEDFONT *x_loadfont P_((char *name));
 void x_unloadfont P_((X_LOADEDFONT *font));
 unsigned long x_loadcolor P_((CHAR *name, unsigned long def, unsigned char rgb[3]));
 void x_unloadcolor P_((unsigned long pixel));
-void x_drawbevel P_((X11WIN *xw, Window win, int x, int y, unsigned w, unsigned h, _char_ dir, int height));
+void x_drawbevel P_((X11WIN *xw, Window win, int x, int y, unsigned w, unsigned h, _char_ dir, int height, _ELVFACE_ face));
 void x_drawstring P_((Display *display, Window win, GC gc, int x, int y, char *str, int len));

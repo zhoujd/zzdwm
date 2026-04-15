@@ -4,20 +4,27 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_draw[] = "$Id: draw.c,v 2.133 2004/03/07 21:37:49 steve Exp $";
+char id_draw[] = "$Id: draw.c,v 2.138 2011/12/15 17:55:12 steve Exp $";
 #endif
 
+/* SLOPPY_ITALICS tweaks the behavior of the drawing logic to avoid clipping
+ * portions of italic characters that lie outside of the character cell.
+ * Mostly this makes italics at the end of the line looks better.
+ */
 #if defined (GUI_WIN32)
 # define SLOPPY_ITALICS
-# define isitalic(f)	(colorinfo[(f)&0x7f].da.bits & COLOR_ITALIC)
+# define isitalic(f)	(colorinfo[(f)&FACE_BITS].da.bits & COLOR_ITALIC)
 #else
 # undef SLOPPY_ITALICS
 #endif
 
+/* SLOPPY_BOXED adds COLOR_LEFTBOX and COLOR_RIGHTBOX where appropriate,
+ * to help the GUI draw the left and right edges of boxed text.
+ */
 #if defined(GUI_WIN32) || defined(GUI_X11)
 # define SLOPPY_BOXED
-# define isboxed(f)	((colorinfo[(f)&0x7f].da.bits & COLOR_BOXED) \
-			 || (((f) & 0x80) \
+# define isboxed(f)	((colorinfo[(f)&FACE_BITS].da.bits & COLOR_BOXED) \
+			 || (((f) & SELECTED_BIT) \
 				&& (colorinfo[COLOR_FONT_SELECTION].da.bits & COLOR_BOXED)))
 #else
 # undef SLOPPY_BOXED
@@ -25,21 +32,21 @@ char id_draw[] = "$Id: draw.c,v 2.133 2004/03/07 21:37:49 steve Exp $";
 
 #if USE_PROTOTYPES
 static void insimage(CHAR *ch, DRAWATTR *attr, int qty, int extent);
-static void delimage(CHAR *ch, char *font, DRAWATTR *attr, int qty, int extent);
-static void fillcell(_CHAR_ ch, _char_ font, long offset);
-static void drawchar(CHAR *p, long qty, _char_ font, long offset);
+static void delimage(CHAR *ch, ELVFACE *font, DRAWATTR *attr, int qty, int extent);
+static void fillcell(_CHAR_ ch, _ELVFACE_ font, long offset);
+static void drawchar(CHAR *p, long qty, _ELVFACE_ font, long offset);
 static void compareimage(WINDOW win);
 static void drawcurrent(DRAWINFO *di, int base, int same, DRAWATTR *da);
 static void updateimage(WINDOW win);
 static void genlastrow(WINDOW win);
 static void opentextline(WINDOW win, CHAR *text, int len);
-static void openchar(CHAR *p, long qty, _char_ font, long offset);
+static void openchar(CHAR *p, long qty, _ELVFACE_ font, long offset);
 static void openmove(WINDOW win, long oldcol, long newcol, CHAR *image, long len);
 # ifdef FEATURE_MISC
   static ELVBOOL drawquick(WINDOW win);
 # endif
 # ifdef FEATURE_LISTCHARS
-static void lcsdrawchar(CHAR *p, long qty, _char_ font, long offset);
+static void lcsdrawchar(CHAR *p, long qty, _ELVFACE_ font, long offset);
 # endif
 #endif
 
@@ -54,7 +61,7 @@ static int	lprecedes, lextends;
 static int hlfont[9];
 
 
-static int hlobjects P_((WINDOW win, int font, long offset));
+static int hlobjects P_((WINDOW win, _ELVFACE_ font, long offset));
 
 #ifdef FEATURE_MISC
 static ELVBOOL hlprep P_((WINDOW win, BUFFER buf));
@@ -216,7 +223,7 @@ static ELVBOOL hlprep(win, buf)
 /* compute the highlighted version of a font at a given point */
 static int hlobjects(win, font, offset)
 	WINDOW	win;
-	int	font;
+	_ELVFACE_	font;
 	long	offset;
 {
 	int	i;
@@ -254,7 +261,7 @@ DRAWINFO *drawalloc(rows, columns, top)
 	newp->newline = (DRAWLINE *)safealloc(rows + 1, sizeof(DRAWLINE));
 	newp->curline = (DRAWLINE *)safealloc(rows, sizeof(DRAWLINE));
 	newp->newchar = (CHAR *)safealloc(rows * columns, sizeof(CHAR));
-	newp->newfont = (char *)safealloc(rows * columns, sizeof(char));
+	newp->newfont = (ELVFACE *)safealloc(rows * columns, sizeof(ELVFACE));
 	newp->curchar = (CHAR *)safealloc(rows * columns, sizeof(CHAR));
 	newp->curattr = (DRAWATTR *)safealloc(rows * columns, sizeof(DRAWATTR));
 	newp->offsets = (long *)safealloc(rows * columns, sizeof(long));
@@ -283,13 +290,13 @@ DRAWINFO *drawalloc(rows, columns, top)
 		sprintf(tochar8(name), "hlobject%d", i + 1);
 		hlfont[i] = colorfind(name);
 	}
-	colorset(hlfont[0], toCHAR("boxed"), ElvFalse);
+	colorset(hlfont[0], toLCHAR("boxed"), ElvFalse);
 #endif
 #ifdef FEATURE_HLSEARCH
 	if (!searchfont)
 	{
-		searchfont = colorfind(toCHAR("hlsearch"));
-		colorset(searchfont, toCHAR("bold"), ElvFalse);
+		searchfont = colorfind(toLCHAR("hlsearch"));
+		colorset(searchfont, toLCHAR("bold"), ElvFalse);
 	}
 #endif
 
@@ -470,7 +477,7 @@ static int	thisscroll;	/* scroll distance while drawing this line */
 static int	scrollrows;	/* #rows (i.e., area) scrolled by gui->scroll */
 static int	maxcell;	/* number of cells to be drawn */
 static int	seloffset;	/* offset of character, during selection */
-static char	selfont;	/* font of character, during selection */
+static ELVFACE	selfont;	/* font of character, during selection */
 #ifdef FEATURE_REGION
 static region_t *thisregion;
 #endif
@@ -520,7 +527,7 @@ static void insimage(ch, attr, qty, extent)
 /* delete some characters from an image, and add blanks to the end. */
 static void delimage(ch, font, attr, qty, extent)
 	CHAR	*ch;	/* where character deletion should begin */
-	char	*font;	/* parallel array of font codes for "ch" characters */
+	ELVFACE *font;	/* parallel array of font codes for "ch" characters */
 	DRAWATTR *attr;	/* parallel array of attributes for "ch" characters */
 	int	qty;	/* number of characters to delete */
 	int	extent;	/* number of characters after the deletion point */
@@ -569,7 +576,7 @@ static void delimage(ch, font, attr, qty, extent)
  */
 static void fillcell(ch, font, offset)
 	_CHAR_	ch;	/* new character to place in the next cell */
-	_char_	font;	/* font code of new character */
+	_ELVFACE_ font;	/* font code of new character */
 	long	offset;	/* buffer offset, or -1 if not from buffer */
 {
 	register int		i;
@@ -668,15 +675,22 @@ static void fillcell(ch, font, offset)
 static void drawchar(p, qty, font, offset)
 	CHAR	*p;	/* the characters to be added */
 	long	qty;	/* number of characters to add */
-	_char_	font;	/* font code of characters */
+	_ELVFACE_ font;	/* font code of characters */
 	long	offset;	/* buffer offset of character, or -1 if not from buffer */
 {
 	register 	  CHAR	ch;		/* a character from *p */
 	register DRAWINFO *di = thiswin->di;	/* window drawing info */
 	long		  delta;		/* value to add to "offset" */
-	CHAR		  hifont;		/* possibly highlighted font */
+	_ELVFACE_	  hifont;		/* possibly highlighted font */
 	CHAR		  tmpch;
 	int		  i;
+
+#ifdef FEATURE_EMBED
+	if (thiswin->embedded && thiswin->embedfont)
+	{
+		font = colortmp(font, thiswin->embedfont);
+	}
+#endif
 
 #ifdef FEATURE_REGION
 	/* if in a region, then merge the region's font into font */
@@ -705,7 +719,7 @@ static void drawchar(p, qty, font, offset)
 	 && offset <= markoffset(thiswin->cursor)
 	 && (delta == 0 || markoffset(thiswin->cursor) < offset + delta * qty))
 	{
-		thiswin->di->cursface = font & 0x7f;
+		thiswin->di->cursface = font & FACE_BITS;
 	}
 
 	/* for each character... */
@@ -760,8 +774,8 @@ static void drawchar(p, qty, font, offset)
 		}
 
 		/* If the offset is in the selected region for this window,
-		 * then make the font letter uppercase so that it will be
-		 * drawn highlighted.  Also, make wide characters be either
+		 * then use a hilighted version of the font.
+		 * Also, make wide characters (such as tabs) be either
 		 * totally highlighted or totally unhighlighted.
 		 */
 		hifont = font;
@@ -786,10 +800,10 @@ static void drawchar(p, qty, font, offset)
 					&& i <= thiswin->selright
 					&& (ch != '\n' || thiswin->seltype != 'r'))
 				{
-					hifont = font | 0x80;
+					hifont = font | SELECTED_BIT;
 				}
+				selfont = hifont;
 			}
-			selfont = hifont;
 			seloffset = offset;
 		}
 #ifdef FEATURE_TEXTOBJ
@@ -798,7 +812,7 @@ static void drawchar(p, qty, font, offset)
 		else if (thiswin->match == offset)
 #endif
 		{
-			hifont = font | 0x80; /* showmatch */
+			hifont = font | SELECTED_BIT; /* showmatch */
 		}
 
 		/* remember where this line started */
@@ -880,7 +894,7 @@ static void drawchar(p, qty, font, offset)
 static void lcsdrawchar(p, qty, font, offset)
 	CHAR	*p;	/* the characters to be added */
 	long	qty;	/* number of characters to add -- always 1 */
-	_char_	font;	/* font code of characters */
+	_ELVFACE_ font;	/* font code of characters */
 	long	offset;	/* offset of chars -- ignored */
 {
 	register DRAWINFO *di = thiswin->di;	/* window drawing info */
@@ -1074,7 +1088,11 @@ static void drawcurrent(di, base, same, da)
 	{
 		di->curchar[base + i] = di->newchar[base + i];
 		di->curattr[base + i] = *da;
+
 #ifdef SLOPPY_BOXED
+		/* COLOR_LEFTBOX only affects the first char in the span, while
+		 * COLOR_RIGHTBOX only affects the last char in the span.
+		 */
 		if (i != 0)
 			di->curattr[base + i].bits &= ~COLOR_LEFTBOX;
 		if (i != same - 1)
@@ -1098,7 +1116,13 @@ static void updateimage(win)
 	int	forcebits, j;
 	short	*guides = o_guidewidth(markbuffer(win->cursor));
 	int	logicaltab;
+
 #ifdef SLOPPY_BOXED
+	/* The firstboxed variable is used to determine the transitions from
+	 * boxed text to unboxed or vice-versa, so we can add the COLOR_LEFTBOX
+	 * or COLOR_RIGHTBOX bits to there.  We test/adjust it whenever we see
+	 * a change in the attributes within a line.
+	 */
 	int	firstboxed;
 #endif
 
@@ -1114,7 +1138,7 @@ static void updateimage(win)
 			logicaltab = 0;
 		else
 		{
-			for (i = 0; di->newline[i].startrow < row && di->nlines > i && di->newline[i + 1].startrow - 1 < row; i++)
+			for (i = 0; di->newline[i].startrow < row && di->newline[i + 1].startrow - 1 < row; i++)
 			{
 			}
 			logicaltab = (row - di->newline[i].startrow) * ncols;
@@ -1486,8 +1510,10 @@ static void genlastrow(win)
 	char	*scan;
 	CHAR	*cp;
 	char	buf[25];
+	CHAR	charbuf[20];
 	CHAR	left[100];
 	CHAR	*build, *arg;
+	CHAR	atcurs;
 #ifdef DISPLAY_HTML
 	CHAR	*linkname;
 #endif
@@ -1503,7 +1529,7 @@ static void genlastrow(win)
 #ifdef DISPLAY_HTML
 		linkname = NULL;
 #endif
-		if (!CHARncmp(cp, "file", 4))
+		if (!CHARncmp(cp, toLCHAR("file"), 4))
 		{
 			cp += 3;
 			arg = o_filename(markbuffer(win->cursor));
@@ -1511,26 +1537,50 @@ static void genlastrow(win)
 				arg = o_bufname(markbuffer(win->cursor));
 		}
 #ifdef FEATURE_SHOWTAG
-		else if (!CHARncmp(cp, "tag", 3))
+		else if (!CHARncmp(cp, toLCHAR("tag"), 3))
 		{
 			arg = telabel(win->state->cursor);
 		}
 #endif
-		else if (!CHARncmp(cp, "cmd", 3))
+		else if (!CHARncmp(cp, toLCHAR("cmd"), 3))
 		{
 			arg = win->cmdchars;
 		}
-		else if (!CHARncmp(cp, "face", 4))
+		else if (!CHARncmp(cp, toLCHAR("face"), 4))
 		{
 			if (win->di->cursface < colornpermanent)
 				arg = colorinfo[(int)win->di->cursface].name;
 		}
-		else if (!CHARncmp(cp, "state", 5))
+		else if (!CHARncmp(cp, toLCHAR("state"), 5))
 		{
 			arg = o_state;
 		}
+		else if (!CHARncmp(cp, toLCHAR("char"), 4))
+		{
+			if (win->state->cursor)
+			{
+				atcurs = scanchar(win->state->cursor);
+				if (atcurs > ' ' && atcurs <= '~')
+					sprintf(buf, "%c=\\x%02x", atcurs, atcurs);
+				else
+				{
+					switch (atcurs)
+					{
+					  case '\b':	sprintf(buf, "\\b=\\x%02x", atcurs);	break;
+					  case '\f':	sprintf(buf, "\\f=\\x%02x", atcurs);	break;
+					  case '\n':	sprintf(buf, "\\n=\\x%02x", atcurs);	break;
+					  case '\r':	sprintf(buf, "\\r=\\x%02x", atcurs);	break;
+					  case '\t':	sprintf(buf, "\\t=\\x%02x", atcurs);	break;
+					  case ' ':	sprintf(buf, "' '=\\x%02x", atcurs);	break;
+					  default:	sprintf(buf, "\\%03o=\\x%02x", atcurs, atcurs);
+					}
+				}
+				CHARcpy(charbuf, toCHAR(buf));
+				arg = charbuf;
+			}
+		}
 #ifdef DISPLAY_HTML
-		else if (!CHARncmp(cp, "link", 4))
+		else if (!CHARncmp(cp, toLCHAR("link"), 4))
 		{
 			if (win->md->tagatcursor != NULL
 			 && win->md->tagnext == dmhtml.tagnext)
@@ -1540,14 +1590,14 @@ static void genlastrow(win)
 #endif
 #ifdef FEATURE_SPELL
 		else if (o_spell(markbuffer(win->cursor))
-		      && !CHARncmp(cp, "spell", 5))
+		      && !CHARncmp(cp, toLCHAR("spell"), 5))
 		{
 			i = win->di->cursrow * win->di->columns + win->di->curscol;
 			arg = spellshow(win->cursor, win->di->newfont[i]);
 		}
 #endif
 #ifdef FEATURE_REGION
-		else if (!CHARncmp(cp, "region", 6))
+		else if (!CHARncmp(cp, toLCHAR("region"), 6))
 		{
 			region = regionfind(win->state->cursor);
 			if (region)
@@ -1647,7 +1697,7 @@ static void genlastrow(win)
 		 */
 		if (!win->di->newmsg
 #ifdef FEATURE_INCSEARCH
-			&& CHARcmp(win->state->modename, toCHAR("IncSrch"))
+			&& strcmp(win->state->modename, "IncSrch")
 #endif
 		)
 		{
@@ -1671,7 +1721,7 @@ static void genlastrow(win)
 			for (i = base + o_columns(win) - 10; i < base + o_columns(win) - 3; i++)
 			{
 				win->di->newchar[i] = *scan++;
-				win->di->newfont[i] = (o_hasfocus(win) ? COLOR_FONT_SHOWMODE : COLOR_FONT_IDLE);
+				win->di->newfont[i] = COLOR_FONT_SHOWMODE;
 				if (!*scan)
 				{
 					scan = " ";
@@ -1691,7 +1741,7 @@ static void genlastrow(win)
 			for (i = base + o_columns(win) - 10 - strlen(buf); *scan; i++)
 			{
 				win->di->newchar[i] = *scan++;
-				win->di->newfont[i] = (o_hasfocus(win) ? COLOR_FONT_RULER : COLOR_FONT_IDLE);
+				win->di->newfont[i] = COLOR_FONT_RULER;
 			}
 		}
 		else
@@ -1701,7 +1751,7 @@ static void genlastrow(win)
 			win->di->newchar[i] = maplrnchar(o_modified(markbuffer(win->cursor)) ? '*' : ',');
 			if (win->di->newchar[i] == ',')
 				win->di->newchar[i] = ' ';
-			win->di->newfont[i] = (o_hasfocus(win) ? COLOR_FONT_RULER : COLOR_FONT_IDLE);
+			win->di->newfont[i] = COLOR_FONT_RULER;
 		}
 
 	}
@@ -2189,13 +2239,7 @@ static void opentextline(win, text, len)
 			if (win->di->logic != DRAW_SCRATCH)
 				win->di->newrow[0].insrows--;
 			win->di->opencell -= win->di->columns;
-#if 0
-			/* This assertion seems to fail (meaninglessly) if you
-			 * backspace around the end of the line.
-			 */
-			assert((win->di->opencell - thiscol) % win->di->columns == 0);
-#endif
-			for (j = win->di->opencell - thiscol;
+			for (j = (win->di->rows - 1) * win->di->columns;
 			     j < win->di->rows * win->di->columns;
 			     j++)
 			{
@@ -2253,7 +2297,7 @@ void drawopencomplete(win)
 		{
 			opentextline(win, win->di->openimage + win->di->opencursor, len);
 		}
-		opentextline(win, toCHAR("\r\n"), 2);
+		opentextline(win, toLCHAR("\r\n"), 2);
 		break;
 
 	  case DRAW_OPENOUTPUT:
@@ -2265,7 +2309,7 @@ void drawopencomplete(win)
 		win->di->opencell = (win->di->rows - 1) * win->di->columns;
 		thiscol = 0;
 		win->di->newrow[0].insrows = 0;
-		opentextline(win, toCHAR("\r\n"), 2);
+		opentextline(win, toLCHAR("\r\n"), 2);
 		break;
 	}
 
@@ -2301,7 +2345,7 @@ void drawmsg(win, imp, verbose, len)
 	if (win->di->drawstate != DRAW_VISUAL)
 	{
 		drawextext(win, verbose, len);
-		drawextext(win, toCHAR("\n"), 1);
+		drawextext(win, toLCHAR("\n"), 1);
 	}
 	else /* full-screen */
 	{
@@ -2346,7 +2390,7 @@ static long	openselbottom;	/* offset of bottom of highlighted region */
 static void openchar(p, qty, font, offset)
 	CHAR	*p;	/* characters to be output */
 	long	qty;	/* number of characters */
-	_char_	font;	/* font code of that character */
+	_ELVFACE_ font;	/* font code of that character */
 	long	offset;	/* buffer offset of the character, or -1 if not from buffer */
 {
 	register CHAR ch;
@@ -2645,7 +2689,7 @@ void drawextext(win, text, len)
 		}
 		if (i + width < len)
 		{
-			opentextline(win, toCHAR("\r\n"), 2);
+			opentextline(win, toLCHAR("\r\n"), 2);
 		}
 	}
 

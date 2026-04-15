@@ -35,15 +35,15 @@ extern char	*dircwd P_((void));
 extern ELVBOOL	dirchdir P_((char *pathname));
 
 extern ELVBOOL	prgopen P_((char *command, ELVBOOL willwrite, ELVBOOL willread));
-extern int	prgwrite P_((CHAR *buf, int nbytes));
+extern int	prgwrite P_((char *buf, int nbytes));
 extern ELVBOOL	prggo P_((void));
-extern int	prgread P_((CHAR *buf, int nbytes));
+extern int	prgread P_((char *buf, int nbytes));
 extern int	prgclose P_((void));
 
 extern int	txtopen P_((char *filename, _char_ rwa, ELVBOOL binary));
 extern void	txtclose P_((void));
-extern int	txtwrite P_((CHAR *buf, int nbytes));
-extern int	txtread P_((CHAR *buf, int nbytes));
+extern int	txtwrite P_((char *buf, int nbytes));
+extern int	txtread P_((char *buf, int nbytes));
 
 #if defined(PROTOCOL_HTTP) || defined(PROTOCOL_FTP)
 typedef struct
@@ -58,6 +58,7 @@ typedef struct
 #define netbytes(sb)		((sb)->right - (sb)->left)
 #define netconsume(sb, n)	((sb)->left += (n))
 
+int	  netspeed P_((char *site));
 sockbuf_t *netconnect P_((char *site_port, unsigned int defport));
 void	  netdisconnect P_((sockbuf_t *sb));
 ELVBOOL	  netread P_((sockbuf_t *sb));

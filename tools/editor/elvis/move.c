@@ -4,11 +4,11 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_move[] = "$Id: move.c,v 2.67 2003/12/28 20:31:11 steve Exp $";
+char id_move[] = "$Id: move.c,v 2.69 2011/12/15 17:55:12 steve Exp $";
 #endif
 
 #ifdef FEATURE_G
-static void gdraw P_((CHAR *p, long qty, _char_ font, long offset));
+static void gdraw P_((CHAR *p, long qty, _ELVFACE_ font, long offset));
 static long gstartrow P_((WINDOW win, long col));
 #endif
 
@@ -609,7 +609,6 @@ RESULT m_mark(win, vinf)
 
 	/* move to the named mark */
 	marksetoffset(win->state->cursor, markoffset(newmark));
-	msg(MSG_INFO, "[C]on mark $1", vinf->key2);
 	return RESULT_COMPLETE;
 }
 
@@ -1626,8 +1625,8 @@ RESULT m_fsentence(win, vinf)
 	DEFAULT(1);
 
 	/* If sentenceend and sentencequote are unset, use default values */
-	end = o_sentenceend ? o_sentenceend : toCHAR(".?!");
-	quote = o_sentencequote ? o_sentencequote : toCHAR("\")]");
+	end = o_sentenceend ? o_sentenceend : toLCHAR(".?!");
+	quote = o_sentencequote ? o_sentencequote : toLCHAR("\")]");
 
 	count = vinf->count;
 	oper = vinf->oper;
@@ -1779,8 +1778,8 @@ RESULT m_bsentence(win, vinf)
 	DEFAULT(1);
 
 	/* If sentenceend and sentencequote are unset, use default values */
-	end = o_sentenceend ? o_sentenceend : toCHAR(".?!");
-	quote = o_sentencequote ? o_sentencequote : toCHAR("\")]");
+	end = o_sentenceend ? o_sentenceend : toLCHAR(".?!");
+	quote = o_sentencequote ? o_sentencequote : toLCHAR("\")]");
 
 	/* misc initialization */
 	anynext = anythis = ElvFalse;
@@ -2002,7 +2001,7 @@ static CHAR gcommand;	/* this affects which whitespace is allowed */
 static void gdraw(p, qty, font, offset)
 	CHAR	*p;	/* first letter of text to draw */
 	long	qty;	/* quantity to draw (negative to repeat *p) */
-	_char_	font;	/* font code of the text */
+	_ELVFACE_ font;	/* font code of the text */
 	long	offset;	/* buffer offset of *p */
 {
 	long	delta;		/* value to add to "offset" */

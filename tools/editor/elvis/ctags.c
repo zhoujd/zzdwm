@@ -11,7 +11,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_ctags[] = "$Id: ctags.c,v 2.44 2003/10/17 17:41:23 steve Exp $";
+char id_ctags[] = "$Id: ctags.c,v 2.46 2012/04/25 18:58:57 steve Exp $";
 #endif
 #if OSEXPANDARGS
 # define JUST_DIRFIRST
@@ -640,10 +640,9 @@ int lex_gettoken()
 					 */
 					if (ch == '/')
 					{
-						do
+						while ((ch = cpp_getc()) != '\n')
 						{
-							ch = cpp_getc();
-						} while (ch != '\n' && ch != EOF);
+						}
 					}
 
 					/* the last name before a comma, '=', or
@@ -933,6 +932,7 @@ void maketag(scope, name, lnum, seek, number, kind, inside)
 	char	lnbuf[20];
 	TAG	*scan, *ref, *next;
 
+	next = NULL; /* just to keep the compiler happy */
 
 	/* if tag has a scope that we don't care about, ignore it */
 	if ((scope == EXTERN && !incl_extern)
@@ -970,7 +970,7 @@ void maketag(scope, name, lnum, seek, number, kind, inside)
 				for (; scan && !strcmp(scan->TAGNAME,name); scan = next)
 				{
 					if (warn_duplicate)
-						printf("duplicate tag \"%s\" is typedef: keeping one from %s, not %s\n", name, file_name, scan->TAGFILE);
+						printf("duplicate tag \"%s\" is typedef: keeping one from %s, not %ss\n", name, file_name, scan->TAGFILE);
 
 					/* make any references to it point to
 					 * the next tag instead.
@@ -985,10 +985,7 @@ void maketag(scope, name, lnum, seek, number, kind, inside)
 							ref->bighop = scan->next;
 					}
 					if (taglist == scan)
-					{
 						taglist = scan->next;
-						next = taglist;
-					}
 
 					/* delete this one */
 					(void)tagfree(scan);
@@ -1252,7 +1249,7 @@ void ctags(name)
 				maketag(EXTERN, lex_name, lex_lnum, tagseek, use_numbers, "x", NULL);
 			}
 			/* generate a tag, if -v/-t and maybe -s */
-			else if (scope==TYPEDEF || scope==STRUCT || scope==UNION ? incl_types : incl_vars)
+			else if (scope==TYPEDEF || scope==STRUCT || scope==UNION || scope==ENUM ? incl_types : incl_vars)
 			{
 				/* a TYPEDEF outside of a header is KSTATIC */
 				if (scope == TYPEDEF && !file_header)
@@ -1261,7 +1258,7 @@ void ctags(name)
 				}
 				else /* use whatever scope was declared */
 				{
-					maketag(scope, lex_name, lex_lnum, tagseek, use_numbers, scope==TYPEDEF || scope==STRUCT || scope==UNION ? "t" : "v", NULL);
+					maketag(scope, lex_name, lex_lnum, tagseek, use_numbers, scope==TYPEDEF || scope==STRUCT || scope==UNION || scope==ENUM ? "t" : "v", NULL);
 				}
 
 				/* if declaration included a body, then generate

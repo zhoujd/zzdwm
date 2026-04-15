@@ -357,6 +357,8 @@ void x_ev_process(event)
 	  case UnmapNotify:
 		xw->ismapped = ElvFalse;
 		xw->willraise = ElvFalse;
+		if (x_hasfocus == xw)
+			x_hasfocus = NULL;
 		break;
 
 	  case FocusIn:

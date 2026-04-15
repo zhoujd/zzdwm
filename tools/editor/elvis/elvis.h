@@ -20,6 +20,26 @@
 # define FEATURE_TEXTOBJ
 #endif
 
+/* The embed feature requires cachedesc */
+#if defined(FEATURE_EMBED) && !defined(FEATURE_CACHEDESC)
+# define FEATURE_CACHEDESC
+#endif
+
+#ifndef USE_PROTOTYPES
+# if defined(__STDC__) || defined(__cplusplus)
+#  define USE_PROTOTYPES	1
+# else
+#  define USE_PROTOTYPES	0
+# endif
+#endif
+#if USE_PROTOTYPES
+# define P_(args)	args
+# define P_VOID		(void)
+#else
+# define P_(args)	()
+# define P_VOID		()
+#endif
+
 /* Some handy macros */
 #define QTY(array)	(int)(sizeof(array) / sizeof((array)[0]))
 #define ELVCTRL(ch)	((ch) ^ 0x40)
@@ -81,7 +101,11 @@
 /* Some useful data types */
 typedef enum {ElvFalse, ElvTrue} ELVBOOL;
 typedef enum { RESULT_COMPLETE, RESULT_MORE, RESULT_ERROR } RESULT;
+#ifdef FEATURE_WCHAR
+typedef wchar_t CHAR;
+#else
 typedef unsigned char CHAR;
+#endif
 typedef unsigned short COUNT;
 typedef unsigned int	_COUNT_;
 typedef unsigned int	_CHAR_;
@@ -92,35 +116,43 @@ typedef int		_char_;
 #include "elvctype.h"
 
 /* Character conversions, and other operations */
-#define toCHAR(s)	((CHAR *)(s))
-#define tochar8(s)	((char *)(s))
-#define CHARcpy(d,s)	((void)strcpy((char *)(d), (char *)(s)))
-#define CHARcat(d,s)	((void)strcat((char *)(d), (char *)(s)))
-#define CHARncpy(d,s,n)	((void)strncpy((char *)(d), (char *)(s), (n)))
-#define CHARncat(d,s,n)	((void)strncat((char *)(d), (char *)(s), (n)))
-#define CHARlen(s)	strlen((char *)(s))
-#define CHARchr(s,c)	((CHAR *)strchr((char *)(s), (char)(c)))
-#define CHARrchr(s,c)	((CHAR *)strrchr((char *)(s), (char)(c)))
-#define CHARcmp(s,t)	(strcmp((char *)(s), (char *)(t)))
-#define CHARncmp(s,t,n) (strncmp((char *)(s), (char *)(t), (n)))
-#define CHARdup(s)	((CHAR *)safedup(tochar8(s)))
-#define CHARkdup(s)	((CHAR *)safekdup(tochar8(s)))
-#define long2CHAR(s,l)	((void)sprintf((char *)(s), "%ld", (l)))
-#define CHAR2long(s)	(atol(tochar8(s)))
-
-#ifndef USE_PROTOTYPES
-# if defined(__STDC__) || defined(__cplusplus)
-#  define USE_PROTOTYPES	1
-# else
-#  define USE_PROTOTYPES	0
-# endif
-#endif
-#if USE_PROTOTYPES
-# define P_(args)	args
-# define P_VOID		(void)
+#ifdef FEATURE_WCHAR
+# include <wchar.h>
+# define toLCHAR(s)	L##s
+extern CHAR *toCHAR P_((char *s));	/* function in char.c */
+extern char *tochar8 P_((CHAR *s));	/* function in char.c */
+# define CHARcpy(d,s)	((void)wcscpy((d), (s)))
+# define CHARcat(d,s)	((void)wcscat((d), (s)))
+# define CHARncpy(d,s,n)	((void)wcsncpy((d), (s), (n)))
+# define CHARncat(d,s,n)	((void)wcsncat((d), (s), (n)))
+# define CHARlen(s)	wcslen(s)
+# define CHARchr(s,c)	wcschr((s), (c))
+# define CHARrchr(s,c)	wcsrchr((s), (c))
+# define CHARcmp(s,t)	wcscmp((s), (t))
+# define CHARncmp(s,t,n) wcsncmp((s), (t), (n))
+# define CHARset(s,c,n)	wmemset((s), (c), (n))
+# define CHARdup(s)	safeCHARdup(s)
+# define CHARkdup(s)	safekCHARdup(s)
+# define long2CHAR(s,l)	((void)swprintf((s), "%ld", (l)))
+# define CHAR2long(s)	(atol(tochar8(s)))
 #else
-# define P_(args)	()
-# define P_VOID		()
+# define toLCHAR(s)	((CHAR *)(s))
+# define toCHAR(s)	((CHAR *)(s))
+# define tochar8(s)	((char *)(s))
+# define CHARcpy(d,s)	((void)strcpy((char *)(d), (char *)(s)))
+# define CHARcat(d,s)	((void)strcat((char *)(d), (char *)(s)))
+# define CHARncpy(d,s,n)	((void)strncpy((char *)(d), (char *)(s), (n)))
+# define CHARncat(d,s,n)	((void)strncat((char *)(d), (char *)(s), (n)))
+# define CHARlen(s)	strlen((char *)(s))
+# define CHARchr(s,c)	((CHAR *)strchr((char *)(s), (char)(c)))
+# define CHARrchr(s,c)	((CHAR *)strrchr((char *)(s), (char)(c)))
+# define CHARcmp(s,t)	(strcmp((char *)(s), (char *)(t)))
+# define CHARncmp(s,t,n) (strncmp((char *)(s), (char *)(t), (n)))
+# define CHARset(s,c,n)	memset((s), (c), (n))
+# define CHARdup(s)	((CHAR *)safedup(tochar8(s)))
+# define CHARkdup(s)	((CHAR *)safekdup(tochar8(s)))
+# define long2CHAR(s,l)	((void)sprintf((char *)(s), "%ld", (l)))
+# define CHAR2long(s)	(atol(tochar8(s)))
 #endif
 
 /* Some macros to handle C++ in a graceful way */
@@ -138,6 +170,7 @@ extern ELVBOOL stdin_not_kbd;
 #endif
 
 /* Header files for the modules */
+#include "color.h"
 #include "safe.h"
 #include "options.h"
 #include "optglob.h"
@@ -156,7 +189,7 @@ extern ELVBOOL stdin_not_kbd;
 #include "state.h"
 #include "window.h"
 #include "spell.h"
-#include "color.h"
+#include "color2.h"
 #include "options2.h"
 #include "gui2.h"
 #include "display2.h"

@@ -761,6 +761,7 @@ static int rungdb(argc, argv)
 	/* open a connection to the X server */
 	openx();
 
+fprintf(stderr, "\033[43melvgdb is running...\033[m\n");
 	/* find the elvis server's window */
 	XGetWindowProperty(display, root, elvis_server, 0L, 1L, False,
 		XA_WINDOW, &type, &format, &ul, &dummy, &data);
@@ -774,6 +775,7 @@ static int rungdb(argc, argv)
 		elviswin = *(Window *)data;
 		XFree(data);
 	}
+fprintf(stderr, "\033[43melvis is found on window %ld\033[m\n", (long)elviswin);
 
 	/* store elvgdb's xterm windowid as the elvgdb server attribute */
 	str = getenv("WINDOWID");
@@ -787,12 +789,14 @@ static int rungdb(argc, argv)
 		XChangeProperty(display, root, elvgdb_server, XA_WINDOW, 32,
 			PropModeReplace, (unsigned char *)&ul, 1);
 		XFlush(display);
+fprintf(stderr, "\033[43mgdb's xterm is found on window %ld\033[m\n", (long)ul);
 	}
 
 	/* did elvis share its secret code for bypassing security? */
 	str = getenv("secret");
 	if (str)
 		secret = strtol(str, NULL, 0);
+fprintf(stderr, "\033[43melvis' secret is %ld\033[m\n", secret);
 
 	/* load annotation attributes */
 	str = getenv("ELVISPATH");
@@ -802,12 +806,17 @@ static int rungdb(argc, argv)
 	if (!str)
 		fprintf(stderr, "elvgdb: Warning: could not find \"elvgdb.ini\" in $ELVISPATH\n");
 	else
+	{
+fprintf(stderr, "\033[43mAbout to load annotations rules from %s\033[m\n", str);
 		loadannot(str);
+	}
 
 	/* simulate an "elvgdb-init" annotation before gdb starts */
+fprintf(stderr, "\033[43mSending annotation \"elvgdb-init\"\033[m\n");
 	doannot(elviswin, "elvgdb-init", "");
 
 	/* if couldn't open gdb then fail */
+fprintf(stderr, "\033[43mStarting gdb\033[m\n");
 	fromgdb = opengdb(argc, argv);
 	if (!fromgdb)
 	{
@@ -899,6 +908,7 @@ static Window findgdb()
 	}
 
 	/* scan for the largest child window */
+	largest = 0; /* just to keep the compiler happy */
 	for (largestpixels = 0, scan = 0; scan < nchild; scan++)
 	{
 		/* get info on this window */

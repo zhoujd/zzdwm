@@ -307,7 +307,7 @@ RESULT oper(win, vinf, from, to)
 			if (vinf->tweak & TWEAK_LINE)
 			{
 				markaddoffset(curs, 1L);
-				bufreplace(curs, curs, toCHAR("\n"), 1);
+				bufreplace(curs, curs, toLCHAR("\n"), 1);
 				markaddoffset(curs, -1L);
 			}
 

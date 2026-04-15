@@ -12,7 +12,7 @@
 BEGIN_EXTERNC
 extern ELVBOOL	guicolorsync P_((WINDOW win));
 extern void	guimoveto P_((WINDOW win, int column, int row));
-extern DRAWATTR	*guidraw P_((WINDOW win, _char_ font, CHAR *text, int len, int forcebits));
+extern DRAWATTR	*guidraw P_((WINDOW win, _ELVFACE_ font, CHAR *text, int len, int forcebits));
 extern ELVBOOL	guishift P_((WINDOW win, int qty, int rows));
 extern ELVBOOL	guiscroll P_((WINDOW win, int qty, ELVBOOL notlast));
 extern void	guiclrtoeol P_((WINDOW win));
@@ -24,8 +24,18 @@ END_EXTERNC
 
 extern GUI	*gui;
 
+#ifdef GUI_GNOME
+extern GUI guignome;
+#endif
+
+#ifdef GUI_GNOME
+extern GUI guignome;
+#endif
+
 #ifdef GUI_X11
 extern GUI	guix11;
+extern GUI	guix11_lan;
+extern GUI	guix11_wan;
 #endif
 
 #ifdef GUI_PM

@@ -5,7 +5,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_xstatus[] = "$Id: xstatus.c,v 2.14 2002/11/10 00:31:28 steve Exp $";
+char id_xstatus[] = "$Id: xstatus.c,v 2.15 2004/05/07 18:07:20 steve Exp $";
 #endif
 #ifdef GUI_X11
 # include "guix11.h"
@@ -61,7 +61,7 @@ static int draw1pane(xw, pos, text, wideptr)
 
 	/* draw the pane's bevel and face */
 	pos -= width;
-	x_drawbevel(xw, xw->st.win, pos, 2, width - ST_ADJACENT, statusheight, 'b', -ST_BEVEL);
+	x_drawbevel(xw, xw->st.win, pos, 2, width - ST_ADJACENT, statusheight, 'b', -ST_BEVEL, x_statuscolors);
 
 	/* draw the pane's label */
 	xw->fg = colorinfo[x_statuscolors].fg;

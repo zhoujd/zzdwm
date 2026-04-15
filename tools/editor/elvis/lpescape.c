@@ -10,7 +10,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_lpescape[] = "$Id: lpescape.c,v 2.29 2003/10/17 17:41:23 steve Exp $";
+char id_lpescape[] = "$Id: lpescape.c,v 2.30 2011/12/15 17:55:12 steve Exp $";
 #endif
 #ifdef FEATURE_LPR
 
@@ -19,7 +19,7 @@ typedef enum {BOLD, NOBOLD, UNDLN, NOUNDLN, ITALIC, NOITALIC, FIXED, NOFIXED, BO
 
 #if USE_PROTOTYPES
 static void before(int minorno, void (*draw)(_CHAR_));
-static void fontch(_char_ font, _CHAR_ ch);
+static void fontch(_ELVFACE_ font, _CHAR_ ch);
 static void page(int linesleft);
 static void after(int linesleft);
 static void putesc(CODE code);
@@ -148,7 +148,7 @@ static void before(minorno, draw)
  * a character.
  */
 static void fontch(font, ch)
-	_char_	font;	/* font of the next character from text image */
+	_ELVFACE_ font;	/* font of the next character from text image */
 	_CHAR_	ch;	/* the next character to draw */
 {
 	char	*scan;

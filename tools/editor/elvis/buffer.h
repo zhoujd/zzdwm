@@ -72,6 +72,7 @@ typedef struct buffer_s
 	OPTVAL		bufdisplay;	/* string: the default display mode */
 	OPTVAL		initialsyntax;	/* start in "syntax" mode regardless of bufdisplay? */
 	OPTVAL		errlines;	/* number: #lines when errlist created */
+	OPTVAL		readenc;	/* one of latin1/utf8/wide/auto: file read mode */
 	OPTVAL		readeol;	/* one of unix/dos/mac/text/binary: file read mode */
 	OPTVAL		locked;		/* boolean: prevent changes to buffer? */
 	OPTVAL		partiallastline;/* boolean: file has no real last newline */
@@ -115,6 +116,7 @@ typedef struct buffer_s
 #define o_bufdisplay(buf)	((buf)->bufdisplay.value.string)
 #define o_initialsyntax(buf)	((buf)->initialsyntax.value.boolean)
 #define o_errlines(buf)		((buf)->errlines.value.number)
+#define o_readenc(buf)		((buf)->readenc.value.character)
 #define o_readeol(buf)		((buf)->readeol.value.character)
 #define o_locked(buf)		((buf)->locked.value.boolean)
 #define o_partiallastline(buf)	((buf)->partiallastline.value.boolean)
@@ -154,6 +156,9 @@ extern void buffree P_((BUFFER buffer));
 extern void buftitle P_((BUFFER buffer, CHAR *title));
 extern void bufappend P_((BUFFER buf, CHAR *str, int len));
 #ifdef FEATURE_PERSIST
+extern void bufpersevent P_((void));
+extern int bufpersispacked P_((OPTDESC *desc, OPTVAL *val, CHAR	*newval));
+extern void bufperstweak P_((char *optname, char *change));
 extern void bufpersistinit P_((void));
 extern void bufpersistsave P_((BUFFER buf));
 #endif

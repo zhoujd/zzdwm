@@ -4,7 +4,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_autocmd[] = "$Id: autocmd.c,v 1.32 2004/03/21 23:24:41 steve Exp $";
+char id_autocmd[] = "$Id: autocmd.c,v 1.33 2004/03/31 20:49:56 steve Exp $";
 #endif
 
 #ifdef FEATURE_AUTOCMD
@@ -54,66 +54,66 @@ static struct {
 	aubits_t bits;
 } nametbl[] =
 {
-  { toCHAR("*"),			{0x7fffffff, 0x3fffffff, 0x3fffffff}},
-  { toCHAR("*"),/* without OPTBITS */	{0x7fffffff, 0x3fff3fff, 0x3fffffff}},
+  { toLCHAR("*"),			{0x7fffffff, 0x3fffffff, 0x3fffffff}},
+  { toLCHAR("*"),/* without OPTBITS */	{0x7fffffff, 0x3fff3fff, 0x3fffffff}},
 
   /* file events */
-  { toCHAR("BufCreate"),		{0x00000001, 0x00000000, 0x00000000}},
-  { toCHAR("BufDelete"),		{0x00000002, 0x00000000, 0x00000000}},
-  { toCHAR("BufEnter"),			{0x00000004, 0x00000000, 0x00000000}},
-  { toCHAR("BufFilePost"),		{0x00000008, 0x00000000, 0x00000000}},
-  { toCHAR("BufFilePre"),		{0x00000010, 0x00000000, 0x00000000}},
-  { toCHAR("BufHidden"),		{0x00000020, 0x00000000, 0x00000000}},
-  { toCHAR("BufLeave"),			{0x00000040, 0x00000000, 0x00000000}},
-  { toCHAR("BufNewFile"),		{0x00000080, 0x00000000, 0x00000000}},
-  { toCHAR("BufRead"), /* BufReadPost */{0x00000100, 0x40000000, 0x00000000}},
-  { toCHAR("BufReadPost"),		{0x00000100, 0x00000000, 0x00000000}},
-  { toCHAR("BufReadPre"),		{0x00000200, 0x00000000, 0x00000000}},
-  { toCHAR("BufUnload"),		{0x00000400, 0x00000000, 0x00000000}},
-  { toCHAR("BufWrite"),/* BufWritePre */{0x00000800, 0x40000000, 0x00000000}},
-  { toCHAR("BufWritePost"),		{0x00001000, 0x00000000, 0x00000000}},
-  { toCHAR("BufWritePre"),		{0x00000800, 0x00000000, 0x00000000}},
-  { toCHAR("FileAppendPost"),		{0x00002000, 0x00000000, 0x00000000}},
-  { toCHAR("FileAppendPre"),		{0x00004000, 0x00000000, 0x00000000}},
-  { toCHAR("FileChangedShell"),		{0x00008000, 0x00000000, 0x00000000}},
-  { toCHAR("FileReadPost"),		{0x00010000, 0x00000000, 0x00000000}},
-  { toCHAR("FileReadPre"),		{0x00020000, 0x00000000, 0x00000000}},
-  { toCHAR("FileWritePost"),		{0x00040000, 0x00000000, 0x00000000}},
-  { toCHAR("FileWritePre"),		{0x00080000, 0x00000000, 0x00000000}},
-  { toCHAR("FilterReadPost"),		{0x00100000, 0x00000000, 0x00000000}},
-  { toCHAR("FilterReadPre"),		{0x00200000, 0x00000000, 0x00000000}},
-  { toCHAR("FilterWritePost"),		{0x00400000, 0x00000000, 0x00000000}},
-  { toCHAR("FilterWritePre"),		{0x00800000, 0x00000000, 0x00000000}},
-  { toCHAR("StdinReadPost"),		{0x01000000, 0x00000000, 0x00000000}},
-  { toCHAR("StdinReadPre"),		{0x02000000, 0x00000000, 0x00000000}},
+  { toLCHAR("BufCreate"),		{0x00000001, 0x00000000, 0x00000000}},
+  { toLCHAR("BufDelete"),		{0x00000002, 0x00000000, 0x00000000}},
+  { toLCHAR("BufEnter"),		{0x00000004, 0x00000000, 0x00000000}},
+  { toLCHAR("BufFilePost"),		{0x00000008, 0x00000000, 0x00000000}},
+  { toLCHAR("BufFilePre"),		{0x00000010, 0x00000000, 0x00000000}},
+  { toLCHAR("BufHidden"),		{0x00000020, 0x00000000, 0x00000000}},
+  { toLCHAR("BufLeave"),		{0x00000040, 0x00000000, 0x00000000}},
+  { toLCHAR("BufNewFile"),		{0x00000080, 0x00000000, 0x00000000}},
+  { toLCHAR("BufRead"),/* BufReadPost */{0x00000100, 0x40000000, 0x00000000}},
+  { toLCHAR("BufReadPost"),		{0x00000100, 0x00000000, 0x00000000}},
+  { toLCHAR("BufReadPre"),		{0x00000200, 0x00000000, 0x00000000}},
+  { toLCHAR("BufUnload"),		{0x00000400, 0x00000000, 0x00000000}},
+  { toLCHAR("BufWrite"),/* BufWritePre*/{0x00000800, 0x40000000, 0x00000000}},
+  { toLCHAR("BufWritePost"),		{0x00001000, 0x00000000, 0x00000000}},
+  { toLCHAR("BufWritePre"),		{0x00000800, 0x00000000, 0x00000000}},
+  { toLCHAR("FileAppendPost"),		{0x00002000, 0x00000000, 0x00000000}},
+  { toLCHAR("FileAppendPre"),		{0x00004000, 0x00000000, 0x00000000}},
+  { toLCHAR("FileChangedShell"),	{0x00008000, 0x00000000, 0x00000000}},
+  { toLCHAR("FileReadPost"),		{0x00010000, 0x00000000, 0x00000000}},
+  { toLCHAR("FileReadPre"),		{0x00020000, 0x00000000, 0x00000000}},
+  { toLCHAR("FileWritePost"),		{0x00040000, 0x00000000, 0x00000000}},
+  { toLCHAR("FileWritePre"),		{0x00080000, 0x00000000, 0x00000000}},
+  { toLCHAR("FilterReadPost"),		{0x00100000, 0x00000000, 0x00000000}},
+  { toLCHAR("FilterReadPre"),		{0x00200000, 0x00000000, 0x00000000}},
+  { toLCHAR("FilterWritePost"),		{0x00400000, 0x00000000, 0x00000000}},
+  { toLCHAR("FilterWritePre"),		{0x00800000, 0x00000000, 0x00000000}},
+  { toLCHAR("StdinReadPost"),		{0x01000000, 0x00000000, 0x00000000}},
+  { toLCHAR("StdinReadPre"),		{0x02000000, 0x00000000, 0x00000000}},
 
   /* other events */
-  { toCHAR("AliasEnter"),		{0x00000000, 0x00000001, 0x00000000}},
-  { toCHAR("AliasLeave"),		{0x00000000, 0x00000002, 0x00000000}},
-  { toCHAR("BgChanged"),		{0x00000000, 0x00000004, 0x00000000}},
-  { toCHAR("CursorHold"),		{0x00000000, 0x00000008, 0x00000000}},
-  { toCHAR("DisplayEnter"),		{0x00000000, 0x00000010, 0x00000000}},
-  { toCHAR("DisplayLeave"),		{0x00000000, 0x00000020, 0x00000000}},
-  { toCHAR("DispMapEnter"),		{0x00000000, 0x00000040, 0x00000000}},
-  { toCHAR("DispMapLeave"),		{0x00000000, 0x00000080, 0x00000000}},
-  { toCHAR("Edit"),			{0x00000000, 0x00000100, 0x00000000}},
-  { toCHAR("FileEncoding"),		{0x00000000, 0x00000200, 0x00000000}},
-  { toCHAR("FileType"),			{0x00000000, 0x00000400, 0x00000000}},
-  { toCHAR("FocusGained"),		{0x00000000, 0x00000800, 0x00000000}},
-  { toCHAR("FocusLost"),		{0x00000000, 0x00001000, 0x00000000}},
-  { toCHAR("GUIEnter"),			{0x00000000, 0x00002000, 0x00000000}},
-  { toCHAR("OptChanged"),/* OPTBITS */	{0x00000000, 0x00004000, 0x00000000}},
-  { toCHAR("OptSet"),	/* OPTBITS */	{0x00000000, 0x00008000, 0x00000000}},
-  { toCHAR("ScriptEnter"),		{0x00000000, 0x00010000, 0x00000000}},
-  { toCHAR("ScriptLeave"),		{0x00000000, 0x00020000, 0x00000000}},
-  { toCHAR("Syntax"),			{0x00000000, 0x00040000, 0x00000000}},
-  { toCHAR("TermChanged"),		{0x00000000, 0x00080000, 0x00000000}},
-  { toCHAR("User"),			{0x00000000, 0x00100000, 0x00000000}},
-  { toCHAR("VimEnter"),			{0x00000000, 0x00200000, 0x00000000}},
-  { toCHAR("VimLeave"),			{0x00000000, 0x00400000, 0x00000000}},
-  { toCHAR("VimLeavePre"),		{0x00000000, 0x00800000, 0x00000000}},
-  { toCHAR("WinEnter"),			{0x00000000, 0x01000000, 0x00000000}},
-  { toCHAR("WinLeave"),			{0x00000000, 0x02000000, 0x00000000}},
+  { toLCHAR("AliasEnter"),		{0x00000000, 0x00000001, 0x00000000}},
+  { toLCHAR("AliasLeave"),		{0x00000000, 0x00000002, 0x00000000}},
+  { toLCHAR("BgChanged"),		{0x00000000, 0x00000004, 0x00000000}},
+  { toLCHAR("CursorHold"),		{0x00000000, 0x00000008, 0x00000000}},
+  { toLCHAR("DisplayEnter"),		{0x00000000, 0x00000010, 0x00000000}},
+  { toLCHAR("DisplayLeave"),		{0x00000000, 0x00000020, 0x00000000}},
+  { toLCHAR("DispMapEnter"),		{0x00000000, 0x00000040, 0x00000000}},
+  { toLCHAR("DispMapLeave"),		{0x00000000, 0x00000080, 0x00000000}},
+  { toLCHAR("Edit"),			{0x00000000, 0x00000100, 0x00000000}},
+  { toLCHAR("FileEncoding"),		{0x00000000, 0x00000200, 0x00000000}},
+  { toLCHAR("FileType"),		{0x00000000, 0x00000400, 0x00000000}},
+  { toLCHAR("FocusGained"),		{0x00000000, 0x00000800, 0x00000000}},
+  { toLCHAR("FocusLost"),		{0x00000000, 0x00001000, 0x00000000}},
+  { toLCHAR("GUIEnter"),		{0x00000000, 0x00002000, 0x00000000}},
+  { toLCHAR("OptChanged"),/* OPTBITS */	{0x00000000, 0x00004000, 0x00000000}},
+  { toLCHAR("OptSet"),	/* OPTBITS */	{0x00000000, 0x00008000, 0x00000000}},
+  { toLCHAR("ScriptEnter"),		{0x00000000, 0x00010000, 0x00000000}},
+  { toLCHAR("ScriptLeave"),		{0x00000000, 0x00020000, 0x00000000}},
+  { toLCHAR("Syntax"),			{0x00000000, 0x00040000, 0x00000000}},
+  { toLCHAR("TermChanged"),		{0x00000000, 0x00080000, 0x00000000}},
+  { toLCHAR("User"),			{0x00000000, 0x00100000, 0x00000000}},
+  { toLCHAR("VimEnter"),		{0x00000000, 0x00200000, 0x00000000}},
+  { toLCHAR("VimLeave"),		{0x00000000, 0x00400000, 0x00000000}},
+  { toLCHAR("VimLeavePre"),		{0x00000000, 0x00800000, 0x00000000}},
+  { toLCHAR("WinEnter"),		{0x00000000, 0x01000000, 0x00000000}},
+  { toLCHAR("WinLeave"),		{0x00000000, 0x02000000, 0x00000000}},
 
   /* user events */
   { NULL,	/* AU_USER01 */		{0x00000000, 0x00000000, 0x00000001}},
@@ -160,7 +160,7 @@ static void listcmd(WINDOW win, CHAR *cmd);
 #endif
 
 /* This is the default autocmd group */
-static aug_t defgroup = {NULL, toCHAR("END"), NULL};
+static aug_t defgroup = {NULL, toLCHAR("END"), NULL};
 
 /* This stores a list of groups */
 static aug_t *groups = &defgroup;
@@ -235,16 +235,22 @@ RESULT ex_augroup(xinf)
 			if (scan == &defgroup)
 				continue;
 			len = CHARlen(scan->group);
-			col += len + 1;
-			gap[0] = ' ';
-			if (col >= o_columns(xinf->window))
-			{
-				gap[0] = '\n';
-				col = len;
-			}
 			if (col > 0)
+			{
+				if (col + 1 + len >= o_columns(xinf->window))
+				{
+					gap[0] = '\n';
+					col = 0;
+				}
+				else
+				{
+					gap[0] = ' ';
+					col++;
+				}
 				drawextext(xinf->window, gap, 1);
+			}
 			drawextext(xinf->window, scan->group, len);
+			col += len;
 		}
 		if (col > 0)
 		{
@@ -255,7 +261,7 @@ RESULT ex_augroup(xinf)
 	else
 	{
 		/* As a special case, "end" is treated like "END" */
-		if (!CHARcmp(xinf->lhs, toCHAR("end")))
+		if (!CHARcmp(xinf->lhs, toLCHAR("end")))
 		{
 			curgroup = &defgroup;
 			return RESULT_COMPLETE;
@@ -591,12 +597,12 @@ RESULT ex_autocmd(xinf)
 	/* the last word is the filename pattern, or NULL.  For NULL we want
 	 * to use "*".
 	 */
-	ptrn = word ? word : toCHAR("*");
+	ptrn = word ? word : toLCHAR("*");
 
 	/* now "scan" points to the remainder of the line -- the command to
 	 * be executed.
 	 */
-	if (scan && !CHARncmp(scan, toCHAR("nested "), 7))
+	if (scan && !CHARncmp(scan, toLCHAR("nested "), 7))
 		scan += 7;
 	if (scan && !*scan)
 		scan = NULL;
@@ -633,7 +639,7 @@ RESULT ex_autocmd(xinf)
 			/* if just supposed to list it, then do that */
 			if (!xinf->bang)
 			{
-				drawextext(xinf->window, toCHAR("au "), 3);
+				drawextext(xinf->window, toLCHAR("au "), 3);
 				word = bitstoname(&au->bits);
 				drawextext(xinf->window, word, CHARlen(word));
 				drawextext(xinf->window, blanks, 1);
@@ -909,7 +915,7 @@ RESULT auperform(win, bang, groupname, event, filename)
 	/* if any events are supposed to be ignored, then ignore them */
 	if (o_eventignore)
 	{
-		if (!CHARcmp(o_eventignore, toCHAR("all")))
+		if (!CHARcmp(o_eventignore, toLCHAR("all")))
 			return RESULT_COMPLETE;
 		ignore = nametobits(o_eventignore);
 		if (ignore &&
@@ -931,7 +937,7 @@ RESULT auperform(win, bang, groupname, event, filename)
 	}
 	if (!filename)
 	{
-		filename = toCHAR("no file yet");
+		filename = toLCHAR("no file yet");
 	}
 
 	/* set up the options that the commands will need */
@@ -1060,9 +1066,9 @@ void ausave(custom)
 			continue;
 
 		/* output a command to recreate this event type */
-		bufappend(custom, toCHAR("try aue "), 8L);
+		bufappend(custom, toLCHAR("try aue "), 8L);
 		bufappend(custom, nametbl[i].name, 0);
-		bufappend(custom, toCHAR("\n"), 1L);
+		bufappend(custom, toLCHAR("\n"), 1L);
 	}
 
 	/* for each group... */
@@ -1076,9 +1082,9 @@ void ausave(custom)
 		anygrp = ElvTrue;
 
 		/* start this group */
-		bufappend(custom, toCHAR("try aug "), 8L);
+		bufappend(custom, toLCHAR("try aug "), 8L);
 		bufappend(custom, group->group, 0);
-		bufappend(custom, toCHAR("\nthen {\n au!\n"), 13L);
+		bufappend(custom, toLCHAR("\nthen {\n au!\n"), 13L);
 
 		/* for each au in this group... */
 		for (au = group->au; au; au = au->next)
@@ -1127,14 +1133,14 @@ void ausave(custom)
 		} /* for au */
 
 		/* mark the end of this group */
-		bufappend(custom, toCHAR("}\n"), 2);
+		bufappend(custom, toLCHAR("}\n"), 2);
 
 	} /* for group */
 
 	/* if any groups were output, then we need to end "if feature(...)" */
 	if (anygrp)
 	{
-		bufappend(custom, toCHAR("try aug END\n"), 12L);
+		bufappend(custom, toLCHAR("try aug END\n"), 12L);
 	}
 }
 # endif /* FEATURE_MKEXRC */
@@ -1237,14 +1243,14 @@ CHAR *aucomplete(win, from, to)
 		if (matches == 0)
 		{
 			guibeep(win);
-			return toCHAR("");
+			return toLCHAR("");
 		}
 
 		/* if unique match, then return its tail plus a space */
 		if (matches == 1)
 		{
 			CHARcpy(retbuf, nametbl[match].name + wlen);
-			CHARcat(retbuf, toCHAR(" "));
+			CHARcat(retbuf, toLCHAR(" "));
 			return retbuf;
 		}
 
@@ -1277,7 +1283,7 @@ CHAR *aucomplete(win, from, to)
 			mlen = CHARlen(nametbl[event].name);
 			if (len + mlen + 2 >= o_columns(win))
 			{
-				drawextext(win, toCHAR("\n"), 1);
+				drawextext(win, toLCHAR("\n"), 1);
 				len = 0;
 			}
 			else if (len > 0)
@@ -1291,8 +1297,8 @@ CHAR *aucomplete(win, from, to)
 			len += mlen;
 		}
 		if (len > 0)
-			drawextext(win, toCHAR("\n"), 1);
-		return toCHAR("");
+			drawextext(win, toLCHAR("\n"), 1);
+		return toLCHAR("");
 
 	  case 2: /* file type or pattern -- treat like filename */
 		return NULL;

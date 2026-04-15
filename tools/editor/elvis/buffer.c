@@ -4,7 +4,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_buffer[] = "$Id: buffer.c,v 2.160 2004/03/23 18:23:16 steve Exp $";
+char id_buffer[] = "$Id: buffer.c,v 2.171 2011/12/15 17:55:12 steve Exp $";
 #endif
 
 #define swaplong(x,y)	{long tmp; tmp = (x); (x) = (y); (y) = tmp;}
@@ -25,6 +25,7 @@ static ELVBOOL persistinternal(BUFFER buf);
 static void persisthist(char *field, char *prompt, char	*bufname, BUFFER persbuf);
 static void persistbuf(BUFFER buf, BUFFER persbuf);
 static void persistother(BUFFER buf, BUFFER persbuf);
+static void persistargs(BUFFER persbuf);
 # endif
 # ifdef DEBUG_ALLOC
   static void checkundo(char *where);
@@ -94,6 +95,7 @@ static OPTDESC bdesc[] =
 	{"bufdisplay", "bd",    optsstring,	optisstring	},
 	{"initialsyntax","isyn",NULL,		NULL		},
 	{"errlines", "errlines",optnstring,	optisnumber	},
+	{"readenc", "renc",	opt1string,	optisoneof,	"latin1 utf8 wide auto"},
 	{"readeol", "reol",	opt1string,	optisoneof,	"unix dos mac text binary"},
 	{"locked", "lock",	NULL,		NULL		},
 	{"partiallastline","pll",NULL,		NULL		},
@@ -198,8 +200,8 @@ static void proc(bufinfo, nchars, nlines, changes, prevloc, name)
 	 */
 	if (!buf)
 	{
-		internal = (ELVBOOL)(!CHARncmp(name, toCHAR("Elvis "), 6) &&
-				CHARncmp(name, toCHAR("Elvis untitled"), 14));
+		internal = (ELVBOOL)(!CHARncmp(name, toLCHAR("Elvis "), 6) &&
+				CHARncmp(name, toLCHAR("Elvis untitled"), 14));
 		buf = bufalloc(name, bufinfo, internal);
 		buf->bufinfo = bufinfo;
 		o_buflines(buf) = nlines;
@@ -208,8 +210,8 @@ static void proc(bufinfo, nchars, nlines, changes, prevloc, name)
 		buf->changepos = prevloc;
 
 		/* guess some values for a few other critical options */
-		if (!CHARncmp(name, toCHAR("Elvis "), 6) &&
-			CHARncmp(name, toCHAR("Elvis untitled"), 14))
+		if (!CHARncmp(name, toLCHAR("Elvis "), 6) &&
+			CHARncmp(name, toLCHAR("Elvis untitled"), 14))
 		{
 			/* probably an internal buffer */
 			optpreset(o_internal(buf), ElvTrue, OPT_HIDE|OPT_NODFLT);
@@ -306,6 +308,218 @@ void bufinit()
 }
 
 #ifdef FEATURE_PERSIST
+/* Copy the persist value to persistonce.  This is called whenever a user event
+ * is received, or when the value of persist is changed.
+ */
+void bufpersevent()
+{
+	/* if both are identical then do nothing */
+	if (!o_persist && !o_persistonce)
+		return;
+	if (o_persist && o_persistonce && !CHARcmp(o_persist, o_persistonce))
+		return;
+
+	/* free the old value, if any */
+	if (o_persistonce && (optflags(o_persistonce) & OPT_FREE) != 0)
+	{
+		safefree(o_persistonce);
+		o_persistonce = NULL;
+		optflags(o_persistonce) &= ~OPT_FREE;
+	}
+
+	/* if persist has a value, copy it to persistonce */
+	if (o_persist)
+	{
+		o_persistonce = CHARdup(o_persist);
+		optflags(o_persistonce) |= OPT_FREE;
+	}
+}
+
+
+/* Check a strings validity (all are valid) and set the option.  Return 1
+ * if different, or 0 if same.  This also has the side-effect of storing
+ * the same string for o_persistonce.  The optglob.c file uses this function
+ * when setting the persist option.
+ */
+int bufpersispacked(desc, val, newval)
+	OPTDESC	*desc;	/* description of the option */
+	OPTVAL	*val;	/* value of the option */
+	CHAR	*newval;/* value the option should have (as a string) */
+{
+	int	ret = optispacked(desc, val, newval);
+
+	/* copy the value from persist to persistonce */
+	bufpersevent();
+
+	/* return the result from assigning to persist */
+	return ret;
+}
+
+
+/* Adjust either the persist option or the persistonce option.  The first
+ * character of change may be "+" to add things to the value, "=" to completely
+ * replace the value, or "-" to remove things from the value.  If none of those
+ * characters is given then it uses "-" by default.  The remainder of the
+ * change string is a comma-delimited list of attribute names or name:value
+ * pairs.
+ *
+ * Example: The ":e +cmd" command calls bufpertweak("persistonce", "+hours:0")
+ * to prevent the cursor from being moved the when the file is loaded so it
+ * doesn't interfere with any searches.
+ */
+void bufperstweak(optname, change)
+	char	*optname;	/* "persist" or "persistonce" */
+	char	*change;	/* value to incorporate into the option */
+{
+	CHAR	*line;	/* a command line to execute */
+
+	/* if no change then do nothing */
+	if (!change || !*change)
+		return;
+
+	/* build a :let command line for the change */
+	line = NULL;
+	buildstr(&line, "let ");
+	buildstr(&line, optname);
+	if (*change == '+' || *change == '|')
+	{
+		change++;
+		buildCHAR(&line, '|');
+	}
+	else if (*change == '=')
+		change++;
+	else if (*change == '-' || *change == '^')
+	{
+		change++;
+		buildCHAR(&line, '^');
+	}
+	else
+		buildCHAR(&line, '^');
+	buildCHAR(&line, '=');
+	buildCHAR(&line, '"');
+	buildstr(&line, change);
+	buildCHAR(&line, '"');
+
+	/* execute the command */
+	exstring(windefault, line, NULL);
+
+	/* free the command */
+	safefree(line);
+}
+
+
+/* Load global persistent information */
+void bufpersistinit()
+{
+	ELVBOOL	doex, dosearch, doargs, rightargs;
+	BUFFER	exbuf, searchbuf;
+	CHAR	*line;
+	int	i, nargs;
+	char	**newargs;
+	int	gotnext;
+	ELVBOOL	oldhide;
+
+	/* do nothing if persistfile is unset */
+	if (!o_persistfile)
+		return;
+
+	/* figure out what we're supposed to load */
+	rightargs = ElvTrue;
+	doex = (ELVBOOL)(calcelement(o_persistonce,toLCHAR("ex")) != NULL);
+	dosearch = (ELVBOOL)(calcelement(o_persistonce,toLCHAR("search")) != NULL);
+	doargs = (ELVBOOL)(calcelement(o_persistonce,toLCHAR("args")) != NULL);
+	if (arglist && *arglist)
+		doargs = ElvFalse; /* already have args */
+
+	/* if not supposed to do any globals, then don't */
+	if (!doex && !dosearch && !doargs)
+		return;
+
+	/* try to open the file */
+	oldhide = msghide(ElvTrue);
+	if (!ioopen(iofilename(tochar8(o_persistfile), '\0'), 'r', ElvFalse, ElvFalse, 'a', 't'))
+	{
+		(void)msghide(oldhide);
+		return;
+	}
+	(void)msghide(oldhide);
+
+	/* locate the history buffers */
+	exbuf = bufalloc(toCHAR(EX_BUF), 0, ElvTrue);
+	searchbuf = bufalloc(toCHAR(REGEXP_BUF), 0, ElvTrue);
+	
+	/* for each line up to the first bufname line... */
+	nargs = 0;
+	gotnext = -1;
+	while ((line = persistget()) != NULL && CHARncmp(line, toLCHAR("bufname "), 8))
+	{
+		/* skip blank lines. */
+		if (!*line)
+			continue;
+
+		/* handle it */
+		if (*line == ':')
+		{
+			/* skip if not doing ex history */
+			if (!doex)
+				continue;
+
+			/* append to ex history */
+			CHARcat(line, toLCHAR("\n"));
+			bufappend(exbuf, line, 0);
+		}
+		else if (*line == '/' || *line == '?')
+		{
+			/* skip of not doing search history */
+			if (!dosearch)
+				continue;
+
+			/* append to search history */
+			CHARcat(line, toLCHAR("\n"));
+			bufappend(searchbuf, line, 0);
+		}
+		else if (!CHARncmp(line, toLCHAR("cd "), 3))
+		{
+			/* compare dir name to current dir */
+			rightargs = (ELVBOOL)!CHARcmp(toCHAR(dircwd()), line + 3);
+		}
+		else if (!CHARncmp(line, toLCHAR("arg "), 4))
+		{
+			/* skip if not doing args, or wrong args */
+			if (!doargs || !rightargs)
+				continue;
+
+			/* append to the args list */
+			newargs = safealloc(nargs + 2, sizeof(char *));
+			for (i = 0; i < nargs; i++)
+				newargs[i] = arglist[i];
+			newargs[nargs++] = safedup(tochar8(line + 4));
+			newargs[nargs] = NULL;
+			if (arglist)
+				safefree(arglist);
+			arglist = newargs;
+		}
+		else if (!CHARncmp(line, toLCHAR("argnext "), 8))
+		{
+			/* skip if not doing args */
+			if (!doargs)
+				continue;
+
+			/* remember the "argnext" value for later */
+			gotnext = (int)CHAR2long(line + 8);
+		}
+	}
+
+	/* maybe restore argnext */
+	if (doargs && gotnext > 0 && gotnext <= nargs)
+		argnext = gotnext - 1; /* so we start on the one before next */
+
+	/* close the file */
+	(void)ioclose();
+}
+
+
+
 /* Return ElvTrue if a buffer is internal (not persistent) */
 static ELVBOOL persistinternal(buf)
 	BUFFER	buf;	/* a buffer to be saved, or NULL for all */
@@ -315,7 +529,7 @@ static ELVBOOL persistinternal(buf)
 		return ElvFalse;
 
 	if (o_internal(buf)
-	 || !CHARncmp(o_bufname(buf), toCHAR("Elvis untitled"), 14)
+	 || !CHARncmp(o_bufname(buf), toLCHAR("Elvis untitled"), 14)
 	 || !o_filename(buf))
 		return ElvTrue;
 
@@ -325,7 +539,7 @@ static ELVBOOL persistinternal(buf)
 
 /* Return the next line, or NULL if there is no next line.  The \n is stripped
  * off, but there's guaranteed to be room in the buffer for it, so you can
- * CHARcat(line, toCHAR("\n")) to put it back.  This function assumes you've
+ * CHARcat(line, toLCHAR("\n")) to put it back.  This function assumes you've
  * already called ioopen() to start reading the file.
  */
 static CHAR *persistget()
@@ -352,109 +566,7 @@ static CHAR *persistget()
 	return line;
 }
 
-/* Load global persistent information */
-void bufpersistinit()
-{
-	ELVBOOL	doex, dosearch, doargs;
-	BUFFER	exbuf, searchbuf;
-	CHAR	*line;
-	int	i, nargs;
-	char	**newargs;
-	int	gotnext;
-	ELVBOOL	oldhide;
 
-	/* do nothing if persistfile is unset */
-	if (!o_persistfile)
-		return;
-
-	/* figure out what we're supposed to load */
-	doex = (ELVBOOL)(calcelement(o_persist,toCHAR("ex")) != NULL);
-	dosearch = (ELVBOOL)(calcelement(o_persist,toCHAR("search")) != NULL);
-	doargs = (ELVBOOL)(calcelement(o_persist,toCHAR("args")) != NULL);
-	if (arglist && *arglist)
-		doargs = ElvFalse; /* already have args */
-
-	/* if not supposed to do any globals, then don't */
-	if (!doex && !dosearch && !doargs)
-		return;
-
-	/* try to open the file */
-	oldhide = msghide(ElvTrue);
-	if (!ioopen(iofilename(tochar8(o_persistfile), '\0'), 'r', ElvFalse, ElvFalse, 't'))
-	{
-		(void)msghide(oldhide);
-		return;
-	}
-	(void)msghide(oldhide);
-
-	/* locate the history buffers */
-	exbuf = bufalloc(toCHAR(EX_BUF), 0, ElvTrue);
-	searchbuf = bufalloc(toCHAR(REGEXP_BUF), 0, ElvTrue);
-	
-	/* for each line up to the first bufname line... */
-	nargs = 0;
-	gotnext = -1;
-	while ((line = persistget()) != NULL && CHARncmp(line, "bufname ", 8))
-	{
-		/* skip blank lines. */
-		if (!*line)
-			continue;
-
-		/* handle it */
-		if (*line == ':')
-		{
-			/* skip if not doing ex history */
-			if (!doex)
-				continue;
-
-			/* append to ex history */
-			CHARcat(line, toCHAR("\n"));
-			bufappend(exbuf, line, 0);
-		}
-		else if (*line == '/' || *line == '?')
-		{
-			/* skip of not doing search history */
-			if (!dosearch)
-				continue;
-
-			/* append to search history */
-			CHARcat(line, toCHAR("\n"));
-			bufappend(searchbuf, line, 0);
-		}
-		else if (!CHARncmp(line, "arg ", 4))
-		{
-			/* skip if not doing args */
-			if (!doargs)
-				continue;
-
-			/* append to the args list */
-			newargs = safealloc(nargs + 2, sizeof(char *));
-			for (i = 0; i < nargs; i++)
-				newargs[i] = arglist[i];
-			newargs[nargs++] = safedup(tochar8(line + 4));
-			newargs[nargs] = NULL;
-			if (arglist)
-				safefree(arglist);
-			arglist = newargs;
-		}
-		else if (!CHARncmp(line, "argnext ", 8))
-		{
-			/* skip if not doing args */
-			if (!doargs)
-				continue;
-
-			/* remember the "argnext" value for later */
-			gotnext = (int)CHAR2long(line + 8);
-		}
-	}
-
-	/* maybe restore argnext */
-	if (doargs && gotnext > 0 && gotnext <= nargs)
-		argnext = gotnext - 1; /* so we start on the one before next */
-
-	/* close the file */
-	(void)ioclose();
-}
 
 /* Load the peristent information about a given buffer */
 static void persistload(buf)
@@ -478,7 +590,7 @@ static void persistload(buf)
 #ifdef FEATURE_REGION
 	ELVBOOL	doregions;	/* supposed to load regions? */
 	int	regions;	/* found number of regions */
-	_char_	face;
+	_ELVFACE_ face;
 	char	facename[50];
 #endif
 #ifdef FEATURE_FOLD
@@ -504,7 +616,7 @@ static void persistload(buf)
 
 	/* Try to open the file */
 	oldhide = msghide(ElvTrue);
-	if (!ioopen(iofilename(tochar8(o_persistfile), '\0'), 'r', ElvFalse, ElvFalse, 't'))
+	if (!ioopen(iofilename(tochar8(o_persistfile), '\0'), 'r', ElvFalse, ElvFalse, 'a', 't'))
 	{
 		(void)msghide(oldhide);
 		return;
@@ -512,22 +624,22 @@ static void persistload(buf)
 	(void)msghide(oldhide);
 
 	/* detect whether we're supposed to load some specific things */
-	domarks = (ELVBOOL)(calcelement(o_persist,toCHAR("marks")) != NULL);
+	domarks = (ELVBOOL)(calcelement(o_persistonce,toLCHAR("marks")) != NULL);
 #ifdef FEATURE_REGION
-	doregions = (ELVBOOL)(calcelement(o_persist,toCHAR("regions")) != NULL);
+	doregions = (ELVBOOL)(calcelement(o_persistonce,toLCHAR("regions")) != NULL);
 #endif
 #ifdef FEATURE_FOLD
-	dofolds = (ELVBOOL)(calcelement(o_persist,toCHAR("folds")) != NULL);
+	dofolds = (ELVBOOL)(calcelement(o_persistonce,toLCHAR("folds")) != NULL);
 #endif
 
 	/* for now, assume buflines and bufchars won't change */
 	oldbuflines = o_buflines(buf);
 	oldbufchars = o_bufchars(buf);
-	external = calcelement(o_persist, toCHAR("external"));
+	external = calcelement(o_persistonce, toLCHAR("external"));
 	if (external && *external == ':')
 		external++;
 	else
-		external = toCHAR("b");
+		external = toLCHAR("b");
 
 	/* For each line... */
 	cursor = change = -1L;
@@ -542,7 +654,7 @@ static void persistload(buf)
 	while ((line = persistget()) != NULL)
 	{
 		/* is it a bufname line? */
-		if (!CHARncmp(line, toCHAR("bufname "), 8))
+		if (!CHARncmp(line, toLCHAR("bufname "), 8))
 		{
 			/* is this the end of this buffer's section? */
 			if (!skip)
@@ -558,11 +670,11 @@ static void persistload(buf)
 
 		/* is it the entry's timestamp? */
 		line8 = tochar8(line);
-		if (sscanf(line8, "hours %4d%2d%2dT%2d:%2d",
+		if (sscanf(line8, "hours %4d-%2d-%2dT%2d:%2d",
 					&gotYYYY, &gotMM, &gotDD, &gothh, &gotmm) == 5)
 		{
 			/* get the current timestamp */
-			sscanf(dirtime(NULL), "%4d%2d%2dT%2d:%2d", 
+			sscanf(dirtime(NULL), "%4d-%2d-%2dT%2d:%2d", 
 					&nowYYYY, &nowMM, &nowDD, &nowhh, &nowmm);
 
 			/* compute the hours between them (sloppily) */
@@ -706,9 +818,12 @@ static void persistload(buf)
 			face = colorfind(toCHAR(facename));
 			if (!face)
 				break;
-			regionadd(marksetline(marktmp(marktop, buf, 0), top),
-				marksetline(marktmp(markbottom, buf, 0), bottom+1),
-				face, toCHAR(comment));
+			(void)marksetline(marktmp(marktop, buf, 0), top);
+			if (bottom == o_buflines(buf))
+				(void)marktmp(markbottom, buf, o_bufchars(buf));
+			else
+				(void)marksetline(marktmp(markbottom, buf, 0), bottom + 1);
+			regionadd(&marktop, &markbottom, face, toCHAR(comment));
 		}
 #endif /* FEATURE_REGION */
 
@@ -767,14 +882,14 @@ static void persistload(buf)
 	(void)ioclose();
 
 	/* get the persist.hours value */
-	phours = calcelement(o_persist, toCHAR("hours"));
+	phours = calcelement(o_persistonce, toLCHAR("hours"));
 	if (phours)
 		phours++;
 
 	/* clobber cursor and/or change, if not supposed to load */
-	if (!calcelement(o_persist, toCHAR("cursor")))
+	if (!calcelement(o_persistonce, toLCHAR("cursor")))
 		cursor = -1L;
-	if (!calcelement(o_persist, toCHAR("change")))
+	if (!calcelement(o_persistonce, toLCHAR("change")))
 		change = -1L;
 
 	/* if it hasn't expired then restore cursor */
@@ -817,7 +932,7 @@ static void persisthist(field, prompt, bufname, persbuf)
 		return;
 
 	/* get the number of lines to keep.  If 0, then save nothing */
-	scan = calcelement(o_persist, toCHAR(field));
+	scan = calcelement(o_persistonce, toCHAR(field));
 	if (!scan || *scan++ != ':')
 		return;
 	for (lines = 0; elvdigit(*scan); scan++)
@@ -888,7 +1003,7 @@ static void persistbuf(buf, persbuf)
 
 	/* always start with a "bufname" line, and timestamp */
 	sprintf(line, "bufname %.289s\nhours %s\n",
-		o_bufname(buf), dirtime(NULL));
+		tochar8(o_bufname(buf)), dirtime(NULL));
 	bufappend(persbuf, toCHAR(line), 0);
 
 	/* always store bufchars, buflines, cursor, and change */
@@ -897,7 +1012,7 @@ static void persistbuf(buf, persbuf)
 	bufappend(persbuf, toCHAR(line), 0);
 
 	/* maybe store the named marks */
-	if (calcelement(o_persist, toCHAR("marks")))
+	if (calcelement(o_persistonce, toLCHAR("marks")))
 	{
 		/* for each mark... */
 		for (i = 0; i < QTY(namedmark); i++)
@@ -915,7 +1030,7 @@ static void persistbuf(buf, persbuf)
 
 #ifdef FEATURE_REGION
 	/* maybe save regions */
-	if (calcelement(o_persist, toCHAR("regions")))
+	if (calcelement(o_persistonce, toLCHAR("regions")))
 	{
 		/* for each region in this buffer... */
 		for (region = buf->regions; region; region = region->next)
@@ -931,7 +1046,7 @@ static void persistbuf(buf, persbuf)
 
 #ifdef FEATURE_FOLD
 	/* maybe save folds */
-	if (calcelement(o_persist, toCHAR("folds")))
+	if (calcelement(o_persistonce, toLCHAR("folds")))
 	{
 		/* save each fold... */
 		for (fold = buf->fold; fold; fold = fold->next)
@@ -967,7 +1082,7 @@ static void persistother(buf, persbuf)
 	long	max;
 
 	/* try to open the file */
-	if (!ioopen(iofilename(tochar8(o_persistfile), '\0'), 'r', ElvFalse, ElvFalse, 't'))
+	if (!ioopen(iofilename(tochar8(o_persistfile), '\0'), 'r', ElvFalse, ElvFalse, 'a', 't'))
 	{
 		return;
 	}
@@ -977,7 +1092,7 @@ static void persistother(buf, persbuf)
 
 	/* fetch the limit, if any */
 	max = -1;
-	line = calcelement(o_persist, toCHAR("max"));
+	line = calcelement(o_persistonce, toLCHAR("max"));
 	if (line && *line++ == ':')
 	{
 		for (max = 0; elvdigit(*line); line++)
@@ -992,7 +1107,7 @@ static void persistother(buf, persbuf)
 	while ((line = persistget()) != NULL)
 	{
 		/* is it "bufname" line? */
-		if (!CHARncmp(line, toCHAR("bufname "), 8))
+		if (!CHARncmp(line, toLCHAR("bufname "), 8))
 		{
 			/* if the buffer has reached its limit, then break */
 			if (max >= 0 && o_bufchars(persbuf) >= max)
@@ -1022,12 +1137,96 @@ static void persistother(buf, persbuf)
 			continue;
 
 		/* append this line */
-		CHARcat(line, toCHAR("\n"));
+		CHARcat(line, toLCHAR("\n"));
 		bufappend(persbuf, line, 0);
 	}
 
 	/* close the file */
 	(void)ioclose();
+}
+
+static void persistargs(persbuf)
+	BUFFER	persbuf;	/* where to store the args */
+{
+	char	line[300];
+	int	args, i;
+	CHAR	*tmp, *scan, *dir;
+	ELVBOOL	otherdir;
+
+	otherdir = ElvFalse; /* just to keep compiler happy */
+
+	/* get the value of persist.args */
+	args = 0;
+	tmp = calcelement(o_persistonce, toLCHAR("args"));
+	if (!tmp)
+		args = 0;
+	else if (*tmp != ':')
+		args = 1;
+	else
+		args = atoi((char *)(tmp + 1));
+
+	/* if persist.args <= 0 then don't save this dir's args */
+	if (args <= 0)
+	{
+		return;
+	}
+
+	/* save current args */
+	dir = toCHAR(dircwd());
+	sprintf(line, "cd %.295s\n", tochar8(dir));
+	bufappend(persbuf, toCHAR(line), 0);
+	for (i = 0; arglist[i]; i++)
+	{
+		sprintf(line, "arg %.294s\n", arglist[i]);
+		bufappend(persbuf, toCHAR(line), 0);
+	}
+	sprintf(line, "argnext %d\n", argnext);
+	bufappend(persbuf, toCHAR(line), 0);
+
+
+	/* try to open the persistfile */
+	if (!ioopen(iofilename(tochar8(o_persistfile), '\0'), 'r', ElvFalse, ElvFalse, 'a', 't'))
+	{
+		return;
+	}
+
+	/* save other directories' args, by scanning  */
+	while ((scan = persistget()) != NULL)
+	{
+		/* is it "bufname" line? */
+		if (!CHARncmp(scan, toLCHAR("cd "), 3))
+		{
+			if (CHARcmp(scan + 3, dir))
+			{
+				otherdir = ElvTrue;
+				args--;
+				if (args > 0)
+				{
+					CHARcat(scan, toLCHAR("\n"));
+					bufappend(persbuf, scan, 0);
+				}
+			}
+			else
+			{
+				otherdir = ElvFalse;
+			}
+		}
+		else if (!CHARncmp (scan, toLCHAR("arg"), 3))/* arg or argnext */
+		{
+			if (otherdir)
+			{
+				CHARcat(scan, toLCHAR("\n"));
+				bufappend(persbuf, scan, 0);
+			}
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	/* close the persistfile */
+	ioclose();
 }
 
 /* save persistent information for a given buffer, or for all user buffers if
@@ -1041,8 +1240,8 @@ void bufpersistsave(buf)
 	ELVBOOL	oldhide;
  static	ELVBOOL savedall = ElvFalse;
 
-	/* if the persistfile option is unset, then do nothing */
-	if (!o_persistfile)
+	/* if the persistfile or persistonce option is "", then do nothing */
+	if (!o_persistfile || !o_persistonce)
 		return;
 
 	/* if already saved all buffers, then don't save anything more.  The
@@ -1052,7 +1251,7 @@ void bufpersistsave(buf)
 	if (savedall)
 		return;
 
-	/* if internal bffer, then don't do anything */
+	/* if internal buffer, then don't do anything */
 	if (persistinternal(buf))
 		return;
 
@@ -1062,29 +1261,17 @@ void bufpersistsave(buf)
 	persbuf = bufalloc(toCHAR(PERSIST_BUF), 0, ElvTrue);
 	if (o_bufchars(persbuf) > 0L)
 	{
-		bufreplace(marktmp(head, persbuf, 0L),
-			   marktmp(tail, persbuf, o_bufchars(persbuf)),
-			   NULL, 0L);
+		(void)marktmp(head, persbuf, 0L);
+		(void)marktmp(tail, persbuf, o_bufchars(persbuf));
+		bufreplace(&head, &tail, NULL, 0L);
 	}
+
+	/* save args.  This also clobbers the contents (if any) of persbuf. */
+	persistargs(persbuf);
 
 	/* save histories */
 	persisthist("ex", ":", EX_BUF, persbuf);
 	persisthist("search", "/?", REGEXP_BUF, persbuf);
-
-	/* maybe save args */
-	if (calcelement(o_persist, toCHAR("args")))
-	{
-		char	line[300];
-		int	i;
-
-		for (i = 0; arglist[i]; i++)
-		{
-			sprintf(line, "arg %.294s\n", arglist[i]);
-			bufappend(persbuf, toCHAR(line), 0);
-		}
-		sprintf(line, "argnext %d\n", argnext);
-		bufappend(persbuf, toCHAR(line), 0);
-	}
 
 	/* save either this buffer, or all buffers */
 	if (buf)
@@ -1157,7 +1344,7 @@ BUFFER bufalloc(name, bufinfo, internal)
 	}
 	else
 	{
-		buffer->bufinfo = lowalloc(tochar8(name));
+		buffer->bufinfo = lowalloc(name);
 	}
 
 	/* initialize the buffer options */
@@ -1200,6 +1387,7 @@ BUFFER bufalloc(name, bufinfo, internal)
 		buffer->lisp = bufdefopts->lisp;
 		buffer->smartargs = bufdefopts->smartargs;
 		buffer->userprotocol = bufdefopts->userprotocol;
+		buffer->readenc = bufdefopts->readenc;
 
 		/* Strings are tricky, because we may need to allocate a
 		 * duplicate of the value.
@@ -1247,20 +1435,20 @@ BUFFER bufalloc(name, bufinfo, internal)
 # define OSCCPRG "cc ($1?$1:$2)"
 #endif
 		optpreset(o_cc(buffer), toCHAR(OSCCPRG), OPT_UNSAFE);
-		optpreset(o_equalprg(buffer), toCHAR("fmt"), OPT_UNSAFE);
-		optpreset(o_keywordprg(buffer), toCHAR("ref $1 file:$2"), OPT_UNSAFE);
+		optpreset(o_equalprg(buffer), toLCHAR("fmt"), OPT_UNSAFE);
+		optpreset(o_keywordprg(buffer), toLCHAR("ref $1 file:$2"), OPT_UNSAFE);
 #ifndef OSMAKEPRG
 # define OSMAKEPRG "make $1"
 #endif
 		optpreset(o_make(buffer), toCHAR(OSMAKEPRG), OPT_UNSAFE);
-		o_paragraphs(buffer) = toCHAR("PPppIPLPQPP");
-		o_sections(buffer) = toCHAR("NHSHSSSEse");
+		o_paragraphs(buffer) = toLCHAR("PPppIPLPQPP");
+		o_sections(buffer) = toLCHAR("NHSHSSSEse");
 		o_shiftwidth(buffer) = safealloc(2, sizeof(short));
 			o_shiftwidth(buffer)[0] = 0;
 			o_shiftwidth(buffer)[1] = 8;
 			optflags(o_shiftwidth(buffer)) = OPT_FREE;
 		o_undolevels(buffer) = 0;
-		optpreset(o_bufdisplay(buffer), toCHAR("normal"), OPT_NODFLT);
+		optpreset(o_bufdisplay(buffer), toLCHAR("normal"), OPT_NODFLT);
 		optpreset(o_initialsyntax(buffer), ElvFalse, OPT_HIDE|OPT_NODFLT);
 		optflags(o_textwidth(buffer)) = OPT_REDRAW;
 		optpreset(o_locked(buffer), ElvFalse, OPT_HIDE|OPT_NODFLT);
@@ -1270,6 +1458,7 @@ BUFFER bufalloc(name, bufinfo, internal)
 		optpreset(o_smartargs(buffer), ElvFalse, OPT_HIDE);
 		optpreset(o_userprotocol(buffer), ElvFalse, OPT_HIDE|OPT_NODFLT);
 		optflags(o_mapmode(buffer)) = OPT_HIDE|OPT_REDRAW;
+		optpreset(o_readenc(buffer), 'a', OPT_HIDE);
 	}
 
 	/* set the name of this buffer, and limit access to some options */
@@ -1572,7 +1761,7 @@ ELVBOOL bufread(mark, rfile)
 #endif
 
 	/* open the file/filter */
-	if (!ioopen(rfile, 'r', ElvFalse, ElvFalse, o_readeol(markbuffer(mark))))
+	if (!ioopen(rfile, 'r', ElvFalse, ElvFalse, o_readenc(markbuffer(mark)), o_readeol(markbuffer(mark))))
 	{
 		/* failed -- error message already given */
 		return ElvFalse;
@@ -1604,8 +1793,10 @@ ELVBOOL bufread(mark, rfile)
 		(void)auperform(windefault, ElvFalse, NULL,
 			filter ? AU_FILTERREADPOST : AU_FILEREADPOST,
 			toCHAR(rfile));
-		markfree(aubottom);
-		markfree(autop);
+		if (aubottom)
+			markfree(aubottom);
+		if (autop)
+			markfree(autop);
 		autop = aubottom = NULL;
 		bufoptions(oldbuf);
 	}
@@ -1702,7 +1893,7 @@ BUFFER bufload(bufname, filename, reload)
 #endif
 
 	/* Set the buffer's options */
-	optpreset(o_filename(buf), CHARkdup(filename), OPT_HIDE|OPT_LOCK|OPT_FREE);
+	optpreset(o_filename(buf), CHARkdup(toCHAR(filename)), OPT_HIDE|OPT_LOCK|OPT_FREE);
 	optpreset(o_edited(buf), ElvTrue, OPT_HIDE|OPT_NODFLT);
 	optpreset(o_readonly(buf), o_defaultreadonly, OPT_HIDE|OPT_NODFLT);
 	optpreset(o_newfile(buf), ElvFalse, OPT_HIDE|OPT_NODFLT);
@@ -1795,7 +1986,7 @@ BUFFER bufload(bufname, filename, reload)
 	{
 		o_partiallastline(buf) = ElvTrue;
 		marksetoffset(&end, markoffset(&end) + 1);
-		bufreplace(&end, &end, toCHAR("\n"), 1L);
+		bufreplace(&end, &end, toLCHAR("\n"), 1L);
 	}
 	else
 		o_partiallastline(buf) = ElvFalse;
@@ -1859,17 +2050,17 @@ BUFFER bufload(bufname, filename, reload)
 			else if (!strncmp(ext, ".htm", 4)
 			      || !strncmp(ext, ".HTM", 4)
 			      || scanchar(marktmp(top, buf, 0)) == '<')
-				optputstr(toCHAR("bd"), toCHAR("html"), ElvFalse);
+				optputstr(toLCHAR("bd"), toLCHAR("html"), ElvFalse);
 # endif
 # ifdef DISPLAY_MAN
 			else if (!strcmp(ext, ".man")
 			      || (elvdigit(ext[1]) && !ext[2])
 			      || scanchar(marktmp(top, buf, 0)) == '.')
-				optputstr(toCHAR("bd"), toCHAR("man"), ElvFalse);
+				optputstr(toLCHAR("bd"), toLCHAR("man"), ElvFalse);
 # endif
 # ifdef DISPLAY_SYNTAX
 			else if (descr_known(tochar8(o_filename(buf)), SYNTAX_FILE))
-				optputstr(toCHAR("bd"), toCHAR("syntax"), ElvFalse);
+				optputstr(toLCHAR("bd"), toLCHAR("syntax"), ElvFalse);
 # endif
 		}
 #else
@@ -2296,10 +2487,10 @@ ELVBOOL bufwrite(from, to, wfile, force)
 #endif /* FEATURE_PROTO */
 
 	/* Determine some characteristics of this write */
-	append = (ELVBOOL)(wfile[0] == '>' && wfile[1] == '>');
-	filter = (ELVBOOL)(wfile[0] == '!');
+	append = (ELVBOOL)(wfile && wfile[0] == '>' && wfile[1] == '>');
+	filter = (ELVBOOL)(wfile && wfile[0] == '!');
 	wholebuf = (ELVBOOL)(markoffset(from) == 0 && markoffset(to) == o_bufchars(buf));
-	samefile = (ELVBOOL)(o_filename(buf) && !strcmp(wfile, tochar8(o_filename(buf))));
+	samefile = (ELVBOOL)(wfile && o_filename(buf) && !strcmp(wfile, tochar8(o_filename(buf))));
 
 	/* if we're appending, skip the initial ">>" */
 	if (append)
@@ -2314,7 +2505,7 @@ ELVBOOL bufwrite(from, to, wfile, force)
 	 */
 	if (!filter && wholebuf && samefile && o_readonly(buf) && !force)
 	{
-		msg(MSG_ERROR, "[s]$1 readonly" , wfile);
+		msg(MSG_ERROR, "[s]$1 readonly" , wfile ? wfile : "stdout");
 		return ElvFalse;
 	}
 
@@ -2417,6 +2608,9 @@ ELVBOOL bufwrite(from, to, wfile, force)
 
 	/* Try to write the file */
 	if (ioopen(wfile, append ? 'a' : 'w', ElvFalse, ElvTrue,
+		o_writeenc == 's'
+			? o_readenc(markbuffer(from))
+			: o_writeenc,
 		o_writeeol == 's' || o_readeol(markbuffer(from)) == 'b'
 			? o_readeol(markbuffer(from))
 			: o_writeeol))
@@ -3109,7 +3303,7 @@ void bufreplace(from, to, newp, newlen)
 void bufappend(buf, str, len)
 	BUFFER	buf;	/* buffer to receive the new text */
 	CHAR	*str;	/* the new text */
-	int	len;	/* length of the text, or 0 to use count it */
+	int	len;	/* length of the text, or 0 to count it via CHARlen() */
 {
 	MARKBUF	tail;
 

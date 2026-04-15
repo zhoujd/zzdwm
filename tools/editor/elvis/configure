@@ -1,5 +1,13 @@
 #!/bin/sh
 
+# TEMPORARY: There is a problem with the Gnome interface.  Gnome should be
+# omitted by default until this is resolved.  Giving an explicit "--with-gnome"
+# flag should still enable it, though.  The bug that I'm encountering is that
+# the -lgnorba library contains unresolved references to "gnome_init" and
+# "gnome_init_with_popt_table".  This started showing up after I upgraded my
+# computer from SuSE 6.3 to SuSE 7.0.
+GUI_GNOME=bug
+
 # This is a UNIX shell script that generates a custom "Makefile" file and
 # a "config.h" file.
 #
@@ -9,6 +17,8 @@
 #	 --without-x		disable support for X-windows interface
 #	 --with-xft[=no]	enable/disable support for Xft under "x11" intf.
 #	 --without-xft		disable support for Xft under "x11" interface
+#	 --with-gnome[=no]	enable/disable support for GNOME interface
+#	 --without-gnome	disable support for GNOME interface
 #	 --with-gcc[=no]	enable/disable use of GCC
 #	 --without-gcc		disable use of GCC
 #	 --x-includes=DIR	add DIR to path for X-windows include files
@@ -50,9 +60,9 @@
 
 # Set some defaults
 XINCPATH="/usr/X11R6/include /usr/X11/include /usr/include /usr/include/X11 /usr/local/X11/include /usr/openwin/include"
-XLIBPATH="/lib /usr/lib /usr/X11/lib /usr/local/X11/lib /usr/openwin/lib /usr/X11R6/lib /usr/ucblib /usr/ccs/lib /usr/local/lib "`echo "$LD_LIBRARY_PATH" | tr ':' ' '`
+XLIBPATH="/lib /usr/lib /lib64 /usr/lib64 /usr/X11/lib /usr/local/X11/lib /usr/openwin/lib /usr/X11R6/lib /usr/ucblib /usr/ccs/lib /usr/local/lib "`echo "$LD_LIBRARY_PATH" | tr ':' ' '`
 GNUPATH=`echo "$PATH" | tr ':' ' '`
-PREFIX=/usr/local
+PREFIX=/usr
 BINDIR='$(PREFIX)/bin'
 DATADIR='$(PREFIX)/share/elvis/'
 DOCDIR='$(PREFIX)/share/elvis/doc/'
@@ -112,6 +122,8 @@ usage()
 	echo "       --without-x        disable support for X-windows interface"
 	echo "       --with-xft[=no]    enable/disable support for Xft under 'x11' intf."
 	echo "       --without-xft      disable support for Xft under 'x11' interface"
+	echo "       --with-gnome[=no]  enable/disable support for GNOME interface"
+	echo "       --without-gnome    disable support for GNOME interface"
 	echo "       --with-gcc[=no]    enable/disable use of GCC"
 	echo "       --without-gcc      disable use of GCC"
 	echo "       --x-includes=DIR   add DIR to path for X-windows include files"
@@ -137,6 +149,14 @@ usage()
 for i
 do
 	case "$i" in
+	  --with-gnome=no|--without-gnome)
+		GUI_GNOME=undef
+		args="$args --with-gnome=no"
+		;;
+	  --with-gnome*)
+		GUI_GNOME=define
+		args="$args --with-gnome"
+		;;
 	  --with-x=no|--without-x)
 		GUI_X11=undef
 		args="$args --with-x=no"
@@ -166,11 +186,10 @@ do
 	  --x-includes=*)
 		XINCPATH=`echo "$i"|sed 's/^--x-includes=//'`" $XINCPATH"
 		args="$args $i"
-                ;;
+		;;
 	  --x-libraries=*)
 		XLIBPATH=`echo "$i"|sed 's/^--x-libraries=//'`" $XLIBPATH"
-		args="$args $i"$
-                X_LIBRARIES_OPTION=undef
+		args="$args $i"
 		;;
 	  --bindir=*)
 		BINDIR=`echo "$i"|sed 's/^--bindir=//'`
@@ -282,38 +301,66 @@ case "$inet" in
   *) why "   Internet headers found" ;;
 esac
 
+# Find Gnome files, unless gnome is specifically omitted
+case "$GUI_GNOME" in
+  undef)
+	why "   Skipping GNOME tests since you specified --with-gnome=no"
+	;;
+  bug)
+	why "   Skipping GNOME due to a temporary configuration bug.  (For more information,"
+	why "      see the comment at the top of the 'configure' script)"
+	GUI_GNOME=undef
+	;;
+  *)
+	GNOMELIBSSEARCH="gnomeui zvt gnome libglade gnorba"
+	for LIBSEARCHTMP in $GNOMELIBSSEARCH
+	do
+		res=`gnome-config --libs $LIBSEARCHTMP`
+		retcode=$?
+		if [ $retcode -ne 0 ]
+		then
+			why "  gnome-config failed to find $LIBSEARCHTMP"
+			why "  You should be able to get it from www.gnome.org"
+			break
+		fi
+	done
+
+	gnomelibs=`gnome-config --libs $GNOMELIBSSEARCH 2>/dev/null`
+	gnomeres1=$?
+	gnomecflags=`gnome-config --cflags $GNOMELIBSSEARCH 2>/dev/null`
+	gnomeres2=$?
+
+	if [ $gnomeres1 -ne 0 -o $gnomeres2 -ne 0 -o $retcode -ne 0 -o "$gnomelibs" = "" -o "$gnomecflags" = "" ]
+	then
+		why "   gnome-config not happy - perhaps you are missing some gnomes?"
+		why "   ($gnomeres1 / $gnomeres2 / $retcode / $gnomelibs / $gnomecflags )"
+		gnomelibs=""
+		gnomecflags=""
+	else
+		why "   GNOME found -- omitting gdk_imlib; it causes more trouble that it's worth"
+		gnomelibs="`echo $gnomelibs | sed 's/ -lgdk_imlib / /'`"
+		gnomecflags="$gnomecflags -I."
+		echo '#ifndef GDK_IMLIB_H' >gdk_imlib.h
+		echo '# define GDK_IMLIB_H' >>gdk_imlib.h
+		echo 'typedef char GdkImlibColor;' >>gdk_imlib.h
+		echo 'typedef char GdkImlibImage;' >>gdk_imlib.h
+		echo '#endif' >>gdk_imlib.h
+	fi
+
+esac
+
 case "$GUI_X11" in
   undef)
 	why "   Skipping X11 tests since you specified --with-x=no"
 	;;
 
   *)
-        if [ "$SYS" = "darwin" ]
-        then
-            case "$X_LIBRARIES_OPTION" in
-            undef)
-                ;;
-            *)
-                if [ -d /opt/X11/include -a -d /opt/X11/lib ]
-                then
-			echo "darwin: no --x-libraries= option set, assuming XQuartz installation in /opt/X11..."
-			XINCPATH=/opt/X11/include
-			XLIBPATH=/opt/X11/lib
-                else
-			echo "darwin should build OK as a generic Unix but you must use the --x-libraries= option"
-			exit 0
-		fi
-            esac
-        fi
 	xinc=`searchpath X11/Xresource.h $XINCPATH`
 	case "$xinc" in
 		"") why "   X11 headers not found - maybe need '--x-includes=...' argument?" ;;
 		*) why "   X11 headers found" ;;
 	esac
-	for suffix in a so dylib; do
-		xlib=`searchpath libX11.$suffix $XLIBPATH`
-		test -n "$xlib" && break;
-	done
+	xlib=`searchpath libX11.a $XLIBPATH`
 	if [ "$xlib" = "" ]
 	then
 		xlib=`searchpath libX11.so $XLIBPATH`
@@ -344,6 +391,19 @@ case "$gnu" in
  y|n)	gnu="" ;;
 esac
 
+# If GNOME is unspecified, and the GNOME check was OK then assume with-gnome
+if [ "$GUI_GNOME" = "" -a "$gnomelibs" ]
+then
+  why "Assuming --with-gnome because you have GNOME installed"
+  GUI_GNOME=define
+  args="$args --with-gnome"
+elif [ "$GUI_GNOME" = "" ]
+then
+  why "Assuming --with-gnome=no because GNOME was not found"
+  GUI_GNOME=undef
+  args="$args --with-gnome=no"
+fi
+
 # If X-windows is unspecified, and the X files are present, then assume with-x
 if [ "$GUI_X11" = "" -a "$xinc" ]
 then
@@ -360,9 +420,7 @@ fi
 # If X-windows is used, then check for the -lXpm library, need for FEATURE_IMAGE
 if [ "$GUI_X11" = "define" -a "$FEATURE_IMAGE" = "" ]
 then
-	if [ "`searchpath libXpm.a $XLIBPATH`" = "" ] \
-		&& [ "`searchpath libXpm.so $XLIBPATH`" = "" ] \
-		&& [ "`searchpath libXpm.dylib $XLIBPATH`" = "" ]
+	if [ "`searchpath libXpm.a $XLIBPATH`" = "" -a "`searchpath libXpm.so $XLIBPATH`" = "" ]
 	then
 		why "   Disabling the use of background images since -lXpm wasn't found"
 		FEATURE_IMAGE=undef
@@ -390,11 +448,11 @@ case "$FEATURE_XFT" in
 	if [ "$GUI_X11" = "define" ]
 	then
 		xft_h=`searchpath X11/Xft/Xft.h $XINCPATH`
-		for suffix in a so dylib; do
-			libxft=`searchpath libXft.$suffix $XLIBPATH`
-			test -n "$libxft" && break
-		done
-		[ -n "$libxft" ] || libxft=`searchpath libXft.so $XLIBPATH`
+		libxft=`searchpath libXft.a $XLIBPATH`
+		if [ "$libxft" = "" ]
+		then
+			libxft=`searchpath libXft.so $XLIBPATH`
+		fi
 		if [ "$xft_h" = "" -o "$libxft" = "" ]
 		then
 			why "   Xft not found"
@@ -542,26 +600,16 @@ fi
 if [ "$NEED_INET_ATON" = undef ]
 then
 	why "Does this system require -lresolv to use inet_aton()?"
-	if [ "`searchpath libresolv.a $XLIBPATH`" = "" ] \
-		&& [ "`searchpath libresolv.so $XLIBPATH`" = "" ] \
-		&& [ "`searchpath libresolv.dylib $XLIBPATH`" = "" ]
+	if [ "`searchpath libresolv.a $XLIBPATH`" = "" ]
 	then
-		why "   Assuming no, because I couldn't find libresolv"
+		why "   Assuming no, because I couldn't find libresolv.a"
 	else
-		why "   Assuming yes, because I found libresolv"
+		why "   Assuming yes, because I found libresolv.a"
 		NLIBS="$NLIBS -lresolv"
 	fi
 fi
 why "Does this system support memmove()?"
-FN=memmove$$.c
-cat >$FN <<EOF
-#include <string.h>
-int main(void) { char buf2[10], buf1[10]; memmove(buf2, buf1, 10); return 0; }
-EOF
-gcc -c $FN >/dev/null 2>&1
-RC=$?
-rm -f $FN
-if [ $RC -eq 0 ]
+if fgrep memmove /usr/include/string*.h </dev/null >/dev/null
 then
 	why "   Assuming yes, because it is declared in <string.h> or <strings.h>"
 	NEED_MEMMOVE=undef
@@ -600,7 +648,7 @@ case "$SYS" in
 	TLIBS="-lcurses"
 	;;
 
-  *linux* | *kfreebsd*)
+  *linux*)
 	if [ ! -f /usr/lib/libtermcap.a -a ! -f /lib/libtermcap.a ]
 	then
 		if [ -f /usr/lib/libncurses.a -o -f /usr/lib/ncurses.a ]
@@ -742,22 +790,16 @@ case "$SYS" in
   *freebsd*)
 	why "For FreeBSD, we ignore the <sys/select.h> file"
 	NEED_SELECT_H="undef"
-	if [ "$GUI_X11" = "define" ]
-	then
-		why "   To support X11, it also requires -lipc"
-		XLIBS=" -lipc"
-	fi
+	#who "   To support X11, it also requires -lipc"
+	#XLIBS=" -lipc"
 	;;
 
   *openbsd*)
 	why "For OpenBSD, we ignore the <sys/select.h> file"
 	NEED_SELECT_H="undef"
 	TLIBS="-lcurses"
-	if [ "$GUI_X11" = "define" ]
-	then
-		why "   To support X11, it also requires -lipc"
-		XLIBS=" -lipc"
-	fi
+	who "   To support X11, it also requires -lipc"
+	XLIBS=" -lipc"
 	;;
 
   *netbsd*)
@@ -855,16 +897,20 @@ echo "Man dir:  "`sh instman.sh -d -p"${PREFIX}"`
 
 #Set some options that'll be used in the here-files below
 CC="$CC$USE"
+if [ "$GUI_GNOME" = "define" ]
+then
+  GNOMELIBS="$gnomelibs"
+  GNOMECFLAGS="$gnomecflags"
+
+  CC="$CC $GNOMECFLAGS"
+fi
+
 if [ "$GUI_X11" = "define" ]
 then
 	case "$FEATURE_XFT" in
 	  define)
 		xft="-lXft "
-		if [ "$SYS" = "darwin" -a -d /opt/X11/include/freetype2 ]
-		then
-			CC="$CC -I/opt/X11/include/freetype2"
-
-		elif [ -d /usr/include/freetype2 ]
+		if [ -d /usr/include/freetype2 ]
 		then
 			CC="$CC -I/usr/include/freetype2"
 		fi
@@ -879,7 +925,7 @@ then
 	esac
 	case "$xlib" in
 	  /lib/libX11.*|/usr/lib/libX11.*|"")
-                XLIBS="$xft$xpm-lX11$XLIBS"
+		XLIBS="$xft$xpm-lX11$XLIBS"
 		;;
 	  *)
 		XLIBS="-L`dirname $xlib` $xft$xpm-lX11$XLIBS"
@@ -889,27 +935,8 @@ then
 	  /usr/include/X11/Xresource.h)
 		;;
 	  *)
-                x11subdir=`dirname $xinc`
-################################################################################
-# darwin will mostly build ok as a "generic" system with the exception
-# that -L<X11_lib_dir> must be specified with the --x-libraries= option
-################################################################################
-                if [ "$SYS" = "darwin" ]
-                then
-                     x=-1
-                     xdir=""
-                     for dir in $XLIBPATH
-                     do
-                        if test $x -lt 0
-                        then
-                            xdir="$dir"
-                            x=`expr $x + 1`
-                        fi
-                     done
-                     CC="$CC -L$xdir -I"`dirname $x11subdir`
-                else
-		    CC="$CC -I"`dirname $x11subdir`
-                fi
+		x11subdir=`dirname $xinc`
+		CC="$CC -I"`dirname $x11subdir`
 		;;
 	esac
 fi
@@ -942,6 +969,7 @@ cat >config.h <<eof-config
 
 
 /* The following determine which user interfaces are to be supported */
+#${GUI_GNOME:-undef}	GUI_GNOME	/* Pretty GNOME user interface */
 #${GUI_X11:-undef}	GUI_X11		/* simple X-windows interface */
 #undef	GUI_CURSES	/* curses interface */
 #define	GUI_TERMCAP	/* termcap interface */
@@ -968,6 +996,7 @@ cat >config.h <<eof-config
 #define	FEATURE_CACHEDESC /* store syntax/markup descriptions in RAM */
 #define	FEATURE_CALC	/* built-in calculator -- see command below */
 #define	FEATURE_COMPLETE /* filename completion */
+#define FEATURE_EMBED	/* allow embedded syntax coloring (e.g. PHP in HTML) */
 #define	FEATURE_EQUALTILDE /* :let option =~ excmdline */
 #define	FEATURE_FOLD	/* the :fold and :unfold commands */
 #define	FEATURE_G	/* most of the visual 'g' commands */
@@ -997,6 +1026,7 @@ cat >config.h <<eof-config
 #define	FEATURE_V	/* the v/V/^V marking commands */
 #${FEATURE_XFT:-undef}	FEATURE_XFT	/* support antialiased fonts in "x11" */
 #define	FEATURE_PERSIST	/* the persistfile option */
+#undef	FEATURE_WCHAR	/* use wide characters internally */
 
 /* The FEATURE_CALC option, above, controls whether the calculator and all of
  * the features that depend on it should be included in elvis.  You almost
@@ -1172,7 +1202,7 @@ eof-generic
 
 esac
 cat >>$tmp <<eof-all
-s!^LIBS=.*!LIBS=$XLIBS $LIBS!
+s!^LIBS=.*!LIBS=$GNOMELIBS $XLIBS $LIBS!
 s!^PREFIX=.*!PREFIX=$PREFIX!
 s!^BINDIR=.*!BINDIR=$BINDIR!
 s!^DATADIR=.*!DATADIR=$DATADIR!
@@ -1183,24 +1213,21 @@ then
 	echo 's!^CFLAGS=.*!& -I/usr/local/X11/include!' >>$tmp
 fi
 
+# Remove the source/object for GNOME from the makefile if we aren't using it
+if [ "$GUI_GNOME" != "define" ]
+then
+cat >> $tmp << eof-gnome
+s!^GNOMESRCS=.*!GNOMESRCS=!
+s!^GNOMEOBJS=.*!GNOMEOBJS=!
+eof-gnome
+fi
+
 # Remove the elvgdb program if X11 isn't available
-# Remove the X11 sources/objects as well and
-# don't install the unneeded icons and themes
 if [ "$GUI_X11" != "define" ]
 then
-cat >> $tmp <<eof-nox11
+cat >> $tmp <<eof-noelvgdb
 /^ALL=/s! elvgdb.(EXE)!!
-s!^X11SRCS=!#X11SRCS=!
-s!^X11OBJS=!#X11OBJS=!
-s!^X11HDRS=!#X11HDRS=!
-s!@ICONS@!!
-s!@THEMES@!!
-eof-nox11
-else
-cat >> $tmp <<eof-x11
-s!@ICONS@!icons!
-s!@THEMES@!themes!
-eof-x11
+eof-noelvgdb
 fi
 
 # Run "Makefile.in" through that sed script, to produce "Makefile"

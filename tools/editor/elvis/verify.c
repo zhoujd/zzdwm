@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_verify[] = "$Id: verify.c,v 1.14 2003/10/17 17:41:23 steve Exp $";
+char id_verify[] = "$Id: verify.c,v 1.15 2011/12/15 17:55:12 steve Exp $";
 #endif
 
 #ifdef PROTOCOL_FTP
@@ -57,8 +57,8 @@ extern ELVBOOL sesmacro(void);
 extern WINDOW winofbuf(WINDOW win, BUFFER buf);
 extern WINDOW winalloc(GUIWIN *gw, OPTVAL *gvals, BUFFER buf, long rows, long columns);
 extern void msg(MSGIMP imp, char *terse, ...);
-extern void drawchar(CHAR *cp, long qty, _char_ font, long offset);
-extern void draw1ch(CHAR c, _char_ font, long offset);
+extern void drawchar(CHAR *cp, long qty, _ELVFACE_ font, long offset);
+extern void draw1ch(CHAR c, _ELVFACE_ font, long offset);
 extern void drawopencomplete(WINDOW win);
 extern char *perm2str(DIRPERM perm);
 extern char *bool2str(ELVBOOL bool);
@@ -102,7 +102,7 @@ char *perm2str(DIRPERM perm)
 	}
 }
 
-void draw1ch(CHAR c, _char_ font, long offset)
+void draw1ch(CHAR c, _ELVFACE_ font, long offset)
 {
 	static char prevfont = 'n';
 
@@ -119,7 +119,7 @@ void draw1ch(CHAR c, _char_ font, long offset)
 	putchar(c);
 }
 
-void drawchar(CHAR *cp, long qty, _char_ font, long offset)
+void drawchar(CHAR *cp, long qty, _ELVFACE_ font, long offset)
 {
 	long	delta = 1;
 	if (qty < 0)
@@ -681,13 +681,13 @@ ELVBOOL buffer(void)
 	MARKBUF	mark;
 	int	i;
 
-	o_session = toCHAR("verify.ses");
+	o_session = toLCHAR("verify.ses");
 	bufinit();
-	buf = bufalloc(toCHAR("buffer"), 0, ElvFalse);
+	buf = bufalloc(toLCHAR("buffer"), 0, ElvFalse);
 	(void)marktmp(mark, buf, 0);
 	for (i = 0; i < 200; i++)
 	{
-		bufreplace(&mark, &mark, toCHAR("This is a test\n"), 15);
+		bufreplace(&mark, &mark, toLCHAR("This is a test\n"), 15);
 	}
 	if (o_buflines(buf) != 200)
 	{

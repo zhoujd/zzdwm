@@ -28,7 +28,7 @@ extern RESULT	m_gupdown P_((WINDOW win, VIINFO *vinf));
 
 /* in search.c */
 extern RESULT	m_search P_((WINDOW win, VIINFO *vinf));
-extern char	searchfont;
+extern ELVFACE	searchfont;
 extern regexp	*searchre;
 extern ELVBOOL	searchforward;
 extern ELVBOOL	searchhasdelta;

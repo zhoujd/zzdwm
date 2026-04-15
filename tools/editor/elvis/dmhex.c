@@ -4,7 +4,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_dmhex[] = "$Id: dmhex.c,v 2.21 2003/10/17 17:41:23 steve Exp $";
+char id_dmhex[] = "$Id: dmhex.c,v 2.22 2011/12/15 17:55:12 steve Exp $";
 #endif
 #ifdef DISPLAY_HEX
 
@@ -18,7 +18,7 @@ static void term(DMINFO *info);
 static long mark2col(WINDOW w, MARK mark, ELVBOOL cmd);
 static MARK move(WINDOW w, MARK from, long linedelta, long column, ELVBOOL cmd);
 static MARK setup(WINDOW win, MARK top, long cursor, MARK bottom, DMINFO *info);
-static MARK image(WINDOW w, MARK line, DMINFO *info, void (*draw)(CHAR *p, long qty, _char_ font, long offset));
+static MARK image(WINDOW w, MARK line, DMINFO *info, void (*draw)(CHAR *p, long qty, _ELVFACE_ font, long offset));
 #endif
 
 /* Lines look like this:
@@ -53,10 +53,10 @@ static DMINFO *init(win)
 	}
 
 	/* locate the fonts we'll use */
-	font_hexheading = colorfind(toCHAR("hexheading"));
-	colorset(font_hexheading, toCHAR("underlined"), ElvFalse);
-	font_hexcursor = colorfind(toCHAR("hexcursor"));
-	font_hexoffset = colorfind(toCHAR("hexoffset"));
+	font_hexheading = colorfind(toLCHAR("hexheading"));
+	colorset(font_hexheading, toLCHAR("underlined"), ElvFalse);
+	font_hexcursor = colorfind(toLCHAR("hexcursor"));
+	font_hexoffset = colorfind(toLCHAR("hexoffset"));
 
 	return NULL;
 }
@@ -177,7 +177,7 @@ static MARK image(w, line, info, draw)
 	WINDOW	w;		/* window where drawing will go */
 	MARK	line;		/* start of line to draw */
 	DMINFO	*info;		/* window-specific info about mode */
-	void	(*draw)P_((CHAR *p, long qty, _char_ font, long offset));
+	void	(*draw)P_((CHAR *p, long qty, _ELVFACE_ font, long offset));
 				/* function for drawing a single character */
 {
 	char	*c8p;

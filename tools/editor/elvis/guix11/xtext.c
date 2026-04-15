@@ -447,11 +447,19 @@ void x_ta_draw(xw, fg, bg, bits, text, len)
 					(int)xw->ta.cellh);
 				XSetForeground(x_display, xw->gc, fg);
 			}
+#ifdef FEATURE_WCHAR
+			XftDrawString32(xw->ta.xftdraw, x_xftpixel(fg),
+				loaded->xftfont, 
+				(int)(xw->ta.cursx * xw->ta.cellw),
+				(int)(xw->ta.cursy * xw->ta.cellh + xw->ta.cellbase),
+				(XftChar32 *)text, len);
+#else
 			XftDrawString8(xw->ta.xftdraw, x_xftpixel(fg),
 				loaded->xftfont, 
 				(int)(xw->ta.cursx * xw->ta.cellw),
 				(int)(xw->ta.cursy * xw->ta.cellh + xw->ta.cellbase),
 				(XftChar8 *)text, len);
+#endif
 		}
 		else
 #endif
@@ -482,11 +490,19 @@ void x_ta_draw(xw, fg, bg, bits, text, len)
 		{
 #ifdef FEATURE_XFT
 			if (o_antialias && loaded->xftfont)
+# ifdef FEATURE_WCHAR
+				XftDrawString32(xw->ta.xftdraw, x_xftpixel(fg),
+					loaded->xftfont, 
+					(int)(xw->ta.cursx * xw->ta.cellw + 1),
+					(int)(xw->ta.cursy * xw->ta.cellh + xw->ta.cellbase),
+					(XftChar32 *)text, len);
+# else
 				XftDrawString8(xw->ta.xftdraw, x_xftpixel(fg),
 					loaded->xftfont, 
 					(int)(xw->ta.cursx * xw->ta.cellw + 1),
 					(int)(xw->ta.cursy * xw->ta.cellh + xw->ta.cellbase),
 					(XftChar8 *)text, len);
+# endif
 			else
 #endif
 			XDrawString(x_display, xw->ta.win, xw->gc,

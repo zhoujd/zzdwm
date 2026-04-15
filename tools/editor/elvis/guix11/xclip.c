@@ -3,7 +3,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_xclip[] = "$Id: xclip.c,v 2.7 2003/10/17 17:41:23 steve Exp $";
+char id_xclip[] = "$Id: xclip.c,v 2.8 2006/12/05 01:31:31 steve Exp $";
 #endif
 #ifdef GUI_X11
 # include "guix11.h"
@@ -22,7 +22,7 @@ void x_clipevent(event)
 	XEvent	notify;
 	Window	owner;
 	X11WIN	*xw;
-	Atom	targets[2];
+	Atom	targets[3];
 
 	switch (event->type)
 	{
@@ -59,6 +59,7 @@ void x_clipevent(event)
 		/* try to convert the selection */
 		if (event->xselectionrequest.selection == XA_PRIMARY
 		 && (event->xselectionrequest.target == XA_STRING
+			|| event->xselectionrequest.target == x_text
 			|| event->xselectionrequest.target == x_compound_text))
 		{
 			/* store the selection's value into the property */
@@ -75,7 +76,8 @@ void x_clipevent(event)
 		 && event->xselectionrequest.target == x_targets)
 		{
 			targets[0] = XA_STRING;
-			targets[1] = x_compound_text;
+			targets[1] = x_text;
+			targets[2] = x_compound_text;
 			XChangeProperty(x_display,
 				event->xselectionrequest.requestor,
 				event->xselectionrequest.property,

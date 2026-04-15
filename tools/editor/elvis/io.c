@@ -4,7 +4,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_io[] = "$Id: io.c,v 2.63 2004/03/20 23:00:10 steve Exp $";
+char id_io[] = "$Id: io.c,v 2.66 2011/12/02 20:03:06 steve Exp $";
 #endif
 
 #if USE_PROTOTYPES
@@ -61,16 +61,17 @@ static int	openline; /* line number within source file */
  * don't match.
  */
 #ifdef DEBUG_ALLOC
-ELVBOOL	_ioopen(file, line, name, rwa, prgsafe, force, eol)
+ELVBOOL	_ioopen(file, line, name, rwa, prgsafe, force, enc, eol)
 	char	*file;	/* name of caller's source file */
 	int	line;	/* line number within caller's source file */
 #else
-ELVBOOL	ioopen(name, rwa, prgsafe, force, eol)
+ELVBOOL	ioopen(name, rwa, prgsafe, force, enc, eol)
 #endif
 	char	*name;	/* name of file, or "!program" */
 	_char_	rwa;	/* one of {read, write, append} */
 	ELVBOOL	prgsafe;/* If ElvTrue, allow "!program"; else refuse */
 	ELVBOOL	force;	/* if ElvTrue, allow files to be clobbered */
+	_char_	enc;	/* encoding, one of { latin1 utf8 wide auto } */
 	_char_	eol;	/* one of {unix, dos, mac, text, binary} */
 {
 	DIRPERM perms;
@@ -686,7 +687,8 @@ char *iofilename(partial, endchar)
 	CHAR		slashstr[1];
 
 	/* If paranoid, then don't allow filename completion either */
-	if (o_security == 'r' /* restricted */)
+	if (o_security == 'r' /* restricted */
+	 && endchar != '\0' /* even restricted allowed tilde expansion */)
 		return NULL;
 
 	/* parse the rules */
@@ -815,12 +817,12 @@ char *iofilename(partial, endchar)
 				bname = dirfile(fname);
 				if (col + strlen(bname) + 2 >= (unsigned)o_columns(windefault))
 				{
-					drawextext(windefault, toCHAR("\n"), 1);
+					drawextext(windefault, toLCHAR("\n"), 1);
 					col = 0;
 				}
 				else if (col > 0)
 				{
-					drawextext(windefault, toCHAR(" "), 1);
+					drawextext(windefault, toLCHAR(" "), 1);
 					col++;
 				}
 
@@ -838,7 +840,7 @@ char *iofilename(partial, endchar)
 			}
 			if (col > 0)
 			{
-				drawextext(windefault, toCHAR("\n"), 1);
+				drawextext(windefault, toLCHAR("\n"), 1);
 			}
 		}
 
@@ -926,6 +928,96 @@ char *ioeol(filename)
 
 	/* if all else fails, assume "text" */
 	return "text";
+}
+
+
+/* Try to guess the non-ASCII encoding in a file.
+ * Returns "wide"   if the text appears to be using 16-bit characters
+ *         "utf8"   if it appears to be using UTF-8 characters, or
+ *         "latin1" for everything else, including new or unreadable files.
+ */
+char *ioenc(filename)
+	char	*filename;
+{
+	int	nbytes, i, even, odd, more, ch;
+
+#ifdef PROTOCOL_HTTP
+	/* check for a protocol */
+	for (i = 0; elvalpha(filename[i]); i++)
+	{
+	}
+	if (i < 2 || filename[i] != ':')
+		i = 0;
+
+	/* assume all protocols except "file:" use latin1 */
+	if (!strncmp(filename, "file:", 5))
+		filename += i + 1;
+	else if (i > 0)
+		return "latin1"; /* we could do better for HTML/XML */
+#endif
+
+#ifdef FEATURE_STDIN
+	/* we don't dare read from stdin to check */
+	if (!strcmp(filename, "-"))
+		return "latin1"; /* !!! should come from locale */
+#endif
+
+	/* Fill tinybuf with bytes from the beginning of the file.
+	 * Note that txtread() always reads one byte per CHAR; it does *not*
+	 * attempt to convert the encoding.
+	 */
+	nbytes = 0;
+	if (txtopen(filename, 'r', ElvTrue) == 0)
+	{
+		nbytes = txtread(tinybuf, QTY(tinybuf));
+		txtclose();
+	}
+	else
+	{
+		return "latin1"; /* should come from locale */
+	}
+
+	/* if many NULs in odd-numbered bytes then assume wide */
+	for (i = even = odd = 0; i < nbytes; i++)
+	{
+		if (tinybuf[i] != 0)
+			continue;
+		if (i & 1)
+			odd++;
+		else
+			even++;
+	}
+	if (odd > 5 && odd > even * 4)
+		return "wide";
+
+	/* look for any non-ASCII, non-UTF-8 character */
+	for (i = more = 0; i < nbytes; i++)
+	{
+		/* skip ASCII bytes */
+		ch = tinybuf[i];
+		if (more == 0 && (ch & 0x80) == 0x00)
+			continue;
+
+		/* detect the first byte of a UTF-8 character */
+		if (more == 0 && (ch & 0xc0) == 0xc0)
+		{
+			while (ch & 0x80)
+			{
+				more++;
+				ch <<= 1;
+			}
+			more--; /* this byte counts as first byte */
+			continue;
+		}
+
+		/* if we get here, we should be in a UFT-8 character */
+		if (more == 0 || (ch & 0x80) != 0x80)
+			break;
+		more--; /* this byte counts as another data byte */
+	}
+	if (i >= nbytes)
+		return "utf8";
+	return "latin1"; /* should come from locale */
 }
 
 /* return an absolute version of a filename */

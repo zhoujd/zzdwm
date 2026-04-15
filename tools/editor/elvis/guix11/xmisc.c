@@ -5,7 +5,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_xmisc[] = "$Id: xmisc.c,v 2.24 2003/10/17 17:41:23 steve Exp $";
+char id_xmisc[] = "$Id: xmisc.c,v 2.28 2004/05/19 18:19:41 steve Exp $";
 #endif
 #ifdef GUI_X11
 # include "guix11.h"
@@ -25,7 +25,7 @@ XftColor *x_xftpixel(pixel)
 		return &cp->xftcolor;
 
 	/* scan for the pixel */
-	for (cp = colors; cp->pixel != (unsigned long)pixel; cp = cp->next)
+	for (cp = colors; cp->pixel != (unsigned long)pixel; cp = cp->next);
 	{
 	}
 	return &cp->xftcolor;
@@ -293,13 +293,14 @@ void x_unloadcolor(pixel)
  * drawn in the scrollbar foreground color (regardless of the window's normal
  * foreground color).
  */
-void x_drawbevel(xw, win, x, y, w, h, dir, height)
+void x_drawbevel(xw, win, x, y, w, h, dir, height, face)
 	X11WIN		*xw;	/* top-level app window to draw in */
 	Window		win;	/* widget where drawing should occur */
 	int		x, y;	/* upper-left corner of the rectangle */
 	unsigned	w, h;	/* width and height of the rectangle */
 	_char_		dir;	/* one of "udrl" for arrow, or 'b' for button */
 	int		height;	/* height of button, 0 to disable */
+	_ELVFACE_	face;	/* font code, for colors */
 {
 	XGCValues	gcv;
 	int		b, r;	/* bottom & right edges */
@@ -309,6 +310,7 @@ void x_drawbevel(xw, win, x, y, w, h, dir, height)
 	int		dx[4], dy[4];	/* inward movement */
 	int		ntop;		/* number of points in topleft color */
 	int		i;
+	int		roundul, roundll, roundur, roundlr; /* round corners */
 
 	/* if height is 0, then clear the button area */
 	if (height == 0)
@@ -318,22 +320,27 @@ void x_drawbevel(xw, win, x, y, w, h, dir, height)
 	}
 
 	/* choose the edge colors */
-	if (height > 0)
+	topleft = x_white;
+	bottomright = x_black;
+	if (x_visual->class == TrueColor)
 	{
-		topleft = x_white;
-		bottomright = x_black;
+		/* use a darker version of the button background */
+		bottomright = colorinfo[face].bg;
+		bottomright = (((bottomright & x_visual->red_mask) * 2 / 3) & x_visual->red_mask)
+			    | (((bottomright & x_visual->green_mask) * 2 / 3) & x_visual->green_mask)
+			    | (((bottomright & x_visual->blue_mask) * 2 / 3) & x_visual->blue_mask);
 	}
-	else
+	if (height < 0)
 	{
-		topleft = x_black;
-		bottomright = x_white;
+		/* swap edge colors so button looks "pushed in" */
+		topleft ^= bottomright;
+		bottomright ^= topleft;
+		topleft ^= bottomright;
 		height = -height;
 	}
 
 	/* set the foreground color to the scrollbar's color */
-	gcv.foreground = (win == xw->sb.win ? colorinfo[x_scrollcolors].bg :
-			  win == xw->st.win ? colorinfo[x_statuscolors].bg :
-					      colorinfo[x_toolcolors].bg);
+	gcv.foreground = colorinfo[face].bg;
 	gcv.fill_style = FillSolid;
 	XChangeGC(x_display, xw->gc, GCForeground|GCFillStyle, &gcv);
 	xw->fg = gcv.foreground;
@@ -372,35 +379,83 @@ void x_drawbevel(xw, win, x, y, w, h, dir, height)
 	  	break;
 
 	  default: /* rectangular button */
-		/* draw the button's face */
-		XFillRectangle(x_display, win, xw->gc, x, y, w, h);
+		/* decide which corners to round */
+		roundul = roundll = roundur = roundlr = 0;
+		if (win != xw->st.win && win != xw->sb.win && w > 4 && h > 4)
+		{
+			switch (o_toolshape)
+			{
+			  case 'r': /* rounded */
+				roundul = roundll = roundur = roundlr = 1;
+				break;
+
+			  case 't': /* tab */
+				roundul = roundur = 1;
+				break;
+
+			  case 'd': /* diamond */
+				roundul = roundlr = 1;
+				break;
+
+			  default: /* square */
+				; /* leave all corners unrounded */
+			}
+		}
 
 		/* locate the bottom & right edges */
 		b = y + h - 1;
 		r = x + w - 1;
+
+		/* draw the button's face */
+		if (w > 2 * (unsigned)height && h > 2 * (unsigned)height)
+		{
+			XFillRectangle(x_display, win, xw->gc,
+					x + height, y + height,
+					w - 2 * height, h - 2 * height);
+
+			/* rounding can change corner pixels of the face */
+			XSetForeground(x_display, xw->gc, topleft);
+			if (roundul)
+				XDrawPoint(x_display, win, xw->gc, x + height, y + height);
+			if (roundur)
+				XDrawPoint(x_display, win, xw->gc, r - height, y + height);
+			XSetForeground(x_display, xw->gc, bottomright);
+			xw->fg = bottomright;
+			if (roundll)
+				XDrawPoint(x_display, win, xw->gc, x + height, b - height);
+			if (roundlr)
+				XDrawPoint(x_display, win, xw->gc, r - height, b - height);
+		}
 
 		/* draw the outermost bevel sides */
 		while (--height >= 0)
 		{
 			/* draw the bottom bevel edges */
 			XSetForeground(x_display, xw->gc, bottomright);
-			XDrawLine(x_display, win, xw->gc, x, b, r, b);
+			XDrawLine(x_display, win, xw->gc,
+				roundll ? x+3 : x, b, roundlr ? r-3 : r, b);
 
 			/* draw the top & left bevel edges */
 			XSetForeground(x_display, xw->gc, topleft);
-			XDrawLine(x_display, win, xw->gc, x, y, r, y);
-			XDrawLine(x_display, win, xw->gc, x, y, x, b);
+			XDrawLine(x_display, win, xw->gc,
+				roundul ? x+3 : x, y, roundur ? r-3 : r, y);
+			XDrawLine(x_display, win, xw->gc,
+				x, roundul ? y+3 : y, x, roundll ? b-3 : b);
 
 			/* draw the right bevel edge */
 			XSetForeground(x_display, xw->gc, bottomright);
 			xw->fg = bottomright;
-			XDrawLine(x_display, win, xw->gc, r, y, r, b);
+			XDrawLine(x_display, win, xw->gc,
+				r, roundur ? y+3 : y, r, roundlr ? b-3 : b);
 
 			/* move the edges in slightly, to continue the bevel */
 			x++;
 			y++;
 			r--;
 			b--;
+
+			/* never round after the first iteration */
+			roundul = roundll = roundur = roundlr = 0;
 		}
 
 		/* for rectangular buttons, we're done */

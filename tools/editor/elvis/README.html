@@ -228,8 +228,8 @@ Toggles text between uppercase and lowercase.
 <dd>For "x11" only, the <strong>antialias</strong> option controls whether
 Elvis will use the Xft library to draw antialiased text.
 Antialiased fonts tend to leave a much larger gap between lines, so the
-<strong>aasqueeze</strong> option gives you a way to reduce/increase that
-gap, and get more/less lines on the screen.
+<strong>aasqueeze</strong> option gives you a way to reduce that gap, and
+get more lines on the screen.
 
 <dt>auevent, aufilename, and auforce
 <dd>These options are only defined during an autocmd event.
@@ -436,7 +436,7 @@ was actually using Luxi Mono fonts instead of Andale fonts.
 broke the way it parses newlines.
 This is important if you remove the <strong>spaces</strong> keyword from
 filenamerules, and then do something like
-"<code>:n `grep foo *.txt`</code>"
+"<code>:n `grep -l foo *.txt`</code>"
 to sets the args list to all files containing "foo".
 
 <dt>HTTP User-agent: header line
@@ -465,7 +465,7 @@ had indeed timed out.
 <dd>In a file full of blank lines, "d)" caused 2.2.0 to dump core.
 
 <dt>:put from a cut buffer
-<dd>The <code>:put<code> command wasn't accepting a cut buffer name argument.
+<dd>The <code>:put</code> command wasn't accepting a cut buffer name argument.
 
 <dt>:dict didn't handle single words
 <dd>The <code>:dict</code> alias (after ":load dict") didn't handle single-word
@@ -536,7 +536,7 @@ so pages which use a lot of backslashes such as ":man groff_man" looked bad.
 It also affected the <code>:chregion</code> command.
 
 <dt>:%j only joined two lines
-<dd>The command "<code>:1,%j</code>" joins all lines but "<code>:%j</code>"
+<dd>The command "<code>:1,$j</code>" joined all lines but "<code>:%j</code>"
 only joined two.
 
 <dt>elvis.ini maps too much

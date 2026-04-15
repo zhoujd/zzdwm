@@ -7,7 +7,7 @@
 #ifdef FEATURE_REGION
 
 # if USE_PROTOTYPES
-  static region_t *rgnfind(MARK from, MARK to, _char_ font, region_t *after,
+  static region_t *rgnfind(MARK from, MARK to, _ELVFACE_ font, region_t *after,
   			region_t **lag);
   static void rgnfree(region_t *region);
   static void rgnclean(BUFFER buf);
@@ -80,7 +80,7 @@ static void rgncheck(file, line, full)
 static region_t *rgnfind(from, to, font, after, lag)
 	MARK from;	/* start of the region to search */
 	MARK to;	/* end of the region to search */
-	_char_ font;	/* font to search for, or '\0' for any */
+	_ELVFACE_ font;	/* font to search for, or '\0' for any */
 	region_t *after;/* NULL to start new search, else previous return val */
 	region_t **lag;	/* reference to a pointer to region before found one */
 {
@@ -218,7 +218,7 @@ void regionundo(buf, keep)
 void regiondel(from, to, font)
 	MARK from;	/* start of region to delete */
 	MARK to;	/* end of region to delete */
-	_char_ font;	/* font to use, or '\0' for all fonts */
+	_ELVFACE_ font;	/* font to use, or '\0' for all fonts */
 {
 	region_t *doomed, *lag;
 	MARKBUF	above, below;
@@ -229,6 +229,7 @@ void regiondel(from, to, font)
 
 	/* for each doomed region... */
 	abovecomment = belowcomment = NULL;
+	abovefont = belowfont = '\0'; /* just to keep compiler happy */
 	lag = NULL;
 	while ((doomed = rgnfind(from, to, font, lag, &lag)) != NULL)
 	{
@@ -279,7 +280,7 @@ void regiondel(from, to, font)
 void regionadd(from, to, font, comment)
 	MARK from;	/* start of region to add */
 	MARK to;	/* end of region to add */
-	_char_ font;	/* font to use */
+	_ELVFACE_ font;	/* font to use */
 	CHAR *comment;	/* comment to use */
 {
 	region_t *r;	/* the new region */
@@ -372,7 +373,7 @@ RESULT ex_region(xinf)
 			build = buf + CHARlen(buf);
 			*build++ = ',';
 			long2CHAR(build, markline(r->to) - 1);
-			CHARcat(build, toCHAR(" region "));
+			CHARcat(build, toLCHAR(" region "));
 			CHARcat(build, colorinfo[(int)r->font].name);
 			build += CHARlen(build);
 			if (CHARcmp(r->comment, colorinfo[(int)r->font].name))

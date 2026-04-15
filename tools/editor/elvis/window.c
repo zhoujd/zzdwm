@@ -83,18 +83,18 @@ static CHAR *getwm(desc, val)
 	 * would be dependent on the screen width.
 	 */
 	if (!win || !win->cursor)
-		return toCHAR("0");
+		return toLCHAR("0");
 
 	assert(win == windefault);
 
 	buf = markbuffer(win->cursor);
 	if (o_textwidth(buf) >= o_columns(win))
 	{
-		CHARcpy(str, toCHAR("wide"));
+		CHARcpy(str, toLCHAR("wide"));
 	}
 	else if (o_textwidth(buf) == 0)
 	{
-		CHARcpy(str, toCHAR("0"));
+		CHARcpy(str, toLCHAR("0"));
 	}
 	else
 	{
@@ -138,7 +138,7 @@ static OPTDESC wdesc[] =
 void wininit()
 {
 	/* initialize the options */
-	optpreset(o_display(&windefopts), toCHAR("normal"), OPT_HIDE|OPT_LOCK);
+	optpreset(o_display(&windefopts), toLCHAR("normal"), OPT_HIDE|OPT_LOCK);
 	optflags(o_windowid(&windefopts)) = OPT_LOCK|OPT_HIDE;
 #if defined (GUI_WIN32)
 	optpreset(o_columns(&windefopts), 80, OPT_SET|OPT_NODFLT);
@@ -240,7 +240,7 @@ WINDOW winalloc(gw, gvals, buf, rows, columns)
 			if (o_bufchars(markbuffer(newp->cursor)) == 0L)
 			{
 				assert(markoffset(newp->cursor) == 0L);
-				bufreplace(newp->cursor, newp->cursor, toCHAR("\n"), 1);
+				bufreplace(newp->cursor, newp->cursor, toLCHAR("\n"), 1);
 				marksetoffset(newp->cursor, 0L);
 			}
 			inputpush(newp, newp->state->flags, 'i');
@@ -254,7 +254,7 @@ WINDOW winalloc(gw, gvals, buf, rows, columns)
 			if (o_bufchars(markbuffer(newp->cursor)) == 0L)
 			{
 				assert(markoffset(newp->cursor) == 0L);
-				bufreplace(newp->cursor, newp->cursor, toCHAR("\n"), 1);
+				bufreplace(newp->cursor, newp->cursor, toLCHAR("\n"), 1);
 				marksetoffset(newp->cursor, 0L);
 			}
 			inputpush(newp, newp->state->flags, 'R');
@@ -385,9 +385,9 @@ void winresize(win, rows, columns)
 	/* update the options */
 	changed = NULL;
 	if (o_lines(win) != rows)
-		changed = toCHAR("lines");
+		changed = toLCHAR("lines");
 	else if (o_columns(win) != columns)
-		changed = toCHAR("columns");
+		changed = toLCHAR("columns");
 	o_lines(win) = rows;
 	o_columns(win) = columns;
 	if (!(optflags(o_scroll(win)) & OPT_SET))
@@ -403,7 +403,7 @@ void winresize(win, rows, columns)
 
 #ifdef FEATURE_AUTOCMD
 	/* handle OptChanged event for lines or columns now */
-	if (changed)
+	if (changed);
 		auperform(win, ElvFalse, NULL, AU_OPTCHANGED, changed);
 #endif
 }

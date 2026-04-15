@@ -5,6 +5,10 @@
 #
 #   usage: sh install.sh [-r|-d] [-pprefix] programs...
 #
+#   flags: -r        Remove (else install)
+#          -d        Show the directory names, but don't install or remove
+#          -pprefix  The directory where elvis was installed, without "bin"
+#
 ################################################################################
 
 # This is the default prefix.  All installation directories are relative
@@ -24,7 +28,7 @@ CATDIRS="MAN/catmanl MAN/catman.l MAN/catman.LOCAL MAN/cat.LOCAL MAN/catman.1 MA
 
 ################################################################################
 
-# Look for a "-r"
+# Look for a "-d" or "-r"
 if test "$1" = "-d"
 then
 	shift
@@ -53,8 +57,7 @@ esac
 # If MANPATH is unset, then set it to some likely values
 if [ "$MANPATH" = "" ]
 then
-	MANPATH="/usr/local/share/man:/usr/share/man:$PREFIX/share/man"
-	MANPATH="$MANPATH:/usr/local/man:/usr/X11/man:/usr/man:$PREFIX/man"
+	MANPATH="/usr/local/man:/usr/X11/man:/usr/man:$PREFIX/man"
 fi
 
 # Choose a man directory under PREFIX, giving priority to "share" directories.
@@ -189,9 +192,7 @@ then
 	for i
 	do
 		case $job in
-		  install)	cp doc/$i.man $mandir/$i$ext
-		          	chmod 0644 $mandir/$i$ext
-		          	;;
+		  install)	cp doc/$i.man $mandir/$i$ext ;;
 		  remove)	rm $mandir/$i$ext* ;;
 		esac
 	done
@@ -219,7 +220,6 @@ then
 				# give nroff another chance
 				nroff -man doc/$i.man >$catdir/$i$ext
 			fi
-			chmod 0644 $catdir/$i$ext
 			;;
 		  remove)
 			rm $catdir/$i$ext*
@@ -261,7 +261,7 @@ case $job in
 		then
 			for i
 			do
-				rm -f $dir/$i$ext.gz
+				rm -f $dir/$i$ext.z
 				gzip -f $dir/$i$ext
 			done
 			finalext=$ext.gz

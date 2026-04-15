@@ -6,7 +6,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_optglob[] = "$Id: optglob.c,v 2.119 2004/03/26 21:34:40 steve Exp $";
+char id_optglob[] = "$Id: optglob.c,v 2.125 2011/11/30 01:06:06 steve Exp $";
 #endif
 
 #ifdef FEATURE_LISTCHARS
@@ -102,6 +102,7 @@ static OPTDESC ogdesc[] =
 	{"gdefault", "gd",	NULL,		NULL		},
 	{"matchchar", "mc",	optsstring,	optisstring	},
 	{"show", "show",	optsstring,	optisstring	},
+	{"writeenc", "wenc",	opt1string,	optisoneof,	"latin1 utf8 wide auto same"},
 	{"writeeol", "weol",	opt1string,	optisoneof,	"unix dos mac text binary same"},
 	{"binary", "bin",	NULL,		NULL		},
 	{"saveregexp", "sre",	NULL,		NULL		},
@@ -131,7 +132,9 @@ static OPTDESC ogdesc[] =
 	{"state", "state",	optsstring,	optisstring	},
 	{"initializing", "ing",	NULL,		NULL		},
 	{"persistfile", "perf",	optsstring,	optisstring	},
-	{"persist", "pers",	optsstring,	optispacked,	"cursor,change,hours:,marks,regions,folds,external:,ex:,search:,args,max:"},
+	{"persist", "pers",	optsstring,	bufpersispacked,"cursor,change,hours:,marks,regions,folds,external:,ex:,search:,args:,max:"},
+	{"persistonce","pero",	optsstring,	optispacked,	"cursor,change,hours:,marks,regions,folds,external:,ex:,search:,args:,max:"},
+	{"facesused","faces",	optnstring,	optisnumber,	},
 
 	/* added these for the sake of backward compatibility : */
 	{"more", "mo",		NULL,		NULL		},
@@ -235,7 +238,7 @@ void optglobinit()
 	optflags(o_session) = OPT_LOCK|OPT_HIDE;
 	optflags(o_recovering) = OPT_HIDE;
 	o_magic = ElvTrue;
-	optpreset(o_magicchar, toCHAR("^$.[*"), OPT_HIDE);
+	optpreset(o_magicchar, toLCHAR("^$.[*"), OPT_HIDE);
 	optpreset(o_magicname, ElvFalse, OPT_HIDE);
 	optpreset(o_magicperl, ElvFalse, OPT_HIDE);
 	o_prompt = ElvTrue;
@@ -245,9 +248,9 @@ void optglobinit()
 	optpreset(o_modeline, ElvFalse, OPT_UNSAFE);
 	optpreset(o_modelines, 5, OPT_HIDE);
 #ifdef OSSHELLENV
-	optpreset(o_shell, toCHAR(getenv(OSSHELLENV)), OPT_HIDE | OPT_UNSAFE);
+	optpreset(o_shell, CHARdup(toCHAR(getenv(OSSHELLENV))), OPT_HIDE | OPT_UNSAFE | OPT_FREE);
 #else
-	optpreset(o_shell, toCHAR(getenv("SHELL")), OPT_HIDE | OPT_UNSAFE);
+	optpreset(o_shell, CHARdup(toCHAR(getenv("SHELL"))), OPT_HIDE | OPT_UNSAFE | OPT_FREE);
 #endif
 	if (!o_shell)
 		o_shell = toCHAR(OSSHELL);
@@ -265,10 +268,10 @@ void optglobinit()
 	optflags(o_tempsession) = OPT_HIDE;
 	optflags(o_newsession) = OPT_HIDE;
 	optpreset(o_nearscroll, 10, OPT_HIDE);
-	optflags(o_previousfile) = OPT_HIDE|OPT_LOCK;
-	optflags(o_previousfileline) = OPT_HIDE|OPT_LOCK;
-	optflags(o_previouscommand) = OPT_HIDE|OPT_LOCK;
-	optflags(o_previoustag) = OPT_HIDE|OPT_LOCK;
+	optflags(o_previousfile) = OPT_HIDE;
+	optflags(o_previousfileline) = OPT_HIDE;
+	optflags(o_previouscommand) = OPT_HIDE;
+	optflags(o_previoustag) = OPT_HIDE;
 	optflags(o_tagprg) = OPT_HIDE|OPT_UNSAFE;
 	o_optimize = ElvTrue;
 	optpreset(o_pollfrequency, 20, OPT_HIDE);
@@ -276,11 +279,15 @@ void optglobinit()
 	optflags(o_sentencequote) = OPT_HIDE;
 	optpreset(o_sentencegap, 2, OPT_HIDE);
 	if (!o_directory)
-		o_directory = toCHAR(getenv("TMP"));
+	{
+		envval = getenv("TMP");
+		if (envval)
+			optpreset(o_directory, CHARdup(toCHAR(envval)), OPT_FREE);
 #ifdef OSDIRECTORY
-	if (!o_directory)
-		o_directory = toCHAR(OSDIRECTORY);
+		else
+			o_directory = toCHAR(OSDIRECTORY);
 #endif
+	}
 	o_errorbells = ElvTrue;
 	optpreset(o_nonascii, 'm', OPT_HIDE); /* most */
 	optflags(o_digraph) = OPT_HIDE;
@@ -295,9 +302,10 @@ void optglobinit()
 	optpreset(o_maptrace, 'o', OPT_HIDE); /* off */
 	optpreset(o_maplog, 'o', OPT_HIDE); /* off */
 	o_timeout = ElvTrue;
-	optpreset(o_matchchar, toCHAR("[]{}()"), OPT_HIDE);
-	optpreset(o_show, toCHAR("spell/tag,region"), OPT_HIDE);
+	optpreset(o_matchchar, toLCHAR("[]{}()"), OPT_HIDE);
+	optpreset(o_show, toLCHAR("spell/tag,region"), OPT_HIDE);
 	o_writeeol = 's'; /* same */
+	o_writeenc = 's'; /* same */
 	optpreset(o_binary, ElvFalse, OPT_HIDE);
 	optpreset(o_saveregexp, ElvTrue, OPT_HIDE);
 	optpreset(o_hardtabs, 8, OPT_HIDE);
@@ -320,15 +328,17 @@ void optglobinit()
 	optpreset(o_eventignore, NULL, OPT_HIDE);
 	optpreset(o_eventerrors, ElvFalse, OPT_HIDE);
 	optpreset(o_tweaksection, ElvTrue, OPT_HIDE);
-	optpreset(o_listchars, toCHAR("eol:$"), OPT_HIDE);
+	optpreset(o_listchars, toLCHAR("eol:$"), OPT_HIDE);
 #ifdef FEATURE_LISTCHARS
 	(void)dmnlistchars('<', -1L, 0, NULL, NULL);
 #endif
-	optpreset(o_cleantext, toCHAR("long,bs,ex"), OPT_HIDE);
-	optpreset(o_filenamerules, toCHAR("tilde,dollar,paren,wildcard,special,space"), OPT_HIDE);
+	optpreset(o_cleantext, toLCHAR("long"), OPT_HIDE);
+	optpreset(o_filenamerules, toLCHAR("tilde,dollar,paren,wildcard,special,space"), OPT_HIDE);
 	optpreset(o_initializing, ElvTrue, OPT_HIDE|OPT_LOCK);
 	optpreset(o_persistfile, NULL, OPT_HIDE | OPT_UNSAFE);
-	optpreset(o_persist, toCHAR("cursor,change,hours:8,marks,regions,folds,ex:50,search:20,args"), OPT_HIDE);
+	optpreset(o_persist, toLCHAR("cursor,change,hours:8,marks,regions,folds,ex:50,search:20,args:10"), OPT_HIDE);
+	optpreset(o_persistonce, toLCHAR("cursor,change,hours:8,marks,regions,folds,ex:50,search:20,args:10"), OPT_HIDE|OPT_NODFLT);
+	optpreset(o_facesused, 0, OPT_HIDE|OPT_NODFLT);
 
 	/* Set the "home" option from $HOME */
 	envval = getenv("HOME");
@@ -336,34 +346,39 @@ void optglobinit()
 	{
 		if (optflags(o_home) & OPT_FREE)
 			safefree(o_home);
-		o_home = toCHAR(envval);
+		o_home = CHARdup(toCHAR(envval));
 	}
 	else if (!o_home)
 	{
-		o_home = toCHAR(".");
+		o_home = toLCHAR(".");
 	}
 	optflags(o_home) |= OPT_HIDE | OPT_UNSAFE;
 
 	/* Set the "previousdir" option from $OLDPWD */
 	envval = getenv("OLDPWD");
 	if (envval)
-		o_previousdir = toCHAR(envval);
+		optpreset(o_previousdir, CHARdup(toCHAR(envval)), OPT_FREE);
 	else
-		o_previousdir = toCHAR(".");
+		o_previousdir = toLCHAR(".");
 	optflags(o_previousdir) |= OPT_HIDE;
 
 	/* Set the "tags" option from $TAGPATH */
-	o_tags = toCHAR(getenv("TAGPATH"));
-	if (!o_tags)
+	envval = getenv("TAGPATH");
+	if (envval)
 	{
-		o_tags = toCHAR("tags");
+		optpreset(o_tags, CHARdup(toCHAR(envval)), OPT_FREE);
+	}
+	else
+	{
+		o_tags = toLCHAR("tags");
 	}
 
 	/* Set the "background" option from $ELVISBG */
 	envval = getenv("ELVISBG");
-	if (!envval || (strcmp(envval, "dark") && strcmp(envval, "light")))
-		envval = "dark";
-	optpreset(o_background, *envval, OPT_HIDE|OPT_NODFLT);
+	if (!envval || !strcmp(envval, "dark"))
+		optpreset(o_background, 'd', OPT_HIDE|OPT_NODFLT);
+	else
+		optpreset(o_background, 'l', OPT_HIDE|OPT_NODFLT);
 
 	/* Generate the default elvispath value. */
 	envval = getenv("ELVISPATH");
@@ -371,11 +386,13 @@ void optglobinit()
 	{
 		if (optflags(o_elvispath) & OPT_FREE)
 			safefree(o_elvispath);
-		o_elvispath = toCHAR(envval);
+		o_elvispath = CHARdup(toCHAR(envval));
+		optflags(o_elvispath) |= OPT_FREE;
 	}
 	else if (!o_elvispath)
 	{
-		o_elvispath = toCHAR(OSLIBPATH);
+		o_elvispath = CHARdup(toCHAR(OSLIBPATH));
+		optflags(o_elvispath) |= OPT_FREE;
 	}
 	optflags(o_elvispath) |= OPT_HIDE | OPT_UNSAFE;
 
@@ -385,14 +402,16 @@ void optglobinit()
 	{
 		if (optflags(o_sessionpath) & OPT_FREE)
 			safefree(o_sessionpath);
-		o_sessionpath = toCHAR(envval);
+		o_sessionpath = CHARdup(toCHAR(envval));
+		optflags(o_elvispath) |= OPT_FREE;
 	}
 	else if (!o_sessionpath)
 	{
 #ifdef OSSESSIONPATH
-		o_sessionpath = toCHAR(OSSESSIONPATH);
+		o_sessionpath = CHARdup(toCHAR(OSSESSIONPATH));
+		optflags(o_sessionpath) |= OPT_FREE;
 #else
-		o_sessionpath = toCHAR("~:.");
+		o_sessionpath = toLCHAR("~:.");
 #endif
 	}
 	optflags(o_sessionpath) |= (OPT_HIDE | OPT_LOCK);
@@ -402,7 +421,7 @@ void optglobinit()
 # ifdef OSLPTYPE
 	optpreset(o_lptype, toCHAR(OSLPTYPE), OPT_HIDE);
 # else
-	optpreset(o_lptype, toCHAR("dumb"), OPT_HIDE);
+	optpreset(o_lptype, toLCHAR("dumb"), OPT_HIDE);
 # endif
 	optpreset(o_lpcrlf, ElvFalse, OPT_HIDE);
 	optpreset(o_lpout, toCHAR(OSLPOUT), OPT_HIDE | OPT_UNSAFE);

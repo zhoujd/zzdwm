@@ -6,7 +6,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_tagelvis[] = "$Id: tagelvis.c,v 1.42 2003/10/18 04:47:18 steve Exp $";
+char id_tagelvis[] = "$Id: tagelvis.c,v 1.44 2011/11/21 20:45:14 steve Exp $";
 #endif
 
 
@@ -159,7 +159,7 @@ TAG *tetag(select)
 
 		/* Wipe out the set of restrictions */
 		tsreset();
-		tmp = tochar8(calculate(toCHAR("file:+(filename)"),NULL, CALC_MSG));
+		tmp = tochar8(calculate(toLCHAR("file:+(filename)"),NULL, CALC_MSG));
 		assert(tmp);
 		tsparse(tmp);
 
@@ -179,7 +179,7 @@ TAG *tetag(select)
 			tmp[i] = *scan;
 
 		/* read tags from the program */
-		tsfile(tochar8(tmp), o_taglength);
+		tsfile(tmp, o_taglength);
 		safefree(tmp);
 
 		/* wipe out the tag file name */
@@ -194,7 +194,7 @@ TAG *tetag(select)
 		/* Build a new set of restrictions */
 		tsreset();
 		tsparse(tochar8(select));
-		tmp = tochar8(calculate(toCHAR("file:+(filename)"),NULL, CALC_MSG));
+		tmp = tochar8(calculate(toLCHAR("file:+(filename)"),NULL, CALC_MSG));
 		assert(tmp);
 		tsparse(tmp);
 
@@ -240,7 +240,7 @@ BUFFER tebrowse(all, select)
 	CHAR	*address;	/* the tagaddress of a tag, converted to HTML */
 	CHAR	*url;		/* the URL of a tag */
 	CHAR	*args[5];	/* tagname, tagfile, tagaddress, url, NULL */
-	CHAR	*dflt = toCHAR("<ul>\n\n<li><a href=\"$4\">$1</a> $2, $3\n\n</ul>\n");
+	CHAR	*dflt = toLCHAR("<ul>\n\n<li><a href=\"$4\">$1</a> $2, $3\n\n</ul>\n");
 	CHAR	*cp;
 	CHAR	prev, prev2;
 	long	qty;
@@ -255,7 +255,7 @@ BUFFER tebrowse(all, select)
 
 	/* default args are none */
 	if (!select)
-		select = toCHAR("");
+		select = toLCHAR("");
 
 	if (o_tagprg && *o_tagprg)
 	{
@@ -263,7 +263,7 @@ BUFFER tebrowse(all, select)
 
 		/* make an HTML copy of the string */
 		cp = (CHAR *)safealloc(CHARlen(select) + 8, sizeof(CHAR));
-		CHARcpy(cp, toCHAR("Browse "));
+		CHARcpy(cp, toLCHAR("Browse "));
 		CHARcat(cp, select);
 
 		/* evaluate the tagprg string with $1 set to the args */
@@ -283,7 +283,7 @@ BUFFER tebrowse(all, select)
 			tmp[i] = *cp;
 
 		/* read tags from the program */
-		tsfile(tochar8(tmp), o_taglength);
+		tsfile(tmp, o_taglength);
 		safefree(tmp);
 	}
 	else
@@ -292,7 +292,7 @@ BUFFER tebrowse(all, select)
 
 		/* parse the restrictions & make an HTML copy of the string */
 		cp = (CHAR *)safealloc(CHARlen(select) + 8, sizeof(CHAR));
-		CHARcpy(cp, toCHAR("Browse "));
+		CHARcpy(cp, toLCHAR("Browse "));
 		CHARcat(cp, select);
 		tsparse(tochar8(select));
 		select = cp;
@@ -342,14 +342,14 @@ BUFFER tebrowse(all, select)
 			safefree(o_bufdisplay(buf));
 		optflags(o_bufdisplay(buf)) &= ~OPT_FREE;
 	}
-	o_bufdisplay(buf) = toCHAR("html");
+	o_bufdisplay(buf) = toLCHAR("html");
 	if (o_mapmode(buf))
 	{
 		if (optflags(o_mapmode(buf)) & OPT_FREE)
 			safefree(o_mapmode(buf));
 		optflags(o_mapmode(buf)) &= ~OPT_FREE;
 	}
-	o_mapmode(buf) = toCHAR("html");
+	o_mapmode(buf) = toLCHAR("html");
 
 	/* if no format was read from "elvis.bro" then use the default */
 	if (o_bufchars(buf) == 0L)
@@ -385,7 +385,7 @@ BUFFER tebrowse(all, select)
 			  case '1':
 				args[0] = select;
 				args[1] = NULL;
-				cp = calculate(toCHAR("htmlsafe($1)"), args, CALC_MSG);
+				cp = calculate(toLCHAR("htmlsafe($1)"), args, CALC_MSG);
 				break;
 
 			  case '2':
@@ -517,7 +517,7 @@ spell_t *telibrary(tagfile, dict, ignorecase, prefix)
 	int	i;
 
 	/* open the file */
-	if (!ioopen(tagfile, 'r', ElvFalse, ElvFalse, 't'))
+	if (!ioopen(tagfile, 'r', ElvFalse, ElvFalse, 'a', 't'))
 		return dict;
 
 	/* Arrange certain parameters to always appear in the same elements of
@@ -527,19 +527,19 @@ spell_t *telibrary(tagfile, dict, ignorecase, prefix)
 #define TEFILE	attr[4]
 #define TEFIRST	6
 	tagnamereset();
-	CHARcpy(tagline, toCHAR("x\tx\t1;\"\tkind:x\tfile:x\tln:x\tenum:x"));
+	CHARcpy(tagline, toLCHAR("x\tx\t1;\"\tkind:x\tfile:x\tln:x\tenum:x"));
 	tagparse(tochar8(tagline));
 
 	/* create a generic font name */
 	prevkind[0] = '\0';
 	font = genericfont = colorfind(prefix);
-	CHARcpy(descr, toCHAR("like normal"));
+	CHARcpy(descr, toLCHAR("like normal"));
 	if (genericfont)
 	{
 		colorset(genericfont, descr, ElvFalse);
 
 		/* after this, others should default to be "like" this font */
-		CHARcpy(descr, toCHAR("like "));
+		CHARcpy(descr, toLCHAR("like "));
 		CHARcat(descr, prefix);
 	}
 	flags = genericfont << 8;
@@ -672,7 +672,7 @@ void tebuilddef(buf)
 	CHAR	*cp;		/* for scanning the line */
 	long	offset;		/* offset of the tag within this buffer */
 	int	i;
-        DIRPERM perm;
+	DIRPERM	perm;
 
 	/* Destroy the old list, if any */
 	tefreedef(buf);
@@ -681,7 +681,7 @@ void tebuilddef(buf)
 	if (!o_show)
 		return;
 	for (src = o_show; src && *src; src++)
-		if (CHARncmp(src, "tag", 3))
+		if (CHARncmp(src, toLCHAR("tag"), 3))
 			break;
 	if (!*src)
 		return;
@@ -702,12 +702,12 @@ void tebuilddef(buf)
 	 * necessary because the ioopen() function displays an error
 	 * message when the file it's trying to read doesn't exist.
 	 */
-        perm = dirperm("tags");
-        if (perm == DIR_NEW || perm == DIR_DIRECTORY)
+	perm = dirperm("tags");
+	if (perm == DIR_NEW || perm == DIR_DIRECTORY)
 		return;
 
 	/* open the file */
-	if (!ioopen("tags", 'r', ElvFalse, ElvFalse, 't'))
+	if (!ioopen("tags", 'r', ElvFalse, ElvFalse, 'a', 't'))
 		return;
 
 	/* For each line from the tags file */
@@ -945,7 +945,7 @@ CHAR *tagcomplete(win, m)
 	/* if no matches, then return a space */
 	if (!tag)
 	{
-		CHARcpy(retbuf, toCHAR(" "));
+		CHARcpy(retbuf, toLCHAR(" "));
 		if (plen == 0)
 			*retbuf = '\0';
 		return retbuf;
@@ -966,7 +966,7 @@ CHAR *tagcomplete(win, m)
 	if (!tag->next)
 	{
 		CHARcpy(retbuf, toCHAR(tag->TAGNAME + plen));
-		CHARcat(retbuf, toCHAR(" "));
+		CHARcat(retbuf, toLCHAR(" "));
 		while (tag)
 			tag = tagfree(tag);
 		return retbuf;
@@ -998,7 +998,7 @@ CHAR *tagcomplete(win, m)
 		mlen = strlen(scan->TAGNAME);
 		if (plen + mlen + 1 >= o_columns(win))
 		{
-			drawextext(win, toCHAR("\n"), 1);
+			drawextext(win, toLCHAR("\n"), 1);
 			plen = 0;
 			olddrawstate = win->di->drawstate;
 		}
@@ -1024,7 +1024,7 @@ CHAR *tagcomplete(win, m)
 		win->di->drawstate = DRAW_VMSG;
 	}
 	else
-		drawextext(win, toCHAR("\n"), 1);
+		drawextext(win, toLCHAR("\n"), 1);
 
 	/* we weren't able to extend the partial name at all */
 	*retbuf = '\0';

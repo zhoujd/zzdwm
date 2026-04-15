@@ -5,7 +5,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_guix11[] = "$Id: guix11.c,v 2.89 2004/03/22 00:22:15 steve Exp $";
+char id_guix11[] = "$Id: guix11.c,v 2.99 2011/11/22 03:33:04 steve Exp $";
 #endif
 #ifdef GUI_X11
 # include "guix11.h"
@@ -81,14 +81,15 @@ static struct
 static void beep(GUIWIN *gw);
 static int catchErrors(Display *disp, XErrorEvent *err);
 static int ignoreErrors(Display *disp, XErrorEvent *err);
+static void warptowindow(Window win);
 static void moveto(GUIWIN *gw, int column, int row);
 static ELVBOOL scroll(GUIWIN *gw, int qty, ELVBOOL notlast);
 static ELVBOOL shift(GUIWIN *gw, int qty, int rows);
 static ELVBOOL clientaction(int argc, char **argv);
 static ELVBOOL clrtoeol(GUIWIN *gw);
-static ELVBOOL color(int fontcode, CHAR *colornam, ELVBOOL isfg, long *colorptr, unsigned char rgb[3]);
+static ELVBOOL color(_ELVFACE_ fontcode, CHAR *colornam, ELVBOOL isfg, long *colorptr, unsigned char rgb[3]);
 static ELVBOOL creategw(char *name,char * firstcmd);
-static void definecolor(int font, char *foreground, char *background, long *fg, long *bg);
+static void definecolor(_ELVFACE_ font, char *foreground, char *background, long *fg, long *bg);
 static void destroygw(GUIWIN *gw, ELVBOOL force);
 static void draw(GUIWIN *gw, long fg, long bg, int bits, CHAR *text, int len);
 static void freecolor(long color, ELVBOOL isfg);
@@ -132,6 +133,7 @@ Atom		x_elvis_server;		/* value for ELVIS_SERVER atom */
 Atom		x_resource_manager;	/* value for MANAGER_RESOURCES atom */
 Atom		x_targets;		/* value for TARGETS atom */
 Atom		x_compound_text;	/* value for COMPOUND_TEXT atom */
+Atom		x_text;			/* value for TEXT atom */
 X_LOADEDFONT	*x_defaultnormal;	/* normal font */
 X_LOADEDFONT	*x_defaultbold;		/* bold font, or NULL to fake it */
 X_LOADEDFONT	*x_defaultitalic;	/* italic font, or NULL to fake it */
@@ -249,7 +251,7 @@ static OPTDESC x11desc[] =
 	{"altkey", "metakey",	opt1string,	optisoneof,	"control-O setbit ignore"},
 	{"stagger", "step",	optnstring,	optisnumber,	"0:200"},
 	{"warpback", "xwb",	NULL,		NULL		},
-	{"warpto", "wt",	opt1string,	optisoneof,	"don't scrollbar origin corners"},
+	{"warpto", "wt",	opt1string,	optisoneof,	"don't scrollbar origin corners window"},
 	{"focusnew", "fn",	NULL,		NULL		},
 	{"textcursor", "tc",	opt1string,	optisoneof,	"hollow opaque xor"},
 	{"outlinemono", "om",	optnstring,	optisnumber,	"0:3"},
@@ -263,10 +265,12 @@ static OPTDESC x11desc[] =
 	{"help", "Help",	optsstring,	optisstring	},
 	{"synccursor", "xsync",	NULL,		NULL		},
 	{"scrollbgimage", "sbi",NULL,		NULL		},
-	{"secret", "secret",	optnstring,	optisnumber	}
+	{"secret", "secret",	optnstring,	optisnumber	},
+	{"toolshape", "xts",	opt1string,	optisoneof,	"square rounded tab diamond"},
+	{"raisedelay", "raisedelay",optnstring,	optisnumber,	"0:1000"}
 #ifdef FEATURE_XFT
        ,{"antialias", "aa",	NULL,		NULL		},
-	{"aasqueeze", "aas",	optnstring,	xoptisnumber,	"-10:10"}
+	{"aasqueeze", "aas",	optnstring,	xoptisnumber,	"0:10"}
 #endif
 };
 
@@ -277,14 +281,14 @@ char *x_background;
 char *x_foreground;
 
 /* The following store color code, returned by colorfind() */
-int x_cursorcolors;
-int x_toolcolors;
-int x_toolbarcolors;
-int x_scrollcolors;
-int x_scrollbarcolors;
-int x_statuscolors;
-int x_statusbarcolors;
-int x_guidecolors;
+ELVFACE x_cursorcolors;
+ELVFACE x_toolcolors;
+ELVFACE x_toolbarcolors;
+ELVFACE x_scrollcolors;
+ELVFACE x_scrollbarcolors;
+ELVFACE x_statuscolors;
+ELVFACE x_statusbarcolors;
+ELVFACE x_guidecolors;
 
 /* These are used to detect changes in the above colors */
 static long xtoolfg, xtoolbg, xtoolbarfg, xtoolbarbg;
@@ -793,6 +797,10 @@ static int test()
 		"hpterm", "Eterm", "gnome", "kvt", NULL
 	};
 
+	/* if we've already connected, then the answer is obvious */
+	if (x_display)
+		return 1;
+
 	/* I've had some problems in which DISPLAY gets set to the valid name
 	 * of a functioning X server, even though I'm personally not the user
 	 * who's using that X server.
@@ -816,8 +824,41 @@ static int test()
 	}
 
 	/* Try to contact the server.  If we can contact it, great! */
-	if (getenv("DISPLAY") && (x_display = XOpenDisplay("")) != (Display *)0)
+	tmp = getenv("DISPLAY");
+	if (tmp && (x_display = XOpenDisplay(tmp)) != (Display *)0)
+	{
+		/* okay, all variations of "x11" are available.  Sort the
+		 * names to make the best one for this speed be the default.
+		 */
+		if (elvalnum(*tmp))
+		{
+			char xhost[200];
+			strcpy(xhost, tmp);
+			tmp = strchr(xhost, ':');
+			if (tmp)
+				*tmp = '\0';
+			i = netspeed(xhost);
+			if (i == 1)
+			{
+				tmp = guix11.name;
+				guix11.name = guix11_lan.name;
+				guix11_lan.name = tmp;
+				tmp = guix11.desc;
+				guix11.desc = guix11_lan.desc;
+				guix11_lan.desc = tmp;
+			}
+			else if (i == 2)
+			{
+				tmp = guix11.name;
+				guix11.name = guix11_wan.name;
+				guix11_wan.name = tmp;
+				tmp = guix11.desc;
+				guix11.desc = guix11_wan.desc;
+				guix11_wan.desc = tmp;
+			}
+		}
 		return 1;
+	}
 	return 0;
 }
 
@@ -938,7 +979,7 @@ static ELVBOOL clientaction(argc, argv)
 
 /* submit a :color command to define a font's or control's colors */
 static void definecolor(font, foreground, background, fg, bg)
-	int	font;
+	_ELVFACE_ font;
 	char	*foreground;
 	char	*background;
 	long	*fg, *bg;
@@ -979,8 +1020,6 @@ static int init(argc, argv)
 	ELVBOOL	mustfork = ElvFalse;
 	char	*geomstr = NULL;
 	GUI	*oldgui;
-	struct timeval tv;
-	struct timezone tz;
 
 	/* initialization */
 	if (!x_display)
@@ -1111,6 +1150,7 @@ static int init(argc, argv)
 	x_resource_manager = XInternAtom(x_display, "RESOURCE_MANAGER", ElvTrue);
 	x_targets = XInternAtom(x_display, "TARGETS", ElvTrue);
 	x_compound_text = XInternAtom(x_display, "COMPOUND_TEXT", ElvTrue);
+	x_text = XInternAtom(x_display, "TEXT", ElvTrue);
 	sprintf(raw, "ELVIS_SERVER_%d@", geteuid());
 	gethostname(raw + strlen(raw), sizeof raw - strlen(raw));
 	x_elvis_server = XInternAtom(x_display, raw, ElvFalse);
@@ -1243,8 +1283,9 @@ static int init(argc, argv)
 	optpreset(o_xencoding, toCHAR(DEFAULT_XENCODING), OPT_HIDE);
 	optpreset(o_scrollwheelspeed, DEFAULT_SCROLLWHEELSPEED, OPT_HIDE);
 	optpreset(o_scrollbgimage, ElvTrue, OPT_HIDE);
-	gettimeofday(&tv, &tz);
 	optpreset(o_secret, 0L, OPT_HIDE|OPT_UNSAFE);
+	optpreset(o_toolshape, 's', OPT_HIDE); /* square */
+	optpreset(o_raisedelay, 0, OPT_HIDE);
 	optinsert("x11", QTY(x11desc), x11desc, (OPTVAL *)&x_optvals);
 
 	/* convert geometry string, if given */
@@ -1305,6 +1346,11 @@ static int init(argc, argv)
 	 * on it.  But normally this init() function would be run before the
 	 * gui variable is set, since elvis isn't 100% convinced that this GUI
 	 * will work yet.  Ugly!
+	 *
+	 * NOTE: Now that there are multiple versions of "x11", for various
+	 * connection speeds, the list of variations is sorted so that
+	 * the "guix11" variable contains the preferred one.  This should
+	 * be safe.
 	 */
 	oldgui = gui, gui = &guix11;
 	if (!x_foreground) x_foreground = DEFAULT_FOREGROUND;
@@ -1447,6 +1493,106 @@ static void destroygw(gw, force)
 	}
 }
 
+/* Warp the pointer into a window, moving the pointer as little as possible */
+static void warptowindow(win)
+	Window		win;		/* window to warp into */
+{
+	Window		root, child;
+	int		rootx, rooty, winx, winy;
+	unsigned int	width, height;
+	unsigned int	udummy;
+	Window		wdummy;
+	int		dummy;
+	struct timeval	timeout;
+
+	/* get the window size */
+	width = height = 0; /* in case XGetGeometry() fails */
+	XGetGeometry(x_display, win, &wdummy, &dummy, &dummy,
+		     &width, &height, &udummy, &udummy);
+
+	/* get the pointer info */
+	if (XQueryPointer(x_display, win,
+			  &root, &child, &rootx, &rooty, &winx, &winy, &udummy))
+	{
+		/* if outside of window, then clip to nearest edge */
+		if (winx < 0)
+			winx = 0;
+		else if ((unsigned)winx >= width)
+			winx = width - 1;
+		if (winy < 0)
+			winy = 0;
+		else if ((unsigned)winy >= height)
+			winy = height - 1;
+	}
+	else /* not in the same window */
+	{
+		/* just warp to the middle of the window */
+		winx = width / 2;
+		winy = height / 2;
+	}
+
+	/* Raise the window.  It may have gotten buried during editing */
+	if (o_raisedelay == 0)
+		XRaiseWindow(x_display, win);
+	else
+	{
+		XSizeHints hints;
+		XGetNormalHints(x_display, win, &hints);
+		if ((hints.flags & (PPosition|USPosition)) == 0)
+		{
+			hints.x = winx;
+			hints.y = winy;
+			hints.flags |= USPosition;
+		}
+		hints.width = width;
+		hints.height = height;
+		hints.flags |= USSize;
+		XSetNormalHints(x_display, win, &hints);
+		XUnmapWindow(x_display, win);
+		timeout.tv_sec = 0L;
+		timeout.tv_usec = o_raisedelay * 1000;
+		(void)select(0, NULL, NULL, NULL, &timeout);
+		XMapRaised(x_display, win);
+	}
+		timeout.tv_sec = 0L;
+		timeout.tv_usec = 50000L; /* 0.05 seconds */
+		(void)select(0, NULL, NULL, NULL, &timeout);
+
+	/* Move the pointer outside the window.  For some reason,
+	 * window managers seem to care about that.
+	 */
+	XWarpPointer(x_display, None, root, 0,0,0,0, rootwidth-1,0);
+	XFlush(x_display);
+		timeout.tv_sec = 0L;
+		timeout.tv_usec = 50000L; /* 0.05 seconds */
+		(void)select(0, NULL, NULL, NULL, &timeout);
+	XWarpPointer(x_display, None, root, 0,0,0,0, 0,rootheight-1);
+	XFlush(x_display);
+		timeout.tv_sec = 0L;
+		timeout.tv_usec = 50000L; /* 0.05 seconds */
+		(void)select(0, NULL, NULL, NULL, &timeout);
+
+	/* Move the pointer to opposite corners of the original window,
+	 * so that if the screen pans if necessary (as in XFree86) to make
+	 * the whole window becomes visible.
+	 */
+	XWarpPointer(x_display, None, win, 0,0,0,0, width-1,0);
+	XFlush(x_display);
+		timeout.tv_sec = 0L;
+		timeout.tv_usec = 50000L; /* 0.05 seconds */
+		(void)select(0, NULL, NULL, NULL, &timeout);
+	XWarpPointer(x_display, None, win, 0,0,0,0, 0,height-1);
+	XFlush(x_display);
+		timeout.tv_sec = 0L;
+		timeout.tv_usec = 50000L; /* 0.05 seconds */
+		(void)select(0, NULL, NULL, NULL, &timeout);
+
+	/* Warp the pointer to the point nearest its original position,
+	 * inside the window.  Hopefully the end result of this will be
+	 * that the user doesn't notice the pointer move at all.
+	 */
+	XWarpPointer(x_display, None, win, 0,0,0,0, winx,winy);
+}
 
 
 /* This function changes the keyboard focus to a specific window */
@@ -1478,6 +1624,7 @@ static ELVBOOL focusgw(gw)
 	if (xw->willraise)
 	{
 		XRaiseWindow(x_display, xw->win);
+
 
 		/* Move the pointer to some point in the window, so that if
 		 * keyboard focus follows the mouse, this will switch focus.
@@ -1531,6 +1678,10 @@ static ELVBOOL focusgw(gw)
 							0, 0, 0, 0, x2, y2);
 				break;
 
+			  case 'w': /* window */
+				warptowindow(xw->win);
+				break;
+
 			  /* case 'd': don't -- requires no action */
 			}
 		}
@@ -1548,14 +1699,7 @@ static ELVBOOL focusgw(gw)
 	}
 
 	/* Explicitly change the focus */
-	{
-		XWindowAttributes attribute;
-		XGetWindowAttributes(x_display, xw->win, &attribute);
-		if (attribute.map_state == IsViewable )
-		{ 
-			XSetInputFocus(x_display, xw->win, RevertToParent, x_now);
-		} 
-	}
+	XSetInputFocus(x_display, xw->win, RevertToParent, x_now);
 	x_hasfocus = xw;
 	x_didcmd = ElvTrue;
 	return ElvTrue;
@@ -1575,6 +1719,7 @@ static void loop()
 	ELVBOOL	oldstatusbar;
 	ELVBOOL	oldscrollbar;
 	ELVBOOL	oldscrollbarleft;
+	CHAR	oldtoolshape;
 #ifdef FEATURE_XFT
 	ELVBOOL oldantialias;
 #endif
@@ -1588,6 +1733,7 @@ static void loop()
 	oldstatusbar = o_statusbar;
 	oldscrollbar = o_scrollbar;
 	oldscrollbarleft = o_scrollbarleft;
+	oldtoolshape = o_toolshape;
 #ifdef FEATURE_XFT
 	oldantialias = o_antialias;
 #endif
@@ -1625,12 +1771,14 @@ static void loop()
 		if (xtoolbarfg != colorinfo[x_toolbarcolors].fg
 		 || xtoolbarbg != colorinfo[x_toolbarcolors].bg
 		 || xtoolfg != colorinfo[x_toolcolors].fg
-		 || xtoolbg != colorinfo[x_toolcolors].bg)
+		 || xtoolbg != colorinfo[x_toolcolors].bg
+		 || oldtoolshape != o_toolshape)
 		{
 			xtoolbarfg = colorinfo[x_toolbarcolors].fg;
 			xtoolbarbg = colorinfo[x_toolbarcolors].bg;
 			xtoolfg = colorinfo[x_toolcolors].fg;
 			xtoolbg = colorinfo[x_toolcolors].bg;
+			oldtoolshape = o_toolshape;
 			for (xw = x_winlist; xw; xw = xw->next)
 				x_tb_recolor(xw);
 		}
@@ -1711,11 +1859,8 @@ static ELVBOOL wpoll(reset)
  */
 static void term()
 {
-	Window	curfocus;
-	int	dummy;
-	unsigned udummy;
-	Window	wdummy;
-	unsigned width, height;
+	Window		curfocus;
+	int		dummy;
 
 	/* unload fonts */
 	x_unloadfont(x_defaultnormal);
@@ -1733,45 +1878,10 @@ static void term()
 		XGetInputFocus(x_display, &curfocus, &dummy);
 	 	if (curfocus != fromwin)
 		{
-			width = 0; /* just in case XGetGeometry() fails */
-			XGetGeometry(x_display, fromwin, &wdummy,
-				&dummy, &dummy, &width, &height,
-				&udummy, &udummy);
-
-			/* Move the pointer outside the window.  For some
-			 * reason, window managers care about that.
-			 */
-			XWarpPointer(x_display, None, root,
-				0, 0, 0, 0, rootwidth - 1, 0);
-			XFlush(x_display);
-			XWarpPointer(x_display, None, root,
-				0, 0, 0, 0, 0, rootheight - 1);
-			XFlush(x_display);
-
-			/* move the pointer to opposite corners of the
-			 * original window, so that if the screen scrolls
-			 * (as in XFree86) the whole window becomes visible.
-			 * Then leave the pointer in the middle of the
-			 * window's top edge.
-			 */
-			XWarpPointer(x_display, None, fromwin,
-				0, 0, 0, 0, width - 1, 0);
-			XFlush(x_display);
-			XWarpPointer(x_display, None, fromwin,
-				0, 0, 0, 0, 0, height - 1);
-			XFlush(x_display);
-			XWarpPointer(x_display, None, fromwin,
-				0, 0, 0, 0, width / 2, 0);
+			warptowindow(fromwin);
 		}
 	}
-	{
-		XWindowAttributes attribute;
-		XGetWindowAttributes(x_display, fromwin, &attribute);
-		if (attribute.map_state == IsViewable )
-		{ 
-			XSetInputFocus(x_display, fromwin, RevertToParent, x_now);
-		} 
-	}
+	XSetInputFocus(x_display, fromwin, RevertToParent, x_now);
 
 	/* delete the server property from the root window */
 	XDeleteProperty(x_display, root, x_elvis_server);
@@ -1895,7 +2005,7 @@ static ELVBOOL creategw(name, firstcmd)
 
 	/* allocate storage space */
 	xw = (X11WIN *)safealloc(1, sizeof(*xw));
-	xw->title = safedup(o_filename(buf) ? tochar8(o_filename(buf)) : name);
+	xw->title = safedup((buf && o_filename(buf)) ? tochar8(o_filename(buf)) : name);
 	xw->next = x_winlist;
 	x_winlist = xw;
 
@@ -2239,6 +2349,7 @@ static ELVBOOL guicmd(gw, extra)
 	char	*label, *end;
 	char	op;
  static	ELVBOOL	gap;
+ static ELVFACE	toolface;
 	CHAR	*dump;
 
 	/* if no "extra" string, then pretend it is "" */
@@ -2285,10 +2396,37 @@ static ELVBOOL guicmd(gw, extra)
 			gap = ElvTrue;
 			return ElvTrue;
 		}
-		else if (!strcmp(label, "newtoolbar"))
+		else if (!strncmp(label, "newtoolbar", 10)
+		      && (elvspace(label[10]) || label[10] == '\0'))
 		{
-			x_tb_config(ElvFalse, NULL, '\0', NULL);
+			/* skip extra whitespace */
+			for (label += 10; elvspace(*label); label++)
+			{
+			}
+
+			/* rest of line should be color name */
+			if (*label)
+				toolface = colorfind(toCHAR(label));
+			else
+				toolface = '\0';
+
+			x_tb_config(ElvFalse, toolface, NULL, '\0', NULL);
 			allreconfig = ElvTrue;
+			return ElvTrue;
+		}
+		else if (!strncmp(label, "color", 5)
+		      && (elvspace(label[5]) || label[5] == '\0'))
+		{
+			/* skip extra whitespace */
+			for (label += 5; elvspace(*label); label++)
+			{
+			}
+
+			/* rest of line should be color name */
+			if (*label)
+				toolface = colorfind(toCHAR(label));
+			else
+				toolface = '\0';
 			return ElvTrue;
 		}
 		else /* empty or tool's label (with no operator), so dump it */
@@ -2306,7 +2444,7 @@ static ELVBOOL guicmd(gw, extra)
 	}
 
 	/* configure the toolbar button */
-	if (x_tb_config(gap, label, op, extra))
+	if (x_tb_config(gap, toolface, label, op, extra))
 		allreconfig = ElvTrue;
 
 	/* clobber the "gap" flag -- either we just used it, or we never will */
@@ -2482,7 +2620,7 @@ Found:	/* We have a key!  At this point, "key" and "name" are the only
 
 /* parse a color name, and convert it to both a color code, and RGB values */
 static ELVBOOL color(fontcode, colornam, isfg, colorptr, rgb)
-	int	fontcode;	/* font code */
+	_ELVFACE_ fontcode;	/* font code */
 	CHAR	*colornam;	/* name of the color */
 	ELVBOOL	isfg;		/* ElvTrue for foreground, ElvFalse for background */
 	long	*colorptr;	/* where to store the color number */
@@ -2647,17 +2785,6 @@ static RESULT stop(alwaysfork)
 
 /*----------------------------------------------------------------------------*/
 
-/* NOTE: The X11 headers #define ElvTrue and ElvFalse for their own purposes, but now
- * we need use elvis' enum versions of them.  This probably isn't important,
- * really, since both sets of symbols use the same value, but some compilers
- * will complain if "False" becomes "0" in the initializer of the guix11 struct
- * and we want to keep compilers happy.
- */
-#ifdef True
-# undef True
-# undef False
-#endif
-
 GUI guix11 =
 {
 	"x11",	/* name */
@@ -2673,6 +2800,106 @@ GUI guix11 =
 	test,
 	init,
 	usage,
+	loop,
+	wpoll,
+	term,
+	creategw,
+	destroygw,
+	focusgw,
+	retitle,
+	NULL,	/* reset */
+	flush,
+	moveto,
+	draw,
+	shift,
+	scroll,
+	clrtoeol,
+	NULL,	/* newline */
+	beep,
+	NULL,	/* msg */
+	scrollbar,
+	status,
+	keylabel,
+	x_clipopen,
+	x_clipwrite,
+	x_clipread,
+	x_clipclose,
+	color,
+	freecolor,
+	setbg,
+	guicmd,	/* guicmd */
+	NULL,	/* tabcmd */
+	NULL,	/* save */
+	NULL,	/* wildcard */
+	NULL,	/* prgopen */
+	NULL,	/* prgclose */
+	stop
+};
+GUI guix11_lan =
+{
+	"x11lan",	/* name */
+	"X11 for medium-speed LANs",
+	ElvFalse,	/* exonly */
+	ElvFalse,	/* newblank */
+	ElvTrue,	/* minimizeclr */
+	ElvFalse,	/* scrolllast */
+	ElvTrue,	/* shiftrows */
+	0,	/* movecost */
+	0,	/* nopts */
+	NULL,	/* optdescs */
+	test,
+	init,
+	NULL, /* usage */
+	loop,
+	wpoll,
+	term,
+	creategw,
+	destroygw,
+	focusgw,
+	retitle,
+	NULL,	/* reset */
+	flush,
+	moveto,
+	draw,
+	shift,
+	scroll,
+	clrtoeol,
+	NULL,	/* newline */
+	beep,
+	NULL,	/* msg */
+	scrollbar,
+	status,
+	keylabel,
+	x_clipopen,
+	x_clipwrite,
+	x_clipread,
+	x_clipclose,
+	color,
+	freecolor,
+	setbg,
+	guicmd,	/* guicmd */
+	NULL,	/* tabcmd */
+	NULL,	/* save */
+	NULL,	/* wildcard */
+	NULL,	/* prgopen */
+	NULL,	/* prgclose */
+	stop
+};
+GUI guix11_wan =
+{
+	"x11wan",	/* name */
+	"X11 for slow WAN connections",
+	ElvFalse,	/* exonly */
+	ElvFalse,	/* newblank */
+	ElvTrue,	/* minimizeclr */
+	ElvFalse,	/* scrolllast */
+	ElvTrue,	/* shiftrows */
+	0,	/* movecost */
+	0,	/* nopts */
+	NULL,	/* optdescs */
+	test,
+	init,
+	NULL, /* usage */
 	loop,
 	wpoll,
 	term,

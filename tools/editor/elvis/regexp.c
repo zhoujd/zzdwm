@@ -300,7 +300,7 @@ CHAR *regbuild(delim, refp, reg)
 	ELVBOOL	reg;	/* really regular expression? (else replacement text) */
 {
 	CHAR	*retext;
-	ELVBOOL	inclass, curly;
+	ELVBOOL	inclass, curly, allownul;
 	CHAR	name[30], *value;
 	int	i;
 	int	phase;	/* context within a bracketed character class */
@@ -310,8 +310,9 @@ CHAR *regbuild(delim, refp, reg)
 			/* 3: in named class w/ extra brackets: ']' ends name */
 
 	parserule = 'E';
+	allownul = (ELVBOOL)(markbuffer(scanmark(refp)) != NULL);
 	for (retext = NULL, inclass = ElvFalse, phase = 0;
-	     *refp && **refp && **refp != '\n' && (inclass || **refp != delim);
+	     *refp && (**refp || allownul) && **refp != '\n' && (inclass || **refp != delim);
 	     )
 	{
 		/* $name or ${name} copies character from the named variable */
@@ -399,7 +400,7 @@ CHAR *regbuild(delim, refp, reg)
 				continue;
 
 			/* if E V or Q then update parserule */
-			if (CHARchr(toCHAR("EVQ"), **refp))
+			if (CHARchr(toLCHAR("EVQ"), **refp))
 				parserule = **refp;
 
 			/* if the backslashed character is a delimiter, then
@@ -409,6 +410,15 @@ CHAR *regbuild(delim, refp, reg)
 			if (**refp != delim)
 				buildCHAR(&retext, '\\');
 			buildCHAR(&retext, **refp);
+			scannext(refp);
+			continue;
+		}
+
+		/* convert NUL bytes to a \0 sequence */
+		if (**refp == '\0')
+		{
+			buildCHAR(&retext, '\\');
+			buildCHAR(&retext, '0');
 			scannext(refp);
 			continue;
 		}
@@ -452,7 +462,7 @@ CHAR *regbuild(delim, refp, reg)
 		retext = (CHAR *)safealloc(1, sizeof(CHAR));
 
 	/* never return a string containing only parserule metachars */
-	for (value = retext; value[0] == '\\' && CHARchr(toCHAR("EQV"), value[1]); value += 2)
+	for (value = retext; value[0] == '\\' && CHARchr(toLCHAR("EQV"), value[1]); value += 2)
 	{
 	}
 	if (!*value && value != retext)
@@ -661,42 +671,42 @@ static CHAR *makeclass(text, bmap)
 					break;
 
 				  case 'd':
-					namedclass = toCHAR("[:digit:]");
+					namedclass = toLCHAR("[:digit:]");
 					break;
 
 				  case 'D':
-					namedclass = toCHAR("[:^digit:]");
+					namedclass = toLCHAR("[:^digit:]");
 					break;
 
 				  case 'p':
-					namedclass = toCHAR("[:print:]");
+					namedclass = toLCHAR("[:print:]");
 					break;
 
 				  case 'P':
-					namedclass = toCHAR("[:^print:]");
+					namedclass = toLCHAR("[:^print:]");
 					break;
 
 				  case 's':
-					namedclass = toCHAR("[:space:]");
+					namedclass = toLCHAR("[:space:]");
 					break;
 
 				  case 'S':
-					namedclass = toCHAR("[:^space:]");
+					namedclass = toLCHAR("[:^space:]");
 					break;
 
 				  case 'w':
 				  case 'i':
-					namedclass = toCHAR("[:alnum:]");
+					namedclass = toLCHAR("[:alnum:]");
 					i = '_';
 					break;
 
 				  case 'W':
-					namedclass = toCHAR("[:^alnum:]");
+					namedclass = toLCHAR("[:^alnum:]");
 					i = '_';
 					break;
 
 				  case 'I':
-					namedclass = toCHAR("[:alpha:]");
+					namedclass = toLCHAR("[:alpha:]");
 					i = '_';
 					break;
 
@@ -878,40 +888,40 @@ static int gettoken(sptr, re)
 			return '\t';	/* TAB */
 
 		  case 'd':
-			subexpr = toCHAR("[[:digit:]]");
+			subexpr = toLCHAR("[[:digit:]]");
 			return gettoken(&subexpr, re);
 
 		  case 'D':
-			subexpr = toCHAR("[^[:digit:]]");
+			subexpr = toLCHAR("[^[:digit:]]");
 			return gettoken(&subexpr, re);
 
 		  case 'p':
-			subexpr = toCHAR("[[:print:]]");
+			subexpr = toLCHAR("[[:print:]]");
 			return gettoken(&subexpr, re);
 
 		  case 'P':
-			subexpr = toCHAR("[^[:print:]]");
+			subexpr = toLCHAR("[^[:print:]]");
 			return gettoken(&subexpr, re);
 
 		  case 's':
-			subexpr = toCHAR("[[:space:]]");
+			subexpr = toLCHAR("[[:space:]]");
 			return gettoken(&subexpr, re);
 
 		  case 'S':
-			subexpr = toCHAR("[^[:space:]]");
+			subexpr = toLCHAR("[^[:space:]]");
 			return gettoken(&subexpr, re);
 
 		  case 'w':
 		  case 'i':
-			subexpr = toCHAR("[[:alnum:]_]");
+			subexpr = toLCHAR("[[:alnum:]_]");
 			return gettoken(&subexpr, re);
 
 		  case 'W':
-			subexpr = toCHAR("[^[:alnum:]_]");
+			subexpr = toLCHAR("[^[:alnum:]_]");
 			return gettoken(&subexpr, re);
 
 		  case 'I':
-			subexpr = toCHAR("[[:alpha:]_]");
+			subexpr = toLCHAR("[[:alpha:]_]");
 			return gettoken(&subexpr, re);
 
 		  case 'h':
@@ -931,7 +941,7 @@ static int gettoken(sptr, re)
 
 		  case 'V':
 			parserule = 'V';
-			magicchar = toCHAR("^$.*[");
+			magicchar = toLCHAR("^$.*[");
 			return gettoken(sptr, re);
 
 		  case 'Q':
@@ -1005,7 +1015,7 @@ static int gettoken(sptr, re)
 			if ((*sptr) - 1 == retext
 			 || ((*sptr) - 1 == retext + 2
 			 	&& retext[0] == '\\'
-			 	&& CHARchr(toCHAR("QVE"), retext[1])))
+			 	&& CHARchr(toLCHAR("QVE"), retext[1])))
 			{
 				return M_BEGLINE;
 			}

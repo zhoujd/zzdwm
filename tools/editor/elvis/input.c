@@ -393,7 +393,7 @@ static RESULT perform(win)
 			if (len > 0)
 			{
 				/* replace the whitespace with a newline */
-				bufreplace(&from, &to, toCHAR("\n"), 1L);
+				bufreplace(&from, &to, toLCHAR("\n"), 1L);
 				marksetoffset(&to, markoffset(&from) + 1);
 
 				/* handle autoindent */
@@ -406,7 +406,7 @@ static RESULT perform(win)
 		ii->prev = ii->arg;
 
 		/* maybe delete old text */
-		if (calcelement(o_cleantext, toCHAR("input")))
+		if (calcelement(o_cleantext, toLCHAR("input")))
 			cleanup(win, ElvTrue, ElvFalse, ElvFalse);
 
 #ifdef DISPLAY_SYNTAX
@@ -471,7 +471,7 @@ static RESULT perform(win)
 			/* If the character was a parenthesis then try to
 			 * locate its match. [{(
 			 */
-			if (CHARchr(toCHAR(")}]"), ii->arg))
+			if (CHARchr(toLCHAR(")}]"), ii->arg))
 			{
 				from = *cursor;
 				assert(markoffset(cursor) > 0);
@@ -549,7 +549,7 @@ static RESULT perform(win)
 				if (end)
 					*end = '\0';
 #else
-				cp = toCHAR("\t");
+				cp = toLCHAR("\t");
 #endif
 
 				/* Now... if we have anything to add, add it */
@@ -602,7 +602,7 @@ static RESULT perform(win)
 				markaddoffset(tmp, -1);
 
 				/* if previous char can't be in name, fail */
-				if (CHARchr(toCHAR("\t\n()<>"), scanchar(tmp)))
+				if (CHARchr(toLCHAR("\t\n()<>"), scanchar(tmp)))
 				{
 					markfree(tmp);
 					guibeep(win);
@@ -610,7 +610,7 @@ static RESULT perform(win)
 				}
 
 				/* collect the partial name into char array */
-				usetab = (ELVBOOL)!calcelement(o_filenamerules, toCHAR("space"));
+				usetab = (ELVBOOL)!calcelement(o_filenamerules, toLCHAR("space"));
 				littlecp = &name.partial[QTY(name.partial)];
 				*--littlecp = '\0';
 				ch = scanchar(tmp);
@@ -726,7 +726,7 @@ static RESULT perform(win)
 			ii->backsp = ii->prev;
 
 			/* maybe clean up */
-			if (calcelement(o_cleantext, win->state->acton ? toCHAR("ex") : toCHAR("bs")))
+			if (calcelement(o_cleantext, win->state->acton ? toLCHAR("ex") : toLCHAR("bs")))
 				cleanup(win, ElvTrue, ElvFalse, ElvFalse);
 		}
 		else if (win->state->acton != NULL
@@ -781,7 +781,7 @@ static RESULT perform(win)
 			scanfree(&cp);
 
 			/* maybe clean up */
-			if (calcelement(o_cleantext, win->state->acton ? toCHAR("ex") : toCHAR("bs")))
+			if (calcelement(o_cleantext, win->state->acton ? toLCHAR("ex") : toLCHAR("bs")))
 				cleanup(win, ElvTrue, ElvFalse, ElvFalse);
 		}
 		else
@@ -809,7 +809,7 @@ static RESULT perform(win)
 			marksetoffset(cursor, markoffset(tmp));
 
 			/* maybe clean up */
-			if (calcelement(o_cleantext, win->state->acton ? toCHAR("ex") : toCHAR("bs")))
+			if (calcelement(o_cleantext, win->state->acton ? toLCHAR("ex") : toLCHAR("bs")))
 				cleanup(win, ElvTrue, ElvFalse, ElvFalse);
 		}
 		else if (markoffset(state->top) < markoffset(cursor))
@@ -817,7 +817,7 @@ static RESULT perform(win)
 			marksetoffset(cursor, markoffset(state->top));
 
 			/* maybe clean up */
-			if (calcelement(o_cleantext, win->state->acton ? toCHAR("ex") : toCHAR("bs")))
+			if (calcelement(o_cleantext, win->state->acton ? toLCHAR("ex") : toLCHAR("bs")))
 				cleanup(win, ElvTrue, ElvFalse, ElvFalse);
 		}
 		else
@@ -1129,12 +1129,12 @@ void inputpush(win, flags, mode)
 	if (mode == 'R')
 	{
 		((INPUTINFO *)win->state->info)->replacing = ElvTrue;
-		win->state->modename = " R ";
+		win->state->modename = "Replace";
 	}
 	else
 	{
 		((INPUTINFO *)win->state->info)->replacing = ElvFalse;
-		win->state->modename = " I ";
+		win->state->modename = " Input ";
 	}
 }
 
@@ -1177,7 +1177,7 @@ void inputtoggle(win, mode)
 	}
 	else
 	{
-		state->modename = " I";
+		state->modename = " Input";
 	}
 }
 
@@ -1220,7 +1220,7 @@ void inputchange(win, from, to, linemd)
 		/* do nothing */
 	}
 	else if (ctrl_o || /* JohnW 19/06/96 */
-		calcelement(o_cleantext, markoffset(to) > markoffset(dispmove(win, 0, INFINITY)) ? toCHAR("long") : toCHAR("short")))
+		calcelement(o_cleantext, markoffset(to) > markoffset(dispmove(win, 0, INFINITY)) ? toLCHAR("long") : toLCHAR("short")))
 	{
 		/* delete the old text */
 		if (linemd)
@@ -1233,7 +1233,7 @@ void inputchange(win, from, to, linemd)
 				{
 				}
 			}
-			bufreplace(from, to, toCHAR("\n"), 1);
+			bufreplace(from, to, toLCHAR("\n"), 1);
 		}
 		else
 		{
@@ -1246,7 +1246,7 @@ void inputchange(win, from, to, linemd)
 		/* replace the last character with a '$' */
 		tmp = *to;
 		tmp.offset--;
-		bufreplace(&tmp, to, toCHAR("$"), 1);
+		bufreplace(&tmp, to, toLCHAR("$"), 1);
 	}
 
 	/* set the edit boundaries and the cursor */

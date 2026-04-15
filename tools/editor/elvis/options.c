@@ -405,7 +405,7 @@ CHAR *optsstring(desc, val)
 	if (val->value.string)
 		return val->value.string;
 	else
-		return toCHAR("");
+		return toLCHAR("");
 }
 
 /* convert a "one of" value to a string */
@@ -768,7 +768,7 @@ static void optoutput(domain, all, set, outbuf, outsize)
 			safefree(scan);
 		}
 
-		CHARncpy(outbuf, toCHAR("too big!\n"), outsize);
+		CHARncpy(outbuf, toLCHAR("too big!\n"), outsize);
 		return;
 	}
 
@@ -781,8 +781,8 @@ static void optoutput(domain, all, set, outbuf, outsize)
 			scan = colinfo[j].opt;
 			if (domain)
 			{
-				(void)CHARcat(outbuf, scan->dom->name);
-				(void)CHARcat(outbuf, ".");
+				(void)CHARcat(outbuf, toCHAR(scan->dom->name));
+				(void)CHARcat(outbuf, toLCHAR("."));
 			}
 
 			/* booleans are special... */
@@ -790,11 +790,11 @@ static void optoutput(domain, all, set, outbuf, outsize)
 			{
 				if (!scan->dom->val[scan->idx].value.boolean)
 				{
-					(void)CHARcat(outbuf, "no");
+					(void)CHARcat(outbuf, toLCHAR("no"));
 				}
-				(void)CHARcat(outbuf, domain
+				(void)CHARcat(outbuf, toCHAR(domain
 					? scan->dom->desc[scan->idx].shortname
-					: scan->dom->desc[scan->idx].longname);
+					: scan->dom->desc[scan->idx].longname));
 			}
 			else
 			{
@@ -803,7 +803,7 @@ static void optoutput(domain, all, set, outbuf, outsize)
 					? scan->dom->desc[scan->idx].shortname
 					: scan->dom->desc[scan->idx].longname);
 				(void)CHARcat(outbuf, str);
-				(void)CHARcat(outbuf, toCHAR("="));
+				(void)CHARcat(outbuf, toLCHAR("="));
 				cmp = CHARlen(str) + 1;
 				str = (*scan->dom->desc[scan->idx].asstring)(
 					&scan->dom->desc[scan->idx],
@@ -827,13 +827,13 @@ static void optoutput(domain, all, set, outbuf, outsize)
 			/* pad to max width, except at end of column */
 			if (j + 1 == ncols || !colinfo[j + 1].opt)
 			{
-				(void)CHARcat(outbuf, "\n");
+				(void)CHARcat(outbuf, toLCHAR("\n"));
 			}
 			else
 			{
 				for (k = colinfo[j].width - scan->width; k > 0; k--)
 				{
-					(void)CHARcat(outbuf, " ");
+					(void)CHARcat(outbuf, toLCHAR(" "));
 				}
 			}
 
@@ -940,8 +940,8 @@ void optautocmd(name, desc, val)
 		{
 			noname[0] = '\0';
 			if (!val->value.boolean)
-				CHARcpy(noname, "no");
-			CHARcat(noname, desc->longname);
+				CHARcpy(noname, toLCHAR("no"));
+			CHARcat(noname, toCHAR(desc->longname));
 			(void)auperform(windefault, ElvFalse, NULL,
 				AU_OPTSET, noname);
 		}
@@ -1086,7 +1086,7 @@ static void savelocal(desc, val, i)
 		if (desc[i].asstring)
 			s->value = (*desc[i].asstring)(&desc[i], &val[i]);
 		else
-			s->value = toCHAR("");
+			s->value = toLCHAR("");
 	}
 	else if (val[i].value.boolean)
 	{
@@ -1291,12 +1291,12 @@ ELVBOOL optset(bang, args, outbuf, outsize)
 	}
 
 	/* if "all", list values of all options */
-	if (!CHARcmp(args, toCHAR("all")))
+	if (!CHARcmp(args, toLCHAR("all")))
 	{
 		optoutput(bang, ElvTrue, ElvFalse, outbuf, outsize);
 		return ElvTrue;
 	}
-	if (!CHARcmp(args, toCHAR("everything")))
+	if (!CHARcmp(args, toLCHAR("everything")))
 	{
 		optoutput(bang, ElvTrue, ElvTrue, outbuf, outsize);
 		return ElvTrue;
@@ -1356,8 +1356,8 @@ ELVBOOL optset(bang, args, outbuf, outsize)
 			}
 			value = NULL;
 			prefix = name;
-			if (!CHARcmp(name, toCHAR("novice"))
-			 || !CHARcmp(name, toCHAR("nonascii")))
+			if (!CHARcmp(name, toLCHAR("novice"))
+			 || !CHARcmp(name, toLCHAR("nonascii")))
 				/* don't check for a "no" prefix */;
 			else if (prefix[0] == 'n' && prefix[1] == 'o')
 				name += 2;
@@ -1593,7 +1593,7 @@ char *optevent(name)
 	}
 
 	/* maybe it has a "no" prefix? */
-	if (!name || CHARncmp(name, toCHAR("no"), 2))
+	if (!name || CHARncmp(name, toLCHAR("no"), 2))
 		return NULL;
 	name += 2;
 
@@ -1728,9 +1728,9 @@ void optsave(custom)
 
 		for (f = foreignhead; f; f = f->next)
 		{
-			bufappend(custom, toCHAR("set "), 4);
+			bufappend(custom, toLCHAR("set "), 4);
 			bufappend(custom, f->args, 0);
-			bufappend(custom, toCHAR("\n"), 1);
+			bufappend(custom, toLCHAR("\n"), 1);
 		}
 	}
 # endif
@@ -1801,12 +1801,12 @@ CHAR *optcomplete(win, m)
 		}
 		else
 		{
-			cp = addquotes(toCHAR("\"|"), cp);
+			cp = addquotes(toLCHAR("\"|"), cp);
 			if (CHARchr(cp, ' ') || CHARchr(cp, '\t'))
 			{
 				retbuf[0] = '"';
 				CHARncpy(&retbuf[1], cp, QTY(retbuf) - 3);
-				CHARcat(retbuf, toCHAR("\""));
+				CHARcat(retbuf, toLCHAR("\""));
 			}
 			else
 			{
@@ -1887,7 +1887,7 @@ CHAR *optcomplete(win, m)
 					mlen = strlen(name);
 					if (2 + j + 1 + mlen >= o_columns(win))
 					{
-						drawextext(win, toCHAR("\n"), 1);
+						drawextext(win, toLCHAR("\n"), 1);
 						j = 0;
 					}
 					else if (j > 0)
@@ -1895,7 +1895,7 @@ CHAR *optcomplete(win, m)
 						drawextext(win, blanks, 1);
 						j++;
 					}
-					drawextext(win, toCHAR("no"), 2);
+					drawextext(win, toLCHAR("no"), 2);
 					drawextext(win, toCHAR(name), mlen);
 					j += 2 + mlen;
 				}
@@ -1904,7 +1904,7 @@ CHAR *optcomplete(win, m)
 					mlen = strlen(name);
 					if (j + 1 + mlen >= o_columns(win))
 					{
-						drawextext(win, toCHAR("\n"), 1);
+						drawextext(win, toLCHAR("\n"), 1);
 						j = 0;
 					}
 					else if (j > 0)
@@ -1917,7 +1917,7 @@ CHAR *optcomplete(win, m)
 				}
 			}
 		if (j > 0)
-			drawextext(win, toCHAR("\n"), 1);
+			drawextext(win, toLCHAR("\n"), 1);
 	}
 
 	/* return the matching chars */

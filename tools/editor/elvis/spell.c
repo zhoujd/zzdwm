@@ -9,7 +9,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_spell[] = "$Id: spell.c,v 1.39 2004/03/21 23:24:41 steve Exp $";
+char id_spell[] = "$Id: spell.c,v 1.40 2011/12/15 17:55:12 steve Exp $";
 #endif
 
 #define MAXWLEN	100	/* maximum word length */
@@ -187,7 +187,7 @@ void spellfree(node)
 
 static void wildspell P_((spell_t *node, CHAR *word, CHAR *partial));
 static void savehelp P_((spell_t *node, CHAR *partial));
-static void spelldraw P_((CHAR *p, long qty, _char_ font, long offset));
+static void spelldraw P_((CHAR *p, long qty, _ELVFACE_ font, long offset));
 
 /* font to use to highlight spelling errors */
 char spellfont;
@@ -197,8 +197,8 @@ spell_t	*spelltags;	/* spelling words from "tags" files */
 spell_t	*spellwords;	/* spelling words from "words" file, or :words cmd */
 
 /* font-dependent spellcheck limits */
-static spellcheck_t spelllimit[128];
-static ELVBOOL spellset[128];
+static spellcheck_t spelllimit[SELECTED_BIT];
+static ELVBOOL spellset[SELECTED_BIT];
 
 /* info about the last value displayed via the "spellshow" option, or returned
  * by the last spellfix() function call.
@@ -225,8 +225,8 @@ void spellbegin()
 	/* locate font (only required the first time) */
 	if (!spellfont)
 	{
-		spellfont = colorfind(toCHAR("spell"));
-		colorset(spellfont, toCHAR("underlined"), ElvFalse);
+		spellfont = colorfind(toLCHAR("spell"));
+		colorset(spellfont, toLCHAR("underlined"), ElvFalse);
 	}
 
 	/* if no user buffers have "spell" set, then do nothing */
@@ -312,7 +312,7 @@ ELVBOOL spellsearch(word)
 		wordfp = fopen(tochar8(o_spelldict), "rb");
 		if (!wordfp)
 		{
-			optputstr(toCHAR("spelldict"), toCHAR(""), ElvFalse);
+			optputstr(toLCHAR("spelldict"), toLCHAR(""), ElvFalse);
 			return ElvFalse;
 		}
 
@@ -660,7 +660,7 @@ void spellhighlight(win)
 			continue;
 
 		/* skip if font has "graphic" attribute or SPELL_CHECK_NONE */
-		newfont = (win->di->newfont[i] & 0x7f);
+		newfont = (win->di->newfont[i] & FACE_BITS);
 		if (colorinfo[(int)newfont].da.bits & COLOR_GRAPHIC
 		 || spelllimit[(int)newfont] == SPELL_CHECK_NONE)
 			continue;
@@ -706,7 +706,7 @@ void spellhighlight(win)
 			    && win->di->offsets[i] < mark.offset)
 			{
 				newfont = win->di->newfont[i];
-				if (!(newfont & 0x7f))
+				if (!(newfont & FACE_BITS))
 					newfont |= o_hasfocus(win)
 						? COLOR_FONT_NORMAL
 						: COLOR_FONT_IDLE;
@@ -759,7 +759,7 @@ static void savehelp(node, partial)
 		/* if it won't fit on this line, then start a new one */
 		if (CHARlen(saveline) + (partial - saveword) > 77)
 		{
-			CHARcat(saveline, toCHAR("\n"));
+			CHARcat(saveline, toLCHAR("\n"));
 			if (savebuf)
 			{
 				end.buffer = savebuf;
@@ -774,7 +774,7 @@ static void savehelp(node, partial)
 
 		/* add the word */
 		if (*saveline)
-			CHARcat(saveline, toCHAR(" "));
+			CHARcat(saveline, toLCHAR(" "));
 		if (*flag != saveflag)
 		{
 			CHARcat(saveline, flag);
@@ -805,7 +805,7 @@ void spellsave(custom)
 	/* use savehelp() to recursively search for personal words */
 	savebuf = custom;
 	if (custom)
-		CHARcpy(savecmd, toCHAR("try words"));
+		CHARcpy(savecmd, toLCHAR("try words"));
 	else
 		*savecmd = '\0';
 	CHARcpy(saveline, savecmd);
@@ -816,7 +816,7 @@ void spellsave(custom)
 	/* finish the last command */
 	if (savecount > 0)
 	{
-		CHARcat(saveline, toCHAR("\n"));
+		CHARcat(saveline, toLCHAR("\n"));
 		if (custom)
 		{
 			bufappend(custom, saveline, 0);
@@ -845,7 +845,7 @@ void spellsave(custom)
 			{
 				if (col > 0)
 				{
-					bufappend(custom, toCHAR("\n"), 1);
+					bufappend(custom, toLCHAR("\n"), 1);
 				}
 				bufappend(custom,
 					toCHAR(level == SPELL_CHECK_NONE
@@ -870,7 +870,7 @@ void spellsave(custom)
 		/* end the line */
 		if (col > 0)
 		{
-			bufappend(custom, toCHAR("\n"), 1);
+			bufappend(custom, toLCHAR("\n"), 1);
 		}
 	}
 }
@@ -1156,14 +1156,14 @@ void spellfix(word, result, resultlen, tagonly)
  */
 CHAR *spellshow(cursor, font)
 	MARK	cursor;	/* the window's cursor */
-	_char_	font;	/* the font at the cursor (may be temp or selected) */
+	_ELVFACE_ font;	/* the font at the cursor (may be temp or selected) */
 {
 	MARK	left;
 	CHAR	*word;
 	CHAR	n, *s;
 
 	/* Strip off "selected" bit.  If no font given, then assume "normal" */
-	font &= 0x7f;
+	font &= FACE_BITS;
 	if (!font)
 		font = 1;
 
@@ -1268,7 +1268,7 @@ void spellcheckfont(fontname, check, bang)
 	ELVBOOL	bang;		/* hidden? */
 {
 	int	font;
-	CHAR	*flag = toCHAR("*+-");
+	CHAR	*flag = toLCHAR("*+-");
 	int	col, len;
 	spellcheck_t level;
 
@@ -1306,7 +1306,7 @@ void spellcheckfont(fontname, check, bang)
 			if (col < 0 || col + 2 + len > o_columns(windefault))
 			{
 				if (col > 0)
-					drawextext(windefault, toCHAR("\n"), 1);
+					drawextext(windefault, toLCHAR("\n"), 1);
 				drawextext(windefault, flag, 1);
 				col = 1;
 			}
@@ -1323,7 +1323,7 @@ void spellcheckfont(fontname, check, bang)
 
 		/* if last line didn't end, then end it now */
 		if (col > 0)
-			drawextext(windefault, toCHAR("\n"), 1);
+			drawextext(windefault, toLCHAR("\n"), 1);
 	}
 }
 
@@ -1331,8 +1331,8 @@ void spellcheckfont(fontname, check, bang)
  * new, temporary fonts.
  */
 void spelltmp(oldfont, newfont, combofont)
-	int	oldfont,newfont;/* two fonts that were combined */
-	int	combofont;	/* the resulting temporary font */
+	_ELVFACE_ oldfont, newfont;/* two fonts that were combined */
+	_ELVFACE_ combofont;	   /* the resulting temporary font */
 {
 	/* make the combo font use the more restrictive checking style from
 	 * either of its parent fonts.
@@ -1421,7 +1421,7 @@ static ELVBOOL	inword;
 static void spelldraw(p, qty, font, offset)
 	CHAR	*p;	/* first letter of text to draw */
 	long	qty;	/* quantity to draw (negative to repeat *p) */
-	_char_	font;	/* font code of the text */
+	_ELVFACE_ font;	/* font code of the text */
 	long	offset;	/* buffer offset of *p */
 {
 	MARKBUF	mark;	/* a temporary mark */

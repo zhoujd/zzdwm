@@ -4,7 +4,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_ex[] = "$Id: ex.c,v 2.244 2004/03/26 21:33:27 steve Exp $";
+char id_ex[] = "$Id: ex.c,v 2.247 2004/05/13 17:21:18 steve Exp $";
 #endif
 
 #if USE_PROTOTYPES
@@ -397,6 +397,14 @@ static ELVBOOL parsewindowid(refp, xinf)
 	long	num;
 	MARK	start;
 	WINDOW	win;
+
+	/* if no default window then do nothing */
+	if (!xinf->window)
+	{
+		xinf->defaddr.buffer = bufdefault;
+		xinf->defaddr.offset = 0L;
+		return ElvTrue;
+	}
 
 	/* set default buffer, assuming default window. */
 	if (xinf->window->state && xinf->window->state->pop)
@@ -841,6 +849,10 @@ ELVBOOL exparseaddress(refp, xinf)
 			expr = NULL;
 			if (**refp == '(')
 			{
+				/* add the initial '(' */
+				buildCHAR(&expr, **refp);
+				(*refp)++;
+
 				/* collect to matching ')' */
 				for (nest = 1, string = '\0';
 				     nest > 0 && **refp && **refp != '\n';
@@ -1572,7 +1584,7 @@ static RESULT parsecmds(refp, xinf, flags)
 
 		  case '\\':
 			scannext(refp);
-			if (*refp && !CHARchr(toCHAR("%#!@"), **refp)) /* !!!removed '\\' */
+			if (*refp && !CHARchr(toLCHAR("%#!@"), **refp)) /* !!!removed '\\' */
 			{
 				buildCHAR(&xinf->rhs, (_CHAR_)'\\');
 				ch = **refp;
@@ -1659,17 +1671,17 @@ ELVFNR exfilenamerules(rulestr)
 {
 	ELVFNR	rules = (ELVFNR)0;
 
-	if (calcelement(rulestr, toCHAR("tilde")))
+	if (calcelement(rulestr, toLCHAR("tilde")))
 		rules |= ELVFNR_TILDE;
-	if (calcelement(rulestr, toCHAR("dollar")))
+	if (calcelement(rulestr, toLCHAR("dollar")))
 		rules |= ELVFNR_DOLLAR;
-	if (calcelement(rulestr, toCHAR("paren")))
+	if (calcelement(rulestr, toLCHAR("paren")))
 		rules |= ELVFNR_PAREN;
-	if (calcelement(rulestr, toCHAR("wildcard")))
+	if (calcelement(rulestr, toLCHAR("wildcard")))
 		rules |= ELVFNR_WILDCARD;
-	if (calcelement(rulestr, toCHAR("special")))
+	if (calcelement(rulestr, toLCHAR("special")))
 		rules |= ELVFNR_SPECIAL;
-	if (calcelement(rulestr, toCHAR("space")))
+	if (calcelement(rulestr, toLCHAR("space")))
 		rules |= ELVFNR_SPACE;
 	return rules;
 }
@@ -1757,7 +1769,7 @@ ELVBOOL exaddfilearg(file, nfiles, filename, rules)
 #if defined(ANY_UNIX) && defined(FEATURE_MISC)
 		else if (filename[0] == '~' && elvalpha(filename[1]))
 		{
-			filename = safedup(expanduserhome(tochar8(filename), tmp));
+			filename = safedup(expanduserhome(filename, tmp));
 			mustfree = ElvTrue;
 		}
 #endif /* ANY_UNIX && FEATURE_MISC */
@@ -1924,7 +1936,7 @@ static ELVBOOL parsefileargs(refp, xinf, flags)
 				 */
 				scanprev(refp);
 			}
-			else if (!CHARchr(toCHAR(" \t\\#!*`"), **refp))
+			else if (!CHARchr(toLCHAR(" \t\\#!*`"), **refp))
 			{
 				/* backslash isn't followed by a char that might
 				 * require backslash quoting, so the backslash
@@ -2055,7 +2067,7 @@ static ELVBOOL parsefileargs(refp, xinf, flags)
 			 * then complain.
 			 */
 			if (buildCHAR(&filename, **refp) == 2
-			 && !CHARcmp(filename, ">>")
+			 && !CHARcmp(filename, toLCHAR(">>"))
 			 && (xinf->nfiles > 0 || (flags & a_Append) == 0))
 			{
 				msg(MSG_ERROR, "bad >>", xinf->cmdname);
@@ -2186,7 +2198,7 @@ static RESULT parse(win, refp, xinf)
 		/* parse the "+p" command, unless at end of buffer */
 		if (markline(win->cursor) < o_buflines(markbuffer(win->cursor)))
 		{
-			scanstring(&p2, toCHAR("+p"));
+			scanstring(&p2, toLCHAR("+p"));
 			result = parse(win, &p2, xinf);
 			scanfree(&p2);
 		}
@@ -2673,7 +2685,7 @@ static RESULT parse(win, refp, xinf)
 			bufreplace(marktmp(logstart, log, 0L), marktmp(logend, log, o_bufchars(log)), NULL, 0L);
 			o_maplog = 'a';
 		}
-		bufappend(log, toCHAR(":"), 1L);
+		bufappend(log, toLCHAR(":"), 1L);
 		if (logstr)
 		{
 			if (*refp)
@@ -2686,7 +2698,7 @@ static RESULT parse(win, refp, xinf)
 		else
 			bufpaste(marktmp(logend, log, o_bufchars(log)),
 					&orig, scanmark(refp));
-		bufappend(log, toCHAR("\n"), 1L);
+		bufappend(log, toLCHAR("\n"), 1L);
 	}
 #endif /* FEATURE_MAPDB */
 
@@ -2886,7 +2898,7 @@ static RESULT execute(xinf)
 			{
 				BUFFER	log;
 				MARKBUF	logstart, logend;
-				char	line[200];
+				char	line[50];
 
 				/* allocate the buffer */
 				log = bufalloc(toCHAR(TRACE_BUF), 0, ElvTrue);
@@ -2899,11 +2911,12 @@ static RESULT execute(xinf)
 				}
 
 				/* add a line */
-				sprintf(line, "Buffer switch from (%s) to (%s) since log line %ld\n",
-					tochar8(o_bufname(markbuffer(xinf->window->cursor))),
-					tochar8(o_bufname(markbuffer(xinf->newcurs))),
-					loglines);
-				bufappend(log, toCHAR(line), strlen(line));
+				bufappend(log, toLCHAR("Buffer switch from ("), 0);
+				bufappend(log, o_bufname(markbuffer(xinf->window->cursor)), 0);
+				bufappend(log, toLCHAR(") to ("), 0);
+				bufappend(log, o_bufname(markbuffer(xinf->newcurs)), 0);
+				sprintf(line, ") since log line %ld\n", loglines);
+				bufappend(log, toCHAR(line), 0);
 			}
 #endif /* FEATURE_MAPDB */
 
@@ -3135,17 +3148,17 @@ CHAR *exname(name)
 	{
 		switch (*name)
 		{
-		  case '!':	return toCHAR("BANG");
-		  case '"':	return toCHAR("QUOTE");
-		  case '#':	return toCHAR("HASH");
-		  case '<':	return toCHAR("LT");
-		  case '=':	return toCHAR("EQ");
-		  case '>':	return toCHAR("GT");
-		  case '&':	return toCHAR("AMP");
-		  case '~':	return toCHAR("TILDE");
-		  case '@':	return toCHAR("AT");
-		  case '(':	return toCHAR("OPEN"); /* not a real command */
-		  case '{':	return toCHAR("OCUR"); /* not a real command */
+		  case '!':	return toLCHAR("BANG");
+		  case '"':	return toLCHAR("QUOTE");
+		  case '#':	return toLCHAR("HASH");
+		  case '<':	return toLCHAR("LT");
+		  case '=':	return toLCHAR("EQ");
+		  case '>':	return toLCHAR("GT");
+		  case '&':	return toLCHAR("AMP");
+		  case '~':	return toLCHAR("TILDE");
+		  case '@':	return toLCHAR("AT");
+		  case '(':	return toLCHAR("OPEN"); /* not a real command */
+		  case '{':	return toLCHAR("OCUR"); /* not a real command */
 		}
 	}
 
@@ -3226,9 +3239,9 @@ long exprintlines(win, mark, qty, pflag)
 		/* output the line number, if we're supposed to */
 		if (number)
 		{
-			memset(tmp, ' ', QTY(tmp));
+			CHARset(tmp, ' ', QTY(tmp));
 			long2CHAR(tmp + 8, lnum);
-			CHARcat(tmp, toCHAR("  "));
+			CHARcat(tmp, toLCHAR("  "));
 			drawextext(win, tmp + CHARlen(tmp) - 8, 8);
 			lnum++;
 		}
@@ -3459,7 +3472,7 @@ CHAR *excomplete(win, from, to)
 					mlen = strlen(cname(i));
 					if (j + mlen + 1 >= o_columns(win))
 					{
-						drawextext(win, toCHAR("\n"), 1);
+						drawextext(win, toLCHAR("\n"), 1);
 						j = 0;
 					}
 					else if (j != 0)
@@ -3470,7 +3483,7 @@ CHAR *excomplete(win, from, to)
 					j += mlen + 1;
 				}
 			if (j != 0)
-				drawextext(win, toCHAR("\n"), 1);
+				drawextext(win, toLCHAR("\n"), 1);
 		}
 		return common;
 	}

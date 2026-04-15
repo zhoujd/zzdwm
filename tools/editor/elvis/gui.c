@@ -4,7 +4,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_gui[] = "$Id: gui.c,v 2.33 2004/02/12 17:57:34 steve Exp $";
+char id_gui[] = "$Id: gui.c,v 2.35 2011/12/15 17:55:12 steve Exp $";
 #endif
 
 /* This is a pointer to the chosen GUI. */
@@ -76,7 +76,7 @@ void guimoveto(win, column, row)
  */
 DRAWATTR *guidraw(win, font, text, len, forcebits)
 	WINDOW	win;	/* window where text is to be drawn */
-	_char_	font;	/* font to use for drawing */
+	_ELVFACE_ font;	/* font to use for drawing */
 	CHAR	*text;	/* text to be drawn */
 	int	len;	/* number of characters in text */
 	int	forcebits; /* attributes to add to the font's defaults */
@@ -93,8 +93,8 @@ DRAWATTR *guidraw(win, font, text, len, forcebits)
 	else
 	{
 
-		if (font & 0x80)
-			combo = colorcombine(font & 0x7f,
+		if (font & SELECTED_BIT)
+			combo = colorcombine(font & FACE_BITS,
 					&colorinfo[COLOR_FONT_SELECTION]);
 		else
 			combo = &colorinfo[font];
@@ -109,7 +109,7 @@ DRAWATTR *guidraw(win, font, text, len, forcebits)
 	/* return the attributes of the non-selected font, including the
 	 * forcebits.  If the font is selected, then also set COLOR_SEL bit.
 	 */
-	da = colorinfo[font & 0x7f].da;
+	da = colorinfo[font & FACE_BITS].da;
 	da.bits = drawfontbits(font);
 	da.bits |= forcebits;
 	return &da;
@@ -309,24 +309,24 @@ int guikeylabel(given, givenlen, label, rawptr)
 		int	len;
 		CHAR	ch;
 	} keys[] = {
-		{toCHAR("<Nul>"),	5,	'\0'},
-		{toCHAR("<BS>"),	4,	'\b'},
-		{toCHAR("<Tab>"),	5,	'\t'},
-		{toCHAR("<FF>"),	4,	'\f'},
-		{toCHAR("<NL>"),	4,	'\n'},
-		{toCHAR("<LF>"),	4,	'\n'},
-		{toCHAR("<EOL>"),	4,	'\n'},
-		{toCHAR("<CR>"),	4,	'\r'},
-		{toCHAR("<Return>"),	8,	'\r'},
-		{toCHAR("<Enter>"),	7,	'\r'},
-		{toCHAR("<Esc>"),	5,	(CHAR)0x1b},
-		{toCHAR("<CSI>"),	5,	(CHAR)0x9b},
-		{toCHAR("<Del>"),	5,	(CHAR)0x7f},
-		{toCHAR("<Space>"),	7,	' '},
-		{toCHAR("<lt>"),	4,	'<'},
-		{toCHAR("<gt>"),	4,	'>'},
-		{toCHAR("<Bar>"),	5,	'|'},
-		{toCHAR("<Bslash>"),	8,	'\\'}
+		{toLCHAR("<Nul>"),	5,	'\0'},
+		{toLCHAR("<BS>"),	4,	'\b'},
+		{toLCHAR("<Tab>"),	5,	'\t'},
+		{toLCHAR("<FF>"),	4,	'\f'},
+		{toLCHAR("<NL>"),	4,	'\n'},
+		{toLCHAR("<LF>"),	4,	'\n'},
+		{toLCHAR("<EOL>"),	4,	'\n'},
+		{toLCHAR("<CR>"),	4,	'\r'},
+		{toLCHAR("<Return>"),	8,	'\r'},
+		{toLCHAR("<Enter>"),	7,	'\r'},
+		{toLCHAR("<Esc>"),	5,	(CHAR)0x1b},
+		{toLCHAR("<CSI>"),	5,	(CHAR)0x9b},
+		{toLCHAR("<Del>"),	5,	(CHAR)0x7f},
+		{toLCHAR("<Space>"),	7,	' '},
+		{toLCHAR("<lt>"),	4,	'<'},
+		{toLCHAR("<gt>"),	4,	'>'},
+		{toLCHAR("<Bar>"),	5,	'|'},
+		{toLCHAR("<Bslash>"),	8,	'\\'}
 	};
 
 	/* if looking up the label of a single character, then check the table */
@@ -386,6 +386,7 @@ int guikeylabel(given, givenlen, label, rawptr)
 
 		/* does it look like a symbolic name? */
 		symraw = NULL;
+		rawlen = 0; /* just to keep the compiler happy */
 		if (scan[labellen - 1] == '>')
 		{
 			/* is it a shifted of controlled function key? */

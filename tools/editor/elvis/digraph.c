@@ -236,7 +236,7 @@ void digaction(win, bang, extra)
 				dig += 7;
 				if (dig >= o_columns(win))
 				{
-					drawextext(win, toCHAR("\n"), 1);
+					drawextext(win, toLCHAR("\n"), 1);
 					dig = 7;
 				}
 				listbuf[3] = dp->in1;
@@ -245,7 +245,7 @@ void digaction(win, bang, extra)
 				drawextext(win, listbuf, 7);
 			}
 		}
-		drawextext(win, toCHAR("\n"), 1);
+		drawextext(win, toLCHAR("\n"), 1);
 		return;
 	}
 

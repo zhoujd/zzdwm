@@ -10,14 +10,10 @@
 #ifdef FEATURE_RCSID
 char id_osprg[] = "$Id: osprg.c,v 2.13 2003/10/17 17:41:23 steve Exp $";
 #endif
-
-#if !defined(__linux__)
 #ifdef NEED_WAIT_H
 # include <sys/wait.h>
 #endif
-#else
-# include <sys/wait.h>
-#endif
+
 
 #define TMPDIR	(o_directory ? tochar8(o_directory) : "/tmp")
 #define SHELL	(o_shell ? tochar8(o_shell) : "/bin/sh")
@@ -171,7 +167,7 @@ ELVBOOL prgopen(cmd, willwrite, willread)
  * For UNIX, this is simply a write() to the temp file or pipe.
  */
 int prgwrite(buf, nbytes)
-	CHAR	*buf;	/* buffer, contains text to be written */
+	char	*buf;	/* buffer, contains text to be written */
 	int	nbytes;	/* number of characters in buf */
 {
 	assert(writefd >= 0);
@@ -274,7 +270,7 @@ ELVBOOL prggo()
  * For UNIX, this is simply a read() from the pipe.
  */
 int prgread(buf, nbytes)
-	CHAR	*buf;	/* buffer where text should be placed */
+	char	*buf;	/* buffer where text should be placed */
 	int	nbytes;	/* maximum number of characters to read */
 {
 	assert(readfd >= 0);

@@ -22,7 +22,7 @@ static ELVCURSOR incshape P_((WINDOW win));
  * draw.c.  This is important because the font must be allocated while no
  * temporary fonts are in use -- i.e, before screen updating begins.
  */
-char	searchfont;
+ELVFACE	searchfont;
 
 /* This is the previous regular expression.  We need to remember it after
  * it has been used, so we can implement the <n> and <shift-N> commands.
@@ -486,7 +486,7 @@ RESULT m_search(win, vinf)
 		}
 
 		/* Compile the regexp /\<\@\>/ */
-		searchre = regcomp(toCHAR("\\<\\@\\>"), win->cursor);
+		searchre = regcomp(toLCHAR("\\<\\@\\>"), win->cursor);
 		if (!searchre)
 			return RESULT_ERROR;
 
@@ -564,7 +564,7 @@ RESULT m_search(win, vinf)
 	/* remove the hint that we're searching, if necessary */
 	if (hint && win->di->drawstate == DRAW_VISUAL)
 	{
-		drawmsg(win, MSG_STATUS, toCHAR(""), 0);
+		drawmsg(win, MSG_STATUS, toLCHAR(""), 0);
 		win->di->newmsg = ElvFalse;
 	}
 
@@ -846,7 +846,7 @@ static RESULT incparse(key, info)
 			history = bufalloc(toCHAR(REGEXP_BUF), 0, ElvTrue);
 			bufappend(history, &ii->dir, 1);
 			bufappend(history, ii->text, len);
-			bufappend(history, toCHAR("\n"), 1);
+			bufappend(history, toLCHAR("\n"), 1);
 			return RESULT_COMPLETE;
 
 		  case '\177':
@@ -1122,7 +1122,7 @@ static RESULT incperform(win)
 	{
 		if (win->di->drawstate == DRAW_VISUAL)
 		{
-			drawmsg(win, MSG_STATUS, toCHAR(""), 0);
+			drawmsg(win, MSG_STATUS, toLCHAR(""), 0);
 			win->di->newmsg = ElvFalse;
 		}
 	}

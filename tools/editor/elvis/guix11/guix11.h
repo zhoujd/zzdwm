@@ -101,6 +101,7 @@ extern Atom		x_elvis_server;	/* value for ELVIS_SERVER atom */
 extern Atom		x_resource_manager;/* value for MANAGER_RESOURCES atom*/
 extern Atom		x_targets;	/* value for TARGETS atom */
 extern Atom		x_compound_text;/* value for COMPOUND_TEXT atom */
+extern Atom		x_text;		/* value for TEXT atom */
 extern Pixmap		x_gray;			/* gray background for mono */
 extern Pixmap		x_elvis_icon;		/* elvis' window icon */
 extern Pixmap		x_elvis_pin_icon;	/* elvis icon with pushpin */
@@ -122,7 +123,7 @@ extern struct x_optvals_s
 		autoiconify, altkey, stagger, warpback, warpto, focusnew,
 		textcursor, outlinemono, borderwidth, xrootwidth, xrootheight,
 		xencoding, scrollwheelspeed, submit, cancel, help, synccursor,
-		scrollbgimage, secret;
+		scrollbgimage, secret, toolshape, raisedelay;
 #ifdef FEATURE_XFT
 	OPTVAL	antialias, aasqueeze;
 #endif
@@ -166,17 +167,19 @@ extern struct x_optvals_s
 #define o_synccursor	 x_optvals.synccursor.value.boolean
 #define o_scrollbgimage	 x_optvals.scrollbgimage.value.boolean
 #define o_secret	 x_optvals.secret.value.number
+#define o_toolshape	 x_optvals.toolshape.value.character
+#define o_raisedelay	 x_optvals.raisedelay.value.number
 #ifdef FEATURE_XFT
 # define o_antialias	 x_optvals.antialias.value.boolean
 # define o_aasqueeze	 x_optvals.aasqueeze.value.number
 #endif
 
 /* The following store font codes return by colorfind() */
-extern int x_cursorcolors;
-extern int x_toolcolors;
-extern int x_toolbarcolors;
-extern int x_scrollcolors;
-extern int x_scrollbarcolors;
-extern int x_statuscolors;
-extern int x_statusbarcolors;
-extern int x_guidecolors;
+extern ELVFACE x_cursorcolors;
+extern ELVFACE x_toolcolors;
+extern ELVFACE x_toolbarcolors;
+extern ELVFACE x_scrollcolors;
+extern ELVFACE x_scrollbarcolors;
+extern ELVFACE x_statuscolors;
+extern ELVFACE x_statusbarcolors;
+extern ELVFACE x_guidecolors;

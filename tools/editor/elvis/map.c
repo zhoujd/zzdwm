@@ -813,7 +813,7 @@ CHAR *maplist(flags, mode, reflen)
 	build = &buf[10];
 	if (!mode && m->mode)
 	{
-		CHARcpy(build, "mode=");
+		CHARcpy(build, toLCHAR("mode="));
 		build += 5;
 		CHARcpy(build, m->mode);
 		build += CHARlen(build);
@@ -825,17 +825,17 @@ CHAR *maplist(flags, mode, reflen)
 	{
 		*--build = '\0';
 		if (m->flags & MAP_NOSAVE)
-			CHARcat(build, toCHAR(" nosave"));
+			CHARcat(build, toLCHAR(" nosave"));
 		if (m->flags & MAP_INPUT)
-			CHARcat(build, toCHAR(" input"));
+			CHARcat(build, toLCHAR(" input"));
 		if (m->flags & MAP_HISTORY)
-			CHARcat(build, toCHAR(" history"));
+			CHARcat(build, toLCHAR(" history"));
 		if (m->flags & MAP_COMMAND)
-			CHARcat(build, toCHAR(" command"));
+			CHARcat(build, toLCHAR(" command"));
 		if (m->flags & MAP_MOTION)
-			CHARcat(build, toCHAR(" motion"));
+			CHARcat(build, toLCHAR(" motion"));
 		if (m->flags & MAP_SELECT)
-			CHARcat(build, toCHAR(" select"));
+			CHARcat(build, toLCHAR(" select"));
 		build += CHARlen(build);
 		*build++ = ' ';
 	}
@@ -863,12 +863,12 @@ CHAR *maplist(flags, mode, reflen)
 	/* add "visual noremap" before rhs, if necessary */
 	if ((m->flags & MAP_ASCMD) != 0 && (flags & (MAP_INPUT|MAP_HISTORY)) != 0)
 	{
-		CHARncpy(build, toCHAR("visual "), 7);
+		CHARncpy(build, toLCHAR("visual "), 7);
 		build += 7;
 	}
 	if (m->flags & MAP_NOREMAP)
 	{
-		CHARncpy(build, toCHAR("noremap "), 8);
+		CHARncpy(build, toLCHAR("noremap "), 8);
 		build += 8;
 	}
 
@@ -1076,7 +1076,7 @@ void mapsave(buf)
 		}
 
 		/* construct a "map" command */
-		CHARcpy(text, toCHAR("map"));
+		CHARcpy(text, toLCHAR("map"));
 		len = 3;
 		switch (m->flags & MAP_WHEN)
 		{
@@ -1095,15 +1095,15 @@ void mapsave(buf)
 
 		  default:
 			if (m->flags & MAP_INPUT)
-				CHARcat(text, toCHAR(" input"));
+				CHARcat(text, toLCHAR(" input"));
 			if (m->flags & MAP_HISTORY)
-				CHARcat(text, toCHAR(" history"));
+				CHARcat(text, toLCHAR(" history"));
 			if (m->flags & MAP_COMMAND)
-				CHARcat(text, toCHAR(" command"));
+				CHARcat(text, toLCHAR(" command"));
 			if (m->flags & MAP_MOTION)
-				CHARcat(text, toCHAR(" motion"));
+				CHARcat(text, toLCHAR(" motion"));
 			if (m->flags & MAP_SELECT)
-				CHARcat(text, toCHAR(" select"));
+				CHARcat(text, toLCHAR(" select"));
 			len = CHARlen(text);
 		}
 		text[len++] = ' ';
@@ -1111,7 +1111,7 @@ void mapsave(buf)
 		/* append a "mode=..." flag if necessary */
 		if (m->mode)
 		{
-			CHARcpy(&text[len], "mode=");
+			CHARcpy(&text[len], toLCHAR("mode="));
 			len += 5;
 			CHARcpy(&text[len], m->mode);
 			len += CHARlen(m->mode);
@@ -1180,12 +1180,12 @@ void mapsave(buf)
 		/* add behavior tweak flags */
 		if (m->flags & MAP_ASCMD)
 		{
-			CHARncpy(&text[len], toCHAR(" visual"), 7);
+			CHARncpy(&text[len], toLCHAR(" visual"), 7);
 			len += 7;
 		}
 		if (m->flags & MAP_NOREMAP)
 		{
-			CHARncpy(&text[len], toCHAR(" noremap"), 8);
+			CHARncpy(&text[len], toLCHAR(" noremap"), 8);
 			len += 8;
 		}
 		text[len++] = ' ';
@@ -1244,7 +1244,7 @@ void mapsave(buf)
 	for (m = abbrs; m; m = m->next)
 	{
 		/* construct an "ab" command */
-		CHARcpy(text, toCHAR("ab"));
+		CHARcpy(text, toLCHAR("ab"));
 		len = 2;
 		if (m->flags & MAP_HISTORY)
 			text[len++] = '!';

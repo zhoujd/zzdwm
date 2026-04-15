@@ -10,27 +10,27 @@ typedef struct guidot_s
 	CHAR	*descr;	/* description of the attributes */
 } guidot_t;
 
-COLORINFO colorinfo[128] =
+COLORINFO colorinfo[SELECTED_BIT] =
 {
 	{NULL},			/* the null color */
-	{toCHAR("normal")},	/* the "normal" color */
-	{toCHAR("idle")},	/* the "idle" color */
-	{toCHAR("bottom")},	/* the "bottom" color */
-	{toCHAR("selection")},	/* the "selection" color */
-	{toCHAR("hlsearch")},	/* the "hlsearch" color */
-	{toCHAR("ruler")},	/* the "ruler" color -- ruler on bottom row */
-	{toCHAR("showmode")},	/* the "showmode" colors -- showmode value */
-	{toCHAR("lnum")},	/* the "lnum" colors -- line numbers */
-	{toCHAR("nontext")}	/* the "nontext" colors -- tilde lines */
+	{toLCHAR("normal")},	/* the "normal" color */
+	{toLCHAR("idle")},	/* the "idle" color */
+	{toLCHAR("bottom")},	/* the "bottom" color */
+	{toLCHAR("selection")},	/* the "selection" color */
+	{toLCHAR("hlsearch")},	/* the "hlsearch" color */
+	{toLCHAR("ruler")},	/* the "ruler" color -- ruler on bottom row */
+	{toLCHAR("showmode")},	/* the "showmode" colors -- showmode value */
+	{toLCHAR("lnum")},	/* the "lnum" colors -- line numbers */
+	{toLCHAR("nontext")}	/* the "nontext" colors -- tilde lines */
 };
-int colornpermanent = COLOR_FONT_QTY_SPECIALS;
-int ntemporary;	/* index of next temporary colorinfo[] to use */
+ELVFACE colornpermanent = COLOR_FONT_QTY_SPECIALS;
+ELVFACE ntemporary;	/* index of next temporary colorinfo[] to use */
 
 /* This array is used to store the sort sequence for the colors.  We don't
  * simply sort the colorinfo[] array in place because we don't want to move
  * any font after it has been assigned a position in colorinfo[].
  */
-int colorsortorder[128] = {
+ELVFACE colorsortorder[SELECTED_BIT] = {
 	COLOR_FONT_BOTTOM,
 	COLOR_FONT_HLSEARCH,
 	COLOR_FONT_IDLE,
@@ -48,8 +48,8 @@ int colorsortorder[128] = {
  */
 static struct
 {
-	unsigned char oldfont, newfont;
-} tmpfonts[128];
+	ELVFACE oldfont, newfont;
+} tmpfonts[SELECTED_BIT];
 
 #ifdef FEATURE_MKEXRC
 /* This is the head of a list of colors that would be used in a different
@@ -61,8 +61,8 @@ static guidot_t *guidot;
 
 /* Forward declarations for static functions */
 static ELVBOOL orcolor P_((unsigned char cur[3], unsigned char or[3], unsigned char bg[3]));
-static void colorlike P_((int fontcode));
-static void recolor P_((int fontcode));
+static void colorlike P_((_ELVFACE_ fontcode));
+static void recolor P_((_ELVFACE_ fontcode));
 
 /* background colors in RGB format, used for choosing foreground color */
 static unsigned char light[3] = {255, 255, 255};
@@ -98,7 +98,7 @@ char *colorimage(bgname)
 	 * we just look for a few specific punctuation marks.
 	 */
 	for (imgname = bgname;
-	     *imgname && CHARchr(toCHAR("./\\:"), *imgname) == NULL;
+	     *imgname && CHARchr(toLCHAR("./\\:"), *imgname) == NULL;
 	     imgname++)
 	{
 	}
@@ -211,15 +211,25 @@ static ELVBOOL orcolor(cur, or, bg)
  * table already, then this adds it.  If it can't add it (because the table is
  * already full) then it outputs an error message and returns 0.
  */
-int colorfind(fontname)
+ELVFACE colorfind(fontname)
 	CHAR *fontname;
 {
-	int	i;
+	ELVFACE	i;
 
 	/* scan the list */
 	for (i = 1; i < colornpermanent; i++)
 		if (!CHARcmp(colorinfo[i].name, fontname))
 			return i;
+
+#if 0
+	/* new color, but we can't allocate it now because we're in the middle
+	 * of redrawing the screen and we've allocated some temporary colors.
+	 */
+	if (ntemporary > colornpermanent)
+	{
+		return 0;
+	}
+#endif
 
 	/* must be a new color -- is there room? */
 	if (i >= QTY(colorinfo))
@@ -240,7 +250,7 @@ int colorfind(fontname)
 
 /* Combine two fonts, and return the result in a static variable */
 COLORINFO *colorcombine(oldfont, newcinfo)
-	int	oldfont;	/* index of the old font */
+	_ELVFACE_ oldfont;	/* index of the old font */
 	COLORINFO *newcinfo;	/* information about new font */
 {
 	static COLORINFO combo;
@@ -286,7 +296,7 @@ void colorparse(descr, fgref,bgref, likeref, bitsref)
 	/* by default, assume nothing */
 	*fgref = NULL;
 	*bgref = NULL;
-	*likeref = NULL;
+	*likeref = '\0';
 	*bitsref = 0;
 
 	/* if no description, then we're done! */
@@ -325,23 +335,23 @@ void colorparse(descr, fgref,bgref, likeref, bitsref)
 		}
 
 		/* Is it a word that has special meaning? */
-		if (!CHARcmp(word, toCHAR("like")))
+		if (!CHARcmp(word, toLCHAR("like")))
 			nextexpect = EXPECT_LIKE;
-		else if (!CHARcmp(word, toCHAR("on")))
+		else if (!CHARcmp(word, toLCHAR("on")))
 			nextexpect = EXPECT_BG;
-		else if (!CHARcmp(word, toCHAR("bold")))
+		else if (!CHARcmp(word, toLCHAR("bold")))
 			*bitsref |= COLOR_BOLD;
-		else if (!CHARcmp(word, toCHAR("italic")))
+		else if (!CHARcmp(word, toLCHAR("italic")))
 			*bitsref |= COLOR_ITALIC;
-		else if (!CHARcmp(word, toCHAR("underlined")))
+		else if (!CHARcmp(word, toLCHAR("underlined")))
 			*bitsref |= COLOR_UNDERLINED;
-		else if (!CHARcmp(word, toCHAR("boxed")))
+		else if (!CHARcmp(word, toLCHAR("boxed")))
 			*bitsref |= COLOR_BOXED;
-		else if (!CHARcmp(word, toCHAR("proportional")))
+		else if (!CHARcmp(word, toLCHAR("proportional")))
 			*bitsref |= COLOR_PROP|COLOR_PROPSET;
-		else if (!CHARcmp(word, toCHAR("fixed")))
+		else if (!CHARcmp(word, toLCHAR("fixed")))
 			*bitsref = (*bitsref & ~COLOR_PROP) | COLOR_PROPSET;
-		else if (!CHARcmp(word, toCHAR("graphic")))
+		else if (!CHARcmp(word, toLCHAR("graphic")))
 			*bitsref |= COLOR_GRAPHIC;
 		else
 			word = NULL;
@@ -423,7 +433,7 @@ Continue:
  * colorlike(fontcode) to adjust any fonts which are "like" this one.
  */
 static void recolor(fontcode)
-	int	fontcode;
+	_ELVFACE_ fontcode;
 {
 	COLORINFO newinfo, tmpinfo, *combo;
 	long	oldfg[20], oldbg;
@@ -431,10 +441,12 @@ static void recolor(fontcode)
 	CHAR	*fgstr, *bgstr, *likestr;
 	CHAR	*colornam, *scan;
 	unsigned short oldbits;
-	ELVBOOL	used;
+	ELVBOOL	used, multiple, oldhide;
 #ifdef FEATURE_AUTOCMD
 	ELVBOOL	bgchanged = ElvFalse;
 #endif
+
+	oldhide = ElvFalse; /* just to keep the compiler happy */
 
 	/* if there is no description, then don't change anything. */
 	if (!colorinfo[fontcode].descr)
@@ -477,13 +489,76 @@ static void recolor(fontcode)
 	/* were we given a background color? */
 	if (bgstr)
 	{
-		/* parse it, if the GUI supports color */
-		if (gui->color
-		 && (*gui->color)(fontcode, bgstr, ElvFalse,
-						&newinfo.bg, newinfo.da.bg_rgb))
+		/* It may actually be a series of colors, separated by "or" */
+		multiple = ElvFalse;
+		for (colornam = scan = bgstr; gui->color && *scan; scan++)
 		{
-			newinfo.da.bits |= (COLOR_BG|COLOR_BGSET);
+			/* If not the end of a color name (the word "or", or
+			 * the end of the description string) then loop.  If
+			 * "or" then stick a '\0' at the end of the color name.
+			 */
+			if (!CHARncmp(scan, toLCHAR(" or "), 4))
+			{
+				*scan = '\0';
+				scan += 3;
+				multiple = ElvTrue;
+				oldhide = msghide(ElvTrue);
+			}
+			else if (scan[1])
+				continue;
+
+			/* Convert the color.  If can't convert, skip it */
+			if (!(*gui->color)(fontcode, colornam, ElvFalse,
+						&tmpinfo.bg, tmpinfo.da.bg_rgb))
+			{
+				colornam = scan + 1;
+				continue;
+			}
+
+			/* was this the first color? */
+			if ((newinfo.da.bits & COLOR_BGSET) == 0)
+			{
+				/* Yes!  First color is simply stored */
+				newinfo.bg = tmpinfo.bg;
+				memcpy(newinfo.da.bg_rgb, tmpinfo.da.bg_rgb, 3);
+				newinfo.da.bits |= (COLOR_BG|COLOR_BGSET);
+			}
+			else
+			{
+				/* if closer to normal bg, remember it */
+				if (orcolor(tmpinfo.da.bg_rgb,
+					newinfo.da.bg_rgb, VIDEO_BG))
+				{
+					/* discard old bg, use the new one */
+					oldbg = newinfo.bg;
+					newinfo.bg = tmpinfo.bg;
+				}
+				else
+				{
+					/* discard "or" bg */
+					oldbg = tmpinfo.bg;
+				}
+			}
+
+			/* prepare for next color, if there is one */
+			colornam = scan + 1;
+
+		} /* end for each color in a list delimited by "or" words */
+
+		/* If multiple colors were given, then we disabled errors for
+		 * the individual colors so we can silently ignore bad colors.
+		 * But if *ALL* colors were bad, then we need to give an
+		 * error message now.
+		 */
+		if (multiple)
+		{
+			(void)msghide(oldhide);
+			if ((newinfo.da.bits & COLOR_BGSET) == 0)
+			{
+				msg(MSG_ERROR, "[S]no valid background colors given for $1", colorinfo[fontcode].name);
+			}
 		}
+
 		safefree(bgstr);
 	}
 
@@ -491,16 +566,19 @@ static void recolor(fontcode)
 	if (fgstr)
 	{
 		/* It may actually be a series of colors, separated by "or" */
+		multiple = ElvFalse;
 		for (colornam = scan = fgstr; gui->color && *scan; scan++)
 		{
 			/* If not the end of a color name (the word "or", or
 			 * the end of the description string) then loop.  If
 			 * "or" then stick a '\0' at the end of the color name.
 			 */
-			if (!CHARncmp(scan, toCHAR(" or "), 4))
+			if (!CHARncmp(scan, toLCHAR(" or "), 4))
 			{
 				*scan = '\0';
 				scan += 3;
+				multiple = ElvTrue;
+				oldhide = msghide(ElvTrue);
 			}
 			else if (scan[1])
 				continue;
@@ -547,6 +625,20 @@ static void recolor(fontcode)
 			colornam = scan + 1;
 
 		} /* end for each color in a list delimited by "or" words */
+
+		/* If multiple colors were given, then we disabled errors for
+		 * the individual colors so we can silently ignore bad colors.
+		 * But if *ALL* colors were bad, then we need to give an
+		 * error message now.
+		 */
+		if (multiple)
+		{
+			(void)msghide(oldhide);
+			if ((newinfo.da.bits & COLOR_FGSET) == 0)
+			{
+				msg(MSG_ERROR, "[S]no valid foreground colors given for $1", colorinfo[fontcode].name);
+			}
+		}
 
 		safefree(fgstr);
 
@@ -639,10 +731,10 @@ static void recolor(fontcode)
  * and reinterpret its "descr" field by calling recolor() on it.
  */
 static void colorlike(fontcode)
-	int	fontcode;
+	_ELVFACE_ fontcode;
 {
 	int	i;
-	int	oldlike;
+	ELVFACE oldlike;
 
 	/* Set this font's "like" value to an impossible value temporarily,
 	 * to avoid any chance of an endless loop due to cyclic dependencies.
@@ -671,9 +763,9 @@ static void colorlike(fontcode)
  * similar.
  */
 void colorset(fontcode, descr, explicit)
-	int	fontcode;
-	CHAR	*descr;
-	ELVBOOL	explicit;
+	_ELVFACE_ fontcode;
+	CHAR	  *descr;
+	ELVBOOL	  explicit;
 {
 	ELVBOOL	washidden;
 	CHAR	*fg, *bg, *like;
@@ -723,7 +815,7 @@ void colorset(fontcode, descr, explicit)
 	 */
 	if (newlike
 	 && (fontcode == COLOR_FONT_NORMAL
-	 || (fontcode == COLOR_FONT_IDLE && CHARcmp(newlike, toCHAR("normal")))))
+	 || (fontcode == COLOR_FONT_IDLE && CHARcmp(newlike, toLCHAR("normal")))))
 	{
 		safefree(newlike);
 		newlike = NULL;
@@ -881,6 +973,12 @@ void colorforeign(name, descr)
  */
 void colorsetup()
 {
+	/* if previous colors used more than o_facesused, then store it
+	 * in o_facesused so we can see if we're running out.
+	 */
+	if (ntemporary > o_facesused)
+		o_facesused = ntemporary;
+
 	/* Set ntemporary to start allocating immediately after the
 	 * permanent fonts.
 	 */
@@ -892,17 +990,17 @@ void colorsetup()
  * that isn't possible (because we ran out of space in the color table) then
  * just return the newfont.
  */
-int colortmp(oldfont, newfont)
-	int	oldfont;
-	int	newfont;
+ELVFACE colortmp(oldfont, newfont)
+	_ELVFACE_	oldfont;
+	_ELVFACE_	newfont;
 {
 	int	i;
 	int	sel;
 
 	/* strip off the "selection" bit */
-	sel = (oldfont | newfont) & 0x80;
-	oldfont &= 0x7f;
-	newfont &= 0x7f;
+	sel = (oldfont | newfont) & SELECTED_BIT;
+	oldfont &= FACE_BITS;
+	newfont &= FACE_BITS;
 
 	/* is it one of the previously allocated temporary fonts? */
 	for (i = ntemporary; --i >= colornpermanent; )
@@ -939,16 +1037,16 @@ int colortmp(oldfont, newfont)
  * called from drawopenedit().  Note that drawopenedit() calls colorsetup(),
  * so ntemporary=colornpermanent.
  */
-int colorexpose(font, refattr)
-	_char_		font;		/* old font code */
+ELVFACE colorexpose(font, refattr)
+	_ELVFACE_	font;		/* old font code */
 	DRAWATTR	*refattr;	/* attributes to show */
 {
 	int	i;
 	int	select;
 
 	/* if old font code is still valid, then just return it */
-	select = font & 0x80;
-	if ((font & 0x7f) < ntemporary)
+	select = font & SELECTED_BIT;
+	if ((font & FACE_BITS) < ntemporary)
 		return font;
 
 	/* else we need to choose a temporary font code */
@@ -1025,13 +1123,13 @@ void colorsave(buf)
 			continue;
 
 		/* construct a command line */
-		CHARcpy(cmd, toCHAR("color "));
+		CHARcpy(cmd, toLCHAR("color "));
 		CHARcat(cmd, o_gui);
-		CHARcat(cmd, toCHAR("."));
+		CHARcat(cmd, toLCHAR("."));
 		CHARcat(cmd, colorinfo[i].name);
-		CHARcat(cmd, toCHAR(" "));
+		CHARcat(cmd, toLCHAR(" "));
 		CHARcat(cmd, colorinfo[i].descr);
-		CHARcat(cmd, toCHAR("\n"));
+		CHARcat(cmd, toLCHAR("\n"));
 
 		/* append it to the buffer */
 		bufappend(buf, cmd, 0);
@@ -1040,11 +1138,11 @@ void colorsave(buf)
 	/* Append the colors for other GUIs too */
 	for (scan = guidot; scan; scan = scan->next)
 	{
-		CHARcpy(cmd, toCHAR("color "));
+		CHARcpy(cmd, toLCHAR("color "));
 		CHARcat(cmd, scan->name);
-		CHARcat(cmd, toCHAR(" "));
+		CHARcat(cmd, toLCHAR(" "));
 		CHARcat(cmd, scan->descr);
-		CHARcat(cmd, toCHAR("\n"));
+		CHARcat(cmd, toLCHAR("\n"));
 
 		/* append it to the buffer */
 		bufappend(buf, cmd, 0);
@@ -1070,15 +1168,15 @@ CHAR *colorcomplete(win, from, to, nameonly)
 	int	matches, firstmatch, common;
  static CHAR	retbuf[100];
  static CHAR	*magic[] = {
-		toCHAR("bold "),
-		toCHAR("boxed "),
-		toCHAR("proportional "),
-		toCHAR("fixed "),
-		toCHAR("graphic "),
-		toCHAR("italic "),
-		toCHAR("like "),
-		toCHAR("on "),
-		toCHAR("underlined ")};
+		toLCHAR("bold "),
+		toLCHAR("boxed "),
+		toLCHAR("proportional "),
+		toLCHAR("fixed "),
+		toLCHAR("graphic "),
+		toLCHAR("italic "),
+		toLCHAR("like "),
+		toLCHAR("on "),
+		toLCHAR("underlined ")};
 	
 
 	/* just to keep the compiler happy */
@@ -1104,7 +1202,7 @@ CHAR *colorcomplete(win, from, to, nameonly)
 
 		/* end of a complete word -- if it was "like" then we expect
 		 * a role. */
-		wantrole = (ELVBOOL)!CHARcmp(word, toCHAR("like"));
+		wantrole = (ELVBOOL)!CHARcmp(word, toLCHAR("like"));
 		if (!role)
 			role = word;
 		else
@@ -1135,19 +1233,19 @@ CHAR *colorcomplete(win, from, to, nameonly)
 				i = colorsortorder[sorted];
 				if (CHARlen(colorinfo[i].name) + 2 > (unsigned)width)
 				{
-					drawextext(win, toCHAR("\n"), 1);
+					drawextext(win, toLCHAR("\n"), 1);
 					width = o_columns(win);
 				}
 				else if (width < o_columns(win))
 				{
-					drawextext(win, toCHAR(" "), 1);
+					drawextext(win, toLCHAR(" "), 1);
 					width--;
 				}
 				drawextext(win, colorinfo[i].name, CHARlen(colorinfo[i].name));
 				width -= CHARlen(colorinfo[i].name);
 			}
-			drawextext(win, toCHAR("\n"), 1);
-			return toCHAR("");
+			drawextext(win, toLCHAR("\n"), 1);
+			return toLCHAR("");
 		}
 
 		/* see how many matches there are, and how many more characters
@@ -1184,14 +1282,14 @@ CHAR *colorcomplete(win, from, to, nameonly)
 		if (matches == 0)
 		{
 			guibeep(win);
-			return toCHAR("");
+			return toLCHAR("");
 		}
 
 		/* If unique match, then return its tail plus a space */
 		if (matches == 1)
 		{
 			CHARcpy(retbuf, colorinfo[firstmatch].name + len);
-			CHARcat(retbuf, toCHAR(" "));
+			CHARcat(retbuf, toLCHAR(" "));
 			return retbuf;
 		}
 
@@ -1213,19 +1311,19 @@ CHAR *colorcomplete(win, from, to, nameonly)
 				continue;
 			if (CHARlen(colorinfo[i].name) + 2 > (unsigned)width)
 			{
-				drawextext(win, toCHAR("\n"), 1);
+				drawextext(win, toLCHAR("\n"), 1);
 				width = o_columns(win);
 			}
 			else if (width < o_columns(win))
 			{
-				drawextext(win, toCHAR(" "), 1);
+				drawextext(win, toLCHAR(" "), 1);
 				width--;
 			}
 			drawextext(win, colorinfo[i].name, CHARlen(colorinfo[i].name));
 			width -= CHARlen(colorinfo[i].name);
 		}
-		drawextext(win, toCHAR("\n"), 1);
-		return toCHAR("");
+		drawextext(win, toLCHAR("\n"), 1);
+		return toLCHAR("");
 	}
 
 	/* if we get here, then it wasn't a role name, so we want to complete
@@ -1248,7 +1346,7 @@ CHAR *colorcomplete(win, from, to, nameonly)
 		if (i >= colornpermanent || !colorinfo[i].descr)
 		{
 			guibeep(win);
-			return toCHAR("");
+			return toLCHAR("");
 		}
 
 		/* else return the settings */
@@ -1263,12 +1361,12 @@ CHAR *colorcomplete(win, from, to, nameonly)
 	 * start with different letters except "bold" and "boxed", so this is
 	 * easy.
 	 */
-	if (!CHARcmp(word, toCHAR("b")))
-		return toCHAR("o");
-	else if (!CHARcmp(word, toCHAR("bo")))
+	if (!CHARcmp(word, toLCHAR("b")))
+		return toLCHAR("o");
+	else if (!CHARcmp(word, toLCHAR("bo")))
 	{
-		drawextext(win, toCHAR("bold boxed\n"), 11);
-		return toCHAR("");
+		drawextext(win, toLCHAR("bold boxed\n"), 11);
+		return toLCHAR("");
 	}
 	len = CHARlen(word);
 	for (i = 0; i < QTY(magic); i++)
@@ -1277,7 +1375,7 @@ CHAR *colorcomplete(win, from, to, nameonly)
 
 	/* it didn't match anything. */
 	guibeep(win);
-	return toCHAR("");
+	return toLCHAR("");
 }
 #endif /* FEATURE_COMPLETE */
 
@@ -1296,9 +1394,16 @@ static struct
 	{"magenta",	5,	{170,   0, 170}},
 	{"cyan",	6,	{  0, 170, 170}},
 	{"white",	7,	{170, 170, 170}},
-	{"gray",	10,	{ 85,  85,  85}},
-	{"grey",	10,	{ 85,  85,  85}},
-	{"yellow",	13,	{255, 255,  85}},
+	/* some synonyms... */
+	{"maroon",	1,	{170,   0,   0}}, /* red */
+	{"pink",	15,	{255,  85, 255}}, /* light magenta */
+	{"navy blue",   4,	{  0,   0, 170}}, /* blue */
+	{"gray",	10,	{ 85,  85,  85}}, /* light black */
+	{"grey",	10,	{ 85,  85,  85}}, /* light black */
+	{"gray20",      10,	{ 85,  85,  85}}, /* light black */
+	{"gray80",      7,	{170, 170, 170}}, /* light cyan */
+	{"yellow",	13,	{255, 255,  85}}, /* light brown */
+	{"tan",		13,	{255, 255,  85}}, /* light brown */
 	/* default & transparent must be the last two items in the list! */
 	{"default",	9,	{  0,   0,   0}},
 	{"transparent",	20,	{170, 170, 170}}
@@ -1365,7 +1470,7 @@ int colorrgb2ansi(isfg, rgb)
  * termcap, open, script, and quit user interfaces.
  */
 ELVBOOL coloransi(fontcode, name, isfg, colorptr, rgb)
-	int	fontcode;	/* index into colorinfo[] (ignored) */
+	_ELVFACE_ fontcode;	/* index into colorinfo[] (ignored) */
 	CHAR	*name;		/* name of the color */
 	ELVBOOL	isfg;		/* will this be a foreground color? */
 	long	*colorptr;	/* where to store the color code */
@@ -1415,9 +1520,9 @@ ELVBOOL coloransi(fontcode, name, isfg, colorptr, rgb)
 
 	/* see if we're supposed to set the brightness bit */
 	bright = ElvFalse;
-	if (!CHARncmp(name, toCHAR("light"), 5)) bright = ElvTrue, name += 5;
-	if (!CHARncmp(name, toCHAR("lt"), 2)) bright = ElvTrue, name += 2;
-	if (!CHARncmp(name, toCHAR("bright"), 6)) bright = ElvTrue, name += 6;
+	if (!CHARncmp(name, toLCHAR("light"), 5)) bright = ElvTrue, name += 5;
+	if (!CHARncmp(name, toLCHAR("lt"), 2)) bright = ElvTrue, name += 2;
+	if (!CHARncmp(name, toLCHAR("bright"), 6)) bright = ElvTrue, name += 6;
 
 	/* skip leading garbage characters */
 	while (*name && !elvalpha(*name))

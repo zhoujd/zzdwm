@@ -22,7 +22,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_exsubst[] = "$Id: exsubst.c,v 2.22 2003/10/17 17:41:23 steve Exp $";
+char id_exsubst[] = "$Id: exsubst.c,v 2.23 2011/11/21 20:40:04 steve Exp $";
 #endif
 
 typedef struct
@@ -454,7 +454,7 @@ RESULT	ex_substitute(xinf)
 		if (subst.re)
 			safefree(subst.re);
 		prev.re = NULL;
-		subst.re = regcomp(toCHAR(""), xinf->window->state->cursor);
+		subst.re = regcomp(toLCHAR(""), xinf->window->state->cursor);
 		if (!subst.re)
 		{
 			/* error message already given by regcomp() */
@@ -474,7 +474,7 @@ RESULT	ex_substitute(xinf)
 		xinf->re = NULL; /* so it isn't clobbered after this cmd */
 
 		/* generate the new text */
-		subst.rplc = regtilde(xinf->lhs ? xinf->lhs : toCHAR(""));
+		subst.rplc = regtilde(xinf->lhs ? xinf->lhs : toLCHAR(""));
 	}
 
 	/* analyse the option string */
@@ -759,7 +759,7 @@ RESULT	ex_substitute(xinf)
 		msg(MSG_INFO, "[dd]$1 substitutions on $2 lines", subst.chsub, subst.chline);
 
 	/* leave the cursor at the location of the last change */
-	if (subst.chsub > 0)
+	if (subst.chsub > 0 && xinf->window)
 	{
 		xinf->newcurs = markalloc(markbuffer(xinf->window->cursor), subst.cursoff);
 

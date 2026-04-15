@@ -4,7 +4,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_exedit[] = "$Id: exedit.c,v 2.71 2004/03/19 16:28:59 steve Exp $";
+char id_exedit[] = "$Id: exedit.c,v 2.72 2004/03/31 00:22:43 steve Exp $";
 #endif
 
 
@@ -76,7 +76,7 @@ RESULT	ex_global(xinf)
 
 	/* Default command is p, which should NOT be required */
 	if (!xinf->rhs)
-		xinf->rhs = CHARdup(toCHAR("p")); 
+		xinf->rhs = CHARdup(toLCHAR("p")); 
 
 	/* ":g!" is like ":v" */
 	if (xinf->bang)
@@ -88,7 +88,9 @@ RESULT	ex_global(xinf)
 	 * experform() function can move the cursor there in the conventional
 	 * way -- that will be important if we switch buffers.
 	 */
-	if (xinf->window->state->acton)
+	if (!xinf->window)
+		cursor = markdup(xinf->fromaddr);
+	else if (xinf->window->state->acton)
 		cursor = xinf->window->state->acton->cursor;
 	else
 		cursor = xinf->window->cursor;
@@ -177,10 +179,15 @@ RESULT	ex_global(xinf)
 	 * the final position so the cursor will be moved there in a graceful
 	 * way.
 	 */
-	xinf->newcurs = markdup(cursor);
-	if (markbuffer(cursor) != markbuffer(orig))
-		marksetbuffer(cursor, markbuffer(orig));
-	marksetoffset(cursor, markoffset(orig));
+	if (!xinf->window)
+		markfree(cursor);
+	else
+	{
+		xinf->newcurs = markdup(cursor);
+		if (markbuffer(cursor) != markbuffer(orig))
+			marksetbuffer(cursor, markbuffer(orig));
+		marksetoffset(cursor, markoffset(orig));
+	}
 	markfree(orig);
 	return ret;
 }
@@ -203,7 +210,7 @@ RESULT	ex_join(xinf)
 	offset = 0;
 
 	/* initialize endlist from options (if set) or literals */
-	endlist = (o_sentenceend ? o_sentenceend : toCHAR(".!?"));
+	endlist = (o_sentenceend ? o_sentenceend : toLCHAR(".!?"));
 
 	/* We're going to be replacing newlines with blanks.  The number of
 	 * newlines we want to replace is equal to the number lines affected
@@ -234,7 +241,7 @@ RESULT	ex_join(xinf)
 				/* figure out how many spaces to insert */
 				if (xinf->bang || *cp == ')' || elvspace(prevchar))
 					nspaces = 0;
-				else if (CHARchr(toCHAR(endlist), prevchar))
+				else if (CHARchr(endlist, prevchar))
 					nspaces = o_sentencegap;
 				else
 					nspaces = 1;
@@ -640,7 +647,7 @@ RESULT	ex_write(xinf)
 	/* if writing to a different filename, remember that name */
 	if (name[0] != '!'
 	 && o_filename(markbuffer(xinf->fromaddr))
-	 && CHARcmp(name, o_filename(markbuffer(xinf->fromaddr))))
+	 && CHARcmp(toCHAR(name), o_filename(markbuffer(xinf->fromaddr))))
 	{
 		if (name[0] == '>' && name[1] == '>')
 			optprevfile(toCHAR(name + 2), 1);
@@ -781,9 +788,9 @@ RESULT	ex_z(xinf)
 		{
 			exprintlines(xinf->window, xinf->newcurs, xinf->from - line, pflag);
 		}
-		drawextext(xinf->window, toCHAR("-------------------------------------------------------------------------------\n"), 80);
+		drawextext(xinf->window, toLCHAR("-------------------------------------------------------------------------------\n"), 80);
 		exprintlines(xinf->window, xinf->fromaddr, 1, pflag);
-		drawextext(xinf->window, toCHAR("-------------------------------------------------------------------------------\n"), 80);
+		drawextext(xinf->window, toLCHAR("-------------------------------------------------------------------------------\n"), 80);
 		count -= (xinf->from - line) + 1;
 		if (count > 0)
 		{

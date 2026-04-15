@@ -335,7 +335,7 @@ void msg(imp, terse, va_alist)
 			  case 'S':
 				arg[i] = va_arg(argptr, CHAR *);
 				if (!arg[i])
-					arg[i] = toCHAR("NULL");
+					arg[i] = toLCHAR("NULL");
 				break;
 
 			  case 's':
@@ -476,7 +476,7 @@ void msg(imp, terse, va_alist)
 			/* For fatal error messages, also write it to fperr */
 			if (imp == MSG_FATAL)
 			{
-				fprintf(fperr, "%s\n", verbose);
+				fprintf(fperr, "%s\n", tochar8(verbose));
 			}
 		}
 		else if (!gui || !gui->msg || !gui->exonly || !(*gui->msg)(0, imp, verbose, (int)(scan - verbose)))
@@ -484,11 +484,11 @@ void msg(imp, terse, va_alist)
 			/* no GUI yet, so just write it to fpinfo/fperr */
 			if (imp == MSG_FATAL || imp == MSG_ERROR)
 			{
-				fprintf(fperr, "%s\n", verbose);
+				fprintf(fperr, "%s\n", tochar8(verbose));
 			}
 			else
 			{
-				fprintf(fpinfo, "%s\r\n", verbose);
+				fprintf(fpinfo, "%s\r\n", tochar8(verbose));
 			}
 		}
 
@@ -513,7 +513,7 @@ void msg(imp, terse, va_alist)
 		/* append the message to the message buffer */
 		buf = bufalloc(toCHAR(MSGQUEUE_BUF), 0, ElvTrue);
 		(void)marktmp(mark, buf, o_bufchars(buf));
-		bufreplace(&mark, &mark, toCHAR("\n"), 1L);
+		bufreplace(&mark, &mark, toLCHAR("\n"), 1L);
 		bufreplace(&mark, &mark, verbose, (long)CHARlen(verbose));
 		bufreplace(&mark, &mark, toCHAR(imp>=MSG_ERROR ? "n" : " "), 1L);
 	}
@@ -596,7 +596,7 @@ void msgflush()
 			{
 				/* no GUI yet, so just write it to fpinfo/fperr */
 				fprintf(imp >= MSG_ERROR ? fperr : fpinfo,
-					"%s\n", verbose + 1);
+					"%s\n", tochar8(verbose + 1));
 			}
 			len = 0;
 		}

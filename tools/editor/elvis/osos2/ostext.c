@@ -103,7 +103,7 @@ txtclose (void)
  * elvis' idea of text into the local OS's idea of text.
  */
 int 
-txtwrite (CHAR *buf,    /* buffer, holds text to be written */
+txtwrite (char *buf,    /* buffer, holds text to be written */
          int nbytes)    /* number of characters to bewritten */
 {
   return write (fd, buf, nbytes);
@@ -114,7 +114,7 @@ txtwrite (CHAR *buf,    /* buffer, holds text to be written */
  * after any conversions such as CRLF->LF translation.
  */
 int 
-txtread (CHAR  *buf,        /* buffer where text should be read into */
+txtread (char  *buf,        /* buffer where text should be read into */
          int nbytes)        /* maximum number of bytes to read */
 {
   return read (fd, buf, nbytes);

@@ -10,7 +10,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_lpps[] = "$Id: lpps.c,v 2.31 2003/10/17 17:41:23 steve Exp $";
+char id_lpps[] = "$Id: lpps.c,v 2.32 2011/12/15 17:55:12 steve Exp $";
 #endif
 #ifdef FEATURE_LPR
 
@@ -19,12 +19,12 @@ static void out(char *str, char *param);
 static void outdef(char *name, char *value);
 static void psmove(int newrow, int newcol);
 static void pscenter(int newrow, int newcol, char *cmd);
-static void pscolor(_char_ newfont);
-static void psstring(_char_ newfont);
+static void pscolor(_ELVFACE_ newfont);
+static void psstring(_ELVFACE_ newfont);
 static void pagestart(void);
 static void pageend(ELVBOOL final);
 static void before(int minorno, void (*draw)(_CHAR_));
-static void fontch(_char_ font, _CHAR_ ch);
+static void fontch(_ELVFACE_ font, _CHAR_ ch);
 static void page(int linesleft);
 static void after(int linesleft);
 #endif
@@ -140,7 +140,7 @@ static void pscenter(newrow, newcol, cmd)
 }
 
 static void pscolor(newfont)
-	_char_	newfont;	/* font whose colors to use */
+	_ELVFACE_	newfont;	/* font whose colors to use */
 {
 	char	str[100];
 	unsigned char rgb[3];
@@ -167,7 +167,7 @@ static void pscolor(newfont)
 
 /* This function starts and/or ends a string.  It also handles font changes */
 static void psstring(newfont)
-	_char_	newfont;	/* font to load */
+	_ELVFACE_	newfont;	/* font to load */
 {
 	char	newps;		/* new postscript font */
 	int	oldcol;
@@ -420,7 +420,7 @@ static void before(minorno, draw)
  * control characters.  (The only possible control character is '\n'.)
  */
 static void fontch(font, ch)
-	_char_	font;	/* font of the next character from text image */
+	_ELVFACE_ font;	/* font of the next character from text image */
 	_CHAR_	ch;	/* the next character */
 {
 	char	buf[10];

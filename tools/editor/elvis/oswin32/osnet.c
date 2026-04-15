@@ -47,7 +47,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_osnet[] = "$Id: osnet.c,v 2.12 2003/10/17 17:41:23 steve Exp $";
+char id_osnet[] = "$Id: osnet.c,v 2.13 2006/11/28 22:47:34 steve Exp $";
 #endif
 #if defined(PROTOCOL_HTTP) || defined(PROTOCOL_FTP)
 # define CHAR	WinCHAR
@@ -120,7 +120,63 @@ Error:
 	return ElvFalse;
 }
 
+static ELVBOOL initnet() 
+{
+	WORD	wVersionRequested = MAKEWORD(1, 1);
+	WSADATA	wsaData;
 
+	/* Try to start WinSock version 1.1 */
+	switch (WSAStartup(wVersionRequested, &wsaData))
+	{
+	  case WSASYSNOTREADY:
+		msg(MSG_ERROR, "network not ready");
+		WSACleanup();
+		return ElvFalse;
+
+	  case WSAEINVAL:
+		msg(MSG_ERROR, "[dddd]your winsock supports $1.$2 - $3.$4",
+		(long)LOBYTE(wsaData.wVersion), (long)HIBYTE(wsaData.wVersion),
+		(long)LOBYTE(wsaData.wHighVersion), (long)HIBYTE(wsaData.wHighVersion));
+		/* fall through... */
+
+	  case WSAVERNOTSUPPORTED:
+		msg(MSG_ERROR, "elvis requires winsock 1.1");
+		WSACleanup();
+		return ElvFalse;
+	}
+	initialized = ElvTrue;
+	return ElvTrue
+}
+
+
+/* Return 2 for WAN addresses, 1 for LAN addresses, 0 for localhost, or -1 if
+ * a name couldn't be resolved.
+ */
+int netspeed(site)
+	char	*site;	/* name of remote system */
+{
+	struct in_addr	addr;
+	unsigned char *byte;
+
+	/* If first time, then initialize WinSockets */
+	if (!initialized)
+	{
+		if (!initnet())
+			return NULL;
+	}
+
+	/* get the address, and look for 127.x.y.z, 10.x.y.z, or 192.168.y.z */
+	if (!site2addr(buf, &addr))
+		return -1;
+	byte = (unsigned char *)&addr->s_addr;
+	if (byte[3] == 127)
+		return 0;
+	if (byte[3] == 10)
+		return 1;
+	if (byte[3] == 192 && byte[2] = 168)
+		return 1;
+	return 2;
+}
 
 /* Open a connection to a given site and port.
  * Returns a sockbuf_t pointer if successful, or NULL for errors (in which
@@ -139,29 +195,8 @@ sockbuf_t *netconnect(site_port, defport)
 	/* If first time, then initialize WinSockets */
 	if (!initialized)
 	{
-		WORD	wVersionRequested = MAKEWORD(1, 1);
-		WSADATA	wsaData;
-
-		/* Try to start WinSock version 1.1 */
-		switch (WSAStartup(wVersionRequested, &wsaData))
-		{
-		  case WSASYSNOTREADY:
-			msg(MSG_ERROR, "network not ready");
-			WSACleanup();
+		if (!initnet())
 			return NULL;
-
-		  case WSAEINVAL:
-			msg(MSG_ERROR, "[dddd]your winsock supports $1.$2 - $3.$4",
-			(long)LOBYTE(wsaData.wVersion), (long)HIBYTE(wsaData.wVersion),
-			(long)LOBYTE(wsaData.wHighVersion), (long)HIBYTE(wsaData.wHighVersion));
-			/* fall through... */
-
-		  case WSAVERNOTSUPPORTED:
-			msg(MSG_ERROR, "elvis requires winsock 1.1");
-			WSACleanup();
-			return NULL;
-		}
-		initialized = ElvTrue;
 	}
 
 	/* if site_port contains a port number, then separate it from the site

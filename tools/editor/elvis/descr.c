@@ -156,7 +156,7 @@ static ELVBOOL findbylanguage(language)
 
 	while ((values = fetchline()) != NULL)
 	{
-		if (CHARcmp(values[0], toCHAR("language")))
+		if (CHARcmp(values[0], toLCHAR("language")))
 			continue;
 		for (i = 1; values[i] && CHARcmp(values[i], language); i++)
 		{
@@ -186,11 +186,11 @@ static ELVBOOL findbyextension(filename)
 	while ((values = fetchline()) != NULL)
 	{
 		/* remember language, just in case this is the one we want */
-		if (!CHARcmp(values[0], toCHAR("language")) && values[1])
+		if (!CHARcmp(values[0], toLCHAR("language")) && values[1])
 			CHARcpy(lang, values[1]);
 
 		/* if not an "extension" line then skip */
-		if (CHARcmp(values[0], toCHAR("extension")))
+		if (CHARcmp(values[0], toLCHAR("extension")))
 			continue;
 
 		/* Does any extension here match the filename? */
@@ -219,8 +219,9 @@ static ELVBOOL findbyextension(filename)
  * If found, return a pointer to its description (cast to (void *) for
  * the sake of code reuse); otherwise return NULL.
  */
-void *descr_recall(win, dfile)
+void *descr_recall(win, lang, dfile)
 	WINDOW	win;		/* window in which to load the markup */
+	CHAR	*lang;		/* language to search for, or NULL to use win */
 	char	*dfile;		/* either SYNTAX_FILE or MARKUP_FILE */
 {
 	CHAR	*cp;
@@ -228,14 +229,16 @@ void *descr_recall(win, dfile)
 	unsigned len;
 
 	/* Determine whether we want to search by language or extension */
-	cp = CHARchr(o_display(win), ' ');
+	cp = lang ? lang : CHARchr(o_display(win), ' ');
 	if (cp)
 	{
 		cp++;
 		for (descr = descriptions; descr; descr = descr->next)
 			if (!CHARcmp(descr->lang, cp)
 			 && !strcmp(descr->file, dfile))
+			{
 				return descr->desc;
+			}
 	}
 	else if (o_filename(markbuffer(win->cursor)))
 	{
@@ -251,7 +254,9 @@ void *descr_recall(win, dfile)
 			 && descr->len <= len
 			 && !CHARcmp(cp + len - descr->len, descr->ext)
 			 && !strcmp(descr->file, dfile))
+			{
 				return descr->desc;
+			}
 		}
 	}
 	return NULL;
@@ -266,8 +271,9 @@ void *descr_recall(win, dfile)
  * After reading the file, you must call descr_close() to close the file and
  * store the description.
  */
-ELVBOOL descr_open(win, dfile)
+ELVBOOL descr_open(win, lang, dfile)
 	WINDOW	win;		/* window in which to load the markup */
+	CHAR	*lang;		/* language to load, or NULL to use win */
 	char	*dfile;		/* either SYNTAX_FILE or MARKUP_FILE */
 {
 	CHAR	*cp;
@@ -279,11 +285,11 @@ ELVBOOL descr_open(win, dfile)
 
 	/* Attempt to locate and open the description file */
 	pathname = iopath(tochar8(o_elvispath), dfile, ElvFalse);
-	if (!pathname || !ioopen(pathname, 'r', ElvFalse, ElvFalse, 't'))
+	if (!pathname || !ioopen(pathname, 'r', ElvFalse, ElvFalse, 'a', 't'))
 		return ElvFalse;
 
 	/* Determine whether we want to search by language or extension */
-	cp = CHARchr(o_display(win), ' ');
+	cp = lang ? lang - 1 : CHARchr(o_display(win), ' ');
 	if (cp)
 		result = findbylanguage(cp + 1);
 	else if (o_filename(markbuffer(win->cursor)))
@@ -312,8 +318,8 @@ CHAR **descr_line()
 	values  = fetchline();
 
 	/* skip any "extension" or "foreign" lines, but remember extensions */
-	while (values && (!CHARcmp(values[0], toCHAR("extension"))
-		       || !CHARcmp(values[0], toCHAR("foreign"))))
+	while (values && (!CHARcmp(values[0], toLCHAR("extension"))
+		       || !CHARcmp(values[0], toLCHAR("foreign"))))
 	{
 		/* remember these extensions */
 		for (i = 1; values[i]; i++)
@@ -324,7 +330,7 @@ CHAR **descr_line()
 	}
 
 	/* stop reading at EOF, or at next "language" line. */
-	if (!values || !CHARcmp(values[0], toCHAR("language")))
+	if (!values || !CHARcmp(values[0], toLCHAR("language")))
 		return NULL;
 
 	/* if "color" or "set" line, then we really didn't want to parse it
@@ -332,8 +338,8 @@ CHAR **descr_line()
 	 * onward should be one long string; for "set", everything from
 	 * values[1] onward should be one long string.
 	 */
-	if ((!CHARcmp(values[0], toCHAR("color")) && values[1] && values[2])
-	 || (!CHARcmp(values[0], toCHAR("set")) && values[1]))
+	if ((!CHARcmp(values[0], toLCHAR("color")) && values[1] && values[2])
+	 || (!CHARcmp(values[0], toLCHAR("set")) && values[1]))
 	{
 		for (i = (**values == 'c') ? 2 : 1; values[i + 1]; i++)
 			for (end = values[i] + CHARlen(values[i]); !*end; )
@@ -416,7 +422,7 @@ CHAR *descr_known(filename, dfile)
 
 	/* attempt to locate and open the description file */
 	pathname = iopath(tochar8(o_elvispath), dfile, ElvFalse);
-	if (!pathname || !ioopen(pathname, 'r', ElvFalse, ElvFalse, 't'))
+	if (!pathname || !ioopen(pathname, 'r', ElvFalse, ElvFalse, 'a', 't'))
 		return NULL;
 
 	/* attempt to locate an extension line which matches this file */

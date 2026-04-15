@@ -45,7 +45,7 @@ typedef struct gui_s
 	int	(*clipwrite) P_((CHAR *text, int len));
 	int	(*clipread) P_((CHAR *text, int len));
 	void	(*clipclose) P_((void));
-	ELVBOOL	(*color) P_((int fontcode, CHAR *colornam, ELVBOOL isfg, long *colorptr, unsigned char rgb[3]));
+	ELVBOOL	(*color) P_((_ELVFACE_ fontcode, CHAR *colornam, ELVBOOL isfg, long *colorptr, unsigned char rgb[3]));
 	void	(*freecolor) P_((long color, ELVBOOL isfg));
 	void	(*setbg) P_((GUIWIN *gw, long bg));
 	ELVBOOL	(*guicmd) P_((GUIWIN *gw, char *extra));

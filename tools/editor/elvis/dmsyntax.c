@@ -4,17 +4,23 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_dmsyntax[] = "$Id: dmsyntax.c,v 2.104 2003/10/19 23:09:33 steve Exp $";
+char id_dmsyntax[] = "$Id: dmsyntax.c,v 2.106 2011/12/15 17:55:12 steve Exp $";
 #endif
 #ifdef DISPLAY_SYNTAX
 
 /* These are the descriptions and values of some global options */
 static OPTDESC globdesc[] =
 {
-	{"includepath", "inc",	optsstring,	optisstring }
+	{"includepath", "inc",	optsstring,	optisstring },
+	{"embedlimit","embl",	optnstring,	optisnumber, "1:100000" },
+	{"embedbg", "embb",	NULL,		NULL	    },
+	{"embed", "embed",	NULL,		NULL	    }
 };
 static OPTVAL globval[QTY(globdesc)];
 #define o_includepath	globval[0].value.string
+#define o_embedlimit	globval[1].value.number
+#define o_embedbg	globval[2].value.boolean
+#define o_embed		globval[3].value.boolean
 
 /* This data type is used to denote a token type.  Values of this type will
  * be used as indices into the cfont[] array, below, to determine which
@@ -28,11 +34,26 @@ typedef enum
 	PREP, PREPWORD, PREPQUOTE, OTHER, PUNCT
 } TOKENTYPE;
 
+#ifdef FEATURE_EMBED
+typedef struct embed_s
+{
+	struct embed_s *next;
+	CHAR	begin[20];	/* marks beginning of embedded text */
+	CHAR	arg[40];	/* if not "", also required to mark embedded */
+	CHAR	lang[20];	/* name of language to use for embedded text */
+	CHAR	end[20];	/* marks end of embedded text */
+	struct sinfo_s	*sinfo;	/* internal description of lang, if loaded yet*/
+	int	beginlen;	/* length of "begin" text */
+	int	arglen;		/* length of "arg" text */
+	int	endlen;		/* length of "end" text */
+} embed_t;
+#endif
+
 /* This structure stores information about the current language's syntax.
  * Each window has its own copy of this, so different windows which happen
  * to be in "syntax" mode can each display different languages.
  */
-typedef struct
+typedef struct sinfo_s
 {
 	/* info about the current parsing state */
 	TOKENTYPE token;	/* used during parsing */
@@ -64,7 +85,11 @@ typedef struct
 	ELVBOOL strnoindent;	/* indentation not allowed in multi-line strings */
 	ELVBOOL strnoempty;	/* empty lines not allowed in multi-line strings */
 	char	mostly;		/* font code of variables */
-	char	wordbits[256];	/* which chars can appear in a word */
+#ifdef FEATURE_EMBED
+	ELVFACE	embedfont;	/* font to use if this is embedded */
+	embed_t	*embed;		/* list of embeddable languages */
+#endif
+	unsigned char wordbits[256];	/* which chars can appear in a word */
 } SINFO;
 #define STARTWORD	0x01	/* char: can start a word */
 #define INWORD		0x02	/* char: can occur within a word */
@@ -75,12 +100,14 @@ typedef struct
 #define USEREGEXP	0x10	/* either: occurs before possible regexp */
 #define USEREGSUB	0x20	/* either: occurs before possible regsub */
 #define OPERATOR	0x40	/* either: prefix to operatorXX name */
+#define ISEMBED		0x80	/* char: can start an embed start/end marker */
 #define isstartword(si,c)	((si)->wordbits[(CHAR)(c)] & STARTWORD)
 #define isinword(si,c)		((si)->wordbits[(CHAR)(c)] & INWORD)
 #define isregexp(si,c)		((si)->wordbits[(CHAR)(c)] & DELIMREGEXP)
 #define isbeforeregexp(si,c)	((si)->wordbits[(CHAR)(c)] & USEREGEXP)
 #define isbeforeregsub(si,c)	((si)->wordbits[(CHAR)(c)] & USEREGSUB)
 #define isoperator(si,c)	((si)->wordbits[(CHAR)(c)] & OPERATOR)
+#define isembed(si,c)		((si)->wordbits[(CHAR)(c)] & ISEMBED)
 #define wordflags(w)		((w)->flags)
 #define wordanchor(w)		(((w)->flags >> 16) & 0xfff)
 #define wordsetanchor(w, a)	((w)->flags = ((w)->flags & ~0x0fff0000) | ((a) << 16))
@@ -93,19 +120,19 @@ typedef struct
 #define wordbeforeregsub(w)	(wordflags(w) & USEREGSUB)
 #define wordoperator(w)		(wordflags(w) & OPERATOR)
 
-/* Most anchor values are in the range 1 - 0x7fe, but these are special */
+/* Most anchor values are in the range 1 - 0xffe, but these are special */
 #define ANCHOR_NONE	0
-#define ANCHOR_ALTERNATIVE	0x800
 #define ANCHOR_FRONT	0xfff
 
 #if USE_PROTOTYPES
+static SINFO *loadsyntax(WINDOW win, CHAR *lang);
 static spell_t *iskeyword(CHAR *word, long anchor, ELVBOOL indent);
 static spell_t *scankeyword(CHAR **refp, long anchor, ELVBOOL indent);
-static void addkeyword(CHAR *word, _char_ font, int anchor, _CHAR_ flags);
+static void addkeyword(CHAR *word, _ELVFACE_ font, int anchor, _CHAR_ flags);
 static DMINFO *init(WINDOW win);
 static void term(DMINFO *info);
 static MARK setup(WINDOW win, MARK top, long cursor, MARK bottom, DMINFO *info);
-static MARK image(WINDOW w, MARK line, DMINFO *info, void (*draw)(CHAR *p, long qty, _char_ font, long offset));
+static MARK image(WINDOW w, MARK line, DMINFO *info, void (*draw)(CHAR *p, long qty, _ELVFACE_ font, long offset));
 static CHAR *tagatcursor(WINDOW win, MARK cursor);
 static MARK tagload(CHAR *tagname, MARK from);
 #endif
@@ -137,8 +164,6 @@ static spell_t *scankeyword(refp, colplusone, indent)
 	ELVBOOL	indent;	/* preceded only by indentation whitespace? */
 {
 	spell_t *node;
-	spell_t *nnode = NULL;	/* node for normal colplusone anchor */
-	CHAR    *rrefp;		/* reference for normal colplusone anchor */
 	int	anchor;
 
 	/* look it up, being careful about case sensitivity */
@@ -171,14 +196,7 @@ static spell_t *scankeyword(refp, colplusone, indent)
 
 				  default:
 					/* must be in a specific column */
-					if (anchor == colplusone)
-					{
-						nnode = node;	/* keep node for normal anchor in mind... */
-						rrefp = *refp;
-						goto Continue;	/* ...but continue searching for... */
-					}
-					/* ...an alternative one which is preferred */
-					else if (anchor != (colplusone | ANCHOR_ALTERNATIVE))
+					if (anchor != colplusone)
 					{
 						goto Continue;
 					}
@@ -195,11 +213,6 @@ Continue:
 			node = spellletter(node, elvtolower(**refp));
 		else
 			node = spellletter(node, **refp);
-	}
-	if (!SPELL_IS_GOOD(node) && nnode)	/* no node for alternative anchor, try normal one */
-	{
-		node = nnode;
-		*refp = rrefp;
 	}
 	if (!SPELL_IS_GOOD(node))
 		return NULL;
@@ -264,7 +277,7 @@ static spell_t *iskeyword(word, colplusone, indent)
 
 static void addkeyword(word, font, anchor, flags)
 	CHAR	*word;		/* a keyword */
-	_char_	font;		/* font, or '\0' for default */
+	_ELVFACE_ font;		/* font, or '\0' for default */
 	int	anchor;		/* columns, or ANCHOR_FRONT, or ANCHOR_NONE */
 	_CHAR_	flags;		/* ISCOMMENT|ISKEYWORD|USEREGEXP|USEREGSUB|OPERATOR */
 {
@@ -385,7 +398,7 @@ void dmssmartargs(win)
 	 */
 	calcarg[0] = build;
 	calcarg[1] = NULL;
-	cp = calculate(toCHAR("shell(\"ref -cd \"$1)"), calcarg, CALC_ALL);
+	cp = calculate(toLCHAR("shell(\"ref -cd \"$1)"), calcarg, CALC_ALL);
 	if (!cp)
 		/* calc statement failed */
 		return;
@@ -459,7 +472,7 @@ ELVBOOL dmskeyword(win, word)
 			nupper++;
 		else if (elvlower(word[i]))
 			nlower++;
-	if (sinfo->finalt && i > 2 && !CHARcmp(word + i - 2, toCHAR("_t")))
+	if (sinfo->finalt && i > 2 && !CHARcmp(word + i - 2, toLCHAR("_t")))
 		return ElvTrue;
 	if (sinfo->allcaps && nlower == 0 && nupper > 0)
 		return ElvTrue;
@@ -473,80 +486,29 @@ ELVBOOL dmskeyword(win, word)
 	return ElvFalse;
 }
 
-/* start the mode, and allocate dminfo */
-static DMINFO *init(win)
-	WINDOW	win;
+/* load a language's syntax and return it */
+static SINFO *loadsyntax(win, lang)
+	WINDOW	win;	/* which window to load if lang=NULL */
+	CHAR	*lang;	/* which language to load, or NULL to use win */
 {
-	char	*str, *path;
-	CHAR	*cp, **values, dummy[1];
-	spell_t	*kw;
+	SINFO	*origsinfo, *newsinfo;
 	int	i, j, flags;
-
-	/* if this is the first-ever time a window has been initialized to
-	 * this mode, then we have some extra work to do...
-	 */
-	if (!dmsyntax.mark2col)
-	{
-		/* Inherit some functions from normal mode. */
-		(*dmnormal.init)(win);
-		dmsyntax.mark2col = dmnormal.mark2col;
-		dmsyntax.move = dmnormal.move;
-		dmsyntax.wordmove = dmnormal.wordmove;
-		dmsyntax.header = dmnormal.header;
-		dmsyntax.indent = dmnormal.indent; /* !!! really a good idea? */
-		dmsyntax.tagnext = dmnormal.tagnext;
-
-		/* initialize the mode's global options */
-		str = getenv("INCLUDE");
-#ifdef OSINCLUDEPATH
-		if (!str)
-			str = OSINCLUDEPATH;
+	spell_t	*kw;
+	CHAR	*cp, **values;
+	char	*str, *path;
+#ifdef FEATURE_EMBED
+	embed_t	*embed;
 #endif
-		optpreset(o_includepath, toCHAR(str), OPT_HIDE);
-		optinsert("glob", QTY(globdesc), globdesc, globval);
 
-		/* locate the default fonts */
-		cfont[COMMENT] =
-		cfont[COMMENT2] = colorfind(toCHAR("comment"));
-		cfont[STRING0] = cfont[STRING1] = colorfind(toCHAR("string"));
-		cfont[CHARACTER] = colorfind(toCHAR("char"));
-		cfont[REGEXP] = colorfind(toCHAR("regexp"));
-		cfont[REGSUB] = colorfind(toCHAR("regsub"));
-		font_keyword =
-		cfont[KEYWORD] = colorfind(toCHAR("keyword"));
-		cfont[DOC] = colorfind(toCHAR("doc"));
-		cfont[DOCMARKUP] = colorfind(toCHAR("docmarkup"));
-		cfont[DOCINDENT] = colorfind(toCHAR("docindent"));
-		cfont[FUNCTION] = colorfind(toCHAR("function"));
-		cfont[VARIABLE] = 0; /* set to sinfo->mostly in setup() */
-		cfont[NUMBER] = colorfind(toCHAR("number"));
-		cfont[PREP] =
-		cfont[PREPWORD] = colorfind(toCHAR("prep"));
-		cfont[PREPQUOTE] = colorfind(toCHAR("prepquote"));
-		cfont[OTHER] = colorfind(toCHAR("other"));
-		cfont[PUNCT] = 0; /* generic font for generic chars */
-
-		/* set some defaults */
-		colorset(cfont[COMMENT], toCHAR("italic"), ElvFalse);
-		colorset(cfont[CHARACTER], toCHAR("like string"), ElvFalse);
-		colorset(cfont[REGEXP], toCHAR("like string"), ElvFalse);
-		colorset(cfont[REGSUB], toCHAR("like regexp"), ElvFalse);
-		colorset(cfont[KEYWORD], toCHAR("bold"), ElvFalse);
-		colorset(cfont[PREP], toCHAR("like keyword"), ElvFalse);
-		colorset(cfont[PREPQUOTE], toCHAR("like string"), ElvFalse);
-		colorset(cfont[OTHER], toCHAR("like keyword"), ElvFalse);
-		colorset(cfont[DOC], toCHAR("proportional"), ElvFalse);
-		colorset(cfont[DOCMARKUP], toCHAR("like doc bold"), ElvFalse);
-		colorset(cfont[DOCINDENT], toCHAR("like doc fixed"), ElvFalse);
-
-		/* if no real window, then we're done! */
-		if (!win)
-			return NULL;
-	}
+	/* Save the original sinfo value.  We want to temporarily change it
+	 * while this function runs, but after that we want to leave it
+	 * unchanged.
+	 */
+	origsinfo = sinfo;
 
 	/* if possible, reuse an existing SINFO structure */
 #ifdef FEATURE_CACHEDESC
-	sinfo = (SINFO *)descr_recall(win, SYNTAX_FILE);
+	sinfo = (SINFO *)descr_recall(win, lang, SYNTAX_FILE);
 	if (!sinfo)
 #endif
 	{
@@ -560,13 +522,13 @@ static DMINFO *init(win)
 		}
 
 		/* set the "mostly" font code to "variable", for now */
-		sinfo->mostly = colorfind(toCHAR("variable"));
+		sinfo->mostly = colorfind(toLCHAR("variable"));
 
 		/* the default string quote is a backslash */
 		sinfo->backslash = '\\';
 
 		/* locate the description in the "elvis.syn" file */
-		if (descr_open(win, SYNTAX_FILE))
+		if (descr_open(win, lang, SYNTAX_FILE))
 		{
 			while ((values = descr_line()) != NULL)
 			{
@@ -596,8 +558,6 @@ static DMINFO *init(win)
 				{
 					if (values[1][0] == '^')
 						j = ANCHOR_FRONT;
-					else if (values[1][0] == '~')
-						j = atoi(tochar8(values[1]) + 1) | ANCHOR_ALTERNATIVE;
 					else
 						j = atoi(tochar8(values[1]));
 					if (j > 0 && j <= ANCHOR_FRONT)
@@ -814,7 +774,8 @@ static DMINFO *init(win)
 				else if (!strcmp(str, "color") && values[1] && values[2])
 				{
 					i = colorfind(values[1]);
-					colorset(i, values[2], ElvFalse);
+					if (i != 0)
+						colorset(i, values[2], ElvFalse);
 				}
 				else if (!strcmp(str, "set") && values[1])
 				{
@@ -825,7 +786,7 @@ static DMINFO *init(win)
 					{
 						cp = (CHAR *)safealloc(CHARlen(sinfo->setargs) + CHARlen(values[1]) + 2, sizeof(CHAR));
 						CHARcpy(cp, sinfo->setargs);
-						CHARcat(cp, toCHAR(" "));
+						CHARcat(cp, toLCHAR(" "));
 						CHARcat(cp, values[1]);
 						safefree(sinfo->setargs);
 						sinfo->setargs = cp;
@@ -845,6 +806,32 @@ static DMINFO *init(win)
 					CHARncpy(sinfo->enddoc, values[1],
 							QTY(sinfo->enddoc) - 1);
 				}
+#ifdef FEATURE_EMBED
+				else if (!strcmp(str, "embed") && values[1] && values[2] && values[3])
+				{
+					embed = (embed_t *)safealloc(1, sizeof *embed);
+					if (values[4] == NULL)
+					{
+						CHARncpy(embed->begin, values[1], sizeof embed->begin - 1);
+						CHARncpy(embed->lang, values[2], sizeof embed->lang - 1);
+						CHARncpy(embed->end, values[3], sizeof embed->end - 1);
+					}
+					else
+					{
+						CHARncpy(embed->begin, values[1], sizeof embed->begin - 1);
+						CHARncpy(embed->arg, values[2], sizeof embed->arg - 1);
+						CHARncpy(embed->lang, values[3], sizeof embed->lang - 1);
+						CHARncpy(embed->end, values[4], sizeof embed->end - 1);
+					}
+					embed->beginlen = CHARlen(embed->begin);
+					embed->arglen = CHARlen(embed->arg);
+					embed->endlen = CHARlen(embed->end);
+					embed->next = sinfo->embed;
+					sinfo->embed = embed;
+					sinfo->wordbits[embed->begin[0]] |= ISEMBED;
+					sinfo->wordbits[embed->end[0]] |= ISEMBED;
+				}
+#endif
 				/* else unknown attribute, or missing args */
 			}
 
@@ -877,7 +864,7 @@ static DMINFO *init(win)
 				     path = NULL)
 				{
 					/* add its tags to the keywords */
-					sinfo->keyword = telibrary(str, sinfo->keyword, sinfo->ignorecase, toCHAR("kind"));
+					sinfo->keyword = telibrary(str, sinfo->keyword, sinfo->ignorecase, toLCHAR("kind"));
 				}
 			}
 			if (o_taglibrary)
@@ -888,11 +875,91 @@ static DMINFO *init(win)
 				     path = NULL)
 				{
 					/* add its tags to the keywords */
-					sinfo->keyword = telibrary(str, sinfo->keyword, sinfo->ignorecase, toCHAR("lib"));
+					sinfo->keyword = telibrary(str, sinfo->keyword, sinfo->ignorecase, toLCHAR("lib"));
 				}
 			}
 		}
 	}
+
+	/* restore sinfo, and return the new value */
+	newsinfo = sinfo;
+	sinfo = origsinfo;
+	return newsinfo;
+}
+
+/* start the mode, and allocate dminfo */
+static DMINFO *init(win)
+	WINDOW	win;
+{
+	CHAR	*cp, dummy[1];
+	char	*str;
+
+	/* if this is the first-ever time a window has been initialized to
+	 * this mode, then we have some extra work to do...
+	 */
+	if (!dmsyntax.mark2col)
+	{
+		/* Inherit some functions from normal mode. */
+		(*dmnormal.init)(win);
+		dmsyntax.mark2col = dmnormal.mark2col;
+		dmsyntax.move = dmnormal.move;
+		dmsyntax.wordmove = dmnormal.wordmove;
+		dmsyntax.header = dmnormal.header;
+		dmsyntax.indent = dmnormal.indent; /* !!! really a good idea? */
+		dmsyntax.tagnext = dmnormal.tagnext;
+
+		/* initialize the mode's global options */
+		str = getenv("INCLUDE");
+#ifdef OSINCLUDEPATH
+		if (!str)
+			str = OSINCLUDEPATH;
+#endif
+		optpreset(o_includepath, toCHAR(str), OPT_HIDE);
+		optpreset(o_embedlimit, 8192, OPT_HIDE);
+		optpreset(o_embedbg, ElvTrue, OPT_HIDE);
+		optpreset(o_embed, ElvTrue, OPT_HIDE);
+
+		/* locate the default fonts */
+		cfont[COMMENT] =
+		cfont[COMMENT2] = colorfind(toLCHAR("comment"));
+		cfont[STRING0] = cfont[STRING1] = colorfind(toLCHAR("string"));
+		cfont[CHARACTER] = colorfind(toLCHAR("char"));
+		cfont[REGEXP] = colorfind(toLCHAR("regexp"));
+		cfont[REGSUB] = colorfind(toLCHAR("regsub"));
+		font_keyword =
+		cfont[KEYWORD] = colorfind(toLCHAR("keyword"));
+		cfont[DOC] = colorfind(toLCHAR("doc"));
+		cfont[DOCMARKUP] = colorfind(toLCHAR("docmarkup"));
+		cfont[DOCINDENT] = colorfind(toLCHAR("docindent"));
+		cfont[FUNCTION] = colorfind(toLCHAR("function"));
+		cfont[VARIABLE] = 0; /* set to sinfo->mostly in setup() */
+		cfont[NUMBER] = colorfind(toLCHAR("number"));
+		cfont[PREP] =
+		cfont[PREPWORD] = colorfind(toLCHAR("prep"));
+		cfont[PREPQUOTE] = colorfind(toLCHAR("prepquote"));
+		cfont[OTHER] = colorfind(toLCHAR("other"));
+		cfont[PUNCT] = 0; /* generic font for generic chars */
+
+		/* set some defaults */
+		colorset(cfont[COMMENT], toLCHAR("italic"), ElvFalse);
+		colorset(cfont[CHARACTER], toLCHAR("like string"), ElvFalse);
+		colorset(cfont[REGEXP], toLCHAR("like string"), ElvFalse);
+		colorset(cfont[REGSUB], toLCHAR("like regexp"), ElvFalse);
+		colorset(cfont[KEYWORD], toLCHAR("bold"), ElvFalse);
+		colorset(cfont[PREP], toLCHAR("like keyword"), ElvFalse);
+		colorset(cfont[PREPQUOTE], toLCHAR("like string"), ElvFalse);
+		colorset(cfont[OTHER], toLCHAR("like keyword"), ElvFalse);
+		colorset(cfont[DOC], toLCHAR("proportional"), ElvFalse);
+		colorset(cfont[DOCMARKUP], toLCHAR("like doc bold"), ElvFalse);
+		colorset(cfont[DOCINDENT], toLCHAR("like doc fixed"), ElvFalse);
+
+		/* if no real window, then we're done! */
+		if (!win)
+			return NULL;
+	}
+
+	/* load the language description */
+	sinfo = loadsyntax(win, NULL);
 
 	/* set options for this language, if any */
 	if (sinfo->setargs)
@@ -946,16 +1013,149 @@ static MARK setup(win, top, cursor, bottom, info)
 	CHAR	*cp, *enddoc;
 	CHAR	following;
 	ELVBOOL	knowstr, knowcom;
-
+#ifdef FEATURE_EMBED
+	embed_t	*embed;
+	CHAR	*cp2;
+	long	embedlimit;
+#endif
 
 	/* Use window's info.  Variables use this language's "mostly" font */
 	sinfo = (SINFO *)info;
 	cfont[VARIABLE] = sinfo->mostly;
+	win->embedded = NULL;
+	win->embedfont = '\0';
 
 	/* use the normal mode's setup function to choose the screen top */
 	newtop = (*dmnormal.setup)(win, top, cursor, bottom, info);
 	if (!newtop || markoffset(newtop) >= o_bufchars(markbuffer(newtop)))
 		return newtop;
+
+#ifdef FEATURE_EMBED
+	/* Does this language support embedded languages? */
+	if (sinfo->embed && o_embed)
+	{
+		/* The top line could be a continuation of an embedded block.
+		 * To find out, scan backward for any embeddable language's
+		 * "start" or "end" text.  Exception: If the top line itself
+		 * starts with any language's "end" text then the first line
+		 * is not a continuation (because embedded blocks end on the
+		 * line before the "end" marker).
+		 */
+
+		/* skip whitespace, and then look for any end marker */
+		scanalloc(&cp, newtop);
+		while (*cp && elvspace(*cp) && *cp != '\n')
+			scannext(&cp);
+		for (embed = sinfo->embed; embed; embed = embed->next)
+		{
+			if (scanmatch(&cp, embed->end, embed->endlen))
+				break;
+		}
+
+		/* Did we find an end marker at the start of the top line?
+		 * If not, then we need to scan backward for a start or end
+		 * marker.
+		 */
+		if (!embed)
+		{
+			embedlimit = o_embedlimit;
+			for (scanseek(&cp, newtop); cp && --embedlimit > 0L; scanprev(&cp))
+			{
+				/* if couldn't possibly be first char of an
+				 * embed start/end marker, then skip it.
+				 */
+				if (!isembed(sinfo, *cp))
+					continue;
+
+				/* scan for an end marker */
+				for (embed = sinfo->embed; embed; embed = embed->next)
+				{
+					if (scanmatch(&cp, embed->end, embed->endlen))
+						break;
+				}
+
+				/* did we find an end marker? */
+				if (embed)
+				{
+					/* Found!  Break from the loop, with a
+					 * NULL value for embed so we can tell
+					 * that we are not in an embedded block
+					 */
+					embed = NULL;
+					break;
+				}
+
+				/* scan for a start marker */
+				for (embed = sinfo->embed; embed; embed = embed->next)
+				{
+					if (!scanmatch(&cp, embed->begin, embed->beginlen))
+						continue;
+
+					/* if this embedded language doesn't
+					 * use an argument, then we're done.
+					 */
+					if (embed->arg[0] == '\0')
+					{
+						break;
+					}
+
+					/* It uses an argument.  Scan for the
+					 * argument text between begin & \n
+					 */
+					scandup(&cp2, &cp);
+					do {
+						scannext(&cp2);
+					} while (cp2 && *cp2 != '\n'
+					      && !scanmatch(&cp2, embed->arg, embed->arglen));
+
+					/* if not found, make cp2=NULL*/
+					if (cp2 && *cp2 == '\n')
+						cp2 = NULL;
+					scanfree(&cp2);
+
+					/* if match, then break with embed
+					 * pointing to the matching language.
+					 */
+					if (cp2)
+					{
+						break;
+					}
+				}
+				if (embed)
+					break;
+			}
+
+			/* At this point, the "embed" variable indicates whether
+			 * we're in an embedded block.  A NULL value means we
+			 * aren't, and any other value means we are in the type
+			 * of block that it points to.  If embedded, then we
+			 * need to use that language's sinfo data instead of the
+			 * usual.  If this is the first time we've displayed
+			 * that language, then we may also need to load the
+			 * syntax.
+			 */
+			if (embed)
+			{
+				if (!embed->sinfo)
+				{
+					embed->sinfo = loadsyntax(NULL, embed->lang);
+				}
+				sinfo = embed->sinfo;
+				win->embedded = embed->sinfo;
+				if (o_embedbg)
+				{
+					if (embed->sinfo->embedfont == '\0')
+						embed->sinfo->embedfont = colorfind(embed->lang);
+					win->embedfont = embed->sinfo->embedfont;
+				}
+			}
+		}
+
+		/* free the scan pointer */
+		scanfree(&cp);
+
+	}
+#endif
 
 	/* Does this language support some form of embedded documentation? */
 	if (*sinfo->enddoc)
@@ -1140,7 +1340,7 @@ static MARK image(w, line, info, draw)
 	WINDOW	w;		/* window where drawing will take place */
 	MARK	line;		/* line to be drawn */
 	DMINFO	*info;		/* window-specific information about mode */
-	void	(*draw)P_((CHAR *p, long qty, _char_ font, long offset));
+	void	(*draw)P_((CHAR *p, long qty, _ELVFACE_ font, long offset));
 				/* function for drawing a single character */
 {
 	int	col;
@@ -1160,6 +1360,10 @@ static MARK image(w, line, info, draw)
 	ELVBOOL	expectregsub;	/* allow substitution text to follow regexp */
 	ELVBOOL	expectprepq;	/* allow preprocessor quotes */
 	int	i;
+#ifdef FEATURE_EMBED
+	embed_t	*embed, *lastembed;
+	ELVBOOL	embedany;
+#endif
 
 #ifdef FEATURE_FOLD
 	/* if this line is folded, then draw using the "normal" image() func */
@@ -1171,6 +1375,89 @@ static MARK image(w, line, info, draw)
 
 	/* initially, we'll assume we continue the font of the previous line */
 	sinfo = (SINFO *)info;
+#ifdef FEATURE_EMBED
+	/* scan for any embed markers in this line... */
+	embedany = ElvFalse;
+
+	/* set lastembed to the current embedding language, or NULL if none */
+	if (w->embedded)
+		for (lastembed = sinfo->embed; lastembed && lastembed->sinfo != (SINFO *)w->embedded; lastembed = lastembed->next)
+		{
+		}
+	else
+		lastembed = NULL;
+
+	/* for each position in this line... */
+	scanalloc(&cp, line);
+	for (; o_embed && cp && *cp != '\n'; scannext(&cp))
+	{
+		/* skip if this couldn't possibly be part of start/end */
+		if (!isembed(sinfo, *cp))
+			continue;
+
+		/* for each embedding style... */
+		for (embed = sinfo->embed; embed; embed = embed->next)
+		{
+			/* does it end the embedding style? */
+			if (lastembed && embed->sinfo == lastembed->sinfo && scanmatch(&cp, embed->end, embed->endlen))
+			{
+				/* yes! */
+				embedany = ElvTrue;
+				lastembed = NULL;
+				break;
+			}
+
+			/* does it start a new embedding style? */
+			if (!lastembed && scanmatch(&cp, embed->begin, embed->beginlen))
+			{
+				/* if it has an arg, then look for that too */
+				up = embed->arg;
+				if (embed->arglen > 0)
+				{
+					scandup(&up, &cp);
+					for (; up && *up != '\n' && !scanmatch(&up, embed->arg, embed->arglen); scannext(&up))
+					{
+					}
+					if (up && *up == '\n')
+						up = NULL;
+					scanfree(&up);
+				}
+
+				/* did we find an arg?  (or didn't need one?) */
+				if (up)
+				{
+					embedany = ElvTrue;
+					lastembed = embed;
+					break;
+				}
+			}
+		}
+	}
+	scanfree(&cp);
+
+	/* if this line ends with a start marker, then maybe we need to
+	 * load its syntax.
+	 */
+	if (embedany && lastembed && lastembed->sinfo == NULL)
+	{
+		lastembed->sinfo = loadsyntax(NULL, lastembed->lang);
+	}
+
+	/* if this line contains any start or end markers, then this line
+	 * itself must not be embedded, so use the default syntax.
+	 */
+	if (embedany)
+	{
+		w->embedded = NULL;
+		w->embedfont = '\0';
+		sinfo = info;
+	}
+	else if (w->embedded)
+	{
+		/* continue using previous embedded syntax */
+		sinfo = (SINFO *)w->embedded;
+	}
+#endif
 	quote = ElvFalse;
 	indent = (ELVBOOL)(sinfo->token != DOC);
 	expectregexp = (ELVBOOL)(sinfo->token == PUNCT);
@@ -1358,9 +1645,6 @@ static MARK image(w, line, info, draw)
 			if (sinfo->token == PUNCT
 			 && (kp = scankeyword(&up, col + 1, indent)) != NULL)
 			{
-				/* indentation ends */
-				indent = ElvFalse;
-
 				/* It's a keyword.  Is it a comment keyword? */
 				if (wordcomment(kp))
 				{
@@ -1504,7 +1788,7 @@ static MARK image(w, line, info, draw)
 			{
 				sinfo->token = PREPWORD;
 			}
-			else if (sinfo->token == PREPWORD && !elvalnum(*cp) && *cp != '_')
+			else if (sinfo->token == PREPWORD && !elvalnum(*cp))
 			{
 				sinfo->token = PUNCT;
 				expectprepq = ElvTrue;
@@ -1687,6 +1971,26 @@ static MARK image(w, line, info, draw)
 		|| !(sinfo->strnewline || (prev && prev==sinfo->backslash)))
 	  && sinfo->token != COMMENT && sinfo->token != DOC)
 		sinfo->token = PUNCT;
+
+#ifdef FEATURE_EMBED
+	/* if we found an embedded language starting on this line, then
+	 * the effect will show up starting with the next line.
+	 */
+	if (o_embed && embedany && lastembed)
+	{
+		/* make the syntax start out in a safe mode */
+		lastembed->sinfo->token = PUNCT;
+
+		/* starting with next line, use the embedded syntax */
+		w->embedded = (void *)lastembed->sinfo;
+		if (o_embedbg)
+		{
+			if (lastembed->sinfo->embedfont == '\0')
+				lastembed->sinfo->embedfont = colorfind(lastembed->lang);
+			w->embedfont = lastembed->sinfo->embedfont;
+		}
+	}
+#endif
 
 	/* clean up & return the MARK of the next line */
 	scanfree(&cp);

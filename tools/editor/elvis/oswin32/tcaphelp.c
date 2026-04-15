@@ -37,7 +37,7 @@ static ELVBOOL clipopen(ELVBOOL forwrite);
 static int clipwrite(CHAR *text, int len);
 static int clipread(CHAR *text, int len);
 static void clipclose(void);
-static void switchcsbi(HANDLE which, COORD *curpos);
+static void switchcsbi(HANDLE which);
 static int optisttyrows(OPTDESC *opt, OPTVAL *val, CHAR *newval);
 static int optisttycols(OPTDESC *opt, OPTVAL *val, CHAR *newval);
 static void ttyresize(int rows, int cols);
@@ -97,21 +97,21 @@ static int optisttyrows (opt, val, newval)
 {
 	int	lines;
 	int	cols;
-	long	value = atol ((char *)newval);
+        long	value = atol ((char *)newval);
 
-	if (value < 2)
-		return -1;
-	else if (value == val->value.number)
-		return 0;
-	switchcsbi(myConsole, NULL);
-	ttyresize(value, -1);
-	ttysize(&lines, &cols);
+        if (value < 2)
+                return -1;
+        else if (value == val->value.number)
+                return 0;
+	switchcsbi(myConsole);
+        ttyresize(value, -1);
+        ttysize(&lines, &cols);
 	o_ttyrows = lines;
 	o_ttycolumns = cols;
 	if (windefault)
 		resized = ElvTrue;
 
-	return 1;
+        return 1;
 }
 
 static int optisttycols (opt, val, newval)
@@ -121,21 +121,21 @@ static int optisttycols (opt, val, newval)
 {
 	int	lines;
 	int	cols;
-	long	value = atol ((char *)newval);
+        long	value = atol ((char *)newval);
 
-	if (value < 30)
-		return -1;
-	else if (value == val->value.number)
-		return 0;
-	switchcsbi(myConsole, NULL);
-	ttyresize(-1, value);
-	ttysize(&lines, &cols);
+        if (value < 30)
+                return -1;
+        else if (value == val->value.number)
+                return 0;
+	switchcsbi(myConsole);
+        ttyresize(-1, value);
+        ttysize(&lines, &cols);
 	o_ttyrows = lines;
 	o_ttycolumns = cols;
 	if (windefault)
 		resized = ElvTrue;
 
-	return 1;
+        return 1;
 }
 /* This function catches signals, especially SIGINT */
 static void catchsig(signo)
@@ -259,7 +259,7 @@ void ttynormal()
 	if (useconsole)
 	{
 		/* switch back to the original mode */
-		switchcsbi(outConsole, NULL);
+		switchcsbi(outConsole);
 		SetConsoleMode(inConsole, inMode);
 		SetConsoleMode(outConsole, outMode);
 	}
@@ -272,11 +272,12 @@ void ttynormal()
 
 
 /* This function switches between screen buffers. */
-static void switchcsbi(HANDLE which, COORD * curpos)
+static void switchcsbi(HANDLE which)
 {
 	int	savedHeight;
 	int	savedWidth;
-	CONSOLE_SCREEN_BUFFER_INFO localconsinfo;
+	COORD	coord;		/* coordinates of cursor position */
+	long	dummy;
 
 #if 1
 	/* if no change, then do nothing */
@@ -304,6 +305,16 @@ static void switchcsbi(HANDLE which, COORD * curpos)
 	{
 		/* set the title */
 		SetConsoleTitle(orig_title);
+
+		/* use the original attributes */
+		attr = origattr;
+
+		/* move to the bottom row, and clear to EOL */
+		coord.X = 0;
+		coord.Y = consinfo.dwSize.Y - 1;
+		SetConsoleCursorPosition(console, coord);
+		FillConsoleOutputCharacter(console, ' ', consinfo.dwSize.X, coord, &dummy);
+		FillConsoleOutputAttribute(console, origattr, consinfo.dwSize.Y, coord, &dummy);
 	}
 	else
 	{
@@ -314,12 +325,6 @@ static void switchcsbi(HANDLE which, COORD * curpos)
 			ttysize (&savedHeight, &savedWidth);
 		}
 		attr = myattr;
-	}
-
-	if (curpos != NULL)
-	{
-		GetConsoleScreenBufferInfo(console, &localconsinfo);
-		*curpos = localconsinfo.dwCursorPosition;
 	}
 }
 
@@ -823,7 +828,7 @@ void ttywrite(buf, len)
 			  case 'h':
 				if (arg[0] == 1)
 				{
-					switchcsbi(myConsole, &coord);
+					switchcsbi(myConsole);
 				}
 				else if (arg[0] == 12)
 				{
@@ -837,7 +842,7 @@ void ttywrite(buf, len)
 			  case 'l':
 				if (arg[0] == 1)
 				{
-					switchcsbi(outConsole, &coord);
+					switchcsbi(outConsole);
 				}
 				else if (arg[0] == 12)
 				{
@@ -995,20 +1000,19 @@ ELVBOOL ttysize(linesptr, colsptr)
 	int	*colsptr;	/* where to store the number of columns */
 {
 	SMALL_RECT size;
-	CONSOLE_SCREEN_BUFFER_INFO localconsinfo;
 
 	if (!useconsole)
 		return ElvFalse;
 
 	/* Get the console buffer size */
-	if (!GetConsoleScreenBufferInfo(myConsole, &localconsinfo))
+	if (!GetConsoleScreenBufferInfo(myConsole, &consinfo))
 		return ElvFalse;
 #if 0
-	prevHeight = *linesptr = localconsinfo.dwSize.Y;
-	prevWidth = *colsptr = localconsinfo.dwSize.X;
+	prevHeight = *linesptr = consinfo.dwSize.Y;
+	prevWidth = *colsptr = consinfo.dwSize.X;
 #else
-	*linesptr = localconsinfo.dwSize.Y;
-	*colsptr = localconsinfo.dwSize.X;
+	*linesptr = consinfo.dwSize.Y;
+	*colsptr = consinfo.dwSize.X;
 #endif
 
 	/* make the window as large as the console buffer */
@@ -1036,41 +1040,39 @@ static void ttyresize(rows, cols)
 	int	rows;
 	int	cols;
 {
-	SMALL_RECT	rect;
-	COORD		coord;
+        SMALL_RECT	rect;
+        COORD		coord;
 	BOOL		b;
-	CONSOLE_SCREEN_BUFFER_INFO localconsinfo;
 
-	if (!useconsole)
-		return;
+        if (!useconsole)
+        	return;
 
 #if 0
 	if (console != myConsole)
 		SetConsoleActiveScreenBuffer(myConsole);
 #endif
 
-	coord = GetLargestConsoleWindowSize(myConsole);
-	GetConsoleScreenBufferInfo(myConsole, &localconsinfo);
-	rect.Left = 0;
-	rect.Top = 0;
-	if (rows > 0)
-		rect.Bottom = min(coord.Y, rows) - 1;
-	else
-		rect.Bottom = localconsinfo.srWindow.Bottom - localconsinfo.srWindow.Top;
-	if (cols > 0)
-		rect.Right = min(coord.X, cols) - 1;
-	else
-		rect.Right = localconsinfo.srWindow.Right - localconsinfo.srWindow.Left;
-	coord.X = rect.Right + 1;
-	coord.Y = rect.Bottom + 1;
-	b = SetConsoleWindowInfo(myConsole, TRUE, &rect);
-	b = SetConsoleScreenBufferSize(myConsole, coord);
-	if (curHeight != coord.Y)
-		curHeight = coord.Y;
-	if (curWidth != coord.X)
-		curWidth = coord.X;
+        coord = GetLargestConsoleWindowSize(myConsole);
+        GetConsoleScreenBufferInfo(myConsole, &consinfo);
+        rect.Left = 0;
+        rect.Top = 0;
+        if (rows > 0)
+                rect.Bottom = min(coord.Y, rows) - 1;
+        else
+                rect.Bottom = consinfo.srWindow.Bottom - consinfo.srWindow.Top;
+        if (cols > 0)
+                rect.Right = min(coord.X, cols) - 1;
+        else
+                rect.Right = consinfo.srWindow.Right - consinfo.srWindow.Left;
+        coord.X = rect.Right + 1;
+        coord.Y = rect.Bottom + 1;
+        b = SetConsoleWindowInfo(myConsole, TRUE, &rect);
+        b = SetConsoleScreenBufferSize(myConsole, coord);
+        if (curHeight != coord.Y)
+                curHeight = coord.Y;
+        if (curWidth != coord.X)
+                curWidth = coord.X;
 }
-
 
 /* This function sets the new console title */
 static void retitle(GUIWIN *gw, char *name)

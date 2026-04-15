@@ -376,7 +376,7 @@ Error:
  * For UNIX, this is simply a write() to the temp file or pipe.
  */
 int 
-prgwrite (CHAR  *buf,  /* buffer, contains text to be written */
+prgwrite (char  *buf,  /* buffer, contains text to be written */
           int  nbytes)  /* number of characters in buf */
 {
   assert (writefd >= 0);
@@ -517,7 +517,7 @@ Error:
  * For UNIX, this is simply a read() from the pipe.
  */
 int 
-prgread (CHAR  *buf,  /* buffer where text should be placed */
+prgread (char  *buf,  /* buffer where text should be placed */
          int  nbytes)  /* maximum number of characters to read */
 {
   assert (readfd >= 0);

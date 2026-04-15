@@ -5,7 +5,7 @@
 /* Create a new buffer in the session file */
 BEGIN_EXTERNC
 extern void	lowinit P_((void (*bufproc)(_BLKNO_ bufinfo, long nchars, long nlines, long changes, long prevloc, CHAR *name)));
-extern BLKNO	lowalloc P_((char *name));
+extern BLKNO	lowalloc P_((CHAR *name));
 extern BLKNO	lowdup P_((_BLKNO_ originfo));
 extern void	lowfree P_((_BLKNO_ bufinfo));
 extern void	lowtitle P_((_BLKNO_ bufinfo, CHAR *title));

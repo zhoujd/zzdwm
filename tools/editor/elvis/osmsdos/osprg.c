@@ -117,7 +117,7 @@ ELVBOOL prgopen(char *command, ELVBOOL willwrite, ELVBOOL willread)
  *
  * For DOS, this is simply a write() to the temp file.
  */
-int prgwrite(CHAR *buf, int nbytes)
+int prgwrite(char *buf, int nbytes)
 {
 	return write(fd, buf, nbytes);
 }
@@ -241,7 +241,7 @@ ELVBOOL prggo(void)
  * should be subjected to the same kinds of transformations as
  * textread().
  */
-int prgread(CHAR *buf, int nbytes)
+int prgread(char *buf, int nbytes)
 {
 	return read(fd, buf, nbytes);
 }

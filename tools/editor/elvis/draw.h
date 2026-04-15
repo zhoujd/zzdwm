@@ -3,7 +3,7 @@
 
 
 /* Attributes of characters currently shown on the screen.  Note that the new
- * image stores 1-byte font codes; the DRAWATTR struct is only used for the
+ * image stores ELVFACE font codes; the DRAWATTR struct is only used for the
  * old image.  This is because the new image needs some extra information
  * (especially the GUI's numbers for the colors) which isn't stored in DRAWATTR.
  * Also, any temporary font codes (created via colortmp()) are still allocated
@@ -18,10 +18,10 @@ typedef struct
 } DRAWATTR;
 
 /* This macro returns a font's attributes.  It is clever enough to convert
- * "selected" font codes 0x80-0xff into real font codes with the COLOR_SEL
- * attribute bit set.
+ * "selected" font codes (with SELECTED_BIT set) into real font codes with
+ * the COLOR_SEL attribute bit set.
  */
-#define drawfontbits(f)		(colorinfo[0x7f & (f)].da.bits | ((0x80 & (f)) ? COLOR_SEL : 0))
+#define drawfontbits(f)		(colorinfo[(f) & FACE_BITS].da.bits | (((f) & SELECTED_BIT) ? COLOR_SEL : 0))
 
 /* This macro compares new attributes to old attributes, at a given index.
  * This is non-trivial since they're stored differently.  It also compares
@@ -29,7 +29,7 @@ typedef struct
  */
 #define drawnochange(di,i)	((di)->newchar[i] == (di)->curchar[i] \
 				&& drawfontbits((di)->newfont[i]) == (di)->curattr[i].bits \
-				&& !memcmp(&colorinfo[0x7f & (int)(di)->newfont[i]].da.fg_rgb, \
+				&& !memcmp(&colorinfo[(int)(di)->newfont[i] & FACE_BITS].da.fg_rgb, \
 						&(di)->curattr[i].fg_rgb, 6))
 
 /* Return TRUE if current attributes match the default font */
@@ -91,7 +91,7 @@ typedef struct
 	DRAWLINE *newline;	/* info about new lines */
 	DRAWLINE *curline;	/* info about current lines */
 	CHAR	 *newchar;	/* characters of new image */
-	char	 *newfont;	/* fonts of new image */
+	ELVFACE	 *newfont;	/* fonts of new image */
 	CHAR	 *curchar;	/* characters of current image */
 	DRAWATTR *curattr;	/* font info of current image */
 	long	 *offsets;	/* buffer offsets of each individual cell */
@@ -112,6 +112,6 @@ typedef struct
 	long	 opencnt;	/* width of line in openimage */
 	int	 opencell;	/* tty simulator's cursor position */
 	ELVBOOL	 tmpmsg;	/* blank out the status line, unless newmsg */
-	char	 cursface;	/* text face of cursor, in visual mode only */
+	ELVFACE	 cursface;	/* text face of cursor, in visual mode only */
 } DRAWINFO;
 

@@ -46,7 +46,7 @@ int txtopen(filename, rwa, binary)
 	fd = open(filename, mode, 0666);
 	if (fd < 0)
 	{
-		if (errno == EPERM || errno == EACCES)
+		if (errno == EPERM || EACCES)
 			return -1;
 		else if (errno == EISDIR)
 			return -2;
@@ -68,7 +68,7 @@ void txtclose()
  * elvis' idea of text into the local OS's idea of text.
  */
 int txtwrite(buf, nbytes)
-	CHAR	*buf;	/* buffer, holds text to be written */
+	char	*buf;	/* buffer, holds text to be written */
 	int	nbytes;	/* number of characters to bewritten */
 {
 	return write(fd, buf, (size_t)nbytes);
@@ -79,7 +79,7 @@ int txtwrite(buf, nbytes)
  * after any conversions such as CRLF->LF translation.
  */
 int txtread(buf, nbytes)
-	CHAR	*buf;	/* buffer where text should be read into */
+	char	*buf;	/* buffer where text should be read into */
 	int	nbytes;	/* maximum number of bytes to read */
 {
 	return read(fd, buf, (size_t)nbytes);

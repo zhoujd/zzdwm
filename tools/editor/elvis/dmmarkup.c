@@ -10,7 +10,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_dmmarkup[] = "$Id: dmmarkup.c,v 2.140 2004/03/21 19:30:12 steve Exp $";
+char id_dmmarkup[] = "$Id: dmmarkup.c,v 2.145 2011/12/15 17:55:12 steve Exp $";
 #endif
 #ifdef DISPLAY_ANYMARKUP
 
@@ -37,7 +37,7 @@ typedef struct markup_s
 	char	attr[8];	/* attributes of markup */
 	twrap_t	(*fn)P_((TOKEN *));/* ptr to special function */	
 } MARKUP;
-#define TITLE	attr[0]		/* in title: -, N, Y */
+#define TITLE	attr[0]		/* in title: -, N, Y, H to hide */
 #define BREAKLN	attr[1]		/* line break: -, 0, 1, 2, c, or p */
 #define INDENT	attr[2]		/* -, <, >, or a number */
 #define LIST	attr[3]		/* in list: -, N, Y, # */
@@ -149,7 +149,7 @@ static twrap_t	manput P_((void));
 
 #ifdef DISPLAY_MAN
 static void	manescape P_((TOKEN *tok));
-static int	manarg P_((TOKEN *token, int start, _char_ font, ELVBOOL spc));
+static int	manarg P_((TOKEN *token, int start, _ELVFACE_ font, ELVBOOL spc));
 static twrap_t	manTH P_((TOKEN *token));
 static twrap_t	manSH P_((TOKEN *token));
 static twrap_t	manBI P_((TOKEN *token));
@@ -171,18 +171,18 @@ static TOKEN	*texget P_((CHAR **refp));
 static DMINFO	*texinit P_((WINDOW win));
 #endif /* defined(DISPLAY_TEX) */
 
-static void	countchar P_((CHAR *p, long qty, _char_ font, long offset));
+static void	countchar P_((CHAR *p, long qty, _ELVFACE_ font, long offset));
 static twrap_t	put P_((TOKEN *token));
 static void	term P_((DMINFO *info));
 static long	mark2col P_((WINDOW w, MARK mark, ELVBOOL cmd));
 static MARK	move P_((WINDOW w, MARK from, long linedelta, long column, ELVBOOL cmd));
 static MARK	setup P_((WINDOW win, MARK top, long cursor, MARK bottom, DMINFO *info));
-static MARK	image P_((WINDOW w, MARK line, DMINFO *info, void (*draw)(CHAR *p, long qty, _char_ font, long offset)));
-static int	start P_((WINDOW win, MARK from, void (*draw)(CHAR *p, long qty, _char_ font, long offset)));
+static MARK	image P_((WINDOW w, MARK line, DMINFO *info, void (*draw)(CHAR *p, long qty, _ELVFACE_ font, long offset)));
+static int	start P_((WINDOW win, MARK from, void (*draw)(CHAR *p, long qty, _ELVFACE_ font, long offset)));
 static void	storestate P_((long offset, LINEINFO *dest));
 static void	findtitle P_((BUFFER buf));
 #ifdef FEATURE_LPR
-static void	header P_((WINDOW w, int pagenum, DMINFO *info, void (*draw)(CHAR *p, long qty, _char_ font, long offset)));
+static void	header P_((WINDOW w, int pagenum, DMINFO *info, void (*draw)(CHAR *p, long qty, _ELVFACE_ font, long offset)));
 #endif
 
 /* Only a single TOKEN is ever really needed at one time */
@@ -200,7 +200,7 @@ static char	spcfont;
 /* This the drawchar pointer points to a function for outputting a single
  * character.
  */
-static void	(*drawchar) P_((CHAR *p, long qty, _char_ font, long offset));
+static void	(*drawchar) P_((CHAR *p, long qty, _ELVFACE_ font, long offset));
 
 /* Special characters.  These are stored in variables rather than macros so
  * that we can pass their address to (*drawchar)().
@@ -219,7 +219,7 @@ static CHAR	bullet2[1] = {'o'};
  * names of the fonts are converted into font codes in the initialization
  * function.
  */
-static char	fontcode[128];
+static ELVFACE	fontcode[128];
 
 static void initfonts()
 {
@@ -232,42 +232,42 @@ static void initfonts()
 	first = ElvFalse;
 
 	/* initialize the fontcode[] array */
-	fontcode['n'] = fontcode['N'] = colorfind(toCHAR("formatted"));
-	fontcode['b'] = fontcode['B'] = colorfind(toCHAR("bold"));
-	fontcode['i'] = fontcode['I'] = colorfind(toCHAR("italic"));
-	fontcode['u'] = fontcode['U'] = colorfind(toCHAR("underlined"));
-	fontcode['f'] = fontcode['F'] = colorfind(toCHAR("fixed"));
-	fontcode['e'] = fontcode['E'] = colorfind(toCHAR("emphasized"));
-	fontcode['l'] = fontcode['L'] = colorfind(toCHAR("link"));
-	fontcode['d'] = fontcode['D'] = colorfind(toCHAR("definition"));
-	fontcode['g'] = fontcode['G'] = colorfind(toCHAR("graphic"));
-	fontcode['m'] = fontcode['M'] = colorfind(toCHAR("markup"));
-	fontcode['*'] = colorfind(toCHAR("bullet"));
-	fontcode['\b'] = colorfind(toCHAR("form_button"));
-	fontcode['\r'] = colorfind(toCHAR("form_radio"));
-	fontcode['\\'] = colorfind(toCHAR("form_check"));
-	fontcode['\t'] = colorfind(toCHAR("form_text"));
-	fontcode['\f'] = colorfind(toCHAR("form_other"));
-	form = colorfind(toCHAR("form"));
+	fontcode['n'] = fontcode['N'] = colorfind(toLCHAR("formatted"));
+	fontcode['b'] = fontcode['B'] = colorfind(toLCHAR("bold"));
+	fontcode['i'] = fontcode['I'] = colorfind(toLCHAR("italic"));
+	fontcode['u'] = fontcode['U'] = colorfind(toLCHAR("underlined"));
+	fontcode['f'] = fontcode['F'] = colorfind(toLCHAR("fixed"));
+	fontcode['e'] = fontcode['E'] = colorfind(toLCHAR("emphasized"));
+	fontcode['l'] = fontcode['L'] = colorfind(toLCHAR("link"));
+	fontcode['d'] = fontcode['D'] = colorfind(toLCHAR("definition"));
+	fontcode['g'] = fontcode['G'] = colorfind(toLCHAR("graphic"));
+	fontcode['m'] = fontcode['M'] = colorfind(toLCHAR("markup"));
+	fontcode['*'] = colorfind(toLCHAR("bullet"));
+	fontcode['\b'] = colorfind(toLCHAR("form_button"));
+	fontcode['\r'] = colorfind(toLCHAR("form_radio"));
+	fontcode['\\'] = colorfind(toLCHAR("form_check"));
+	fontcode['\t'] = colorfind(toLCHAR("form_text"));
+	fontcode['\f'] = colorfind(toLCHAR("form_other"));
+	form = colorfind(toLCHAR("form"));
 
 	/* some hardcoded defaults for the appearances of those fonts */
-	colorset(fontcode['n'], toCHAR("proportional"), ElvFalse);
-	colorset(fontcode['b'], toCHAR("bold like formatted"), ElvFalse);
-	colorset(fontcode['i'], toCHAR("italic like formatted"), ElvFalse);
-	colorset(fontcode['u'], toCHAR("underlined like formatted"), ElvFalse);
-	colorset(fontcode['e'], toCHAR("like bold"), ElvFalse);
-	colorset(fontcode['f'], toCHAR("fixed like formatted"), ElvFalse);
-	colorset(fontcode['l'], toCHAR("underlined blue like formatted"), ElvFalse);
-	colorset(fontcode['d'], toCHAR("like bold"), ElvFalse);
-	colorset(fontcode['g'], toCHAR("graphic like fixed"), ElvFalse);
-	colorset(fontcode['*'], toCHAR("graphic"), ElvFalse);
-	colorset(fontcode['m'], toCHAR("bold green"), ElvFalse);
-	colorset(form, toCHAR("red"), ElvFalse);
-	colorset(fontcode['\b'], toCHAR("boxed like form"), ElvFalse);
-	colorset(fontcode['\r'], toCHAR("boxed like form"), ElvFalse);
-	colorset(fontcode['\\'], toCHAR("boxed like form"), ElvFalse);
-	colorset(fontcode['\t'], toCHAR("underlined like form"), ElvFalse);
-	colorset(fontcode['\f'], toCHAR("boxed like form"), ElvFalse);
+	colorset(fontcode['n'], toLCHAR("proportional"), ElvFalse);
+	colorset(fontcode['b'], toLCHAR("bold like formatted"), ElvFalse);
+	colorset(fontcode['i'], toLCHAR("italic like formatted"), ElvFalse);
+	colorset(fontcode['u'], toLCHAR("underlined like formatted"), ElvFalse);
+	colorset(fontcode['e'], toLCHAR("like bold"), ElvFalse);
+	colorset(fontcode['f'], toLCHAR("fixed like formatted"), ElvFalse);
+	colorset(fontcode['l'], toLCHAR("underlined blue like formatted"), ElvFalse);
+	colorset(fontcode['d'], toLCHAR("like bold"), ElvFalse);
+	colorset(fontcode['g'], toLCHAR("graphic like fixed"), ElvFalse);
+	colorset(fontcode['*'], toLCHAR("graphic"), ElvFalse);
+	colorset(fontcode['m'], toLCHAR("bold green"), ElvFalse);
+	colorset(form, toLCHAR("red"), ElvFalse);
+	colorset(fontcode['\b'], toLCHAR("boxed like form"), ElvFalse);
+	colorset(fontcode['\r'], toLCHAR("boxed like form"), ElvFalse);
+	colorset(fontcode['\\'], toLCHAR("boxed like form"), ElvFalse);
+	colorset(fontcode['\t'], toLCHAR("underlined like form"), ElvFalse);
+	colorset(fontcode['\f'], toLCHAR("boxed like form"), ElvFalse);
 }
 
 
@@ -451,14 +451,14 @@ static twrap_t htmlimg(token)
 	htmlurl = (ELVBOOL)(token->text[1] == 'h' || token->text[1] == 'u');
 
 	/* look for an "alt=..." argument */
-	for (i = 5; i < token->nchars && CHARncmp(&token->text[i - 5], toCHAR(" alt="), 5); i++)
+	for (i = 5; i < token->nchars && CHARncmp(&token->text[i - 5], toLCHAR(" alt="), 5); i++)
 	{
 	}
 
 	/* if no "alt=" then search for "name=" (This is for <frame ...>) */
 	if (i >= token->nchars)
 	{
-		for (i = 6; i < token->nchars && CHARncmp(&token->text[i - 6], toCHAR(" name="), 6); i++)
+		for (i = 6; i < token->nchars && CHARncmp(&token->text[i - 6], toLCHAR(" name="), 6); i++)
 		{
 		}
 	}
@@ -468,8 +468,8 @@ static twrap_t htmlimg(token)
 	{
 		for (i = 5;
 		     i < token->nchars
-			&& CHARncmp(&token->text[i - 5], toCHAR(" src="), 5)
-			&& CHARncmp(&token->text[i - 5], toCHAR(" url="), 5);
+			&& CHARncmp(&token->text[i - 5], toLCHAR(" src="), 5)
+			&& CHARncmp(&token->text[i - 5], toLCHAR(" url="), 5);
 		     i++)
 		{
 		}
@@ -490,6 +490,14 @@ static twrap_t htmlimg(token)
 		/* there is no "alt=..." string, so display the tag name */
 		i = 1;
 		for (j = 1; j + i < token->nchars && elvalpha(token->text[j + i]); j++)
+		{
+		}
+	}
+	else if (token->text[i] == '\'')
+	{
+		/* the "alt=" argument has a single-quoted argument */
+		i++;
+		for (j = i; j < token->nchars && token->text[j] != '\''; j++)
 		{
 		}
 	}
@@ -574,7 +582,7 @@ static twrap_t htmlli(token)
 	{
 		/* convert item# to characters */
 		long2CHAR(buf, (long)listcnt++);
-		CHARcat(buf, toCHAR(")"));
+		CHARcat(buf, toLCHAR(")"));
 		len = CHARlen(buf);
 
 		/* output whitespace for indentation */
@@ -623,6 +631,13 @@ static twrap_t htmlinput(token)
 	int	mycol;
 	int	i;
 
+	/* if in "title" then hide it.  This is mostly because <script>
+	 * switches to "title" mode, and some scripts generate HTML code,
+	 * and we don't want that HTML code to be displayed.
+	 */
+	if (title)
+		return TWRAP_NO;
+
 	/* parse the arguments */
 	height = (token->text[1] == 't') ? 3 : 1;
 	width = vallen = validx = 0;
@@ -630,7 +645,7 @@ static twrap_t htmlinput(token)
 	font = fontcode['\t'];
 	for (i = 4; i < token->nchars; i++)
 	{
-		if (!CHARncmp(&token->text[i], toCHAR("value="), 6))
+		if (!CHARncmp(&token->text[i], toLCHAR("value="), 6))
 		{
 			i += 6;
 			if (token->text[i] == '"')
@@ -638,6 +653,14 @@ static twrap_t htmlinput(token)
 				i++;
 				validx = i;
 				for (vallen = i; i < token->nchars && token->text[i] != '"'; i++)
+				{
+				}
+			}
+			else if (token->text[i] == '\'')
+			{
+				i++;
+				validx = i;
+				for (vallen = i; i < token->nchars && token->text[i] != '\''; i++)
 				{
 				}
 			}
@@ -650,33 +673,33 @@ static twrap_t htmlinput(token)
 			}
 			vallen = i - vallen;
 		}
-		else if (!CHARncmp(&token->text[i], toCHAR("size="), 5)
-		      || !CHARncmp(&token->text[i], toCHAR("cols="), 5))
+		else if (!CHARncmp(&token->text[i], toLCHAR("size="), 5)
+		      || !CHARncmp(&token->text[i], toLCHAR("cols="), 5))
 		{
 			i += 5;
 			width = atoi(tochar8(&token->text[i]));
 		}
-		else if (!CHARncmp(&token->text[i], toCHAR("type="), 5))
+		else if (!CHARncmp(&token->text[i], toLCHAR("type="), 5))
 		{
 			i += 5;
-			if (token->text[i] == '"')
+			if (token->text[i] == '"' || token->text[i] == '\'')
 				i++;
-			if (!CHARncmp(&token->text[i], toCHAR("checkbox"), 8)
-			 || !CHARncmp(&token->text[i], toCHAR("CHECKBOX"), 8))
+			if (!CHARncmp(&token->text[i], toLCHAR("checkbox"), 8)
+			 || !CHARncmp(&token->text[i], toLCHAR("CHECKBOX"), 8))
 			{
 				/* CHECKBOX button */
 				button = radio = ElvTrue;
 				i += 8;
 				font = fontcode['\\'];
 			}
-			else if (!CHARncmp(&token->text[i], toCHAR("hidden"), 6)
-			      || !CHARncmp(&token->text[i], toCHAR("HIDDEN"), 6))
+			else if (!CHARncmp(&token->text[i], toLCHAR("hidden"), 6)
+			      || !CHARncmp(&token->text[i], toLCHAR("HIDDEN"), 6))
 			{
 				/* HIDDEN field -- do nothing with it */
 				return TWRAP_NO;
 			}
-			else if (!CHARncmp(&token->text[i], toCHAR("radio"), 5)
-			      || !CHARncmp(&token->text[i], toCHAR("RADIO"), 5))
+			else if (!CHARncmp(&token->text[i], toLCHAR("radio"), 5)
+			      || !CHARncmp(&token->text[i], toLCHAR("RADIO"), 5))
 			{
 				/* RADIO button */
 				button = radio = ElvTrue;
@@ -699,7 +722,7 @@ static twrap_t htmlinput(token)
 				}
 			}
 		}
-		else if (!CHARncmp(&token->text[i], toCHAR("checked"), 7))
+		else if (!CHARncmp(&token->text[i], toLCHAR("checked"), 7))
 		{
 			/* font = fontcode['\\'] BUT WITH HIGHLIGHTING */
 			i += 7;
@@ -775,7 +798,7 @@ static twrap_t htmla(token)
 	deffont = curfont;
 
 	/* if the token starts with "a href" then force font to "link" */
-	if (!CHARncmp(token->text, toCHAR("<a href="), 8))
+	if (!CHARncmp(token->text, toLCHAR("<a href="), 8))
 		curfont = fontcode['l'];
 
 	/* zero width, always fits on line */
@@ -857,86 +880,90 @@ static int htmlmarkup(token)
 		/* These are HTML tags */
 		/* Tag		 Effects	Function	*/
 		/*               TBILFFD                        */
-		{ "html",	"Y-2-NY-"			},
-		{ "/html",	"N-2-NY-"			},
-		{ "head",	"Y-2-NY-"			},
-		{ "/head",	"N-2-NY-"			},
+		{ "html",	"H-2-NY-"			},
+		{ "/html",	"--2-NY-"			},
+		{ "head",	"H-2-NY-"			},
+		{ "/head",	"--2-NY-"			},
 		{ "title",	"Y-2-NY-"			},
 		{ "/title",	"N-2-NY-"			},
+		{ "style",	"H-2-NN-"			},
+		{ "/style",	"N-2-NY-"			},
+		{ "script",	"H-2-NN-"			},
+		{ "/script",	"N-2-NY-"			},
 		{ "body",	"N-2-NY-"			},
-		{ "/body",	"N-2-NY-"			},
-		{ "h1",		"Np0-BYS"			},
-		{ "/h1",	"N12-NY-"			},
-		{ "h2",		"Nc1-BYS"			},
-		{ "/h2",	"N12-NY-"			},
-		{ "h3",		"N12-BYS"			},
-		{ "/h3",	"N02-NY-"			},
-		{ "h4",		"N12-IY-"			},
-		{ "/h4",	"N02-NY-"			},
-		{ "h5",		"N12-IY-"			},
-		{ "/h5",	"N02-NY-"			},
-		{ "h6",		"N12-IY-"			},
-		{ "/h6",	"N02-NY-"			},
-		{ "p",		"N1|-NYP"			},
-		{ "hr",		"N0-----",	htmlhr		},
-		{ "img",	"N------",	htmlimg		},
-		{ "frame",	"N-----T",	htmlimg		},
-		{ "embed",	"N-----T",	htmlimg		},
-		{ "br",		"N0---Y-"			},
-		{ "table",	"N0|-NY-"			},
-		{ "/table",	"N0@-NY-"			},
-		{ "tr",		"N0@--Y-"			},
-		{ "th",		"N-=-BY-"			},
-		{ "td",		"N-=-NY-"			},
-		{ "blockquote",	"N14-NYP"			},
-		{ "/blockquote","N12-NY-"			},
-		{ "pre",	"N0--FNP",	htmlpre		},
-		{ "/pre",	"N0--NY-"			},
-		{ "dir",	"N0>-FNP",	htmlpre		},
-		{ "/dir",	"N0<-NY-"			},
-		{ "xmp",	"N0>-FN-",	htmlpre		},
-		{ "/xmp",	"N0<-NY-"			},
-		{ "dl",		"N-2-NYS"			},
-		{ "/dl",	"N02-NY-"			},
-		{ "dt",		"N12-DYP"			},
-		{ "dd",		"N03-NY-"			},
-		{ "ol",		"N->#-YP"			},
-		{ "/ol",	"N0<N-Y-"			},
-		{ "ul",		"N->Y-YP"			},
-		{ "/ul",	"N0<N-Y-"			},
-		{ "menu",	"N->Y-Y-"			},
-		{ "/menu",	"N-<N-Y-"			},
-		{ "li",		"N0-----",	htmlli		},
-		{ "input",	"N-----T",	htmlinput	},
-		{ "textarea",	"N-----T",	htmlinput	},
-		{ "a",		"N-----T",	htmla		},
-		{ "/a",		"N---=--"			},
-		{ "cite",	"N---i--"			},
-		{ "/cite",	"N---=--"			},
-		{ "dfn",	"N---d--"			},
-		{ "/dfn",	"N---=--"			},
-		{ "em",		"N---i--"			},
-		{ "/em",	"N---=--"			},
-		{ "kbd",	"N---b--"			},
-		{ "/kbd",	"N---=--"			},
-		{ "strong",	"N---b--"			},
-		{ "/strong",	"N---=--"			},
-		{ "var",	"N---i--"			},
-		{ "/var",	"N---=--"			},
-		{ "address",	"N---i--"			},
-		{ "/address",	"N---=--"			},
-		{ "code",	"N---f--"			},
-		{ "/code",	"N---=--"			},
-		{ "b",		"N---b--"			},
-		{ "/b",		"N---=--"			},
-		{ "i",		"N---i--"			},
-		{ "/i",		"N---=--"			},
-		{ "u",		"N---u--"			},
-		{ "/u",		"N---=--"			},
-		{ "tt",		"N---f--"			},
-		{ "/tt",	"N---=--"			},
+		{ "/body",	"--2-NY-"			},
+		{ "h1",		"-p0-BYS"			},
+		{ "/h1",	"-12-NY-"			},
+		{ "h2",		"-c1-BYS"			},
+		{ "/h2",	"-12-NY-"			},
+		{ "h3",		"-12-BYS"			},
+		{ "/h3",	"-02-NY-"			},
+		{ "h4",		"-12-IY-"			},
+		{ "/h4",	"-02-NY-"			},
+		{ "h5",		"-12-IY-"			},
+		{ "/h5",	"-02-NY-"			},
+		{ "h6",		"-12-IY-"			},
+		{ "/h6",	"-02-NY-"			},
+		{ "p",		"-1|-NYP"			},
+		{ "hr",		"-0-----",	htmlhr		},
+		{ "img",	"-------",	htmlimg		},
+		{ "frame",	"------T",	htmlimg		},
+		{ "embed",	"------T",	htmlimg		},
+		{ "br",		"-0---Y-"			},
+		{ "table",	"-0|-NY-"			},
+		{ "/table",	"-0@-NY-"			},
+		{ "tr",		"-0@--Y-"			},
+		{ "th",		"--=-BY-"			},
+		{ "td",		"--=-NY-"			},
+		{ "blockquote",	"-14-NYP"			},
+		{ "/blockquote","-12-NY-"			},
+		{ "pre",	"-0--FNP",	htmlpre		},
+		{ "/pre",	"-0--NY-"			},
+		{ "dir",	"-0>-FNP",	htmlpre		},
+		{ "/dir",	"-0<-NY-"			},
+		{ "xmp",	"-0>-FN-",	htmlpre		},
+		{ "/xmp",	"-0<-NY-"			},
+		{ "dl",		"--2-NYS"			},
+		{ "/dl",	"-02-NY-"			},
+		{ "dt",		"-12-DYP"			},
+		{ "dd",		"-03-NY-"			},
+		{ "ol",		"-->#-YP"			},
+		{ "/ol",	"-0<N-Y-"			},
+		{ "ul",		"-->Y-YP"			},
+		{ "/ul",	"-0<N-Y-"			},
+		{ "menu",	"-->Y-Y-"			},
+		{ "/menu",	"--<N-Y-"			},
+		{ "li",		"-0-----",	htmlli		},
+		{ "input",	"------T",	htmlinput	},
+		{ "textarea",	"------T",	htmlinput	},
+		{ "a",		"------T",	htmla		},
+		{ "/a",		"----=--"			},
+		{ "cite",	"----i--"			},
+		{ "/cite",	"----=--"			},
+		{ "dfn",	"----d--"			},
+		{ "/dfn",	"----=--"			},
+		{ "em",		"----i--"			},
+		{ "/em",	"----=--"			},
+		{ "kbd",	"----b--"			},
+		{ "/kbd",	"----=--"			},
+		{ "strong",	"----b--"			},
+		{ "/strong",	"----=--"			},
+		{ "var",	"----i--"			},
+		{ "/var",	"----=--"			},
+		{ "address",	"----i--"			},
+		{ "/address",	"----=--"			},
+		{ "code",	"----f--"			},
+		{ "/code",	"----=--"			},
+		{ "b",		"----b--"			},
+		{ "/b",		"----=--"			},
+		{ "i",		"----i--"			},
+		{ "/i",		"----=--"			},
+		{ "u",		"----u--"			},
+		{ "/u",		"----=--"			},
+		{ "tt",		"----f--"			},
+		{ "/tt",	"----=--"			},
 
-		{ (char *)0,	"N------"			}
+		{ (char *)0,	"-------"			}
 	};
 	MARKUP	*scan;	/* used for scanning the tbl[] array */
 	int	len;	/* length of the markup */
@@ -1093,9 +1120,9 @@ static TOKEN *htmlget(refp)
 		 */
 		if (*refp && **refp == '/')
 		{
-			CHARncpy(sgmltag, toCHAR("</"), sizeof sgmltag);
+			CHARncpy(sgmltag, toLCHAR("</"), sizeof sgmltag);
 			CHARncpy(sgmltag + 2, rettok.text + 1, rettok.nchars - 1);
-			CHARcat(sgmltag, toCHAR(">"));
+			CHARcat(sgmltag, toLCHAR(">"));
 		}
 #endif /* SGML_HACK */
 
@@ -1210,12 +1237,16 @@ static TOKEN *htmlget(refp)
 				switch (rettok.text[i])
 				{
 				  case 0x85:	rettok.text[i] = ':';	break;
+				  case 0x88:	rettok.text[i] = '^';	break;
+				  case 0x8b:	rettok.text[i] = '<';	break;
 				  case 0x91:	rettok.text[i] = '`';	break;
 				  case 0x92:	rettok.text[i] = '\'';	break;
 				  case 0x93:	rettok.text[i] = '"';	break;
 				  case 0x94:	rettok.text[i] = '"';	break;
+				  case 0x95:	rettok.text[i] = '*';	break;
 				  case 0x96:	rettok.text[i] = '-';	break;
 				  case 0x97:	rettok.text[i] = '-';	break;
+				  case 0x9b:	rettok.text[i] = '>';	break;
 				}
 			}
 		}
@@ -1257,10 +1288,10 @@ static DMINFO *htmlinit(win)
 	/* decide which tags we should use -- HTML or SGML */
 #ifdef SGML_HACK
 	mui->flavor = 0;
-	if (CHARcmp(o_display(win), toCHAR("html sgml")))
+	if (CHARcmp(o_display(win), toLCHAR("html sgml")))
 	{
 		/* we want plain HTML -- find the first HTML tag */
-		CHARcpy(rettok.text, toCHAR("<html>"));
+		CHARcpy(rettok.text, toLCHAR("<html>"));
 		rettok.nchars = 6;
 		mui->flavor = htmlmarkup(&rettok);
 	}
@@ -1380,19 +1411,19 @@ static CHAR *htmltagatcursor(win, cursor)
 					anyviz = ElvTrue;
 				continue;
 			}
-			if (!CHARncmp(token->text, toCHAR("<a "), 3)
-			 || !CHARcmp(token->text, toCHAR("</a>"))
-			 || !CHARncmp(token->text, toCHAR("<frame "), 7)
-			 || !CHARncmp(token->text, toCHAR("<embed "), 7)
-			 || !CHARncmp(token->text, toCHAR("<htmlurl "), 9)
-			 || !CHARncmp(token->text, toCHAR("<ulink "), 7)
+			if (!CHARncmp(token->text, toLCHAR("<a "), 3)
+			 || !CHARcmp(token->text, toLCHAR("</a>"))
+			 || !CHARncmp(token->text, toLCHAR("<frame "), 7)
+			 || !CHARncmp(token->text, toLCHAR("<embed "), 7)
+			 || !CHARncmp(token->text, toLCHAR("<htmlurl "), 9)
+			 || !CHARncmp(token->text, toLCHAR("<ulink "), 7)
 			 || (anchor.text[1] == '/'
-				&& !CHARncmp(token->text, toCHAR("<img "), 5)))
+				&& !CHARncmp(token->text, toLCHAR("<img "), 5)))
 			{
 				anchor = *token;
 				anyviz = ElvFalse;
 			}
-			if (!CHARncmp(token->text, toCHAR("<img "), 5))
+			if (!CHARncmp(token->text, toLCHAR("<img "), 5))
 				anyviz = ElvTrue;
 
 			/* Don't look across too many line breaks, for speed */
@@ -1416,9 +1447,9 @@ static CHAR *htmltagatcursor(win, cursor)
 	{
 		/* search for an HREF=, SRC=, or URL= parameter */
 		for (p = &anchor.text[3];
-		     CHARncmp(p, toCHAR("href="), 5)
-			&& CHARncmp(p, toCHAR("src="), 4)
-			&& CHARncmp(p, toCHAR("url="), 4);
+		     CHARncmp(p, toLCHAR("href="), 5)
+			&& CHARncmp(p, toLCHAR("src="), 4)
+			&& CHARncmp(p, toLCHAR("url="), 4);
 		     p++)
 		{
 			if (*p == '>' || !*p)
@@ -1430,6 +1461,13 @@ static CHAR *htmltagatcursor(win, cursor)
 		if (*p == '"')
 		{
 			while (*++p != '"' && *p)
+			{
+				buildCHAR(&ret, *p);
+			}
+		}
+		else if (*p == '\'')
+		{
+			while (*++p != '\'' && *p)
 			{
 				buildCHAR(&ret, *p);
 			}
@@ -1466,7 +1504,7 @@ static MARK htmltagload(tagname, from)
 	char	*tmp, *fnfree;
 
 	if (o_verbose >= 5)
-		msg(MSG_INFO, "[SS]htmltagload\\(tagname=$1, from=$2\\)", tagname, from ? o_bufname(markbuffer(from)) : toCHAR("NULL"));
+		msg(MSG_INFO, "[SS]htmltagload\\(tagname=$1, from=$2\\)", tagname, from ? o_bufname(markbuffer(from)) : toLCHAR("NULL"));
 
 	/* if no tagname is given, then fail */
 	if (!tagname || !*tagname)
@@ -1475,7 +1513,7 @@ static MARK htmltagload(tagname, from)
 	/* If protocol is "buffer:" then use the remainder of the tagname as
 	 * a buffer name, and return the changepos of that buffer
 	 */
-	if (!CHARncmp(tagname, "buffer:", 7))
+	if (!CHARncmp(tagname, toLCHAR("buffer:"), 7))
 	{
 		/* find the buffer */
 		retmark.buffer = buffind(tagname + 7);
@@ -1490,8 +1528,8 @@ static MARK htmltagload(tagname, from)
 
 	/* if protocol is "file:", OR "http:" without a host, then skip that. */
 	hasprotocol = ElvFalse;
-	if ((!CHARncmp(tagname, "file:", 5))
-	  || (!CHARncmp(tagname, "http:", 5) && (tagname[5] != '/' || tagname[6] != '/')))
+	if ((!CHARncmp(tagname, toLCHAR("file:"), 5))
+	  || (!CHARncmp(tagname, toLCHAR("http:"), 5) && (tagname[5] != '/' || tagname[6] != '/')))
 		tagname += 5;
 	else if (elvalnum(tagname[0]) && elvalnum(tagname[1]) && CHARchr(tagname, ':'))
 	{
@@ -1516,8 +1554,8 @@ static MARK htmltagload(tagname, from)
 	/* For any protocol except "file", if the anchor is delimited with
 	 * '?' then it will be passed along with the request.
 	 */
-	if ((!CHARncmp(tagname, toCHAR("http:"), 5)
-		|| (elvalpha(*tagname) && !CHARncmp(tagname+1, toCHAR("http:"), 5)))
+	if ((!CHARncmp(tagname, toLCHAR("http:"), 5)
+		|| (elvalpha(*tagname) && !CHARncmp(tagname+1, toLCHAR("http:"), 5)))
 	  && *anchorname == '?')
 	{
 		while (*anchorname)
@@ -1612,12 +1650,12 @@ static MARK htmltagload(tagname, from)
 			/* scan for "id=" or "name=" */
 			for (j = 2; j < token->nchars; j++)
 			{
-				if (!CHARncmp(&token->text[j], toCHAR(" name="), 6))
+				if (!CHARncmp(&token->text[j], toLCHAR(" name="), 6))
 				{
 					j += 6;
 					break;
 				}
-				if (!CHARncmp(&token->text[j], toCHAR(" id="), 4))
+				if (!CHARncmp(&token->text[j], toLCHAR(" id="), 4))
 				{
 					j += 4;
 					break;
@@ -1627,13 +1665,17 @@ static MARK htmltagload(tagname, from)
 				continue;
 
 			/* compare to sought name.  Beware of quotes */
-			if (token->text[j] == '"'
-			    ? !CHARncmp(&token->text[++j], anchorname, (size_t)i)
-				&& token->text[j + i] == '"'
-			    : !CHARncmp(&token->text[j], anchorname, (size_t)i)
-				&& (token->text[j + i] == '>' || token->text[j + i] == ' '))
+			if (token->text[j] == '"' || token->text[j] == '\'')
 			{
-				break;
+				if (!CHARncmp(&token->text[++j], anchorname, (size_t)i)
+				 && token->text[j + i] == token->text[j - 1]) 
+					break;
+			}
+			else
+			{
+				if (!CHARncmp(&token->text[j], anchorname, (size_t)i)
+				 && (token->text[j + i] == '>' || token->text[j + i] == ' '))
+					break;
 			}
 		}
 
@@ -1723,7 +1765,7 @@ static MARK htmltagnext(cursor)
 	     (token = htmlget(&p)) != NULL
 		&& (!token->markup
 			|| token->markup->DEST != 'T'
-			|| !CHARncmp(token->text, "<a name=", 8)
+			|| !CHARncmp(token->text, toLCHAR("<a name="), 8)
 			|| token->offset[0] == markoffset(cursor));
 	     )
 	{
@@ -1732,7 +1774,7 @@ static MARK htmltagnext(cursor)
 	/* if we found an <a ...> token, then skip ahead to the next text token
 	 * or the </a> token.
 	 */
-	if (p && !CHARncmp(token->text, toCHAR("<a "), 3))
+	if (p && !CHARncmp(token->text, toLCHAR("<a "), 3))
 	{
 		while ((token = htmlget(&p)) != NULL
 			&& elvspace(token->text[0]))
@@ -1842,11 +1884,13 @@ static void manescape(token)
 	static struct {
 		CHAR	name1, name2, c1, c2;
 	} special[] = {
+		{ 'a', 'a', 	'\''},
 		{ 'b', 'r',	'|' },		/* should be graphic */
 		{ 'b', 'u',	'*' },		/* should be graphic */
 		{ 'c', 'o',	'O', 'c' },
 		{ 'd', 'g',	'~', '!' },
 		{ 'e', 'm',	'-' },		/* should be wide */
+		{ 'g', 'a',	'`' },
 		{ 'h', 'y',	'-' },
 		{ 'l', 'q',	'"' },
 		{ 'r', 'n',	'-' },		/* should be graphic */
@@ -1945,7 +1989,7 @@ static void manescape(token)
 					i++;
 					break;
 				}
-				else if (!CHARncmp(token->text + i, toCHAR("*(Tm"), 4))
+				else if (!CHARncmp(token->text + i, toLCHAR("*(Tm"), 4))
 				{
 					token->text[j] = digraph('M', 'T');
 					token->offset[j] = token->offset[i - 1];
@@ -1958,8 +2002,8 @@ static void manescape(token)
 					i += 3;
 					break;
 				}
-				else if (!CHARncmp(token->text + i, toCHAR("*(lq"), 4)
-				      || !CHARncmp(token->text + i, toCHAR("*(rq"), 4))
+				else if (!CHARncmp(token->text + i, toLCHAR("*(lq"), 4)
+				      || !CHARncmp(token->text + i, toLCHAR("*(rq"), 4))
 				{
 					token->text[j] = '"';
 					token->offset[j] = token->offset[i - 1];
@@ -2008,7 +2052,7 @@ static void manescape(token)
 static int manarg(token, start, font, spc)
 	TOKEN	*token;	/* the token to parse */
 	int	start;	/* where to begin scanning */
-	_char_	font;	/* initial font of arg */
+	_ELVFACE_ font;	/* initial font of arg */
 	ELVBOOL	spc;	/* insert a space before the word? */
 {
 	ELVBOOL	quote;	/* is this arg enclosed in quotes? */
@@ -2412,6 +2456,8 @@ static void manmarkup(token)
 		{ "DE",		"N0---Y-"			},
 		{ "TS",		"N0---N-"			},
 		{ "TE",		"N0---Y-"			},
+		{ "de",		"H-2-NY-"			},
+		{ ".",		"N-2-NY-"			},
 		{ (char *)0,	"N------"			}
 	};
 	MARKUP	*scan;	/* used for scanning the tbl[] array */
@@ -2531,8 +2577,8 @@ static TOKEN *manget(refp)
 		/* If this is ".TP" or ".TS" then read the following line
 		 * as part of this token.
 		 */
-		if ((!CHARncmp(rettok.text, toCHAR(".TP"), 3)
-			|| !CHARncmp(rettok.text, toCHAR(".TS"), 3))
+		if ((!CHARncmp(rettok.text, toLCHAR(".TP"), 3)
+			|| !CHARncmp(rettok.text, toLCHAR(".TS"), 3))
 		 && *refp
 		 && **refp == '\n'
 		 && scannext(refp))
@@ -2862,14 +2908,14 @@ static twrap_t texitem(token)
 	{
 		/* enumerating -- convert item# to characters */
 		long2CHAR(buf, (long)listcnt++);
-		CHARcat(buf, toCHAR(")"));
+		CHARcat(buf, toLCHAR(")"));
 		label = buf;
 		len = CHARlen(buf);
 		offset = token->offset[0];
 	}
 	else
 	{
-		CHARcpy(buf, toCHAR("*"));
+		CHARcpy(buf, toLCHAR("*"));
 		label = buf;
 		len = 1;
 		offset = token->offset[0];
@@ -3121,8 +3167,10 @@ static TOKEN *texget(refp)
 #define TEX_DIGRAPH &markups[15]
 	{ "digraph",	     "-------", texdigraph	},
 #define TEX_HFIL &markups[16]
+    	{ "par",	     "-12N-YP"			}, /* MS RTF's \p */
 	{ "hfil",	     "--=----"			},
 	{ "hfill",	     "--=----"			},
+	{ "tab",	     "--=----"			}, /* MS RTF's \hfil */
 	{ "hline",	     "-02--Y-",	htmlhr		}, /* reuse HTML! */
 	{ "begin{table}",    "-02-NY-"			},
 	{ "end{table}",	     "-02-NY-"			},
@@ -3236,65 +3284,65 @@ static TOKEN *texget(refp)
 		/* For some keyword markups, parse the following {} */
 		rettok.text[rettok.nchars] = '\0';
 		if (*refp && (
-			!CHARcmp(rettok.text, "\\begin")
-		     || !CHARcmp(rettok.text, "\\end")
-		     || !CHARcmp(rettok.text, "\\vspace")
-		     || !CHARcmp(rettok.text, "\\label")
-		     || !CHARcmp(rettok.text, "\\footnote")
-		     ||	!CHARcmp(rettok.text, "\\title")
-		     ||	!CHARcmp(rettok.text, "\\author")
-		     || !CHARcmp(rettok.text, "\\part")
-		     || !CHARcmp(rettok.text, "\\chapter")
-		     || !CHARcmp(rettok.text, "\\section")
-		     || !CHARcmp(rettok.text, "\\subsection")
-		     || !CHARcmp(rettok.text, "\\cite")
-		     || !CHARcmp(rettok.text, "\\ref")
-		     || !CHARcmp(rettok.text, "\\bibitem")))
+			!CHARcmp(rettok.text, toLCHAR("\\begin"))
+		     || !CHARcmp(rettok.text, toLCHAR("\\end"))
+		     || !CHARcmp(rettok.text, toLCHAR("\\vspace"))
+		     || !CHARcmp(rettok.text, toLCHAR("\\label"))
+		     || !CHARcmp(rettok.text, toLCHAR("\\footnote"))
+		     ||	!CHARcmp(rettok.text, toLCHAR("\\title"))
+		     ||	!CHARcmp(rettok.text, toLCHAR("\\author"))
+		     || !CHARcmp(rettok.text, toLCHAR("\\part"))
+		     || !CHARcmp(rettok.text, toLCHAR("\\chapter"))
+		     || !CHARcmp(rettok.text, toLCHAR("\\section"))
+		     || !CHARcmp(rettok.text, toLCHAR("\\subsection"))
+		     || !CHARcmp(rettok.text, toLCHAR("\\cite"))
+		     || !CHARcmp(rettok.text, toLCHAR("\\ref"))
+		     || !CHARcmp(rettok.text, toLCHAR("\\bibitem"))))
 		{
 			offset = texpair(refp, &rettok);
 			rettok.text[rettok.nchars] = '\0';
 
 			/* Some of those keywords need no more processing */
-			if (!CHARncmp(rettok.text, "\\title", 6))
+			if (!CHARncmp(rettok.text, toLCHAR("\\title"), 6))
 			{
 				rettok.markup = TEX_TITLE;
 				goto End;
 			}
-			if (!CHARncmp(rettok.text, "\\author", 7))
+			if (!CHARncmp(rettok.text, toLCHAR("\\author"), 7))
 			{
 				rettok.markup = TEX_AUTHOR;
 				goto End;
 			}
-			if (!CHARncmp(rettok.text, "\\part", 5))
+			if (!CHARncmp(rettok.text, toLCHAR("\\part"), 5))
 			{
 				rettok.markup = TEX_PART;
 				goto End;
 			}
-			if (!CHARncmp(rettok.text, "\\chapter", 8))
+			if (!CHARncmp(rettok.text, toLCHAR("\\chapter"), 8))
 			{
 				rettok.markup = TEX_CHAPTER;
 				goto End;
 			}
-			if (!CHARncmp(rettok.text, "\\section", 8))
+			if (!CHARncmp(rettok.text, toLCHAR("\\section"), 8))
 			{
 				rettok.markup = TEX_SECTION;
 				goto End;
 			}
-			if (!CHARncmp(rettok.text, "\\subsection", 11))
+			if (!CHARncmp(rettok.text, toLCHAR("\\subsection"), 11))
 			{
 				rettok.markup = TEX_SUBSECTION;
 				goto End;
 			}
 		}
 
-		/* for the \textXX tokens, parse a single { so the new font
+		/* for the \textXX tokens, parse a single { } so the new font
 		 * doesn't become the default font.
 		 */
-		if ((!CHARncmp(rettok.text, "\\text", 4)
-			|| !CHARcmp(rettok.text, "\\code")
-			|| !CHARcmp(rettok.text, "\\emph"))
+		if ((!CHARncmp(rettok.text, toLCHAR("\\text"), 4)
+			|| !CHARcmp(rettok.text, toLCHAR("\\code"))
+			|| !CHARcmp(rettok.text, toLCHAR("\\emph")))
 		 && *refp
-		 && **refp == '{')
+		 && **refp == '{') /*}*/
 		{
 			rettok.text[rettok.nchars] = '{'; /*}*/
 			rettok.offset[rettok.nchars] = offset;
@@ -3304,14 +3352,14 @@ static TOKEN *texget(refp)
 		}
 
 		/* Some special cases... */
-		if (!CHARcmp(rettok.text, "\\halign")
-		 || !CHARcmp(rettok.text, "\\begin{tabular}")
-		 || !CHARcmp(rettok.text, "\\multicolumn")
-		 || !CHARncmp(rettok.text, "\\set", 4)
-		 || !CHARncmp(rettok.text, "\\def", 4)
-		 || !CHARncmp(rettok.text, "\\new", 4)
-		 || !CHARncmp(rettok.text, "\\catcode", 8)
-		 || !CHARncmp(rettok.text, "\\document", 9))
+		if (!CHARcmp(rettok.text, toLCHAR("\\halign"))
+		 || !CHARcmp(rettok.text, toLCHAR("\\begin{tabular}"))
+		 || !CHARcmp(rettok.text, toLCHAR("\\multicolumn"))
+		 || !CHARncmp(rettok.text, toLCHAR("\\set"), 4)
+		 || !CHARncmp(rettok.text, toLCHAR("\\def"), 4)
+		 || !CHARncmp(rettok.text, toLCHAR("\\new"), 4)
+		 || !CHARncmp(rettok.text, toLCHAR("\\catcode"), 8)
+		 || !CHARncmp(rettok.text, toLCHAR("\\document"), 9))
 		{
 			/* collect chars up to EOL */
 			if (*refp)
@@ -3332,8 +3380,8 @@ static TOKEN *texget(refp)
 			goto End;
 		}
 		if (*refp && (
-			!CHARcmp(rettok.text, "\\char")
-		     || !CHARcmp(rettok.text, "\\mathrel")))
+			!CHARcmp(rettok.text, toLCHAR("\\char"))
+		     || !CHARcmp(rettok.text, toLCHAR("\\mathrel"))))
 		{
 			/* include the next char in the name */
 			rettok.text[rettok.nchars] = **refp;
@@ -3348,14 +3396,14 @@ static TOKEN *texget(refp)
 			rettok.width = 1;
 			goto End;
 		}
-		if (!CHARncmp(rettok.text, "\\item", 5))
+		if (!CHARncmp(rettok.text, toLCHAR("\\item"), 5))
 		{
 			rettok.markup = TEX_ITEM;
 			goto End;
 		}
-		if (!CHARncmp(rettok.text, "\\cite", 5)
-		 || !CHARncmp(rettok.text, "\\ref", 4)
-		 || !CHARncmp(rettok.text, "\\bibitem", 8))
+		if (!CHARncmp(rettok.text, toLCHAR("\\cite"), 5)
+		 || !CHARncmp(rettok.text, toLCHAR("\\ref"), 4)
+		 || !CHARncmp(rettok.text, toLCHAR("\\bibitem"), 8))
 		{
 			rettok.markup = TEX_OUTPUT;
 			for (rettok.width = rettok.nchars;
@@ -3368,7 +3416,7 @@ static TOKEN *texget(refp)
 				rettok.width = rettok.nchars;
 			goto End;
 		}
-		if (!CHARncmp(rettok.text, "\\vspace", 7))
+		if (!CHARncmp(rettok.text, toLCHAR("\\vspace"), 7))
 		{
 			rettok.markup = TEX_PARAGRAPH;
 			goto End;
@@ -3376,7 +3424,7 @@ static TOKEN *texget(refp)
 
 		/* look up the keyword */
 		rettok.text[rettok.nchars] = '\0';
-		for (i = 0; i < QTY(markups) && CHARcmp(rettok.text + 1, markups[i].name); i++)
+		for (i = 0; i < QTY(markups) && CHARcmp(rettok.text + 1, toCHAR(markups[i].name)); i++)
 		{
 		}
 		if (i == QTY(markups))
@@ -3543,7 +3591,7 @@ static TOKEN *texget(refp)
 		for (;
 		     *refp 
 			&& rettok.nchars < QTY(rettok.text) - 1
-			&& !CHARchr("{}\\$& \t\n\r", **refp);
+			&& !CHARchr(toLCHAR("{}\\$& \t\n\r"), **refp);
 		     offset++, scannext(refp))
 		{
 			rettok.text[rettok.nchars] = **refp;
@@ -3680,7 +3728,7 @@ static twrap_t put(token)
 		 * nothing else.  We'll do the rest of this markup's job
 		 * at the start of the next line.
 		 */
-		if (token->markup->BREAKLN != '-' && !first)
+		if (token->markup->BREAKLN != '-' && !first && !title)
 		{
 			(*drawchar)(newline, 1, 0, anyspc ? spcoffset : -1);
 			reduce = (ELVBOOL)(col == 0);
@@ -3692,9 +3740,12 @@ static twrap_t put(token)
 		/* do all the standard effects */
 		switch (token->markup->TITLE)
 		{
+		  case 'H':
 		  case 'Y': title = ElvTrue;	break;
 		  case 'N': title = ElvFalse;	break;
 		}
+		if (title)
+			return TWRAP_NO;
 		switch (token->markup->BREAKLN)
 		{
 		  case '0':
@@ -4045,7 +4096,7 @@ static long lastoffset;	/* offset of last non-blank character before wantcol */
 static void countchar(p, qty, font, offset)
 	CHAR	*p;	/* the character being output */
 	long	qty;	/* quantity of characters */
-	_char_	font;	/* the font to show it in (ignored) */
+	_ELVFACE_ font;	/* the font to show it in (ignored) */
 	long	offset;	/* which buffer char this corresponds to */
 {
 	long	delta;
@@ -4209,7 +4260,7 @@ static MARK setup(win, top, cursor, bottom, info)
 	int	i;
 
 	/* we can optimize if "nolist noshowmarkup" */
-	i = (calcelement(o_listchars, toCHAR("markup")) != NULL);
+	i = (calcelement(o_listchars, toLCHAR("markup")) != NULL);
 #ifdef DISPLAY_HTML
 	dmhtml.canopt =
 #endif
@@ -4266,7 +4317,7 @@ static MARK image(w, line, info, draw)
 	WINDOW	w;		/* window where drawing will go */
 	MARK	line;		/* start of line to draw */
 	DMINFO	*info;		/* window-specific info about mode */
-	void	(*draw)P_((CHAR *p, long qty, _char_ font, long offset));
+	void	(*draw)P_((CHAR *p, long qty, _ELVFACE_ font, long offset));
 				/* function for drawing a single character */
 {
 	CHAR	*p;
@@ -4312,7 +4363,7 @@ static void header(w, pagenum, info, draw)
 	WINDOW	w;	/* window from which we're printing */
 	int	pagenum;/* page number */
 	DMINFO	*info;	/* drawing state */
-	void	(*draw)P_((CHAR *p, long qty, _char_ font, long offset));
+	void	(*draw)P_((CHAR *p, long qty, _ELVFACE_ font, long offset));
 {
 	CHAR	pg[20];	/* page number, as a text string */
 	CHAR	*title;	/* title of the document */
@@ -4333,8 +4384,8 @@ static void header(w, pagenum, info, draw)
 	/* if first time, then find the "header" font */
 	if (!font_header)
 	{
-		font_header = colorfind(toCHAR("header"));
-		colorset(font_header, toCHAR("underlined"), ElvFalse);
+		font_header = colorfind(toLCHAR("header"));
+		colorset(font_header, toLCHAR("underlined"), ElvFalse);
 	}
 
 	/* covert page number to text */
@@ -4454,7 +4505,7 @@ static void storestate(offset, dest)
 static int start(win, from, draw)
 	WINDOW	win;	/* window to draw for */
 	MARK	from;	/* starting point */
-	void	(*draw) P_((CHAR *p, long qty, _char_ font, long offset));
+	void	(*draw) P_((CHAR *p, long qty, _ELVFACE_ font, long offset));
 {
 	int	i;
 
@@ -4480,7 +4531,7 @@ static int start(win, from, draw)
 	first = ElvTrue;
 	anyspc = ElvFalse;
 	title = ElvFalse; /* nothing that causes a linebreak can appear in title */
-	list = (ELVBOOL)(o_list(win) && (calcelement(o_listchars, toCHAR("markup")) != NULL));
+	list = (ELVBOOL)(o_list(win) && (calcelement(o_listchars, toLCHAR("markup")) != NULL));
 	readonly = o_readonly(markbuffer(from));
 	textwidth = o_columns(win);
 	tabstop = o_tabstop(markbuffer(win->cursor))[1];
@@ -4618,7 +4669,7 @@ void dmmuadjust(from, to, delta)
 		 * This is because if we insert a small word at the front of
 		 * a line, it might fit at the end of the preceding line.
 		 */
-		i = start(win, from, (void(*)P_((CHAR *,long,_char_,long)))0);
+		i = start(win, from, (void(*)P_((CHAR *,long,_ELVFACE_,long)))0);
 		if (i > 0) i--;
 
 		/* Pretend the cursor is someplace harmless.  This is done

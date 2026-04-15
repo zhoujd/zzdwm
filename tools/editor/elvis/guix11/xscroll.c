@@ -5,7 +5,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_xscroll[] = "$Id: xscroll.c,v 2.16 2003/10/17 17:41:23 steve Exp $";
+char id_xscroll[] = "$Id: xscroll.c,v 2.17 2004/05/07 18:07:20 steve Exp $";
 #endif
 #ifdef GUI_X11
 # include "guix11.h"
@@ -170,13 +170,16 @@ void x_sb_setstate(xw, newstate)
 		/* draw the arrow heads and thumb */
 		x_drawbevel(xw, xw->sb.win,
 			SB_BORDER, SB_BORDER,
-			xw->sb.width, xw->sb.width + 1, 'u', SB_BEVEL);
+			xw->sb.width, xw->sb.width + 1, 'u', SB_BEVEL,
+			x_scrollcolors);
 		x_drawbevel(xw, xw->sb.win,
 			SB_BORDER, xw->sb.h - (SB_BORDER + xw->sb.width + 1),
-			xw->sb.width, xw->sb.width + 1, 'd', SB_BEVEL);
+			xw->sb.width, xw->sb.width + 1, 'd', SB_BEVEL,
+			x_scrollcolors);
 		x_drawbevel(xw, xw->sb.win,
 			SB_BORDER, (int)(xw->sb.offset + xw->sb.top),
-			xw->sb.width, xw->sb.bottom - xw->sb.top, 'b', SB_BEVEL);
+			xw->sb.width, xw->sb.bottom - xw->sb.top, 'b', SB_BEVEL,
+			x_scrollcolors);
 	}
 }
 
@@ -236,12 +239,14 @@ void x_sb_thumb(xw, top, bottom, total)
 	/* replace the old thumb with a new one */
 	x_drawbevel(xw, xw->sb.win,
 		SB_BORDER, (int)(xw->sb.offset + xw->sb.top),
-		xw->sb.width, xw->sb.bottom - xw->sb.top, 'b', 0);
+		xw->sb.width, xw->sb.bottom - xw->sb.top, 'b', 0,
+		x_scrollcolors);
 	xw->sb.top = newtop;
 	xw->sb.bottom = newbottom;
 	x_drawbevel(xw, xw->sb.win,
 		SB_BORDER, (int)(xw->sb.offset + xw->sb.top),
-		xw->sb.width, xw->sb.bottom - xw->sb.top, 'b', SB_BEVEL);
+		xw->sb.width, xw->sb.bottom - xw->sb.top, 'b', SB_BEVEL,
+		x_scrollcolors);
 }
 
 /* Handle a scrollbar event. */

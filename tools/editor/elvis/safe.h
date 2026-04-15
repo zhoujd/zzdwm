@@ -8,9 +8,13 @@ BEGIN_EXTERNC
 extern void *safealloc P_((int qty, size_t size));
 extern void safefree P_((void *ptr));
 extern char *safedup P_((char *str));
+#ifdef FEATURE_WCHAR
+extern CHAR *safeCHARdup P_((CHAR *str));
+#endif
 END_EXTERNC
 # define safekept	safealloc
-#define safekdup	safedup
+# define safekdup	safedup
+# define safekCHARdup	safeCHARdup
 # define safeterm()
 # define safeinspect()
 
@@ -25,6 +29,9 @@ BEGIN_EXTERNC
 extern void *_safealloc P_((char *file, int line, ELVBOOL kept, int qty, size_t size));
 extern void _safefree P_((char *file, int line, void *ptr));
 extern char *_safedup P_((char *file, int line, ELVBOOL kept, char *str));
+# ifdef FEATURE_WCHAR
+extern CHAR *_safeCHARdup P_((char *file, int line, ELVBOOL kept, CHAR *str));
+# endif
 extern void safeterm P_((void));
 extern void safeinspect P_((void));
 END_EXTERNC

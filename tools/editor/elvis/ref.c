@@ -42,7 +42,7 @@ typedef enum
 
 #if USE_PROTOTYPES
 static void usage(char *argv0);
-static char *elv_getline(FILE *fp);
+static char *getrefline(FILE *fp);
 static void store(char *line, char **list);
 static LINECLS classify(char *line, LINECLS prev);
 static void lookup(TAG *tag);
@@ -144,12 +144,13 @@ ELVBOOL _ioopen(file, line, name, rwa, prgsafe, force, eol)
 	char	*file;
 	int	line;
 #else
-ELVBOOL ioopen(name, rwa, prgsafe, force, eol)
+ELVBOOL ioopen(name, rwa, prgsafe, force, enc, eol)
 #endif
 	char	*name;	/* name of file to open */
 	_char_	rwa;	/* ignored; 'r'=read, 'w'=write, 'a'=append */
 	ELVBOOL	prgsafe;/* ignored; safe to use "!prg" as file name? */
 	ELVBOOL	force;	/* ignored; okay to overwrite existing files? */
+	_char_	enc;	/* ignored; how are non-ascii chars encoded? */
 	_char_	eol;	/* ignored; open in binary mode? */
 {
 	iofp = fopen(name, "r");
@@ -171,7 +172,7 @@ ELVBOOL ioclose()
 /* This function reads a single line, and replaces the terminating newline with
  * a '\0' byte.  The string will be in a static buffer.  Returns NULL at EOF.
  */
-static char *elv_getline(fp)
+static char *getrefline(fp)
 	FILE	*fp;
 {
 	int	ch;
@@ -348,7 +349,7 @@ static void lookup(tag)
 	}
 
 	/* for each line... */
-	for (lnum = 1, lc = LC_COMPLETE; (line = elv_getline(fp)) != NULL; lnum++)
+	for (lnum = 1, lc = LC_COMPLETE; (line = getrefline(fp)) != NULL; lnum++)
 	{
 		/* is this the tag definition? */
 		if (taglnum > 0 ? taglnum == lnum : !strncmp(tagline, line, len))
@@ -377,7 +378,7 @@ static void lookup(tag)
 			{
 				if (strchr(line, '(') != NULL)
 				{
-					while ((line = elv_getline(fp)) != NULL
+					while ((line = getrefline(fp)) != NULL
 					    && *line
 					    && ((*line != '#' && *line != '{')
 						|| line[strlen(line) - 1] == '\\'))
@@ -387,7 +388,7 @@ static void lookup(tag)
 				}
 				else if ((lc = classify(line, lc)) == LC_PARTIAL)
 				{
-					while ((line = elv_getline(fp)) != NULL
+					while ((line = getrefline(fp)) != NULL
 					    && (lc = classify(line, lc)) == LC_PARTIAL)
 					{
 						puts(line);
@@ -608,7 +609,7 @@ int main(argc, argv)
 
 		/* first check to see if there is a tags file there */
 		file = dirpath(*dir ? dir : ".", "tags");
-		if (ioopen(file, 'r', ElvFalse, ElvFalse, 't'))
+		if (ioopen(file, 'r', ElvFalse, ElvFalse, 'a', 't'))
 		{
 			/* yes, scan the tags file */
 			ioclose();

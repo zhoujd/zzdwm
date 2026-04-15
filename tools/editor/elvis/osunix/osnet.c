@@ -48,7 +48,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_osnet[] = "$Id: osnet.c,v 2.23 2004/02/25 19:20:14 steve Exp $";
+char id_osnet[] = "$Id: osnet.c,v 2.25 2011/11/21 20:36:33 steve Exp $";
 #endif
 #if defined(PROTOCOL_HTTP) || defined(PROTOCOL_FTP)
 
@@ -165,6 +165,26 @@ Error:
 }
 
 
+/* Return 2 for WAN addresses, 1 for LAN addresses, 0 for localhost, or -1 if
+ * a name couldn't be resolved.
+ */
+int netspeed(site)
+	char	*site;	/* name of remote system */
+{
+	struct in_addr	addr;
+	unsigned char *byte;
+
+	if (!site2addr(site, &addr))
+		return -1;
+	byte = (unsigned char *)&addr.s_addr;
+	if (byte[0] == 127)
+		return 0;
+	if (byte[0] == 10)
+		return 1;
+	if (byte[0] == 192 && byte[1] == 168)
+		return 1;
+	return 2;
+}
 
 /* Open a connection to a given site and port.
  * Returns a sockbuf_t pointer if successful, or NULL for errors (in which
@@ -227,6 +247,13 @@ sockbuf_t *netconnect(site_port, defport)
 void netdisconnect(sb)
 	sockbuf_t	*sb;	/* buffered socket to be freed */
 {
+#ifdef SHUT_WR
+	char	buf[1024];
+	shutdown(sb->fd, SHUT_WR);
+	while(read(sb->fd, buf, sizeof buf) > 0)
+	{
+	}
+#endif
 	close(sb->fd);
 	safefree(sb);
 }

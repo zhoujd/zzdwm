@@ -4,10 +4,9 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_main[] = "$Id: main.c,v 2.77 2004/03/19 23:10:12 steve Exp $";
+char id_main[] = "$Id: main.c,v 2.81 2007/02/11 23:29:18 steve Exp $";
 #endif
 #include <time.h> /* for time(), used to seed the random number generator */
-#include "rev.h"
 
 #if USE_PROTOTYPES
 static void usage(char *hint);
@@ -35,6 +34,12 @@ static GUI *allguis[] =
 
 #ifdef GUI_X11
 	&guix11,
+	&guix11_lan,
+	&guix11_wan,
+#endif
+
+#ifdef GUI_GNOME
+  &guignome,
 #endif
 
 #ifdef GUI_PM
@@ -69,6 +74,10 @@ static char	*initialcommand;
 static char	*initialtag;
 static ELVBOOL	initialall;
 GUI	*chosengui;
+#ifdef FEATURE_PERSIST
+static char	*initialpersist;
+static char	*initialpersistonce;
+#endif
 
 #ifdef FEATURE_STDIN
 FILE	*origstdin;	/* where to read "-" from */
@@ -91,6 +100,10 @@ static void usage(hint)
 	msg(MSG_INFO, "       -e          Start in ex mode instead of vi mode");
 	msg(MSG_INFO, "       -i          Start in input mode instead of vi mode");
 	msg(MSG_INFO, "       -S          Set security=restricted, for maximum security");
+#ifdef FEATURE_PERSIST
+	msg(MSG_INFO, "       -p[=+]flags Adjust the persistonce option before loading first file");
+	msg(MSG_INFO, "       -P[=+]flags Adj.persist & persistonce options before loading first file");
+#endif
 	msg(MSG_INFO, "       -w lines    Set scroll amount to \"lines\"");
 	msg(MSG_INFO, "       -f session  Use \"session\" as the session file");
 	msg(MSG_INFO, "       -G gui      Use the \"gui\" user interface \\(see below\\)");
@@ -215,6 +228,46 @@ static int parseflags(argc, argv)
 					o_defaultreadonly = ElvTrue;
 					del = 1;
 					break;
+
+#ifdef FEATURE_PERSIST
+				  case 'p':
+					if (argv[i][j + 1])
+					{
+						initialpersistonce = &argv[i][j + 1];
+						del = 1;
+					}
+					else if (i + 1 < argc)
+					{
+						initialpersistonce = argv[i + 1];
+						del = 2;
+						i++;
+					}
+					else
+					{
+						usage("-p requires a persistence keyword list");
+					}
+					j = -1; /* so we stop processing this arg */
+					break;
+
+				  case 'P':
+					if (argv[i][j + 1])
+					{
+						initialpersist = &argv[i][j + 1];
+						del = 1;
+					}
+					else if (i + 1 < argc)
+					{
+						initialpersist = argv[i + 1];
+						del = 2;
+						i++;
+					}
+					else
+					{
+						usage("-P requires a persistence keyword list");
+					}
+					j = -1; /* so we stop processing this arg */
+					break;
+#endif
 
 				  case 'V':
 				  case 's':
@@ -456,7 +509,7 @@ static int choosegui(argc, argv)
 		else if (argv[i][1] == '\0' || argv[i][1] == 's')
 		{
 			/* use the "script" interface */
-			o_gui = toCHAR("script");
+			o_gui = toLCHAR("script");
 
 			/* don't read any configuration files */
 			optpreset(o_elvispath, NULL, OPT_HIDE);
@@ -465,7 +518,25 @@ static int choosegui(argc, argv)
 		 || !strcmp(argv[i], "--version")
 		 || !strcmp(argv[i], "-v"))
 		{
-			msg(MSG_INFO, "[sss]elvis $1 $2 $3", VERSION, DATE, REV);
+			msg(MSG_INFO, "[s]elvis $1", VERSION);
+#ifdef COPY1
+			msg(MSG_INFO, "[s]$1", COPY1);
+#endif
+#ifdef COPY2
+			msg(MSG_INFO, "[s]$1", COPY2);
+#endif
+#ifdef COPY3
+			msg(MSG_INFO, "[s]$1", COPY3);
+#endif
+#ifdef COPY4
+			msg(MSG_INFO, "[s]$1", COPY4);
+#endif
+#ifdef COPY5
+			msg(MSG_INFO, "[s]$1", COPY5);
+#endif
+#ifdef PORTEDBY
+			msg(MSG_INFO, "[s]$1", PORTEDBY);
+#endif
 			exit(0);
 		}
 		else if (!strcmp(argv[i], "-help")	/* old GNU */
@@ -508,7 +579,7 @@ static int choosegui(argc, argv)
 		}
 		if (i >= QTY(allguis))
 		{
-			if (CHARcmp(o_gui, toCHAR("?")))
+			if (CHARcmp(o_gui, toLCHAR("?")))
 			{
 				msg(MSG_ERROR, "[s]invalid gui $1", o_gui);
 			}
@@ -606,7 +677,7 @@ static void doexrc()
 	(void)exstring((WINDOW)0, toCHAR(exinit), NULL);
 	o_security |= origsecurity;
 	if (o_exrc)
-		(void)exstring((WINDOW)0, toCHAR("safely source! .exrc"), NULL);
+		(void)exstring((WINDOW)0, toLCHAR("safely source! .exrc"), NULL);
 	dispinit(ElvFalse);
 #endif
 }
@@ -700,7 +771,7 @@ ELVBOOL mainfirstcmd(win)
 	if (initialtag)
 	{
 		/* Compose a ":tag" command */
-		CHARcpy(tagcmd, toCHAR("tag "));
+		CHARcpy(tagcmd, toLCHAR("tag "));
 		CHARncat(tagcmd, toCHAR(initialtag), QTY(tagcmd) - 5);
 
 		/* Execute the command */
@@ -773,10 +844,10 @@ static void init(argc, argv)
 	 * look like the normal colors.  Also used "boxed" as the default
 	 * selection color.
 	 */
-	colorset(COLOR_FONT_IDLE, toCHAR("like normal"), ElvFalse);
-	colorset(COLOR_FONT_BOTTOM, toCHAR("like normal"), ElvFalse);
-	colorset(COLOR_FONT_NONTEXT, toCHAR("like normal"), ElvFalse);
-	colorset(COLOR_FONT_SELECTION, toCHAR("boxed"), ElvFalse);
+	colorset(COLOR_FONT_IDLE, toLCHAR("like normal"), ElvFalse);
+	colorset(COLOR_FONT_BOTTOM, toLCHAR("like normal"), ElvFalse);
+	colorset(COLOR_FONT_NONTEXT, toLCHAR("like normal"), ElvFalse);
+	colorset(COLOR_FONT_SELECTION, toLCHAR("boxed"), ElvFalse);
 
 	/* Create the "Elvis ex history" buffer, and tweak its options */
 	buf = bufalloc(toCHAR(EX_BUF), (BLKNO)0, ElvTrue);
@@ -818,6 +889,13 @@ static void init(argc, argv)
 	buildargs(argc, argv);
 
 #ifdef FEATURE_PERSIST
+	/* Initialize the persistent features, including scanning the
+	 * persistfile for global attributes.
+	 */
+	bufperstweak("persist", initialpersist);
+	if (initialcommand || initialtag)
+		bufperstweak("persistonce", "args");
+	bufperstweak("persistonce", initialpersistonce);
 	bufpersistinit();
 #endif
 
@@ -859,9 +937,7 @@ void term()
 	gui->term();
 	gui = NULL;
 
-#ifdef FEATURE_PERSIST
 	bufpersistsave(NULL);
-#endif
 
 	/* Flush any final messages */
 	msgflush();
@@ -899,7 +975,6 @@ int main(argc, argv)
 	char	**argv;	/* values of the command-line arguments */
 {
 	init(argc, argv);
-	exstring(windefault, toCHAR("window 1"), NULL);
 	(*gui->loop)();
 	term();
 #if !defined (GUI_WIN32)

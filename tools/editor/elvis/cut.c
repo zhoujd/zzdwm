@@ -4,7 +4,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_cut[] = "$Id: cut.c,v 2.41 2003/10/17 17:41:23 steve Exp $";
+char id_cut[] = "$Id: cut.c,v 2.43 2006/12/05 00:42:25 steve Exp $";
 #endif
 
 static void shiftbufs P_((void));
@@ -99,7 +99,6 @@ static void shiftbufs()
 	CHAR	cbname;	/* buffer currently being considered. */
 	BUFFER	buf;	/* the edit buffer used to store a cut buffer's contents */
 	char	tmpname[50];
-	BUFFER	tmpbuf = NULL;	/* a temporary buffer if all cut buffers have marks */
 
 	/* We would like to delete "9 after this, but if it has any marks
 	 * referring to it then we must leave it, and delete "8 instead.
@@ -126,21 +125,6 @@ static void shiftbufs()
 		break;
 	}
 
-	/* if no buffer has been found...  */
-	if (cbname == '1')
-	{
-		buf = cutbuffer(cbname, ElvFalse);
-		/* and even "1 has marks...  */
-		if (buf && buf->marks)
-		{
-			cbname = '9';
-			tmpbuf = cutbuffer(cbname, ElvFalse);
-			/* ...rename "9 temporarily */
-			sprintf(tmpname, CUTNAMED_BUF, '~');
-			buftitle(tmpbuf, toCHAR(tmpname));
-		}
-	}
-
 	/* shift the lower-numbered buffers by renaming them */
 	while (cbname > '1')
 	{
@@ -156,15 +140,6 @@ static void shiftbufs()
 		{
 			buftitle(buf, toCHAR(tmpname));
 		}
-	}
-
-	/* re-rename the temporary buffer */
-	if (tmpbuf)
-	{
-		sprintf(tmpname, CUTNAMED_BUF, '1');
-		/* rename it "1 */
-		buftitle(tmpbuf, toCHAR(tmpname));
-		/* the former "9 is "1 now */
 	}
 
 	/* At this point, the buffers have been shifted and there probably
@@ -430,7 +405,7 @@ void cutyank(cbname, from, to, type, sideeffect)
 
 			/* append this slice of the rectangle */
 			if (dest)
-				bufreplace(&dfrom, &dfrom, toCHAR("\n"), 1);
+				bufreplace(&dfrom, &dfrom, toLCHAR("\n"), 1);
 			if (markoffset(&sfrom) < markoffset(&sto))
 			{
 				if (dest)
@@ -475,7 +450,7 @@ void cutyank(cbname, from, to, type, sideeffect)
 		if (o_partiallastline(dest))
 		{
 			markaddoffset(&dto, 1L);
-			bufreplace(&dto, &dto, toCHAR("\n"), 1);
+			bufreplace(&dto, &dto, toLCHAR("\n"), 1);
 		}
 	}
 
@@ -548,7 +523,7 @@ MARK cutput(cbname, win, at, after, cretend, lretend)
 	}
 
 	/* find the cut buffer */
-	src = cutbuffer(cbname, ElvTrue);
+	src = cutbuffer(cbname, (ELVBOOL)(cbname == '^'));
 	if (!src)
 	{
 		return NULL;
@@ -583,7 +558,7 @@ MARK cutput(cbname, win, at, after, cretend, lretend)
 			&& scanchar(marktmp(sfrom, src, location - 1)) != 'n');
 		if (o_partiallastline(src))
 		{
-			bufreplace(marktmp(sfrom, src, location), &sfrom, toCHAR("\n"), 1L);
+			bufreplace(marktmp(sfrom, src, location), &sfrom, toLCHAR("\n"), 1L);
 		}
 	}
 

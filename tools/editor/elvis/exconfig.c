@@ -4,7 +4,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_exconfig[] = "$Id: exconfig.c,v 2.154 2004/03/21 23:24:41 steve Exp $";
+char id_exconfig[] = "$Id: exconfig.c,v 2.155 2004/03/31 00:21:11 steve Exp $";
 #endif
 
 
@@ -85,13 +85,13 @@ static void listalias(win, alias, shortformat)
 	if (CHARchr(alias->command, '\n') == alias->command + CHARlen(alias->command) - 1)
 	{
 		/* single-line command simply follows the alias name */
-		drawexlist(win, blanks, 10 - (CHARlen(alias->name) % 10));
+		drawexlist(win, blanks, 10 - (strlen(alias->name) % 10));
 		drawexlist(win, alias->command, CHARlen(alias->command));
 	}
 	else if (shortformat)
 	{
 		/* multi-line command, but only show first line */
-		drawexlist(win, blanks, 10 - (CHARlen(alias->name) % 10));
+		drawexlist(win, blanks, 10 - (strlen(alias->name) % 10));
 		ch[0] = '{';
 		ch[1] = ' ';
 		drawexlist(win, ch, 2);
@@ -737,7 +737,7 @@ void exaliassave(custom)
 		if (!anyout)
 		{
 			anyout = ElvTrue;
-			bufappend(custom, toCHAR("try {\n"), 6);
+			bufappend(custom, toLCHAR("try {\n"), 6);
 		}
 
 		/* construct an alias command string */
@@ -782,7 +782,7 @@ void exaliassave(custom)
 	/* if any groups were output, then we need to end "try {" */
 	if (anyout)
 	{
-		bufappend(custom, toCHAR("}\n"), 2);
+		bufappend(custom, toLCHAR("}\n"), 2);
 	}
 }
 
@@ -819,26 +819,26 @@ RESULT	ex_args(xinf)
 				; /* no space is needed */
 			else if (col + len + 4 > o_columns(xinf->window))
 			{
-				drawexlist(xinf->window, toCHAR("\n"), 1);
+				drawexlist(xinf->window, toLCHAR("\n"), 1);
 				col = 0;
 			}
 			else
 			{
-				drawexlist(xinf->window, toCHAR(" "), 1);
+				drawexlist(xinf->window, toLCHAR(" "), 1);
 				col++;
 			}
 
 			/* Output the arg.  If current, enclose in '[' */
 			if (i == argnext - 1)
-				drawexlist(xinf->window, toCHAR("["), 1);
+				drawexlist(xinf->window, toLCHAR("["), 1);
 			drawexlist(xinf->window, toCHAR(arglist[i]), len);
 			if (i == argnext - 1)
-				drawexlist(xinf->window, toCHAR("]"), 1);
+				drawexlist(xinf->window, toLCHAR("]"), 1);
 			col += len;
 		}
 
 		/* the final newline */
-		drawexlist(xinf->window, toCHAR("\n"), 1);
+		drawexlist(xinf->window, toLCHAR("\n"), 1);
 	}
 	return RESULT_COMPLETE;
 }
@@ -861,7 +861,7 @@ RESULT	ex_color(xinf)
 		return RESULT_ERROR;
 	}
 
-	/* If "gui.role", where "gui" is the current GUI, then strip that off */
+	/* If "gui.face", where "gui" is the current GUI, then strip that off */
 	lhs = xinf->lhs;
 	i = CHARlen(o_gui);
 	if (lhs && !CHARncmp(lhs, o_gui, i) && lhs[i] == '.' && lhs[i + 1])
@@ -910,7 +910,7 @@ RESULT	ex_comment(xinf)
 	if (xinf->command == EX_ECHO && xinf->rhs)
 	{
 		drawextext(xinf->window, xinf->rhs, (int)CHARlen(xinf->rhs));
-		drawextext(xinf->window, toCHAR("\n"), 1);
+		drawextext(xinf->window, toLCHAR("\n"), 1);
 	}
 #ifdef FEATURE_CALC
 	else if (xinf->command == EX_CALC && xinf->rhs)
@@ -921,7 +921,7 @@ RESULT	ex_comment(xinf)
 			return RESULT_ERROR;
 		}
 		drawextext(xinf->window, result, (int)CHARlen(result));
-		drawextext(xinf->window, toCHAR("\n"), 1);
+		drawextext(xinf->window, toLCHAR("\n"), 1);
 	}
 #endif
 	else if (xinf->command == EX_GOTO && xinf->fromaddr)
@@ -961,7 +961,7 @@ RESULT ex_message(xinf)
 	{
 		/* no - fake it for :error, else just return */
 		if (xinf->command == MSG_ERROR)
-			xinf->rhs = CHARdup(toCHAR("error"));
+			xinf->rhs = CHARdup(toLCHAR("error"));
 		else
 			return result;
 	}
@@ -1137,21 +1137,21 @@ RESULT	ex_help(xinf)
 	if (!xinf->lhs)
 	{
 		/* :help */
-		topic = toCHAR("CONTENTS");
+		topic = toLCHAR("CONTENTS");
 		section = "elvis.html";
 	}
-	else if (!CHARcmp(xinf->lhs, toCHAR("ex")))
+	else if (!CHARcmp(xinf->lhs, toLCHAR("ex")))
 	{
 		/* :help ex */
 		section = "elvisex.html";
 	}
-	else if (!CHARcmp(xinf->lhs, toCHAR("vi")))
+	else if (!CHARcmp(xinf->lhs, toLCHAR("vi")))
 	{
 		/* :help vi */
 		section = "elvisvi.html";
 	}
-	else if ((!CHARncmp(xinf->lhs, toCHAR("se"), 2)
-			|| !CHARncmp(xinf->lhs, toCHAR(":se"), 3))
+	else if ((!CHARncmp(xinf->lhs, toLCHAR("se"), 2)
+			|| !CHARncmp(xinf->lhs, toLCHAR(":se"), 3))
 		&& xinf->rhs)
 	{
 		/* :help set optionname */
@@ -1173,8 +1173,8 @@ RESULT	ex_help(xinf)
 			topic = xinf->rhs;
 		section = "elvisopt.html";
 	}
-	else if ((!CHARncmp(xinf->lhs, toCHAR("di"), 2)
-			|| !CHARncmp(xinf->lhs, toCHAR(":di"), 3))
+	else if ((!CHARncmp(xinf->lhs, toLCHAR("di"), 2)
+			|| !CHARncmp(xinf->lhs, toLCHAR(":di"), 3))
 		&& xinf->rhs)
 	{
 		/* :help display mode */
@@ -1184,8 +1184,8 @@ RESULT	ex_help(xinf)
 		section = "elvisdm.html";
 	}
 #  ifdef FEATURE_AUTOCMD
-	else if ((!CHARncmp(xinf->lhs, toCHAR("au"), 2)
-			|| !CHARncmp(xinf->lhs, toCHAR(":au"), 3))
+	else if ((!CHARncmp(xinf->lhs, toLCHAR("au"), 2)
+			|| !CHARncmp(xinf->lhs, toLCHAR(":au"), 3))
 		&& xinf->rhs)
 	{
 		/* :help autocmd event */
@@ -1193,7 +1193,7 @@ RESULT	ex_help(xinf)
 		/* topic is event name */
 		topic = auname(xinf->rhs);
 		if (!topic)
-			topic = toCHAR("AUTOCMD");
+			topic = toLCHAR("AUTOCMD");
 		section = "elvistip.html";
 	}
 #  endif
@@ -1228,7 +1228,7 @@ RESULT	ex_help(xinf)
 		}
 #endif
 		if (!topic)
-			topic = toCHAR("GROUP");
+			topic = toLCHAR("GROUP");
 	}
 	else if (len > 1 && xinf->lhs[0] == '<' && xinf->lhs[1])
 	{
@@ -1242,7 +1242,7 @@ RESULT	ex_help(xinf)
 		if (topic[1] == '/')
 			*++topic = '<';
 		if (!elvalnum(topic[1]))
-			topic = toCHAR("html");
+			topic = toLCHAR("html");
 		section = "elvisdm.html";
 	}
 	else if (len > 1 && elvalpha(xinf->lhs[0]) 
@@ -1302,7 +1302,7 @@ RESULT	ex_help(xinf)
 			/* Can't tell what user is looking for; perhaps the user
 			 * doesn't know the syntax of :help ?  Teach them!
 			 */
-			topic = toCHAR("help");
+			topic = toLCHAR("help");
 			section = "elvisex.html";
 		}
 	}
@@ -1321,7 +1321,7 @@ RESULT	ex_help(xinf)
 		safefree(o_bufdisplay(buf));
 		optflags(o_bufdisplay(buf)) &= ~OPT_FREE;
 	}
-	o_bufdisplay(buf) = toCHAR("html");
+	o_bufdisplay(buf) = toLCHAR("html");
 	o_initialsyntax(buf) = ElvFalse;
 
 	/* combine section name and topic name to form a tag */
@@ -1329,7 +1329,7 @@ RESULT	ex_help(xinf)
 	{
 		tag = (CHAR *)safealloc((int)(CHARlen(o_filename(buf)) + CHARlen(topic) + 2), sizeof(CHAR));
 		CHARcpy(tag, o_filename(buf));
-		CHARcat(tag, toCHAR("#"));
+		CHARcat(tag, toLCHAR("#"));
 		CHARcat(tag, topic);
 	}
 	else
@@ -1646,7 +1646,7 @@ RESULT ex_do(xinf)
 		else
 		{
 			drawextext(xinf->window, value, CHARlen(value));
-			drawextext(xinf->window, toCHAR("\n"), 1);
+			drawextext(xinf->window, toLCHAR("\n"), 1);
 		}
 
 		/* is the user getting bored? */
@@ -1822,7 +1822,7 @@ static MAPFLAGS maphelp(refcp, refmode)
 		flags |= maphelp2(refcp, "visual", MAP_ASCMD);
 		flags |= maphelp2(refcp, "noremap", MAP_NOREMAP);
 		flags |= maphelp2(refcp, "nosave", MAP_NOSAVE);
-		if (!CHARncmp(*refcp, "mode=", 5))
+		if (!CHARncmp(*refcp, toLCHAR("mode="), 5))
 		{
 			for (start = modebuf, *refcp += 5;
 			     start < &modebuf[sizeof modebuf -1]
@@ -1894,7 +1894,7 @@ RESULT	ex_map(xinf)
 
 	/* detect "map all" */
 	all = ElvFalse;
-	if (xinf->command == EX_MAP && lhs && !rhs && !CHARcmp(lhs, toCHAR("all")))
+	if (xinf->command == EX_MAP && lhs && !rhs && !CHARcmp(lhs, toLCHAR("all")))
 	{
 		lhs = NULL;
 		all = ElvTrue;
@@ -1982,7 +1982,7 @@ static CHAR *equaltilde(value, len, cmd)
 	/* store the value into the buffer */
 	bufreplace(marktmp(top, buf, 0L), marktmp(bottom, buf, o_bufchars(buf)),
 		value, len);
-	bufappend(buf, toCHAR("\n"), 1);
+	bufappend(buf, toLCHAR("\n"), 1);
 
 	/* temporarily make this the default buffer */
 	prevdef = bufdefault;
@@ -2093,9 +2093,9 @@ RESULT	ex_set(xinf)
 				if (chunks[0].ptr == NULL)
 				{
 					if (oldval[0])
-						CHARcat(oldval, toCHAR(","));
+						CHARcat(oldval, toLCHAR(","));
 					CHARcat(oldval, build);
-					CHARcat(oldval, toCHAR(":"));
+					CHARcat(oldval, toLCHAR(":"));
 					(void)calcsubscript(oldval, build, QTY(chunks), chunks);
 				}
 				safefree(build);
@@ -2161,7 +2161,16 @@ RESULT	ex_set(xinf)
 			for (j = 0; j < i; j++)
 				buildCHAR(&opereq, xinf->rhs[j]);
 			while (xinf->rhs[i] != '=' && xinf->rhs[i])
+			{
+				if (elvalnum(xinf->rhs[i]))
+				{
+					if (opereq)
+						safefree(opereq);
+					msg(MSG_ERROR, "bad assignment operator");
+					return RESULT_ERROR;
+				}
 				buildCHAR(&opereq, xinf->rhs[i++]);
+			}
 			buildCHAR(&opereq, ' ');
 			buildCHAR(&opereq, '(');
 			for (j = i + 1; xinf->rhs[j]; j++)

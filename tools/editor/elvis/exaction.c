@@ -4,7 +4,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_exaction[] = "$Id: exaction.c,v 2.127 2004/03/22 00:20:03 steve Exp $";
+char id_exaction[] = "$Id: exaction.c,v 2.129 2011/11/21 20:39:34 steve Exp $";
 #endif
 
 #ifdef FEATURE_MISC
@@ -49,13 +49,13 @@ RESULT	ex_buffer(xinf)
 	CHAR	*name;
 	int	len;		/* length of string in winlist[] */
 	int	bnlen;		/* length of buffer name */
-	CHAR	*htmlhead = toCHAR("\
+	CHAR	*htmlhead = toLCHAR("\
 <html><head>\n\
 <title>Buffer List</title>\n\
 </head><body>\n\
 <h1>Buffer List</h1>\n\
 <menu>\n");
-	CHAR	*htmltail = toCHAR("</menu></body></html>\n");
+	CHAR	*htmltail = toLCHAR("</menu></body></html>\n");
 
 	assert(xinf->command == EX_BUFFER || xinf->command == EX_BBROWSE || xinf->command == EX_SBBROWSE);
 
@@ -83,7 +83,7 @@ RESULT	ex_buffer(xinf)
 				   marktmp(tmp2, html, o_bufchars(html)),
 				   htmlhead,
 				   CHARlen(htmlhead));
-			o_bufdisplay(html) = toCHAR("html");
+			o_bufdisplay(html) = toLCHAR("html");
 			o_initialsyntax(html) = ElvFalse;
 			o_readonly(html) = ElvTrue;
 		}
@@ -132,18 +132,18 @@ RESULT	ex_buffer(xinf)
 			if (html)
 			{
 				marksetoffset(&tmp, o_bufchars(html));
-				bufreplace(&tmp, &tmp, toCHAR("<li><a href=\"buffer:"), 20L);
+				bufreplace(&tmp, &tmp, toLCHAR("<li><a href=\"buffer:"), 20L);
 				marksetoffset(&tmp, o_bufchars(html));
 				bufreplace(&tmp, &tmp, o_bufname(buf), CHARlen(o_bufname(buf)));
 				marksetoffset(&tmp, o_bufchars(html));
-				bufreplace(&tmp, &tmp, toCHAR("\">"), 2L);
+				bufreplace(&tmp, &tmp, toLCHAR("\">"), 2L);
 
 				if (first == 0L)
 					first = o_bufchars(html);
 				marksetoffset(&tmp, o_bufchars(html));
 				bufreplace(&tmp, &tmp, winlist, len);
 				marksetoffset(&tmp, o_bufchars(html));
-				bufreplace(&tmp, &tmp, toCHAR("</a>\n"), 5L);
+				bufreplace(&tmp, &tmp, toLCHAR("</a>\n"), 5L);
 			}
 			else
 			{
@@ -260,7 +260,7 @@ RESULT ex_window(xinf)
 			drawextext(xinf->window,
 				o_bufname(markbuffer(win->cursor)),
 				CHARlen(o_bufname(markbuffer(win->cursor))));
-			drawextext(xinf->window, toCHAR("\n"), 1);
+			drawextext(xinf->window, toLCHAR("\n"), 1);
 		}
 		return RESULT_COMPLETE;
 	}
@@ -430,11 +430,19 @@ RESULT	ex_edit(xinf)
 	/* Are we supposed to switch buffers? */
 	if (xinf->nfiles > 0)
 	{
+#ifdef FEATURE_PERSIST
+		/* We shouldn't let persistence move the cursor, because if
+		 * the "+cmd" parameter involves searching then a persistent
+		 * cursor could interfere with the search.
+		 */
+		bufperstweak("persistonce", "+hours:0");
+#endif
+
 		/* If we expect to load the "previousfile" then the default
 		 * starting line is the "previousfileline".
 		 */
 		if (o_previousfile
-		 && !CHARcmp(o_previousfile, xinf->file[0]))
+		 && !CHARcmp(o_previousfile, toCHAR(xinf->file[0])))
 		{
 			line = o_previousfileline;
 		}
@@ -644,7 +652,7 @@ RESULT	ex_file(xinf)
 		{
 			if (markbuffer(xinf->window->cursor) == buf && o_buflines(buf) > 0)
 			{
-				msg(MSG_INFO, "[dd](filename)(readonly?\" [READONLY]\")(modified?\" [MODIFIED]\")(!edited?\" [NOT EDITED]\")(newfile?\" [NEW FILE]\") $1/$2 ($1 * 100 / $2)%",
+				msg(MSG_INFO, "[dd](filename)(readonly?\" [READONLY]\")(modified?\" [MODIFIED]\")(!edited?\" [NOT EDITED]\")(newfile?\" [NEW FILE]\") ($1 * 100 / $2)%",
 					lnum, o_buflines(buf));
 			}
 			else
@@ -743,7 +751,7 @@ RESULT	ex_mkexrc(xinf)
 		/* store the name in mkexrcfile, and regenerate the CUSTOM_BUF
 		 * so it contains the new value of mkexrcfile.
 		 */
-		(void)optputstr(toCHAR("mkexrcfile"), toCHAR(filename), ElvFalse);
+		(void)optputstr(toLCHAR("mkexrcfile"), toCHAR(filename), ElvFalse);
 		eventupdatecustom(ElvTrue);
 		eventupdatecustom(ElvFalse);
 		buf = buffind(toCHAR(CUSTOM_BUF));
@@ -1011,7 +1019,7 @@ RESULT	ex_bang(xinf)
 			bangcmd = (char *)safealloc((int)CHARlen(xinf->rhs) + 2, sizeof(char));
 			bangcmd[0] = '!';
 			strcpy(bangcmd + 1, tochar8(xinf->rhs));
-			if (!ioopen(bangcmd, 'r', ElvFalse, ElvFalse, 't'))
+			if (!ioopen(bangcmd, 'r', ElvFalse, ElvFalse, 'a', 't'))
 			{
 				o_exrefresh = origrefresh;
 				return RESULT_ERROR;
@@ -1102,7 +1110,7 @@ RESULT	ex_bang(xinf)
 		/* add a bogus newline.  Elvis wants to see one there even if
 		 * it isn't really part of the buffer's intended text.
 		 */
-		bufreplace(xinf->toaddr, xinf->toaddr, toCHAR("\n"), 1L);
+		bufreplace(xinf->toaddr, xinf->toaddr, toLCHAR("\n"), 1L);
 		o_partiallastline(markbuffer(mark)) = ElvTrue;
 	}
 
@@ -1144,8 +1152,8 @@ RESULT	ex_source(xinf)
 
 	/* open the file */
 	if (xinf->rhs == NULL
-		    ? !ioopen(xinf->file[0], 'r', ElvFalse, ElvFalse, 't')
-		    : !ioopen(tochar8(xinf->rhs), 'r', ElvTrue, ElvFalse, 't'))
+		    ? !ioopen(xinf->file[0], 'r', ElvFalse, ElvFalse, 'a', 't')
+		    : !ioopen(tochar8(xinf->rhs), 'r', ElvTrue, ElvFalse, 'a', 't'))
 		return RESULT_ERROR;
 
 	/* create a temp buffer */
@@ -1207,7 +1215,7 @@ RESULT	ex_stack(xinf)
 			markline(xinf->window->tagstack[i].origin),
 			o_bufname(markbuffer(xinf->window->tagstack[i].origin)),
 			xinf->window->tagstack[i].prevtag ?
-				xinf->window->tagstack[i].prevtag : toCHAR(""));
+				xinf->window->tagstack[i].prevtag : toLCHAR(""));
 	}
 	return RESULT_COMPLETE;
 }
@@ -1260,7 +1268,7 @@ RESULT	ex_tag(xinf)
 	if (o_filename(markbuffer(xinf->window->cursor))
 	 || (xinf->rhs && (CHARchr(xinf->rhs, '#')
 			|| CHARchr(xinf->rhs, '?')
-			|| !CHARncmp(xinf->rhs, toCHAR("buffer:"), 7))))
+			|| !CHARncmp(xinf->rhs, toLCHAR("buffer:"), 7))))
 		loadfn = xinf->window->md->tagload;
 	else
 		loadfn = dmnormal.tagload;
@@ -1355,13 +1363,13 @@ RESULT	ex_browse(xinf)
 			if (perms == DIR_READONLY || perms == DIR_READWRITE)
 			{
 				tmp = (CHAR *)safealloc(CHARlen(xinf->rhs) + 9, sizeof(CHAR));
-				CHARcpy(tmp, toCHAR("tagfile:"));
+				CHARcpy(tmp, toLCHAR("tagfile:"));
 				CHARcat(tmp, xinf->rhs);
 			}
 			else
 			{
 				tmp = (CHAR *)safealloc(CHARlen(xinf->rhs) + 8, sizeof(CHAR));
-				CHARcpy(tmp, toCHAR("class:/"));
+				CHARcpy(tmp, toLCHAR("class:/"));
 				CHARcat(tmp, xinf->rhs);
 			}
 		}
@@ -1382,7 +1390,7 @@ RESULT	ex_browse(xinf)
 		/* no args given, but we know our filename */
 		buf = markbuffer(xinf->window->cursor);
 		tmp = (CHAR *)safealloc(CHARlen(o_filename(buf)) + 9, sizeof(CHAR));
-		CHARcpy(tmp, "tagfile:");
+		CHARcpy(tmp, toLCHAR("tagfile:"));
 		CHARcat(tmp, o_filename(buf));
 		buf = tebrowse(ElvFalse, tmp);
 		safefree(tmp);
@@ -1421,6 +1429,16 @@ RESULT	ex_split(xinf)
 	BUFFER	buffer;
 
 	assert(xinf->command == EX_SPLIT || xinf->command == EX_SNEW);
+
+#ifdef FEATURE_PERSIST
+	/* If invoked with "+cmd" then we want to inhibit restoring the cursor
+	 * because if "+cmd" involves a search command then moving the cursor
+	 * could interfere with that.  Note that by using "+hours:0" instead of
+	 * "-cursor,change" we still allow the ' mark to be set.
+	 */
+	if (xinf->lhs)
+		bufperstweak("persistonce", "+hours:0");
+#endif
 
 	/* decide which buffer should appear in the new window */
 	if (xinf->command == EX_SNEW)

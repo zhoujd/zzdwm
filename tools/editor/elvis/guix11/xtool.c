@@ -5,7 +5,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_xtool[] = "$Id: xtool.c,v 2.22 2004/02/05 23:31:19 steve Exp $";
+char id_xtool[] = "$Id: xtool.c,v 2.23 2004/05/07 18:07:20 steve Exp $";
 #endif
 #ifdef GUI_X11
 # include "guix11.h"
@@ -31,6 +31,7 @@ typedef struct tool_s
 	unsigned int	textx;		/* label's horiz offset within button */
 	ELVBOOL		safer;		/* run with "safer" flag? */
 	ELVBOOL		gap;		/* precede this option with a gap */
+	_ELVFACE_	face;		/* font code, for colors */
 } TOOL;
 
 #if USE_PROTOTYPES
@@ -75,6 +76,7 @@ static TOOL *findtool(label, isnew)
 			tool->id = lag->id + 1;	/* next new label */
 		else
 			tool->id = lag->id;	/* subitem of same label */
+		tool->face = x_toolcolors;
 
 		/* insert it into the list */
 		if (lag)
@@ -177,11 +179,11 @@ static void draw1tool(xw, tool, bevel)
 	/* draw the button's bevel and face */
 	x_drawbevel(xw, xw->tb.win,
 		xw->tb.state[tool->id].x, xw->tb.state[tool->id].y,
-		tool->width, toolheight, 'b', bevel);
+		tool->width, toolheight, 'b', bevel, tool->face);
 
 	/* draw the button's label */
 	XSetFont(x_display, xw->gc, x_loadedcontrol->fontinfo->fid);
-	xw->fg = colorinfo[bevel == 0 ? x_toolbarcolors : x_toolcolors].fg;
+	xw->fg = colorinfo[bevel == 0 ? x_toolbarcolors : tool->face].fg;
 	XSetForeground(x_display, xw->gc, xw->fg);
 	if (bevel == 0)
 	{
@@ -330,7 +332,7 @@ void x_tb_predict(xw, w, h)
 			scan->width = 0;
 		}
 	}
-	toolbase = x_loadedcontrol->fontinfo->max_bounds.ascent + TB_BEVEL;
+	toolbase = x_loadedcontrol->fontinfo->ascent + TB_BEVEL;
 
 	/* if any tool lacks a "width" field, then compute it now */
 	for (scan = tools; scan; scan = scan->next)
@@ -556,7 +558,7 @@ void x_tb_draw(xw, fromscratch)
 			x_drawbevel(xw, xw->tb.win, 
 				(xw->tb.state[lag->id].x + lag->width + xw->tb.state[tool->id].x) / 2 - 1,
 				xw->tb.state[tool->id].y + toolheight / 2,
-				3, 2, 'b', -1);
+				3, 2, 'b', -1, x_toolcolors);
 		}
 	}
 }
@@ -679,13 +681,14 @@ void x_tb_event(xw, event)
  *
  * Returns ElvTrue if the screens all need to be reconfigured, ElvFalse otherwise.
  */
-ELVBOOL x_tb_config(gap, label, op, value)
+ELVBOOL x_tb_config(gap, face, label, op, value)
 	ELVBOOL	gap;	/* insert a gap before this item? */
+	_ELVFACE_ face;	/* font code, for colors */
 	char	*label;	/* name of a toolbar button, or NULL to delete all */
 	_char_	op;	/* :excmd, ?enable, =pushedin, or '~' to delete */
 	char	*value;	/* an ex command or an expression, depending on op */
 {
-	TOOL	*tool;
+	TOOL	*tool, *next;
 	ELVBOOL	changed;/* do we need to reconfigure after this? */
 	int	len;
 	CHAR	*rawin;
@@ -693,10 +696,29 @@ ELVBOOL x_tb_config(gap, label, op, value)
 	/* if no label was given, then clobber all tools */
 	if (!label)
 	{
-		changed = (ELVBOOL)(tools && o_toolbar);
-		while (tools)
+		if (face == '\0')
 		{
-			freetool(tools);
+			/* clobber them regardless of their face */
+			changed = (ELVBOOL)(tools && o_toolbar);
+			while (tools)
+			{
+				freetool(tools);
+			}
+		}
+		else
+		{
+			/* clobber tools only if they match the given face */
+			changed = ElvFalse;
+			for (tool = tools; tool; tool = next)
+			{
+				next = tool->next;
+				if (tool->face == face)
+				{
+					freetool(tool);
+					changed |= ElvTrue;
+				}
+			}
+			changed &= o_toolbar;
 		}
 		return changed;
 	}
@@ -708,6 +730,13 @@ ELVBOOL x_tb_config(gap, label, op, value)
 	if (!changed && tool->gap != gap)
 		changed = ElvTrue;
 	tool->gap |= gap;
+
+	/* if given a face name, then change the face */
+	if (face && tool->face != face)
+	{
+		tool->face = face;
+		changed = ElvTrue;
+	}
 
 	/* If the value is an empty string, treat it as no value */
 	if (value && !*value)

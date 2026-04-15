@@ -44,10 +44,10 @@ void spellend P_((void));
 void spellhighlight P_((WINDOW win));
 void spellsave P_((BUFFER custom));
 void spellfix P_((CHAR *word, CHAR *result, int resultlen, ELVBOOL tagonly));
-CHAR *spellshow P_((MARK cursor, _char_ font));
+CHAR *spellshow P_((MARK cursor, _ELVFACE_ font));
 ELVBOOL spellcount P_((MARK cursor, long count));
 void spellcheckfont P_((CHAR *fontname, spellcheck_t check, ELVBOOL bang));
-void spelltmp P_((int oldfont, int newfont, int combofont));
+void spelltmp P_((_ELVFACE_ oldfont, _ELVFACE_ newfont, _ELVFACE_ combofont));
 void spellload P_((char *filename, ELVBOOL personal));
 MARK spellnext P_((WINDOW win, MARK curs));
 

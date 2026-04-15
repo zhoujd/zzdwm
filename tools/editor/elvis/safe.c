@@ -35,6 +35,16 @@ char *safedup(str)
 	strcpy(newp, str);
 	return newp;
 }
+
+# ifdef FEATURE_WCHAR
+CHAR *safeCHARdup(str)
+	CHAR	*str;	/* nul-terminated CHAR string to be duplicated */
+{
+	CHAR *newp = (CHAR *)safealloc((int)CHARlen(str) + 1, sizeof(CHAR));
+	CHARcpy(newp, str);
+	return newp;
+}
+# endif
 #else
 
 #define MAGIC1 0x10d934a2
@@ -185,6 +195,20 @@ char *_safedup(file, line, kept, str)
 
 	newp = (char *)_safealloc(file, line, kept, (int)(strlen(str) + 1), sizeof(char));
 	strcpy(newp, str);
+	return newp;
+}
+
+/* allocate a duplicate of a CHAR string, using _safealloc() */
+CHAR *_safeCHARdup(file, line, kept, str)
+	char	*file;	/* name of source file where this func was called */
+	int	line;	/* line of source file where this func was called */
+	ELVBOOL	kept;	/* if ElvTrue, don't complain if never freed */
+	CHAR	*str;	/* nul-terminated string to duplicate */
+{
+	CHAR	*newp;
+
+	newp = (CHAR *)_safealloc(file, line, kept, (int)(CHARlen(str) + 1), sizeof(CHAR));
+	CHARcpy(newp, str);
 	return newp;
 }
 

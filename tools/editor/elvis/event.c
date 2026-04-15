@@ -4,7 +4,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_event[] = "$Id: event.c,v 2.85 2003/10/17 17:41:23 steve Exp $";
+char id_event[] = "$Id: event.c,v 2.88 2009/06/24 20:37:42 steve Exp $";
 #endif
 
 #ifndef DEBUG_EVENT
@@ -290,6 +290,14 @@ WATCH(fprintf(stderr, "eventexpose(..., top=%d, left=%d, bottom=%d, right=%d)\n"
 	/* permit the bell to ring */
 	guibeep(NULL);
 
+	/* because GUI windows aren't necessarily created or destroyed at the
+	 * same time as elvis' internal WINDOW data structures, it is possible
+	 * that we'll receive an expose event for a GUI window that doesn't
+	 * (as far as Elvis knows) exist anymore.  In that case, do nothing.
+	 */
+	if (win == NULL)
+		return;
+ 
 	if (top < 0) top = 0;
 	if (left < 0) left = 0;
 	if (bottom >= o_lines(win)) bottom = o_lines(win) - 1;
@@ -453,6 +461,11 @@ WATCH(fprintf(stderr, "eventclick(..., row=%d, column=%d, what=%d)\n", row, colu
 	USUAL_SUSPECTS
 	eventcounter++;
 
+#ifdef FEATURE_PERSIST
+	/* copy persist to persistonce */
+	bufpersevent();
+#endif
+
 	/* reset the poll frequency counter */
 	guipoll(ElvTrue);
 	bufmsgtype = MSG_STATUS;
@@ -467,7 +480,7 @@ WATCH(fprintf(stderr, "eventclick(..., row=%d, column=%d, what=%d)\n", row, colu
 	 */
 	if (!strcmp(win->state->modename, "More"))
 	{
-		(void)eventkeys(gw, toCHAR("\n"), 1);
+		(void)eventkeys(gw, toLCHAR("\n"), 1);
 		return markoffset(win->cursor);
 	}
 
@@ -575,7 +588,7 @@ WATCH(fprintf(stderr, "eventclick(..., row=%d, column=%d, what=%d)\n", row, colu
 			if (markoffset(newcurs) >= o_bufchars(markbuffer(win->state->cursor)))
 			{
 				marksetoffset(newcurs, o_bufchars(markbuffer(win->state->cursor)));
-				bufreplace(newcurs, newcurs, toCHAR("\n"), 1L);
+				bufreplace(newcurs, newcurs, toLCHAR("\n"), 1L);
 				markaddoffset(newcurs, 1L);
 				marksetoffset(newcurs, o_bufchars(markbuffer(win->state->cursor)) - 2L);
 			}
@@ -720,13 +733,18 @@ WATCH(fprintf(stderr, "eventclick(..., row=%d, column=%d, what=%d)\n", row, colu
  */
 MAPSTATE eventkeys(gw, key, nkeys)
 	GUIWIN	*gw;	/* GUI's handle for window that received keypress event */
-	CHAR	*key;	/* array of ASCII characters from key */
+	CHAR	*key;	/* array of ASCII/Unicode characters from key */
 	int	nkeys;	/* number of ASCII characters */
 {
 	MAPSTATE mapstate;
 WATCH(fprintf(stderr, "eventkeys(..., key={%d, ...}, nkeys=%d)\n", key[0], nkeys));
 	USUAL_SUSPECTS
 	eventcounter++;
+
+#ifdef FEATURE_PERSIST
+	/* copy persist to persistonce */
+	bufpersevent();
+#endif
 
 	/* reset the poll frequency counter */
 	guipoll(ElvTrue);
@@ -769,6 +787,11 @@ WATCH(fprintf(stderr, "eventscroll(..., %d, %ld, %ld)\n", scroll, count, denom))
 	USUAL_SUSPECTS
 	assert(win != NULL && (count > 0 || (count == 0 && scroll == SCROLL_PERCENT)));
 	eventcounter++;
+
+#ifdef FEATURE_PERSIST
+	/* copy persist to persistonce */
+	bufpersevent();
+#endif
 
 	/* reset the poll frequency counter */
 	guipoll(ElvTrue);

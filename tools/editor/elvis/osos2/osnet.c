@@ -5,6 +5,9 @@
  * Herbert 
  *
  * $Log: osnet.c,v $
+ * Revision 1.7  2006/11/28 22:47:34  steve
+ * Added "x11wan" and "x11lan" GUIs, which are slower versions of "x11".
+ *
  * Revision 1.6  2003/10/23 23:35:45  steve
  * Herbert's latest changes.
  *
@@ -97,7 +100,7 @@ char id_osnet[] = "$Id";
 #  include <netinet/in.h>
 # endif
 # include <sys/select.h>
-# if defined(__IBMC__) || defined(__WATCOMC__)
+# ifdef __IBMC__
 #  define close(s)      soclose(s)
 #  define read(s,p,n)  recv(s, p, n, 0)
 #  define write(s,p,n)  send(s, p, n, 0)
@@ -181,6 +184,37 @@ site2addr(char *site, struct in_addr  *address)
 Error:
   msg(MSG_ERROR, "[s]unknown site $1", site);
   return ElvFalse;
+}
+
+
+/* Return 2 for WAN addresses, 1 for LAN addresses, 0 for localhost, or -1 if
+ * a name couldn't be resolved.
+ */
+int netspeed(site)
+	char	*site;	/* name of remote system */
+{
+	struct in_addr	addr;
+	unsigned char *byte;
+
+#ifndef __EMX__
+  /* If first time, then initialize OS/2 sockets */
+  if (!initialized)
+    {
+      (void)sock_init ();
+      initialized = ElvTrue;
+    }
+#endif
+
+	if (!site2addr(buf, &addr))
+		return -1;
+	byte = (unsigned char *)&addr->s_addr;
+	if (byte[3] == 127)
+		return 0;
+	if (byte[3] == 10)
+		return 1;
+	if (byte[3] == 192 && byte[2] = 168)
+		return 1;
+	return 2;
 }
 
 /* Open a connection to a given site and port.

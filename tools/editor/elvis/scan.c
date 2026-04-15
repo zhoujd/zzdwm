@@ -4,7 +4,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_scan[] = "$Id: scan.c,v 2.26 2003/10/17 17:41:23 steve Exp $";
+char id_scan[] = "$Id: scan.c,v 2.28 2006/11/30 19:10:45 steve Exp $";
 #endif
 
 #ifdef FEATURE_LITRE
@@ -69,7 +69,8 @@ CHAR	*_scanalloc(file, line, cp, start)
 	assert(start != NULL && cp != NULL);
 
 	/* allocate a new scan context */
-#ifndef DEBUG_ALLOC
+#if !defined(DEBUG_ALLOC) || !defined(DEBUG_SCAN)
+# ifndef DEBUG_ALLOC
 	if (recycle)
 	{
 		newp = recycle;
@@ -77,6 +78,7 @@ CHAR	*_scanalloc(file, line, cp, start)
 		memset((char *)newp, 0, sizeof(*newp));
 	}
 	else
+# endif
 	{
 		newp = (struct scan_s *)safealloc(1, sizeof *newp);
 	}
@@ -116,7 +118,8 @@ CHAR	*scanstring(cp, str)
 	assert(str != NULL && cp != NULL);
 
 	/* allocate a new scan context */
-#ifndef DEBUG_ALLOC
+#if !defined(DEBUG_ALLOC) || !defined(DEBUG_SCAN)
+# ifndef DEBUG_ALLOC
 	if (recycle)
 	{
 		newp = recycle;
@@ -124,6 +127,7 @@ CHAR	*scanstring(cp, str)
 		memset((char *)newp, 0, sizeof(*newp));
 	}
 	else
+# endif
 	{
 		newp = (struct scan_s *)safealloc(1, sizeof *newp);
 	}
@@ -171,7 +175,8 @@ CHAR *scandup(cp, oldp)
 	assert(scan__top && scan__top->ptr == oldp);
 
 	/* allocate a new scan context */
-#ifndef DEBUG_ALLOC
+#if !defined(DEBUG_ALLOC) || !defined(DEBUG_SCAN)
+# ifndef DEBUG_ALLOC
 	if (recycle)
 	{
 		newp = recycle;
@@ -179,6 +184,7 @@ CHAR *scandup(cp, oldp)
 		memset((char *)newp, 0, sizeof(*newp));
 	}
 	else
+# endif
 	{
 		newp = (struct scan_s *)safealloc(1, sizeof *newp);
 	}
@@ -522,4 +528,57 @@ CHAR scanchar(mark)
 	sesunlock(blkno, ElvFalse);
 
 	return ch;
+}
+
+
+/* Compare a memory string to a portion of a buffer, in a case-insensitive way.
+ * In the interest of speed, it will avoid creating a new scan context if
+ * the whole string is known to be contiguous in the buffer's block cache.
+ *
+ * Returns 1 if match, or 0 if mismatch.
+ */
+int scanmatch(refcp, mem, len)
+	CHAR	**refcp;/* reference to a scan pointer */
+	CHAR	*mem;	/* the string to look for */
+	int	len;	/* number of CHARs in the "mem" string */
+{
+	int	i;
+	CHAR	*cp2;
+
+	/* A NULL scan never matches anything */
+	if (*refcp == NULL)
+		return 0;
+
+	/* An empty string always matches */
+	if (len == 0)
+		return 1;
+
+	/* if first char doesn't match, then give up */
+	if (elvtolower(**refcp) != elvtolower(*mem))
+		return 0;
+
+	/* if we're lucky, we can do this the fast way */
+	if (scanright(refcp) >= len)
+	{
+		for (i = 1, cp2 = (*refcp) + 1, mem++;
+		     i < len && elvtolower(*cp2) == elvtolower(*mem);
+		     i++, cp2++, mem++)
+		{
+		}
+		if (i < len)
+			return 0;
+		return 1;
+	}
+
+	/* okay, we'll do it the hard way */
+	scandup(&cp2, refcp);
+	for (i = 1, scannext(&cp2), mem++;
+	     i < len && cp2 != NULL && elvtolower(*cp2) == elvtolower(*mem);
+	     i++, scannext(&cp2), mem++)
+	{
+	}
+	scanfree(&cp2);
+	if (i < len)
+		return 0;
+	return 1;
 }

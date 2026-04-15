@@ -73,3 +73,4 @@ extern CHAR	*scanseek P_((CHAR **cp, MARK restart));
 extern CHAR	*scan__next P_((CHAR **cp));
 extern CHAR	*scan__prev P_((CHAR **cp));
 extern CHAR	scanchar P_((MARK mark));
+extern int	scanmatch P_((CHAR **refcp, CHAR *mem, int len));

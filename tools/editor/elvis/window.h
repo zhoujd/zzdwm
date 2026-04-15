@@ -20,7 +20,7 @@ typedef struct window_s
 	ELVBOOL	selattop;	/* boolean: does seltop follow cursor? (else selbottom does) */
 	CHAR	seltype;	/* 'c'=character, 'l'=line, 'r'=rectangle */
 	CHAR	cmdchars[7];	/* up to six characters of a command */
-	int	defaultfont;	/* font to combine with "normal" */
+	ELVFACE	defaultfont;	/* font to combine with "normal" */
 	long	fgcolor;	/* foreground color of previous defaultfont */
 	long	bgcolor;	/* background color of previous defaultfont */
 	long	match;		/* offset of matching parenthesis, for showmatch */
@@ -41,8 +41,12 @@ typedef struct window_s
 	struct {		/* details of highlighting */
 		long	from;
 		long	to;
-		int	font;
+		ELVFACE	font;
 	} hlinfo[30];		/* "30" corresponds to maximum hllayers value */
+#endif
+#ifdef FEATURE_EMBED
+	void	*embedded;	/* NULL unless drawing embedded syntax */
+	ELVFACE	embedfont;	/* font to use for embedded text */
 #endif
 	OPTVAL	*guivals;	/* GUI option values */
 	OPTVAL	windowid;	/* unique number to identify this window */

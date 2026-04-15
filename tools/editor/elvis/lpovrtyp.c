@@ -13,7 +13,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_lpovrtyp[] = "$Id: lpovrtyp.c,v 2.18 2003/10/17 17:41:23 steve Exp $";
+char id_lpovrtyp[] = "$Id: lpovrtyp.c,v 2.19 2011/12/15 17:55:12 steve Exp $";
 #endif
 #ifdef FEATURE_LPR
 
@@ -21,7 +21,7 @@ char id_lpovrtyp[] = "$Id: lpovrtyp.c,v 2.18 2003/10/17 17:41:23 steve Exp $";
 static void outcr(void);
 static void outbs(void);
 static void before(int minorno, void (*draw)(_CHAR_));
-static void fontch(_char_ font, _CHAR_ ch);
+static void fontch(_ELVFACE_ font, _CHAR_ ch);
 static void page(int linesleft);
 static void after(int linesleft);
 #endif
@@ -117,7 +117,7 @@ static void before(minorno, draw)
  * a control character then it outputs the line and then the control character
  */
 static void fontch(font, ch)
-	_char_	font;	/* font of the next character from text image */
+	_ELVFACE_ font;	/* font of the next character from text image */
 	_CHAR_	ch;	/* the next character */
 {
 	int	bits;

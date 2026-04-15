@@ -4,16 +4,17 @@
 
 BEGIN_EXTERNC
 #ifdef DEBUG_ALLOC
-extern ELVBOOL	_ioopen P_((char *file, int line, char *name, _char_ rwa, ELVBOOL prgsafe, ELVBOOL force, _char_ eol));
-# define ioopen(n,r,p,f,e)	_ioopen(__FILE__, __LINE__, n,r,p,f,e)
+extern ELVBOOL	_ioopen P_((char *file, int line, char *name, _char_ rwa, ELVBOOL prgsafe, ELVBOOL force, _char_ enc, _char_ eol));
+# define ioopen(n,r,p,f,rr, e)	_ioopen(__FILE__, __LINE__, n,r,p,f,rr,e)
 #else
-extern ELVBOOL	ioopen P_((char *name, _char_ rwa, ELVBOOL prgsafe, ELVBOOL force, _char_ eol));
+extern ELVBOOL	ioopen P_((char *name, _char_ rwa, ELVBOOL prgsafe, ELVBOOL force, _char_ enc, _char_ eol));
 #endif
 extern int	iowrite P_((CHAR *iobuf, int len));
 extern int	ioread P_((CHAR *iobuf, int len));
 extern ELVBOOL	ioclose P_((void));
 extern char	*iopath P_((char *path, char *filename, ELVBOOL usefile));
 extern char	*iofilename P_((char *partial, _char_ endchar));
+extern char	*ioenc P_((char *filename));
 extern char	*ioeol P_((char *filename));
 extern char	*ioabsolute P_((char *filename));
 

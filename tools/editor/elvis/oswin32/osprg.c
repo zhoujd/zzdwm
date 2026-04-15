@@ -1101,8 +1101,8 @@ TRACE(fprintf(tracelog, "%s(%d) piper=0x%lx (was 0x%lx)\n", __FILE__, __LINE__, 
  * For Win32, this is simply a WriteFile() to the temp file or pipe.
  */
 int prgwrite(buf, nbytes)
-	ElvisCHAR	*buf;	/* buffer, contains text to be written */
-	int		nbytes;	/* number of characters in buf */
+	char	*buf;	/* buffer, contains text to be written */
+	int	nbytes;	/* number of characters in buf */
 {
 	DWORD	written;/* number of characters actually written */
 
@@ -1227,8 +1227,8 @@ TRACE(fprintf(tracelog, "pipefname=\"%s\", bytes=%ld\n", pipefname, *pipefname ?
  * newline conversion explicitly, since pipes are always binary.
  */
 int prgread(buf, nbytes)
-	ElvisCHAR	*buf;	/* buffer where text should be placed */
-	int		nbytes;	/* maximum number of characters to read */
+	char	*buf;	/* buffer where text should be placed */
+	int	nbytes;	/* maximum number of characters to read */
 {
 	DWORD	nread;
 	int	i, j;

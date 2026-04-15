@@ -67,7 +67,7 @@ typedef union
 		long	reserved;	/* nothing yet; always 0 */
 		BLKNO	first;		/* first text block list */
 		short	checksum;	/* checksum of this block */
-		char	name[1];	/* buffer name */
+		CHAR	name[1];	/* buffer name */
 	} bufinfo;
 
 	struct
@@ -91,10 +91,10 @@ typedef union
 	char	sizetester[BLKSIZE];	/* forces BLK to be prefered size */
 } BLK;
 
-#define SES_MAXSUPER	((o_blksize - (long)(((BLK *)0)->super.buf)) / sizeof(BLKNO))
-#define SES_MAXSUPER2	((o_blksize - (long)(((BLK *)0)->super2.buf)) / sizeof(BLKNO))
-#define SES_MAXBUFINFO	(o_blksize - (long)(((BLK *)0)->bufinfo.name))
-#define SES_MAXBLKLIST	((o_blksize - (long)(((BLK *)0)->blklist.blk)) / sizeof(((BLK *)0)->blklist.blk[0]))
+#define SES_MAXSUPER	((o_blksize - (size_t)(((BLK *)0)->super.buf)) / sizeof(BLKNO))
+#define SES_MAXSUPER2	((o_blksize - (size_t)(((BLK *)0)->super2.buf)) / sizeof(BLKNO))
+#define SES_MAXBUFINFO	((o_blksize - (size_t)(((BLK *)0)->bufinfo.name)) / sizeof(CHAR))
+#define SES_MAXBLKLIST	((o_blksize - (size_t)(((BLK *)0)->blklist.blk)) / sizeof(((BLK *)0)->blklist.blk[0]))
 #define SES_MAXCHARS	(o_blksize / sizeof(CHAR))
 
 

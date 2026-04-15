@@ -5,7 +5,7 @@
 #define WINDOW elviswin
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_guicurs[] = "$Id: guicurs.c,v 2.25 2003/10/17 17:41:23 steve Exp $";
+char id_guicurs[] = "$Id: guicurs.c,v 2.26 2011/12/15 17:55:12 steve Exp $";
 #endif
 #undef WINDOW
 #ifdef GUI_CURSES
@@ -50,7 +50,7 @@ static int init(int argc, char **argv);
 static int test(void);
 static void bell(GUIWIN *gw);
 static void destroygw(GUIWIN *gw, ELVBOOL force);
-static void draw(GUIWIN *gw, _char_ font, CHAR *text, int len);
+static void draw(GUIWIN *gw, _ELVFACE_ font, CHAR *text, int len);
 static void flush(void);
 static void loop(void);
 static void moveto(GUIWIN *gw, int column, int row);
@@ -346,7 +346,7 @@ static void moveto(gw, column, row)
  */
 static void draw(gw, font, text, len)
 	GUIWIN	*gw;	/* window where text should be displayed */
-	_char_	font;	/* font to use */
+	_ELVFACE_ font;	/* font to use */
 	CHAR	*text;	/* text to be drawn */
 	int	len;	/* length of text */
 {

@@ -12,7 +12,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_tagsrch[] = "$Id: tagsrch.c,v 1.16 2003/10/17 17:41:23 steve Exp $";
+char id_tagsrch[] = "$Id: tagsrch.c,v 1.17 2011/11/21 20:57:23 steve Exp $";
 #endif
 #ifdef FEATURE_TAGS
 
@@ -629,7 +629,7 @@ void tsfile(filename, maxlength)
 		taglength = maxlength, fulllength = ElvFalse;
 
 	/* open the file */
-	if (!ioopen(filename, 'r', ElvTrue, ElvFalse, 't'))
+	if (!ioopen(filename, 'r', ElvTrue, ElvFalse, 'a', 't'))
 	{
 		return;
 	}
@@ -645,7 +645,7 @@ void tsfile(filename, maxlength)
 	bytes = ioread(tagline, QTY(tagline) - 1);
 	skipped = ElvFalse;
 	while (bytes > taglength
-		&& (!lastname || CHARncmp(lastname, tagline, (size_t)taglength) >= 0))
+		&& (!lastname || CHARncmp(toCHAR(lastname), tagline, (size_t)taglength) >= 0))
 	{
 		/* Except for the first time, we would like to avoid scanning
 		 * all of the tag lines currently in the tagline[] buffer if we
@@ -666,7 +666,7 @@ void tsfile(filename, maxlength)
 			}
 
 			/* Is it before the first one we care about? */
-			if (dst && CHARncmp(src, firstname, (int)(dst - src)) < 0)
+			if (dst && CHARncmp(src, toCHAR(firstname), (int)(dst - src)) < 0)
 			{
 				/* Yes, so we want to skip as much as possible.
 				 * Since we didn't bother to remember whether
@@ -699,7 +699,7 @@ void tsfile(filename, maxlength)
 		/* disable firstname/lastname checks if tags file claims to
 		 * be unsorted.
 		 */
-		if (lastname && *tagline == '!' && !CHARncmp(tagline, toCHAR("!_TAG_FILE_SORTED\t0\t"), 20))
+		if (lastname && *tagline == '!' && !CHARncmp(tagline, toLCHAR("!_TAG_FILE_SORTED\t0\t"), 20))
 		{
 			lastname = firstname = NULL;
 		}
@@ -713,7 +713,7 @@ void tsfile(filename, maxlength)
 		/* if not obviously too early to be of interest, parse it and
 		 * process it...
 		 */
-		if ((!firstname || CHARncmp(firstname, tagline, taglength) <= 0)
+		if ((!firstname || CHARncmp(toCHAR(firstname), tagline, taglength) <= 0)
 			&& (tag = tagparse(tochar8(tagline))) != NULL)
 		{
 			/* do we want to keep this tag? */

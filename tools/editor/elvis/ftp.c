@@ -105,7 +105,7 @@ static void getaccountinfo(site_port, anonymous, wantuser)
 
 	/* Locate the ~/.netrc file.  Look in the home directory first */
 #ifdef FEATURE_CALC
-	filename = tochar8(calculate(toCHAR("home/\".netrc\""), NULL, CALC_ALL));
+	filename = tochar8(calculate(toLCHAR("home/\".netrc\""), NULL, CALC_ALL));
 #else
 	filename = "~/.netrc";
 #endif
@@ -281,8 +281,8 @@ static char *ftpcommand(cmd, arg, simple)
 
 /* This function should be called before any command which transfers data.
  * It sends a "PASV" command to learn which port will be used for the transfer,
- * and then opens data_sb as a socket to that port.  Returns ElvTrue if successful,
- * or ElvFalse if error (after giving an error message).
+ * and then opens data_sb as a socket to that port.  Returns ElvTrue if
+ * successful, or ElvFalse if error (after giving an error message).
  */
 static ELVBOOL passive()
 {
@@ -411,11 +411,13 @@ static DIRPERM resourcetype(resource, reading)
 	if (!response)
 	{
 		netdisconnect(data_sb);
+		data_sb = NULL;
 		return DIR_BADPATH;
 	}
 	if (atoi(response) == FTP_NO_FILE)
 	{
 		netdisconnect(data_sb);
+		data_sb = NULL;
 		return DIR_NEW;
 	}
 
@@ -446,9 +448,11 @@ ExistingFile:
 	if (!response || atoi(response) >= 400)
 	{
 		netdisconnect(data_sb);
+		data_sb = NULL;
 		return DIR_READONLY;
 	}
 	netdisconnect(data_sb);
+	data_sb = NULL;
 	(void)ftpcommand(NULL, NULL, ElvFalse);
 
 	return DIR_READWRITE;
@@ -501,11 +505,11 @@ static ELVBOOL ftpdir(site_port, anonymous, resource)
 		*cp = '\0';
 
 		/* set up the other args for the "parent directory" item */
-		sprintf(urlbuf, "ftp://%s/%s%s", site_port, anonymous ? "" : "~/", new);
+		sprintf(urlbuf, "ftp://%s/%s%s", site_port, anonymous ? "" : "~/", tochar8(new));
 		safefree(new);
 		args[0] = toCHAR(urlbuf);
-		args[1] = toCHAR("..");
-		args[2] = toCHAR("Parent directory");
+		args[1] = toLCHAR("..");
+		args[2] = toLCHAR("Parent directory");
 		args[3] = NULL;
 		cp = calculate(toCHAR(HTML_ITEM), args, CALC_MSG);
 		if (cp)
@@ -571,6 +575,7 @@ static ELVBOOL ftpdir(site_port, anonymous, resource)
 		htmltext = new;
 	}
 	netdisconnect(data_sb);
+	data_sb = NULL;
 
 	/* Add the HTML tail to the string */
 	new = (CHAR *)safealloc(CHARlen(htmltext) + strlen(HTML_TAIL) + 1, sizeof(CHAR));
@@ -656,7 +661,7 @@ ELVBOOL ftpopen(site_port, resource, force, rwap)
 		response = ftpcommand("PWD", NULL, ElvTrue);
 	if (!response)
 	{
-		netdisconnect(command_sb);
+		ftpclose();
 		return ElvFalse;
 	}
 	if (response[4] == '"')
@@ -688,7 +693,7 @@ ELVBOOL ftpopen(site_port, resource, force, rwap)
 		if (rwap == 'w' && !force)
 		{
 			msg(MSG_ERROR, "won't overwrite ftp file without '!'");
-			netdisconnect(command_sb);
+			ftpclose();
 			return ElvFalse;
 		}
 		break;
@@ -702,14 +707,14 @@ ELVBOOL ftpopen(site_port, resource, force, rwap)
 	  	if (rwap != 'r' && rwap != 'p')
 	  	{
 	  		msg(MSG_ERROR, "can only READ ftp directories");
-	  		netdisconnect(command_sb);
+			ftpclose();
 	  		return ElvFalse;
 	  	}
 
 		/* read the directory, as one big string of HTML */
 		if (!ftpdir(site_port, anonymous, resource))
 		{
-			netdisconnect(command_sb);
+			ftpclose();
 			return ElvFalse;
 		}
 		htmllen = CHARlen(htmltext);
@@ -718,14 +723,14 @@ ELVBOOL ftpopen(site_port, resource, force, rwap)
 
 	  default: /* probably DIR_BADPATH */
 	  	/* error message already given */
-		netdisconnect(command_sb);
+		ftpclose();
 	  	return ElvFalse;
 	}
 
 	/* initiate the data transfer */
 	if (!passive())
 	{
-		netdisconnect(command_sb);
+		ftpclose();
 		return ElvFalse;
 	}
 	switch (rwap)
@@ -753,7 +758,7 @@ ELVBOOL ftpopen(site_port, resource, force, rwap)
 	if (!response)
 	{
 		/* error message already given */
-		netdisconnect(command_sb);
+		ftpclose();
 		return ElvFalse;
 	}
 
@@ -808,9 +813,11 @@ int ftpread(buf, nbytes)
 
 void ftpclose()
 {
+	if (data_sb)
+		netdisconnect(data_sb);
 	if (command_sb)
 		netdisconnect(command_sb);
-	command_sb = NULL;
+	data_sb = command_sb = NULL;
 	if (htmltext)
 		safefree(htmltext);
 	htmltext = NULL;

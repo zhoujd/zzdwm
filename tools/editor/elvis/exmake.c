@@ -90,7 +90,7 @@ static ELVBOOL parse_errmsg()
 	     prevch = *cp, cp && scannext(&cp))
 	{
 		/* is the character legal in a word? */
-		if (!elvspace(*cp) && CHARchr("():\"'`,", *cp) == NULL)
+		if (!elvspace(*cp) && CHARchr(toLCHAR("():\"'`,"), *cp) == NULL)
 		{
 			/* work around a quirk of Microsoft's compilers:
 			 * if the sequence "/\" is seen, convert it to "/".
@@ -170,8 +170,8 @@ static ELVBOOL parse_errmsg()
 			safefree(word);
 		}
 		else if (errfile && errline &&
-			(!CHARcmp(word + 1, toCHAR("arning"))
-				|| !CHARcmp(word + 1, toCHAR("rror"))))
+			(!CHARcmp(word + 1, toLCHAR("arning"))
+				|| !CHARcmp(word + 1, toLCHAR("rror"))))
 		{
 			/* skip over error number and other garbage */
 			safefree(word);
@@ -187,7 +187,7 @@ static ELVBOOL parse_errmsg()
 			 */
 			if (!cp || *cp == '\n')
 			{
-				errdesc = CHARdup(toCHAR("unknown error"));
+				errdesc = CHARdup(toLCHAR("unknown error"));
 			}
 			
 			/* back up one character, if possible */
@@ -517,8 +517,8 @@ RESULT	ex_make(xinf)
 
 	/* create the shell command line that we'll be running */
 	buf = markbuffer(&xinf->defaddr);
-	args[0] = (xinf->rhs ? xinf->rhs : toCHAR(""));
-	args[1] = (o_filename(buf) ? o_filename(buf) : toCHAR(""));
+	args[0] = (xinf->rhs ? xinf->rhs : toLCHAR(""));
+	args[1] = (o_filename(buf) ? o_filename(buf) : toLCHAR(""));
 	args[2] = NULL;
 	str = calculate(xinf->command==EX_CC ? o_cc(buf) : o_make(buf), args, CALC_MSG);
 	if (!str)
@@ -534,7 +534,7 @@ RESULT	ex_make(xinf)
 	o_pollfrequency = 1;
 	(void)guipoll(ElvTrue);
 	drawextext(xinf->window, str, (int)CHARlen(str));
-	drawextext(xinf->window, toCHAR("\n"), 1);
+	drawextext(xinf->window, toLCHAR("\n"), 1);
 
 	/* prepare to create the new errlist */
 	errprep();

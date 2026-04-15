@@ -4,7 +4,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_calc[] = "$Id: calc.c,v 2.145 2004/03/14 23:18:52 steve Exp $";
+char id_calc[] = "$Id: calc.c,v 2.149 2011/12/02 20:02:39 steve Exp $";
 #endif
 
 #ifdef TRY
@@ -16,9 +16,9 @@ char id_calc[] = "$Id: calc.c,v 2.145 2004/03/14 23:18:52 steve Exp $";
 #ifdef TRY
 # include <getopt.h>
 # undef o_true
-# define o_true "True"
+# define o_true toLCHAR("True")
 # undef o_false
-# define o_false "False"
+# define o_false toLCHAR("False")
 # define elvdigit isdigit
 # define elvupper isupper
 # define elvlower islower
@@ -62,121 +62,127 @@ static CHAR *subnum(CHAR *cp, long nelem, long *from, long *to);
 static CHAR *feature[] =
 {
 # ifdef PROTOCOL_HTTP
-	toCHAR("http"),
+	toLCHAR("http"),
 # endif
 # ifdef PROTOCOL_FTP
-	toCHAR("ftp"),
+	toLCHAR("ftp"),
 # endif
 # ifdef FEATURE_ALIAS
-	toCHAR("alias"),
+	toLCHAR("alias"),
 # endif
 # ifdef FEATURE_ARRAY
-	toCHAR("array"),
+	toLCHAR("array"),
 # endif
 # ifdef FEATURE_AUTOCMD
-	toCHAR("autocmd"),
+	toLCHAR("autocmd"),
 # endif
 # ifdef FEATURE_BACKTICK
-	toCHAR("backtick"),
+	toLCHAR("backtick"),
 # endif
 # ifdef FEATURE_BROWSE
-	toCHAR("browse"),
+	toLCHAR("browse"),
 # endif
 # ifdef FEATURE_CACHEDESC
-	toCHAR("cachedesc"),
+	toLCHAR("cachedesc"),
 # endif
 # ifdef FEATURE_CALC
-	toCHAR("calc"),
+	toLCHAR("calc"),
 # endif
 # ifdef FEATURE_COMPLETE
-	toCHAR("complete"),
+	toLCHAR("complete"),
+# endif
+# ifdef FEATURE_EMBED
+	toLCHAR("embed"),
 # endif
 # ifdef FEATURE_EQUALTILDE
-	toCHAR("equaltilde"),
+	toLCHAR("equaltilde"),
 # endif
 # ifdef FEATURE_FOLD
-	toCHAR("fold"),
+	toLCHAR("fold"),
 # endif
 # ifdef FEATURE_G
-	toCHAR("g"),
+	toLCHAR("g"),
 # endif
 # ifdef FEATURE_HLOBJECT
-	toCHAR("hlobject"),
+	toLCHAR("hlobject"),
 # endif
 # ifdef FEATURE_HLSEARCH
-	toCHAR("hlsearch"),
+	toLCHAR("hlsearch"),
 # endif
 # ifdef FEATURE_IMAGE
-	toCHAR("image"),
+	toLCHAR("image"),
 # endif
 # ifdef FEATURE_INCSEARCH
-	toCHAR("incsearch"),
+	toLCHAR("incsearch"),
 # endif
 # ifdef FEATURE_LISTCHARS
-	toCHAR("listchars"),
+	toLCHAR("listchars"),
 # endif
 # ifdef FEATURE_LITRE
-	toCHAR("litre"),
+	toLCHAR("litre"),
 # endif
 # ifdef FEATURE_LPR
-	toCHAR("lpr"),
+	toLCHAR("lpr"),
 # endif
 # ifdef FEATURE_MAKE
-	toCHAR("make"),
+	toLCHAR("make"),
 # endif
 # ifdef FEATURE_MAPDB
-	toCHAR("mapdb"),
+	toLCHAR("mapdb"),
 # endif
 # ifdef FEATURE_MISC
-	toCHAR("misc"),
+	toLCHAR("misc"),
 # endif
 # ifdef FEATURE_MKEXRC
-	toCHAR("mkexrc"),
+	toLCHAR("mkexrc"),
 # endif
 # ifdef FEATURE_NORMAL
-	toCHAR("normal"),
+	toLCHAR("normal"),
 # endif
 # ifdef FEATURE_PERSIST
-	toCHAR("persist"),
+	toLCHAR("persist"),
 # endif
 # ifdef FEATURE_PROTO
-	toCHAR("proto"),
+	toLCHAR("proto"),
 # endif
 # ifdef FEATURE_RAM
-	toCHAR("ram"),
+	toLCHAR("ram"),
 # endif
 # ifdef FEATURE_RCSID
-	toCHAR("rcsid"),
+	toLCHAR("rcsid"),
 # endif
 # ifdef FEATURE_REGION
-	toCHAR("region"),
+	toLCHAR("region"),
 # endif
 # ifdef FEATURE_SHOWTAG
-	toCHAR("showtag"),
+	toLCHAR("showtag"),
 # endif
 # ifdef FEATURE_SMARTARGS
-	toCHAR("smartargs"),
+	toLCHAR("smartargs"),
 # endif
 # ifdef FEATURE_SPELL
-	toCHAR("spell"),
+	toLCHAR("spell"),
 # endif
 # ifdef FEATURE_SPLIT
-	toCHAR("split"),
+	toLCHAR("split"),
 # endif
 # ifdef FEATURE_STDIN
-	toCHAR("stdin"),
+	toLCHAR("stdin"),
 # endif
 # ifdef FEATURE_TAGS
-	toCHAR("tags"),
+	toLCHAR("tags"),
 # endif
 # ifdef FEATURE_TEXTOBJ
-	toCHAR("textobj"),
+	toLCHAR("textobj"),
 # endif
 # ifdef FEATURE_V
-	toCHAR("v"),
+	toLCHAR("v"),
+# endif
+# ifdef FEATURE_WCHAR
+	toLCHAR("wchar"),
 # endif
 # ifdef FEATURE_XFT
-	toCHAR("xft"),
+	toLCHAR("xft"),
 # endif
 	NULL
 };
@@ -187,41 +193,41 @@ static CHAR *feature[] =
 /* This array describes the operators */
 static struct
 {
-	char	*name;	/* name of the operator */
+	CHAR	*name;	/* name of the operator */
 	short	prec;	/* natural precedence of the operator */
 	char	code;	/* function code for applying operator */
 	char	subcode;/* details, depend on function */
 } opinfo[] =
 {
-	{"Func",1,	'f',	'('},
-	{"Cat",	17,	'c',	' '},
-	{"Sub",	18,	'a',	'['},
-	{";",	2,	'c',	';'},
-	{",",	2,	'c',	','},
-	{"..",	3,	'c',	'.'},
-	{"||",	6,	'b',	'|'},
-	{"&&",	7,	'b',	'&'},
-	{"!=",	11,	's',	'!'},
-	{"==",	11,	's',	'='},
-	{"<=",	12,	's',	'l'},
-	{">=",	12,	's',	'g'},
-	{"<<",	13,	'i',	'<'},
-	{">>",	13,	'i',	'>'},
-	{":",	5,	't',	':'},
-	{"?",	4,	't',	'?'},
-	{"|",	8,	'i',	'|'},
-	{"^",	9,	'i',	'^'},
-	{"&",	10,	'i',	'&'},
-	{"=",	11,	's',	'='},
-	{"<",	12,	's',	'<'},
-	{">",	12,	's',	'>'},
-	{"+",	14,	'i',	'+'},
-	{"-",	14,	'i',	'-'},
-	{"%",	15,	'i',	'%'},
-	{"*",	15,	'i',	'*'},
-	{"/",	15,	'i',	'/'},
-	{"!",	16,	'u',	'!'},
-	{"~",	16,	'u',	'~'},
+	{toLCHAR("Func"),1,	'f',	'('},
+	{toLCHAR("Cat"),17,	'c',	' '},
+	{toLCHAR("Sub"),18,	'a',	'['},
+	{toLCHAR(";"),	2,	'c',	';'},
+	{toLCHAR(","),	2,	'c',	','},
+	{toLCHAR(".."),	3,	'c',	'.'},
+	{toLCHAR("||"),	6,	'b',	'|'},
+	{toLCHAR("&&"),	7,	'b',	'&'},
+	{toLCHAR("!="),	11,	's',	'!'},
+	{toLCHAR("=="),	11,	's',	'='},
+	{toLCHAR("<="),	12,	's',	'l'},
+	{toLCHAR(">="),	12,	's',	'g'},
+	{toLCHAR("<<"),	13,	'i',	'<'},
+	{toLCHAR(">>"),	13,	'i',	'>'},
+	{toLCHAR(":"),	5,	't',	':'},
+	{toLCHAR("?"),	4,	't',	'?'},
+	{toLCHAR("|"),	8,	'i',	'|'},
+	{toLCHAR("^"),	9,	'i',	'^'},
+	{toLCHAR("&"),	10,	'i',	'&'},
+	{toLCHAR("="),	11,	's',	'='},
+	{toLCHAR("<"),	12,	's',	'<'},
+	{toLCHAR(">"),	12,	's',	'>'},
+	{toLCHAR("+"),	14,	'i',	'+'},
+	{toLCHAR("-"),	14,	'i',	'-'},
+	{toLCHAR("%"),	15,	'i',	'%'},
+	{toLCHAR("*"),	15,	'i',	'*'},
+	{toLCHAR("/"),	15,	'i',	'/'},
+	{toLCHAR("!"),	16,	'u',	'!'},
+	{toLCHAR("~"),	16,	'u',	'~'},
 };
 
 
@@ -360,8 +366,8 @@ ELVBOOL calcbase10(str)
 ELVBOOL calctrue(str)
 	CHAR	*str;	/* the sting to be checked */
 {
-	if (!str || !*str || !CHARcmp(str, toCHAR("0"))
-		|| !CHARcmp(str, toCHAR("false")) || !CHARcmp(str, toCHAR("no"))
+	if (!str || !*str || !CHARcmp(str, toLCHAR("0"))
+		|| !CHARcmp(str, toLCHAR("false")) || !CHARcmp(str, toLCHAR("no"))
 		|| (o_false && !CHARcmp(str, o_false)))
 	{
 		return ElvFalse;
@@ -494,7 +500,7 @@ _CHAR_ calcsubscript(array, sub, max, chunks)
 	}
 	else if (sub[0] == ',')
 		delim = '\0';
-	else if (!elvalnum(*sub) && !elvspace(*sub) && !CHARchr(toCHAR("?-."), *sub))
+	else if (!elvalnum(*sub) && !elvspace(*sub) && !CHARchr(toLCHAR("?-."), *sub))
 		delim = *sub++;
 	else
 		delim = ' ';
@@ -702,33 +708,33 @@ static ELVBOOL func(name, arg)
 	unsigned short bits;
 #endif
 
-	if (!CHARcmp(name, toCHAR("strlen")))
+	if (!CHARcmp(name, toLCHAR("strlen")))
 	{
 		long2CHAR(name, (long)CHARlen(arg));
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("tolower")))
+	else if (!CHARcmp(name, toLCHAR("tolower")))
 	{
 		for (; *arg; arg++)
 			*name++ = (elvupper(*arg) ? elvtolower(*arg) : *arg);
 		*name = '\0';
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("toupper")))
+	else if (!CHARcmp(name, toLCHAR("toupper")))
 	{
 		for (; *arg; arg++)
 			*name++ = (elvlower(*arg) ? elvtoupper(*arg) : *arg);
 		*name = '\0';
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("isnumber")))
+	else if (!CHARcmp(name, toLCHAR("isnumber")))
 	{
 		if (RESULT_OVERFLOW(name, 6)) goto Overflow;
 		CHARcpy(name, calcnumber(arg) ? o_true : o_false);
 		return ElvTrue;
 	}
 #ifndef TRY
-	else if (!CHARcmp(name, toCHAR("list")))
+	else if (!CHARcmp(name, toLCHAR("list")))
 	{
 		/* count the displayed with of this string */
 		for (tmp = arg, i = 0; *tmp; tmp++)
@@ -757,7 +763,7 @@ static ELVBOOL func(name, arg)
 		safefree(tmp);
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("htmlsafe")))
+	else if (!CHARcmp(name, toLCHAR("htmlsafe")))
 	{
 		for (i = 0, tmp = NULL; arg[i]; i++)
 		{
@@ -784,7 +790,7 @@ static ELVBOOL func(name, arg)
 		return ElvTrue;
 	}
 #ifdef FEATURE_MISC
-	else if (!CHARcmp(name, toCHAR("color")))
+	else if (!CHARcmp(name, toLCHAR("color")))
 	{
 		/* separate face name from attribute name */
 		tmp = CHARchr(arg, ',');
@@ -794,14 +800,16 @@ static ELVBOOL func(name, arg)
 		/* decide what we're supposed to return */
 		if (!tmp)
 			j = 0;
-		else if (*tmp == 'f')
+		else if (*tmp == 'f') /* fg */
 			j = 1;
-		else if (*tmp == 'b')
+		else if (*tmp == 'b') /* bg */
 			j = 2;
-		else if (*tmp == 'l')
+		else if (*tmp == 'l') /* like */
 			j = 3;
-		else if (*tmp == 's')
+		else if (*tmp == 's') /* set */
 			j = 4;
+		else if (*tmp == 'n') /* next */
+			j = 5;
 		else
 			goto BadArgs;
 
@@ -834,6 +842,10 @@ static ELVBOOL func(name, arg)
 			  		? o_true
 			  		: o_false;
 						break;
+			  case 5: tmp = (i + 1 < colornpermanent)
+					? colorinfo[i + 1].name
+				  	: NULL;
+						break;
 			}
 
 			/* return it */
@@ -864,7 +876,7 @@ static ELVBOOL func(name, arg)
 		return ElvTrue;
 	}
 #endif /* FEATURE_MISC */
-	else if (!CHARcmp(name, toCHAR("time")))
+	else if (!CHARcmp(name, toLCHAR("time")))
 	{
 		if (RESULT_OVERFLOW(name, 20))
 			goto Overflow;
@@ -874,33 +886,33 @@ static ELVBOOL func(name, arg)
 		return ElvTrue;
 	}
 #endif /* !TRY */
-	else if (!CHARcmp(name, toCHAR("hex")))
+	else if (!CHARcmp(name, toLCHAR("hex")))
 	{
 		if (!calcnumber(arg)) goto NeedNumber;
 		if (RESULT_OVERFLOW(name, 10)) goto Overflow;
 		sprintf((char *)name, "0x%lx", CHAR2long(arg));
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("octal")))
+	else if (!CHARcmp(name, toLCHAR("octal")))
 	{
 		if (!calcnumber(arg)) goto NeedNumber;
 		if (RESULT_OVERFLOW(name, 12)) goto Overflow;
 		sprintf((char *)name, "0%lo", CHAR2long(arg));
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("char")))
+	else if (!CHARcmp(name, toLCHAR("char")))
 	{
 		if (!calcnumber(arg)) goto NeedNumber;
 		*name++ = (CHAR)CHAR2long(arg);
 		*name = '\0';
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("ascii")))
+	else if (!CHARcmp(name, toLCHAR("ascii")))
 	{
 		sprintf((char *)name, "%d", *arg);
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("dirext")))
+	else if (!CHARcmp(name, toLCHAR("dirext")))
 	{
 		/* if this is a URL, and it contains a '#' or '?' character,
 		 * then truncate it there.
@@ -916,12 +928,12 @@ static ELVBOOL func(name, arg)
 		}
 		if (*tmp != '.')
 		{
-			tmp = toCHAR("");
+			tmp = toLCHAR("");
 		}
 		CHARcpy(name, tmp);
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("rand")))
+	else if (!CHARcmp(name, toLCHAR("rand")))
 	{
 		if (calcnumber(arg))
 		{
@@ -948,7 +960,7 @@ static ELVBOOL func(name, arg)
 		return ElvTrue;
 	}
 #ifndef TRY
-	else if (!CHARcmp(name, toCHAR("quote")))
+	else if (!CHARcmp(name, toLCHAR("quote")))
 	{
 		/* divide the arg into "chars" and "str" fields */
 		tmp = CHARchr(arg, (CHAR)',');
@@ -968,7 +980,7 @@ static ELVBOOL func(name, arg)
 		safefree(tmp);
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("unquote")))
+	else if (!CHARcmp(name, toLCHAR("unquote")))
 	{
 		/* divide the arg into "chars" and "str" fields */
 		tmp = CHARchr(arg, (CHAR)',');
@@ -986,7 +998,7 @@ static ELVBOOL func(name, arg)
 		safefree(tmp);
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("exists")))
+	else if (!CHARcmp(name, toLCHAR("exists")))
 	{
 		UNSAFE;
 
@@ -1014,57 +1026,57 @@ static ELVBOOL func(name, arg)
 		}
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("dirperm")))
+	else if (!CHARcmp(name, toLCHAR("dirperm")))
 	{
 		UNSAFE;
 
 		switch (urlperm(tochar8(arg)))
 		{
 		  case DIR_INVALID:
-			CHARcpy(name, toCHAR("invalid"));
+			CHARcpy(name, toLCHAR("invalid"));
 			break;
 
 		  case DIR_BADPATH:
-			CHARcpy(name, toCHAR("badpath"));
+			CHARcpy(name, toLCHAR("badpath"));
 			break;
 
 		  case DIR_NOTFILE:
-			CHARcpy(name, toCHAR("notfile"));
+			CHARcpy(name, toLCHAR("notfile"));
 			break;
 
 		  case DIR_DIRECTORY:
-			CHARcpy(name, toCHAR("directory"));
+			CHARcpy(name, toLCHAR("directory"));
 			break;
 
 		  case DIR_NEW:
-			CHARcpy(name, toCHAR("new"));
+			CHARcpy(name, toLCHAR("new"));
 			break;
 
 		  case DIR_UNREADABLE:
-			CHARcpy(name, toCHAR("unreadable"));
+			CHARcpy(name, toLCHAR("unreadable"));
 			break;
 
 		  case DIR_READONLY:
-			CHARcpy(name, toCHAR("readonly"));
+			CHARcpy(name, toLCHAR("readonly"));
 			break;
 
 		  case DIR_READWRITE:
-			CHARcpy(name, toCHAR("readwrite"));
+			CHARcpy(name, toLCHAR("readwrite"));
 			break;
 		}
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("dirfile")))
+	else if (!CHARcmp(name, toLCHAR("dirfile")))
 	{
 		CHARcpy(name, toCHAR(dirfile(tochar8(arg))));
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("dirname")) || !CHARcmp(name, toCHAR("dirdir")))
+	else if (!CHARcmp(name, toLCHAR("dirname")) || !CHARcmp(name, toLCHAR("dirdir")))
 	{
 		CHARcpy(name, toCHAR(dirdir(tochar8(arg))));
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("basename")))
+	else if (!CHARcmp(name, toLCHAR("basename")))
 	{
 		CHARcpy(name, toCHAR(dirfile(tochar8(arg))));
 		/* find the last '.' in the name */
@@ -1077,13 +1089,21 @@ static ELVBOOL func(name, arg)
 		}
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("fileeol")))
+#if 1
+	else if (!CHARcmp(name, toLCHAR("fileenc")))
+	{
+		UNSAFE;
+		CHARcpy(name, toCHAR(ioenc(tochar8(arg))));
+		return ElvTrue;
+	}
+#endif
+	else if (!CHARcmp(name, toLCHAR("fileeol")))
 	{
 		UNSAFE;
 		CHARcpy(name, toCHAR(ioeol(tochar8(arg))));
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("elvispath")))
+	else if (!CHARcmp(name, toLCHAR("elvispath")))
 	{
 		tmp = toCHAR(iopath(tochar8(o_elvispath), tochar8(arg), ElvFalse));
 		if (!tmp)
@@ -1095,26 +1115,26 @@ static ELVBOOL func(name, arg)
 		}
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("getcwd")))
+	else if (!CHARcmp(name, toLCHAR("getcwd")))
 	{
 		c = dircwd();
 		if (RESULT_OVERFLOW(name, strlen(c))) goto Overflow;
 		CHARcpy(name, toCHAR(c));
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("absolute")))
+	else if (!CHARcmp(name, toLCHAR("absolute")))
 	{
 		c = ioabsolute(tochar8(arg));
 		if (RESULT_OVERFLOW(name, strlen(c))) goto Overflow;
 		CHARcpy(name, toCHAR(c));
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("buffer")))
+	else if (!CHARcmp(name, toLCHAR("buffer")))
 	{
 		CHARcpy(name, buffind(arg) ? o_true : o_false);
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("window")))
+	else if (!CHARcmp(name, toLCHAR("window")))
 	{
 		buf = buffind(arg);
 		win = (buf ? winofbuf(NULL, buf) : NULL);
@@ -1124,7 +1144,7 @@ static ELVBOOL func(name, arg)
 			*name = '\0';
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("newbuffer")))
+	else if (!CHARcmp(name, toLCHAR("newbuffer")))
 	{
 		if (*arg && (buf = buffind(arg)) != NULL)
 		{
@@ -1137,7 +1157,7 @@ static ELVBOOL func(name, arg)
 		CHARcpy(name, o_bufname(buf));
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("alias")))
+	else if (!CHARcmp(name, toLCHAR("alias")))
 	{
 # ifdef FEATURE_ALIAS
 		c = exisalias(tochar8(arg), ElvTrue);
@@ -1149,7 +1169,7 @@ static ELVBOOL func(name, arg)
 		CHARcpy(name, tmp);
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("feature")))
+	else if (!CHARcmp(name, toLCHAR("feature")))
 	{
 		/* for now */
 		CHARcpy(name, o_false);
@@ -1173,7 +1193,7 @@ static ELVBOOL func(name, arg)
 
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("knownsyntax")))
+	else if (!CHARcmp(name, toLCHAR("knownsyntax")))
 	{
 #ifdef DISPLAY_SYNTAX
 		tmp = descr_known(tochar8(arg), SYNTAX_FILE);
@@ -1188,7 +1208,7 @@ static ELVBOOL func(name, arg)
 #endif
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("knownmarkup")))
+	else if (!CHARcmp(name, toLCHAR("knownmarkup")))
 	{
 #ifdef DISPLAY_MARKUP
 		tmp = descr_known(tochar8(arg), MARKUP_FILE);
@@ -1203,7 +1223,7 @@ static ELVBOOL func(name, arg)
 #endif
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("current")))
+	else if (!CHARcmp(name, toLCHAR("current")))
 	{
 		/* The default return value is an empty string */
 		*name = '\0';
@@ -1260,7 +1280,7 @@ static ELVBOOL func(name, arg)
 				 && markoffset(windefault->cursor) < re->endp[0])
 				{
 					/* Yes!  Copy the matching text */
-					tmp = regsub(re, toCHAR("&"), ElvFalse);
+					tmp = regsub(re, toLCHAR("&"), ElvFalse);
 					CHARncpy(name, tmp, RESULT_AVAIL(name));
 					safefree(tmp);
 					break;
@@ -1337,15 +1357,15 @@ static ELVBOOL func(name, arg)
 		  		switch (windefault->seltype)
 		  		{
 		  		  case 'c':
-		  			CHARcpy(name, toCHAR("character"));
+		  			CHARcpy(name, toLCHAR("character"));
 		  			break;
 
 		  		  case 'r':
-		  			CHARcpy(name, toCHAR("rectangle"));
+		  			CHARcpy(name, toLCHAR("rectangle"));
 		  			break;
 
 		  		  default:
-		  		  	CHARcpy(name, toCHAR("line"));
+		  		  	CHARcpy(name, toLCHAR("line"));
 		  		}
 		  	}
 		  	break;
@@ -1379,7 +1399,7 @@ static ELVBOOL func(name, arg)
 		  case 't':	/* tag or tagstack */
 			tmp = NULL;
 #ifdef FEATURE_SHOWTAG
-			if (!CHARcmp(arg, "tag"))
+			if (!CHARcmp(arg, toLCHAR("tag")))
 				tmp = telabel(windefault->cursor);
 			else
 #endif
@@ -1395,13 +1415,13 @@ static ELVBOOL func(name, arg)
 
 		  case 'b':
 			if (~colorinfo[COLOR_FONT_NORMAL].da.bits & COLOR_BG)
-				tmp = toCHAR("");
+				tmp = toLCHAR("");
 			else if (colorinfo[COLOR_FONT_NORMAL].da.bg_rgb[0] +
 				 colorinfo[COLOR_FONT_NORMAL].da.bg_rgb[1] +
 				 colorinfo[COLOR_FONT_NORMAL].da.bg_rgb[2]>=384)
-				tmp = toCHAR("light");
+				tmp = toLCHAR("light");
 			else
-				tmp = toCHAR("dark");
+				tmp = toLCHAR("dark");
 			if (RESULT_OVERFLOW(name, CHARlen(tmp)))
 				goto Overflow;
 			CHARcpy(name, tmp);
@@ -1429,10 +1449,10 @@ static ELVBOOL func(name, arg)
 		}
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("line"))
+	else if (!CHARcmp(name, toLCHAR("line"))
 #ifdef FEATURE_FOLD
-	      || !CHARcmp(name, toCHAR("folded"))
-	      || !CHARcmp(name, toCHAR("unfolded"))
+	      || !CHARcmp(name, toLCHAR("folded"))
+	      || !CHARcmp(name, toLCHAR("unfolded"))
 #endif
 					       )
 	{
@@ -1502,7 +1522,7 @@ static ELVBOOL func(name, arg)
 		}
 		return ElvTrue;
 	}
-	else if (!CHARcmp(name, toCHAR("shell")))
+	else if (!CHARcmp(name, toLCHAR("shell")))
 	{
 		/* This is unsafe.  We can't use the UNSAFE macro, though,
 		 * because this particular function is unsafe even if
@@ -1516,7 +1536,7 @@ static ELVBOOL func(name, arg)
 		*--arg = '!';
 
 		/* Run the command and read its output */
-		if (!ioopen(tochar8(arg), 'r', ElvFalse, ElvFalse, 't'))
+		if (!ioopen(tochar8(arg), 'r', ElvFalse, ElvFalse, 'a', 't'))
 			return ElvFalse;
 		arg = name;
 		while ((i = ioread(arg,RESULT_AVAIL(name))) > 0)
@@ -1537,8 +1557,8 @@ static ELVBOOL func(name, arg)
 		return ElvTrue;
 	}
 # ifdef FEATURE_SPELL
-	else if (!CHARcmp(name, toCHAR("spell"))
-	      || !CHARcmp(name, toCHAR("spelltag")))
+	else if (!CHARcmp(name, toLCHAR("spell"))
+	      || !CHARcmp(name, toLCHAR("spelltag")))
 	{
 		spellfix(arg, name, RESULT_AVAIL(name) - 100, (ELVBOOL)(name[5] != '\0'));
 		return ElvTrue;
@@ -1854,6 +1874,26 @@ static ELVBOOL apply()
 				}
 				msg(MSG_WARNING, "<< and >> only partially implemented");
 			}
+			else if (subcode == '*' && *first == '\0' && *second != '\0')
+			{
+				/* Expressions of the form "*string" treat the
+				 * string as variable name, and return the value
+				 * of that variable.
+				 */
+				third = optgetstr(second, NULL);
+				if (!third)
+				{
+					msg(MSG_ERROR, "[S]can't dereference '$1'", second);
+					return ElvFalse;
+				}
+				if (RESULT_OVERFLOW(first, CHARlen(third)))
+				{
+					msg(MSG_ERROR, "result too long");
+					return ElvFalse;
+				}
+				CHARcpy(first, third);
+				return ElvTrue;
+			}
 			else if (subcode == '*' && calcnumber(second))
 			{
 				/* Expressions of the form "string * number"
@@ -2001,7 +2041,7 @@ static ELVBOOL apply()
 		  case '=':	i = (i == 0);	break;
 		  case '!':	i = (i != 0);	break;
 		}
-		(void)CHARcpy(first, toCHAR(i ? o_true : o_false));
+		(void)CHARcpy(first, i ? o_true : o_false);
 		break;
 
 	  case 'c': /* concatenation operators */
@@ -2091,7 +2131,7 @@ static ELVBOOL apply()
 		else
 		{
 			/* (bool ? string) is legal -- assume third arg is "" */
-			third = toCHAR("");
+			third = toLCHAR("");
 		}
 
 		/* replace the first boolean with either second or third arg */
@@ -2281,7 +2321,7 @@ CHAR *calculate(expr, arg, rule)
 			expr++;
 			if (!*expr
 			 || (build == result && *expr == '\\')
-			 || !strchr("$()\\", *expr))
+			 || !strchr("$()", *expr))
 			{
 				/* at front of expression, or if followed by
 				 * normal character - literal */
@@ -2358,7 +2398,7 @@ CHAR *calculate(expr, arg, rule)
 #ifndef TRY
 				if (!tmp)
 				{
-					if (optval(tochar8(build)) || !CHARcmp(build, toCHAR("_")))
+					if (optval(tochar8(build)) || !CHARcmp(build, toLCHAR("_")))
 					{
 						/* skip the $ but reparse the
 						 * name as an option or _.
@@ -2513,8 +2553,8 @@ CHAR *calculate(expr, arg, rule)
 			else
 			{
 				/* insert a copy of the current line */
-				CHARcpy(build, toCHAR("line"));
-				(void)func(build, toCHAR(""));
+				CHARcpy(build, toLCHAR("line"));
+				(void)func(build, toLCHAR(""));
 				while (*build)
 					build++;
 			}
@@ -2677,7 +2717,7 @@ CHAR *calculate(expr, arg, rule)
 					safefree(tmp);
 
 					/* move past the end of the regexp */
-					expr = (scan ? scan : toCHAR(""));
+					expr = (scan ? scan : toLCHAR(""));
 					scanfree(&scan);
 					break;
 				}
@@ -2689,7 +2729,7 @@ CHAR *calculate(expr, arg, rule)
 				 * so it wouldn't think a "!=" was a "!".
 				 */
 				for (i = 0;
-				     i < QTY(opinfo) && CHARncmp(opinfo[i].name, expr, strlen(opinfo[i].name));
+				     i < QTY(opinfo) && CHARncmp(opinfo[i].name, expr, CHARlen(opinfo[i].name));
 				     i++)
 				{
 				}
@@ -2722,7 +2762,7 @@ CHAR *calculate(expr, arg, rule)
 				opstack[ops].prec = prec;
 				opstack[++ops].first = ++build;
 				*build = '\0';
-				expr += strlen(opinfo[i].name);
+				expr += CHARlen(opinfo[i].name);
 
 				/* Allow "..." as a synonym for ".." */
 				if (opinfo[i].name[0] == '.' && *expr == '.')

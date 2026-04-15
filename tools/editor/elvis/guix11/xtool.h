@@ -21,5 +21,5 @@ void x_tb_create P_((X11WIN *xw, int x, int y));
 void x_tb_destroy P_((X11WIN *xw));
 void x_tb_draw P_((X11WIN *xw, ELVBOOL fromscratch));
 void x_tb_event P_((X11WIN *xw, XEvent *event));
-ELVBOOL x_tb_config P_((ELVBOOL gap, char *label, _char_ op, char *value));
+ELVBOOL x_tb_config P_((ELVBOOL gap, _ELVFACE_ face, char *label, _char_ op, char *value));
 void x_tb_recolor P_((X11WIN *xw));

@@ -45,11 +45,11 @@ RESULT v_quit(win, vinf)
 	switch (vinf->key2)
 	{
 	  case 'Z':
-		result = exstring(win, toCHAR("x"), NULL);
+		result = exstring(win, toLCHAR("x"), NULL);
 		break;
 
 	  case 'Q':
-		result = exstring(win, toCHAR("q!"), NULL);
+		result = exstring(win, toLCHAR("q!"), NULL);
 		break;
 	}
 
@@ -276,7 +276,6 @@ RESULT v_setmark(win, vinf)
 
 	/* set the mark */
 	namedmark[vinf->key2 - 'a'] = markdup(win->state->cursor);
-	msg(MSG_INFO, "[C]set mark $1", vinf->key2);
 	return RESULT_COMPLETE;
 }
 
@@ -531,19 +530,19 @@ RESULT v_window(win, vinf)
 		break;
 
 	  case 's':
-		return exstring(win, toCHAR("split"), NULL);
+		return exstring(win, toLCHAR("split"), NULL);
 
 	  case 'n':
-		return exstring(win, toCHAR("snew"), NULL);
+		return exstring(win, toLCHAR("snew"), NULL);
 
 	  case 'q':
-		return exstring(win, toCHAR("xit"), NULL);
+		return exstring(win, toLCHAR("xit"), NULL);
 
 	  case 'c':
-		return exstring(win, toCHAR("close"), NULL);
+		return exstring(win, toLCHAR("close"), NULL);
 
 	  case 'o':
-	  	return exstring(win, toCHAR("only"), NULL);
+	  	return exstring(win, toLCHAR("only"), NULL);
 
 	  case ']':
 	  case ELVCTRL(']'):
@@ -555,13 +554,13 @@ RESULT v_window(win, vinf)
 	  case 'd':
 		if (!CHARcmp(o_display(win), o_bufdisplay(markbuffer(win->cursor))))
 		{
-			if (!CHARcmp(o_display(win), toCHAR("normal")))
+			if (!CHARcmp(o_display(win), toLCHAR("normal")))
 				dispset(win, "hex");
 #ifdef DISPLAY_SYNTAX
-			else if (CHARncmp(o_bufdisplay(markbuffer(win->cursor)), toCHAR("syntax"), 6)
+			else if (CHARncmp(o_bufdisplay(markbuffer(win->cursor)), toLCHAR("syntax"), 6)
 			      && o_filename(markbuffer(win->cursor))
 			      && descr_known(tochar8(o_filename(markbuffer(win->cursor))), SYNTAX_FILE)
-			      && CHARcmp(o_display(win), toCHAR("syntax")) )
+			      && CHARcmp(o_display(win), toLCHAR("syntax")) )
 				dispset(win, "syntax");
 #endif
 			else
@@ -632,7 +631,7 @@ RESULT v_tag(win, vinf)
 
 	/* the ^T command is easy... */
 	if (vinf->command == ELVCTRL('T'))
-		return exstring(win, toCHAR("pop"), NULL);
+		return exstring(win, toLCHAR("pop"), NULL);
 
 	/* get the tag name */
 	tagname = (*win->md->tagatcursor)(win, win->cursor);
@@ -642,7 +641,7 @@ RESULT v_tag(win, vinf)
 	cmd = NULL;
 	if (vinf->command == ELVCTRL('W'))
 		buildCHAR(&cmd, 's');
-	for (scan = toCHAR("tag "); *scan; scan++)
+	for (scan = toLCHAR("tag "); *scan; scan++)
 		buildCHAR(&cmd, *scan);
 	for (scan = tagname; *scan; scan++)
 	{
@@ -1079,20 +1078,20 @@ RESULT v_notex(win, vinf)
 	switch (vinf->command)
 	{
 	  case ELVCTRL('Z'):
-		result = exstring(win, toCHAR("stop"), NULL);
+		result = exstring(win, toLCHAR("stop"), NULL);
 		break;
 
 	  case ELVCTRL('^'):
-		result = exstring(win, toCHAR("e #"), NULL);
+		result = exstring(win, toLCHAR("e #"), NULL);
 		break;
 
 	  case '&':
-		result = exstring(win, toCHAR("&"), NULL);
+		result = exstring(win, toLCHAR("&"), NULL);
 		break;
 
 	  case '*':
 #ifdef FEATURE_MAKE
-		result = exstring(win, toCHAR("errlist"), NULL);
+		result = exstring(win, toLCHAR("errlist"), NULL);
 #else
 		result = RESULT_ERROR;
 #endif
@@ -1134,7 +1133,7 @@ RESULT v_notex(win, vinf)
 #ifdef FEATURE_CALC
 		if (CHARchr(o_keywordprg(buf), '$'))
 		{
-			word[1] = o_filename(buf) ? o_filename(buf) : toCHAR("");
+			word[1] = o_filename(buf) ? o_filename(buf) : toLCHAR("");
 			word[2] = NULL;
 			xinfb.rhs = calculate(o_keywordprg(buf), word, CALC_MSG);
 			if (!xinfb.rhs)

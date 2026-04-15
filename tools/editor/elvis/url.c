@@ -2,7 +2,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_url[] = "$Id: url.c,v 2.25 2004/03/07 20:10:28 steve Exp $";
+char id_url[] = "$Id: url.c,v 2.26 2007/12/03 19:20:58 steve Exp $";
 #endif
 
 static char	url_protocol[10];
@@ -113,7 +113,7 @@ DIRPERM urlperm(url)
 	char	*url;
 {
 	/* "-" is used for stdio -- not an actual filename */
-	if (!strcmp(url, "-"))
+	if (!url || !strcmp(url, "-"))
 		return DIR_READWRITE;
 
 #if defined(PROTOCOL_HTTP) || defined(PROTOCOL_FTP)

@@ -1,41 +1,25 @@
 # This is a hand-made Makefile.  MSVC++ can't read it, but NMAKE can.
 ###############################################################################
-
-# Check if the compiler supports single threaded statically linked CRT (-ML),
-# and if so, use it. Newer compilers don't, so fall back to -MT (statically
-# linked multithreaded.)
-!IF [$(CC) -ML 2>&1 | find "D9002" >NUL]==0
-CRTFLAG_RELEASE=/MT
-CRTFLAG_DEBUG=/MTd
-!ELSE
-CRTFLAG_RELEASE=/ML
-!IF [$(CC) -MLd 2>&1 | find "D4002" >NUL]==0
-CRTFLAG_DEBUG=/ML
-!ELSE
-CRTFLAG_DEBUG=/MLd
-!ENDIF
-!ENDIF
-
 # Macro definitions
 
 RSC=rc.exe
 CPP=cl.exe
 LD=link.exe
-C_DEFINES=/D _CRT_SECURE_NO_WARNINGS=1 /D _CRT_NONSTDC_NO_WARNINGS=1 /D WIN32
 !IF "$(CFG)" == "WinElvis - Win32 Release"
 INTDIR=GuiRel
-CFLAGS=/nologo $(CRTFLAG_RELEASE) /W1 /O2 /I "." /I ".." /I "oswin32" \
- /I "..\oswin32" /D "NDEBUG" $(C_DEFINES) /D "_WINDOWS" /D "GUI_WIN32" \
- /Fo"$(INTDIR)/" /c 
+CFLAGS=/nologo /ML /W1 /GX /O2 /I "." /I ".." /I "oswin32" /I "..\oswin32" \
+ /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "GUI_WIN32" /Fo"$(INTDIR)/" /c 
 RSC_PROJ=/l 0x409 /fo"..\$(INTDIR)\winelvis.res" /d "NDEBUG" 
-LDFLAGS=/nologo /subsystem:windows /incremental:no /out:"WinElvis.exe" 
+LDFLAGS=/nologo /subsystem:windows /incremental:no /machine:I386 \
+ /out:"WinElvis.exe" 
 !ELSE
 INTDIR=GuiDebug
-CFLAGS=/nologo $(CRTFLAG_DEBUG) /W3 /Z7 /Od /I "oswin32" /I "." $(C_DEFINES) \
- /D "_DEBUG" /D "_WINDOWS" /D "GUI_WIN32" /Fo"$(INTDIR)/" /Fd"$(INTDIR)/" /c 
+CFLAGS=/nologo /MLd /W3 /Gm /GX /Zi /Od /I "oswin32" /I "." /D "WIN32" \
+ /D "_DEBUG" /D "_WINDOWS" /D "GUI_WIN32" /Fp"$(INTDIR)/elvis.pch" /YX \
+ /Fo"$(INTDIR)/" /Fd"$(INTDIR)/" /c 
 RSC_PROJ=/l 0x409 /fo"..\$(INTDIR)\winelvis.res"
-LDFLAGS=/nologo /subsystem:windows /incremental:no /pdb:"elvis.pdb" \
- /debug /out:"WinElvis.exe" 
+LDFLAGS=/nologo /subsystem:windows /incremental:no /pdb:"$(OUTDIR)/elvis.pdb" \
+ /debug /machine:I386 /out:"WinElvis.exe" 
 !ENDIF
 CPP_OBJS=$(INTDIR)/
 HDRS=autocmd.h buffer.h buffer2.h calc.h color.h config.h cut.h descr.h \
@@ -45,8 +29,8 @@ HDRS=autocmd.h buffer.h buffer2.h calc.h color.h config.h cut.h descr.h \
  oswin32\osdef.h regexp.h region.h safe.h scan.h session.h spell.h state.h \
  state2.h tag.h version.h vi.h vicmd.h window.h
 GUIHDRS=guiwin32\winelvis.h guiwin32\wintools.h
-LIBS=kernel32.lib user32.lib gdi32.lib comctl32.lib comdlg32.lib shell32.lib \
- wsock32.lib
+LIBS=kernel32.lib user32.lib gdi32.lib winspool.lib comctl32.lib comdlg32.lib \
+ advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib wsock32.lib
 LINK32_OBJS= \
 	"$(INTDIR)/guiwin.obj" \
 	"$(INTDIR)/gwcmd.obj" \

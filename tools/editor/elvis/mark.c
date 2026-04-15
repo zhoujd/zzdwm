@@ -4,7 +4,7 @@
 
 #include "elvis.h"
 #ifdef FEATURE_RCSID
-char id_mark[] = "$Id: mark.c,v 2.18 2002/11/01 19:29:49 steve Exp $";
+char id_mark[] = "$Id: mark.c,v 2.19 2004/03/31 20:01:51 steve Exp $";
 #endif
 
 
@@ -33,7 +33,7 @@ MARK _markalloc(file, line, buffer, offset)
 
 	assert(buffer != NULL && offset >= 0 && offset <= o_bufchars(buffer));
 
-	newp = (MARK)_safealloc(file, line, False, 1, sizeof(MARKBUF));
+	newp = (MARK)_safealloc(file, line, ElvFalse, 1, sizeof(MARKBUF));
 	/*fprintf(stderr, "markalloc(0x%lx, %ld) called from %s(%d), returning 0x%lx\n", (long)buffer, offset, file, line, (long)newp);*/
 #endif
 	newp->buffer = buffer;
