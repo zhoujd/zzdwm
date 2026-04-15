@@ -12,7 +12,7 @@
 
 /* The following determine which user interfaces are to be supported */
 #undef	GUI_GNOME	/* Pretty GNOME user interface */
-#define	GUI_X11		/* simple X-windows interface */
+#undef	GUI_X11		/* simple X-windows interface */
 #undef	GUI_CURSES	/* curses interface */
 #define	GUI_TERMCAP	/* termcap interface */
 #define	GUI_OPEN	/* open-mode only, does nothing fancy */
@@ -44,7 +44,7 @@
 #define	FEATURE_G	/* most of the visual 'g' commands */
 #define	FEATURE_HLOBJECT /* the hlobject and hllayers options */
 #define	FEATURE_HLSEARCH  /* the hlsearch option */
-#define	FEATURE_IMAGE	/* background images in x11 */
+#undef	FEATURE_IMAGE	/* background images in x11 */
 #define	FEATURE_INCSEARCH /* the incsearch option */
 #define	FEATURE_LISTCHARS /* the "listchars" option */
 #define	FEATURE_LITRE	/* accelerate searches for literal strings */
@@ -66,7 +66,7 @@
 #define	FEATURE_TAGS	/* :tag command -- undef'ing will break ref & ctags */
 #define	FEATURE_TEXTOBJ	/* text objects */
 #define	FEATURE_V	/* the v/V/^V marking commands */
-#define	FEATURE_XFT	/* support antialiased fonts in "x11" */
+#undef	FEATURE_XFT	/* support antialiased fonts in "x11" */
 #define	FEATURE_PERSIST	/* the persistfile option */
 #undef	FEATURE_WCHAR	/* use wide characters internally */
 
@@ -114,7 +114,7 @@
 #define	NEED_WAIT_H	/* must include <sys/wait.h> */
 #undef	NEED_SELECT_H	/* must include <sys/select.h> */
 #define	NEED_IOCTL_H	/* must include <sys/ioctl.h> */
-#define	NEED_XOS_H	/* must include <X11/Xos.h> */
+#undef	NEED_XOS_H	/* must include <X11/Xos.h> */
 #define	NEED_IN_H	/* must include <netinet/in.h> */
 #define	NEED_SOCKET_H	/* must include <sys/socket.h> */
 #undef	NEED_XRMCOMBINEFILEDATABASE	/* X11R4 needs this */
@@ -139,5 +139,5 @@
 /* The following macros, and their values, are mostly used to determine the
  * default values of some options.
  */
-#define	OSLPOUT	"!lp -s"	/* default value of lpout option */
-#define OSLIBPATH "~/.elvis:/etc/elvis:/usr/share/elvis/:/usr/share/elvis/doc/"	/* default elvispath */
+#define	OSLPOUT	"!lpr"	/* default value of lpout option */
+#define OSLIBPATH "~/.elvis:/etc/elvis:/usr/local/share/elvis/:/usr/local/share/elvis/doc/"	/* default elvispath */

@@ -10,10 +10,14 @@
 #ifdef FEATURE_RCSID
 char id_osprg[] = "$Id: osprg.c,v 2.13 2003/10/17 17:41:23 steve Exp $";
 #endif
+
+#if !defined(__linux__)
 #ifdef NEED_WAIT_H
 # include <sys/wait.h>
 #endif
-
+#else
+# include <sys/wait.h>
+#endif
 
 #define TMPDIR	(o_directory ? tochar8(o_directory) : "/tmp")
 #define SHELL	(o_shell ? tochar8(o_shell) : "/bin/sh")

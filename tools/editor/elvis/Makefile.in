@@ -71,7 +71,7 @@ FLAGI=-I
 # ctags and elvtags are the same program under different names.  The $(EXE) on
 # the end is just in case this Makefile is reconfigured for an operating
 # system which requires the EXE macro to be something like ".exe".
-ALL=elvis$(EXE) ref$(EXE) elvtags$(EXE) elvfmt$(EXE) elvgdb$(EXE)
+ALL=elvis$(EXE) ref$(EXE) elvtags$(EXE) fmt$(EXE) elvfmt$(EXE) elvgdb$(EXE)
 
 ################################################################################
 # The installation directories are relative to this
@@ -172,8 +172,14 @@ DISTRIB=elvis-$(VERSION)
 DOSEXE=exedos
 WIN32EXE=exewin32
 OS2EXE=exeos2
+REV=rev.h
 
 all: $(ALL)
+
+$(REV):
+	@./ver.sh $@
+
+main.o: $(REV)
 
 every: $(EVERY)
 
@@ -183,15 +189,15 @@ elvis$(EXE): $(HDRS) main$(OBJ) $(OBJS) $(GUIOBJS) $(LPOBJS)
 ctags$(EXE): $(CTOBJS)
 	$(CC) $(CFLAGS) $(CTOBJS) -o ctags$(EXE)
 
+
+elvfmt$(EXE): fmt$(EXE)
+	$(CP) fmt$(EXE) elvfmt$(EXE)
+
 doc/elvtags.man: doc/ctags.man
 	sed 's/\<CTAGS\>/ELVTAGS/g; s/ctags\>/elvtags/g; s/ant" elvtags/ant" ctags/' doc/ctags.man >doc/elvtags.man
 
 elvtags$(EXE): ctags$(EXE)
 	$(CP) ctags$(EXE) elvtags$(EXE)
-
-elvfmt$(EXE) doc/elvfmt.man: fmt$(EXE) doc/fmt.man
-	$(CP) fmt$(EXE) elvfmt$(EXE)
-	sed 's/\<FMT\>/ELVFMT/g; s/\<fmt\>/elvfmt/g' doc/fmt.man >doc/elvfmt.man
 
 ref$(EXE): $(REFOBJS)
 	$(CC) $(CFLAGS) $(REFOBJS) -o ref$(EXE)

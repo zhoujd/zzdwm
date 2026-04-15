@@ -15,10 +15,12 @@
  * variable.  Others (particularly ncurses) forbid it.  The nice ones
  * supply one if you don't, so they'll work either way.
  */
+#if !defined(__linux__)
 #ifdef NEED_BC
        char	*BC;	/* :bc=: move cursor left */
 #else
 extern char	*BC;	/* :bc=: move cursor left */
+#endif
 #endif
 
 /* HP-UX, and maybe some others, require the application code to supply
@@ -103,11 +105,13 @@ static void chgsize P_((TWIN *tw, int newheight, ELVBOOL winch));
 static void cursorshape P_((ELVCURSOR shape));
 
 /* termcap values */
+#if !defined(__linux__)
+       char	PC;		  /* :pc=: pad character (not a string var!) */
+       char	*UP;		/* :up=: move cursor up */
+#endif
 static ELVBOOL	AM;		/* :am:  boolean: auto margins? */
 static ELVBOOL	PT;		/* :pt:  boolean: physical tabs? */
-       char	PC;		/* :pc=: pad character (not a string var!) */
 static char	*VB;		/* :vb=: visible bell */
-       char	*UP;		/* :up=: move cursor up */
 static char	*AF;		/* :AF=: change the foreground color */
 static char	*SO;		/* :so=: standout start */
 static char	*SE;		/* :se=: standout end */
