@@ -1764,8 +1764,8 @@ void vipush(win, flags, cursor)
 	win->state->mapflags |= MAP_COMMAND;
 	viinitcmd((VIINFO *)win->state->info);
 
-	/* default ruler/showmode */
-	o_ruler(win) = o_showmode(win) = ElvTrue;
+	/* default showmode */
+	o_showmode(win) = ElvTrue;
 
 	/* if a specific cursor was given, use it */
 	if (cursor)
