@@ -420,12 +420,22 @@ bufinit (const char *fname)
         (*mod)++;		/* Bump the modifier    */
     }
   if ((bp = bfind (bname, TRUE)) == NULL)	/* Create text buffer.  */
-    abort ();
+    {
+      eprintf ("Out of memory: cannot create buffer");
+      if (wheadp != NULL)
+        curwp = wheadp;
+      return;
+    }
   curbp = bp;			/* Current buffer       */
   if (++nbuf <= 2)		/* If 2 or less buffers */
     {				/* Get a new window     */
       if ((wp = (EWINDOW *) malloc (sizeof (EWINDOW))) == NULL)
-        abort ();		/* Out of memory        */
+        {
+          eprintf ("Out of memory: cannot create window");
+          if (wheadp != NULL)
+            curwp = wheadp;
+          return;
+        }
       curwp = wp;		/* Current window       */
       if (nbuf == 1)		/* First window?        */
         {

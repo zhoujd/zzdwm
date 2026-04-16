@@ -309,7 +309,10 @@ popblist (void)
   if (blistp->b_nwnd == 0)
     {				/* Not on screen yet.   */
       if ((wp = wpopup ()) == NULL)
-        return (FALSE);
+        {
+          eprintf("[Cannot create popup window]");
+          return (FALSE);
+        }
       addwind (wp, -1);		/* One less window      */
       wp->w_bufp = blistp;
       ++blistp->b_nwnd;
