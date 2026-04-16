@@ -236,6 +236,8 @@ killbuffer (int f, int n, int k)
   else if (s == TRUE) {
     if ((bp = bfind (bufn, FALSE)) == NULL) {	/* Easy if unknown.     */
       eprintf ("[Buffer not found]");
+      /* FIX: Ensure proper cleanup before returning */
+      eerase();
       return (TRUE);
     }
   } else {
@@ -571,6 +573,7 @@ bcreate (const char *bname)
   if ((lp = lallocx (0)) == NULL)
     {				/* header line          */
       free ((char *) bp);
+      bp = NULL;
       return (NULL);
     }
   bp->b_bufp = NULL;
@@ -754,12 +757,20 @@ zotbuf (BUFFER *bp)
   BUFFER *bp1, *bp2;
   int s;
 
+  /* FIX: Validate input before proceeding */
+  if (bp == NULL)
+    {
+      eprintf("[Internal error: NULL buffer passed to zotbuf]");
+      return (FALSE);
+    }
+
   /* we ony get here if there is only *scratch* left */
   if (bp->b_nwnd != 0)
     return (FALSE); /* fail silently */
   if ((s = bclear (bp)) != TRUE) /* Blow text away */
     return (s);
   free (bp->b_linep);		/* Release header line */
+  bp->b_linep = NULL;
   bp1 = 0;			/* Find the header */
   bp2 = bheadp;
   while (bp2 != bp)
@@ -777,6 +788,7 @@ zotbuf (BUFFER *bp)
   killundo (bp);		/* Free undo records	*/
   removemode (bp);
   free (bp);			/* Release buffer block */
+  bp = NULL;
   return (TRUE);
 }
 

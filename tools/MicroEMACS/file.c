@@ -661,8 +661,15 @@ expand (const char *text, int *len)
             newbuf = realloc (buf, newsize);
           if (newbuf == NULL)
           {
+            /* FIX: Free existing buffer on allocation failure */
+            if (bufsize > 0 && buf != NULL)
+              {
+                free(buf);
+                buf = NULL;
+              }
             eprintf ("Can't allocate tab expansion buffer of %d bytes",
                      newsize);
+            bufsize = 0;
             return (NULL);
           }
           buf = newbuf;

@@ -546,6 +546,12 @@ replyq_put (const char *s)
       return FALSE;
     }
   copy = strdup (s);
+  /* FIX: Check for strdup failure */
+  if (copy == NULL)
+    {
+      eprintf("Memory allocation failed for reply queue");
+      return FALSE;
+    }
   replyq[replyq_size] = copy;
   ++replyq_size;
   return TRUE;
