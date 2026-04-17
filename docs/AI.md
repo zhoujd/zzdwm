@@ -5,7 +5,7 @@ AI
 
 ```
 ## Setup 
-$ docker run -it --rm 
+$ docker run -it --rm \
 	-v ~/.hermes:/opt/data \
 	nousresearch/hermes-agent setup
 
