@@ -27,7 +27,7 @@ RUN_PARAM=(
     -h $CTN_HOST
     -e INSIDE_DOCKER=yes
     -v $TOP:$WS
-    -w $WS
+    -w $MNT
 )
 
 stop() {
