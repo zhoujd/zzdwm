@@ -10,7 +10,8 @@ RUN sed -i "s/archive.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list && \
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    build-essential musl-tools python3-docutils sudo git \
+    build-essential musl-tools sudo git \
+    python3-pip python3-venv python3-docutils \
     && rm -rf /var/lib/apt/lists/*
 
 ARG USER_NAME=zach
@@ -21,6 +22,10 @@ RUN useradd $USER_NAME -m -s $USER_SHELL \
     && chmod 0440 /etc/sudoers.d/$USER_NAME
 
 USER $USER_NAME
+
+ARG PIP_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip3 config set global.index-url ${PIP_URL}
+
 RUN cat > ~/.bashrc <<EOF
 # .bashrc
 

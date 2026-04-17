@@ -16,6 +16,7 @@ RUN apk update --no-cache \
     libbsd-static libbsd-dev ncurses-dev musl-dev ncurses-static \
     gcc make libtool autoconf automake \
     git bash sudo shadow openssh file \
+    python3 py3-pip \
     && rm -rf /var/cache/apk/*
 
 ARG USER_NAME=zach
@@ -27,6 +28,9 @@ RUN adduser -D -s $USER_SHELL $USER_NAME \
     && chmod 0440 /etc/sudoers.d/$USER_NAME
 
 USER $USER_NAME
+
+ARG PIP_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip3 config set global.index-url ${PIP_URL}
 
 RUN cat > ~/.profile <<EOF
 # .profile
