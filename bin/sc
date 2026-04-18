@@ -40,4 +40,4 @@ hardstatus off
 hardstatus string "%n %t"
 windowlist string "%4n %t %h%=%f"
 EOF
-screen -c "$tmpfile" $@
+exec screen -c "$tmpfile" $@ >/dev/null 2>&1
