@@ -16,6 +16,9 @@ RUN xbps-install -Syu xbps \
     openssh git findutils diffutils bash python3 python3-pip \
     && xbps-remove -Oo
 
+# GNU screen utmp file
+RUN touch /var/run/utmp
+
 ARG USER_NAME=zach
 RUN useradd $USER_NAME -m \
     && usermod -aG wheel $USER_NAME \

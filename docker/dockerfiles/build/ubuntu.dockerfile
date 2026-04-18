@@ -14,6 +14,9 @@ RUN apt-get update \
     python3-pip python3-venv python3-docutils \
     && rm -rf /var/lib/apt/lists/*
 
+# GNU screen utmp file
+RUN touch /var/run/utmp
+
 ARG USER_NAME=zach
 ARG USER_SHELL=/bin/bash
 RUN useradd $USER_NAME -m -s $USER_SHELL \

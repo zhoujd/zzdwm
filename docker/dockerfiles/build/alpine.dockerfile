@@ -19,6 +19,9 @@ RUN apk update --no-cache \
     python3 py3-pip \
     && rm -rf /var/cache/apk/*
 
+# GNU screen utmp file
+RUN touch /var/run/utmp
+
 ARG USER_NAME=zach
 ARG USER_SHELL=/bin/bash
 RUN adduser -D -s $USER_SHELL $USER_NAME \
