@@ -7,7 +7,7 @@ WS=$SCRIPT_DIR
 . /etc/os-release
 
 build() {
-    ./configure --without-x
+    ./configure --without-x linux
     make clean
     make CC="gcc -O0 -g"
     echo "Build done"
@@ -41,7 +41,7 @@ publish() {
             "
         docker run $opt $img sh <<'EOF'
 cat /etc/os-release
-./configure --without-x
+./configure --without-x linux
 make clean
 make CC="gcc -Os -s -static"
 EOF
