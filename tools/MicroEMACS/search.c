@@ -73,6 +73,7 @@
  */
 #include "def.h"
 #include "regexp.h"
+#include <ctype.h>
 
 #define SRCH_BEGIN	(0)	/* Search sub-codes.    */
 #define	SRCH_FORW	(-1)
@@ -769,6 +770,9 @@ isearch (int dir)
   register int success;
   int pptr;
   int fkey, bkey;		/* keys bound to commands */
+  int firstc;
+  int xcase;
+  int i;
 
   /* Get the bindings for incremental search so user can use those
    * keys instead of C-S or C-R.  We can't allow C-X or M- keys
@@ -884,6 +888,57 @@ isearch (int dir)
           memset (pat, 0, NPAT);
           pptr = 0;
           is_prompt (dir, FALSE, success);
+          break;
+
+        case CCHR('W'):
+          /* add the rest of the current word to the pattern */
+          clp = curwp->w_dot.p;
+          cbo = curwp->w_dot.o;
+          firstc = 1;
+          if (pptr == -1)
+            pptr = 0;
+          if (dir == SRCH_BACK)
+            {
+              /* when isearching backwards, cbo is the start of the pattern */
+              cbo += pptr;
+            }
+          /* if the search is case insensitive, add to pattern using lowercase */
+          xcase = 0;
+          for (i = 0; pat[i]; i++)
+            if (CISUPPER((pat[i])))
+              xcase = 1;
+          while (cbo < llength(clp))
+            {
+              c = lgetc(clp, cbo++);
+              if ((!firstc && !isalnum(c)))
+                break;
+              if (pptr == NPAT - 1)
+                {
+                  ttbeep();
+                  break;
+                }
+              firstc = 0;
+              if (!xcase && CISUPPER(c))
+                c = CTOLOWER(c);
+              pat[pptr++] = c;
+              pat[pptr] = '\0';
+              unicodepat ();
+              is_lpush ();
+              if (success != FALSE)
+                {
+                  if (is_find (dir) != FALSE)
+                    is_cpush (c);
+                  else
+                    {
+                      success = FALSE;
+                      ttbeep ();
+                      is_cpush (SRCH_ACCM);
+                    }
+                }
+              else
+                is_cpush (SRCH_ACCM);
+            }
+          is_prompt(dir, pptr < 0, success);
           break;
 
         case KDEL:		/* DEL   */
