@@ -162,15 +162,16 @@ all() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-usage: $app {dep|dm|bin|misc|install|-i|build|-b|clean|-c|all|-a}
-dep          --    Install depend package
-dm           --    Install xsession
-bin          --    Install bin
-misc         --    Install misc
-install|-i   --    Install all
-build|-b     --    Build all
-clean|-c     --    Clean all
-all|-a       --    Init all
+Usage: $app {option}
+Option:
+dep           install depend package
+dm            install xsession
+bin           install bin
+misc          install misc
+install|-i    install all
+build|-b      build all
+clean|-c      clean all
+all|-a        init all
 EOF
 }
 
