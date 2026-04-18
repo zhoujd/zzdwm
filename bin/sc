@@ -43,12 +43,8 @@ EOF
 
 if [ -n "$STY" ]; then
    case $1 in
-     -* )
-      screen $@
-      ;;
-     * )
-      screen 1
-      ;;
+     '' ) screen 1 ;;
+     * ) screen $@ ;;
    esac
 else
    screen -c "$tmpfile" $@
