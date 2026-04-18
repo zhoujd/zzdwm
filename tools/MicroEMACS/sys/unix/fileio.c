@@ -524,7 +524,7 @@ int
 ffcheckname (char *filename)
 {
   /* check last character */
-  if (filename[strlen (filename) - 1] == '/')
+  if (!filename || (filename[strlen (filename) - 1] == '/'))
     {
       eprintf ("[Bad file name]");
       return (FALSE);
