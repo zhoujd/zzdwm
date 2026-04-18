@@ -31,6 +31,10 @@ void safefree(ptr)
 char *safedup(str)
 	char	*str;	/* nul-terminated string to be duplicated */
 {
+	if (!str)
+	{
+		return NULL;
+	}
 	char *newp = (char *)safealloc((int)strlen(str) + 1, sizeof(char));
 	strcpy(newp, str);
 	return newp;
@@ -40,6 +44,10 @@ char *safedup(str)
 CHAR *safeCHARdup(str)
 	CHAR	*str;	/* nul-terminated CHAR string to be duplicated */
 {
+	if (!str)
+	{
+		return NULL;
+	}
 	CHAR *newp = (CHAR *)safealloc((int)CHARlen(str) + 1, sizeof(CHAR));
 	CHARcpy(newp, str);
 	return newp;
