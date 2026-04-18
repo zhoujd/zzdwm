@@ -905,21 +905,21 @@ isearch (int dir)
           /* if the search is case insensitive, add to pattern using lowercase */
           xcase = 0;
           for (i = 0; pat[i]; i++)
-            if (CISUPPER((pat[i])))
+            if (CISUPPER ((pat[i])))
               xcase = 1;
-          while (cbo < llength(clp))
+          while (cbo < llength (clp))
             {
-              c = lgetc(clp, cbo++);
-              if ((!firstc && !isalnum(c)))
+              c = lgetc (clp, cbo++);
+              if ((!firstc && !isalnum (c)))
                 break;
               if (pptr == NPAT - 1)
                 {
-                  ttbeep();
+                  ttbeep ();
                   break;
                 }
               firstc = 0;
-              if (!xcase && CISUPPER(c))
-                c = CTOLOWER(c);
+              if (!xcase && CISUPPER (c))
+                c = CTOLOWER (c);
               pat[pptr++] = c;
               pat[pptr] = '\0';
               unicodepat ();
@@ -938,14 +938,14 @@ isearch (int dir)
               else
                 is_cpush (SRCH_ACCM);
             }
-          is_prompt(dir, pptr < 0, success);
+          is_prompt (dir, pptr < 0, success);
           break;
 
-        case KDEL:		/* DEL   */
-        case KUP:		/* UP    */
-        case KDOWN:		/* Down  */
-        case KLEFT:		/* LEFT  */
-        case KRIGHT:		/* Right */
+        case KDEL:        /* DEL   */
+        case KUP:         /* UP    */
+        case KDOWN:       /* Down  */
+        case KLEFT:       /* LEFT  */
+        case KRIGHT:      /* Right */
           ungetinp (c);		/* push back input */
           curwp->w_flag |= WFMOVE;
           return (TRUE);
