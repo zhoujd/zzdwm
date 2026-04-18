@@ -40,4 +40,16 @@ hardstatus off
 hardstatus string "%n %t"
 windowlist string "%4n %t %h%=%f"
 EOF
-exec screen -c "$tmpfile" $@ >/dev/null 2>&1
+
+if [ -n "$STY" ]; then
+   case $1 in
+     -* )
+      screen $@
+      ;;
+     * )
+      screen 1
+      ;;
+   esac
+else
+   screen -c "$tmpfile" $@
+fi
