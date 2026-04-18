@@ -10,15 +10,15 @@ TM=Make.Test
 usage() {
     app=$(basename $0)
     cat <<EOF
-usage: $app {option}
-option:
-build|-b            build {test|-t|all|-a}
-clean|-c            clean {test|-t|all|-a}
-debug|-d            debug
-release|-r          release
-publish|-p          publish
-install|-i          install
-uninstall|-u        uninstall
+Usage: $app {option}
+Option:
+build|-b        build {test|-t|all|-a}
+clean|-c        clean {test|-t|all|-a}
+debug|-d        debug
+release|-r      release
+publish|-p      publish
+install|-i      install
+uninstall|-u    uninstall
 EOF
 }
 
