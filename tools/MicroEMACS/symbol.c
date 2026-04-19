@@ -220,7 +220,7 @@ KEY key[] = {
   {KCTLX | '!',         spawncmd,          "cmd"},
   {KCTLX | '@',         spawnpipe,         "pipe"},
   {KCTLX | '#',         spawnfilter,       "filter"},
-  {KCTLX | '$',         changecwd,         "cd"},
+  {KCTLX | '$',         changedir,         "cd"},
 #endif
   {KMETA | KCTRL | 'E', gccerror,          "gcc-error"},
   {KMETA | KCTRL | 'F', foldcase,          "fold-case"},

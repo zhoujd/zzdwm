@@ -514,7 +514,7 @@ end:
  * Bound to "C-X $".
  */
 int
-changecwd (int f, int n, int k)
+changedir (int f, int n, int k)
 {
   register int s;
   static char line[NLINE];

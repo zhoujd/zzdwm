@@ -878,7 +878,7 @@ int spawncli (int f, int n, int k);	/* Run CLI in a subjob.         */
 int spawncmd (int f, int n, int k);	/* Run a one-liner in a subjob. */
 int spawnpipe (int f, int n, int k);	/* Pipe a command into a window.*/
 int spawnfilter (int f, int n, int k);	/* Filter a buffer via program. */
-int changecwd (int f, int n, int k);	/* Change current directory.    */
+int changedir (int f, int n, int k);	/* Change current directory.    */
 int dired (int f, int n, int k);	/* List current directory.      */
 
 int spawn (char *program,		/* Spawn a program.		*/
