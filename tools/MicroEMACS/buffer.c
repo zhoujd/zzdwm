@@ -78,6 +78,8 @@
  *
  */
 #include "def.h"
+#include <errno.h>
+#include <unistd.h>
 
 char oldbufn[NBUFN];		/* name of old buffer   */
 
@@ -89,6 +91,7 @@ static int getbufn (char bufn[NBUFN]);
 static void intoa (char buf[], int width, long num);
 static int usebuf (BUFFER *bp);
 static int makelist (void);
+static int dorevert (void);
 int swbuffer (BUFFER *bp);
 BUFFER* get_scratch(void);
 int zotbuf (BUFFER *bp);
@@ -833,9 +836,61 @@ ask:
  * unmark the current buffers change flag
  */
 int
-unmark(int f, int n, int k)
+unmark (int f, int n, int k)
 {
   curbp->b_flag &= ~BFCHG;
   curwp->w_flag |= WFMODE;
   return TRUE;
+}
+
+/*
+ * revert the current buffer
+ */
+static int
+dorevert (void)
+{
+  if (access (curbp->b_fname, R_OK) != F_OK)
+    {
+      ttbeep ();
+      if (errno == ENOENT)
+        eprintf ("File %s no longer exists!", curbp->b_fname);
+      else
+        eprintf ("File %s is no longer readable!", curbp->b_fname);
+      return (FALSE);
+    }
+
+  /* Prevent readin from asking if we want to kill the buffer. */
+  curbp->b_flag &= ~BFCHG;
+
+  /* Clean up undo memory */
+  setundochanged ();
+
+  if (readin (curbp->b_fname))
+    return (TRUE);
+
+  return (FALSE);
+}
+
+/*
+ * Revert the current buffer to whatever is on disk.
+ */
+int
+revertbuffer (int f, int n, int k)
+{
+  char fbuf[NFILEN + 32];
+
+  if (curbp->b_fname[0] == 0)
+    {
+      eprintf ("Cannot revert buffer not associated "
+          "with any files.");
+      return (FALSE);
+    }
+
+  snprintf (fbuf, sizeof (fbuf), "Revert buffer from file %s",
+      curbp->b_fname);
+
+  if (eyesno (fbuf) == TRUE)
+    return dorevert ();
+
+  return (FALSE);
 }

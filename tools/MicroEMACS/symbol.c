@@ -280,6 +280,7 @@ KEY key[] = {
   {-1,                  setfillcol,        "set-fill-column"},
   {-1,                  delwhite,          "just-one-space"},
   {-1,                  prevbuffer,        "back-buffer"},
+  {-1,                  revertbuffer,      "revert-buffer"},
   {-1,                  insertmacro,       "ins-macro"},
   {-1,                  setoverstrike,     "set-overstrike"},
   {-1,                  freetags,          "free-tags"},
