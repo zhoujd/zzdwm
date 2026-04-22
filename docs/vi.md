@@ -69,3 +69,14 @@ https://sourceforge.net/projects/elvis-vi-editor/files/elvis-2.2_0.tar.gz
 ## 2.2.2
 https://github.com/kirkendall/elvis
 ```
+
+## Elvis Identify and Delete the Session Files
+
+```
+## Remove session files
+$ rm /var/tmp/elvis*.ses
+
+## Recovering Data (if Needed)
+$ elvis -r
+no session file found in /var/tmp
+```
