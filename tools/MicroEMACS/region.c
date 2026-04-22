@@ -385,5 +385,9 @@ reglines ()
       n++;
     }
 
+  /* place us at the beginning of the region */
+  curwp->w_dot.p = region.r_pos.p;
+  curwp->w_dot.o = region.r_pos.o;
+
   return (n);
 }
