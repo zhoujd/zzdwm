@@ -892,26 +892,28 @@ checkheap (int f, int n, int k)
 }
 
 /*
- * trim trailing whitespace from the point to eol
+ * Trim trailing whitespace from the point to eol with no arguments, it
+ * trims the current region
  */
 int
 trim (int f, int n, int k)
 {
-  LINE *lp;	/* current line pointer */
-  int offset;	/* original line offset position */
-  int length;	/* current length */
-  int inc;	/* increment to next line [sgn(n)] */
+  register LINE *lp;	/* current line pointer */
+  register int offset;	/* original line offset position */
+  register int length;	/* current length */
+  register int inc;	/* increment to next line [sgn(n)] */
 
   if (curbp->b_flag & BFRO)	/* if buffer is read-only       */
     return FALSE;               /* fail                         */
 
   if (f == FALSE)
-    n = 1;
+    n = reglines();
 
   /* loop thru trimming n lines */
   inc = ((n > 0) ? 1 : -1);
   while (n)
     {
+      saveundo (UMOVE, &curwp->w_dot);
       lp = curwp->w_dot.p;	/* find current line text */
       offset = curwp->w_dot.o;	/* save original offset */
       length = lp->l_used;	/* find current length */

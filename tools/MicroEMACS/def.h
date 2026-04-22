@@ -841,6 +841,7 @@ int upperregion (int f, int n, int k);	/* Upper case region.           */
 int indentregion (int f, int n, int k);	/* Shift region indentation.    */
 
 int getregion (REGION *rp);		/* Get current region bounds.	*/
+int reglines ();		/* Get lines in the current region */
 
 /*
  * Defined "ring.c".
