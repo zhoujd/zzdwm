@@ -364,30 +364,26 @@ indentregion (int f, int n, int k)
 int
 reglines ()
 {
-    register LINE *linep;       /* position while scanning */
-    register int n;             /* number of lines in this current region */
-    REGION region;
+  register LINE *linep;       /* position while scanning */
+  register int n;             /* number of lines in this current region */
+  REGION region;
 
-    /* check for a valid region first */
-    if (getregion (&region) != TRUE )
-        return (0);
+  /* check for a valid region first */
+  if (getregion (&region) != TRUE )
+      return (0);
 
-    /* start at the top of the region.... */
-    linep = region.r_pos.p;
-    region.r_size += region.r_pos.o;
-    n = 0;
+  /* start at the top of the region.... */
+  linep = region.r_pos.p;
+  region.r_size += region.r_pos.o;
+  n = 0;
 
-    /* scan the region... counting lines */
-    while (region.r_size > 0L )
-      {
-        region.r_size -= wllength (linep) + 1;
-        linep = lforw(linep);
-        n++;
-      }
+  /* scan the region... counting lines */
+  while (region.r_size > 0L )
+    {
+      region.r_size -= wllength (linep) + 1;
+      linep = lforw(linep);
+      n++;
+    }
 
-    /* place us at the beginning of the region */
-    curwp->w_dot.p = region.r_pos.p;
-    curwp->w_dot.o = region.r_pos.o;
-
-    return (n);
+  return (n);
 }
