@@ -551,6 +551,8 @@ ctlxrp (int f, int n, int k)
 int
 ctlxe (int f, int n, int k)
 {
+  if (f == FALSE)
+    n = reglines();
   return domacro (&kbdm[0], n);
 }
 
