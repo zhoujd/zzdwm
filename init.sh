@@ -112,6 +112,15 @@ install_misc() {
     echo "Install cwmrc"
     local cwm=$CORE_ROOT/misc/cwm
     ln -sfTv $cwm/cwmrc ~/.cwmrc
+    echo "Install terminfo"
+    local terminfo=$CORE_ROOT/misc/terminfo
+    tis=(
+        $terminfo/screen-256color.ti
+        $terminfo/xterm-256color.ti
+    )
+    for t in ${tis[@]}; do
+        tic -s $t
+    done
     echo "Install misc done"
 }
 
