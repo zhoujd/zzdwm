@@ -20,7 +20,7 @@ defflow off
 defshell -bash
 defscrollback 5000
 defdynamictitle on
-term screen-256color
+term xterm-256color
 termcapinfo st* ti@:te@
 bind ^G
 bind g
