@@ -222,6 +222,7 @@ KEY key[] = {
   {KCTLX | '#',         spawnfilter,       "filter"},
   {KCTLX | '$',         changedir,         "cd"},
 #endif
+  {KMETA | KCTRL | 'C', regioninfo,        "region-info"},
   {KMETA | KCTRL | 'E', gccerror,          "gcc-error"},
   {KMETA | KCTRL | 'F', foldcase,          "fold-case"},
   {KMETA | KCTRL | 'H', delbword,          "back-del-word"},
@@ -295,7 +296,6 @@ KEY key[] = {
   {-1,                  setnewline,        "set-newline"},
   {-1,                  redo,              "redo"},
   {-1,                  filevisitreadonly, "file-visit-readonly"},
-  {-1,                  regioninfo,        "region-info"},
   {-1,                  viewfile,          "view-file"}
 };
 

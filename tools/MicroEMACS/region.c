@@ -398,31 +398,54 @@ reglines ()
 int
 regioninfo (int f, int n, int k)
 {
-  register LINE *lp;       /* position while scanning */
-  register long size;      /* size of region left to count */
-  register int nlines;     /* number of lines */
-  register int nbytes;     /* number of bytes */
+  LINE *lp;       /* position while scanning */
+  long size;      /* size of region left to count */
+  int nlines;     /* number of lines */
+  int nbytes;     /* number of bytes */
+  int ch;
+  int wordflag;
+  int lastword;
+  int nwords;
+  int nchars;
+  int offset;
   REGION region;
 
   /* check for a valid region first */
   if (getregion (&region) != TRUE )
       return (FALSE);
 
-  /* start at the top of the region.... */
+  /* count up things */
+  lastword = FALSE;
   lp = region.r_pos.p;
-  size = region.r_size + region.r_pos.o;
-  nlines = 0;
+  offset = region.r_pos.o;
+  size = region.r_size;
   nbytes = region.r_size;;
-
-  /* scan the region... counting lines */
-  while (size > 0L )
+  nlines = 0;
+  nwords = 0;
+  nchars = 0;
+  while (size--)
     {
-      size -= wllength (lp) + 1;
-      lp = lforw(lp);
-      nlines++;
+       /* get the current character */
+       if (offset == wllength(lp)) {	/* end of line */
+         ch = '\n';
+         lp = lforw(lp);
+         offset = 0;
+         ++nlines;
+       } else {
+         ch = lgetc(lp, offset);
+         ++offset;
+         ++nchars;
+       }
+
+       /* and tabulate it */
+       wordflag = CISWORD(ch);
+       if (wordflag == TRUE && lastword == FALSE)
+         ++nwords;
+       lastword = wordflag;
     }
-  
+  /* update nlines */
+  ++nlines;
   /* display results */
-  eprintf("[Region: %d lines, %d bytes]", nlines, nbytes);
+  eprintf("[Line %d Word %d Char %d Byte %d]", nlines, nwords, nchars, nbytes);
   return (TRUE);
 }
