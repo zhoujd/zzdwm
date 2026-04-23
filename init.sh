@@ -113,13 +113,13 @@ install_misc() {
     local cwm=$CORE_ROOT/misc/cwm
     ln -sfTv $cwm/cwmrc ~/.cwmrc
     echo "Install terminfo"
-    local terminfo=$CORE_ROOT/misc/terminfo
+    local term=$CORE_ROOT/misc/term
     tis=(
-        $terminfo/screen-256color.ti
-        $terminfo/xterm-256color.ti
+        $term/screen-256color.ti
+        $term/xterm-256color.ti
     )
-    for t in ${tis[@]}; do
-        tic -s $t
+    for ti in ${tis[@]}; do
+        tic -s $ti
     done
     echo "Install misc done"
 }
