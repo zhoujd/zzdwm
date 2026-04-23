@@ -401,13 +401,14 @@ regioninfo (int f, int n, int k)
   LINE *lp;       /* position while scanning */
   long size;      /* size of region left to count */
   int nlines;     /* number of lines */
-  int nbytes;     /* number of bytes */
+  long nbytes;    /* number of bytes */
+  long nwords;
+  long nchars;
   int ch;
   int wordflag;
   int lastword;
-  int nwords;
-  int nchars;
   int offset;
+  int avgch;      /* average number of chars/word */
   REGION region;
 
   /* check for a valid region first */
@@ -421,31 +422,37 @@ regioninfo (int f, int n, int k)
   size = region.r_size;
   nbytes = region.r_size;;
   nlines = 0;
-  nwords = 0;
-  nchars = 0;
+  nwords = 0L;
+  nchars = 0L;
   while (size--)
     {
        /* get the current character */
-       if (offset == wllength(lp)) {	/* end of line */
+       if (offset == wllength (lp)) {	/* end of line */
          ch = '\n';
-         lp = lforw(lp);
+         lp = lforw (lp);
          offset = 0;
          ++nlines;
        } else {
-         ch = lgetc(lp, offset);
+         ch = lgetc (lp, offset);
          ++offset;
          ++nchars;
        }
 
        /* and tabulate it */
-       wordflag = CISWORD(ch);
+       wordflag = CISWORD (ch);
        if (wordflag == TRUE && lastword == FALSE)
          ++nwords;
        lastword = wordflag;
     }
+  /* and report on the info */
+  if (nwords > 0L)
+    avgch = (int)((100L * nchars) / nwords);
+  else
+    avgch = 0;
   /* update nlines */
   ++nlines;
   /* display results */
-  eprintf("[Line %d Word %d Char %d Byte %d]", nlines, nwords, nchars, nbytes);
+  eprintf("[Word %l Char %l Line %d Byte %l Avg chars/word %d]",
+          nwords, nchars, nlines, nbytes, avgch);
   return (TRUE);
 }
