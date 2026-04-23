@@ -9,9 +9,11 @@ bell_msg ""
 vbell_msg ""
 bell off
 vbell off
+nonblock on
 altscreen on
 maptimeout 0
 msgwait 3
+msgminwait 0
 defutf8 on
 deflogin off
 defflow off
