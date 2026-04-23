@@ -839,6 +839,7 @@ int copyregion (int f, int n, int k);	/* Copy region to kill buffer.  */
 int lowerregion (int f, int n, int k);	/* Lower case region.           */
 int upperregion (int f, int n, int k);	/* Upper case region.           */
 int indentregion (int f, int n, int k);	/* Shift region indentation.    */
+int regioninfo (int f, int n, int k);   /* Display region information   */
 
 int getregion (REGION *rp);		/* Get current region bounds.	*/
 int reglines ();		/* Get lines in the current region */

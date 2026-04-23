@@ -370,7 +370,7 @@ reglines ()
 
   /* check for a valid region first */
   if (getregion (&region) != TRUE )
-      return (0);
+      return (FALSE);
 
   /* start at the top of the region.... */
   linep = region.r_pos.p;
@@ -390,4 +390,39 @@ reglines ()
   curwp->w_dot.o = region.r_pos.o;
 
   return (n);
+}
+
+/*
+ * Display region information
+*/
+int
+regioninfo (int f, int n, int k)
+{
+  register LINE *lp;       /* position while scanning */
+  register long size;      /* size of region left to count */
+  register int nlines;     /* number of lines */
+  register int nbytes;     /* number of bytes */
+  REGION region;
+
+  /* check for a valid region first */
+  if (getregion (&region) != TRUE )
+      return (FALSE);
+
+  /* start at the top of the region.... */
+  lp = region.r_pos.p;
+  size = region.r_size + region.r_pos.o;
+  nlines = 0;
+  nbytes = region.r_size;;
+
+  /* scan the region... counting lines */
+  while (size > 0L )
+    {
+      size -= wllength (lp) + 1;
+      lp = lforw(lp);
+      nlines++;
+    }
+  
+  /* display results */
+  eprintf("[Region: %d lines, %d bytes]", nlines, nbytes);
+  return (TRUE);
 }

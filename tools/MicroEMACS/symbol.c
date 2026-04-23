@@ -295,6 +295,7 @@ KEY key[] = {
   {-1,                  setnewline,        "set-newline"},
   {-1,                  redo,              "redo"},
   {-1,                  filevisitreadonly, "file-visit-readonly"},
+  {-1,                  regioninfo,        "region-info"},
   {-1,                  viewfile,          "view-file"}
 };
 
