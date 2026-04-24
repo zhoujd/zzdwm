@@ -839,7 +839,6 @@ int copyregion (int f, int n, int k);	/* Copy region to kill buffer.  */
 int lowerregion (int f, int n, int k);	/* Lower case region.           */
 int upperregion (int f, int n, int k);	/* Upper case region.           */
 int indentregion (int f, int n, int k);	/* Shift region indentation.    */
-int regioninfo (int f, int n, int k);   /* Display region information   */
 
 int getregion (REGION *rp);		/* Get current region bounds.	*/
 int reglines ();		/* Get lines in the current region */
@@ -1008,6 +1007,7 @@ int lowerword (int f, int n, int k);	/* Lower case word.             */
 int capword (int f, int n, int k);	/* Initial capitalize word.     */
 int delfword (int f, int n, int k);	/* Delete forward word.         */
 int delbword (int f, int n, int k);	/* Delete backward word.        */
+int wordcount (int f, int n, int k);	/* # of words in marked region. */
 
 int inword (void);			/* Is dot in a word?		*/
 EWINDOW * wpopup (void);		/* Pick window for a pop-up	*/

@@ -222,7 +222,7 @@ KEY key[] = {
   {KCTLX | '#',         spawnfilter,       "filter"},
   {KCTLX | '$',         changedir,         "cd"},
 #endif
-  {KMETA | KCTRL | 'C', regioninfo,        "region-info"},
+  {KMETA | KCTRL | 'C', wordcount,         "count-words"},
   {KMETA | KCTRL | 'E', gccerror,          "gcc-error"},
   {KMETA | KCTRL | 'F', foldcase,          "fold-case"},
   {KMETA | KCTRL | 'H', delbword,          "back-del-word"},
