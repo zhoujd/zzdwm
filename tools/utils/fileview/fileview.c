@@ -219,12 +219,12 @@ int main( int argc, char *argv[] )
 			case KB_END:	position = posmax; break;
 
 			// move forward/backward by one line
-			case KB_LNDN:	position += BUFWIDE; break;
-			case KB_LNUP:	position -= BUFWIDE; break;
+			case KB_LNDN: case 'j':	position += BUFWIDE; break;
+			case KB_LNUP: case 'k':	position -= BUFWIDE; break;
 
 			// move forward/packward by one page
-			case KB_PGDN:	position += pageincr; break;
-			case KB_PGUP:	position -= pageincr; break;
+			case KB_PGDN: case 'J':	position += pageincr; break;
+			case KB_PGUP: case 'K':	position -= pageincr; break;
 
 			// increase/decrease the page-size increment
 			case KB_RGHT:	pageincr >>= 4; break;
