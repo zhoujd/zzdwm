@@ -71,10 +71,10 @@ static Layout layouts[] = {
 
 #define MOD  CTRL('g')
 #define TAGKEYS(KEY,TAG) \
-	{ { MOD, 'v', KEY,     }, { view,           { tags[TAG] }               } }, \
-	{ { MOD, 't', KEY,     }, { tag,            { tags[TAG] }               } }, \
-	{ { MOD, 'V', KEY,     }, { toggleview,     { tags[TAG] }               } }, \
-	{ { MOD, 'T', KEY,     }, { toggletag,      { tags[TAG] }               } },
+	{ { MOD, 'v',       KEY,  }, { view,           { tags[TAG] }            } }, \
+	{ { MOD, CTRL('t'), KEY,  }, { tag,            { tags[TAG] }            } }, \
+	{ { MOD, 'V',       KEY,  }, { toggleview,     { tags[TAG] }            } }, \
+	{ { MOD, 'T',       KEY,  }, { toggletag,      { tags[TAG] }            } },
 
 /* you can specifiy at most 3 arguments */
 static KeyBinding bindings[] = {
@@ -87,7 +87,7 @@ static KeyBinding bindings[] = {
 	{ { MOD, 'H',          }, { focusleft,      { NULL }                    } },
 	{ { MOD, 'L',          }, { focusright,     { NULL }                    } },
 	{ { MOD, 'k',          }, { focusprev,      { NULL }                    } },
-	{ { MOD, 'f',          }, { setlayout,      { "[]=" }                   } },
+	{ { MOD, 't',          }, { setlayout,      { "[]=" }                   } },
 	{ { MOD, 'g',          }, { setlayout,      { "+++" }                   } },
 	{ { MOD, 'b',          }, { setlayout,      { "TTT" }                   } },
 	{ { MOD, 'm',          }, { setlayout,      { "[M]" }                   } },
@@ -134,7 +134,7 @@ static KeyBinding bindings[] = {
 	{ { MOD, KEY_F(5),     }, { view,           { tags[4] }                 } },
 	{ { MOD, 'v', '0'      }, { view,           { NULL }                    } },
 	{ { MOD, 'v', '\t',    }, { viewprevtag,    { NULL }                    } },
-	{ { MOD, 't', '0'      }, { tag,            { NULL }                    } },
+	{ { MOD, CTRL('t'), '0'}, { tag,            { NULL }                    } },
 	TAGKEYS( '1',                              0)
 	TAGKEYS( '2',                              1)
 	TAGKEYS( '3',                              2)
