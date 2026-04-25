@@ -30,6 +30,7 @@ debug: clean
 
 clean:
 	@echo cleaning
+	@rm -f config.h
 	@rm -f dvtm
 	@rm -f dvtm-editor
 
