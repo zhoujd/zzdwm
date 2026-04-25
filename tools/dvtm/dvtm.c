@@ -363,7 +363,7 @@ drawbar(void) {
 	}
 
 	attrset(pertag.runinall[pertag.curtag] ? TAG_SEL : TAG_NORMAL);
-	addstr(layout->symbol);
+	printw(TAG_SYMBOL, layout->symbol);
 	attrset(TAG_NORMAL);
 
 	for (unsigned int i = 0; i < MAX_KEYS && keys[i]; i++) {
