@@ -407,7 +407,7 @@ drawbar(void) {
 
 static int
 show_border(void) {
-	return (bar.pos != BAR_OFF) || (clients && clients->next);
+	return (bar.pos != BAR_OFF) || (clients /* && clients->next */);
 }
 
 static void
@@ -1037,6 +1037,7 @@ setup(void) {
 		colors[i].pair = vt_color_reserve(colors[i].fg, colors[i].bg);
 	}
 	initpertag();
+	hidebar();
 	resize_screen();
 	struct sigaction sa;
 	memset(&sa, 0, sizeof sa);
