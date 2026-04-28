@@ -105,7 +105,7 @@ clean() {
 }
 
 install() {
-    if [ "$(whoami)" == "root" ]; then
+    if [ "$(whoami)" = "root" ]; then
         make install
     else
         sudo make install
