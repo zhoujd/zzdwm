@@ -192,6 +192,7 @@ static void focusdown(const char *args[]);
 static void focusleft(const char *args[]);
 static void focusright(const char *args[]);
 static void killclient(const char *args[]);
+static void killothers(const char *args[]);
 static void paste(const char *args[]);
 static void quit(const char *args[]);
 static void redraw(const char *args[]);
@@ -1368,6 +1369,18 @@ killclient(const char *args[]) {
 		return;
 	debug("killing client with pid: %d\n", sel->pid);
 	kill(-sel->pid, SIGKILL);
+}
+
+static void
+killothers(const char *args[]) {
+	if (!sel)
+		return;
+	for (Client *c = clients; c; c = c->next) {
+		if (c != sel) {
+			debug("killing client with pid: %d\n", c->pid);
+			kill(-c->pid, SIGKILL);
+		}
+	}
 }
 
 static void
