@@ -117,6 +117,7 @@ install_misc() {
     tis=(
         $term/screen-256color.ti
         $term/xterm-256color.ti
+        $term/dvtm-256color.ti
     )
     for ti in ${tis[@]}; do
         tic -s $ti
