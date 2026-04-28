@@ -1375,7 +1375,7 @@ static void
 killothers(const char *args[]) {
 	if (!sel)
 		return;
-	for (Client *c = clients; c; c = c->next) {
+	for (Client *c = nextvisible(clients); c; c = nextvisible(c->next)) {
 		if (c != sel) {
 			debug("killing client with pid: %d\n", c->pid);
 			kill(-c->pid, SIGKILL);
