@@ -5,6 +5,7 @@ dvtm
 
 ```
 ## https://github.com/martanne/dvtm
+## https://www.brain-dump.org/projects/dvtm
 ```
 
 ## Clone
