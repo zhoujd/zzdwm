@@ -984,8 +984,13 @@ mouse_setup(void) {
 static void
 initpertag(void) {
 	int i;
+	bool hide = BAR_DEFHIDE;
 
 	pertag.curtag = pertag.prevtag = 1;
+	if (hide) {
+		bar.lastpos = bar.pos;
+		bar.pos = BAR_OFF;
+	}
 	for(i=0; i <= LENGTH(tags); i++) {
 		pertag.nmaster[i] = screen.nmaster;
 		pertag.mfact[i] = screen.mfact;
@@ -1042,7 +1047,6 @@ setup(void) {
 		colors[i].pair = vt_color_reserve(colors[i].fg, colors[i].bg);
 	}
 	initpertag();
-	hidebar();
 	resize_screen();
 	struct sigaction sa;
 	memset(&sa, 0, sizeof sa);
