@@ -238,8 +238,6 @@ typedef struct {
 	int nmaster[LENGTH(tags) + 1];
 	float mfact[LENGTH(tags) + 1];
 	Layout *layout[LENGTH(tags) + 1];
-	int barpos[LENGTH(tags) + 1];
-	int barlastpos[LENGTH(tags) + 1];
 	bool runinall[LENGTH(tags) + 1];
 } Pertag;
 
@@ -261,6 +259,7 @@ static const char *shell;
 static Register copyreg;
 static volatile sig_atomic_t running = true;
 static bool runinall = false;
+static bool defhide = BAR_DEFHIDE;
 
 static void
 eprint(const char *errstr, ...) {
@@ -323,15 +322,15 @@ updatebarpos(void) {
 static void
 hidebar(void) {
 	if (bar.pos != BAR_OFF) {
-		bar.lastpos = pertag.barlastpos[pertag.curtag] = bar.pos;
-		bar.pos = pertag.barpos[pertag.curtag] = BAR_OFF;
+		bar.lastpos = bar.pos;
+		bar.pos = BAR_OFF;
 	}
 }
 
 static void
 showbar(void) {
 	if (bar.pos == BAR_OFF)
-		bar.pos = pertag.barpos[pertag.curtag] = bar.lastpos;
+		bar.pos = bar.lastpos;
 }
 
 static void
@@ -873,11 +872,6 @@ setpertag(void) {
 	screen.nmaster = pertag.nmaster[pertag.curtag];
 	screen.mfact = pertag.mfact[pertag.curtag];
 	layout = pertag.layout[pertag.curtag];
-	if (bar.pos != pertag.barpos[pertag.curtag]) {
-		bar.pos = pertag.barpos[pertag.curtag];
-		updatebarpos();
-	}
-	bar.lastpos = pertag.barlastpos[pertag.curtag];
 	runinall = pertag.runinall[pertag.curtag];
 }
 
@@ -984,19 +978,12 @@ mouse_setup(void) {
 static void
 initpertag(void) {
 	int i;
-	bool hide = BAR_DEFHIDE;
 
 	pertag.curtag = pertag.prevtag = 1;
-	if (hide) {
-		bar.lastpos = bar.pos;
-		bar.pos = BAR_OFF;
-	}
 	for(i=0; i <= LENGTH(tags); i++) {
 		pertag.nmaster[i] = screen.nmaster;
 		pertag.mfact[i] = screen.mfact;
 		pertag.layout[i] = layout;
-		pertag.barpos[i] = bar.pos;
-		pertag.barlastpos[i] = bar.lastpos;
 		pertag.runinall[i] = runinall;
 	}
 }
@@ -1047,6 +1034,8 @@ setup(void) {
 		colors[i].pair = vt_color_reserve(colors[i].fg, colors[i].bg);
 	}
 	initpertag();
+	if (defhide)
+		hidebar();
 	resize_screen();
 	struct sigaction sa;
 	memset(&sa, 0, sizeof sa);
@@ -1519,10 +1508,10 @@ static void
 togglebarpos(const char *args[]) {
 	switch (bar.pos == BAR_OFF ? bar.lastpos : bar.pos) {
 	case BAR_TOP:
-		bar.pos = pertag.barpos[pertag.curtag] = BAR_BOTTOM;
+		bar.pos = BAR_BOTTOM;
 		break;
 	case BAR_BOTTOM:
-		bar.pos = pertag.barpos[pertag.curtag] = BAR_TOP;
+		bar.pos = BAR_TOP;
 		break;
 	}
 	updatebarpos();
