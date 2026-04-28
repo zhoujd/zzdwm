@@ -208,5 +208,4 @@ static Action actions[] = {
 
 static char const * const keytable[] = {
 	/* add your custom key escape sequences */
-	NULL
 };
