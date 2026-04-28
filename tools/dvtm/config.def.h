@@ -14,13 +14,11 @@
 enum {
 	DEFAULT,
 	BLUE,
-	GREEN,
 };
 
 static Color colors[] = {
 	[DEFAULT] = { .fg = -1,          .bg = -1, .fg256 = -1, .bg256 = -1, },
 	[BLUE]    = { .fg = COLOR_CYAN,  .bg = -1, .fg256 = 68, .bg256 = -1, },
-	[GREEN]   = { .fg = COLOR_GREEN, .bg = -1, .fg256 = 7,  .bg256 = -1, },
 };
 
 #define COLOR(c)        COLOR_PAIR(colors[c].pair)
@@ -28,8 +26,6 @@ static Color colors[] = {
 #define SELECTED_ATTR   (COLOR(BLUE) | A_NORMAL)
 /* curses attributes for normal (not selected) windows */
 #define NORMAL_ATTR     (COLOR(DEFAULT) | A_NORMAL)
-/* curses attributes for the singular window */
-#define SINGULAR_ATTR   (COLOR(GREEN) | A_NORMAL)
 /* curses attributes for a window with pending urgent flag */
 #define URGENT_ATTR     NORMAL_ATTR
 /* curses attributes for the status bar */

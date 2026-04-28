@@ -415,6 +415,7 @@ static void
 draw_border(Client *c) {
 	char t = '\0';
 	int x, y, maxlen, attrs = NORMAL_ATTR;
+	int n = 0;
 
 	if (!show_border())
 		return;
@@ -422,8 +423,9 @@ draw_border(Client *c) {
 		attrs = URGENT_ATTR;
 	if (sel == c || (pertag.runinall[pertag.curtag] && !c->minimized))
 		attrs = SELECTED_ATTR;
-	if (sel == c && !c->next && !c->prev)
-		attrs = SINGULAR_ATTR;
+
+	for (Client *c = nextvisible(clients); c; c = nextvisible(c->next))
+		++n;
 
 	wattrset(c->window, attrs);
 	getyx(c->window, y, x);
@@ -436,10 +438,10 @@ draw_border(Client *c) {
 		c->title[maxlen] = '\0';
 	}
 
-	mvwprintw(c->window, 0, 2, "[%s%s#%d]",
+	mvwprintw(c->window, 0, 2, "[%s%s%d%c%d]",
 	          *c->title ? c->title : "",
 	          *c->title ? " | " : "",
-	          c->order);
+	          c->order, '/', n);
 	if (t)
 		c->title[maxlen] = t;
 	wmove(c->window, y, x);
