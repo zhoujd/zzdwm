@@ -61,7 +61,7 @@ install() {
 }
 
 uninstall() {
-    if [ "$(whoami)" == "root" ]; then
+    if [ "$(whoami)" = "root" ]; then
         make uninstall
     else
         sudo make uninstall
