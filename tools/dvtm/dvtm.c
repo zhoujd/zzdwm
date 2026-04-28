@@ -422,6 +422,8 @@ draw_border(Client *c) {
 		attrs = URGENT_ATTR;
 	if (sel == c || (pertag.runinall[pertag.curtag] && !c->minimized))
 		attrs = SELECTED_ATTR;
+	if (sel == c && !c->next && !c->prev)
+		attrs = SINGULAR_ATTR;
 
 	wattrset(c->window, attrs);
 	getyx(c->window, y, x);
