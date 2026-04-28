@@ -101,10 +101,10 @@ install_bin() {
         $CORE_ROOT/bin/ref
         $CORE_ROOT/bin/ctags
         $CORE_ROOT/bin/elvis
-        $CORE_ROOT/bin/dvtm
-        $CORE_ROOT/bin/dvtm-editor
-        $CORE_ROOT/bin/dvtm-pager
-        $CORE_ROOT/bin/dvtm-status
+        $CORE_ROOT/libexec/dvtm/dvtm
+        $CORE_ROOT/libexec/dvtm/dvtm-editor
+        $CORE_ROOT/libexec/dvtm/dvtm-pager
+        $CORE_ROOT/libexec/dvtm/dvtm-status
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $bin
