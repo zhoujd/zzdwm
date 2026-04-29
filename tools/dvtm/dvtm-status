@@ -5,7 +5,7 @@ FIFO="/tmp/dvtm-status.$$"
 [ -p "$FIFO" ] || mkfifo -m 600 "$FIFO" || exit 1
 
 while true; do
-	date +%H:%M
+	date +"%a %-e %b %-I:%M %p"
 	sleep 60
 done > "$FIFO" &
 
