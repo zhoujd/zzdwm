@@ -1834,7 +1834,12 @@ usage(void) {
 	cleanup();
 	eprint("usage: dvtm [-v] [-M] [-l] [-m mod] [-d delay] [-h lines] [-t title]\n"
 	       "            [-s status-fifo] [-c cmd-fifo] [cmd...]\n");
-	exit(EXIT_FAILURE);
+}
+
+static void
+version(void) {
+	cleanup();
+	puts("dvtm "DATE" "VERSION"");
 }
 
 static bool
@@ -1856,11 +1861,13 @@ parse_args(int argc, char *argv[]) {
 			create(args);
 			continue;
 		}
-		if (argv[arg][1] != 'v' && argv[arg][1] != 'M' && argv[arg][1] != 'l' && (arg + 1) >= argc)
+		if (argv[arg][1] != 'v' && argv[arg][1] != 'M' && argv[arg][1] != 'l' && (arg + 1) >= argc) {
 			usage();
+			exit(EXIT_FAILURE);
+		}
 		switch (argv[arg][1]) {
 			case 'v':
-				puts("dvtm-"VERSION"");
+				version();
 				exit(EXIT_SUCCESS);
 			case 'M':
 				mouse_events_enabled = !mouse_events_enabled;
@@ -1905,6 +1912,7 @@ parse_args(int argc, char *argv[]) {
 			}
 			default:
 				usage();
+				exit(EXIT_FAILURE);
 		}
 	}
 	return init;
@@ -1917,6 +1925,17 @@ main(int argc, char *argv[]) {
 	sigset_t emptyset, blockset;
 
 	setenv("DVTM", VERSION, 1);
+	if (argc == 2) {
+		if (strcmp(argv[1], "--help") == 0) {
+			usage();
+			exit(EXIT_SUCCESS);
+		}
+		if (strcmp(argv[1], "--version") == 0) {
+			version();
+			exit(EXIT_SUCCESS);
+		}
+	}
+
 	if (!parse_args(argc, argv)) {
 		setup();
 		startup(NULL);
