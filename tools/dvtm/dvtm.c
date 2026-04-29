@@ -33,6 +33,7 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <pwd.h>
+#include <assert.h>
 #if defined __CYGWIN__ || defined __sun
 # include <termios.h>
 #endif
@@ -1126,6 +1127,7 @@ create(const char *args[]) {
 		pargs[++i] = args[0];
 		pargs[++i] = NULL;
 	}
+	assert(i < 5);
 	Client *c = calloc(1, sizeof(Client));
 	if (!c)
 		return;
