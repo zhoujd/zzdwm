@@ -261,7 +261,7 @@ static Register copyreg;
 static volatile sig_atomic_t running = true;
 static bool runinall = false;
 static bool defhide = BAR_DEFHIDE;
-static bool deflogin = true;
+static bool deflogin = LOGIN_SHELL;
 
 static void
 eprint(const char *errstr, ...) {

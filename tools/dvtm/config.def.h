@@ -39,6 +39,8 @@ static Color colors[] = {
 #define BAR_AUTOHIDE    false
 /* whether status bar should be default hidden */
 #define BAR_DEFHIDE     true
+/* whether shell should be default login */
+#define LOGIN_SHELL     true
 /* master width factor [0.1 .. 0.9] */
 #define MFACT 0.5
 /* number of clients in master area */
