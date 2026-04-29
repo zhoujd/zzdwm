@@ -17,8 +17,8 @@ enum {
 };
 
 static Color colors[] = {
-	[DEFAULT] = { .fg = -1,          .bg = -1, .fg256 = -1, .bg256 = -1, },
-	[BLUE]    = { .fg = COLOR_CYAN,  .bg = -1, .fg256 = 68, .bg256 = -1, },
+	[DEFAULT] = { .fg = -1,         .bg = -1, .fg256 = -1, .bg256 = -1, },
+	[BLUE]    = { .fg = COLOR_CYAN, .bg = -1, .fg256 = 68, .bg256 = -1, },
 };
 
 #define COLOR(c)        COLOR_PAIR(colors[c].pair)
@@ -54,7 +54,7 @@ static Color colors[] = {
 /* curses attributes for not selected tags which contain windows */
 #define TAG_OCCUPIED (COLOR(BLUE) | A_NORMAL)
 /* curses attributes for not selected tags which with urgent windows */
-#define TAG_URGENT (COLOR(BLUE) | A_NORMAL | A_BLINK)
+#define TAG_URGENT   (COLOR(BLUE) | A_NORMAL | A_BLINK)
 
 const char tags[][8] = { "1", "2", "3", "4", "5" };
 

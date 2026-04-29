@@ -260,6 +260,7 @@ static Register copyreg;
 static volatile sig_atomic_t running = true;
 static bool runinall = false;
 static bool defhide = BAR_DEFHIDE;
+static bool deflogin = true;
 
 static void
 eprint(const char *errstr, ...) {
@@ -1109,17 +1110,21 @@ static char *getcwd_by_pid(Client *c) {
 
 static void
 create(const char *args[]) {
-	const char *pargs[4] = { shell, NULL };
+	const char *pargs[5] = { shell, NULL };
+	int i = 0;
 	char buf[8], *cwd = NULL;
 	const char *env[] = {
 		"DVTM_WINDOW_ID", buf,
 		NULL
 	};
 
+	if (deflogin) {
+		pargs[++i] = "-l";
+	}
 	if (args && args[0]) {
-		pargs[1] = "-c";
-		pargs[2] = args[0];
-		pargs[3] = NULL;
+		pargs[++i] = "-c";
+		pargs[++i] = args[0];
+		pargs[++i] = NULL;
 	}
 	Client *c = calloc(1, sizeof(Client));
 	if (!c)
@@ -1827,8 +1832,8 @@ open_or_create_fifo(const char *name, const char **name_created) {
 static void
 usage(void) {
 	cleanup();
-	eprint("usage: dvtm [-v] [-M] [-m mod] [-d delay] [-h lines] [-t title] "
-	       "[-s status-fifo] [-c cmd-fifo] [cmd...]\n");
+	eprint("usage: dvtm [-v] [-M] [-l] [-m mod] [-d delay] [-h lines] [-t title]\n"
+	       "            [-s status-fifo] [-c cmd-fifo] [cmd...]\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -1851,11 +1856,11 @@ parse_args(int argc, char *argv[]) {
 			create(args);
 			continue;
 		}
-		if (argv[arg][1] != 'v' && argv[arg][1] != 'M' && (arg + 1) >= argc)
+		if (argv[arg][1] != 'v' && argv[arg][1] != 'M' && argv[arg][1] != 'l' && (arg + 1) >= argc)
 			usage();
 		switch (argv[arg][1]) {
 			case 'v':
-				puts("dvtm-"VERSION" © 2007-2016 Marc André Tanner");
+				puts("dvtm-"VERSION"");
 				exit(EXIT_SUCCESS);
 			case 'M':
 				mouse_events_enabled = !mouse_events_enabled;
@@ -1878,6 +1883,9 @@ parse_args(int argc, char *argv[]) {
 				break;
 			case 'h':
 				screen.history = atoi(argv[++arg]);
+				break;
+			case 'l':
+				deflogin = !deflogin;
 				break;
 			case 't':
 				title = argv[++arg];
