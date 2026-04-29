@@ -1127,7 +1127,8 @@ create(const char *args[]) {
 		pargs[++i] = args[0];
 		pargs[++i] = NULL;
 	}
-	assert(i < 5);
+	assert(i < LENGTH(pargs));
+
 	Client *c = calloc(1, sizeof(Client));
 	if (!c)
 		return;
