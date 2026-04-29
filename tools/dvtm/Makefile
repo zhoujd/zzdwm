@@ -1,3 +1,5 @@
+# Makefile
+
 include config.mk
 
 SRC = dvtm.c vt.c
@@ -5,9 +7,9 @@ BIN = dvtm dvtm-status dvtm-editor dvtm-pager
 MANUALS = dvtm.1 dvtm-editor.1 dvtm-pager.1
 
 VERSION = $(shell git describe --always 2>/dev/null || echo "0.15")
-DATE=$(shell date +%Y-%m-%d || "unknown")
+DATE=$(shell date +%Y-%m-%d 2>/dev/null || "unknown")
 CFLAGS += -DVERSION=\"git-${VERSION}\" -DDATE=\"${DATE}\"
-DEBUG_CFLAGS = ${CFLAGS} -UNDEBUG -O0 -g -ggdb -Wall -Wextra -Wno-unused-parameter
+DEBUG_CFLAGS = ${CFLAGS} -UNDEBUG -O0 -g -ggdb -Wall -Wextra
 
 all: dvtm dvtm-editor
 
@@ -23,7 +25,10 @@ dvtm-editor: dvtm-editor.c
 man:
 	@for m in ${MANUALS}; do \
 		echo "Generating $$m"; \
-		sed -e "s/VERSION/${VERSION}/" "$$m" | mandoc -W warning -T utf8 -T xhtml -O man=%N.%S.html -O style=mandoc.css 1> "$$m.html" || true; \
+		sed -e "s/VERSION/${VERSION}/" "$$m" | \
+			mandoc -W warning -T utf8 -T xhtml \
+			-O man=%N.%S.html -O style=mandoc.css 1> "$$m.html" || \
+			true; \
 	done
 
 debug: clean
