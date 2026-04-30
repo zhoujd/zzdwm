@@ -147,7 +147,7 @@ struct NewWindow nwin_undef   =
 
 struct NewWindow nwin_default = 
 { 
-  0, 		/* StartAt */
+  1, 		/* StartAt */
   0, 		/* aka */
   ShellArgs, 	/* args */
   0, 		/* dir */
@@ -588,7 +588,7 @@ struct NewWindow *newwin;
   debug1("NWin: wlock   %d\n", nwin.wlock);
   debug1("NWin: Lflag   %d\n", nwin.Lflag);
 
-  startat = nwin.StartAt < maxwin ? nwin.StartAt : 0;
+  startat = nwin.StartAt < maxwin ? nwin.StartAt : 1;
   pp = wtab + startat;
 
   do
