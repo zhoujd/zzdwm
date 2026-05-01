@@ -85,7 +85,7 @@
 #define SRCH_REGFORW	(-7)
 #define SRCH_REGBACK	(-8)
 
-typedef struct
+typedef struct SRCHCOM
 {
   int s_code;
   LINE *s_dotp;
