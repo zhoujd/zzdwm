@@ -34,7 +34,7 @@ build() {
             ;;
         -* )
             usage
-            exit 1
+            exit 0
             ;;
         * )
             make $@
@@ -94,6 +94,7 @@ clean() {
             ;;
         -* )
             usage
+            exit 0
             ;;
         * )
             make clean
@@ -146,5 +147,6 @@ case $1 in
         ;;
     * )
         usage
+        exit 0
         ;;
 esac
