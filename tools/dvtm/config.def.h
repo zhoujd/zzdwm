@@ -77,9 +77,9 @@ static Layout layouts[] = {
 #define MOD '`'
 #define TAGKEYS(KEY,TAG) \
 	{ { MOD, 'v',       KEY, }, { view,           { tags[TAG] }               } }, \
-	{ { MOD, CTRL('t'), KEY, }, { tag,            { tags[TAG] }               } }, \
+	{ { MOD, 'f',       KEY, }, { tag,            { tags[TAG] }               } }, \
 	{ { MOD, 'V',       KEY, }, { toggleview,     { tags[TAG] }               } }, \
-	{ { MOD, 'T',       KEY, }, { toggletag,      { tags[TAG] }               } },
+	{ { MOD, 'F',       KEY, }, { toggletag,      { tags[TAG] }               } },
 
 /* you can specifiy at most 3 arguments */
 static KeyBinding bindings[] = {
@@ -140,7 +140,7 @@ static KeyBinding bindings[] = {
 	{ { MOD, KEY_F(5),       }, { view,           { tags[4] }                 } },
 	{ { MOD, 'v', '0'        }, { view,           { NULL }                    } },
 	{ { MOD, 'v', '\t',      }, { viewprevtag,    { NULL }                    } },
-	{ { MOD, CTRL('t'), '0', }, { tag,            { NULL }                    } },
+	{ { MOD, 'f', '0',       }, { tag,            { NULL }                    } },
 	TAGKEYS( '1',                                 0)
 	TAGKEYS( '2',                                 1)
 	TAGKEYS( '3',                                 2)
