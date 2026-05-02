@@ -1,0 +1,10 @@
+## .gitignore
+
+Makefile
+config.log
+config.status
+defines.h
+less
+lessecho
+lesskey
+stamp-h
