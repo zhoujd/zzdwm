@@ -17,11 +17,11 @@ msgminwait 0
 defutf8 on
 deflogin off
 defflow off
-defshell -bash
 defscrollback 5000
 defdynamictitle on
+defshell -$SHELL
 term screen-256color
-termcapinfo st* ti@:te@
+termcapinfo st*|rxvt* ti@:te@
 bind ^G
 bind g
 bind ^H
