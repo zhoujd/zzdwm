@@ -7,7 +7,7 @@ all: $(IMGS)
 clean: TARGET =clean
 clean: all
 
-$(IMGS):
+build:
 	$(MAKE) -C $@ $(TARGET)
 
 .PHONY: all clean $(IMGS)
