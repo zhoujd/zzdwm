@@ -142,7 +142,7 @@ install() {
 }
 
 build() {
-    local projects=(
+    local project=(
         $CORE_ROOT/src/dwm
         $CORE_ROOT/src/cwm
         $CORE_ROOT/tools/dmenu
@@ -153,7 +153,7 @@ build() {
         $CORE_ROOT/tools/xbanish
         $CORE_ROOT/tools/xcompmgr
     )
-    for proj in ${projects[@]}; do
+    for proj in ${project[@]}; do
         echo "Build $proj"
         make -C $proj clean
         make -C $proj
