@@ -78,26 +78,26 @@ gotobop (int f, int n, int k)
 
       /* first scan back until we are in a word */
       while (backchar (FALSE, 1, KRANDOM))
-	if (inword ())
-	  break;
+        if (inword ())
+          break;
       curwp->w_dot.o = 0;	/* and go to the B-O-Line */
 
       /* and scan back until we hit a paragraph delimiter as
        * described above.
        */
       while ((prev = lback (curwp->w_dot.p)) != curbp->b_linep)
-	{
-	  if (llength (prev) == 0)
-	    break;
-	  c = lgetc (curwp->w_dot.p, 0);
-	  if (c == ' ' || c == '\t')
-	    break;
-	  c = lgetc (prev, 0);
-	  if (c == '@' || c == '.')
-	    break;
-	  else
-	    curwp->w_dot.p = prev;
-	}
+        {
+          if (llength (prev) == 0)
+            break;
+          c = lgetc (curwp->w_dot.p, 0);
+          if (c == ' ' || c == '\t')
+            break;
+          c = lgetc (prev, 0);
+          if (c == '@' || c == '.')
+            break;
+          else
+            curwp->w_dot.p = prev;
+        }
     }
   curwp->w_flag |= WFMOVE;	/* force screen update */
   return TRUE;
@@ -123,8 +123,8 @@ gotoeop (int f, int n, int k)
       /* Find the first word on/after the current line */
       curwp->w_dot.o = 0;
       while (forwchar (FALSE, 1, KRANDOM))
-      if (inword ())
-        break;
+        if (inword ())
+          break;
       curwp->w_dot.o = 0;
       curwp->w_dot.p = lforw (curwp->w_dot.p);
 
@@ -246,21 +246,21 @@ fillpara (int f, int n, int k)
             {
               /* add word to current line */
               if (!firstflag)
-          {
-            linsert (1, ' ', NULLPTR);
-            ++clength;
-          }
+                {
+                  linsert (1, ' ', NULLPTR);
+                  ++clength;
+                }
               firstflag = FALSE;
             }
           else
             {
               if (curwp->w_dot.o > 0 &&
-            wlgetc (curwp->w_dot.p, curwp->w_dot.o - 1) == ' ')
-          {
-            curwp->w_dot.o -= 1;
-            saveundo (UMOVE, &curwp->w_dot);
-            ldelete (1, FALSE);
-          }
+                  wlgetc (curwp->w_dot.p, curwp->w_dot.o - 1) == ' ')
+                {
+                  curwp->w_dot.o -= 1;
+                  saveundo (UMOVE, &curwp->w_dot);
+                  ldelete (1, FALSE);
+                }
               /* start a new line */
               lnewline ();
               clength = 0;
