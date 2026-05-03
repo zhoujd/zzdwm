@@ -1,10 +1,9 @@
 ## Makefile
 
-UTILS := \
-	xxd \
-	fileview
+APPS := \
+	blackwalls
 
-all: $(UTILS)
+all: $(APPS)
 
 clean: TARGET=clean
 clean: all
@@ -15,7 +14,7 @@ install: all
 uninstall: TARGET=uninstall
 uninstall: all
 
-$(UTILS):
+$(APPS):
 	$(MAKE) -C $@ $(TARGET)
 
-.PHONY: all install uninstall clean $(UTILS)
+.PHONY: all install uninstall clean $(APPS)

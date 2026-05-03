@@ -148,8 +148,8 @@ build() {
         $CORE_ROOT/tools/dmenu
         $CORE_ROOT/tools/dwmstatus
         $CORE_ROOT/tools/slock
-        $CORE_ROOT/tools/utils
         $CORE_ROOT/tools/shotkey
+        $CORE_ROOT/tools/x11
         $CORE_ROOT/tools/xbanish
         $CORE_ROOT/tools/xcompmgr
     )

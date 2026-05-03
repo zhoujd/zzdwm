@@ -43,6 +43,8 @@ jobs:
       run: make -C tools/dmenu
     - name: Build dwmstatus
       run: make -C tools/dwmstatus
+    - name: Build utils
+      run: make -C tools/x11
     - name: Build xbanish
       run: make -C tools/xbanish
     - name: Build xcompmgr
@@ -51,5 +53,3 @@ jobs:
       run: make -C tools/slock
     - name: Build shotkey
       run: make -C tools/shotkey
-    - name: Build utils
-      run: make -C tools/utils
