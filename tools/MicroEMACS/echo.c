@@ -911,7 +911,7 @@ eputi (int i, unsigned int r)
   if (i < 0)
     {
       i = -i;
-      eputc('-');
+      eputc ('-');
     }
 
   if (r == 16)
@@ -940,7 +940,7 @@ eputl (long i, int r)
   if (i < 0)
     {
       i = -i;
-      eputc('-');
+      eputc ('-');
     }
 
   if (r == 16)
