@@ -129,6 +129,7 @@ main (int argc, char *argv[])
   char *proptr;
   int line = 0;
   int gotoflag = FALSE;
+  int basec;		/* c stripped of meta character */
 
   if (argc == 2)
     {
@@ -310,6 +311,44 @@ loop:
     }
   f = FALSE;
   n = 1;
+
+  /* do META-# processing if needed */
+  basec = c & ~KMETA;              /* strip meta char off if there */
+  if ((c & KMETA) && ((basec >= '0' && basec <= '9') || basec == '-'))
+    {
+      f = TRUE;               /* there is a # arg */
+      n = 0;                  /* start with a zero default */
+      mflag = 1;              /* current minus flag */
+      c = basec;              /* strip the META */
+      while ((c >= '0' && c <= '9') || (c == '-') || (c == (KCTRL | 'G')))
+        {
+          if (c == '-')
+            {
+              /* already hit a minus or digit? */
+              if ((mflag == -1) || (n != 0))
+                break;
+              mflag = -1;
+            }
+          else if (c == (KCTRL | 'G'))
+            {
+              eprintf ("[Aborted]");
+              break;
+            }
+          else
+            {
+              n = n * 10 + (c - '0');
+            }
+          if ((n == 0) && (mflag == -1))  /* lonely - */
+            eprintf ("Arg: -");
+          else
+            eprintf ("Arg: %d",n * mflag);
+
+          c = getkey ();   /* get the next key */
+        }
+      n = n * mflag;  /* figure in the sign */
+    }
+
+  /* do ^U repeat argument processing */
   if (c == (KCTRL | 'U'))
     {				/* ^U, start argument.  */
       f = TRUE;
