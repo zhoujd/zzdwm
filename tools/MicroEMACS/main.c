@@ -313,28 +313,60 @@ loop:
   if (c == (KCTRL | 'U'))
     {				/* ^U, start argument.  */
       f = TRUE;
-      n = 4;
-      while ((c = getkey ()) == (KCTRL | 'U'))
-        n *= 4;
-      if ((c >= '0' && c <= '9') || c == '-')
+      n = 4;		/* with argument of 4 */
+      mflag = 0;	/* that can be discarded. */
+      eprintf("Arg: 4");
+      while (((c = getkey()) >= '0' && c <= '9') || c == (KCTRL | 'U')
+            || c == (KCTRL | 'G') || c == '-')
         {
-          if (c == '-')
+          if (c == (KCTRL | 'U'))
             {
-              n = 0;
-              mflag = TRUE;
+              if ((n > 0) == ((n * 4) > 0))
+                n = n * 4;
+              else
+                n = 1;
             }
+          else if (c == (KCTRL | 'G'))
+            {
+              eprintf("[Aborted]");
+              break;
+            }
+          /*
+          * If dash, and start of argument string, set arg.
+          * to -1.  Otherwise, insert it.
+          */
+          else if (c == '-')
+            {
+              if (mflag)
+                break;
+              n = 0;
+              mflag = -1;
+            }
+          /*
+          * If first digit entered, replace previous argument
+          * with digit and set sign.  Otherwise, append to arg.
+          */
           else
             {
-              n = c - '0';
-              mflag = FALSE;
+              if (!mflag)
+                {
+                  n = 0;
+                  mflag = 1;
+                }
+              n = 10 * n + c - '0';
             }
-          while ((c = getkey ()) >= '0' && c <= '9')
-            n = 10 * n + c - '0';
-          if (mflag != FALSE)
-            n = n == 0 ? -1 : -n;
+          eprintf("Arg: %s%d", (mflag >= 0) ? "" : "-", (n ? n : 1));
         }
-      if (n == -n && n != 0)	/* if n == 0x8000       */
-        n = 1;			/* change it to default */
+      /*
+      * Make arguments preceded by a minus sign negative and change
+      * the special argument "^U -" to an effective "^U -1".
+      */
+      if (mflag == -1)
+        {
+          if (n == 0)
+            n++;
+          n = -n;
+        }
     }
   if (kbdmip != NULL)
     {				/* Save macro strokes.  */
