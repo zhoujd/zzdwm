@@ -48,7 +48,7 @@ main (int argc, char *argv[])
   char *tv_stype, *p, *t;
   int i, n;
 
-  if ((tv_stype = getenv ("TERM")) == NULL)	/* Don't want VAX C getenv() */
+  if ((tv_stype = getenv ("TERM")) == NULL)     /* Don't want VAX C getenv() */
     {
       printf ("Environment variable TERM not defined!");
       return 1;
@@ -68,27 +68,27 @@ main (int argc, char *argv[])
       /* Try string capability. */
       t = tgetstr (arg, &p);
       if (t == NULL)
-	printf ("%s (string) not defined\n", arg);
+        printf ("%s (string) not defined\n", arg);
       else
-	{
-	  printf ("%s (string): ", arg);
-	  printesc (t);
-	  printf ("\n");
-	}
+        {
+          printf ("%s (string): ", arg);
+          printesc (t);
+          printf ("\n");
+        }
 
       /* Try numeric capability. */
       n = tgetnum (arg);
       if (n == -1)
-	printf ("%s (numeric) not defined\n", arg);
+        printf ("%s (numeric) not defined\n", arg);
       else
-	printf ("%s (numeric): %d\n", arg, n);
+        printf ("%s (numeric): %d\n", arg, n);
 
       /* Try boolean capability. */
       n = tgetflag (arg);
       if (n == 0)
-	printf ("%s (boolean) not defined\n", arg);
+        printf ("%s (boolean) not defined\n", arg);
       else
-	printf ("%s (boolean): %d\n", arg, n);
+        printf ("%s (boolean): %d\n", arg, n);
 
     }
   return 0;
