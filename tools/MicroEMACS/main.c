@@ -341,7 +341,7 @@ loop:
           if ((n == 0) && (mflag == -1))  /* lonely - */
             eprintf ("Arg: -");
           else
-            eprintf ("Arg: %d",n * mflag);
+            eprintf ("Arg: %d", n * mflag);
 
           c = getkey ();   /* get the next key */
         }
@@ -394,7 +394,7 @@ loop:
                 }
               n = 10 * n + c - '0';
             }
-          if (n == 0)
+          if ((n == 0) && (mflag == -1))  /* lonely - */
             eprintf ("Arg: -");
           else
             eprintf ("Arg: %d", (mflag >= 0) ? n : -n);
