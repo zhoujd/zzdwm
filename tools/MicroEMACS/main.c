@@ -355,7 +355,7 @@ loop:
                 }
               n = 10 * n + c - '0';
             }
-          eprintf("Arg: %s%d", (mflag >= 0) ? "" : "-", (n ? n : 1));
+          eprintf("Arg: %d", (mflag >= 0) ? n : (n ? -n : -1));
         }
       /*
       * Make arguments preceded by a minus sign negative and change

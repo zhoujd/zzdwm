@@ -904,9 +904,15 @@ static char digit[] = "0123456789ABCDEF";
  * Put integer, in radix "r".
  */
 static void
-eputi (unsigned int i, unsigned int r)
+eputi (int i, unsigned int r)
 {
-  register unsigned int q, rem;
+  register int q, rem;
+
+  if (i < 0)
+    {
+      i = -i;
+      eputc('-');
+    }
 
   if (r == 16)
     {
@@ -930,6 +936,12 @@ static void
 eputl (long i, int r)
 {
   register long q, rem;
+
+  if (i < 0)
+    {
+      i = -i;
+      eputc('-');
+    }
 
   if (r == 16)
     {
