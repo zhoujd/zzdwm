@@ -1,7 +1,6 @@
 ### Build in Docker
 
-.PHONY: all
-all: alpine-base void-linux-base ubuntu-base
+TARGET: alpine-base void-linux-base ubuntu-base
 
 CTN_USER ?= ${USER}
 IMG_NS ?= zhoujd
@@ -15,6 +14,9 @@ Void_Linux_BASE_TAG := $(IMG_NS)/void-linux:base
 Void_Linux_LATEST_TAG := $(IMG_NS)/void-linux:latest
 Ubuntu_BASE_TAG := $(IMG_NS)/ubuntu:base
 Ubuntu_LATEST_TAG := $(IMG_NS)/ubuntu:latest
+
+.PHONY: all
+all: $(TARGET)
 
 alpine-base: alpine.dockerfile
 	docker build $(BUILD_ARG) -t $(Alpine_BASE_TAG) -f $< .
