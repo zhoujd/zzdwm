@@ -17,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include	"def.h"
+#include "def.h"
 
 /* Maximum number of undo operations saved. */
 #define N_UNDO 100
@@ -31,26 +31,26 @@
  */
 typedef struct UNDO
 {
-  UKIND kind;			/* Kind of information		*/
-  int l;			/* Line number			*/
-  int o;			/* Offset into line		*/
+  UKIND kind;                   /* Kind of information          */
+  int l;                        /* Line number                  */
+  int o;                        /* Offset into line             */
   union
   {
     /* UDELETE record */
     struct
     {
-      int chars;		/* # of characters deleted	*/
-      int bytes;		/* # of bytes deleted		*/
-      uchar *s;			/* string that was deleted	*/
+      int chars;                /* # of characters deleted      */
+      int bytes;                /* # of bytes deleted           */
+      uchar *s;                 /* string that was deleted      */
     } del;
 
     /* UINSERT record */
     struct
     {
-      int copies;		/* # of copies of string	*/
-      int chars;		/* # of characters inserted	*/
-      int bytes;		/* # of bytes inserted		*/
-      uchar *s;			/* string that was inserted	*/
+      int copies;               /* # of copies of string        */
+      int chars;                /* # of characters inserted     */
+      int bytes;                /* # of bytes inserted          */
+      uchar *s;                 /* string that was inserted     */
     } ins;
   } u;
 }
@@ -66,20 +66,20 @@ LINKS;
 /* Group of UNDO steps, treated as one undo operation. */
 typedef struct UNDOGROUP
 {
-  LINKS links;		/* head = prev group, tail = next group */
-  UNDO *undos;		/* array of undo steps */
-  int next;		/* next free entry in group */
-  int avail;		/* size of group array */
-  int b_flag;		/* copy of curbp->b_flag before any changes */
+  LINKS links;          /* head = prev group, tail = next group */
+  UNDO *undos;          /* array of undo steps */
+  int next;             /* next free entry in group */
+  int avail;            /* size of group array */
+  int b_flag;           /* copy of curbp->b_flag before any changes */
 }
 UNDOGROUP;
 
 /* Linked list of undo groups, treated as a stack of maximum size N_UNDO */
 typedef struct UNDOSTACK
 {
-  LINKS undolist;	/* head and tail of undo group list */
-  LINKS redolist;	/* head and tail of redo group list */
-  int ngroups;		/* size of group stack */
+  LINKS undolist;       /* head and tail of undo group list */
+  LINKS redolist;       /* head and tail of redo group list */
+  int ngroups;          /* size of group stack */
 }
 UNDOSTACK;
 
@@ -87,12 +87,12 @@ UNDOSTACK;
 #define ustart(up) ((up->kind & USTART) != 0)
 #define uend(up)   ((up->kind & UEND) != 0)
 
-#define NOLINE  -1		/* UNDO.{l,o} value meaning "not used"	*/
+#define NOLINE  -1              /* UNDO.{l,o} value meaning "not used"  */
 
-static int startl = NOLINE;	/* lineno saved by startsaveundo	*/
-static int starto;		/* offset saved by startsaveundo	*/
-static int undoing = FALSE;	/* currently undoing an operation? 	*/
-static int b_flag;		/* copy of curbp->b_flag		*/
+static int startl = NOLINE;     /* lineno saved by startsaveundo        */
+static int starto;              /* offset saved by startsaveundo        */
+static int undoing = FALSE;     /* currently undoing an operation?      */
+static int b_flag;              /* copy of curbp->b_flag                */
 
 /* Initialize group links */
 static void
@@ -180,7 +180,7 @@ lineno (const LINE *lp)
   for (;;)
     {
       if (clp == lastline (curbp) || clp == lp)
-	break;
+        break;
       clp = lforw (clp);
       ++nline;
     }
@@ -223,7 +223,6 @@ startsaveundo (void)
   b_flag = curbp->b_flag;
   undoing = FALSE;
 }
-
 
 /*
  * Call this at the end of an undo save sequence,
@@ -336,9 +335,9 @@ newundo (UNDOSTACK *st, UKIND kind, int line, int offset)
        * first one in the list.
        */
       if (st->ngroups >= N_UNDO)
-	freegroup ((UNDOGROUP *) st->undolist.next);
+        freegroup ((UNDOGROUP *) st->undolist.next);
       else
-	st->ngroups++;
+        st->ngroups++;
     }
   else
     /* This is not the first undo record in a group.  Get
@@ -440,8 +439,8 @@ saveundo (UKIND kind, POS *pos, ...)
    */
   if (pos != NULL)
     {
-      line = lineno (pos->p);	/* Line number		*/
-      offset = pos->o;		/* Offset		*/
+      line = lineno (pos->p);   /* Line number          */
+      offset = pos->o;          /* Offset               */
     }
   else if (startl != NOLINE)
     {
@@ -461,68 +460,68 @@ saveundo (UKIND kind, POS *pos, ...)
 
   switch (kind)
     {
-    case UMOVE:			/* Move to (line #, offset)	*/
+    case UMOVE:                 /* Move to (line #, offset)     */
       up = newundo (st, kind, line, offset);
       break;
 
-    case UDELETE:		/* Delete string		*/
+    case UDELETE:               /* Delete string                */
       {
-	int chars = va_arg (ap, int);
-	int bytes = va_arg (ap, int);
-	const uchar *s = va_arg (ap, const uchar *);
+        int chars = va_arg (ap, int);
+        int bytes = va_arg (ap, int);
+        const uchar *s = va_arg (ap, const uchar *);
 
-	up = newundo (st, kind, line, offset);
-	up->u.del.s = (uchar *) malloc (bytes);
-	if (up->u.del.s == NULL)
-	  {
-	  eprintf ("Out of memory in undo!");
-	  return FALSE;
-	  }
+        up = newundo (st, kind, line, offset);
+        up->u.del.s = (uchar *) malloc (bytes);
+        if (up->u.del.s == NULL)
+          {
+          eprintf ("Out of memory in undo!");
+          return FALSE;
+          }
         memcpy (up->u.del.s, s, bytes);
-	up->u.del.chars = chars;
-	up->u.del.bytes = bytes;
-	break;
+        up->u.del.chars = chars;
+        up->u.del.bytes = bytes;
+        break;
       }
 
-    case UINSERT:		/* Insert N copies of a string	*/
+    case UINSERT:               /* Insert N copies of a string  */
       {
-	int copies = va_arg (ap, int);
-	int chars = va_arg (ap, int);
-	int bytes = va_arg (ap, int);
-	const uchar *s = va_arg (ap, const uchar *);
-	UNDO *prev = lastundo (st);
-	int totalbytes = bytes * copies;
+        int copies = va_arg (ap, int);
+        int chars = va_arg (ap, int);
+        int bytes = va_arg (ap, int);
+        const uchar *s = va_arg (ap, const uchar *);
+        UNDO *prev = lastundo (st);
+        int totalbytes = bytes * copies;
 
-	if (prev != NULL &&
+        if (prev != NULL &&
             ukind (prev) == UINSERT &&
-	    prev->l == line &&
-	    prev->o + prev->u.ins.chars == offset)
-	  {
-	    prev->u.ins.chars += chars;
-	    prev->u.ins.s = (uchar *) realloc (prev->u.ins.s, prev->u.ins.bytes + totalbytes);
-	    if (prev->u.ins.s == NULL)
-	      {
-		eprintf ("Out of memory in undo!");
-		return FALSE;
-	      }
-	    memdup (prev->u.ins.s + prev->u.ins.bytes, copies, s, bytes);
-	    prev->u.ins.bytes += totalbytes;
-	  }
-	else
-	  {
-	    up = newundo (st, kind, line, offset);
-	    up->u.ins.chars = chars * copies;
-	    up->u.ins.bytes = totalbytes;
+            prev->l == line &&
+            prev->o + prev->u.ins.chars == offset)
+          {
+            prev->u.ins.chars += chars;
+            prev->u.ins.s = (uchar *) realloc (prev->u.ins.s, prev->u.ins.bytes + totalbytes);
+            if (prev->u.ins.s == NULL)
+              {
+                eprintf ("Out of memory in undo!");
+                return FALSE;
+              }
+            memdup (prev->u.ins.s + prev->u.ins.bytes, copies, s, bytes);
+            prev->u.ins.bytes += totalbytes;
+          }
+        else
+          {
+            up = newundo (st, kind, line, offset);
+            up->u.ins.chars = chars * copies;
+            up->u.ins.bytes = totalbytes;
 
-	    /* Make copy of string. */
-	    up->u.ins.s = (uchar *) malloc (totalbytes);
-	    if (up->u.ins.s == NULL)
-	      {
-		eprintf ("Out of memory in undo!");
-		return FALSE;
-	      }
-	    memdup (up->u.ins.s, copies, s, bytes);
-	  }
+            /* Make copy of string. */
+            up->u.ins.s = (uchar *) malloc (totalbytes);
+            if (up->u.ins.s == NULL)
+              {
+                eprintf ("Out of memory in undo!");
+                return FALSE;
+              }
+            memdup (up->u.ins.s, copies, s, bytes);
+          }
         break;
       }
 
@@ -548,7 +547,7 @@ undostep (UNDO *up)
     {
       status = gotoline (TRUE, up->l + 1, KRANDOM);
       if (up->o > wllength (curwp->w_dot.p))
-	eprintf ("Offset too large");
+        eprintf ("Offset too large");
       else
         {
           curwp->w_dot.o = up->o;
@@ -631,7 +630,7 @@ undo (int f, int n, int k)
   while (start >= g->undos)
     {
       while (start > g->undos && start->l == NOLINE)
-	--start;
+        --start;
       for (up = start; up != end; up++)
         {
           int s = undostep (up);
@@ -851,7 +850,7 @@ printundo (void)
     }
 }
 
-#endif	/* DEBUG */
+#endif  /* DEBUG */
 
 /*
  * Free up the undo records associated with a buffer.
