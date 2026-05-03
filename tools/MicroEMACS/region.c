@@ -82,15 +82,15 @@ getregion (REGION *rp)
     {				/* "r_size" always ok.  */
       rp->r_pos.p = curwp->w_dot.p;
       if (curwp->w_dot.o < curwp->w_mark.o)
-	{
-	  rp->r_pos.o = curwp->w_dot.o;
-	  rp->r_size = curwp->w_mark.o - curwp->w_dot.o;
-	}
+        {
+          rp->r_pos.o = curwp->w_dot.o;
+          rp->r_size = curwp->w_mark.o - curwp->w_dot.o;
+        }
       else
-	{
-	  rp->r_pos.o = curwp->w_mark.o;
-	  rp->r_size = curwp->w_dot.o - curwp->w_mark.o;
-	}
+        {
+          rp->r_pos.o = curwp->w_mark.o;
+          rp->r_size = curwp->w_dot.o - curwp->w_mark.o;
+        }
       return (TRUE);
     }
 
