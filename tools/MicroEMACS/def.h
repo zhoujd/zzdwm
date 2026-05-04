@@ -19,11 +19,11 @@
 
 /* $Header: /home/bloovis/cvsroot/pe/def.h,v 1.5 2005-11-11 17:30:27 bloovis Exp $
  *
- * Name:	MicroEMACS
- *		Common header file.
- * Version:	29
- * By:		rex::conroy
- *		decvax!decwrl!dec-rhea!dec-rex!conroy
+ * Name:        MicroEMACS
+ *              Common header file.
+ * Version:     29
+ * By:          rex::conroy
+ *              decvax!decwrl!dec-rhea!dec-rex!conroy
  *
  * This file is the general header file for all parts
  * of the MicroEMACS display editor. It contains all of the
@@ -117,44 +117,44 @@
  *
  *
  */
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<string.h>
-#include	<stdarg.h>
-#include	<stddef.h>
-#include	<wchar.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <wchar.h>
 
-#include	"sysdef.h"	/* Order is critical.           */
-#include	"ttydef.h"
+#include "sysdef.h"             /* Order is critical.           */
+#include "ttydef.h"
 
 typedef unsigned char uchar;
 
-#define NLMOVE	0		/* C-M moves to next line if at */
+#define NLMOVE  0               /* C-M moves to next line if at */
                                 /* eol and next line is blank   */
-#define CVMVAS	1		/* C-V, M-V work in pages.      */
-#define BACKUP	1		/* Make backup file.            */
+#define CVMVAS  1               /* C-V, M-V work in pages.      */
+#define BACKUP  1               /* Make backup file.            */
 
 /*
  * Table sizes, etc.
  */
-#define NSHASH	31		/* Symbol table hash size.      */
-#define NFILEN	256		/* Length, file name.           */
-#define NBUFN	32		/* Length, buffer name.         */
-#define NLINE	256             /* Length, input line           */
-#define NSTRING 512		/* Length, string buffers       */
-#define NKBDM	256		/* Length, keyboard macro.      */
-#define NMSG	512		/* Length, message buffer.      */
-#define NPAT	80		/* Length, pattern.             */
-#define HUGE	1000		/* A rather large number.       */
-#define NSRCH	128		/* Undoable search commands.    */
-#define NXNAME	64		/* Length, extended command.    */
+#define NSHASH  31              /* Symbol table hash size.      */
+#define NFILEN  256             /* Length, file name.           */
+#define NBUFN   32              /* Length, buffer name.         */
+#define NLINE   256             /* Length, input line           */
+#define NSTRING 512             /* Length, string buffers       */
+#define NKBDM   256             /* Length, keyboard macro.      */
+#define NMSG    512             /* Length, message buffer.      */
+#define NPAT    80              /* Length, pattern.             */
+#define HUGE    1000            /* A rather large number.       */
+#define NSRCH   128             /* Undoable search commands.    */
+#define NXNAME  64              /* Length, extended command.    */
 
 /*
  * Universal.
  */
-#define FALSE	0		/* False, no, bad, etc.         */
-#define TRUE	1		/* True, yes, good, etc.        */
-#define ABORT	2		/* Death, ^G, abort, etc.       */
+#define FALSE   0               /* False, no, bad, etc.         */
+#define TRUE    1               /* True, yes, good, etc.        */
+#define ABORT   2               /* Death, ^G, abort, etc.       */
 
 /*
  * These flag bits keep track of
@@ -163,41 +163,41 @@ typedef unsigned char uchar;
  * flag controls the clearing versus appending
  * of data in the kill buffer.
  */
-#define CFCPCN	0x0001		/* Last command was C-P, C-N    */
-#define CFKILL	0x0002		/* Last command was a kill      */
+#define CFCPCN  0x0001          /* Last command was C-P, C-N    */
+#define CFKILL  0x0002          /* Last command was a kill      */
 
 /*
  * File I/O.
  */
-#define FIOSUC	0		/* Success.                     */
-#define FIOFNF	1		/* File not found.              */
-#define FIOEOF	2		/* End of file.                 */
-#define FIOERR	3		/* Error.                       */
+#define FIOSUC  0               /* Success.                     */
+#define FIOFNF  1               /* File not found.              */
+#define FIOEOF  2               /* End of file.                 */
+#define FIOERR  3               /* Error.                       */
 
 /*
  * Directory I/O.
  */
-#define DIOSUC	0		/* Success.                     */
-#define DIOEOF	1		/* End of file.                 */
-#define DIOERR	2		/* Error.                       */
+#define DIOSUC  0               /* Success.                     */
+#define DIOEOF  1               /* End of file.                 */
+#define DIOERR  2               /* Error.                       */
 
 /*
  * Display colors.
  */
-#define CNONE	0		/* Unknown color.               */
-#define CTEXT	1		/* Text color.                  */
-#define CMODE	2		/* Mode line color.             */
+#define CNONE   0               /* Unknown color.               */
+#define CTEXT   1               /* Text color.                  */
+#define CMODE   2               /* Mode line color.             */
 
 /*
  * Flags for "eread".
  */
-#define EFNEW	0x0001		/* New prompt.                  */
-#define EFAUTO	0x0002		/* Autocompletion enabled.      */
-#define EFCR	0x0004		/* Echo CR at end; last read.   */
-#define EFFILE  0x0008		/* Autocomplete filename.       */
-#define EFBUF   0x0010		/* Autocomplete buffer name.    */
-#define EFPAT   0x0020		/* Autocomplete search pattern. */
-#define EFDIR   0x0040		/* Filename is a directory.	*/
+#define EFNEW   0x0001          /* New prompt.                  */
+#define EFAUTO  0x0002          /* Autocompletion enabled.      */
+#define EFCR    0x0004          /* Echo CR at end; last read.   */
+#define EFFILE  0x0008          /* Autocomplete filename.       */
+#define EFBUF   0x0010          /* Autocomplete buffer name.    */
+#define EFPAT   0x0020          /* Autocomplete search pattern. */
+#define EFDIR   0x0040          /* Filename is a directory.     */
 
 /*
  * Keys are represented inside using a 32 bit
@@ -212,57 +212,57 @@ typedef unsigned char uchar;
  * between "getkey" and "getkbd" easier. The funny keys get
  * mapped into the C1 control area.
  */
-#define METACH	0x1B		/* M- prefix,   Control-[, ESC  */
-#define CTMECH	0x1C		/* C-M- prefix, Control-\       */
-#define EXITCH	0x1D		/* Exit level,  Control-]       */
-#define CTRLCH	0x1E		/* C- prefix,   Control-^       */
-#define HELPCH	0x1F		/* Help key,    Control-_       */
+#define METACH  0x1B            /* M- prefix,   Control-[, ESC  */
+#define CTMECH  0x1C            /* C-M- prefix, Control-\       */
+#define EXITCH  0x1D            /* Exit level,  Control-]       */
+#define CTRLCH  0x1E            /* C- prefix,   Control-^       */
+#define HELPCH  0x1F            /* Help key,    Control-_       */
 
-#define KCHAR	0x001FFFFF	/* The basic character code.    */
-#define KCTRL	0x10000000	/* Control flag.                */
-#define KMETA	0x20000000	/* Meta flag.                   */
-#define KCTLX	0x40000000	/* Control-X flag.              */
+#define KCHAR   0x001FFFFF      /* The basic character code.    */
+#define KCTRL   0x10000000      /* Control flag.                */
+#define KMETA   0x20000000      /* Meta flag.                   */
+#define KCTLX   0x40000000      /* Control-X flag.              */
 
-#define KFIRST	0x0080		/* First special.               */
-#define KLAST	0x009F		/* Last special.                */
+#define KFIRST  0x0080          /* First special.               */
+#define KLAST   0x009F          /* Last special.                */
 
-#define KRANDOM 0x0080		/* A "no key" code.             */
-#define K01	0x0081		/* Use these names to define    */
-#define K02	0x0082		/* the special keys on your     */
-#define K03	0x0083		/* terminal.                    */
-#define K04	0x0084
-#define K05	0x0085
-#define K06	0x0086
-#define K07	0x0087
-#define K08	0x0088
-#define K09	0x0089
-#define K0A	0x008A
-#define K0B	0x008B
-#define K0C	0x008C
-#define K0D	0x008D
-#define K0E	0x008E
-#define K0F	0x008F
-#define K10	0x0090
-#define K11	0x0091
-#define K12	0x0092
-#define K13	0x0093
-#define K14	0x0094
-#define K15	0x0095
-#define K16	0x0096
-#define K17	0x0097
-#define K18	0x0098
-#define K19	0x0099
-#define K1A	0x009A
-#define K1B	0x009B
-#define K1C	0x009C
-#define K1D	0x009D
-#define K1E	0x009E
-#define K1F	0x009F
+#define KRANDOM 0x0080          /* A "no key" code.             */
+#define K01     0x0081          /* Use these names to define    */
+#define K02     0x0082          /* the special keys on your     */
+#define K03     0x0083          /* terminal.                    */
+#define K04     0x0084
+#define K05     0x0085
+#define K06     0x0086
+#define K07     0x0087
+#define K08     0x0088
+#define K09     0x0089
+#define K0A     0x008A
+#define K0B     0x008B
+#define K0C     0x008C
+#define K0D     0x008D
+#define K0E     0x008E
+#define K0F     0x008F
+#define K10     0x0090
+#define K11     0x0091
+#define K12     0x0092
+#define K13     0x0093
+#define K14     0x0094
+#define K15     0x0095
+#define K16     0x0096
+#define K17     0x0097
+#define K18     0x0098
+#define K19     0x0099
+#define K1A     0x009A
+#define K1B     0x009B
+#define K1C     0x009C
+#define K1D     0x009D
+#define K1E     0x009E
+#define K1F     0x009F
 
 /*
  * Macro for key with Control prefix
  */
-#define CCHR(x)	((x)-'@')
+#define CCHR(x) ((x)-'@')
 
 /*
  * These macros make up a do-it-yourself set of "ctype" macros that
@@ -272,15 +272,15 @@ typedef unsigned char uchar;
  * as function calls that do the right thing for Unicode.
  */
 
-#define CISWORD(c)	(cisword((c)))
-#define CISALPHA(c)	(cisalpha((c)))
-#define CISCTRL(c)	(cisctrl((c)))
-#define CISUPPER(c)	(cisupper((c)))
-#define CISLOWER(c)	(cislower((c)))
-#define CISEOSP(c)	(ciseosp((c)))
-#define CTOUPPER(c)	(ctoupper((c)))
-#define CTOLOWER(c)	(ctolower((c)))
-#define	CEQ(c1,c2)	(ceq((c1),(c2)))
+#define CISWORD(c)      (cisword((c)))
+#define CISALPHA(c)     (cisalpha((c)))
+#define CISCTRL(c)      (cisctrl((c)))
+#define CISUPPER(c)     (cisupper((c)))
+#define CISLOWER(c)     (cislower((c)))
+#define CISEOSP(c)      (ciseosp((c)))
+#define CTOUPPER(c)     (ctoupper((c)))
+#define CTOLOWER(c)     (ctolower((c)))
+#define CEQ(c1,c2)      (ceq((c1),(c2)))
 
 /*
  * Macro for converting a preprocessor symbol to a string.
@@ -293,10 +293,10 @@ typedef unsigned char uchar;
  */
 typedef enum UKIND
 {
-  UUNUSED = 0,			/* Entry is unused		*/
-  UMOVE,			/* Move to (line #, offset)	*/
-  UINSERT,			/* Insert string		*/
-  UDELETE,			/* Delete string		*/
+  UUNUSED = 0,                  /* Entry is unused              */
+  UMOVE,                        /* Move to (line #, offset)     */
+  UINSERT,                      /* Insert string                */
+  UDELETE,                      /* Delete string                */
 }
 UKIND;
 
@@ -312,11 +312,11 @@ UKIND;
  */
 typedef struct SYMBOL
 {
-  struct SYMBOL *s_symp;	/* Hash chain.			*/
-  short s_nkey;			/* Count of keys bound here.    */
-  const char *s_name;		/* Name.                        */
+  struct SYMBOL *s_symp;        /* Hash chain.                  */
+  short s_nkey;                 /* Count of keys bound here.    */
+  const char *s_name;           /* Name.                        */
   int (*s_funcp) (int f, int n, int k); /* Function.            */
-  int *s_macro;			/* Macro definition.            */
+  int *s_macro;                 /* Macro definition.            */
 }
 SYMBOL;
 
@@ -345,8 +345,8 @@ POS;
 #define RINGSIZE 16
 typedef struct MARKRING
 {
-  int m_count;			/* Number of marks pushed	*/
-  POS m_ring[RINGSIZE];		/* Stack of marks		*/
+  int m_count;                  /* Number of marks pushed       */
+  POS m_ring[RINGSIZE];         /* Stack of marks               */
 }
 MARKRING;
 
@@ -362,28 +362,28 @@ MARKRING;
  */
 typedef struct BUFFER
 {
-  struct BUFFER *b_bufp;	/* Link to next BUFFER          */
-  struct POS b_dot;		/* The "." (dot) position	*/
-  struct MARKRING b_ring;	/* Mark ring			*/
-  struct LINE *b_linep;		/* Link to the header LINE      */
-  struct UNDOSTACK *b_undo;	/* Pointer to undo stack	*/
-  char b_nwnd;			/* Count of windows on buffer   */
-  char b_flag;			/* Flags                        */
-  int b_leftcol;		/* Left column of windows       */
-  char b_fname[NFILEN];		/* File name                    */
-  char b_bname[NBUFN];		/* Buffer name                  */
-  struct MODE *b_mode;		/* Emacs-like major mode	*/
-  char b_active;		/* window activated flag */
+  struct BUFFER *b_bufp;        /* Link to next BUFFER          */
+  struct POS b_dot;             /* The "." (dot) position       */
+  struct MARKRING b_ring;       /* Mark ring                    */
+  struct LINE *b_linep;         /* Link to the header LINE      */
+  struct UNDOSTACK *b_undo;     /* Pointer to undo stack        */
+  char b_nwnd;                  /* Count of windows on buffer   */
+  char b_flag;                  /* Flags                        */
+  int b_leftcol;                /* Left column of windows       */
+  char b_fname[NFILEN];         /* File name                    */
+  char b_bname[NBUFN];          /* Buffer name                  */
+  struct MODE *b_mode;          /* Emacs-like major mode        */
+  char b_active;                /* window activated flag        */
 }
 BUFFER;
 
-#define b_mark b_ring.m_ring[0] /* Current "mark" position	*/
+#define b_mark b_ring.m_ring[0] /* Current "mark" position      */
 #define firstline(bp) (lforw((bp)->b_linep))
 #define lastline(bp)  (lback((bp)->b_linep))
 
-#define BFCHG	0x01		/* Changed.                     */
-#define BFBAK	0x02		/* Need to make a backup.       */
-#define BFRO	0x04		/* Read-only.                   */
+#define BFCHG   0x01            /* Changed.                     */
+#define BFBAK   0x02            /* Need to make a backup.       */
+#define BFRO    0x04            /* Read-only.                   */
 
 /*
  * There is a window structure allocated for
@@ -397,21 +397,21 @@ BUFFER;
  */
 typedef struct EWINDOW
 {
-  struct EWINDOW *w_wndp;	/* Next window                  */
-  struct BUFFER *w_bufp;	/* Buffer displayed in window   */
-  struct LINE *w_linep;		/* Top line in the window       */
-  struct POS w_dot;		/* The "." (dot) position	*/
-  struct MARKRING w_ring;	/* Mark ring			*/
-  struct LINE *w_savep;		/* save line pointer for search */
-  short w_toprow;		/* Origin 0 top row of window   */
-  short w_ntrows;		/* # of rows of text in window  */
-  char w_force;			/* If NZ, forcing row.          */
-  char w_flag;			/* Flags.                       */
-  int w_leftcol;		/* left column of window        */
+  struct EWINDOW *w_wndp;       /* Next window                  */
+  struct BUFFER *w_bufp;        /* Buffer displayed in window   */
+  struct LINE *w_linep;         /* Top line in the window       */
+  struct POS w_dot;             /* The "." (dot) position       */
+  struct MARKRING w_ring;       /* Mark ring                    */
+  struct LINE *w_savep;         /* save line pointer for search */
+  short w_toprow;               /* Origin 0 top row of window   */
+  short w_ntrows;               /* # of rows of text in window  */
+  char w_force;                 /* If NZ, forcing row.          */
+  char w_flag;                  /* Flags.                       */
+  int w_leftcol;                /* left column of window        */
 }
 EWINDOW;
 
-#define w_mark w_ring.m_ring[0] /* Current "mark" position	*/
+#define w_mark w_ring.m_ring[0] /* Current "mark" position      */
 
 /*
  * Window flags are set by command processors to
@@ -422,11 +422,11 @@ EWINDOW;
  * Because commands set bits in the "w_flag", update will see
  * all change flags, and do the most general one.
  */
-#define WFFORCE 0x01		/* Force reframe.               */
-#define WFMOVE	0x02		/* Movement from line to line.  */
-#define WFEDIT	0x04		/* Editing within a line.       */
-#define WFHARD	0x08		/* Better to a full display.    */
-#define WFMODE	0x10		/* Update mode line.            */
+#define WFFORCE 0x01            /* Force reframe.               */
+#define WFMOVE  0x02            /* Movement from line to line.  */
+#define WFEDIT  0x04            /* Editing within a line.       */
+#define WFHARD  0x08            /* Better to a full display.    */
+#define WFMODE  0x10            /* Update mode line.            */
 
 /*
  * This structure holds the starting position
@@ -440,8 +440,8 @@ EWINDOW;
  */
 typedef struct
 {
-  struct POS r_pos;		/* Origin position		*/
-  int r_size;			/* Length in characters.        */
+  struct POS r_pos;             /* Origin position              */
+  int r_size;                   /* Length in characters.        */
 }
 REGION;
 
@@ -459,11 +459,11 @@ REGION;
  */
 typedef struct LINE
 {
-  struct LINE *l_fp;		/* Link to the next line        */
-  struct LINE *l_bp;		/* Link to the previous line    */
-  int l_size;			/* Allocated size               */
-  int l_used;			/* Used size                    */
-  uchar l_text[];		/* A bunch of characters.       */
+  struct LINE *l_fp;            /* Link to the next line        */
+  struct LINE *l_bp;            /* Link to the previous line    */
+  int l_size;                   /* Allocated size               */
+  int l_used;                   /* Used size                    */
+  uchar l_text[];               /* A bunch of characters.       */
 }
 LINE;
 
@@ -480,13 +480,13 @@ LINE;
  * storage representation of lines to use something fancy on
  * machines with small address spaces.
  */
-#define lforw(lp)	((lp)->l_fp)
-#define lback(lp)	((lp)->l_bp)
-#define lgetc(lp, n)	((lp)->l_text[(n)]&0xFF)
-#define lgets(lp)	((lp)->l_text)
+#define lforw(lp)       ((lp)->l_fp)
+#define lback(lp)       ((lp)->l_bp)
+#define lgetc(lp, n)    ((lp)->l_text[(n)]&0xFF)
+#define lgets(lp)       ((lp)->l_text)
 #define lputs(lp, s, n) memcpy((lp)->l_text,(s),(n))
-#define llength(lp)	((lp)->l_used)
-#define lend(lp)	(&(lp)->l_text[(lp)->l_used])
+#define llength(lp)     ((lp)->l_used)
+#define lend(lp)        (&(lp)->l_text[(lp)->l_used])
 
 /*
  * The wide-character line-related macros deal
@@ -496,8 +496,8 @@ LINE;
  *  - wlgetcptr: get the address of nth UTF-8 character in the line
  *  - wloffset:  get byte offset of nth UTF-8 character in the line
  */
-#define wlgetc(lp, n)	 (ugetc((lp)->l_text,(n),NULL))
-#define wllength(lp)	 (unslen((lp)->l_text,(lp)->l_used))
+#define wlgetc(lp, n)    (ugetc((lp)->l_text,(n),NULL))
+#define wllength(lp)     (unslen((lp)->l_text,(lp)->l_used))
 #define wlgetcptr(lp, n) (ugetcptr((lp)->l_text,(n)))
 #define wloffset(lp, n)  (uoffset((lp)->l_text,(n)))
 
@@ -558,8 +558,8 @@ extern int visflag;
 /*
  * Useful macros for running down the buffer and window lists.
  */
-#define	ALLWIND(wp)	for (wp=wheadp;wp;wp=wp->w_wndp)
-#define ALLBUF(bp)	for (bp=bheadp;bp;bp=bp->b_bufp)
+#define ALLWIND(wp)     for (wp=wheadp;wp;wp=wp->w_wndp)
+#define ALLBUF(bp)      for (bp=bheadp;bp;bp=bp->b_bufp)
 
 /*
  * A tagfile is a filename that has a list of references.
@@ -572,21 +572,21 @@ struct tagfile;
 
 typedef struct tagref
 {
-  char *string;			/* name of the tag              */
-  int line;			/* line number                  */
-  long offset;			/* file offset                  */
-  int exact;			/* non-zero if exact match	*/
-  struct tagref *next;		/* next tag in this file        */
-  struct tagref *prev;		/* previous tag in this file    */
-  struct tagfile *file;		/* file containing this tag     */
+  char *string;                 /* name of the tag              */
+  int line;                     /* line number                  */
+  long offset;                  /* file offset                  */
+  int exact;                    /* non-zero if exact match      */
+  struct tagref *next;          /* next tag in this file        */
+  struct tagref *prev;          /* previous tag in this file    */
+  struct tagfile *file;         /* file containing this tag     */
 }
 tagref;
 
 typedef struct tagfile
 {
-  char *fname;			/* name of file                 */
-  struct tagfile *next;		/* next file on list            */
-  struct tagfile *prev;		/* previous file on list        */
+  char *fname;                  /* name of file                 */
+  struct tagfile *next;         /* next file on list            */
+  struct tagfile *prev;         /* previous file on list        */
 }
 tagfile;
 
@@ -598,42 +598,42 @@ tagfile;
 /*
  * Defined by "basic.c".
  */
-int gotobol (int f, int n, int k);	/* Move to start of line        */
-int gotoeol (int f, int n, int k);	/* Move to end of line          */
-int gotobob (int f, int n, int k);	/* Move to start of buffer      */
-int gotoeob (int f, int n, int k);	/* Move to end of buffer        */
-int forwline (int f, int n, int k);	/* Move forward by lines        */
-int backline (int f, int n, int k);	/* Move backward by lines       */
-int forwpage (int f, int n, int k);	/* Move forward by pages        */
-int backpage (int f, int n, int k);	/* Move backward by pages       */
-int setmark (int f, int n, int k);	/* Set mark                     */
-int swapmark (int f, int n, int k);	/* Swap "." and mark            */
-int backchar (int f, int n, int k);	/* Move backward by characters  */
-int forwchar (int f, int n, int k);	/* Move forward by characters   */
-int gotoline (int f, int n, int k);	/* Go to a specified line.      */
+int gotobol (int f, int n, int k);      /* Move to start of line        */
+int gotoeol (int f, int n, int k);      /* Move to end of line          */
+int gotobob (int f, int n, int k);      /* Move to start of buffer      */
+int gotoeob (int f, int n, int k);      /* Move to end of buffer        */
+int forwline (int f, int n, int k);     /* Move forward by lines        */
+int backline (int f, int n, int k);     /* Move backward by lines       */
+int forwpage (int f, int n, int k);     /* Move forward by pages        */
+int backpage (int f, int n, int k);     /* Move backward by pages       */
+int setmark (int f, int n, int k);      /* Set mark                     */
+int swapmark (int f, int n, int k);     /* Swap "." and mark            */
+int backchar (int f, int n, int k);     /* Move backward by characters  */
+int forwchar (int f, int n, int k);     /* Move forward by characters   */
+int gotoline (int f, int n, int k);     /* Go to a specified line.      */
 
 /*
  * Defined by "buffer.c".
  */
 
-int listbuffers (int f, int n, int k);	/* Display list of buffers      */
-int usebuffer (int f, int n, int k);	/* Switch a window to a buffer  */
-int nextbuffer (int f, int n, int k);	/* Switch to next buffer.       */
-int prevbuffer (int f, int n, int k);	/* Switch to previous buffer.   */
-int killbuffer (int f, int n, int k);	/* Make a buffer go away.       */
-int namebuffer (int f, int n, int k);	/* Rename a buffer.             */
-int unmark (int f, int n, int k);	/* Unmark the change flag.      */
+int listbuffers (int f, int n, int k);  /* Display list of buffers      */
+int usebuffer (int f, int n, int k);    /* Switch a window to a buffer  */
+int nextbuffer (int f, int n, int k);   /* Switch to next buffer.       */
+int prevbuffer (int f, int n, int k);   /* Switch to previous buffer.   */
+int killbuffer (int f, int n, int k);   /* Make a buffer go away.       */
+int namebuffer (int f, int n, int k);   /* Rename a buffer.             */
+int unmark (int f, int n, int k);       /* Unmark the change flag.      */
 int revertbuffer (int f, int n, int k); /* Revert a buffer.            */
 
 BUFFER * bfind (const char *bname, int cflag);
-                                        /* Search for buffer by name	*/
-BUFFER * bcreate (const char *bname);	/* Create buffer by name	*/
-int popblist (void);			/* Display special buffer.	*/
-int bclear (BUFFER *bp);		/* Blow away all text in buffer	*/
-int anycb (void);			/* Look for changed buffers.	*/
-int addline (const char *text);		/* Append text to list buffer.	*/
-void addwind (EWINDOW *wp, int n);	/* Bump ref. count for window.	*/
-const char * bufsearch (		/* Find buffer with partial name*/
+                                        /* Search for buffer by name    */
+BUFFER * bcreate (const char *bname);   /* Create buffer by name        */
+int popblist (void);                    /* Display special buffer.      */
+int bclear (BUFFER *bp);                /* Blow away all text in buffer */
+int anycb (void);                       /* Look for changed buffers.    */
+int addline (const char *text);         /* Append text to list buffer.  */
+void addwind (EWINDOW *wp, int n);      /* Bump ref. count for window.  */
+const char * bufsearch (                /* Find buffer with partial name*/
      const char *bname,
      int cpos,
      const char *prev);
@@ -641,207 +641,207 @@ const char * bufsearch (		/* Find buffer with partial name*/
 /*
  * Defined by "cinfo.c".
  */
-void upmapinit (void);			/* Initialize case table.	*/
-int cisword(wchar_t c);			/* Is c a word character?	*/
-int cisalpha(wchar_t c);		/* Is c a letter?		*/
-int cisctrl (wchar_t c);		/* Is c a control character?	*/
-int cisupper (wchar_t c);		/* Is c an upper case letter?	*/
-int cislower (wchar_t c);		/* Is c a lower case letter?	*/
-int ciseosp (wchar_t c);		/* End-of-sentence punctiation?	*/
-wchar_t ctoupper (wchar_t c);		/* Change c to upper case.	*/
-wchar_t ctolower (wchar_t c);		/* Change c to lower case.	*/
-int ceq (wchar_t c1, wchar_t c2);	/* C1 == C2 with casefolding?	*/
+void upmapinit (void);                  /* Initialize case table.       */
+int cisword(wchar_t c);                 /* Is c a word character?       */
+int cisalpha(wchar_t c);                /* Is c a letter?               */
+int cisctrl (wchar_t c);                /* Is c a control character?    */
+int cisupper (wchar_t c);               /* Is c an upper case letter?   */
+int cislower (wchar_t c);               /* Is c a lower case letter?    */
+int ciseosp (wchar_t c);                /* End-of-sentence punctiation? */
+wchar_t ctoupper (wchar_t c);           /* Change c to upper case.      */
+wchar_t ctolower (wchar_t c);           /* Change c to lower case.      */
+int ceq (wchar_t c1, wchar_t c2);       /* C1 == C2 with casefolding?   */
 
 /*
  * Defined by "cscope.c".
  */
-int findcscope (int f, int n, int k);	/* Search for a cscope ref	*/
-int nextcscope (int f, int n, int k);	/* Search for next cscope ref	*/
-int findgrep (int f, int n, int k);	/* Search for an egrep ref	*/
+int findcscope (int f, int n, int k);   /* Search for a cscope ref      */
+int nextcscope (int f, int n, int k);   /* Search for next cscope ref   */
+int findgrep (int f, int n, int k);     /* Search for an egrep ref      */
 
 /*
  * Defined by "display.c".
  */
-void update (void);			/* Make sure display is right.	*/
-void vtinit (void);			/* Initialize video display.	*/
-void vttidy (void);			/* Tidy display before exit.	*/
-int mouseevent (int f, int n, int k);	/* Handle mouse button event.	*/
-int showvisable (int f, int n, int k);	/* Show visable on modeline.    */
+void update (void);                     /* Make sure display is right.  */
+void vtinit (void);                     /* Initialize video display.    */
+void vttidy (void);                     /* Tidy display before exit.    */
+int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
+int showvisable (int f, int n, int k);  /* Show visable on modeline.    */
 
 /*
  * Defined by "echo.c".
  */
-int readmsg (void);			/* Read next line of message.   */
-int writemsg (const char *sp);		/* Send string to message line.	*/
-int eecho (void);			/* Echo text on status line.    */
+int readmsg (void);                     /* Read next line of message.   */
+int writemsg (const char *sp);          /* Send string to message line. */
+int eecho (void);                       /* Echo text on status line.    */
 int ereply (const char *fp, char *buf, int nbuf, ...);
 int ereplyf (const char *fp, char *buf, int nbuf, int flag, ...);
 void eformat (const char *fp, va_list ap);
 void eprintf (const char *, ...);
 int egetfname (const char *fp, char *buf, int nbuf);
-                                        /* Read filename from echo line	*/
+                                        /* Read filename from echo line */
 int eread (const char *fp, char *buf, int nbuf, int flag, va_list ap);
 int ereadv (const char *fp, char *buf, int nbuf, int flag, ...);
-                                        /* Read input from echo line.	*/
-int eyesno (const char *sp);		/* Ask "yes" or "no" question.	*/
-void eputc (int c);			/* Put a character to screen.	*/
-void einsertc (int c);			/* Insert a character on screen	*/
-void eputs (const char *s);		/* Put a string to screen.	*/
-void eerase (void);			/* Erase the echo line.		*/
+                                        /* Read input from echo line.   */
+int eyesno (const char *sp);            /* Ask "yes" or "no" question.  */
+void eputc (int c);                     /* Put a character to screen.   */
+void einsertc (int c);                  /* Insert a character on screen */
+void eputs (const char *s);             /* Put a string to screen.      */
+void eerase (void);                     /* Erase the echo line.         */
 
-int replyq_put (const char *s);		/* Add string to reply queue.	*/
-void replyq_clear (void);		/* Clear the reply queue.	*/
+int replyq_put (const char *s);         /* Add string to reply queue.   */
+void replyq_clear (void);               /* Clear the reply queue.       */
 
 /*
  * Defined by "extend.c".
  */
-int extend (int f, int n, int k);	/* Extended commands.           */
-int help (int f, int n, int k);		/* Help key.                    */
-int bindtokey (int f, int n, int k);	/* Modify key bindings.         */
-int insertmacro (int f, int n, int k);	/* Insert macro text in buffer. */
+int extend (int f, int n, int k);       /* Extended commands.           */
+int help (int f, int n, int k);         /* Help key.                    */
+int bindtokey (int f, int n, int k);    /* Modify key bindings.         */
+int insertmacro (int f, int n, int k);  /* Insert macro text in buffer. */
 
 /*
  * Defined by "file.c".
  */
-int fileread (int f, int n, int k);	/* Get a file, read only        */
-int fileinsert (int f, int n, int k);	/* Insert a file, read only     */
-int filevisit (int f, int n, int k);	/* Get a file, read write       */
+int fileread (int f, int n, int k);     /* Get a file, read only        */
+int fileinsert (int f, int n, int k);   /* Insert a file, read only     */
+int filevisit (int f, int n, int k);    /* Get a file, read write       */
 int filevisitreadonly (int f, int n, int k);
                                         /* Get a file, read only        */
 int togglereadonly (int f, int n, int k);
                                         /* Toggle buffer readonly flag  */
-int filewrite (int f, int n, int k);	/* Write a file                 */
-int filesave (int f, int n, int k);	/* Save current file            */
-int filename (int f, int n, int k);	/* Adjust file name             */
-int setsavetabs (int f, int n, int k);	/* Set tab save flag            */
-int setnewline (int f, int n, int k);	/* Set auto newline flag        */
-int findfile (int f, int n, int k);	/* Find file                    */
-int viewfile (int f, int n, int k);	/* View file                    */
+int filewrite (int f, int n, int k);    /* Write a file                 */
+int filesave (int f, int n, int k);     /* Save current file            */
+int filename (int f, int n, int k);     /* Adjust file name             */
+int setsavetabs (int f, int n, int k);  /* Set tab save flag            */
+int setnewline (int f, int n, int k);   /* Set auto newline flag        */
+int findfile (int f, int n, int k);     /* Find file                    */
+int viewfile (int f, int n, int k);     /* View file                    */
 
 void makename (char *bname, const char *fname);
-                                        /* Make buffer name from fname	*/
-int readin (const char *fname);		/* Read file into cur. buffer.	*/
+                                        /* Make buffer name from fname  */
+int readin (const char *fname);         /* Read file into cur. buffer.  */
 int visit_file (char *fname);
-int checkreadonly (void);		/* Is current buffer readonly?	*/
+int checkreadonly (void);               /* Is current buffer readonly?  */
 int readlines (LINE *lp2, int *statptr);
-                                        /* Read lines from file.	*/
-void updatemode (void);			/* Update mode lines.		*/
-void unqname (char *name);		/* Unique buffer name.		*/
+                                        /* Read lines from file.        */
+void updatemode (void);                 /* Update mode lines.           */
+void unqname (char *name);              /* Unique buffer name.          */
 
 /*
  * Defined by "fileio.c".
  */
-int ffropen (const char *fn);		/* Open file for reading.	*/
-int ffwopen (const char *fn);		/* Open file for writing.	*/
+int ffropen (const char *fn);           /* Open file for reading.       */
+int ffwopen (const char *fn);           /* Open file for writing.       */
 int ffgetline (char **bufp, int *nbytes);
-                                        /* Read a line from the file.	*/
+                                        /* Read a line from the file.   */
 int ffputline (const char *buf, int nbuf, int nl);
-                                        /* Write line to the file.	*/
-int ffclose (void);			/* Close a file.		*/
-int ffpopen (char *fn);			/* Open profile			*/
-int ffpread (char *cp);			/* Read byte from profile	*/
-int ffpclose (void);			/* Close profile		*/
-void adjustcase (char *fn);		/* Adjust case of filename.	*/
-char * fftilde (char *arg);		/* Expand ~ in filename.	*/
-int fbackupfile (const char *fname);	/* Rename file to backup.	*/
-char *ffsearch (const char *name,	/* Find matching filename.	*/
+                                        /* Write line to the file.      */
+int ffclose (void);                     /* Close a file.                */
+int ffpopen (char *fn);                 /* Open profile                 */
+int ffpread (char *cp);                 /* Read byte from profile       */
+int ffpclose (void);                    /* Close profile                */
+void adjustcase (char *fn);             /* Adjust case of filename.     */
+char * fftilde (char *arg);             /* Expand ~ in filename.        */
+int fbackupfile (const char *fname);    /* Rename file to backup.       */
+char *ffsearch (const char *name,       /* Find matching filename.      */
                 int cpos,
                 const char *prev);
-int ffisdir (char *name, int cpos);     /* name[0..cpos-1] is dir?	*/
-const char * ffexedir (void);		/* Get dir of pe executable.	*/
+int ffisdir (char *name, int cpos);     /* name[0..cpos-1] is dir?      */
+const char * ffexedir (void);           /* Get dir of pe executable.    */
 
 /*
  * Defined by "kbd.c".
  */
-int readprofile (int f, int n, int k);	/* Read profile command file    */
+int readprofile (int f, int n, int k);  /* Read profile command file    */
 
-int getinp (void);			/* Get next input char.		*/
-void ungetinp (int c);			/* Put back one input char.	*/
-int getkey (void);			/* Get next keyboard char.	*/
-void ekeyname (char *cp, int k);	/* Convert key code to name	*/
+int getinp (void);                      /* Get next input char.         */
+void ungetinp (int c);                  /* Put back one input char.     */
+int getkey (void);                      /* Get next keyboard char.      */
+void ekeyname (char *cp, int k);        /* Convert key code to name     */
 
 /*
  * Defined by "line.c".
  */
-LINE * lalloc (int used);		/* Allocate line.		*/
-LINE * lallocx (int used);		/* Allocate line w/o round-up.	*/
+LINE * lalloc (int used);               /* Allocate line.               */
+LINE * lallocx (int used);              /* Allocate line w/o round-up.  */
 int insspace(int f, int n, int k);      /* insert spaces forward.       */
-int linsert (int n, int c, char *s);	/* Insert char(s) at dot	*/
+int linsert (int n, int c, char *s);    /* Insert char(s) at dot        */
 int insertwithnl (const char *s, int len);
-                                        /* Insert string with newlines.	*/
-void lputc (POS p, wchar_t c);		/* Replace char at p with c.	*/
-int lnewline (void);			/* Insert newline.		*/
-void lchange (int flag);		/* Change buffer flag.		*/
-int ldelete (int n, int kflag);		/* Delete n bytes at dot.	*/
+                                        /* Insert string with newlines. */
+void lputc (POS p, wchar_t c);          /* Replace char at p with c.    */
+int lnewline (void);                    /* Insert newline.              */
+void lchange (int flag);                /* Change buffer flag.          */
+int ldelete (int n, int kflag);         /* Delete n bytes at dot.       */
 int lreplace (int plen, const char *st, int f);
-                                        /* Replace chars at dot		*/
-int kinsert (const char *s, int n);	/* Insert text in kill buffer	*/
-void kdelete (void);			/* Delete text in kill buffer	*/
+                                        /* Replace chars at dot         */
+int kinsert (const char *s, int n);     /* Insert text in kill buffer   */
+void kdelete (void);                    /* Delete text in kill buffer   */
 
 /*
  * Defined by "main.c".
  */
-int ctrlg (int f, int n, int k);	/* Abort out of things          */
-int quit (int f, int n, int k);		/* Quit                         */
-int ctlxlp (int f, int n, int k);	/* Begin macro                  */
-int ctlxrp (int f, int n, int k);	/* End macro                    */
-int ctlxe (int f, int n, int k);	/* Execute macro                */
-int jeffexit (int f, int n, int k);	/* Jeff Lomicka style exit.     */
-int showversion (int f, int n, int k);	/* Show version numbers, etc.   */
+int ctrlg (int f, int n, int k);        /* Abort out of things          */
+int quit (int f, int n, int k);         /* Quit                         */
+int ctlxlp (int f, int n, int k);       /* Begin macro                  */
+int ctlxrp (int f, int n, int k);       /* End macro                    */
+int ctlxe (int f, int n, int k);        /* Execute macro                */
+int jeffexit (int f, int n, int k);     /* Jeff Lomicka style exit.     */
+int showversion (int f, int n, int k);  /* Show version numbers, etc.   */
 int displaymessage (int f, int n, int k);
-                                        /* Display message lines.	*/
+                                        /* Display message lines.       */
 
-int domacro (int *macrop, int n);	/* Execute macro.               */
-int quickexit (int f, int n, int k);	/* Quick style exit.            */
+int domacro (int *macrop, int n);       /* Execute macro.               */
+int quickexit (int f, int n, int k);    /* Quick style exit.            */
 
 /*
  * Defined by "paragraph.c"
  */
-int gotobop (int f, int n, int k);	/* Goto beginning of paragraph. */
-int gotoeop (int f, int n, int k);	/* Goto end of paragraph.       */
-int fillpara (int f, int n, int k);	/* Fill current paragraph.      */
-int killpara (int f, int n, int k);	/* Delete paragraph(s).		*/
-int fillword (int f, int n, int k);	/* Insert character with fill.  */
-int setfillcol (int f, int n, int k);	/* Set fill column.             */
+int gotobop (int f, int n, int k);      /* Goto beginning of paragraph. */
+int gotoeop (int f, int n, int k);      /* Goto end of paragraph.       */
+int fillpara (int f, int n, int k);     /* Fill current paragraph.      */
+int killpara (int f, int n, int k);     /* Delete paragraph(s).         */
+int fillword (int f, int n, int k);     /* Insert character with fill.  */
+int setfillcol (int f, int n, int k);   /* Set fill column.             */
 
 /*
  * Defined by "random.c".
  */
-int selfinsert (int f, int n, int k);	/* Insert character             */
-int showcpos (int f, int n, int k);	/* Show the cursor position     */
-int twiddle (int f, int n, int k);	/* Twiddle characters           */
-int quote (int f, int n, int k);	/* Insert literal               */
-int openline (int f, int n, int k);	/* Open up a blank line         */
-int newline (int f, int n, int k);	/* Insert CR-LF                 */
-int deblank (int f, int n, int k);	/* Delete blank lines           */
-int delwhite (int f, int n, int k);	/* Delete extra whitespace      */
-int indent (int f, int n, int k);	/* Insert CR-LF, then indent    */
-int gnuindent (int f, int n, int k);	/* Indent by GNU coding rules   */
-int borlandindent (int f, int n, int k);/* Indent by Borland rules	*/
-int vmwareindent (int f, int n, int k);	/* Indent by VMware rules	*/
-int forwdel (int f, int n, int k);	/* Forward delete               */
-int backdel (int f, int n, int k);	/* Backward delete              */
-int killline (int f, int n, int k);	/* Kill forward                 */
-int yank (int f, int n, int k);		/* Yank back from killbuffer.   */
-int settabsize (int f, int n, int k);	/* Set size of tab character    */
+int selfinsert (int f, int n, int k);   /* Insert character             */
+int showcpos (int f, int n, int k);     /* Show the cursor position     */
+int twiddle (int f, int n, int k);      /* Twiddle characters           */
+int quote (int f, int n, int k);        /* Insert literal               */
+int openline (int f, int n, int k);     /* Open up a blank line         */
+int newline (int f, int n, int k);      /* Insert CR-LF                 */
+int deblank (int f, int n, int k);      /* Delete blank lines           */
+int delwhite (int f, int n, int k);     /* Delete extra whitespace      */
+int indent (int f, int n, int k);       /* Insert CR-LF, then indent    */
+int gnuindent (int f, int n, int k);    /* Indent by GNU coding rules   */
+int borlandindent (int f, int n, int k);/* Indent by Borland rules      */
+int vmwareindent (int f, int n, int k); /* Indent by VMware rules       */
+int forwdel (int f, int n, int k);      /* Forward delete               */
+int backdel (int f, int n, int k);      /* Backward delete              */
+int killline (int f, int n, int k);     /* Kill forward                 */
+int yank (int f, int n, int k);         /* Yank back from killbuffer.   */
+int settabsize (int f, int n, int k);   /* Set size of tab character    */
 int setoverstrike (int f, int n, int k);/* set overstrike mode          */
-int checkheap (int f, int n, int k);	/* Check for heap corruption    */
-int getcolpos (void);			/* Return cur. column pos.	*/
-int getcol (void);			/* Return cur. column counts.   */
-int kremove (int n, uchar *buf);	/* Remove n'th UTF-8 char from	*/
+int checkheap (int f, int n, int k);    /* Check for heap corruption    */
+int getcolpos (void);                   /* Return cur. column pos.      */
+int getcol (void);                      /* Return cur. column counts.   */
+int kremove (int n, uchar *buf);        /* Remove n'th UTF-8 char from  */
                                         /*  kill buffer, return length. */
 int trim (int f, int n, int k);         /* Trim trailing whitespace.    */
 /*
  * Defined by "region.c".
  */
-int killregion (int f, int n, int k);	/* Kill region.                 */
-int copyregion (int f, int n, int k);	/* Copy region to kill buffer.  */
-int lowerregion (int f, int n, int k);	/* Lower case region.           */
-int upperregion (int f, int n, int k);	/* Upper case region.           */
-int indentregion (int f, int n, int k);	/* Shift region indentation.    */
+int killregion (int f, int n, int k);   /* Kill region.                 */
+int copyregion (int f, int n, int k);   /* Copy region to kill buffer.  */
+int lowerregion (int f, int n, int k);  /* Lower case region.           */
+int upperregion (int f, int n, int k);  /* Upper case region.           */
+int indentregion (int f, int n, int k); /* Shift region indentation.    */
 
-int getregion (REGION *rp);		/* Get current region bounds.	*/
-int reglines ();		/* Get lines in the current region */
+int getregion (REGION *rp);             /* Get current region bounds.   */
+int reglines ();                        /* Get lines in current region  */
 
 /*
  * Defined "ring.c".
@@ -853,39 +853,39 @@ void clearmarks (MARKRING *ring);
 /*
  * Defined by "search.c".
  */
-int forwsearch (int f, int n, int k);	/* Search forward               */
-int backsearch (int f, int n, int k);	/* Search backwards             */
+int forwsearch (int f, int n, int k);   /* Search forward               */
+int backsearch (int f, int n, int k);   /* Search backwards             */
 int forwregsearch (int f, int n, int k);/* Search forward reg. exp.     */
 int backregsearch (int f, int n, int k);/* Search backwards reg. exp.   */
-int searchagain (int f, int n, int k);	/* Repeat last search command   */
-int forwisearch (int f, int n, int k);	/* Incremental search forward   */
-int backisearch (int f, int n, int k);	/* Incremental search backwards */
-int queryrepl (int f, int n, int k);	/* Query replace                */
-int replstring (int f, int n, int k);	/* Replace with no query        */
-int regqueryrepl (int f, int n, int k);	/* Regexp query replace         */
-int regrepl (int f, int n, int k);	/* Regexp replace with no query */
-int searchparen (int f, int n, int k);	/* Search for matching paren    */
-int foldcase (int f, int n, int k);	/* Set casefold flag            */
+int searchagain (int f, int n, int k);  /* Repeat last search command   */
+int forwisearch (int f, int n, int k);  /* Incremental search forward   */
+int backisearch (int f, int n, int k);  /* Incremental search backwards */
+int queryrepl (int f, int n, int k);    /* Query replace                */
+int replstring (int f, int n, int k);   /* Replace with no query        */
+int regqueryrepl (int f, int n, int k); /* Regexp query replace         */
+int regrepl (int f, int n, int k);      /* Regexp replace with no query */
+int searchparen (int f, int n, int k);  /* Search for matching paren    */
+int foldcase (int f, int n, int k);     /* Set casefold flag            */
 
 /*
  * Defined by "spell.c".
  */
-int spellword (int f, int n, int k);	/* Spell-check cursor word.	*/
-int spellregion (int f, int n, int k);	/* Spell-check marked region.	*/
+int spellword (int f, int n, int k);    /* Spell-check cursor word.     */
+int spellregion (int f, int n, int k);  /* Spell-check marked region.   */
 
 /*
  * Defined by "spawn.c".
  */
-int spawncli (int f, int n, int k);	/* Run CLI in a subjob.         */
-int spawncmd (int f, int n, int k);	/* Run a one-liner in a subjob. */
-int spawnpipe (int f, int n, int k);	/* Pipe a command into a window.*/
-int spawnfilter (int f, int n, int k);	/* Filter a buffer via program. */
-int changedir (int f, int n, int k);	/* Change current directory.    */
-int dired (int f, int n, int k);	/* List current directory.      */
+int spawncli (int f, int n, int k);     /* Run CLI in a subjob.         */
+int spawncmd (int f, int n, int k);     /* Run a one-liner in a subjob. */
+int spawnpipe (int f, int n, int k);    /* Pipe a command into a window.*/
+int spawnfilter (int f, int n, int k);  /* Filter a buffer via program. */
+int changedir (int f, int n, int k);    /* Change current directory.    */
+int dired (int f, int n, int k);        /* List current directory.      */
 
-int spawn (char *program,		/* Spawn a program.		*/
+int spawn (char *program,               /* Spawn a program.             */
            const char *args[]);
-int openpipe (const char *program,	/* Open a two-way pipe.		*/
+int openpipe (const char *program,      /* Open a two-way pipe.         */
               const char *args[],
               FILE **infile,
               FILE **outfile);
@@ -893,38 +893,38 @@ int openpipe (const char *program,	/* Open a two-way pipe.		*/
 /*
  * Defined by "symbol.c".
  */
-int namemacro (int f, int n, int k);	/* Assign a name to cur. macro  */
+int namemacro (int f, int n, int k);    /* Assign a name to cur. macro  */
 
 void keymapinit ();
-void keyadd (int new,			/* Add a function, bind to key	*/
+void keyadd (int new,                   /* Add a function, bind to key  */
              int (*funcp) (),
              const char *name);
-void keydup (int new,			/* Bind key to existing func.	*/
+void keydup (int new,                   /* Bind key to existing func.   */
              const char *name);
-SYMBOL *symlookup (const char *cp);	/* Symbol table lookup		*/
-int getbindingforcmd (const char *s);	/* Find key bound to cmd. name	*/
-SYMBOL *getbinding (int key);		/* Get symbol bound to key	*/
-void setbinding (int key, SYMBOL *sym);	/* Add global key binding	*/
+SYMBOL *symlookup (const char *cp);     /* Symbol table lookup          */
+int getbindingforcmd (const char *s);   /* Find key bound to cmd. name  */
+SYMBOL *getbinding (int key);           /* Get symbol bound to key      */
+void setbinding (int key, SYMBOL *sym); /* Add global key binding       */
 void setmodebinding (int key,
-                     SYMBOL *sym);	/* Add key binding to mode	*/
-int wallchart (int f, int n, int k);	/* Make wall chart.             */
-const char * symsearch (const char *sname, /* Search for symbol.	*/
+                     SYMBOL *sym);      /* Add key binding to mode      */
+int wallchart (int f, int n, int k);    /* Make wall chart.             */
+const char * symsearch (const char *sname, /* Search for symbol.        */
                         int cpos,
                         const char *prev);
-void createmode (const char *name);	/* Set mode for current buffer	*/
-void removemode (BUFFER *bp);		/* Remove mode for a buffer	*/
-const char * modename (BUFFER *bp);	/* Return name for current mode	*/
+void createmode (const char *name);     /* Set mode for current buffer  */
+void removemode (BUFFER *bp);           /* Remove mode for a buffer     */
+const char * modename (BUFFER *bp);     /* Return name for current mode */
 
 /*
  * Defined by "tags.c".
  */
-int findtag (int f, int n, int k);	/* Search for a tag             */
-int freetags (int f, int n, int k);	/* Free up tag list		*/
+int findtag (int f, int n, int k);      /* Search for a tag             */
+int freetags (int f, int n, int k);     /* Free up tag list             */
 
 /*
  * Defined by "error.c".
  */
-int gccerror (int f, int n, int k);	/* Find line in gcc error	*/
+int gccerror (int f, int n, int k);     /* Find line in gcc error       */
 
 tagfile * findtagfile (const char *name);
 tagref * addtagref (const char *string, tagfile *file, int line, long offset,
@@ -932,10 +932,10 @@ tagref * addtagref (const char *string, tagfile *file, int line, long offset,
 int searchtag (int f, int n, int (*prep)(const char *string),
                const char *tagtype);
 
-void getcursorword (char *buffer,	/* Get word under cursor.	*/
+void getcursorword (char *buffer,       /* Get word under cursor.       */
                     int size,
                     int alpha);
-int inwordpos (struct LINE *linep,	/* Word char at pos?		*/
+int inwordpos (struct LINE *linep,      /* Word char at pos?            */
                int doto, int alpha);
 
 /*
@@ -975,80 +975,80 @@ void panic (char *s);
 /*
  * Defined by "ttykbd.c".
  */
-void ttykeymapinit (void);		/* Initialize termcap handler	*/
-void ttykeymaptidy (void);		/* Clean up termcap handler	*/
-int getkbd (void);			/* Get keyboard character	*/
+void ttykeymapinit (void);              /* Initialize termcap handler   */
+void ttykeymaptidy (void);              /* Clean up termcap handler     */
+int getkbd (void);                      /* Get keyboard character       */
 
 /*
  * Defined by "window.c".
  */
-int reposition (int f, int n, int k);	/* Reposition window            */
-int erefresh (int f, int n, int k);	/* Refresh the screen           */
-int nextwind (int f, int n, int k);	/* Move to the next window      */
-int prevwind (int f, int n, int k);	/* Move to the previous window  */
-int mvdnwind (int f, int n, int k);	/* Move window down             */
-int mvupwind (int f, int n, int k);	/* Move window up               */
-int onlywind (int f, int n, int k);	/* Make current window only one */
-int splitwind (int f, int n, int k);	/* Split current window         */
-int zapwind (int f, int n, int k);	/* Delete the current window.   */
-int enlargewind (int f, int n, int k);	/* Enlarge display window.      */
-int shrinkwind (int f, int n, int k);	/* Shrink window.               */
+int reposition (int f, int n, int k);   /* Reposition window            */
+int erefresh (int f, int n, int k);     /* Refresh the screen           */
+int nextwind (int f, int n, int k);     /* Move to the next window      */
+int prevwind (int f, int n, int k);     /* Move to the previous window  */
+int mvdnwind (int f, int n, int k);     /* Move window down             */
+int mvupwind (int f, int n, int k);     /* Move window up               */
+int onlywind (int f, int n, int k);     /* Make current window only one */
+int splitwind (int f, int n, int k);    /* Split current window         */
+int zapwind (int f, int n, int k);      /* Delete the current window.   */
+int enlargewind (int f, int n, int k);  /* Enlarge display window.      */
+int shrinkwind (int f, int n, int k);   /* Shrink window.               */
 int balancewindows (int f, int n, int k);/* Balance all windows.        */
-int scrnextup (int f, int n, int k);	/* Scroll the next window up.   */
-int scrnextdw (int f, int n, int k);	/* scroll the next window down. */
+int scrnextup (int f, int n, int k);    /* Scroll the next window up.   */
+int scrnextdw (int f, int n, int k);    /* scroll the next window down. */
 
 /*
  * Defined by "word.c".
  */
-int backword (int f, int n, int k);	/* Backup by words              */
-int forwword (int f, int n, int k);	/* Advance by words             */
-int upperword (int f, int n, int k);	/* Upper case word.             */
-int lowerword (int f, int n, int k);	/* Lower case word.             */
-int capword (int f, int n, int k);	/* Initial capitalize word.     */
-int delfword (int f, int n, int k);	/* Delete forward word.         */
-int delbword (int f, int n, int k);	/* Delete backward word.        */
-int wordcount (int f, int n, int k);	/* # of words in marked region. */
+int backword (int f, int n, int k);     /* Backup by words              */
+int forwword (int f, int n, int k);     /* Advance by words             */
+int upperword (int f, int n, int k);    /* Upper case word.             */
+int lowerword (int f, int n, int k);    /* Lower case word.             */
+int capword (int f, int n, int k);      /* Initial capitalize word.     */
+int delfword (int f, int n, int k);     /* Delete forward word.         */
+int delbword (int f, int n, int k);     /* Delete backward word.        */
+int wordcount (int f, int n, int k);    /* # of words in marked region. */
 
-int inword (void);			/* Is dot in a word?		*/
-EWINDOW * wpopup (void);		/* Pick window for a pop-up	*/
+int inword (void);                      /* Is dot in a word?            */
+EWINDOW * wpopup (void);                /* Pick window for a pop-up     */
 
 /*
  * Defined by "undo.c".
  */
-int undo (int f, int n, int k);		/* Undo most recent operation.  */
-int redo (int f, int n, int k);		/* Undo most recent undo.	*/
+int undo (int f, int n, int k);         /* Undo most recent operation.  */
+int redo (int f, int n, int k);         /* Undo most recent undo.       */
 
-void startsaveundo (void);		/* Start of undo sequence.	*/
-int saveundo (UKIND kind, POS *pos, ...); /* Save undo information.	*/
-void endsaveundo (void);		/* End of undo sequence.	*/
-void disablesaveundo (void);		/* Disable subsequent saveundos	*/
-void enablesaveundo (void);		/* Enable subsequent saveundos	*/
-void killundo (BUFFER *bp);		/* Kill undo records for buffer	*/
-int lineno (const LINE *lp);		/* Get zero-based line number.	*/
-void setundochanged (void);		/* Set buffer changed flags.	*/
+void startsaveundo (void);              /* Start of undo sequence.      */
+int saveundo (UKIND kind, POS *pos, ...); /* Save undo information.     */
+void endsaveundo (void);                /* End of undo sequence.        */
+void disablesaveundo (void);            /* Disable subsequent saveundos */
+void enablesaveundo (void);             /* Enable subsequent saveundos  */
+void killundo (BUFFER *bp);             /* Kill undo records for buffer */
+int lineno (const LINE *lp);            /* Get zero-based line number.  */
+void setundochanged (void);             /* Set buffer changed flags.    */
 
 /*
  * Defined by "utf8.c".
  */
 const uchar * ugetcptr (const uchar *s, int n);
-                                        /* Addr of nth UTF-8 char in s	*/
-int uoffset (const uchar *s, int n);	/* Offset of nth UTF-8 char in s */
-int uslen (const uchar *s);		/* # of UTF-8 chars in		*/
-                                        /*  null-terminated string s	*/
-int unslen (const uchar *s, int n);	/* # of UTF-8 chars in string s	*/
-                                        /*  of length n			*/
-int unblen (const uchar *s, int n);	/* # of bytes in next n UTF-8	*/
-                                        /*  chars in s			*/
+                                        /* Addr of nth UTF-8 char in s  */
+int uoffset (const uchar *s, int n);    /* Offset of nth UTF-8 char in s */
+int uslen (const uchar *s);             /* # of UTF-8 chars in          */
+                                        /*  null-terminated string s    */
+int unslen (const uchar *s, int n);     /* # of UTF-8 chars in string s */
+                                        /*  of length n                 */
+int unblen (const uchar *s, int n);     /* # of bytes in next n UTF-8   */
+                                        /*  chars in s                  */
 wchar_t ugetc (const uchar *s, int n, int *len);
-                                        /* Get nth UTF-8 character in s	*/
-                                        /*  as 32-bit Unicode		*/
+                                        /* Get nth UTF-8 character in s */
+                                        /*  as 32-bit Unicode           */
 wchar_t ugetprevc (const uchar *s, int *len);
-                                        /* Get UTF-8 character previous	*/
-                                        /*  to s as 32-bit Unicode	*/
-int ucombining (wchar_t c);		/* c is a combining char?	*/
-int uputc (wchar_t c, unsigned char *s);/* Convert Unicode to UTF-8	*/
-int uwidth (wchar_t c);			/* Display length of c		*/
-int unicode (int f, int n, int k);	/* Command to insert Unicode.	*/
+                                        /* Get UTF-8 character previous */
+                                        /*  to s as 32-bit Unicode      */
+int ucombining (wchar_t c);             /* c is a combining char?       */
+int uputc (wchar_t c, unsigned char *s);/* Convert Unicode to UTF-8     */
+int uwidth (wchar_t c);                 /* Display length of c          */
+int unicode (int f, int n, int k);      /* Command to insert Unicode.   */
 
 /*
  * Return the number of bytes in the UTF-8 character pointed to by s.
@@ -1073,7 +1073,7 @@ uclen (const uchar *s)
   else if (c >= 0xfc && c <= 0xfd)
     n = 6;
   else
-    n = 1;	/* error */
+    n = 1;      /* error */
   return n;
 }
 
