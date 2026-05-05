@@ -86,7 +86,7 @@ static KeyBinding bindings[] = {
 	{ { MOD, 'c',            }, { create,         { NULL }                    } },
 	{ { MOD, 'C',            }, { create,         { NULL, NULL, "$CWD" }      } },
 	{ { MOD, 'x', 'x',       }, { killclient,     { NULL }                    } },
-	{ { MOD, 'x', 'o',       }, { killothers,     { NULL }                    } },
+	{ { MOD, 'x', 'o',       }, { killclient,     { "o" }                     } },
 	{ { MOD, 'j',            }, { focusnext,      { NULL }                    } },
 	{ { MOD, 'J',            }, { focusdown,      { NULL }                    } },
 	{ { MOD, 'K',            }, { focusup,        { NULL }                    } },
