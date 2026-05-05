@@ -47,8 +47,8 @@ test_copymode() { # requires wget, diff, vis
 	return $RESULT
 }
 
-if ! which vis > /dev/null 2>&1 ; then
-	echo "vis not found, skiping copymode test"
+if ! which $DVTM_EDITOR > /dev/null 2>&1 ; then
+	echo "$DVTM_EDITOR not found, skiping copymode test"
 	exit 0
 fi
 
