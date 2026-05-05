@@ -369,6 +369,8 @@ drawbar(void) {
 	attrset(TAG_NORMAL);
 
 	for (unsigned int i = 0; i < MAX_KEYS && keys[i]; i++) {
+		if (keys[0] != MOD)
+			break;
 		if (keys[i] < ' ')
 			printw("^%c", 'A' - 1 + keys[i]);
 		else

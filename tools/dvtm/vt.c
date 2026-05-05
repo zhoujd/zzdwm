@@ -1740,6 +1740,8 @@ void vt_mouse(Vt *t, int x, int y, mmask_t mask)
 		button = 2;
 	else if (mask & (BUTTON1_RELEASED | BUTTON2_RELEASED | BUTTON3_RELEASED))
 		button = 3;
+	else
+		return;
 
 	if (mask & BUTTON_SHIFT)
 		state |= 4;
