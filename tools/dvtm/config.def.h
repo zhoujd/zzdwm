@@ -146,7 +146,6 @@ static KeyBinding bindings[] = {
 	TAGKEYS( '3',                                 2)
 	TAGKEYS( '4',                                 3)
 	TAGKEYS( '5',                                 4)
-
 };
 
 static const ColorRule colorrules[] = {
