@@ -11,6 +11,7 @@
 .Nm
 .Op Fl v
 .Op Fl M
+.Op Fl l
 .Op Fl m Ar modifier
 .Op Fl d Ar delay
 .Op Fl h Ar lines
@@ -35,6 +36,9 @@ Print version information to standard output and exit.
 .It Fl M
 Toggle default mouse grabbing upon startup. Use this to allow normal mouse operation
 under X.
+.
+.It Fl l
+Toggle login shell upon startup (default on).
 .
 .It Fl m Ar modifier
 Set command modifier at runtime.
@@ -78,7 +82,7 @@ Execute
 Each keybinding begins with
 .Ic Mod
 which defaults to
-.Ic ^g
+.Ic `
 but can be changed in
 .Pa config.h
 or with the
@@ -94,6 +98,9 @@ Create a new shell window using the current working directory of the focused win
 .
 .It Ic Mod-x-x
 Close focused window.
+.
+.It Ic Mod-x-o
+Close others windows.
 .
 .It Ic Mod-l
 Increases the master area width about 5% (all except grid and
@@ -153,7 +160,7 @@ Toggle between defined layouts (affects all windows).
 .It Ic Mod-Enter
 Zooms/cycles current window to/from master area.
 .
-.It Ic Mod-f
+.It Ic Mod-t
 Change to vertical stack tiling layout.
 .
 .It Ic Mod-b
@@ -208,10 +215,10 @@ Toggles to the previously selected tags.
 .It Ic Mod-V-[1..n]
 Add/remove all windows with nth tag to/from the view.
 .
-.It Ic Mod-t-[1..n]
+.It Ic Mod-f-[1..n]
 Apply nth tag to focused window.
 .
-.It Ic Mod-T-[1..n]
+.It Ic Mod-F-[1..n]
 Add/remove nth tag to/from focused window.
 .
 .It Ic Mod-q-q
