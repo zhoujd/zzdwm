@@ -123,9 +123,13 @@ install_misc() {
         $term/screen.ti
         $term/xterm.ti
         $term/dvtm.ti
+        $term/st.ti
+        $term/rxvt.ti
         $term/screen-256color.ti
         $term/xterm-256color.ti
         $term/dvtm-256color.ti
+        $term/st-256color.ti
+        $term/rxvt-256color.ti
     )
     for ti in ${tis[@]}; do
         echo "Import $ti"
