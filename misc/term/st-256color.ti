@@ -1,5 +1,5 @@
 #	Reconstructed via infocmp from file: /home/zach/.terminfo/s/st-256color
-st-256color|stterm-256color|simpleterm with 256 colors,
+st-256color|simpleterm with 256 colors,
 	am, bce, ccc, hs, mir, msgr, npc, xenl,
 	colors#0x100, cols#80, it#8, lines#24, pairs#0x10000,
 	acsc=+C\,D-A.B0E``aaffgghFiGjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,

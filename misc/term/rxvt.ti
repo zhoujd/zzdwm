@@ -1,5 +1,5 @@
 #	Reconstructed via infocmp from file: /home/zach/.terminfo/r/rxvt
-rxvt|rxvt-color|rxvt terminal emulator (X Window System),
+rxvt|rxvt terminal emulator (X Window System),
 	am, bce, eo, mir, msgr, xenl, xon,
 	colors#8, cols#80, it#8, lines#24, ncv@, pairs#64,
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,

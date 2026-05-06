@@ -1,5 +1,5 @@
 #	Reconstructed via infocmp from file: /home/zach/.terminfo/s/st
-st|stterm|aka simpleterm,
+st|aka simpleterm,
 	am, bce, hs, mir, msgr, npc, xenl,
 	colors#8, cols#80, it#8, lines#24, pairs#64,
 	acsc=+C\,D-A.B0E``aaffgghFiGjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
