@@ -194,6 +194,8 @@ static Button buttons[] = {
 	{ BUTTON1_DOUBLE_CLICKED, { mouse_fullscreen, { "[M]" } } },
 	{ BUTTON2_CLICKED,        { mouse_zoom,       { NULL  } } },
 	{ BUTTON3_CLICKED,        { mouse_minimize,   { NULL  } } },
+	{ BUTTON4_PRESSED,        { scrollback,       { "-1"  } } },
+	{ BUTTON5_PRESSED,        { scrollback,       { "1"   } } },
 };
 #endif /* CONFIG_MOUSE */
 

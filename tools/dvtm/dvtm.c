@@ -1731,6 +1731,7 @@ handle_mouse(void) {
 #ifdef CONFIG_MOUSE
 	MEVENT event;
 	unsigned int i;
+	debug("mouse\n");
 	if (getmouse(&event) != OK)
 		return;
 	msel = get_client_by_coord(event.x, event.y);
