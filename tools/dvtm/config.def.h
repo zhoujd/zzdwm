@@ -85,7 +85,7 @@ static Layout layouts[] = {
 static KeyBinding bindings[] = {
 	{ { MOD, 'c',            }, { create,         { NULL }                    } },
 	{ { MOD, 'C',            }, { create,         { NULL, NULL, "$CWD" }      } },
-	{ { MOD, 'x', 'x',       }, { killclient,     { "0" }                     } },
+	{ { MOD, 'x', 'x',       }, { killclient,     { NULL }                    } },
 	{ { MOD, 'x', 'o',       }, { killclient,     { "1" }                     } },
 	{ { MOD, 'x', 'a',       }, { killclient,     { "2" }                     } },
 	{ { MOD, 'j',            }, { focusnext,      { NULL }                    } },
