@@ -120,16 +120,16 @@ install_misc() {
     echo "Install terminfo"
     local term=$CORE_ROOT/misc/term
     tis=(
-        $term/screen.ti
-        $term/xterm.ti
-        $term/dvtm.ti
-        $term/st.ti
-        $term/rxvt.ti
-        $term/screen-256color.ti
-        $term/xterm-256color.ti
-        $term/dvtm-256color.ti
-        $term/st-256color.ti
-        $term/rxvt-256color.ti
+        $term/dvtm/dvtm.ti
+        $term/dvtm/dvtm-256color.ti
+        $term/st/st.ti
+        $term/st/st-256color.ti
+        $term/rxvt/rxvt.ti
+        $term/rxvt/rxvt-256color.ti
+        $term/screen/screen.ti
+        $term/screen/screen-256color.ti
+        $term/xterm/xterm.ti
+        $term/xterm/xterm-256color.ti
     )
     for ti in ${tis[@]}; do
         echo "Import $ti"
