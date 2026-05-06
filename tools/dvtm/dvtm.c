@@ -1373,16 +1373,16 @@ static void
 killclient(const char *args[]) {
 	if (!sel)
 		return;
-	if (!args[0]) {
+	if (!args[0] || (args[0] && !strcmp("0", args[0]))) {
 		debug("killing client with pid: %d\n", sel->pid);
 		kill(-sel->pid, SIGKILL);
-	} else {
-		for (Client *c = nextvisible(clients); c; c = nextvisible(c->next)) {
-			if (c != sel) {
-				debug("killing client with pid: %d\n", c->pid);
-				kill(-c->pid, SIGKILL);
-			}
-		}
+		return;
+	}
+	for (Client *c = nextvisible(clients); c; c = nextvisible(c->next)) {
+		if (c == sel && !strcmp("1", args[0]))
+			continue;
+		debug("killing client with pid: %d\n", c->pid);
+		kill(-c->pid, SIGKILL);
 	}
 }
 
