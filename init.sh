@@ -122,12 +122,12 @@ install_misc() {
     tis=(
         $term/dvtm/dvtm.ti
         $term/dvtm/dvtm-256color.ti
+        $term/screen/screen.ti
+        $term/screen/screen-256color.ti
         $term/st/st.ti
         $term/st/st-256color.ti
         $term/rxvt/rxvt.ti
         $term/rxvt/rxvt-256color.ti
-        $term/screen/screen.ti
-        $term/screen/screen-256color.ti
         $term/xterm/xterm.ti
         $term/xterm/xterm-256color.ti
     )
