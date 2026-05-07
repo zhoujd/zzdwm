@@ -167,8 +167,7 @@
 
 /* #undef BUILTIN_TELNET */
 /* #undef RXVT_OSC */
-/* #undef COLORS256 */
-
+#define COLORS256
 
 /*
  * If you have a braille display you should define HAVE_BRAILLE.
