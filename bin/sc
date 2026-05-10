@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 tmpfile=$(mktemp /tmp/screen-pipe.XXXXXX)
 trap 'rm -f "$tmpfile"' 0 1 15
