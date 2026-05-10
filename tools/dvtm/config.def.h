@@ -121,6 +121,7 @@ static KeyBinding bindings[] = {
 	{ { MOD, '8',            }, { focusn,         { "8" }                     } },
 	{ { MOD, '9',            }, { focusn,         { "9" }                     } },
 	{ { MOD, '\t',           }, { focuslast,      { NULL }                    } },
+	{ { MOD, 'o',            }, { focuslast,      { NULL }                    } },
 	{ { MOD, 'q', 'q',       }, { quit,           { NULL }                    } },
 	{ { MOD, 'a',            }, { togglerunall,   { NULL }                    } },
 	{ { MOD, CTRL('L'),      }, { redraw,         { NULL }                    } },
