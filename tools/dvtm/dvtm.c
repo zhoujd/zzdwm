@@ -261,6 +261,7 @@ static volatile sig_atomic_t running = true;
 static bool runinall = false;
 static bool defhide = BAR_DEFHIDE;
 static bool deflogin = LOGIN_SHELL;
+static bool showtitle = SHOW_TITLE;
 
 static void
 eprint(const char *errstr, ...) {
@@ -441,8 +442,8 @@ draw_border(Client *c) {
 	}
 
 	mvwprintw(c->window, 0, 2, "[%s%s%d%c%d]",
-	          *c->title ? c->title : "",
-	          *c->title ? " | " : "",
+	          (*c->title && showtitle) ? c->title : "",
+	          (*c->title && showtitle) ? " | " : "",
 	          c->order, '/', n);
 	if (t)
 		c->title[maxlen] = t;
