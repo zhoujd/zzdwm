@@ -42,7 +42,7 @@ static Color colors[] = {
 /* whether shell should be default login */
 #define LOGIN_SHELL     true
 /* whether title shoud be hidden on border */
-#define SHOW_TITLE      true
+#define SHOW_TITLE      false
 /* master width factor [0.1 .. 0.9] */
 #define MFACT 0.5
 /* number of clients in master area */
