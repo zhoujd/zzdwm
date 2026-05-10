@@ -1,10 +1,13 @@
 ## MicroEMACS clang-format file
 
 ---
+Language: Cpp
 BasedOnStyle: GNU
 ColumnLimit: 120
 IndentWidth: 2
 TabWidth: 4
 UseTab: Never
 UseCRLF: false
+MaxEmptyLinesToKeep: 2
+SortIncludes: false
 ---
