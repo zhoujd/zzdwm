@@ -12,6 +12,8 @@ RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     build-essential musl-tools sudo git \
     python3-pip python3-venv python3-docutils \
+    && rm -f /tmp/*.deb \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # GNU screen utmp file
