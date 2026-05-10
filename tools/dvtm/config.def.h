@@ -109,6 +109,7 @@ static KeyBinding bindings[] = {
 	{ { MOD, 's',            }, { togglebar,      { NULL }                    } },
 	{ { MOD, 'S',            }, { togglebarpos,   { NULL }                    } },
 	{ { MOD, 'M',            }, { togglemouse,    { NULL }                    } },
+	{ { MOD, 'T',            }, { toggletitle,    { NULL }                    } },
 	{ { MOD, '\n',           }, { zoom ,          { NULL }                    } },
 	{ { MOD, '\r',           }, { zoom ,          { NULL }                    } },
 	{ { MOD, '1',            }, { focusn,         { "1" }                     } },

@@ -208,6 +208,7 @@ static void togglebar(const char *args[]);
 static void togglebarpos(const char *args[]);
 static void toggleminimize(const char *args[]);
 static void togglemouse(const char *args[]);
+static void toggletitle(const char *args[]);
 static void togglerunall(const char *args[]);
 static void toggletag(const char *args[]);
 static void toggleview(const char *args[]);
@@ -1569,6 +1570,12 @@ static void
 togglemouse(const char *args[]) {
 	mouse_events_enabled = !mouse_events_enabled;
 	mouse_setup();
+}
+
+static void
+toggletitle(const char *args[]) {
+	showtitle = !showtitle;
+	draw_all();
 }
 
 static void
