@@ -221,6 +221,7 @@ static void mouse_focus(const char *args[]);
 static void mouse_fullscreen(const char *args[]);
 static void mouse_minimize(const char *args[]);
 static void mouse_zoom(const char *args[]);
+static void mouse_scrollback(const char *args[]);
 
 /* functions and variables available to layouts via config.h */
 static Client* nextvisible(Client *c);
@@ -1628,6 +1629,11 @@ static void
 mouse_zoom(const char *args[]) {
 	focus(msel);
 	zoom(NULL);
+}
+
+static void
+mouse_scrollback(const char *args[]) {
+	scrollback(args);
 }
 
 static Cmd *
