@@ -379,6 +379,10 @@ drawbar(void) {
 			printw("%c", keys[i]);
 	}
 
+	if (sel && sel->title) {
+		printw(" %s ", sel->title);
+	}
+
 	getyx(stdscr, y, x);
 	(void)y;
 	int maxwidth = screen.w - x - 2;
