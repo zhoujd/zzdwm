@@ -370,17 +370,17 @@ drawbar(void) {
 	printw(TAG_SYMBOL, layout->symbol);
 	attrset(TAG_NORMAL);
 
-	for (unsigned int i = 0; i < MAX_KEYS && keys[i]; i++) {
-		if (keys[0] != MOD)
-			break;
-		if (keys[i] < ' ')
-			printw("^%c", 'A' - 1 + keys[i]);
-		else
-			printw("%c", keys[i]);
-	}
-
-	if (sel && sel->title) {
-		printw(" %s ", sel->title);
+	if (keys[0] == MOD) {
+		for (unsigned int i = 0; i < MAX_KEYS && keys[i]; i++) {
+			if (keys[i] < ' ')
+				printw("^%c", 'A' - 1 + keys[i]);
+			else
+				printw("%c", keys[i]);
+		}
+	} else {
+		if (sel && sel->title) {
+			printw(" %s", sel->title);
+		}
 	}
 
 	getyx(stdscr, y, x);
