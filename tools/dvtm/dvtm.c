@@ -371,15 +371,17 @@ drawbar(void) {
 	attrset(TAG_NORMAL);
 
 	if (keys[0] == MOD) {
+		addch(' ');
 		for (unsigned int i = 0; i < MAX_KEYS && keys[i]; i++) {
 			if (keys[i] < ' ')
 				printw("^%c", 'A' - 1 + keys[i]);
 			else
 				printw("%c", keys[i]);
 		}
+		addch(' ');
 	} else {
 		if (sel && sel->title) {
-			printw(" %s", sel->title);
+			printw(" %s ", sel->title);
 		}
 	}
 
@@ -659,8 +661,10 @@ term_title_handler(Vt *term, const char *title) {
 		strncpy(c->title, title, sizeof(c->title) - 1);
 	c->title[title ? sizeof(c->title) - 1 : 0] = '\0';
 	settitle(c);
-	if (!isarrange(fullscreen) || sel == c)
+	if (!isarrange(fullscreen) || sel == c) {
+		drawbar();
 		draw_border(c);
+	}
 	applycolorrules(c);
 }
 
