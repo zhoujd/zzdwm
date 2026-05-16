@@ -1026,6 +1026,29 @@ getshell(void) {
 }
 
 static void
+setdeflayouts(void)
+{
+	unsigned int i;
+	int j;
+	const char *pargs[5] = { NULL };
+
+	for (i = 0; i < LENGTH(tags); i++) {
+		if (taglayouts[i] != 0) {
+			Layout *l;
+			pargs[0] = tags[i];
+			view(pargs);
+			l = (Layout *)layouts;
+			for (j = 0; j < taglayouts[i]; j++)
+				l++;
+			pargs[0] = l->symbol;
+			setlayout(pargs);
+		}
+	}
+	pargs[0] = tags[0];
+	view(pargs);
+}
+
+static void
 setup(void) {
 	shell = getshell();
 	setlocale(LC_CTYPE, "");
@@ -1048,6 +1071,7 @@ setup(void) {
 		colors[i].pair = vt_color_reserve(colors[i].fg, colors[i].bg);
 	}
 	initpertag();
+	setdeflayouts();
 	if (defhide)
 		hidebar();
 	resize_screen();

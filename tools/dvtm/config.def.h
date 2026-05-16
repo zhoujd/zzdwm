@@ -61,6 +61,7 @@ static Color colors[] = {
 #define TAG_URGENT   (COLOR(BLUE) | A_NORMAL | A_BLINK)
 
 const char tags[][8] = { "1", "2", "3", "4", "5" };
+const int taglayouts[] = { 3, 3, 0, 0, 0 };
 
 #include "tile.c"
 #include "grid.c"
