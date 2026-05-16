@@ -35,10 +35,7 @@ debug: clean
 	@$(MAKE) CFLAGS='${DEBUG_CFLAGS}'
 
 clean:
-	@echo cleaning
-	@rm -f config.h
-	@rm -f dvtm
-	@rm -f dvtm-editor
+	rm -f config.h dvtm dvtm-editor
 
 dist: clean
 	@echo creating dist tarball
