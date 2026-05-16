@@ -264,6 +264,7 @@ static bool runinall = false;
 static bool defhide = BAR_DEFHIDE;
 static bool deflogin = LOGIN_SHELL;
 static bool showtitle = SHOW_TITLE;
+static unsigned int deftag = DEF_TAG;
 
 static void
 eprint(const char *errstr, ...) {
@@ -1044,7 +1045,10 @@ setdeflayouts(void)
 			setlayout(pargs);
 		}
 	}
-	pargs[0] = tags[0];
+	if (deftag >= LENGTH(tags) || !deftag)
+		pargs[0] = tags[0];
+	else
+		pargs[0] = tags[deftag - 1];
 	view(pargs);
 }
 

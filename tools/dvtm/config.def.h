@@ -43,22 +43,24 @@ static Color colors[] = {
 #define LOGIN_SHELL     true
 /* whether title shoud be hidden on border */
 #define SHOW_TITLE      false
+/* default tag on startup, 1 means default */
+#define DEF_TAG         1
 /* master width factor [0.1 .. 0.9] */
-#define MFACT 0.5
+#define MFACT           0.5
 /* number of clients in master area */
-#define NMASTER 1
+#define NMASTER         1
 /* scroll back buffer size in lines */
-#define SCROLL_HISTORY 500
+#define SCROLL_HISTORY  500
 /* printf format string for the tag in the status bar */
-#define TAG_SYMBOL   " %s "
+#define TAG_SYMBOL      " %s "
 /* curses attributes for the currently selected tags */
-#define TAG_SEL      (COLOR(BLUE) | A_BOLD)
+#define TAG_SEL         (COLOR(BLUE) | A_BOLD)
 /* curses attributes for not selected tags which contain no windows */
-#define TAG_NORMAL   (COLOR(DEFAULT) | A_NORMAL)
+#define TAG_NORMAL      (COLOR(DEFAULT) | A_NORMAL)
 /* curses attributes for not selected tags which contain windows */
-#define TAG_OCCUPIED (COLOR(BLUE) | A_NORMAL)
+#define TAG_OCCUPIED    (COLOR(BLUE) | A_NORMAL)
 /* curses attributes for not selected tags which with urgent windows */
-#define TAG_URGENT   (COLOR(BLUE) | A_NORMAL | A_BLINK)
+#define TAG_URGENT      (COLOR(BLUE) | A_NORMAL | A_BLINK)
 
 const char tags[][8] = { "1", "2", "3", "4", "5" };
 const int taglayouts[] = { 3, 3, 0, 0, 0 };
