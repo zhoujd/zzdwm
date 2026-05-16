@@ -993,8 +993,13 @@ mouse_setup(void) {
 static void
 initpertag(void) {
 	int i;
+	int defpertag;
 
-	pertag.curtag = pertag.prevtag = 1;
+	if (deftag >= LENGTH(tags) || !deftag)
+		defpertag = 1;
+	else
+		defpertag = deftag;
+	pertag.curtag = pertag.prevtag = defpertag;
 	for(i=0; i <= LENGTH(tags); i++) {
 		pertag.nmaster[i] = screen.nmaster;
 		pertag.mfact[i] = screen.mfact;
