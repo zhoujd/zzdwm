@@ -371,7 +371,7 @@ drawbar(void) {
 	printw(TAG_SYMBOL, layout->symbol);
 	attrset(TAG_NORMAL);
 
-	if (keys[0] == MOD) {
+	if (keys[0]) {
 		addch(' ');
 		for (unsigned int i = 0; i < MAX_KEYS && keys[i]; i++) {
 			if (keys[i] < ' ')
