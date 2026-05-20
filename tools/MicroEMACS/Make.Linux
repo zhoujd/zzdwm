@@ -29,7 +29,9 @@ CFLAGS := -Os $(CFLAGS)
 endif
 
 LD = gcc
+ifneq ($(DEBUG), yes)
 LDFLAGS = -s
+endif
 ifeq ($(STATIC), yes)
 LDFLAGS := -static $(LDFLAGS)
 endif
