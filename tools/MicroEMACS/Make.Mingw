@@ -26,9 +26,7 @@ CFLAGS := -Os $(CFLAGS)
 endif
 
 LD = gcc
-ifneq ($(DEBUG), yes)
-LDFLAGS = -s
-endif
+LDFLAGS =
 
 # Objects comprising MicroEMACS.
 

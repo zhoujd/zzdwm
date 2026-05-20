@@ -29,11 +29,9 @@ CFLAGS := -Os $(CFLAGS)
 endif
 
 LD = gcc
-ifneq ($(DEBUG), yes)
-LDFLAGS = -s
-endif
+LDFLAGS =
 ifeq ($(STATIC), yes)
-LDFLAGS := -static $(LDFLAGS)
+LDFLAGS := -static -s $(LDFLAGS)
 endif
 ifeq ($(TERMCAP), yes)
 LIBS = -L/usr/lib64/termcap -ltermcap
