@@ -363,7 +363,8 @@ char *
 ffsearch (
      const char *name,		/* filename to search for */
      int cpos,			/* number of characters in name to match */
-     const char *prev)		/* previous matching name */
+     const char *prev,		/* previous matching name */
+     int flag)			/* directory flag */
 {
   struct dirent *ff;
   static DIR *dirp;
@@ -397,6 +398,9 @@ ffsearch (
     }
   while ((ff = readdir (dirp)) != NULL)	/* find next file       */
     {
+      if (flag && ff->d_type != DT_DIR
+          && !ffisdir (ff->d_name, strlen (ff->d_name)))
+        continue;
       strcpy (&buf[pathlen], ff->d_name);	/* append filename    */
       if (strncmp (buf, name, cpos) == 0)	/* does it match?       */
         return (buf);		/* return static buffer */
@@ -419,7 +423,7 @@ ffisdir (
   struct stat stbuf;
   int ret;
 
-  strncpy (fname, name, sizeof (fname) - 1);
+  snprintf(fname, sizeof (fname), "%s", name);
   if (cpos < NFILEN)		/* cpos isn't too big for buffer? */
     fname[cpos] = '\0';		/* null-terminate it    */
   ret = stat (fftilde (fname), &stbuf);	/* get file information */

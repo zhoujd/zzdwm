@@ -521,7 +521,7 @@ changedir (int f, int n, int k)
   char *dname;
   int ret = FALSE;
 
-  s = ereply ("Path: ", line, sizeof(line));
+  s = egetdname ("Path: ", line, sizeof(line));
   if (s == FALSE)
     {
       if (getcwd (line, sizeof(line)) == NULL)
@@ -571,7 +571,7 @@ dired (int f, int n, int k)
   char bname[] = "*dired*";
   int fd = -1;
 
-  s = ereply ("Dired: ", line, sizeof(line));
+  s = egetdname ("Dired: ", line, sizeof(line));
   if (s == FALSE)
     snprintf (line, sizeof(line), ".");
   else if (s == ABORT)

@@ -447,7 +447,8 @@ ffpclose (void)
 char *
 ffsearch (const char *name,	/* filename to search for */
 	  int cpos,		/* number of characters in name to match */
-	  const char *prev)	/* previous matching name */
+	  const char *prev,	/* previous matching name */
+	  int flag)		/* directory flag */
 {
   struct dirent *ff;
   static DIR *dirp;
@@ -480,9 +481,12 @@ ffsearch (const char *name,	/* filename to search for */
     }
   while ((ff = readdir (dirp)) != NULL)	/* find next file       */
     {
+      if (flag && ff->d_type != DT_DIR
+          && !ffisdir (ff->d_name, strlen (ff->d_name)))
+        continue;
       strcpy (&buf[pathlen], ff->d_name);	/* append filename    */
-      strlwr (buf);		/* lower-case it        */
-      if (strncmp (buf, name, cpos) == 0)	/* if it matches,       */
+      strlwr (buf);            /* lower-case it        */
+      if (strncmp (buf, name, cpos) == 0)      /* if it matches,       */
         return (buf);		/* return static buffer */
     }
   closedir (dirp);

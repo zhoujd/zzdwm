@@ -680,6 +680,8 @@ void eformat (const char *fp, va_list ap);
 void eprintf (const char *, ...);
 int egetfname (const char *fp, char *buf, int nbuf);
                                         /* Read filename from echo line */
+int egetdname (const char *fp, char *buf, int nbuf);
+                                        /* Read dirname from echo line  */
 int eread (const char *fp, char *buf, int nbuf, int flag, va_list ap);
 int ereadv (const char *fp, char *buf, int nbuf, int flag, ...);
                                         /* Read input from echo line.   */
@@ -746,7 +748,8 @@ char * fftilde (char *arg);             /* Expand ~ in filename.        */
 int fbackupfile (const char *fname);    /* Rename file to backup.       */
 char *ffsearch (const char *name,       /* Find matching filename.      */
                 int cpos,
-                const char *prev);
+                const char *prev,
+                int flag);
 int ffisdir (char *name, int cpos);     /* name[0..cpos-1] is dir?      */
 const char * ffexedir (void);           /* Get dir of pe executable.    */
 

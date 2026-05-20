@@ -403,6 +403,16 @@ egetfname (const char *fp, char *buf, int nbuf)
 }
 
 /*
+ * Write out a prompt, and read back a dirname.  Autocompletion
+ * of the filename is requested by hitting a space.
+ */
+int
+egetdname (const char *fp, char *buf, int nbuf)
+{
+  return ereadv (fp, buf, nbuf, EFNEW | EFCR | EFFILE | EFDIR);
+}
+
+/*
  * Start creating a visible list of choices for autocompletion,
  * using the pop-up buffer that's also used for displaying
  * the buffer list and the key bindings.  Ignore errors,
@@ -523,7 +533,7 @@ nextname (
   if (flag & EFAUTO)		/* autocomplete a command name  */
     return (symsearch (buf, cpos, prev));
   else if (flag & EFFILE)	/* autocomplete a filename      */
-    return (ffsearch (buf, cpos, prev));
+    return (ffsearch (buf, cpos, prev, (flag & EFDIR)));
   else if (flag & EFBUF)	/* autocomplete a buffer name   */
     return (bufsearch (buf, cpos, prev));
   else				/* weird flag value         */
@@ -675,7 +685,7 @@ eread (const char *fp, char *buf, int nbuf, int flag, va_list ap)
         {
           int popup;
 
-          if ((popup = (c == '?' || c == '\004')) != FALSE)
+          if ((popup = (c == '?' || c == '\t' || c == ' ')) != FALSE)
             startchoices ();	/* start choice list    */
           nhits = 0;
           nxtra = HUGE;
