@@ -904,7 +904,7 @@ detab(int f, int n, int k)
 {
   int inc;	/* increment to next line [sgn(n)] */
 
-  if (curbp->b_flag & BFRO)	/* if buffer is read-only       */
+  if (checkreadonly () == FALSE)	/* if buffer is read-only       */
     return FALSE;               /* fail                         */
 
   if (f == FALSE)
@@ -922,10 +922,12 @@ detab(int f, int n, int k)
           /* if we have a tab */
           if (lgetc(curwp->w_dot.p, curwp->w_dot.o) == '\t')
             {
+              saveundo (UMOVE, &curwp->w_dot);
               ldelete(1, FALSE);
               insspace(TRUE,
                   (tabmask + 1) -
                   (curwp->w_dot.o & tabmask), KRANDOM);
+              saveundo (UMOVE, &curwp->w_dot);
             }
           forwchar(FALSE, 1, KRANDOM);
         }
@@ -953,7 +955,7 @@ entab (int f, int n, int k)
   int ccol;	/* current cursor column */
   char cchar;	/* current character */
 
-  if (curbp->b_flag & BFRO)	/* if buffer is read-only       */
+  if (checkreadonly () == FALSE)	/* if buffer is read-only       */
     return FALSE;               /* fail                         */
 
   if (f == FALSE)
@@ -980,15 +982,16 @@ entab (int f, int n, int k)
                   /* there is a bug here dealing with mixed space/tabed
                       lines.......it will get fixed                */
                   backchar(TRUE, ccol - fspace, KRANDOM);
+                  saveundo (UMOVE, &curwp->w_dot);
                   ldelete((long) (ccol - fspace), FALSE);
                   linsert(1, '\t', NULLPTR);
+                  saveundo (UMOVE, &curwp->w_dot);
                   fspace = -1;
                 }
             }
 
           /* get the current character */
-          cchar = wlgetc(curwp->w_dot.p, curwp->w_dot.o);
-
+          cchar = lgetc(curwp->w_dot.p, curwp->w_dot.o);
           switch (cchar)
             {
             case '\t':	/* a tab...count em up */
@@ -1031,7 +1034,7 @@ trim (int f, int n, int k)
   register int length;	/* current length */
   register int inc;	/* increment to next line [sgn(n)] */
 
-  if (curbp->b_flag & BFRO)	/* if buffer is read-only       */
+  if (checkreadonly () == FALSE)	/* if buffer is read-only       */
     return FALSE;               /* fail                         */
 
   if (f == FALSE)
