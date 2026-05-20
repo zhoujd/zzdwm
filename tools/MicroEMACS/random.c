@@ -79,6 +79,9 @@
 #include "def.h"
 
 int overstrike = 0;		/* TRUE if in overstrike mode */
+int tabmask = 0x07;		/* tabulator mask */
+
+#define nextab(a) (a & ~tabmask) + (tabmask+1)
 
 /*
  * Display a bunch of useful information about
@@ -889,6 +892,131 @@ checkheap (int f, int n, int k)
   eprintf ("[Not implemented]");
 #endif
   return (TRUE);
+}
+
+/*
+ * change tabs to spaces
+ *
+ * int f, n;		default flag and numeric repeat count
+ */
+int
+detab(int f, int n, int k)
+{
+  int inc;	/* increment to next line [sgn(n)] */
+
+  if (curbp->b_flag & BFRO)	/* if buffer is read-only       */
+    return FALSE;               /* fail                         */
+
+  if (f == FALSE)
+    n = reglines();
+
+  /* loop thru detabbing n lines */
+  inc = ((n > 0) ? 1 : -1);
+  while (n)
+    {
+      curwp->w_dot.o = 0;	/* start at the beginning */
+
+      /* detab the entire current line */
+      while (curwp->w_dot.o < wllength(curwp->w_dot.p))
+        {
+          /* if we have a tab */
+          if (lgetc(curwp->w_dot.p, curwp->w_dot.o) == '\t')
+            {
+              ldelete(1, FALSE);
+              insspace(TRUE,
+                  (tabmask + 1) -
+                  (curwp->w_dot.o & tabmask), KRANDOM);
+            }
+          forwchar(FALSE, 1, KRANDOM);
+        }
+
+      /* advance/or back to the next line */
+      forwline(TRUE, inc, KRANDOM);
+      n -= inc;
+    }
+  curwp->w_dot.o = 0;	/* to the begining of the line */
+  thisflag &= ~CFCPCN;	/* flag that this resets the goal column */
+  lchange(WFEDIT);	/* yes, we have made at least an edit */
+  return TRUE;
+}
+
+/*
+ * change spaces to tabs where posible
+ *
+ * int f, n;		default flag and numeric repeat count
+ */
+int
+entab (int f, int n, int k)
+{
+  int inc;	/* increment to next line [sgn(n)] */
+  int fspace;	/* pointer to first space if in a run */
+  int ccol;	/* current cursor column */
+  char cchar;	/* current character */
+
+  if (curbp->b_flag & BFRO)	/* if buffer is read-only       */
+    return FALSE;               /* fail                         */
+
+  if (f == FALSE)
+    n = reglines();
+
+  /* loop thru entabbing n lines */
+  inc = ((n > 0) ? 1 : -1);
+  while (n)
+    {
+      curwp->w_dot.o = 0;	/* start at the beginning */
+
+      /* entab the entire current line */
+      fspace = -1;
+      ccol = 0;
+      while (curwp->w_dot.o < wllength(curwp->w_dot.p))
+        {
+          /* see if it is time to compress */
+          if ((fspace >= 0) && (nextab(fspace) <= ccol))
+            {
+              if (ccol - fspace < 2)
+                fspace = -1;
+              else
+                {
+                  /* there is a bug here dealing with mixed space/tabed
+                      lines.......it will get fixed                */
+                  backchar(TRUE, ccol - fspace, KRANDOM);
+                  ldelete((long) (ccol - fspace), FALSE);
+                  linsert(1, '\t', NULLPTR);
+                  fspace = -1;
+                }
+            }
+
+          /* get the current character */
+          cchar = wlgetc(curwp->w_dot.p, curwp->w_dot.o);
+
+          switch (cchar)
+            {
+            case '\t':	/* a tab...count em up */
+              ccol = nextab(ccol);
+              break;
+
+            case ' ':	/* a space...compress? */
+              if (fspace == -1)
+                fspace = ccol;
+              ccol++;
+              break;
+
+            default:	/* any other char...just count */
+              ccol++;
+              fspace = -1;
+              break;
+            }
+          forwchar(FALSE, 1, KRANDOM);
+        }
+
+      /* advance/or back to the next line */
+      forwline(TRUE, inc, KRANDOM);
+      n -= inc;
+    }
+  curwp->w_dot.o = 0;	/* to the begining of the line */
+  thisflag &= ~CFCPCN;	/* flag that this resets the goal column */
+  lchange(WFEDIT);	/* yes, we have made at least an edit */
+  return TRUE;
 }
 
 /*

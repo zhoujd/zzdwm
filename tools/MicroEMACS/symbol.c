@@ -169,7 +169,8 @@ KEY key[] = {
   {KCTRL | '_',         undo,              "undo"},
   {KCTLX | KCTRL | 'B', buffermenu,        "buffer-menu"},
   {KCTLX | KCTRL | 'C', quit,              "quit"},
-  {KCTLX | KCTRL | 'E', eecho,             "echo"},
+  {KCTLX | KCTRL | 'D', detab,             "detab-line"},
+  {KCTLX | KCTRL | 'E', entab,             "entab-line"},
 #ifndef MINGW
   {KCTLX | KCTRL | 'F', findfile,          "find-file"},
 #else
@@ -295,6 +296,7 @@ KEY key[] = {
   {-1,                  showvisable,       "display-visable"},
   {-1,                  setnewline,        "set-newline"},
   {-1,                  redo,              "redo"},
+  {-1,                  eecho,             "echo"},
   {-1,                  filevisitreadonly, "file-visit-readonly"},
   {-1,                  viewfile,          "view-file"}
 };
