@@ -685,7 +685,7 @@ eread (const char *fp, char *buf, int nbuf, int flag, va_list ap)
         {
           int popup;
 
-          if ((popup = (c == '?' || c == '\t' || c == ' ')) != FALSE)
+          if ((popup = (c == '?' || c == '\t' || c == '\004')) != FALSE)
             startchoices ();	/* start choice list    */
           nhits = 0;
           nxtra = HUGE;
