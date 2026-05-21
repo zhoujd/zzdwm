@@ -222,6 +222,10 @@ static void usage(void) {
 	exit(EXIT_FAILURE);
 }
 
+static void version(void) {
+	puts("abduco" " " VERSION " " DATE " " REV);
+}
+
 static bool xsnprintf(char *buf, size_t size, const char *fmt, ...) {
 	va_list ap;
 	if (size > INT_MAX)
@@ -580,6 +584,16 @@ int main(int argc, char *argv[]) {
 		default_cmd[1] = NULL;
 	}
 
+	if (argc == 2) {
+		if (strcmp(argv[1], "--help") == 0) {
+			usage();
+		}
+		if (strcmp(argv[1], "--version") == 0) {
+			version();
+			exit(EXIT_SUCCESS);
+		}
+	}
+
 	server.name = basename(argv[0]);
 	gethostname(server.host+1, sizeof(server.host) - 1);
 
@@ -608,7 +622,7 @@ int main(int argc, char *argv[]) {
 			client.flags |= CLIENT_LOWPRIORITY;
 			break;
 		case 'v':
-			puts("abduco-"VERSION" © 2013-2016 Marc André Tanner");
+			version();
 			exit(EXIT_SUCCESS);
 		default:
 			usage();
