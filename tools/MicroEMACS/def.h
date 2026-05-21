@@ -642,6 +642,9 @@ const char * bufsearch (                /* Find buffer with partial name*/
      const char *bname,
      int cpos,
      const char *prev);
+int swbuffer (BUFFER *bp);              /* Make buffer BP current       */
+BUFFER* getscratch (void);              /* Get scratch buffer           */
+int zotbuf (BUFFER *bp);                /* Kill buffer pointed to by bp */
 
 /*
  * Defined by "cinfo.c".
@@ -734,6 +737,7 @@ int readlines (LINE *lp2, int *statptr);
                                         /* Read lines from file.        */
 void updatemode (void);                 /* Update mode lines.           */
 void unqname (char *name);              /* Unique buffer name.          */
+int writeout (const char *fn);          /* Performs the file writing    */
 
 /*
  * Defined by "fileio.c".
@@ -757,6 +761,8 @@ char *ffsearch (const char *name,       /* Find matching filename.      */
                 int flag);
 int ffisdir (char *name, int cpos);     /* name[0..cpos-1] is dir?      */
 const char * ffexedir (void);           /* Get dir of pe executable.    */
+int ffcheckname (char *filename);       /* Check file name valid.       */
+
 
 /*
  * Defined by "kbd.c".
@@ -767,6 +773,7 @@ int getinp (void);                      /* Get next input char.         */
 void ungetinp (int c);                  /* Put back one input char.     */
 int getkey (void);                      /* Get next keyboard char.      */
 void ekeyname (char *cp, int k);        /* Convert key code to name     */
+int getctl (void);                      /* Helper function for getkey   */
 
 /*
  * Defined by "line.c".
@@ -899,6 +906,9 @@ int openpipe (const char *program,      /* Open a two-way pipe.         */
               const char *args[],
               FILE **infile,
               FILE **outfile);
+int gettempfile (char *path,            /* Create temp file path.       */
+                 int size,
+                 const char *prefix);
 
 /*
  * Defined by "symbol.c".
@@ -1096,3 +1106,8 @@ int buffermenu (int f, int n, int k);
  * Defined by "version.c".
  */
 void printversion(void);
+
+/*
+ * Defined by "complete.c".
+ */
+int getfilename (char *prompt, char *buf, int nbuf);

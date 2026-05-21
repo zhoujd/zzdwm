@@ -80,15 +80,7 @@ int savetabs = 1;		/* TRUE if tabs are preserved when saving files */
 int autonewline = TRUE;		/* TRUE if automatic add newline to end of file */
 
 /*
- * External declarations.
- */
-extern char *fftilde (char *filename);	/* fileio.c */
-extern int ffcheckname (char *filename);
-extern int getfilename (char *prompt, char *buf, int nbuf);
-extern int swbuffer (BUFFER *bp);
-
-/*
- * make sure a buffer name is unique
+ * Make sure a buffer name is unique
  */
 void
 unqname (char *name)
@@ -112,7 +104,10 @@ unqname (char *name)
     }
 }
 
-int
+/*
+ * Get file by file name
+ */
+static int
 getfile (char fname[])
 {
   BUFFER *bp;
@@ -179,6 +174,9 @@ findfile (int f, int n, int k)
   return (getfile (fname));
 }
 
+/*
+ * View file by input file name
+ */
 int
 viewfile (int f, int n, int k)
 {

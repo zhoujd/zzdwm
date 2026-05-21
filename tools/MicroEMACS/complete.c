@@ -4,13 +4,10 @@
 #include "def.h"
 #include <unistd.h>
 
-extern int ttgetc ();
-extern void ttflush ();
-extern int ttcol;
-extern int gettempfile (char *path, int size, const char *prefix);
-
-int getfilename (char *, char *, int);
-void outstring (char *);
+/*
+ * Forward declarations.
+ */
+static void outstring (char *s);
 
 /*
  * basic filename completion, based on code in uemacs/PK

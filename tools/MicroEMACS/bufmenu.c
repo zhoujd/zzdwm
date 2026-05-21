@@ -25,26 +25,12 @@
 #define CTRL_P CCHR('P')
 #define CTRL_H CCHR('H')
 
-extern int listbuffers(int f, int n, int k);
-extern int onlywind(int f, int n, int k);
-extern int splitwind(int f, int n, int k);
-extern int forwline(int f, int n, int k);
-extern int backline(int f, int n, int k);
-extern int nextwind(int f, int n, int k);
-extern int filesave(int f, int n, int k);
-
-extern int swbuffer (BUFFER *);
-extern void update(void);
-extern int ttgetc(void);
-extern void eerase(void);
-extern int zotbuf(BUFFER *);
-extern BUFFER* get_scratch(void);
-extern int getctl(void);
-
-int buffermenu(int f, int n, int k);
-BUFFER *get_buffer(int n);
-int valid_buf(BUFFER* bp_try);
-int count_buffers(void);
+/*
+ * Forward declarations.
+ */
+static BUFFER *get_buffer(int n);
+static int valid_buf(BUFFER* bp_try);
+static int count_buffers(void);
 
 int
 buffermenu(int f, int n, int k)
@@ -212,7 +198,7 @@ start:
         case 'X':
           if (bufcount == 0)
             {
-              bp = get_scratch();
+              bp = getscratch();
               swbuffer(bp);
               onlywind(0, 0, KRANDOM);
               eerase();
@@ -223,7 +209,7 @@ start:
             swbuffer(org_bp);
           else
             {
-              bp = get_scratch();
+              bp = getscratch();
               swbuffer(bp);
             }
           onlywind(0, 0, KRANDOM);

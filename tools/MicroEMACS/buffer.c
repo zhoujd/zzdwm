@@ -86,15 +86,11 @@ char oldbufn[NBUFN];		/* name of old buffer   */
 /*
  * Forward declarations.
  */
-
 static int getbufn (char bufn[NBUFN]);
 static void intoa (char buf[], int width, long num);
 static int usebuf (BUFFER *bp);
 static int makelist (void);
 static int dorevert (void);
-int swbuffer (BUFFER *bp);
-BUFFER* get_scratch(void);
-int zotbuf (BUFFER *bp);
 
 /*
  * This command attach a buffer to a window. The
@@ -249,7 +245,7 @@ killbuffer (int f, int n, int k)
 
   /* beep if attempt to kill buffer list */
   if (bp == blistp) {
-    bp_alt = get_scratch();
+    bp_alt = getscratch();
     swbuffer(bp_alt);
     eerase();
     return (TRUE);
@@ -266,7 +262,7 @@ killbuffer (int f, int n, int k)
 
   /* no alternate buffer, try for scratch or create it */
   if (bp_alt == NULL) {
-    bp_alt = get_scratch();
+    bp_alt = getscratch();
   }
 
   if (bp_alt == NULL) {
@@ -737,7 +733,7 @@ swbuffer (BUFFER *bp)
 /*
  * get scratch buffer
  */
-BUFFER* get_scratch(void)
+BUFFER* getscratch(void)
 {
   BUFFER* bp;
 

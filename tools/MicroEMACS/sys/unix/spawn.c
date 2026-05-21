@@ -46,12 +46,15 @@
 #include <fcntl.h>
 #endif
 
-extern int swbuffer (BUFFER *bp);
-extern int writeout (const char *fn);
-
+/*
+ * External declarations.
+ */
 extern struct termios oldtty;
 extern struct termios newtty;
 
+/*
+ * Forward declarations.
+ */
 static int saw_sigpipe;
 
 /*
