@@ -528,7 +528,6 @@ extern char *cscope_path;
 extern int mouse;
 extern int xflag;
 extern int zflag;
-
 extern int nrow;
 extern int ncol;
 extern int npages;
@@ -554,6 +553,12 @@ extern int fillcol;
 extern int tabsize;
 extern int savetabs;
 extern int visflag;
+extern int tabmask;
+
+/*
+ * Internal defined functions.
+ */
+#define nextab(a)       (a & ~tabmask) + (tabmask+1)
 
 /*
  * Useful macros for running down the buffer and window lists.

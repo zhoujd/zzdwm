@@ -81,8 +81,6 @@
 int overstrike = 0;		/* TRUE if in overstrike mode */
 int tabmask = 0x07;		/* tabulator mask */
 
-#define nextab(a) (a & ~tabmask) + (tabmask+1)
-
 /*
  * Display a bunch of useful information about
  * the current location of dot. The character under the
