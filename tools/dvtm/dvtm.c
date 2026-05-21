@@ -1896,7 +1896,7 @@ usage(void) {
 static void
 version(void) {
 	cleanup();
-	puts("dvtm" " " DATE " " VERSION);
+	puts("dvtm" " " VERSION " " DATE " " REV);
 }
 
 static bool

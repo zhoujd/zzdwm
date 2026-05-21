@@ -6,9 +6,10 @@ SRC = dvtm.c vt.c
 BIN = dvtm dvtm-status dvtm-editor dvtm-pager
 MANUALS = dvtm.1 dvtm-editor.1 dvtm-pager.1
 
-VERSION = $(shell git describe --always 2>/dev/null || echo "0.15")
-DATE=$(shell date +%Y-%m-%d 2>/dev/null || "unknown")
-CFLAGS += -DVERSION=\"git-${VERSION}\" -DDATE=\"${DATE}\"
+VERSION = "0.15"
+REV = $(shell git describe --always 2>/dev/null || echo "unknown")
+DATE = $(shell date +%Y-%m-%d 2>/dev/null || echo "unknown")
+CFLAGS += -DVERSION=\"${VERSION}\" -DREV=\"git-${REV}\" -DDATE=\"${DATE}\"
 DEBUG_CFLAGS = ${CFLAGS} -UNDEBUG -O0 -g -ggdb -Wall -Wextra
 
 all: dvtm dvtm-editor
