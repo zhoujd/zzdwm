@@ -79,7 +79,7 @@ static Layout layouts[] = {
 };
 
 /* default C-g */
-#define MOD '`'
+#define MOD CTRL('\\')
 #define TAGKEYS(KEY,TAG) \
 	{ { MOD, 'v',       KEY, }, { view,           { tags[TAG] }               } }, \
 	{ { MOD, 'f',       KEY, }, { tag,            { tags[TAG] }               } }, \
