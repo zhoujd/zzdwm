@@ -134,13 +134,13 @@ usage() {
     cat <<EOF
 Usage: $app {option}
 Option:
-build|-b      build images
 run|-r        {alpine|-a|void|-v|ubuntu|-u|+++}
 ssh           {alpine|-a|void|-v|ubuntu|-u|+++}
+build|-b      build images
+clean|-c      clean
 shell|-s      attach shell
 stop          stop service
 status        show status
-clean|-c      clean
 EOF
 }
 
