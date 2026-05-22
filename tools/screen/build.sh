@@ -7,15 +7,24 @@ WS=$SCRIPT_DIR
 . /etc/os-release
 
 build() {
-    ./configure
+    ./configure \
+        --prefix=/usr/local
+        --enable-colors256 \
+        --disable-pam \
+        --disable-telnet \
+        --disable-utmp
     make clean
     make CFLAGS="-O0 -g"
     echo "Build done"
 }
 
 release() {
-    ./configure
-    cp -v config.h.static config.h
+    ./configure \
+        --prefix=/usr/local
+        --enable-colors256 \
+        --disable-pam \
+        --disable-telnet \
+        --disable-utmp
     make clean
     case $ID in
         alpine|void )
@@ -42,8 +51,12 @@ publish() {
             "
         docker run $opt $img sh <<'EOF'
 cat /etc/os-release
-./configure
-cp -v config.h.static config.h
+./configure \
+    --prefix=/usr/local
+    --enable-colors256 \
+    --disable-pam \
+    --disable-telnet \
+    --disable-utmp
 make clean
 make CFLAGS="-Os" LDFLAGS="-s -static"
 ls -l screen
