@@ -92,7 +92,7 @@ unqname (char *name)
     {
       /* go to the end of the name */
       sp = name;
-      while (*sp && *(sp + 2))
+      while (*sp && *(sp + 1))
         ++sp;
       if (sp == name || (*(sp - 1) < '0' || *(sp - 1) > '8'))
         {

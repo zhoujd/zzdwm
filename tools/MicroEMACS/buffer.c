@@ -358,8 +358,8 @@ makelist (void)
   if ((s = bclear (blistp)) != TRUE)
     return (s);
   strcpy (blistp->b_fname, "");
-  if (addline    ("ACV         Size Buffer                           File") == FALSE
-      || addline ("---         ---- ------                           ----") == FALSE)
+  if (addline    ("ACV         Size Buffer                          File") == FALSE
+      || addline ("---         ---- ------                          ----") == FALSE)
     return (FALSE);
   ALLBUF (bp)
   {				/* For all buffers      */
@@ -399,7 +399,7 @@ makelist (void)
     cp2 = &bp->b_fname[0];	/* File name            */
     if (*cp2 != 0)
       {
-        while (cp1 < &line[1 + 1 + 12 + 1 + NBUFN + 3])
+        while (cp1 < &line[1 + 1 + 12 + 1 + NBUFN + 2])
           *cp1++ = ' ';
         while ((c = *cp2++) != 0)
           {
