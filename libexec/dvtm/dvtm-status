@@ -8,7 +8,7 @@ trap 'rm -f "$FIFO"' 0 1 15
 mktime() {
     # If Sunday, show the week number of the next week
     if [ $(date +'%u') -gt 6 ]; then
-        WEEK=$(date +'W%-V' -d "next Mon")
+        WEEK=$(date +'W%-V' -d "next monday")
     else
         WEEK=$(date +'W%-V')
     fi
