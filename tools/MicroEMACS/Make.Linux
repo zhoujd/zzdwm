@@ -31,7 +31,7 @@ endif
 LD = gcc
 LDFLAGS =
 ifeq ($(STATIC), yes)
-LDFLAGS := -static -s $(LDFLAGS)
+LDFLAGS := -static $(LDFLAGS)
 endif
 ifeq ($(TERMCAP), yes)
 LIBS = -L/usr/lib64/termcap -ltermcap
