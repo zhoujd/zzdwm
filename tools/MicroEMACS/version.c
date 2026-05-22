@@ -37,7 +37,7 @@
 #include "rev.h"
 
 char *version[] = {
-  "MicroEMACS" " " DATE " " REV,
+  "MicroEMACS" " " "34" " " DATE " " REV,
   NULL
 };
 
