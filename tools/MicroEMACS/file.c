@@ -92,9 +92,9 @@ unqname (char *name)
     {
       /* go to the end of the name */
       sp = name;
-      while (*sp && *(sp + 1))
+      while (*sp)
         ++sp;
-      if (sp == name || (*(sp - 1) < '0' || *(sp - 1) > '8'))
+      if (sp == name || (*sp < '0' || *sp > '8'))
         {
           *sp++ = '0';
           *sp = 0;
@@ -614,13 +614,13 @@ makename (char *bname, const char *fname)
     )
     --cp1;
   cp2 = &bname[0];
-  while (cp2 != &bname[NBUFN - 1] && *cp1 != 0
+  while (cp2 != &bname[NBUFN - 2] && *cp1 != 0
 #ifdef BDC3
          && *cp1 != BDC3
 #endif
     )
     *cp2++ = *cp1++;
-  *cp2 = 0;
+  *cp2 = *(cp2 + 1) = 0;
 }
 
 /*
