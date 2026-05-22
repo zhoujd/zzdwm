@@ -134,10 +134,10 @@ static KeyBinding bindings[] = {
 	{ { MOD, 'E',            }, { copymode,       { "dvtm-pager" }            } },
 	{ { MOD, '/',            }, { copymode,       { "dvtm-pager", "/" }       } },
 	{ { MOD, 'y',            }, { paste,          { NULL }                    } },
-	{ { MOD, KEY_PPAGE,      }, { scrollback,     { "-1" }                    } },
-	{ { MOD, KEY_NPAGE,      }, { scrollback,     { "1"  }                    } },
-	{ { MOD, 'p',            }, { scrollback,     { "-1" }                    } },
-	{ { MOD, 'n',            }, { scrollback,     { "1"  }                    } },
+	{ { MOD, KEY_PPAGE,      }, { scrollback,     { "-10" }                   } },
+	{ { MOD, KEY_NPAGE,      }, { scrollback,     { "10"  }                   } },
+	{ { MOD, 'p',            }, { scrollback,     { "-10" }                   } },
+	{ { MOD, 'n',            }, { scrollback,     { "10"  }                   } },
 	{ { MOD, '?',            }, { create,         { "man dvtm", "dvtm help" } } },
 	{ { MOD, MOD,            }, { send,           { (const char []){MOD, 0} } } },
 	{ { KEY_SPREVIOUS,       }, { scrollback,     { "-1" }                    } },
@@ -203,8 +203,8 @@ static Button buttons[] = {
 	{ BUTTON1_DOUBLE_CLICKED, { mouse_fullscreen, { "[M]" } } },
 	{ BUTTON2_CLICKED,        { mouse_zoom,       { NULL  } } },
 	{ BUTTON3_CLICKED,        { mouse_minimize,   { NULL  } } },
-	{ BUTTON4_PRESSED,        { mouse_scrollback, { "-1"  } } },
-	{ BUTTON5_PRESSED,        { mouse_scrollback, { "1"   } } },
+	{ BUTTON4_PRESSED,        { mouse_scrollback, { "-10" } } },
+	{ BUTTON5_PRESSED,        { mouse_scrollback, { "10"  } } },
 };
 #endif /* CONFIG_MOUSE */
 
