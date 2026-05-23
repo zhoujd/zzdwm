@@ -79,7 +79,6 @@ Key keys[] = {
   { MODKEY,                       XK_slash,      cmd("dmenu_man &") },
   { MODKEY,                       XK_apostrophe, cmd("dmenu_desk &") },
   { MODKEY,                       XK_grave,      cmd("dmenu_menu &") },
-  { MODKEY,                       XK_semicolon,  cmd("dmenu_wincd &") },
 };
 
 ModeProperties mode_properties[MODE_SIZE] = {
