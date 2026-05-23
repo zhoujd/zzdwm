@@ -1,7 +1,8 @@
 ## Makefile
 
 APPS := \
-	blackwalls
+	blackwalls \
+	keynav
 
 all: $(APPS)
 
