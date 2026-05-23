@@ -4,6 +4,7 @@ log=$HOME/.dwm-errors
 kind=run
 
 opt=(
+    "keynav &"
     "VBoxClient-all &"
 )
 

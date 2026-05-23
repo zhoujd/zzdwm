@@ -21,7 +21,8 @@ install_dep() {
                  libxfixes-dev libxi-dev libxext-dev \
                  libxrandr-dev \
                  libxcomposite-dev libxdamage-dev \
-                 libx11-xcb-dev libxcb-randr0-dev libxcb-xinerama0-dev
+                 libx11-xcb-dev libxcb-randr0-dev libxcb-xinerama0-dev \
+                 libcairo2-dev libxdo-dev
             echo "Install tool package"
             sudo apt install -y \
                  alsa-utils x11-utils wmctrl xdotool psmisc gnupg2
@@ -37,7 +38,8 @@ install_dep() {
                  alsa-lib-devel \
                  libXrandr-devel byacc \
                  libXfixes-devel libXi-devel \
-                 libXcomposite-devel libXdamage-devel
+                 libXcomposite-devel libXdamage-devel \
+                 libcairo2-dev libxdo-dev
             echo "Install tool package"
             sudo xbps-install -Sy \
                  bash-completion xorg wmctrl xdotool psmisc gnupg2
