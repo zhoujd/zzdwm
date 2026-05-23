@@ -481,8 +481,7 @@ ffsearch (const char *name,	/* filename to search for */
     }
   while ((ff = readdir (dirp)) != NULL)	/* find next file       */
     {
-      if (flag && ff->d_type != DT_DIR
-          && !ffisdir (ff->d_name, strlen (ff->d_name)))
+      if (flag && !ffisdir (ff->d_name, strlen (ff->d_name)))
         continue;
       strcpy (&buf[pathlen], ff->d_name);	/* append filename    */
       strlwr (buf);            /* lower-case it        */
