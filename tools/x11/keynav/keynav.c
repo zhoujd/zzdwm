@@ -524,6 +524,8 @@ void defaults() {
     "3 click 3",
     "4 click 4",
     "5 click 5",
+    "6 click 6",
+    "7 click 7",
     "ctrl+h cut-left",
     "ctrl+j cut-down",
     "ctrl+k cut-up",
