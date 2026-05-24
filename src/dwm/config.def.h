@@ -59,6 +59,7 @@ static const unsigned int alphas[][3] = {
 static const char *const autostart[] = {
 	"blackwalls", NULL,
 	"dwmstatus", NULL,
+	"keynav", NULL,
 	"shotkey", NULL,
 	"xbanish", NULL,
 	"xcompmgr", NULL,
