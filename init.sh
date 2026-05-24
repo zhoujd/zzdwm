@@ -120,6 +120,9 @@ install_misc() {
     echo "Install cwmrc"
     local cwm=$CORE_ROOT/misc/cwm
     ln -sfTv $cwm/cwmrc ~/.cwmrc
+    echo "Install keynavrc"
+    local keynav=$CORE_ROOT/misc/keynav
+    ln -sfTv $keynav/keynavrc ~/.keynavrc
     echo "Install terminfo"
     local term=$CORE_ROOT/misc/term
     tis=(
