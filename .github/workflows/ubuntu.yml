@@ -35,6 +35,8 @@ jobs:
       run: apt-get install -y libxcomposite-dev libxdamage-dev
     - name: Install lemonbar dependence
       run: apt-get install -y libx11-xcb-dev libxcb-randr0-dev libxcb-xinerama0-dev
+    - name: Install keynav dependence
+      run: apt-get install -y libcairo2-dev libxdo-dev
     - name: Build dwm
       run: make -C src/dwm
     - name: Build cwm
