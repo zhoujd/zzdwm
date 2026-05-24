@@ -28,3 +28,9 @@ $ patch -p1 < dvtm-v0.15-52-g7bcf43f-pertag.diff
 ```
 $ make LDFLAGS=-static
 ```
+
+## Title
+
+```
+export PS1='\[\033]0;\W $$@\h\007\]\[\033[1;32m\][\u@\h \W]$ \[\033[m\]'
+```
