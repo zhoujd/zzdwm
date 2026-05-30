@@ -3,26 +3,16 @@
 SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 TOP=$(cd $SCRIPT_ROOT/.. && pwd)
 
-CTN_PREFIX=zz-build
+source ${SCRIPT_ROOT}/env.sh
+
 CTN_USER=zach
 CTN_HOST=build
+CTN_PREFIX=zz-build
+CTN_NAME=${CTN_PREFIX}-1
 
 MNT=/home/$CTN_USER
 WS=$MNT/$(basename $TOP)
 
-LAST_INDEX=$(docker ps -a --format "{{.Names}}" \
-  | grep "^${CTN_PREFIX}-" \
-  | sed "s/^${CTN_PREFIX}-//" \
-  | sort -n | tail -n 1)
-
-# Default to 0 if no container exists
-if [ -z "$LAST_INDEX" ]; then
-    NEXT_INDEX=1
-else
-    NEXT_INDEX=$((LAST_INDEX + 1))
-fi
-
-CTN_NAME=${CTN_PREFIX}-${NEXT_INDEX}
 IMGS=(
     zhoujd/alpine:base
     zhoujd/void-linux:base
@@ -131,15 +121,9 @@ status() {
 
 clean() {
     echo "Clean rm exit"
-    ps_list=$(docker ps -a | grep Exit )
-    if [ -n "$ps_list" ]; then
-        docker ps -a | grep Exit | cut -d ' ' -f 1 | xargs docker rm
-    fi
+    cleanexit
     echo "Clean none images"
-    img_list=$(docker images --filter "dangling=true" -q --no-trunc)
-    if [ -n "$img_list" ]; then
-        docker rmi $img_list
-    fi
+    cleannone
 }
 
 usage() {
