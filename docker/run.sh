@@ -73,8 +73,10 @@ run() {
 ssh() {
     local kind=$1
     local cmd="run"
+    local port=2222
     local opt=(
         -d
+        -e PORT=${port}
         -v ~/.ssh:/home/$CTN_USER/.ssh:ro
     )
     case $kind in
@@ -99,7 +101,8 @@ ssh() {
         opt+=($@)
     fi
     stop
-    docker run ${RUN_PARAM[@]} ${opt[@]} ${img} ${cmd}
+    docker run ${RUN_PARAM[@]} ${opt[@]} ${img} ${cmd} >/dev/null 2>&1 \
+        && echo "Start SSH server on ${port}"
 }
 
 shell() {
