@@ -132,15 +132,20 @@ clean() {
 usage() {
     local app=$(basename $0)
     cat <<EOF
-Usage: $app {option}
+Usage: $app {option} {args}
 Option:
-run|-r        {alpine|-a|void|-v|ubuntu|-u|+++}
-ssh           {alpine|-a|void|-v|ubuntu|-u|+++}
-build|-b      build images
-clean|-c      clean
-shell|-s      attach shell
-stop          stop service
-status        show status
+run|-r        Run container service
+ssh           Start ssh service
+build|-b      Build images
+clean|-c      Clean
+shell|-s      Attach shell
+stop          Stop service
+status        Show status
+Args:
+alpine|-a     Alpine (default)
+void|-v       Void Linux
+ubuntu|-u     Ubuntu
++++           Addition parameters
 EOF
 }
 
