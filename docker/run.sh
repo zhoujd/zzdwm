@@ -3,13 +3,26 @@
 SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 TOP=$(cd $SCRIPT_ROOT/.. && pwd)
 
-CTN_NAME=zz-build-1
+CTN_PREFIX=zz-build
 CTN_USER=zach
 CTN_HOST=build
 
 MNT=/home/$CTN_USER
 WS=$MNT/$(basename $TOP)
 
+LAST_INDEX=$(docker ps -a --format "{{.Names}}" \
+  | grep "^${CTN_PREFIX}-" \
+  | sed "s/^${CTN_PREFIX}-//" \
+  | sort -n | tail -n 1)
+
+# Default to 0 if no container exists
+if [ -z "$LAST_INDEX" ]; then
+    NEXT_INDEX=1
+else
+    NEXT_INDEX=$((LAST_INDEX + 1))
+fi
+
+CTN_NAME=${CTN_PREFIX}-${NEXT_INDEX}
 IMGS=(
     zhoujd/alpine:base
     zhoujd/void-linux:base
