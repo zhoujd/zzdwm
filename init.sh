@@ -139,7 +139,7 @@ install_misc() {
     )
     for ti in ${tis[@]}; do
         echo "Import $ti"
-        tic -s $ti
+        tic -sx $ti
     done
     echo "Install misc done"
 }
