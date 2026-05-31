@@ -134,8 +134,8 @@ usage() {
     cat <<EOF
 Usage: $app {option} {args}
 Option:
-run|-r        Run container service
-ssh           Start ssh service
+run|-r        Run container {args}
+ssh           Start ssh {args}
 build|-b      Build images
 clean|-c      Clean
 shell|-s      Attach shell
