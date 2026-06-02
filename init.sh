@@ -90,12 +90,10 @@ install_bin() {
     local bin=/usr/local/bin
     local apps=(
         $CORE_ROOT/bin/me
-        $CORE_ROOT/bin/ec
         $CORE_ROOT/bin/sc
         $CORE_ROOT/bin/ag
         $CORE_ROOT/bin/less
         $CORE_ROOT/bin/pick
-        $CORE_ROOT/bin/etags
         $CORE_ROOT/bin/cscope
         $CORE_ROOT/bin/screen
         $CORE_ROOT/bin/busybox
@@ -109,6 +107,8 @@ install_bin() {
         $CORE_ROOT/libexec/dvtm/dvtm-editor
         $CORE_ROOT/libexec/dvtm/dvtm-pager
         $CORE_ROOT/libexec/dvtm/dvtm-status
+        $CORE_ROOT/libexec/emacs/ec
+        $CORE_ROOT/libexec/emacs/etags
     )
     for app in ${apps[@]}; do
         sudo cp -fv $app $bin
