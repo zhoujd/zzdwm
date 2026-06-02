@@ -115,3 +115,9 @@ shiftview(const char *args[])
 {
 	shifttag_with_filter(args, true, false);
 }
+
+void
+shiftempty(const char *args[])
+{
+       shifttag_with_filter(args, false, true);
+}
