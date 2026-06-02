@@ -97,6 +97,8 @@ static KeyBinding bindings[] = {
 	{ { MOD, 'x', 'a',       }, { killclient,     { "2" }                     } },
 	{ { MOD, 'n',            }, { shifttag,       { "+1" }                    } },
 	{ { MOD, 'N',            }, { shifttag,       { "-1" }                    } },
+	{ { MOD, ']',            }, { shiftview,      { "+1" }                    } },
+	{ { MOD, '[',            }, { shiftview,      { "-1" }                    } },
 	{ { MOD, 'j',            }, { focusnext,      { NULL }                    } },
 	{ { MOD, 'J',            }, { focusdown,      { NULL }                    } },
 	{ { MOD, 'K',            }, { focusup,        { NULL }                    } },

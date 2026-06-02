@@ -111,13 +111,7 @@ shifttag(const char *args[])
 }
 
 void
-shifttag_occupied(const char *args[])
+shiftview(const char *args[])
 {
 	shifttag_with_filter(args, true, false);
-}
-
-void
-shifttag_unoccupied(const char *args[])
-{
-	shifttag_with_filter(args, false, true);
 }
