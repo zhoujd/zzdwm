@@ -1,3 +1,14 @@
+/*
+ * shifttag.c
+ *
+ * Shift to next/previous tag, with skipping occupied/unoccupied variants:
+ * - shifttag: shift to next/previous tags
+ * - shifttag_occupied:  skipping unoccupied tags
+ * - shifttag_unoccupied: skipping occupied tags
+ */
+
+static unsigned int current_tags = DEF_TAG;
+
 static unsigned int
 get_occupied_tags(void)
 {
@@ -77,9 +88,6 @@ shifttag_with_filter(const char *args[], bool skip_unoccupied, bool skip_occupie
 		return;
 	if (skip_occupied && !skip_unoccupied && (occupied == TAGMASK))
 		return;
-
-	static unsigned int current_tags = 1;
-
 
 	unsigned int nextseltags = rotate_tags(current_tags, direction, skip_unoccupied, skip_occupied);
 

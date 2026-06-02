@@ -927,6 +927,7 @@ view(const char *args[]) {
 		setpertag();
 		tagset[seltags] = newtagset;
 		tagschanged();
+		current_tags = newtagset;
 	}
 }
 
