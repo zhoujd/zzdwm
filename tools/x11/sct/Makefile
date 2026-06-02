@@ -1,7 +1,9 @@
+### Makefile
+
 CC ?= gcc
 CFLAGS ?= -Wall -Wextra -Werror -pedantic -std=c99 -O2 -I /usr/X11R6/include
 LDFLAGS ?= -L /usr/X11R6/lib -s
-PREFIX ?= /usr
+PREFIX ?= /usr/local
 BIN ?= $(PREFIX)/bin
 MAN ?= $(PREFIX)/share/man/man1
 INSTALL ?= install
