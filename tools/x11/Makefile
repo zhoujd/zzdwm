@@ -2,7 +2,8 @@
 
 APPS := \
 	blackwalls \
-	keynav
+	keynav \
+	sct
 
 all: $(APPS)
 
