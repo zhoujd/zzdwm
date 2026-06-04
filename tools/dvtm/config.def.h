@@ -69,6 +69,8 @@ const int taglayouts[] = { 3, 3, 0, 0, 0 };
 #include "grid.c"
 #include "bstack.c"
 #include "fullscreen.c"
+#include "doubledeck.c"
+#include "zetadeck.c"
 
 /* by default the first layout entry is used */
 static Layout layouts[] = {
@@ -76,6 +78,8 @@ static Layout layouts[] = {
 	{ "+++", grid },
 	{ "TTT", bstack },
 	{ "[M]", fullscreen },
+	{ "[D]", doubledeck },
+	{ "[Z]", zetadeck },
 };
 
 /* default C-g */
@@ -111,6 +115,8 @@ static KeyBinding bindings[] = {
 	{ { MOD, 'g',            }, { setlayout,      { "+++" }                   } },
 	{ { MOD, 'b',            }, { setlayout,      { "TTT" }                   } },
 	{ { MOD, 'm',            }, { setlayout,      { "[M]" }                   } },
+	{ { MOD, 'n',            }, { setlayout,      { "[D]" }                   } },
+	{ { MOD, 'z',            }, { setlayout,      { "[Z]" }                   } },
 	{ { MOD, 'O',            }, { setlayout,      { "-1" }                    } },
 	{ { MOD, 'o',            }, { setlayout,      { "+1" }                    } },
 	{ { MOD, CTRL('H'),      }, { setlayout,      { "-1" }                    } },
