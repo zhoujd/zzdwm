@@ -16,8 +16,12 @@ mktime() {
     echo ${WEEK} ${TIME}
 }
 
+display() {
+    echo "$(TZ=Asia/Shanghai mktime)"
+}
+
 while true; do
-    TZ="Asia/Shanghai" mktime
+    display
     sleep 20
 done > "$FIFO" &
 
