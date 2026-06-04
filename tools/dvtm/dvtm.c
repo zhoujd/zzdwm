@@ -1469,9 +1469,16 @@ static void
 setlayout(const char *args[]) {
 	unsigned int i;
 
-	if (!args || !args[0]) {
-		if (++layout == &layouts[LENGTH(layouts)])
+	if (!args || !args[0] || !strcmp(args[0], "+1")) {
+		if (layout == &layouts[LENGTH(layouts) - 1])
 			layout = &layouts[0];
+		else
+			++layout;
+	} else if (!strcmp(args[0], "-1")) {
+		if (layout == &layouts[0])
+			layout = &layouts[LENGTH(layouts) - 1];
+		else
+			--layout;
 	} else {
 		for (i = 0; i < LENGTH(layouts); i++)
 			if (!strcmp(args[0], layouts[i].symbol))
