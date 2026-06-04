@@ -2,9 +2,9 @@
  * shifttag.c
  *
  * Shift to next/previous tag, with skipping occupied/unoccupied variants:
+ * - shiftview: skipping unoccupied tags
  * - shifttag: shift to next/previous tags
- * - shifttag_occupied:  skipping unoccupied tags
- * - shifttag_unoccupied: skipping occupied tags
+ * - shiftemp: skipping occupied tags
  */
 
 static unsigned int current_tags = DEF_TAG;
@@ -105,19 +105,19 @@ shifttag_with_filter(const char *args[], bool skip_unoccupied, bool skip_occupie
 }
 
 void
-shifttag(const char *args[])
-{
-	shifttag_with_filter(args, false, false);
-}
-
-void
 shiftview(const char *args[])
 {
 	shifttag_with_filter(args, true, false);
 }
 
 void
-shiftempty(const char *args[])
+shifttag(const char *args[])
 {
-       shifttag_with_filter(args, false, true);
+	shifttag_with_filter(args, false, false);
+}
+
+void
+shiftemp(const char *args[])
+{
+	shifttag_with_filter(args, false, true);
 }
