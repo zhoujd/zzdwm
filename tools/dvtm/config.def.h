@@ -113,8 +113,6 @@ static KeyBinding bindings[] = {
 	{ { MOD, 'g',            }, { setlayout,      { "+++" }                   } },
 	{ { MOD, 'b',            }, { setlayout,      { "TTT" }                   } },
 	{ { MOD, 'm',            }, { setlayout,      { "[M]" }                   } },
-	{ { MOD, 'O',            }, { setlayout,      { "-1" }                    } },
-	{ { MOD, 'o',            }, { setlayout,      { "+1" }                    } },
 	{ { MOD, CTRL('H'),      }, { setlayout,      { "-1" }                    } },
 	{ { MOD, ' ',            }, { setlayout,      { "+1" }                    } },
 	{ { MOD, 'i',            }, { incnmaster,     { "+1" }                    } },
@@ -138,7 +136,7 @@ static KeyBinding bindings[] = {
 	{ { MOD, '8',            }, { focusn,         { "8" }                     } },
 	{ { MOD, '9',            }, { focusn,         { "9" }                     } },
 	{ { MOD, '\t',           }, { focuslast,      { NULL }                    } },
-	{ { MOD, 'u',            }, { focuslast,      { NULL }                    } },
+	{ { MOD, 'o',            }, { focuslast,      { NULL }                    } },
 	{ { MOD, 'q', 'q',       }, { quit,           { NULL }                    } },
 	{ { MOD, 'a',            }, { togglerunall,   { NULL }                    } },
 	{ { MOD, CTRL('L'),      }, { redraw,         { NULL }                    } },
@@ -148,11 +146,11 @@ static KeyBinding bindings[] = {
 	{ { MOD, '/',            }, { copymode,       { "dvtm-pager", "/" }       } },
 	{ { MOD, 'y',            }, { paste,          { NULL }                    } },
 	{ { MOD, KEY_PPAGE,      }, { scrollback,     { "-10" }                   } },
-	{ { MOD, KEY_NPAGE,      }, { scrollback,     { "10"  }                   } },
+	{ { MOD, KEY_NPAGE,      }, { scrollback,     { "+10" }                   } },
 	{ { MOD, '?',            }, { create,         { "man dvtm", "dvtm help" } } },
 	{ { MOD, MOD,            }, { send,           { (const char []){MOD, 0} } } },
-	{ { KEY_SPREVIOUS,       }, { scrollback,     { "-1" }                    } },
-	{ { KEY_SNEXT,           }, { scrollback,     { "1"  }                    } },
+	{ { KEY_SPREVIOUS,       }, { scrollback,     { "-10" }                   } },
+	{ { KEY_SNEXT,           }, { scrollback,     { "+10" }                   } },
 	{ { MOD, '0',            }, { view,           { NULL }                    } },
 	{ { MOD, KEY_F(1),       }, { view,           { tags[0] }                 } },
 	{ { MOD, KEY_F(2),       }, { view,           { tags[1] }                 } },
@@ -161,6 +159,11 @@ static KeyBinding bindings[] = {
 	{ { MOD, KEY_F(5),       }, { view,           { tags[4] }                 } },
 	{ { MOD, 'v', '0'        }, { view,           { NULL }                    } },
 	{ { MOD, 'v', '\t',      }, { viewprevtag,    { NULL }                    } },
+	{ { MOD, 'v', 'o',       }, { viewprevtag,    { NULL }                    } },
+	{ { MOD, 'v', 'h',       }, { shiftview,      { "-1" }                    } },
+	{ { MOD, 'v', 'l',       }, { shiftview,      { "+1" }                    } },
+	{ { MOD, 'v', 'k',       }, { shifttag,       { "-1" }                    } },
+	{ { MOD, 'v', 'j',       }, { shifttag,       { "+1" }                    } },
 	{ { MOD, 'f', '0',       }, { tag,            { NULL }                    } },
 	TAGKEYS( '1',                                 0)
 	TAGKEYS( '2',                                 1)
@@ -215,7 +218,7 @@ static Button buttons[] = {
 	{ BUTTON2_CLICKED,        { mouse_zoom,       { NULL  } } },
 	{ BUTTON3_CLICKED,        { mouse_minimize,   { NULL  } } },
 	{ BUTTON4_PRESSED,        { mouse_scrollback, { "-10" } } },
-	{ BUTTON5_PRESSED,        { mouse_scrollback, { "10"  } } },
+	{ BUTTON5_PRESSED,        { mouse_scrollback, { "+10" } } },
 };
 #endif /* CONFIG_MOUSE */
 
