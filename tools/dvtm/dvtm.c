@@ -265,6 +265,7 @@ static bool defhide = BAR_DEFHIDE;
 static bool deflogin = LOGIN_SHELL;
 static bool showtitle = SHOW_TITLE;
 static unsigned int deftag = DEF_TAG;
+static bool forceborder = FORCE_BORDER;
 
 static void
 eprint(const char *errstr, ...) {
@@ -420,7 +421,9 @@ drawbar(void) {
 
 static int
 show_border(void) {
-	return (bar.pos != BAR_OFF) || (clients && isvisible(clients) && clients->next);
+	return (forceborder ||
+	        (bar.pos != BAR_OFF) ||
+	        (clients && isvisible(clients) && clients->next));
 }
 
 static void

@@ -43,6 +43,8 @@ static Color colors[] = {
 #define LOGIN_SHELL     true
 /* whether title shoud be hidden on border */
 #define SHOW_TITLE      false
+/* whether border shoud be show force */
+#define FORCE_BORDER    true
 /* default tag on startup, 1 means default */
 #define DEF_TAG         1
 /* master width factor [0.1 .. 0.9] */
