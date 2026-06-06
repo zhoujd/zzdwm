@@ -420,7 +420,7 @@ drawbar(void) {
 
 static int
 show_border(void) {
-	return (bar.pos != BAR_OFF) || (clients && isvisible(clients));
+	return (bar.pos != BAR_OFF) || (clients && isvisible(clients) && clients->next);
 }
 
 static void
