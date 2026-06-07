@@ -118,12 +118,12 @@ int main(int argc, char *argv[])
 
 		close(tty);
 
-		const char *editor_argv[argc+2];
+		const char *editor_argv[argc + 2];
 		editor_argv[0] = editor;
 		for (int i = 1; i < argc; i++)
 			editor_argv[i] = argv[i];
 		editor_argv[argc] = tempname;
-		editor_argv[argc+1] = NULL;
+		editor_argv[argc + 1] = NULL;
 
 		execvp(editor, (char* const*)editor_argv);
 		error("failed to exec editor process `%s'", editor);
