@@ -42,7 +42,9 @@ spawncli (int f, int n, int k)
   ttclose ();
   if (cspec == NULL)
     {                     /* Try to find it.      */
-      cspec = getenv ("COMSPEC");
+      cspec = getenv ("SHELL");  /* Prefer Linux portable */
+      if (cspec == NULL)
+        cspec = getenv ("COMSPEC");
       if (cspec == NULL)
         cspec = "/c/WINDOWS/system32/cmd.exe";
     }
