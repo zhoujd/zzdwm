@@ -17,9 +17,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include	"def.h"
-
-#include	<process.h>
+#include "def.h"
+#include <process.h>
 
 /* extern char *getenv(char *); */
 
@@ -35,14 +34,14 @@ char *cspec = NULL;		/* Command string.      */
 int
 spawncli (int f, int n, int k)
 {
-  ttcolor (CTEXT);		    /* Normal color.        */
+  ttcolor (CTEXT);		/* Normal color.        */
   ttwindow (0, nrow - 1);	/* Full screen scroll.  */
   ttmove (nrow - 1, 0);		/* Last line.           */
   ttflush ();
   ttclose ();
   if (cspec == NULL)
     {                     /* Try to find it.      */
-      cspec = getenv ("SHELL");  /* Prefer Linux portable */
+      cspec = getenv ("SHELL"); /* Prefer Linux shell.  */
       if (cspec == NULL)
         cspec = getenv ("COMSPEC");
       if (cspec == NULL)
