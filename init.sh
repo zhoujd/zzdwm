@@ -136,7 +136,6 @@ install_misc() {
         $term/rxvt/rxvt-256color.ti
         $term/xterm/xterm.ti
         $term/xterm/xterm-256color.ti
-        $term/alacritty/alacritty.ti
     )
     for ti in ${tis[@]}; do
         echo "Import $ti"
