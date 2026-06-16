@@ -113,6 +113,8 @@ static KeyBinding bindings[] = {
 	{ { MOD, 'g',            }, { setlayout,      { "+++" }                   } },
 	{ { MOD, 'b',            }, { setlayout,      { "TTT" }                   } },
 	{ { MOD, 'm',            }, { setlayout,      { "[M]" }                   } },
+	{ { MOD, ',',            }, { setlayout,      { "-1" }                    } },
+	{ { MOD, '.',            }, { setlayout,      { "+1" }                    } },
 	{ { MOD, '<',            }, { setlayout,      { "-1" }                    } },
 	{ { MOD, '>',            }, { setlayout,      { "+1" }                    } },
 	{ { MOD, 'o',            }, { togglelayout,   { NULL }                    } },
