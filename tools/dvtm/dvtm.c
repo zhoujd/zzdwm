@@ -199,6 +199,7 @@ static void redraw(const char *args[]);
 static void scrollback(const char *args[]);
 static void send(const char *args[]);
 static void setlayout(const char *args[]);
+static void togglelayout(const char *args[]);
 static void incnmaster(const char *args[]);
 static void setmfact(const char *args[]);
 static void startup(const char *args[]);
@@ -255,6 +256,7 @@ static unsigned int seltags;
 static unsigned int tagset[2] = { 1, 1 };
 static bool mouse_events_enabled = ENABLE_MOUSE;
 static Layout *layout = layouts;
+static Layout *last_layout = NULL;
 static StatusBar bar = { .fd = -1, .lastpos = BAR_POS, .pos = BAR_POS, .autohide = BAR_AUTOHIDE, .h = 1 };
 static CmdFifo cmdfifo = { .fd = -1 };
 static const char *shell;
@@ -1469,9 +1471,24 @@ send(const char *args[]) {
 }
 
 static void
+togglelayout(const char *args[]) {
+    if (!last_layout)
+        return; // Do nothing if no previous layout exists
+
+    Layout *tmp = layout;
+    layout = last_layout;
+    last_layout = tmp;
+
+	pertag.layout[pertag.curtag] = layout;
+	arrange();
+}
+
+static void
 setlayout(const char *args[]) {
 	unsigned int i;
 
+	/* Track the current layout as 'last' before changing it */
+	last_layout = layout;
 	if (!args || !args[0] || !strcmp(args[0], "+1")) {
 		if (layout == &layouts[LENGTH(layouts) - 1])
 			layout = &layouts[0];

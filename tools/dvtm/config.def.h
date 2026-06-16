@@ -117,6 +117,7 @@ static KeyBinding bindings[] = {
 	{ { MOD, ' ',            }, { setlayout,      { "+1" }                    } },
 	{ { MOD, CTRL('o'),      }, { setlayout,      { "-1" }                    } },
 	{ { MOD, 'o',            }, { setlayout,      { "+1" }                    } },
+	{ { MOD, KEY_BACKSPACE,  }, { togglelayout,   { NULL }                    } },
 	{ { MOD, 'i',            }, { incnmaster,     { "+1" }                    } },
 	{ { MOD, 'd',            }, { incnmaster,     { "-1" }                    } },
 	{ { MOD, '-',            }, { setmfact,       { "-0.05" }                 } },
