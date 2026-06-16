@@ -1488,7 +1488,9 @@ setlayout(const char *args[]) {
 	unsigned int i;
 
 	/* Track the current layout as 'last' before changing it */
-	last_layout = layout;
+	if (layout && layout != last_layout) {
+		last_layout = layout;
+	}
 	if (!args || !args[0] || !strcmp(args[0], "+1")) {
 		if (layout == &layouts[LENGTH(layouts) - 1])
 			layout = &layouts[0];
