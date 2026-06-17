@@ -25,15 +25,17 @@
 #else
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#endif
-
-#ifdef _WIN32
 #include <io.h>  /* THIS DEFINES THE write() FUNCTION IN MINGW */
 #endif
 
 #include <conio.h>
 
 #include "def.h"
+
+/* Fallback definition for older MinGW compilers if missing */
+#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#endif
 
 extern int attnorm;	/* In tty.c */
 
@@ -73,6 +75,8 @@ ttopen (void)
   /* Save current console output mode.
    */
   GetConsoleMode (hout, &houtmode);
+  houtmode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+  SetConsoleMode(hout, houtmode);
 
   /* Get screen size.
    */
