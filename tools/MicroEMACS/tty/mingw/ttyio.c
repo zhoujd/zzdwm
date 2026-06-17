@@ -27,6 +27,10 @@
 #include <windows.h>
 #endif
 
+#ifdef _WIN32
+#include <io.h>  /* THIS DEFINES THE write() FUNCTION IN MINGW */
+#endif
+
 #include <conio.h>
 
 #include "def.h"
@@ -85,6 +89,7 @@ ttopen (void)
   cinfo.dwSize = 100;     /* make it 100% visible */
   cinfo.bVisible = TRUE;
   SetConsoleCursorInfo (hout, &cinfo);
+  write(1, "\033[?1049h", 8);
 }
 
 /*
@@ -94,6 +99,7 @@ void
 ttclose (void)
 {
   SetConsoleMode (hin, hinmode);
+  write(1, "\033[?1049l", 8);
 }
 
 /*
