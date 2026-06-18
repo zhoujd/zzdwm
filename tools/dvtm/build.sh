@@ -52,6 +52,8 @@ publish() {
     else
         img=zhoujd/alpine
         opt="
+            --name=build-dvtm-1
+            --rm
             -i
             -u $(id -u):$(id -g)
             -v $MNT_DIR:$MNT_DIR
