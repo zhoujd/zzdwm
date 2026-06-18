@@ -34,6 +34,8 @@ publish() {
     else
         img=zhoujd/alpine
         opt="
+            --name=build-elvis-1
+            --rm
             -i
             -u $(id -u):$(id -g)
             -v $MNT_DIR:$MNT_DIR
