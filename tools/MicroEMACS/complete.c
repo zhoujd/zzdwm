@@ -2,7 +2,11 @@
  * Filename completion.c
  */
 #include "def.h"
-#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <io.h>
+#include <windows.h>
 
 /*
  * Forward declarations.
@@ -12,15 +16,14 @@ static void outstring (char *s);
 /*
  * basic filename completion, based on code in uemacs/PK
  */
-int
-getfilename (char *prompt, char *buf, int nbuf)
+int getfilename (char *prompt, char *buf, int nbuf)
 {
   int cpos = 0; /* current character position in string */
   int c;
   int ocpos, nskip = 0, didtry = 0;
   int eolchar = '\n';
-  int result = 0;
   FILE *tmpf = NULL;
+  static char tmp[255];
 
   /* prompt the user for the input string */
   eprintf (prompt);
@@ -49,8 +52,12 @@ getfilename (char *prompt, char *buf, int nbuf)
 
           /* if we default the buffer, return FALSE */
           if (buf[0] == 0)
-            return FALSE;
+            {
+              if (tmpf != NULL) { fclose(tmpf); _unlink(tmp); }
+              return FALSE;
+            }
 
+          if (tmpf != NULL) { fclose(tmpf); _unlink(tmp); }
           return TRUE;
         }
 
@@ -60,6 +67,7 @@ getfilename (char *prompt, char *buf, int nbuf)
           ctrlg (FALSE, 0, KRANDOM);
           ttputc (c);
           ttflush ();
+          if (tmpf != NULL) { fclose(tmpf); _unlink(tmp); }
           return ABORT;
         }
       else if ((c == 0x7F || c == 0x08 || c == 0x107))
@@ -106,8 +114,7 @@ getfilename (char *prompt, char *buf, int nbuf)
       else if ((c == 0x09 || c == ' ' || c == '?'))
         {
           /* TAB, complete file name */
-          static char ffbuf[255];
-          static char tmp[255];
+          static char ffbuf[1024]; /* Expanded to safely hold the bash shell payload */
           int n, iswild = 0;
 
           didtry = 1;
@@ -135,23 +142,28 @@ getfilename (char *prompt, char *buf, int nbuf)
             {
               buf[ocpos] = 0;
               if (tmpf != NULL)
-                fclose (tmpf);
-              strcpy (ffbuf, "echo ");
+                {
+                  fclose (tmpf);
+                  _unlink(tmp);
+                  tmpf = NULL;
+                }
+
+              /* FIX: Fetch the actual user Temp directory instead of writing to C:\ */
+              char win_temp_dir[MAX_PATH];
+              GetTempPathA(MAX_PATH, win_temp_dir);
+              GetTempFileNameA(win_temp_dir, "me", 0, tmp);
+
+              /* Construct bash command string execution */
+              /* Wrapping the inner shell command ensures wildcards evaluate in bash, not Windows */
+              strcpy (ffbuf, "bash.exe -c \"echo ");
               strcat (ffbuf, buf);
               if (!iswild)
                 strcat (ffbuf, "*");
-              strcat (ffbuf, " >");
-              if (!gettempfile (tmp, sizeof (tmp), "me"))
-                return FALSE;
-              result = mkstemp (tmp);
-              if (result == -1)
-                {
-                  printf ("Failed to create temp file\n");
-                  exit (1);
-                }
+              strcat (ffbuf, "\" > ");
               strcat (ffbuf, tmp);
               strcat (ffbuf, " 2>&1");
-              result = system (ffbuf);
+
+              system (ffbuf);
               tmpf = fopen (tmp, "r");
               nskip = 0;
             }
@@ -161,7 +173,7 @@ getfilename (char *prompt, char *buf, int nbuf)
               ;
           nskip++;
 
-          if (c != ' ')
+          if (c == EOF)
             {
               ttbeep ();
               nskip = 0;
@@ -197,7 +209,6 @@ getfilename (char *prompt, char *buf, int nbuf)
             }
           ttflush ();
           rewind (tmpf);
-          unlink (tmp);
         }
       else
         {

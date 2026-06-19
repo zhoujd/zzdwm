@@ -171,11 +171,7 @@ KEY key[] = {
   {KCTLX | KCTRL | 'C', quit,              "quit"},
   {KCTLX | KCTRL | 'D', detab,             "detab-line"},
   {KCTLX | KCTRL | 'E', entab,             "entab-line"},
-#ifndef MINGW
   {KCTLX | KCTRL | 'F', findfile,          "find-file"},
-#else
-  {KCTLX | KCTRL | 'F', filename,          "set-file-name"},
-#endif
   {KCTLX | KCTRL | 'I', fileinsert,        "file-insert"},
   {KCTLX | KCTRL | 'L', lowerregion,       "lower-region"},
   {KCTLX | KCTRL | 'N', mvdnwind,          "down-window"},
