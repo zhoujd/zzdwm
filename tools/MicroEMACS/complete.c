@@ -177,7 +177,7 @@ getfilename (char *prompt, char *buf, int nbuf)
               GetTempPathA (MAX_PATH, win_temp_dir);
               GetTempFileNameA (win_temp_dir, "me", 0, tmp);
               /* Call bash explicitly and wrap variables inside quotes */
-              strcpy (ffbuf, "bash.exe -c \"echo ");
+              strcpy (ffbuf, "bash -c \"echo ");
               strcat (ffbuf, buf);
               if (!iswild)
                 strcat (ffbuf, "*");
