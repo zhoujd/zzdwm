@@ -7,15 +7,15 @@
 #include <stdlib.h>
 /* Operating System Specific Headers and Definitions */
 #if defined(_WIN32) || defined(__MINGW32__)
-  #include <io.h>
-  #include <windows.h>
-  #define PATH_BUFFER_SIZE MAX_PATH
-  #define UNLINK_FILE _unlink
+#include <io.h>
+#include <windows.h>
+#define PATH_BUFFER_SIZE MAX_PATH
+#define UNLINK_FILE _unlink
 #else
-  #include <unistd.h>
-  #include <limits.h>
-  #define PATH_BUFFER_SIZE PATH_MAX
-  #define UNLINK_FILE unlink
+#include <unistd.h>
+#include <limits.h>
+#define PATH_BUFFER_SIZE PATH_MAX
+#define UNLINK_FILE unlink
 #endif
 
 /*
@@ -26,7 +26,8 @@ static void outstring (char *s);
 /*
  * basic filename completion, based on code in uemacs/PK
  */
-int getfilename (char *prompt, char *buf, int nbuf)
+int
+getfilename (char *prompt, char *buf, int nbuf)
 {
   int cpos = 0; /* current character position in string */
   int c;
@@ -63,11 +64,19 @@ int getfilename (char *prompt, char *buf, int nbuf)
           /* if we default the buffer, return FALSE */
           if (buf[0] == 0)
             {
-              if (tmpf != NULL) { fclose(tmpf); _unlink(tmp); }
+              if (tmpf != NULL)
+                {
+                  fclose (tmpf);
+                  UNLINK_FILE (tmp);
+                }
               return FALSE;
             }
 
-          if (tmpf != NULL) { fclose(tmpf); _unlink(tmp); }
+          if (tmpf != NULL)
+            {
+              fclose (tmpf);
+              UNLINK_FILE (tmp);
+            }
           return TRUE;
         }
 
@@ -77,7 +86,11 @@ int getfilename (char *prompt, char *buf, int nbuf)
           ctrlg (FALSE, 0, KRANDOM);
           eprintf ("[Aborted]");
           ttflush ();
-          if (tmpf != NULL) { fclose(tmpf); _unlink(tmp); }
+          if (tmpf != NULL)
+            {
+              fclose (tmpf);
+              UNLINK_FILE (tmp);
+            }
           return ABORT;
         }
       else if ((c == 0x7F || c == 0x08 || c == 0x107))
@@ -154,43 +167,44 @@ int getfilename (char *prompt, char *buf, int nbuf)
               if (tmpf != NULL)
                 {
                   fclose (tmpf);
-                  _unlink(tmp);
+                  UNLINK_FILE (tmp);
                   tmpf = NULL;
                 }
 
-              #if defined(_WIN32) || defined(__MINGW32__)
-                /* Windows Path Logic */
-                char win_temp_dir[MAX_PATH];
-                GetTempPathA(MAX_PATH, win_temp_dir);
-                GetTempFileNameA(win_temp_dir, "me", 0, tmp);
+#if defined(_WIN32) || defined(__MINGW32__)
+              /* Windows Path Logic */
+              char win_temp_dir[MAX_PATH];
+              GetTempPathA (MAX_PATH, win_temp_dir);
+              GetTempFileNameA (win_temp_dir, "me", 0, tmp);
 
-                /* Call bash explicitly and wrap variables inside quotes */
-                strcpy (ffbuf, "bash.exe -c \"echo ");
-                strcat (ffbuf, buf);
-                if (!iswild)
-                    strcat (ffbuf, "*");
-                strcat (ffbuf, "\" > \"");
-                strcat (ffbuf, tmp);
-                strcat (ffbuf, "\" 2>&1");
-              #else
-                /* Linux Path Logic */
-                strcpy(tmp, "/tmp/meXXXXXX");
-                int fd = mkstemp(tmp);
-                if (fd == -1) {
-                    printf("Failed to create temp file\n");
-                    exit(1);
+              /* Call bash explicitly and wrap variables inside quotes */
+              strcpy (ffbuf, "bash.exe -c \"echo ");
+              strcat (ffbuf, buf);
+              if (!iswild)
+                strcat (ffbuf, "*");
+              strcat (ffbuf, "\" > \"");
+              strcat (ffbuf, tmp);
+              strcat (ffbuf, "\" 2>&1");
+#else
+              /* Linux Path Logic */
+              strcpy (tmp, "/tmp/meXXXXXX");
+              int fd = mkstemp (tmp);
+              if (fd == -1)
+                {
+                  printf ("Failed to create temp file\n");
+                  exit (1);
                 }
-                close(fd);
+              close (fd);
 
-                /* Standard Unix syntax (no bash.exe prefix needed) */
-                strcpy (ffbuf, "echo ");
-                strcat (ffbuf, buf);
-                if (!iswild)
-                  strcat (ffbuf, "*");
-                strcat (ffbuf, " > ");
-                strcat (ffbuf, tmp);
-                strcat (ffbuf, " 2>&1");
-              #endif
+              /* Standard Unix syntax (no bash.exe prefix needed) */
+              strcpy (ffbuf, "echo ");
+              strcat (ffbuf, buf);
+              if (!iswild)
+                strcat (ffbuf, "*");
+              strcat (ffbuf, " > ");
+              strcat (ffbuf, tmp);
+              strcat (ffbuf, " 2>&1");
+#endif
 
               system (ffbuf);
               tmpf = fopen (tmp, "r");
