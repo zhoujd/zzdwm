@@ -26,7 +26,8 @@ CFLAGS := -Os $(CFLAGS)
 endif
 
 LD = gcc
-LDFLAGS =
+LDFLAGS := -s $(LDFLAGS)
+LIBS = -lkernel32 -lntdll -lmsvcrt
 
 # Objects comprising MicroEMACS.
 
