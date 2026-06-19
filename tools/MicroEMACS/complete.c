@@ -5,8 +5,18 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <io.h>
-#include <windows.h>
+/* Operating System Specific Headers and Definitions */
+#if defined(_WIN32) || defined(__MINGW32__)
+  #include <io.h>
+  #include <windows.h>
+  #define PATH_BUFFER_SIZE MAX_PATH
+  #define UNLINK_FILE _unlink
+#else
+  #include <unistd.h>
+  #include <limits.h>
+  #define PATH_BUFFER_SIZE PATH_MAX
+  #define UNLINK_FILE unlink
+#endif
 
 /*
  * Forward declarations.
@@ -65,7 +75,7 @@ int getfilename (char *prompt, char *buf, int nbuf)
         {
           /* Abort the input? */
           ctrlg (FALSE, 0, KRANDOM);
-          ttputc (c);
+          eprintf ("[Aborted]");
           ttflush ();
           if (tmpf != NULL) { fclose(tmpf); _unlink(tmp); }
           return ABORT;
@@ -148,20 +158,39 @@ int getfilename (char *prompt, char *buf, int nbuf)
                   tmpf = NULL;
                 }
 
-              /* FIX: Fetch the actual user Temp directory instead of writing to C:\ */
-              char win_temp_dir[MAX_PATH];
-              GetTempPathA(MAX_PATH, win_temp_dir);
-              GetTempFileNameA(win_temp_dir, "me", 0, tmp);
+              #if defined(_WIN32) || defined(__MINGW32__)
+                /* Windows Path Logic */
+                char win_temp_dir[MAX_PATH];
+                GetTempPathA(MAX_PATH, win_temp_dir);
+                GetTempFileNameA(win_temp_dir, "me", 0, tmp);
 
-              /* Construct bash command string execution */
-              /* Wrapping the inner shell command ensures wildcards evaluate in bash, not Windows */
-              strcpy (ffbuf, "bash.exe -c \"echo ");
-              strcat (ffbuf, buf);
-              if (!iswild)
-                strcat (ffbuf, "*");
-              strcat (ffbuf, "\" > ");
-              strcat (ffbuf, tmp);
-              strcat (ffbuf, " 2>&1");
+                /* Call bash explicitly and wrap variables inside quotes */
+                strcpy (ffbuf, "bash.exe -c \"echo ");
+                strcat (ffbuf, buf);
+                if (!iswild)
+                    strcat (ffbuf, "*");
+                strcat (ffbuf, "\" > \"");
+                strcat (ffbuf, tmp);
+                strcat (ffbuf, "\" 2>&1");
+              #else
+                /* Linux Path Logic */
+                strcpy(tmp, "/tmp/meXXXXXX");
+                int fd = mkstemp(tmp);
+                if (fd == -1) {
+                    printf("Failed to create temp file\n");
+                    exit(1);
+                }
+                close(fd);
+
+                /* Standard Unix syntax (no bash.exe prefix needed) */
+                strcpy (ffbuf, "echo ");
+                strcat (ffbuf, buf);
+                if (!iswild)
+                  strcat (ffbuf, "*");
+                strcat (ffbuf, " > ");
+                strcat (ffbuf, tmp);
+                strcat (ffbuf, " 2>&1");
+              #endif
 
               system (ffbuf);
               tmpf = fopen (tmp, "r");
