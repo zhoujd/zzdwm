@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-/* Operating System Specific Headers and Definitions */
+
 #if defined(_WIN32) || defined(__MINGW32__)
 #include <io.h>
 #include <windows.h>
@@ -84,7 +84,7 @@ getfilename (char *prompt, char *buf, int nbuf)
         {
           /* Abort the input? */
           ctrlg (FALSE, 0, KRANDOM);
-          eprintf ("[Aborted]");
+          eputc(c);
           ttflush ();
           if (tmpf != NULL)
             {
@@ -171,12 +171,11 @@ getfilename (char *prompt, char *buf, int nbuf)
                   tmpf = NULL;
                 }
 
-#if defined(_WIN32) || defined(__MINGW32__)
+            #if defined(_WIN32) || defined(__MINGW32__)
               /* Windows Path Logic */
               char win_temp_dir[MAX_PATH];
               GetTempPathA (MAX_PATH, win_temp_dir);
               GetTempFileNameA (win_temp_dir, "me", 0, tmp);
-
               /* Call bash explicitly and wrap variables inside quotes */
               strcpy (ffbuf, "bash.exe -c \"echo ");
               strcat (ffbuf, buf);
@@ -185,7 +184,7 @@ getfilename (char *prompt, char *buf, int nbuf)
               strcat (ffbuf, "\" > \"");
               strcat (ffbuf, tmp);
               strcat (ffbuf, "\" 2>&1");
-#else
+            #else
               /* Linux Path Logic */
               strcpy (tmp, "/tmp/meXXXXXX");
               int fd = mkstemp (tmp);
@@ -195,7 +194,6 @@ getfilename (char *prompt, char *buf, int nbuf)
                   exit (1);
                 }
               close (fd);
-
               /* Standard Unix syntax (no bash.exe prefix needed) */
               strcpy (ffbuf, "echo ");
               strcat (ffbuf, buf);
@@ -204,7 +202,7 @@ getfilename (char *prompt, char *buf, int nbuf)
               strcat (ffbuf, " > ");
               strcat (ffbuf, tmp);
               strcat (ffbuf, " 2>&1");
-#endif
+            #endif
 
               system (ffbuf);
               tmpf = fopen (tmp, "r");
