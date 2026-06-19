@@ -34,7 +34,7 @@ getfilename (char *prompt, char *buf, int nbuf)
   int ocpos, nskip = 0, didtry = 0;
   int eolchar = '\n';
   FILE *tmpf = NULL;
-  static char tmp[255];
+  static char tmp[PATH_BUFFER_SIZE];
 
   /* prompt the user for the input string */
   eprintf (prompt);
