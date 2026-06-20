@@ -846,6 +846,8 @@ int getcol (void);                      /* Return cur. column counts.   */
 int kremove (int n, uchar *buf);        /* Remove n'th UTF-8 char from  */
                                         /*  kill buffer, return length. */
 int trim (int f, int n, int k);         /* Trim trailing whitespace.    */
+int markall(int f, int n, int k);       /* Mark the entire buffer.      */
+
 /*
  * Defined by "region.c".
  */

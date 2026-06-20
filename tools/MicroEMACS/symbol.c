@@ -200,7 +200,7 @@ KEY key[] = {
   {KCTLX | 'E',         ctlxe,             "execute-macro"},
   {KCTLX | 'F',         readprofile,       "read-profile"},
   {KCTLX | 'G',         gotoline,          "goto-line"},
-  {KCTLX | 'H',         checkheap,         "check-heap"},
+  {KCTLX | 'H',         markall,           "mark-all"},
 #ifndef MINGW
   {KCTLX | 'I',         spellregion,       "spell-region"},
 #endif
@@ -293,6 +293,7 @@ KEY key[] = {
   {-1,                  setnewline,        "set-newline"},
   {-1,                  redo,              "redo"},
   {-1,                  eecho,             "echo"},
+  {-1,                  checkheap,         "check-heap"},
   {-1,                  filevisitreadonly, "file-visit-readonly"},
   {-1,                  viewfile,          "view-file"}
 };
