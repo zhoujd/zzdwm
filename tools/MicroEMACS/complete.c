@@ -9,14 +9,17 @@
 #if defined(_WIN32) || defined(__MINGW32__)
 #include <io.h>
 #include <windows.h>
-#define PATH_BUFFER_SIZE MAX_PATH
+#define TMPBUF_SIZE MAX_PATH
 #define UNLINK_FILE _unlink
 #else
 #include <unistd.h>
 #include <limits.h>
-#define PATH_BUFFER_SIZE PATH_MAX
+#define TMPBUF_SIZE PATH_MAX
 #define UNLINK_FILE unlink
 #endif
+
+/* Expanded to safely hold the bash shell payload */
+#define FFBUF_SIZE 1024
 
 /*
  * Forward declarations.
@@ -34,7 +37,7 @@ getfilename (char *prompt, char *buf, int nbuf)
   int ocpos, nskip = 0, didtry = 0;
   int eolchar = '\n';
   FILE *tmpf = NULL;
-  static char tmp[PATH_BUFFER_SIZE];
+  static char tmp[TMPBUF_SIZE];
 
   /* prompt the user for the input string */
   eprintf (prompt);
@@ -137,7 +140,7 @@ getfilename (char *prompt, char *buf, int nbuf)
       else if ((c == 0x09 || c == ' ' || c == '?'))
         {
           /* TAB, complete file name */
-          static char ffbuf[1024]; /* Expanded to safely hold the bash shell payload */
+          static char ffbuf[FFBUF_SIZE];
           int n, iswild = 0;
 
           didtry = 1;
@@ -173,9 +176,9 @@ getfilename (char *prompt, char *buf, int nbuf)
 
             #if defined(_WIN32) || defined(__MINGW32__)
               /* Windows Path Logic */
-              char win_temp_dir[MAX_PATH];
-              GetTempPathA (MAX_PATH, win_temp_dir);
-              GetTempFileNameA (win_temp_dir, "me", 0, tmp);
+              static char tmpdir[MAX_PATH];
+              GetTempPathA (MAX_PATH, tmpdir);
+              GetTempFileNameA (tmpdir, "me", 0, tmp);
               /* Call bash explicitly and wrap variables inside quotes */
               strcpy (ffbuf, "bash -c \"echo ");
               strcat (ffbuf, buf);
