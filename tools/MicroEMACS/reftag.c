@@ -396,6 +396,7 @@ readtagfile (char *fname)
 int
 preptag (const char *string)
 {
+  (void)string;
   return readtagfile ("TAGS");
 }
 

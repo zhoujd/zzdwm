@@ -13,6 +13,10 @@ CC = gcc
 
 all: $(TARGET)
 
+debug: CFLAGS = -Wall -Wextra -g -O0 -DDEBUG -fsanitize=address
+debug: LDFLAGS += -fsanitize=address
+debug: $(TARGET)
+
 utf8: utf8.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ -I. -Isys/unix -Itty/ncurses -DTEST $^
 

@@ -330,7 +330,7 @@ unicode (int f, int n, int k)
 #ifdef TEST
 
 int
-main (int argc, char *argv[])
+main ()
 {
   static uchar s[] = { 'a', '=', 0xc3, 0xa4, ',', 'i', '=', 0xe2, 0x88, 0xab, ',',
                        '+', '=', 0xf0, 0x90, 0x80, 0x8f, ',',
@@ -360,7 +360,7 @@ main (int argc, char *argv[])
       printf("char #%d in s in unicode is %x, size %d\n", i, u, size);
     }
   printf("Scanning backwards...\n");
-  p = s + strlen (s);
+  p = s + strlen ((const char*)s);
   i = len;
   while (p > s)
     {
