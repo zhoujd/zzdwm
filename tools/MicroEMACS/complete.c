@@ -11,6 +11,7 @@
 #include <windows.h>
 #define TMPBUF_SIZE MAX_PATH
 #define UNLINK_FILE _unlink
+#define CMD_PREFIX "bash -c"
 #else
 #include <unistd.h>
 #include <limits.h>
@@ -180,7 +181,8 @@ getfilename (char *prompt, char *buf, int nbuf)
               GetTempPathA (MAX_PATH, tmpdir);
               GetTempFileNameA (tmpdir, "me", 0, tmp);
               /* Call bash explicitly and wrap variables inside quotes */
-              strcpy (ffbuf, "bash -c \"echo ");
+              strcpy (ffbuf, CMD_PREFIX);
+              strcat (ffbuf, " \"echo ");
               strcat (ffbuf, buf);
               if (!iswild)
                 strcat (ffbuf, "*");
