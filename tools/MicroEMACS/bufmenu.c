@@ -154,7 +154,7 @@ start:
           eerase();
           return TRUE;
 
-          /* save file */
+        /* save file */
         case 's':
         case 'S':
           bp = get_buffer(bufptr);
@@ -167,7 +167,7 @@ start:
             }
           break;
 
-          /* toggle read only */
+        /* toggle read only */
         case 'v':
         case 'V':
         case '%':
@@ -177,7 +177,7 @@ start:
           goto start;
           break;
 
-          /* kill buffer */
+        /* kill buffer */
         case 'd':
         case 'D':
         case 'k':
@@ -191,7 +191,7 @@ start:
           goto start;
           break;
 
-          /* exit buffer menu */
+        /* exit buffer menu */
         case 'q':
         case 'Q':
         case 'x':
@@ -216,7 +216,7 @@ start:
           eerase();
           return TRUE;
 
-          /* any other key */
+        /* any other key */
         default:
           ttbeep();
           break;
