@@ -46,7 +46,7 @@ int save_position = 1;
 int save_zoom_level = 1;
 
 /* look */
-char* font                   = "dejavu sans mono 8";
+char* font                   = "SF Mono SC 12";
 char* default_bgcolor        = "#000000";
 char* default_fgcolor        = "#DDDDDD";
 char* inputbar_bgcolor       = "#141414";
