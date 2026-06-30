@@ -309,7 +309,6 @@ static void fdeck(const Arg *arg);
 static void sighup(int unused);
 static void sigterm(int unused);
 static void focussame(const Arg *arg);
-static void recreate(const Arg *arg);
 
 /* variables */
 static Client *prevclient = NULL;
@@ -3881,18 +3880,6 @@ fdeck(const Arg *arg)
 	default:
 		break;
 	}
-}
-
-void
-recreate(const Arg *arg)
-{
-	if (!selmon || !selmon->sel) {
-		spawn(arg);
-		return;
-	}
-	XUnmapWindow(dpy, selmon->sel->win);
-	XDestroyWindow(dpy, selmon->sel->win);
-	spawn(arg);
 }
 
 int
