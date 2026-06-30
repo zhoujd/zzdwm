@@ -180,6 +180,7 @@ typedef struct {
 
 /* commands for use by keybindings */
 static void create(const char *args[]);
+static void recreate(const char *args[]);
 static void copymode(const char *args[]);
 static void focusn(const char *args[]);
 static void focusid(const char *args[]);
@@ -1223,6 +1224,14 @@ create(const char *args[]) {
 	attach(c);
 	focus(c);
 	arrange();
+}
+
+static void
+recreate(const char *args[]) {
+	if (!sel)
+		return;
+	killclient(args);
+	create(args);
 }
 
 static void
