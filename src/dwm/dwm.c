@@ -3886,27 +3886,37 @@ fdeck(const Arg *arg)
 void
 recreate(const Arg *arg)
 {
+	XClassHint ch = { NULL, NULL };
+
 	/* 1. Safety check: if no active client or monitor, do a normal spawn */
 	if (!selmon || !selmon->sel) {
 		spawn(arg);
 		return;
 	}
 
-	Client *old_sel = selmon->sel;
+	/* 2. CORE EXCLUSION: Ask the X Server for the class hint info of the focused window. */
+	/* This bypasses the missing .class struct member by reading directly from X11. */
+	if (XGetClassHint(dpy, selmon->sel->win, &ch)) {
+		/* Check if the class matches your terminal (e.g., "St", "Alacritty", "kitty") */
+		if (ch.res_class && strcmp(ch.res_class, "St") != 0) {
+			/* If it is NOT a terminal, free X11 allocated memory and abort safely */
+			XFree(ch.res_name);
+			XFree(ch.res_class);
+			return;
+		}
+		/* Free the strings allocated by XGetClassHint to prevent memory leaks */
+		XFree(ch.res_name);
+		XFree(ch.res_class);
+	} else {
+		/* If X11 fails to fetch the class hint, play it safe and abort */
+		return;
+	}
 
-	/* 2. Save the layout properties of the current terminal */
-	unsigned int old_tags = old_sel->tags;
+	/* 3. Safe Destruction: Only triggered if the window passed the terminal check above */
+	XUnmapWindow(dpy, selmon->sel->win);
+	XDestroyWindow(dpy, selmon->sel->win);
 
-	/* 3. CORE FIX: Bypass the missing .pid member completely. */
-	/* We use native X11 core API to manually unmap and destroy the target window handler. */
-	/* This bypasses dwm's unstable internal timers and prevents layout crashes. */
-	XUnmapWindow(dpy, old_sel->win);
-	XDestroyWindow(dpy, old_sel->win);
-
-	/* 4. Lock the workspace tag snapshot so the upcoming window inherits the position */
-	selmon->tagset[selmon->seltags] = old_tags;
-
-	/* 5. Asynchronously launch the fresh, clean terminal replacement */
+	/* 4. Launch the new clean terminal replacement into the Master area */
 	spawn(arg);
 }
 
