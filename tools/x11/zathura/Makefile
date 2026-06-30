@@ -43,7 +43,7 @@ ${PROJECT}: ${OBJECTS}
 
 clean:
 	@rm -rf ${PROJECT} ${OBJECTS} ${PROJECT}-${VERSION}.tar.gz \
-		${DOBJECTS} ${PROJECT}-debug
+		${DOBJECTS} ${PROJECT}-debug config.h
 
 distclean: clean
 	@rm -rf config.h
