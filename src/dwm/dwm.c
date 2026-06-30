@@ -3886,37 +3886,12 @@ fdeck(const Arg *arg)
 void
 recreate(const Arg *arg)
 {
-	XClassHint ch = { NULL, NULL };
-
-	/* 1. Safety check: if no active client or monitor, do a normal spawn */
 	if (!selmon || !selmon->sel) {
 		spawn(arg);
 		return;
 	}
-
-	/* 2. CORE EXCLUSION: Ask the X Server for the class hint info of the focused window. */
-	/* This bypasses the missing .class struct member by reading directly from X11. */
-	if (XGetClassHint(dpy, selmon->sel->win, &ch)) {
-		/* Check if the class matches your terminal (e.g., "St", "Alacritty", "kitty") */
-		if (ch.res_class && strcmp(ch.res_class, "St") != 0) {
-			/* If it is NOT a terminal, free X11 allocated memory and abort safely */
-			XFree(ch.res_name);
-			XFree(ch.res_class);
-			return;
-		}
-		/* Free the strings allocated by XGetClassHint to prevent memory leaks */
-		XFree(ch.res_name);
-		XFree(ch.res_class);
-	} else {
-		/* If X11 fails to fetch the class hint, play it safe and abort */
-		return;
-	}
-
-	/* 3. Safe Destruction: Only triggered if the window passed the terminal check above */
 	XUnmapWindow(dpy, selmon->sel->win);
 	XDestroyWindow(dpy, selmon->sel->win);
-
-	/* 4. Launch the new clean terminal replacement into the Master area */
 	spawn(arg);
 }
 
