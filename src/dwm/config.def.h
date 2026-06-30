@@ -136,6 +136,7 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_i,            resetnmaster,     {.ui = nmaxmaster} },
 	{ MODKEY|ShiftMask,             XK_d,            resetnmaster,     {.ui = nminmaster} },
 	{ MODKEY,                       XK_Return,       zoom,             {0} },
+	{ MODKEY|ControlMask,           XK_Return,       recreate,         {.v = termcmd } },
 	{ MODKEY,                       XK_Tab,          view,             {0} },
 	{ MODKEY|ShiftMask,             XK_x,            killclient,       {0} },
 	{ MODKEY|ControlMask,           XK_x,            killclient,       {.ui = 1} }, /* others in tag */

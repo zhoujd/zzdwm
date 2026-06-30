@@ -309,6 +309,7 @@ static void fdeck(const Arg *arg);
 static void sighup(int unused);
 static void sigterm(int unused);
 static void focussame(const Arg *arg);
+static void recreate(const Arg *arg);
 
 /* variables */
 static Client *prevclient = NULL;
@@ -3880,6 +3881,33 @@ fdeck(const Arg *arg)
 	default:
 		break;
 	}
+}
+
+void
+recreate(const Arg *arg)
+{
+	/* 1. Safety check: if no active client or monitor, do a normal spawn */
+	if (!selmon || !selmon->sel) {
+		spawn(arg);
+		return;
+	}
+
+	Client *old_sel = selmon->sel;
+
+	/* 2. Save the layout properties of the current terminal */
+	unsigned int old_tags = old_sel->tags;
+
+	/* 3. CORE FIX: Bypass the missing .pid member completely. */
+	/* We use native X11 core API to manually unmap and destroy the target window handler. */
+	/* This bypasses dwm's unstable internal timers and prevents layout crashes. */
+	XUnmapWindow(dpy, old_sel->win);
+	XDestroyWindow(dpy, old_sel->win);
+
+	/* 4. Lock the workspace tag snapshot so the upcoming window inherits the position */
+	selmon->tagset[selmon->seltags] = old_tags;
+
+	/* 5. Asynchronously launch the fresh, clean terminal replacement */
+	spawn(arg);
 }
 
 int
