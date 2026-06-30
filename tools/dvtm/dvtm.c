@@ -1230,25 +1230,8 @@ static void
 recreate(const char *args[]) {
 	if (!sel)
 		return;
-	Client *old_sel = sel;
+	killclient(args);
 	create(args);
-	if (sel && old_sel != sel) {
-		Client *new_client = sel;
-		detach(new_client);
-		if (clients == old_sel) {
-			clients = new_client;
-		} else {
-			Client *c;
-			for (c = clients; c && c->next != old_sel; c = c->next);
-			if (c)
-				c->next = new_client;
-		}
-		new_client->next = old_sel->next;
-		kill(-old_sel->pid, SIGKILL);
-		destroy(old_sel);
-		focus(new_client);
-		arrange();
-	}
 }
 
 static void
