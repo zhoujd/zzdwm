@@ -1,63 +1,7 @@
 #!/bin/sh
-
-# 1. Inject the complete standard global system environment executable paths
-PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:$HOME/.local/bin"
-export PATH
-
-# =====================================================================
-# CORE FIX 1: Multi-layered Focus Cleaning Mechanism
-# =====================================================================
-ACTIVE_WIN=$(xdotool getwindowfocus 2>/dev/null)
-if [ -z "$ACTIVE_WIN" ] || [ "$ACTIVE_WIN" = "0" ]; then
-    ACTIVE_WIN=$(xdotool getactivewindow 2>/dev/null)
-fi
-
-# Critical safety wall: If the captured ID belongs to dwm's root window, abort.
-if [ -z "$ACTIVE_WIN" ] || [ "$ACTIVE_WIN" = "0" ]; then
-    exit 0
-fi
-
-# =====================================================================
-# CORE FIX 2: Accurate X11 Class Name Extraction
-# xprop returns a raw string format like: WM_CLASS(STRING) = "st", "St"
-# We use standard awk to cleanly pull out the exact second field (instance class)
-# and strip out all unnecessary quotes, spaces, and commas.
-# =====================================================================
-RAW_CLASS=$(xprop -id "$ACTIVE_WIN" WM_CLASS 2>/dev/null)
-WIN_CLASS=$(echo "$RAW_CLASS" | awk -F '"' '{print $4}' | tr '[:upper:]' '[:lower:]')
-
-# =====================================================================
-# CORE FIX 3: Strict Word Matching (Anti-Overlap Check)
-# Instead of fuzzy grep, we use absolute case matching to ensure "urxvt"
-# is never misidentified as "st" due to character overlaps.
-# =====================================================================
-TERMINAL_EXE=""
-case "$WIN_CLASS" in
-    "st"|"st-256color")
-        TERMINAL_EXE="st"
-        ;;
-    "urxvt"|"rxvt-unicode"|"rxvt")
-        TERMINAL_EXE="urxvt"
-        ;;
-    *)
-        # Security trigger: If it is a web browser, exit silently to protect data
-        exit 0
-        ;;
+export PATH="/usr/local/bin:/usr/bin:/bin:$HOME/.local/bin"
+W=$(xdotool getwindowfocus 2>/dev/null || xdotool getactivewindow)
+C=$(xprop -id "$W" WM_CLASS 2>/dev/null | awk -F '"' '{print tolower($4)}')
+case "$C" in 
+    st*|urxvt*|rxvt*) setsid "${C%%-*}" >/dev/null 2>&1 & sleep 0.03; xdotool windowkill "$W" ;;
 esac
-
-# =====================================================================
-# CORE FIX 4: Background Detachment Protocol
-# =====================================================================
-if command -v setsid >/dev/null 2>&1; then
-    setsid $TERMINAL_EXE >/dev/null 2>&1 &
-else
-    $TERMINAL_EXE >/dev/null 2>&1 &
-fi
-
-# Provide a tiny microsecond delay for the new terminal to securely finalize its fork cycle
-sleep 0.03
-
-# Destroy the old matching window cleanly from the X server hierarchy matrix
-xdotool windowkill "$ACTIVE_WIN" 2>/dev/null
-
-exit 0
