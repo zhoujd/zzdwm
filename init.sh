@@ -69,6 +69,7 @@ install_dm() {
         $libexec/dm/focuswin
         $libexec/dm/focuswincd
         $libexec/dm/dupterm
+        $libexec/dm/warpterm
         $libexec/dm/movewin
         $libexec/dm/deckwin
         $libexec/dm/doubledeck
