@@ -1230,8 +1230,11 @@ static void
 recreate(const char *args[]) {
 	if (!sel)
 		return;
-	killclient(args);
-	create(args);
+	killclient((const char* []){ NULL });
+	char *cwd = getcwd_by_pid(sel);
+	const char *pargs[3] = { NULL, NULL, cwd };
+	create(pargs);
+	free(cwd);
 }
 
 static void
