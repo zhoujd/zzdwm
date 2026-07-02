@@ -76,7 +76,7 @@ Key keys[] = {
   { MODKEY|ShiftMask,             XK_n,          cmd("prevwin &") },
   { MODKEY|ShiftMask,             XK_z,          cmd("slock &") },
   { MODKEY|ShiftMask,             XK_Return,     cmd("dupterm &") },
-  { MODKEY|ControlMask,           XK_Return,     cmd("warpterm &") },
+  { MODKEY|ControlMask,           XK_Return,     cmd("rebterm &") },
   { MODKEY,                       XK_slash,      cmd("dmenu_man &") },
   { MODKEY,                       XK_apostrophe, cmd("dmenu_desk &") },
   { MODKEY,                       XK_grave,      cmd("dmenu_menu &") },
