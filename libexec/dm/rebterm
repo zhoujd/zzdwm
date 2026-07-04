@@ -2,6 +2,8 @@
 export PATH="/usr/local/bin:/usr/bin:/bin:$HOME/.local/bin"
 W=$(xdotool getwindowfocus 2>/dev/null || xdotool getactivewindow)
 C=$(xprop -id "$W" WM_CLASS 2>/dev/null | awk -F '"' '{print tolower($4)}')
-case "$C" in 
-    st*|urxvt*|rxvt*) setsid "${C%%-*}" >/dev/null 2>&1 & sleep 0.03; xdotool windowkill "$W" ;;
+case "$C" in
+    st*|urxvt*|rxvt* )
+        setsid "${C%%-*}" >/dev/null 2>&1 & sleep 0.03; xdotool windowkill "$W"
+        ;;
 esac
