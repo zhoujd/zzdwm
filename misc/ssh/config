@@ -1,9 +1,6 @@
 ## config
 
 Host *
-  ForwardX11 no
-  ForwardX11Trusted no
-  ForwardAgent no
   TCPKeepAlive yes
   ServerAliveInterval 15
   ServerAliveCountMax 30
@@ -15,4 +12,7 @@ Host *
 Host github.com
   Hostname github.com
   User git
+  ForwardX11 no
+  ForwardX11Trusted no
+  ForwardAgent no
   PreferredAuthentications publickey
