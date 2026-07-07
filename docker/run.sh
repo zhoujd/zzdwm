@@ -129,6 +129,19 @@ clean() {
     cleannone
 }
 
+valgrind() {
+    echo "Run valgrind check"
+    local prog=${1:-""}
+    local img=zhoujd/valgrind:latest
+    local cmd="valgrind --leak-check=full $prog"
+    docker run \
+             --rm \
+             --cap-add=SYS_PTRACE \
+             -v $(pwd):/workspace \
+             $img \
+             $cmd
+}
+
 usage() {
     local app=$(basename $0)
     cat <<EOF
@@ -141,6 +154,7 @@ clean|-c      Clean
 shell|-s      Attach shell
 stop          Stop service
 status        Show status
+valgrind|-v   Run valgrind check
 Args:
 alpine|-a     Alpine (default)
 void|-v       Void Linux
@@ -174,6 +188,10 @@ case $CMD in
         ;;
     clean|-c )
         clean
+        ;;
+    valgrind|-v )
+        shift
+        valgrind "$@"
         ;;
     * )
         usage
