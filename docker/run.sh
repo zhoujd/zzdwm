@@ -130,16 +130,16 @@ clean() {
 }
 
 valgrind() {
-    echo "Run valgrind check"
-    local prog=${1:-""}
+    echo "Usage: valgrind --leak-check=full ./program"
     local img=zhoujd/valgrind:latest
-    local cmd="valgrind --leak-check=full $prog"
+    local cmd=bash
     docker run \
-             --rm \
-             --cap-add=SYS_PTRACE \
-             -v $(pwd):/workspace \
-             $img \
-             $cmd
+        --rm \
+        -it \
+        --cap-add=SYS_PTRACE \
+        -v $(pwd):/workspace \
+        ${img} \
+        ${cmd}
 }
 
 usage() {

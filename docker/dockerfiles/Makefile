@@ -1,7 +1,8 @@
 ## Makefile
 
 IMGS := \
-	build
+	build \
+	tool
 
 all: $(IMGS)
 
