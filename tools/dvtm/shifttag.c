@@ -117,7 +117,7 @@ shifttag(const char *args[])
 }
 
 void
-shiftempty(const char *args[])
+shiftvoid(const char *args[])
 {
 	shifttag_with_filter(args, false, true);
 }
