@@ -1499,6 +1499,9 @@ static void
 setlayout(const char *args[]) {
 	unsigned int i;
 
+	if (args && !strcmp(args[0], layout->symbol)) {
+		return;
+	}
 	/* Track the current layout as 'last' before changing it */
 	if (layout && layout != last_layout) {
 		last_layout = layout;
