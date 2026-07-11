@@ -242,6 +242,7 @@ typedef struct {
 	int nmaster[LENGTH(tags) + 1];
 	float mfact[LENGTH(tags) + 1];
 	Layout *layout[LENGTH(tags) + 1];
+	Layout *last_layout[LENGTH(tags) + 1];
 	bool runinall[LENGTH(tags) + 1];
 } Pertag;
 
@@ -257,7 +258,6 @@ static unsigned int seltags;
 static unsigned int tagset[2] = { 1, 1 };
 static bool mouse_events_enabled = ENABLE_MOUSE;
 static Layout *layout = layouts;
-static Layout *last_layout = NULL;
 static StatusBar bar = { .fd = -1, .lastpos = BAR_POS, .pos = BAR_POS, .autohide = BAR_AUTOHIDE, .h = 1 };
 static CmdFifo cmdfifo = { .fd = -1 };
 static const char *shell;
@@ -1484,12 +1484,12 @@ send(const char *args[]) {
 
 static void
 togglelayout(const char *args[]) {
-    if (!last_layout)
-        return; // Do nothing if no previous layout exists
+    if (!pertag.last_layout[pertag.curtag])
+        return;
 
     Layout *tmp = layout;
-    layout = last_layout;
-    last_layout = tmp;
+    layout = pertag.last_layout[pertag.curtag];
+    pertag.last_layout[pertag.curtag] = tmp;
 
 	pertag.layout[pertag.curtag] = layout;
 	arrange();
@@ -1503,8 +1503,8 @@ setlayout(const char *args[]) {
 		return;
 	}
 	/* Track the current layout as 'last' before changing it */
-	if (layout && layout != last_layout) {
-		last_layout = layout;
+	if (layout && layout != pertag.last_layout[pertag.curtag]) {
+		pertag.last_layout[pertag.curtag] = layout;
 	}
 	if (!args || !args[0] || !strcmp(args[0], "+1")) {
 		if (layout == &layouts[LENGTH(layouts) - 1])
