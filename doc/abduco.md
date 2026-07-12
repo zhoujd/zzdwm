@@ -33,6 +33,7 @@ $ abduco -a session-name
 ```
 $ abduco -c dvtm-session
 
-## Detach using CTRL-\ and later reattach with
+## Detach using CTRL-\ (default) and later reattach with
+## -e <char>  Set the detach character to <char>, defaults to ^\.
 $ abduco -a dvtm-session
 ```
