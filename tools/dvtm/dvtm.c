@@ -270,6 +270,7 @@ static bool deflogin = LOGIN_SHELL;
 static bool showtitle = SHOW_TITLE;
 static unsigned int deftag = DEF_TAG;
 static bool forceborder = FORCE_BORDER;
+static bool mod_key_pressed = false;
 
 static void
 eprint(const char *errstr, ...) {
@@ -449,7 +450,7 @@ draw_border(Client *c) {
 	wattrset(c->window, attrs);
 	getyx(c->window, y, x);
 	mvwhline(c->window, 0, 0, ACS_HLINE, c->w);
-	maxlen = c->w - 10;
+	maxlen = c->w - 12;
 	if (maxlen < 0)
 		maxlen = 0;
 	if ((size_t)maxlen < sizeof(c->title)) {
@@ -457,7 +458,10 @@ draw_border(Client *c) {
 		c->title[maxlen] = '\0';
 	}
 
-	mvwprintw(c->window, 0, 2, "[%s%s%d%c%d]",
+	bool is_mod_active = (c == sel && mod_key_pressed && bar.pos == BAR_OFF);
+
+	mvwprintw(c->window, 0, 2, "[%s%s%s%d%c%d]",
+	          is_mod_active ? "» " : "",
 	          (*c->title && showtitle) ? c->title : "",
 	          (*c->title && showtitle) ? " | " : "",
 	          c->order, '/', n);
@@ -2117,22 +2121,30 @@ main(int argc, char *argv[]) {
 				KeyBinding *binding = NULL;
 				if (code == KEY_MOUSE) {
 					key_index = 0;
+					mod_key_pressed = false;
 					handle_mouse();
 				} else if ((binding = keybinding(keys, key_index))) {
 					unsigned int key_length = MAX_KEYS;
 					while (key_length > 1 && !binding->keys[key_length-1])
 						key_length--;
 					if (key_index == key_length) {
+						mod_key_pressed = false;
 						binding->action.cmd(binding->action.args);
 						key_index = 0;
 						memset(keys, 0, sizeof(keys));
+					} else {
+						mod_key_pressed = true;
 					}
 				} else {
 					key_index = 0;
+					mod_key_pressed = false;
 					memset(keys, 0, sizeof(keys));
 					keypress(code);
 				}
 				drawbar();
+				if (sel) {
+					draw_border(sel);
+				}
 				if (is_content_visible(sel))
 					wnoutrefresh(sel->window);
 			}
