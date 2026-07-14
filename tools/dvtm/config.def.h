@@ -124,6 +124,7 @@ static KeyBinding bindings[] = {
 	{ { MOD, '-',            }, { setmfact,       { "-0.05" }                 } },
 	{ { MOD, '=',            }, { setmfact,       { "+0.05" }                 } },
 	{ { MOD, 'n',            }, { toggleminimize, { NULL }                    } },
+	{ { MOD, 'N',            }, { minimizeothers, { NULL }                    } },
 	{ { MOD, 's',            }, { togglebar,      { NULL }                    } },
 	{ { MOD, 'S',            }, { togglebarpos,   { NULL }                    } },
 	{ { MOD, 'M',            }, { togglemouse,    { NULL }                    } },
