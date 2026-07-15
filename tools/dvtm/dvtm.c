@@ -210,6 +210,7 @@ static void togglebar(const char *args[]);
 static void togglebarpos(const char *args[]);
 static void toggleminimize(const char *args[]);
 static void minimizeothers(const char *args[]);
+static void minimizeslaves(const char *args[]);
 static void togglemouse(const char *args[]);
 static void toggletitle(const char *args[]);
 static void togglerunall(const char *args[]);
@@ -1666,6 +1667,40 @@ minimizeothers(const char *args[]) {
 		if (sel && c == sel)
 			continue;
 		c->minimized = any_open;
+	}
+	arrange();
+	redraw(NULL);
+}
+
+static void
+minimizeslaves(const char *args[]) {
+	Client *c;
+	bool any_slave_open = false;
+	bool is_first = true;
+
+	for (c = clients; c; c = c->next) {
+		if (c->minimized || !is_content_visible(c))
+			continue;
+		if (is_first) {
+			is_first = false;
+			continue;
+		}
+		if (sel && c == sel)
+			continue;
+		any_slave_open = true;
+		break;
+	}
+	is_first = true;
+	for (c = clients; c; c = c->next) {
+		if (!is_content_visible(c) && !c->minimized)
+			continue;
+		if (is_first) {
+			is_first = false;
+			continue;
+		}
+		if (sel && c == sel)
+			continue;
+		c->minimized = any_slave_open;
 	}
 	arrange();
 	redraw(NULL);
