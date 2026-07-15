@@ -1676,13 +1676,13 @@ static void
 minimizeslaves(const char *args[]) {
 	Client *c;
 	bool any_slave_open = false;
-	bool is_first = true;
+	int master_count = 0;
 
 	for (c = clients; c; c = c->next) {
 		if (c->minimized || !is_content_visible(c))
 			continue;
-		if (is_first) {
-			is_first = false;
+		if (master_count < screen.nmaster) {
+			master_count++;
 			continue;
 		}
 		if (sel && c == sel)
@@ -1690,12 +1690,13 @@ minimizeslaves(const char *args[]) {
 		any_slave_open = true;
 		break;
 	}
-	is_first = true;
+
+	master_count = 0;
 	for (c = clients; c; c = c->next) {
 		if (!is_content_visible(c) && !c->minimized)
 			continue;
-		if (is_first) {
-			is_first = false;
+		if (master_count < screen.nmaster) {
+			master_count++;
 			continue;
 		}
 		if (sel && c == sel)
