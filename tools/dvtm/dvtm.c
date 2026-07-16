@@ -460,9 +460,10 @@ draw_border(Client *c) {
 	}
 
 	bool is_mod_active = (c == sel && mod_key_pressed && bar.pos == BAR_OFF);
-	char sep = is_mod_active ? '*' : '/';
+	char sep = '/';
 
-	mvwprintw(c->window, 0, 2, "[%s%s%d%c%d]",
+	mvwprintw(c->window, 0, 2, "[%s%s%s%d%c%d]",
+	          is_mod_active ? "» " : "",
 	          (*c->title && showtitle) ? c->title : "",
 	          (*c->title && showtitle) ? " | " : "",
 	          c->order, sep, n);
