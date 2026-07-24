@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare VERSION=${1:-"8.1.1045"}
+declare VERSION=${1:-"9.2.0843"}
 
 docker run -i --rm -v "$PWD":/out -u root -w /root zhoujd/alpine:latest /bin/sh <<EOF
 set -e
@@ -34,6 +34,6 @@ make install
 mkdir -p /out/vim
 cp -r /usr/local/* /out/vim
 
-strip /out/bin/vim
+strip /out/vim/bin/vim
 chown -R $(id -u):$(id -g) /out/vim
 EOF
