@@ -80,3 +80,13 @@ $ rm /var/tmp/elvis*.ses
 $ elvis -r
 no session file found in /var/tmp
 ```
+
+## Elvis with UTF-8 on Transparent iconv Filter
+
+```
+## Read/Convert a UTF-8 file into single-byte ISO-8859-1 upon opening:
+:r !iconv -f UTF-8 -t ISO-8859-1 yourfile.txt
+
+## Convert the buffer back to true UTF-8 when writing to disk:
+:w !iconv -f ISO-8859-1 -t UTF-8 > yourfile.txt
+```
