@@ -1,5 +1,8 @@
 #!/bin/bash
 
+## Test
+# vim -c "set shortmess+=I" -u NONE -U NONE --noplugin
+
 declare VERSION=${1:-"9.2.0843"}
 
 docker run -i --rm -v "$PWD":/out -u root -w /root zhoujd/alpine:latest /bin/sh <<EOF
