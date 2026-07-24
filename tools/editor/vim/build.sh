@@ -2,8 +2,10 @@
 
 declare VERSION=${1:-"8.1.1045"}
 
-docker run -i --rm -v "$PWD":/out -w /root docker.io/alpine:edge /bin/sh <<EOF
-apk --no-cache add gcc make musl-dev ncurses-static
+docker run -i --rm -v "$PWD":/out -u root -w /root zhoujd/alpine:latest /bin/sh <<EOF
+set -e
+
+apk --no-cache add wget
 
 wget "https://github.com/vim/vim/archive/v${VERSION}.tar.gz"
 tar xvfz "v${VERSION}.tar.gz"
