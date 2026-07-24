@@ -16,6 +16,7 @@ tar xvfz "v${VERSION}.tar.gz"
 cd "vim-${VERSION}"
 
 LDFLAGS="-static" ./configure \
+    --prefix=/usr/local \
     --disable-channel \
     --disable-gpm \
     --disable-gtktest \
