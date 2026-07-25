@@ -24,8 +24,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-char *getenv ();
-
 #define	CTRLZ	0x1a		/* DOS end of file      */
 
 static int ffp;			/* text file pointer    */
@@ -57,6 +55,7 @@ static int bufsize;		/* size of line buffer */
  * Forward declarations.
  */
 static void putbytes (const char *s, int len);
+static const char *convertpath (const char *path, char *out_buf, size_t buf_size);
 
 /*
  * Expand a filename that has a leading ~ or ~username.
@@ -90,13 +89,38 @@ ffisdir (
 }
 
 /*
+ * Translates POSIX drive paths (/c/dir/file) to Win32 paths (C:/dir/file)
+ * so native fopen(), stat(), and opendir() can open the file.
+ */
+static const char *
+convertpath (const char *path, char *out_buf, size_t buf_size)
+{
+  if (path == NULL)
+    return NULL;
+  /* If path matches /c/... or /C/... */
+  if (path[0] == '/' &&
+      ((path[1] >= 'a' && path[1] <= 'z') || (path[1] >= 'A' && path[1] <= 'Z')) &&
+      (path[2] == '/' || path[2] == '\0'))
+    {
+      char drive = path[1];
+      if (drive >= 'a' && drive <= 'z')
+        drive -= 32; /* Uppercase drive letter */
+      snprintf (out_buf, buf_size, "%c:%s", drive, path + 2);
+      return out_buf;
+    }
+  return path; /* Return original path if no conversion needed */
+}
+
+/*
  * Open a file for reading.  Used for text files, not profile files.
  */
 int
 ffropen (const char *fn)
 {
   writing = FALSE;
-  if ((ffp = open (fn, O_RDONLY | O_BINARY)) < 0)
+  char win_fn[1024];
+  const char *real_fn = convertpath (fn, win_fn, sizeof (win_fn));
+  if ((ffp = open (real_fn, O_RDONLY | O_BINARY)) < 0)
     return (FIOFNF);
   cindex = csize = 0;		/* set up for getbyte() */
   return (FIOSUC);
@@ -110,8 +134,10 @@ ffropen (const char *fn)
 int
 ffwopen (const char *fn)
 {
+  char win_fn[1024];
+  const char *real_fn = convertpath (fn, win_fn, sizeof (win_fn));
   if ((ffp =
-       open (fn, O_TRUNC | O_WRONLY | O_CREAT | O_BINARY,
+       open (real_fn, O_TRUNC | O_WRONLY | O_CREAT | O_BINARY,
 	     S_IREAD | S_IWRITE)) < 0)
     {
       eprintf ("Cannot open file for writing");
