@@ -383,9 +383,9 @@ forwsrch (void)
           if (tptr >= tend)
             {
               if ((tlp = lforw (tlp)) == lastline)
-          return (FALSE);
+                return (FALSE);
               if (upat[pp] != '\n')
-          goto fail;
+                goto fail;
               tend = lend (tlp);
               tbo = 0;
               tptr = lgets (tlp);
@@ -394,7 +394,7 @@ forwsrch (void)
             {
               uc = ugetc (tptr, 0, &ulen);
               if (!CEQ (uc, upat[pp]))
-          goto fail;
+                goto fail;
               tptr += ulen;
               ++tbo;
             }
@@ -463,17 +463,17 @@ backsrch (void)
           if (tbo == 0)
             {
               if ((tlp = lback (tlp)) == lastline)
-          return (FALSE);
+                return (FALSE);
               tbo = wllength (tlp);
               tptr = lend (tlp);
               if (upat[--pp] != '\n')
-          goto fail;
+                goto fail;
             }
           else
             {
               uc = ugetprevc (tptr, &ulen);
               if (!CEQ (uc, upat[--pp]))
-          goto fail;
+                goto fail;
               tptr -= ulen;
               --tbo;
             }
@@ -512,9 +512,9 @@ dosearch (int dir)
     case SRCH_REGFORW:
     case SRCH_REGBACK:
       if (regpat != NULL)
-	status = doregsrch (dir);
+        status = doregsrch (dir);
       else
-	status = ABORT;
+        status = ABORT;
       break;
     default:
       status = ABORT;
@@ -666,7 +666,7 @@ is_undo (int *pptr, int *dir)
     default:
       *pptr -= 1;
       if (*pptr < 0)
-	*pptr = 0;
+        *pptr = 0;
       pat[*pptr] = '\0';
       break;
     }
@@ -1087,9 +1087,9 @@ searchandreplace (int f, int query, int dir)
   if (dir == SRCH_REGFORW || dir == SRCH_REGBACK)
     {
       if (regpat != NULL)
-	free (regpat);
+        free (regpat);
       if ((regpat = regcomp ((const char *) pat)) == NULL)	/* regerror shows message */
-	return (FALSE);
+        return (FALSE);
     }
 
   if (query)
@@ -1372,9 +1372,8 @@ searchignore (int ch, int forward)
   int lss = srchstate;		/* local search state */
   struct statetrans *trans;
 
-  /* If not cmode, check all chars
-   */
-/*	if (!(curbp->b_mode & MDCMOD)) return (0); */
+  /* If not cmode, check all chars */
+  /* if (!(curbp->b_mode & MDCMOD)) return (0); */
 
   if (forward)
     trans = forward_trans;
@@ -1436,15 +1435,15 @@ searchparen (int f, int n, int k)
   for (i = 0; i < 4; i++)
     if (bracket[i][0] == chinc)
       {
-	chdec = bracket[i][1];
-	break;
+        chdec = bracket[i][1];
+        break;
       }
   for (i = 0; i < 4; i++)
     if (bracket[i][1] == chinc)
       {
-	chdec = bracket[i][0];
-	forward = FALSE;	/* search backwards     */
-	break;
+        chdec = bracket[i][0];
+        forward = FALSE;	/* search backwards     */
+        break;
       }
 
   srchstate = 0;		/* start state for ignore */
@@ -1457,7 +1456,7 @@ searchparen (int f, int n, int k)
             {			/* proceed to next line */
               clp = lforw (clp);
               if (clp == curbp->b_linep)
-          break;		/* if end of buffer     */
+                break;		/* if end of buffer     */
               len = wllength (clp);
               cbo = 0;
             }
@@ -1470,7 +1469,7 @@ searchparen (int f, int n, int k)
             {
               clp = lback (clp);
               if (clp == curbp->b_linep)
-          break;
+                break;
               len = wllength (clp);
               cbo = len;
             }
@@ -1484,12 +1483,12 @@ searchparen (int f, int n, int k)
           if (CEQ (ch, chdec))
             {
               if (count-- == 0)
-          {		/* We've found it   */
-            curwp->w_dot.p = clp;
-            curwp->w_dot.o = cbo;
-            curwp->w_flag |= WFMOVE;
-            return (TRUE);
-          }
+                {		/* We've found it   */
+                  curwp->w_dot.p = clp;
+                  curwp->w_dot.o = cbo;
+                  curwp->w_flag |= WFMOVE;
+                  return (TRUE);
+                }
             }
           else if (CEQ (ch, chinc))
             count++;
