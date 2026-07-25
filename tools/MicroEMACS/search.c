@@ -1158,7 +1158,7 @@ searchandreplace (int f, int query, int dir)
               curwp->w_savep = clp;
               repl = getrepl (dir, news, sub, sizeof (sub), &plen);
               if (lreplace (plen, repl, f) == FALSE)
-          return (FALSE);
+                return (FALSE);
               rcnt++;
               clp = curwp->w_savep;
             }
