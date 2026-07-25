@@ -310,6 +310,7 @@ int
 selfinsert (int f, int n, int k)
 {
   register int c;
+  int spaces, res;
 
   if (n < 0)
     return (FALSE);
@@ -320,7 +321,21 @@ selfinsert (int f, int n, int k)
     c -= '@';
   if (overstrike && curwp->w_dot.o != wllength (curwp->w_dot.p))
     ldelete (1, FALSE);
-  return (linsert (n, c, NULLPTR));
+  if (c == '\t' && !savetabs)
+    {
+      while (n--)
+        {
+          spaces = tabsize - (curwp->w_dot.o % tabsize);
+          if (spaces == 0)
+            spaces = tabsize;
+          res = linsert (spaces, ' ', NULLPTR);
+          if (res != TRUE)
+            return (res);
+        }
+      return (TRUE);
+    }
+  else
+    return (linsert (n, c, NULLPTR));
 }
 
 /*
