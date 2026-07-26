@@ -120,7 +120,7 @@ dired (int f, int n, int k)
   /* Wrap directory path in quotes to prevent shell breakage on spaces */
   snprintf (buf, sizeof(buf),
             "ls -aBhl --group-directories-first \"%s\" > \"%s\" 2>&1",
-            line, tmp_path);
+            fftilde(line), tmp_path);
 
   if (system (buf) == 0)
     {

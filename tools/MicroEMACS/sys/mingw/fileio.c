@@ -59,11 +59,41 @@ static const char *convertpath (const char *path, char *out_buf, size_t buf_size
 
 /*
  * Expand a filename that has a leading ~ or ~username.
- * FIXME: this does nothing on Windows.
  */
 char *
 fftilde (char *arg)
 {
+  static char expanded[NLINE];
+  const char *home = NULL;
+  char *slash;
+
+  if (arg == NULL || arg[0] != '~')
+    return arg;
+  slash = strchr (arg, '/');
+  if (slash == NULL)
+    slash = strchr (arg, '\\');
+  /* Case 1: Current user (~/path or ~) */
+  if (arg[1] == '\0' || arg[1] == '/' || arg[1] == '\\')
+    {
+      home = getenv ("HOME");
+      if (home == NULL)
+        home = getenv ("USERPROFILE");
+      if (home == NULL)
+        {
+          static char win_home[NLINE];
+          const char *drive = getenv ("HOMEDRIVE");
+          const char *path = getenv ("HOMEPATH");
+          if (drive != NULL && path != NULL)
+            {
+              snprintf (win_home, sizeof (win_home), "%s%s", drive, path);
+              home = win_home;
+            }
+        }
+      if (home == NULL)
+        return arg;
+      snprintf (expanded, sizeof (expanded), "%s%s", home, arg + 1);
+      return expanded;
+    }
   return arg;
 }
 
