@@ -212,10 +212,10 @@ KEY key[] = {
   {KCTLX | 'X',         nextbuffer,        "forw-buffer"},
   {KCTLX | 'Z',         enlargewind,       "enlarge-window"},
   {KCTLX | '!',         spawncmd,          "cmd"},
+  {KCTLX | '$',         changedir,         "cd"},
 #ifndef MINGW
   {KCTLX | '@',         spawnpipe,         "pipe"},
   {KCTLX | '#',         spawnfilter,       "filter"},
-  {KCTLX | '$',         changedir,         "cd"},
 #endif
   {KMETA | KCTRL | 'C', wordcount,         "count-words"},
   {KMETA | KCTRL | 'E', gccerror,          "gcc-error"},

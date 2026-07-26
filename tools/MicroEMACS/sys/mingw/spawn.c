@@ -178,3 +178,58 @@ spawncmd (int f, int n, int k)
   ttflush ();
   return TRUE;
 }
+
+/*
+ * Change current work directory
+ * Bound to "C-X $".
+ */
+int
+changedir (int f, int n, int k)
+{
+  register int s;
+  static char line[NLINE];
+  char *dname;
+
+  s = egetdname ("Path: ", line, sizeof (line));
+
+  /* User pressed Enter without typing a path -> display current CWD */
+  if (s == FALSE)
+    {
+      if (getcwd (line, sizeof (line)) == NULL)
+        {
+          eprintf ("Failed to getcwd.");
+          eerase ();
+          sgarbf = TRUE;
+          return FALSE;
+        }
+      eprintf ("CWD: %s", line);
+      return TRUE;
+    }
+  else if (s == ABORT)
+    {
+      return ABORT;
+    }
+
+  /* Expand ~ or ~username */
+  dname = fftilde (line);
+
+  /*
+   * On Windows, SetCurrentDirectoryA changes both the current drive
+   * AND directory simultaneously, supporting both '/' and '\'.
+   */
+  if (!SetCurrentDirectoryA (dname))
+    {
+      eprintf ("Failed to chdir: %s", dname);
+      eerase ();
+      sgarbf = TRUE;
+      return FALSE;
+    }
+
+  /* Fetch and print the canonical absolute directory after change */
+  if (getcwd (line, sizeof (line)) != NULL)
+    eprintf ("CWD: %s", line);
+  else
+    eprintf ("CWD: %s", dname);
+
+  return TRUE;
+}
