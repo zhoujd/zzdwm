@@ -31,9 +31,32 @@ static void outstring (char *s);
 static void sanitize_slashes (char *path);
 static void normalize_path (char *path);
 static void to_native_path (const char *posix_path, char *native_path, size_t max_len);
+static int is_regular_file (const char *path);
 static int collect_matches (const char *prefix,
                             char matches[][TMPBUF_SIZE],
-                            int max_matches);
+                            int max_matches,
+                            int dir_only);
+
+/*
+ * Check if the given POSIX path points to a regular file (not a directory)
+ */
+static int
+is_regular_file (const char *path)
+{
+  struct stat st;
+  char native[TMPBUF_SIZE];
+
+  if (path == NULL || *path == '\0')
+    return 0;
+
+  to_native_path (path, native, TMPBUF_SIZE);
+  if (stat (native, &st) == 0)
+    {
+      if (S_ISREG (st.st_mode))
+        return 1;
+    }
+  return 0;
+}
 
 /*
  * Helper: Converts backslashes to forward slashes, translates Windows drive
@@ -98,8 +121,7 @@ sanitize_slashes (char *path)
 }
 
 /*
- * Helper: Simplifies path components by resolving '.' and '..'
- * in-place within the buffer while protecting drive/root prefixes.
+ * Helper: Simplifies path components by resolving '.' and '..' safely
  */
 static void
 normalize_path (char *path)
@@ -111,28 +133,25 @@ normalize_path (char *path)
   if (path == NULL || *path == '\0')
     return;
 
-  /* 1. Calculate and protect root prefix length */
+  /* Calculate and protect root prefix length */
   if (path[0] == '/' && path[1] == '/')
     {
-      /* UNC path: //server/share */
       root_len = 2;
     }
   else if (path[0] == '/' && isalpha ((unsigned char)path[1]) &&
            (path[2] == '/' || path[2] == '\0'))
     {
-      /* MSYS style drive prefix: /c/ or /c */
       root_len = (path[2] == '/') ? 3 : 2;
     }
   else if (path[0] == '/')
     {
-      /* POSIX root: / */
       root_len = 1;
     }
 
   src = path + root_len;
   dst = path + root_len;
 
-  while (*src)
+  while (*src != '\0')
     {
       if (*src == '/')
         {
@@ -152,7 +171,7 @@ normalize_path (char *path)
         {
           src += (src[2] == '\0') ? 2 : 3;
 
-          /* Rewind dst, but NEVER past the protected root_len */
+          /* Rewind dst safely */
           if (dst > path + root_len)
             {
               if (dst[-1] == '/')
@@ -168,7 +187,7 @@ normalize_path (char *path)
       if (dst > path && dst[-1] != '/')
         *dst++ = PATH_SEP;
 
-      while (*src && *src != '/')
+      while (*src != '\0' && *src != '/')
         *dst++ = *src++;
     }
 
@@ -178,14 +197,12 @@ normalize_path (char *path)
 
   *dst = '\0';
 
-  /* Fallback to current directory if path collapses completely */
   if (path[0] == '\0')
     strcpy (path, ".");
 }
 
 /*
  * Helper: Converts a POSIX MSYS-style path (/c/path) to a Windows native path (C:/path)
- * solely for filesystem syscalls (opendir, stat) on Win32 builds.
  */
 static void
 to_native_path (const char *posix_path, char *native_path, size_t max_len)
@@ -212,12 +229,13 @@ to_native_path (const char *posix_path, char *native_path, size_t max_len)
 }
 
 /*
- * Helper: Perform in-memory directory scanning for filename matching.
+ * Helper: Perform in-memory directory scanning for filename/directory matching.
  */
 static int
 collect_matches (const char *prefix,
                  char matches[][TMPBUF_SIZE],
-                 int max_matches)
+                 int max_matches,
+                 int dir_only)
 {
   char dirpath[TMPBUF_SIZE];
   char pattern[TMPBUF_SIZE];
@@ -229,14 +247,12 @@ collect_matches (const char *prefix,
   struct dirent *entry;
   size_t pat_len;
 
-  /* 1. Copy raw input */
   strncpy (expanded_prefix, prefix, TMPBUF_SIZE - 1);
   expanded_prefix[TMPBUF_SIZE - 1] = '\0';
 
-  /* 2. Sanitize all separators to forward slashes */
   sanitize_slashes (expanded_prefix);
 
-  /* 3. Handle ~ expansion using $HOME */
+  /* Handle ~ expansion using $HOME */
   if (expanded_prefix[0] == '~')
     {
       const char *home = NULL;
@@ -260,41 +276,31 @@ collect_matches (const char *prefix,
       home = getenv ("HOME");
 #endif
 
-      if (home != NULL)
+      if (home != NULL && (expanded_prefix[1] == '/' || expanded_prefix[1] == '\0'))
         {
-          if (expanded_prefix[1] == '/' || expanded_prefix[1] == '\0')
+          char temp[TMPBUF_SIZE];
+          size_t home_len = strlen (home);
+
+          if (home_len < TMPBUF_SIZE)
             {
-              char temp[TMPBUF_SIZE];
-              size_t home_len = strlen (home);
+              memcpy (temp, home, home_len);
+              strncpy (temp + home_len, expanded_prefix + 1, TMPBUF_SIZE - home_len - 1);
+              temp[TMPBUF_SIZE - 1] = '\0';
 
-              if (home_len < TMPBUF_SIZE)
-                {
-                  /* Copy home directory safely */
-                  memcpy (temp, home, home_len);
-                  /* Append remaining path after '~' */
-                  strncpy (temp + home_len, expanded_prefix + 1, TMPBUF_SIZE - home_len - 1);
-                  temp[TMPBUF_SIZE - 1] = '\0';
+              strncpy (expanded_prefix, temp, TMPBUF_SIZE - 1);
+              expanded_prefix[TMPBUF_SIZE - 1] = '\0';
 
-                  strncpy (expanded_prefix, temp, TMPBUF_SIZE - 1);
-                  expanded_prefix[TMPBUF_SIZE - 1] = '\0';
-
-                  /* Normalize slashes after ~ replacement */
-                  sanitize_slashes (expanded_prefix);
-                }
-
-              /* Normalize slashes after ~ replacement */
               sanitize_slashes (expanded_prefix);
             }
         }
     }
 
-  /* 4. Collapse '.' and '..' path components */
   normalize_path (expanded_prefix);
 
   strcpy (dirpath, ".");
   pattern[0] = '\0';
 
-  /* 5. Separate directory path from search pattern prefix */
+  /* Separate directory path from search pattern prefix */
   last_slash = strrchr (expanded_prefix, '/');
 
   if (last_slash != NULL)
@@ -314,7 +320,6 @@ collect_matches (const char *prefix,
   else
     strcpy (pattern, expanded_prefix);
 
-  /* Convert POSIX dirpath to Windows Native path (/c/zznix -> C:/zznix) for opendir */
   to_native_path (dirpath, native_dirpath, TMPBUF_SIZE);
 
   dir = opendir (native_dirpath);
@@ -325,12 +330,10 @@ collect_matches (const char *prefix,
 
   while ((entry = readdir (dir)) != NULL && match_count < max_matches)
     {
-      /* Skip current/parent directory links */
       if (strcmp (entry->d_name, ".") == 0
           || strcmp (entry->d_name, "..") == 0)
         continue;
 
-      /* Match prefix (case-insensitive on Windows) */
 #if defined (_WIN32) || defined (__MINGW32__)
       if (pat_len == 0 || _strnicmp (entry->d_name, pattern, pat_len) == 0)
 #else
@@ -339,22 +342,6 @@ collect_matches (const char *prefix,
         {
           struct stat st;
           int ret;
-
-          /* Rebuild full matched display path cleanly; prevent double slashes at root */
-          if (last_slash != NULL)
-            {
-              if (strcmp (dirpath, "/") == 0)
-                ret = snprintf (matches[match_count], TMPBUF_SIZE, "/%s", entry->d_name);
-              else
-                ret = snprintf (matches[match_count], TMPBUF_SIZE, "%s/%s", dirpath, entry->d_name);
-            }
-          else
-            ret = snprintf (matches[match_count], TMPBUF_SIZE, "%s", entry->d_name);
-
-          if (ret < 0 || ret >= TMPBUF_SIZE)
-            continue;
-
-          /* Perform stat check to append trailing slash for directories */
           char full_check_path[TMPBUF_SIZE];
           char native_full_check[TMPBUF_SIZE];
 
@@ -368,7 +355,28 @@ collect_matches (const char *prefix,
 
           to_native_path (full_check_path, native_full_check, TMPBUF_SIZE);
 
-          if (stat (native_full_check, &st) == 0 && S_ISDIR (st.st_mode))
+          int is_dir = (stat (native_full_check, &st) == 0 && S_ISDIR (st.st_mode));
+
+          /* Filter out files if dir_only requested */
+          if (dir_only && !is_dir)
+            continue;
+
+          /* Rebuild full matched display path cleanly */
+          if (last_slash != NULL)
+            {
+              if (strcmp (dirpath, "/") == 0)
+                ret = snprintf (matches[match_count], TMPBUF_SIZE, "/%s", entry->d_name);
+              else
+                ret = snprintf (matches[match_count], TMPBUF_SIZE, "%s/%s", dirpath, entry->d_name);
+            }
+          else
+            ret = snprintf (matches[match_count], TMPBUF_SIZE, "%s", entry->d_name);
+
+          if (ret < 0 || ret >= TMPBUF_SIZE)
+            continue;
+
+          /* Append trailing slash for directories */
+          if (is_dir)
             {
               size_t len = strlen (matches[match_count]);
               if (len < TMPBUF_SIZE - 2)
@@ -392,43 +400,34 @@ collect_matches (const char *prefix,
 int
 getfilename (char *prompt, char *buf, int nbuf)
 {
-  int cpos = 0; /* Current character position in string */
+  int cpos = 0;
   int c;
   int eolchar = '\n';
 
-  /* Match tracking state */
   static char matches[MAX_MATCHES][TMPBUF_SIZE];
   int match_count = 0;
   int match_idx = -1;
 
-  /* Clean initial buffer */
   memset (buf, 0, nbuf);
-
-  /* Prompt the user for the input string */
   eprintf (prompt);
 
   for (;;)
     {
-      /* Get a character from the user */
       c = ttgetc ();
 
-      /* If it is a <ret>, change it to a <NL> */
       if (c == CCHR ('M'))
         c = '\n';
 
-      /* Reset TAB match state whenever any non-completion key is pressed */
-      if (c != 0x09 && c != ' ' && c != '?')
+      /* Reset match state on non-completion key */
+      if (c != 0x09 && c != ' ' && c != '?' && c != CCHR ('F') && c != 0x06)
         {
           match_count = 0;
           match_idx = -1;
         }
 
-      /* Line terminator: return completed string */
       if (c == eolchar)
         {
           buf[cpos] = '\0';
-
-          /* Clear the message line */
           eerase ();
           ttflush ();
 
@@ -438,7 +437,6 @@ getfilename (char *prompt, char *buf, int nbuf)
           return TRUE;
         }
 
-      /* Abort input (^G) */
       if (c == CCHR ('G'))
         {
           ctrlg (FALSE, 0, KRANDOM);
@@ -447,33 +445,71 @@ getfilename (char *prompt, char *buf, int nbuf)
           return ABORT;
         }
 
-      /* Rubout / Erase (Backspace) */
-      else if (c == 0x7F || c == 0x08 || c == 0x107)
+      /* Ctrl+F (0x06): Advance into DIRECTORIES ONLY */
+      else if (c == CCHR ('F') || c == 0x06)
         {
-          if (cpos != 0)
+          buf[cpos] = '\0';
+
+          /* FAST GUARD: If current buffer points directly to a file, beep and do nothing */
+          if (is_regular_file (buf))
             {
-              outstring ("\b \b");
-              --ttcol;
-              if (buf[--cpos] < 0x20)
+              ttbeep ();
+              continue;
+            }
+
+          match_count = collect_matches (buf, matches, MAX_MATCHES, 1);
+          match_idx = 0;
+
+          if (match_count > 0)
+            {
+              int n;
+
+              while (cpos > 0)
                 {
                   outstring ("\b \b");
                   --ttcol;
+                  cpos--;
                 }
-              if (buf[cpos] == '\n')
+
+              strncpy (buf, matches[match_idx], (size_t) (nbuf - 1));
+              buf[nbuf - 1] = '\0';
+              cpos = (int) strlen (buf);
+
+              match_count = 0;
+              match_idx = -1;
+
+              for (n = 0; n < cpos; n++)
                 {
-                  outstring ("\b\b  \b\b");
-                  ttcol -= 2;
+                  c = buf[n];
+                  if ((c < ' ') && (c != '\n'))
+                    {
+                      outstring ("^");
+                      ++ttcol;
+                      c ^= 0x40;
+                    }
+
+                  if (c != '\n')
+                    ttputc (c);
+                  else
+                    {
+                      outstring ("<NL>");
+                      ttcol += 3;
+                    }
+                  ++ttcol;
                 }
-              buf[cpos] = '\0';
               ttflush ();
             }
+          else
+            {
+              ttbeep ();
+            }
         }
-      /* Ctrl+B (0x02): Go up to parent directory */
+
+      /* Ctrl+B (0x02): Up to parent directory */
       else if (c == CCHR ('B') || c == 0x02)
         {
           buf[cpos] = '\0';
 
-          /* Erase current prompt input from screen */
           while (cpos > 0)
             {
               outstring ("\b \b");
@@ -481,10 +517,8 @@ getfilename (char *prompt, char *buf, int nbuf)
               cpos--;
             }
 
-          /* If buffer has a path, remove the last directory segment */
           if (buf[0] != '\0')
             {
-              /* Remove trailing slash if user ended input with '/' */
               size_t len = strlen (buf);
               if (len > 1 && buf[len - 1] == PATH_SEP)
                 buf[len - 1] = '\0';
@@ -492,38 +526,32 @@ getfilename (char *prompt, char *buf, int nbuf)
               char *last_slash = strrchr (buf, PATH_SEP);
               if (last_slash != NULL)
                 {
-                  /* Handle root directory cases (/ or /c/) */
                   if (last_slash == buf)
                     {
-                      buf[1] = '\0'; /* Truncate back to "/" */
+                      buf[1] = '\0';
                     }
                   else
                     {
                       *last_slash = PATH_SEP;
-                      *(last_slash + 1) = '\0'; /* Truncate to parent folder/ */
+                      *(last_slash + 1) = '\0';
                     }
                 }
               else
                 {
-                  /* No slashes left: clear buffer or set to ".." */
                   buf[0] = '\0';
                 }
             }
           else
             {
-              /* Empty buffer: navigate up using "../" */
               strcpy (buf, "../");
             }
 
-          /* Clean and normalize new parent path */
           sanitize_slashes (buf);
           normalize_path (buf);
 
-          /* Reset completion match state */
           match_count = 0;
           match_idx = -1;
 
-          /* Render updated parent directory path back to screen */
           cpos = (int) strlen (buf);
           for (int n = 0; n < cpos; n++)
             {
@@ -545,6 +573,28 @@ getfilename (char *prompt, char *buf, int nbuf)
               ++ttcol;
             }
           ttflush ();
+        }
+
+      /* Backspace */
+      else if (c == 0x7F || c == 0x08 || c == 0x107)
+        {
+          if (cpos != 0)
+            {
+              outstring ("\b \b");
+              --ttcol;
+              if (buf[--cpos] < 0x20)
+                {
+                  outstring ("\b \b");
+                  --ttcol;
+                }
+              if (buf[cpos] == '\n')
+                {
+                  outstring ("\b\b  \b\b");
+                  ttcol -= 2;
+                }
+              buf[cpos] = '\0';
+              ttflush ();
+            }
         }
 
       /* Kill line (^U) */
@@ -570,20 +620,18 @@ getfilename (char *prompt, char *buf, int nbuf)
           ttflush ();
         }
 
-      /* TAB or '?' — Filename completion */
+      /* TAB / Space / '?' — Filename & Directory completion */
       else if (c == 0x09 || c == ' ' || c == '?')
         {
           buf[cpos] = '\0';
 
-          /* First TAB press: populate matches from directory */
           if (match_count == 0)
             {
-              match_count = collect_matches (buf, matches, MAX_MATCHES);
+              match_count = collect_matches (buf, matches, MAX_MATCHES, 0);
               match_idx = 0;
             }
           else
             {
-              /* Subsequent TAB press: cycle through matched files */
               match_idx = (match_idx + 1) % match_count;
             }
 
@@ -591,7 +639,6 @@ getfilename (char *prompt, char *buf, int nbuf)
             {
               int n;
 
-              /* Erase current prompt line buffer from display */
               while (cpos > 0)
                 {
                   outstring ("\b \b");
@@ -599,13 +646,11 @@ getfilename (char *prompt, char *buf, int nbuf)
                   cpos--;
                 }
 
-              /* Copy selected match into buffer */
               strncpy (buf, matches[match_idx], (size_t) (nbuf - 1));
               buf[nbuf - 1] = '\0';
 
               cpos = (int) strlen (buf);
 
-              /* If single directory match, clear state so subsequent TAB enters directory */
               if (match_count == 1)
                 {
                   if (cpos > 0 && buf[cpos - 1] == PATH_SEP)
@@ -615,7 +660,6 @@ getfilename (char *prompt, char *buf, int nbuf)
                     }
                 }
 
-              /* Render completed string back to editor terminal */
               for (n = 0; n < cpos; n++)
                 {
                   c = buf[n];
@@ -638,10 +682,10 @@ getfilename (char *prompt, char *buf, int nbuf)
               ttflush ();
             }
           else
-            ttbeep (); /* No matching files found */
+            ttbeep ();
         }
 
-      /* Regular printable character input */
+      /* Character input */
       else
         {
           if (cpos < nbuf - 1)
@@ -661,9 +705,6 @@ getfilename (char *prompt, char *buf, int nbuf)
     }
 }
 
-/*
- * Output a string of characters to terminal
- */
 void
 outstring (char *s)
 {
