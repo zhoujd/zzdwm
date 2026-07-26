@@ -705,6 +705,9 @@ getfilename (char *prompt, char *buf, int nbuf)
     }
 }
 
+/*
+ * Output a string of characters to terminal
+ */
 void
 outstring (char *s)
 {
