@@ -139,3 +139,42 @@ dired (int f, int n, int k)
 
   return TRUE;
 }
+
+/*
+ * Run a one-liner in a subjob.
+ * When the command returns, wait for a single
+ * character to be typed, then mark the screen as
+ * garbage so a full repaint is done.
+ * Bound to "C-X !".
+ */
+int
+spawncmd (int f, int n, int k)
+{
+  register int s;
+  static char line[NLINE];
+
+  if ((s = ereply ("! ", line, sizeof(line))) != TRUE)
+    return (s);
+
+  /* Force repaint */
+  eerase ();
+  sgarbf = TRUE;
+
+  /* Run the command */
+  ttputc ('\n');                /* Already have '\r'    */
+  ttcolor (CTEXT);              /* Normal color.        */
+  ttwindow (0, nrow - 1);       /* Full screen scroll.  */
+  ttmove (nrow - 1, 0);         /* Last line.           */
+  ttflush ();
+  ttclose ();
+  if (system (line) == -1)
+    printf ("Failed on system %s\n", line);
+  else
+    printf ("(End)");
+  fflush (stdout);              /* to be sure P.K.      */
+  while ((s = ttgetc ()) != EOF && s != '\n' && s != '\r');
+  printf ("\n");
+  ttopen ();
+  ttflush ();
+  return TRUE;
+}

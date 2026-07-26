@@ -211,8 +211,8 @@ KEY key[] = {
   {KCTLX | 'V',         showversion,       "display-version"},
   {KCTLX | 'X',         nextbuffer,        "forw-buffer"},
   {KCTLX | 'Z',         enlargewind,       "enlarge-window"},
-#ifndef MINGW
   {KCTLX | '!',         spawncmd,          "cmd"},
+#ifndef MINGW
   {KCTLX | '@',         spawnpipe,         "pipe"},
   {KCTLX | '#',         spawnfilter,       "filter"},
   {KCTLX | '$',         changedir,         "cd"},
