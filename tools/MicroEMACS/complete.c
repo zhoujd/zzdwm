@@ -468,6 +468,84 @@ getfilename (char *prompt, char *buf, int nbuf)
               ttflush ();
             }
         }
+      /* Ctrl+B (0x02): Go up to parent directory */
+      else if (c == CCHR ('B') || c == 0x02)
+        {
+          buf[cpos] = '\0';
+
+          /* Erase current prompt input from screen */
+          while (cpos > 0)
+            {
+              outstring ("\b \b");
+              --ttcol;
+              cpos--;
+            }
+
+          /* If buffer has a path, remove the last directory segment */
+          if (buf[0] != '\0')
+            {
+              /* Remove trailing slash if user ended input with '/' */
+              size_t len = strlen (buf);
+              if (len > 1 && buf[len - 1] == PATH_SEP)
+                buf[len - 1] = '\0';
+
+              char *last_slash = strrchr (buf, PATH_SEP);
+              if (last_slash != NULL)
+                {
+                  /* Handle root directory cases (/ or /c/) */
+                  if (last_slash == buf)
+                    {
+                      buf[1] = '\0'; /* Truncate back to "/" */
+                    }
+                  else
+                    {
+                      *last_slash = PATH_SEP;
+                      *(last_slash + 1) = '\0'; /* Truncate to parent folder/ */
+                    }
+                }
+              else
+                {
+                  /* No slashes left: clear buffer or set to ".." */
+                  buf[0] = '\0';
+                }
+            }
+          else
+            {
+              /* Empty buffer: navigate up using "../" */
+              strcpy (buf, "../");
+            }
+
+          /* Clean and normalize new parent path */
+          sanitize_slashes (buf);
+          normalize_path (buf);
+
+          /* Reset completion match state */
+          match_count = 0;
+          match_idx = -1;
+
+          /* Render updated parent directory path back to screen */
+          cpos = (int) strlen (buf);
+          for (int n = 0; n < cpos; n++)
+            {
+              char ch = buf[n];
+              if ((ch < ' ') && (ch != '\n'))
+                {
+                  outstring ("^");
+                  ++ttcol;
+                  ch ^= 0x40;
+                }
+
+              if (ch != '\n')
+                ttputc (ch);
+              else
+                {
+                  outstring ("<NL>");
+                  ttcol += 3;
+                }
+              ++ttcol;
+            }
+          ttflush ();
+        }
 
       /* Kill line (^U) */
       else if (c == 0x15)
