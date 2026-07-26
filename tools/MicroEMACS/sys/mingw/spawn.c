@@ -19,6 +19,16 @@
 
 #include "def.h"
 #include <process.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <ctype.h>
+#include <io.h>
+#include <windows.h>
+
+#define TMPBUF_SIZE MAX_PATH
 
 /* extern char *getenv(char *); */
 
@@ -67,20 +77,65 @@ openpipe (const char *program, const char *args[],
 
 /*
  * Create temp file path
+ * Windows safe temporary file creation
  */
 int
 gettempfile (char *path, int size, const char *prefix)
 {
-  static const char *tmp = NULL;	/* Saved "TMP" name.    */
+  static char temp_dir[NLINE];
 
-  if (tmp == NULL)
+  (void)size;
+  (void)prefix;
+  GetTempPathA (sizeof(temp_dir), temp_dir);
+  GetTempFileNameA (temp_dir, "dir", 0, path);
+  return TRUE;
+}
+
+/*
+ * List current directory
+ * Bound to "C-X d".
+ */
+int
+dired (int f, int n, int k)
+{
+  register int s;
+  register BUFFER *bp;
+  static char line[NLINE];
+  static char buf[NLINE * 3];
+  char tmp_path[NLINE];
+  char bname[] = "*dired*";
+
+  s = egetdname ("Dired: ", line, sizeof(line));
+  if (s == FALSE || line[0] == '\0')
+    snprintf (line, sizeof(line), ".");
+  else if (s == ABORT)
+    return s;
+
+  /* Force repaint */
+  eerase ();
+  sgarbf = TRUE;
+
+  gettempfile (tmp_path, NLINE, NULL);
+
+  /* Wrap directory path in quotes to prevent shell breakage on spaces */
+  snprintf (buf, sizeof(buf),
+            "ls -aBhl --group-directories-first \"%s\" > \"%s\" 2>&1",
+            line, tmp_path);
+
+  if (system (buf) == 0)
     {
-      tmp = getenv ("TMP");
-      if (tmp == NULL)
-        tmp = getenv ("TEMP");
-      if (tmp == NULL)
-        tmp = "./tmp";			/* Safer.               */
+      if ((bp = bfind (bname, TRUE)) != NULL)
+        {
+          bclear (bp);
+          swbuffer (bp);
+          readin (tmp_path);
+          strcpy (bp->b_bname, bname);
+          strcpy (bp->b_fname, "");
+        }
     }
-  snprintf(path, size, "%s/%sXXXXXX", tmp, prefix);
+
+  /* Cleanup temp file */
+  remove (tmp_path);
+
   return TRUE;
 }
