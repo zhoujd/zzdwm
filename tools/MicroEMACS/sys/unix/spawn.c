@@ -570,7 +570,6 @@ dired (int f, int n, int k)
   static char line[NLINE];
   static char buf[NLINE*3];
   char tmp[] = "/tmp/meXXXXXX";
-  char lpar[] = "-aBhl --group-directories-first";
   char bname[] = "*dired*";
   int fd = -1;
 
@@ -590,10 +589,11 @@ dired (int f, int n, int k)
   if (unlink (tmp) == -1)
     goto end;
 
-  /* Run the command */
+  /* Wrap directory path in quotes to prevent shell breakage on spaces */
   snprintf (buf, sizeof(buf),
-            "(realpath %s && ls %s %s) >%s 2>&1",
-            line, line, lpar, tmp);
+            "ls -aBhl --group-directories-first \"%s\" > \"%s\" 2>&1",
+            fftilde(line), tmp);
+
   if (system (buf) == -1)
     goto end;
   fflush (stdout);              /* to be sure P.K.      */
