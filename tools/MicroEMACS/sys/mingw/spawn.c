@@ -61,7 +61,7 @@ spawncli (int f, int n, int k)
   spawnlp (0, cspec, cspec, "", "", NULLPTR);
   ttopen ();
   sgarbf = TRUE;
-  return (TRUE);
+  return TRUE;
 }
 
 /*
@@ -190,48 +190,36 @@ spawnpipe (int f, int n, int k)
   char cmd_buf[NLINE * 2 + 32]; /* Safe buffer to prevent truncation warnings */
 
   if ((s = ereply ("Pipe: ", line, sizeof (line))) != TRUE)
-    {
-      return (s);
-    }
+    return (s);
 
   /* Force repaint */
   eerase ();
   sgarbf = TRUE;
 
   if (gettempfile (tmp, sizeof (tmp), "dir") != TRUE)
-    {
-      goto end;
-    }
-
+    goto end;
   /* Construct the full shell command into the large safe buffer */
   snprintf (cmd_buf, sizeof (cmd_buf), "%s >\"%s\" 2>&1", line, tmp);
-
   if (system (cmd_buf) == -1)
     {
       printf ("Failed on system %s\n", cmd_buf);
       goto end;
     }
   fflush (stdout);
-
   /* Read back file contents and populate the target microEMACS buffer */
   if ((bp = bfind (bname, TRUE)) != NULL)
     {
       bclear (bp);
       swbuffer (bp);
       if (readin (tmp) == FALSE)
-        {
-          goto end;
-        }
+        goto end;
       strcpy (bp->b_bname, bname);
       strcpy (bp->b_fname, "");
     }
 
 end:
   if (tmp[0] != '\0')
-    {
-      remove (tmp);
-    }
-
+    remove (tmp);
   return (TRUE);
 }
 
@@ -251,14 +239,10 @@ spawnfilter (int f, int n, int k)
   char cmd_buf[NLINE * 3 + 32]; /* Safe buffer to hold line + input path + output path */
 
   if (curbp->b_flag & BFRO) /* if buffer is read-only       */
-    {
-      return (FALSE);       /* fail                         */
-    }
+    return (FALSE);         /* fail                         */
 
   if ((s = ereply ("# ", line, sizeof (line))) != TRUE)
-    {
-      return (s);
-    }
+    return (s);
 
   /* Force repaint */
   eerase ();
@@ -266,51 +250,34 @@ spawnfilter (int f, int n, int k)
 
   if (gettempfile (filin, sizeof (filin), "me") != TRUE
       || gettempfile (filout, sizeof (filout), "me") != TRUE)
-    {
-      goto end;
-    }
-
+    goto end;
   if (writeout (filin) != TRUE)
-    {
-      goto end;
-    }
-
+    goto end;
   /* Construct the full filter command into the large safe buffer */
   snprintf (cmd_buf, sizeof (cmd_buf), "%s \"%s\" >\"%s\" 2>&1",
             line, filin, filout);
-
   if (system (cmd_buf) == -1)
     {
       printf ("Failed on system %s\n", cmd_buf);
       goto end;
     }
   fflush (stdout);
-
   /* Read back filtered contents and populate the target buffer */
   if ((bp = bfind (bname, TRUE)) != NULL)
     {
       bclear (bp);
       swbuffer (bp);
-
       if (readin (filout) == FALSE)
-        {
-          goto end;
-        }
+        goto end;
       strcpy (bp->b_bname, bname);
       strcpy (bp->b_fname, "");
     }
 
 end:
   if (filin[0] != '\0')
-    {
-      remove (filin);
-    }
-
+    remove (filin);
   if (filout[0] != '\0')
-    {
-      remove (filout);
-    }
-
+    remove (filout);
   return (TRUE);
 }
 
@@ -327,7 +294,6 @@ changedir (int f, int n, int k)
   char *dname;
 
   s = egetdname ("Path: ", line, sizeof (line));
-
   /* User pressed Enter without typing a path -> display current CWD */
   if (s == FALSE)
     {
@@ -346,10 +312,8 @@ changedir (int f, int n, int k)
     {
       return ABORT;
     }
-
   /* Expand ~ or ~username */
   dname = fftilde (line);
-
   /*
    * On Windows, SetCurrentDirectoryA changes both the current drive
    * AND directory simultaneously, supporting both '/' and '\'.
@@ -361,7 +325,6 @@ changedir (int f, int n, int k)
       sgarbf = TRUE;
       return FALSE;
     }
-
   /* Fetch and print the canonical absolute directory after change */
   if (getcwd (line, sizeof (line)) != NULL)
     {
@@ -370,10 +333,8 @@ changedir (int f, int n, int k)
     }
   else
     eprintf ("CWD: %s", dname);
-
   return TRUE;
 }
-
 
 /*
  * List current directory
@@ -400,12 +361,10 @@ dired (int f, int n, int k)
   sgarbf = TRUE;
 
   gettempfile (tmp_path, NLINE, NULL);
-
   /* Wrap directory path in quotes to prevent shell breakage on spaces */
   snprintf (buf, sizeof(buf),
             "ls -aBhl --group-directories-first \"%s\" > \"%s\" 2>&1",
             fftilde(line), tmp_path);
-
   if (system (buf) == 0)
     {
       if ((bp = bfind (bname, TRUE)) != NULL)
@@ -417,9 +376,7 @@ dired (int f, int n, int k)
           strcpy (bp->b_fname, "");
         }
     }
-
   /* Cleanup temp file */
   remove (tmp_path);
-
   return TRUE;
 }
