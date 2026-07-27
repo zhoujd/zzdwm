@@ -29,10 +29,9 @@
 #include <windows.h>
 #include <ctype.h>
 
-#define TMPBUF_SIZE MAX_PATH
-
-/* extern char *getenv(char *); */
-
+/*
+ * Global declarations.
+ */
 char *cspec = NULL;		/* Command string.      */
 
 /*
@@ -357,7 +356,7 @@ dired (int f, int n, int k)
   register int s;
   register BUFFER *bp;
   static char line[NLINE];
-  static char buf[NLINE * 3];
+  static char buf[NLINE*3];
   static char tmp_path[NLINE];
   char bname[] = "*dired*";
 
