@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include <io.h>
 #include <windows.h>
+#include <ctype.h>
 
 #define TMPBUF_SIZE MAX_PATH
 
@@ -179,6 +180,51 @@ spawncmd (int f, int n, int k)
   return TRUE;
 }
 
+
+/*
+ * Translates to POSIX drive paths (/c/dir/file)
+ */
+static const char *
+convertposix (const char *path, char *out_buf, size_t buf_size)
+{
+  if (!path || !out_buf || buf_size == 0)
+    {
+      return NULL;
+    }
+  size_t i = 0;
+  size_t j = 0;
+  if (path[0] != '\0' && path[1] == ':')
+    {
+      if (j + 3 > buf_size)
+        {
+          out_buf[0] = '\0';
+          return NULL;
+        }
+      out_buf[j++] = '/';
+      out_buf[j++] = (char)tolower((unsigned char)path[0]);
+      i = 2;
+    }
+  while (path[i] != '\0')
+    {
+      if (j + 2 > buf_size)
+        {
+          out_buf[0] = '\0';
+          return NULL;
+        }
+      if (path[i] == '\\')
+        {
+          out_buf[j++] = '/';
+        }
+      else
+        {
+          out_buf[j++] = path[i];
+        }
+      i++;
+    }
+  out_buf[j] = '\0';
+  return out_buf;
+}
+
 /*
  * Change current work directory
  * Bound to "C-X $".
@@ -188,6 +234,7 @@ changedir (int f, int n, int k)
 {
   register int s;
   static char line[NLINE];
+  static char buf[NLINE];
   char *dname;
 
   s = egetdname ("Path: ", line, sizeof (line));
@@ -202,7 +249,8 @@ changedir (int f, int n, int k)
           sgarbf = TRUE;
           return FALSE;
         }
-      eprintf ("CWD: %s", line);
+      convertposix (line, buf, NLINE);
+      eprintf ("CWD: %s", buf);
       return TRUE;
     }
   else if (s == ABORT)
@@ -227,7 +275,10 @@ changedir (int f, int n, int k)
 
   /* Fetch and print the canonical absolute directory after change */
   if (getcwd (line, sizeof (line)) != NULL)
-    eprintf ("CWD: %s", line);
+    {
+      convertposix (line, buf, NLINE);
+      eprintf ("CWD: %s", buf);
+    }
   else
     eprintf ("CWD: %s", dname);
 
