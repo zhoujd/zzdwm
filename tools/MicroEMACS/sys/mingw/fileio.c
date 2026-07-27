@@ -508,7 +508,7 @@ ffsearch (const char *name,	/* filename to search for */
 {
   struct dirent *ff;
   static DIR *dirp;
-  static char buf[65];
+  static char buf[NFILEN];
   static int pathlen;
   int i, c = 0;
 
@@ -516,7 +516,10 @@ ffsearch (const char *name,	/* filename to search for */
     {
       if (dirp != NULL)
         closedir (dirp);
+      if (cpos >= (int) sizeof (buf))
+        cpos = sizeof (buf) - 1;
       strncpy (buf, name, cpos);	/* save the name        */
+      buf[cpos] = '\0';
       for (i = cpos; i > 0; --i)
         {			/* find end of path     */
           c = buf[i - 1];
@@ -537,6 +540,8 @@ ffsearch (const char *name,	/* filename to search for */
     }
   while ((ff = readdir (dirp)) != NULL)	/* find next file       */
     {
+      if (pathlen + strlen (ff->d_name) >= sizeof (buf))
+        continue;
       if (flag && !ffisdir (ff->d_name, strlen (ff->d_name)))
         continue;
       strcpy (&buf[pathlen], ff->d_name);	/* append filename    */
