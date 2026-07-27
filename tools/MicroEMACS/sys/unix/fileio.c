@@ -376,7 +376,10 @@ ffsearch (
     {
       if (dirp != NULL)
         closedir (dirp);
+      if (cpos >= (int) sizeof(buf))
+        cpos = sizeof(buf) - 1;
       strncpy (buf, name, cpos);	/* save the name        */
+      buf[cpos] = '\0';           /* Explicit null-termination */
       for (i = cpos; i > 0; --i)
         {			/* find end of path     */
           c = buf[i - 1];
@@ -398,6 +401,8 @@ ffsearch (
     }
   while ((ff = readdir (dirp)) != NULL)	/* find next file       */
     {
+      if (pathlen + strlen(ff->d_name) >= sizeof(buf))
+        continue;
       if (flag && ff->d_type != DT_DIR
           && !ffisdir (ff->d_name, strlen (ff->d_name)))
         continue;
