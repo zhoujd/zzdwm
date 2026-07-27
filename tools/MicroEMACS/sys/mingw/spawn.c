@@ -187,7 +187,9 @@ spawnpipe (int f, int n, int k)
   char bname[] = "*pipe*";
   static char cmd_buf[NLINE*3];   /* Safe buffer to prevent truncation warnings */
 
-  /* Clear the static arrays cleanly at function entry; do NOT clear line[0] here */
+  /* Clear the static arrays cleanly at function entry
+   * do NOT clear line[0] here
+   */
   tmp[0] = '\0';
   cmd_buf[0] = '\0';
 
@@ -240,7 +242,9 @@ spawnfilter (int f, int n, int k)
   static char filout[NLINE];      /* Safe storage space for output path string */
   static char cmd_buf[NLINE*4];   /* Safe buffer to hold line + input path */
 
-  /* Clear the static arrays cleanly at function entry; do NOT clear line[0] here */
+  /* Clear the static arrays cleanly at function entry
+   * do NOT clear line[0] here
+   */
   filin[0] = '\0';
   filout[0] = '\0';
   cmd_buf[0] = '\0';
@@ -300,7 +304,9 @@ changedir (int f, int n, int k)
   static char tmp_path[NLINE];
   char *dname;
 
-  /* Clear the static arrays cleanly at function entry; do NOT clear line[0] here */
+  /* Clear the static arrays cleanly at function entry
+   * do NOT clear line[0] here
+   */
   tmp_path[0] = '\0';
 
   s = egetdname ("Path: ", line, sizeof (line));
@@ -360,7 +366,9 @@ dired (int f, int n, int k)
   static char tmp_path[NLINE];
   char bname[] = "*dired*";
 
-  /* Clear the static arrays cleanly at function entry; do NOT clear line[0] here */
+  /* Clear the static arrays cleanly at function entry
+   * do NOT clear line[0] here
+   */
   buf[0] = '\0';
   tmp_path[0] = '\0';
 
