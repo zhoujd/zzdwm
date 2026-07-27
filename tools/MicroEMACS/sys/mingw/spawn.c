@@ -85,8 +85,7 @@ gettempfile (char *path, int size, const char *prefix)
 {
   static char temp_dir[NLINE];
 
-  (void)size;
-  (void)prefix;
+  /* GetTempPathA will natively overwrite this whole array block on every pass */
   GetTempPathA (sizeof(temp_dir), temp_dir);
   GetTempFileNameA (temp_dir, "dir", 0, path);
   return TRUE;
@@ -183,11 +182,15 @@ int
 spawnpipe (int f, int n, int k)
 {
   register int s;
-  register BUFFER *bp;        /* pointer to buffer to zot */
+  register BUFFER *bp;            /* pointer to buffer to zot */
   static char line[NLINE];
-  char tmp[NLINE];            /* Clean storage space for path string */
+  static char tmp[NLINE];         /* Clean storage space for path string */
   char bname[] = "*pipe*";
-  char cmd_buf[NLINE * 2 + 32]; /* Safe buffer to prevent truncation warnings */
+  static char cmd_buf[NLINE*3];   /* Safe buffer to prevent truncation warnings */
+
+  /* Clear the static arrays cleanly at function entry; do NOT clear line[0] here */
+  tmp[0] = '\0';
+  cmd_buf[0] = '\0';
 
   if ((s = ereply ("Pipe: ", line, sizeof (line))) != TRUE)
     return (s);
@@ -234,9 +237,14 @@ spawnfilter (int f, int n, int k)
   register BUFFER *bp;     /* pointer to buffer to zot */
   static char line[NLINE];
   char bname[] = "*filter*";
-  char filin[NLINE];       /* Safe storage space for input path string */
-  char filout[NLINE];      /* Safe storage space for output path string */
-  char cmd_buf[NLINE * 3 + 32]; /* Safe buffer to hold line + input path + output path */
+  static char filin[NLINE];       /* Safe storage space for input path string */
+  static char filout[NLINE];      /* Safe storage space for output path string */
+  static char cmd_buf[NLINE*4];   /* Safe buffer to hold line + input path */
+
+  /* Clear the static arrays cleanly at function entry; do NOT clear line[0] here */
+  filin[0] = '\0';
+  filout[0] = '\0';
+  cmd_buf[0] = '\0';
 
   if (curbp->b_flag & BFRO) /* if buffer is read-only       */
     return (FALSE);         /* fail                         */
@@ -290,8 +298,11 @@ changedir (int f, int n, int k)
 {
   register int s;
   static char line[NLINE];
-  static char buf[NLINE];
+  static char tmp_path[NLINE];
   char *dname;
+
+  /* Clear the static arrays cleanly at function entry; do NOT clear line[0] here */
+  tmp_path[0] = '\0';
 
   s = egetdname ("Path: ", line, sizeof (line));
   /* User pressed Enter without typing a path -> display current CWD */
@@ -304,8 +315,8 @@ changedir (int f, int n, int k)
           sgarbf = TRUE;
           return FALSE;
         }
-      convertposix (line, buf, NLINE);
-      eprintf ("CWD: %s", buf);
+      convertposix (line, tmp_path, NLINE);
+      eprintf ("CWD: %s", tmp_path);
       return TRUE;
     }
   else if (s == ABORT)
@@ -328,8 +339,8 @@ changedir (int f, int n, int k)
   /* Fetch and print the canonical absolute directory after change */
   if (getcwd (line, sizeof (line)) != NULL)
     {
-      convertposix (line, buf, NLINE);
-      eprintf ("CWD: %s", buf);
+      convertposix (line, tmp_path, NLINE);
+      eprintf ("CWD: %s", tmp_path);
     }
   else
     eprintf ("CWD: %s", dname);
@@ -347,11 +358,15 @@ dired (int f, int n, int k)
   register BUFFER *bp;
   static char line[NLINE];
   static char buf[NLINE * 3];
-  char tmp_path[NLINE];
+  static char tmp_path[NLINE];
   char bname[] = "*dired*";
 
+  /* Clear the static arrays cleanly at function entry; do NOT clear line[0] here */
+  buf[0] = '\0';
+  tmp_path[0] = '\0';
+
   s = egetdname ("Dired: ", line, sizeof(line));
-  if (s == FALSE || line[0] == '\0')
+  if (s == FALSE)
     snprintf (line, sizeof(line), ".");
   else if (s == ABORT)
     return s;

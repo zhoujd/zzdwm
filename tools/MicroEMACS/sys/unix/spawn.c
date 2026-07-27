@@ -573,6 +573,9 @@ dired (int f, int n, int k)
   char bname[] = "*dired*";
   int fd = -1;
 
+  /* Clear the static arrays cleanly at function entry; do NOT clear line[0] here */
+  buf[0] = '\0';
+
   s = egetdname ("Dired: ", line, sizeof(line));
   if (s == FALSE)
     snprintf (line, sizeof(line), ".");
