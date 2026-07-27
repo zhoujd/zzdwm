@@ -255,10 +255,9 @@ collect_matches (const char *prefix,
   /* Handle ~ expansion using $HOME */
   if (expanded_prefix[0] == '~')
     {
-      const char *home = NULL;
+      const char *home = getenv ("HOME");
 
 #if defined (_WIN32) || defined (__MINGW32__)
-      home = getenv ("HOME");
       if (home == NULL)
         home = getenv ("USERPROFILE");
       if (home == NULL)
@@ -272,8 +271,6 @@ collect_matches (const char *prefix,
               home = win_home;
             }
         }
-#else
-      home = getenv ("HOME");
 #endif
 
       if (home != NULL && (expanded_prefix[1] == '/' || expanded_prefix[1] == '\0'))
