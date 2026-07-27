@@ -72,7 +72,7 @@ fftilde (char *arg)
   slash = strchr (arg, '/');
   if (slash == NULL)
     slash = strchr (arg, '\\');
-  /* Case 1: Current user (~/path or ~) */
+  /* current user (~/path or ~) */
   if (arg[1] == '\0' || arg[1] == '/' || arg[1] == '\\')
     {
       home = getenv ("HOME");
@@ -251,7 +251,6 @@ fillbuf (void)
   return (cbuf[cindex++] & 0xff);
 }
 
-
 /*
  * Read a line from a file, and store the bytes
  * in a local buffer. Stop on end of file or end of
@@ -424,7 +423,6 @@ adjustcase (char *fn)
 #endif
 }
 
-
 /*
  * Open a profile file for reading.  We keep this separate from
  * ffropen() so that we can have a text file and a profile open
@@ -480,18 +478,15 @@ ffpread (char *cp)
   return (FIOSUC);
 }
 
-
 /*
  * Close the profile file.
  */
-
 int
 ffpclose (void)
 {
   close (pfp);
   return (FIOSUC);
 }
-
 
 /*
  * Find the first or next file that matches the first 'cpos' characters
