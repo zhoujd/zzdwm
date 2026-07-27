@@ -59,7 +59,7 @@ is_regular_file (const char *path)
 }
 
 /*
- * Helper: Converts backslashes to forward slashes, translates Windows drive
+ * Converts backslashes to forward slashes, translates Windows drive
  * letters (e.g. "C:/abc" -> "/c/abc"), and collapses redundant slashes.
  */
 static void
@@ -121,7 +121,7 @@ sanitize_slashes (char *path)
 }
 
 /*
- * Helper: Simplifies path components by resolving '.' and '..' safely
+ * Simplifies path components by resolving '.' and '..' safely
  */
 static void
 normalize_path (char *path)
@@ -202,7 +202,7 @@ normalize_path (char *path)
 }
 
 /*
- * Helper: Converts a POSIX MSYS-style path (/c/path) to a Windows native path (C:/path)
+ * Converts a POSIX MSYS-style path (/c/path) to a Windows native path (C:/path)
  */
 static void
 to_native_path (const char *posix_path, char *native_path, size_t max_len)
@@ -229,7 +229,7 @@ to_native_path (const char *posix_path, char *native_path, size_t max_len)
 }
 
 /*
- * Helper: Perform in-memory directory scanning for filename/directory matching.
+ * Perform in-memory directory scanning for filename/directory matching.
  */
 static int
 collect_matches (const char *prefix,
