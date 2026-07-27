@@ -93,95 +93,6 @@ gettempfile (char *path, int size, const char *prefix)
 }
 
 /*
- * List current directory
- * Bound to "C-X d".
- */
-int
-dired (int f, int n, int k)
-{
-  register int s;
-  register BUFFER *bp;
-  static char line[NLINE];
-  static char buf[NLINE * 3];
-  char tmp_path[NLINE];
-  char bname[] = "*dired*";
-
-  s = egetdname ("Dired: ", line, sizeof(line));
-  if (s == FALSE || line[0] == '\0')
-    snprintf (line, sizeof(line), ".");
-  else if (s == ABORT)
-    return s;
-
-  /* Force repaint */
-  eerase ();
-  sgarbf = TRUE;
-
-  gettempfile (tmp_path, NLINE, NULL);
-
-  /* Wrap directory path in quotes to prevent shell breakage on spaces */
-  snprintf (buf, sizeof(buf),
-            "ls -aBhl --group-directories-first \"%s\" > \"%s\" 2>&1",
-            fftilde(line), tmp_path);
-
-  if (system (buf) == 0)
-    {
-      if ((bp = bfind (bname, TRUE)) != NULL)
-        {
-          bclear (bp);
-          swbuffer (bp);
-          readin (tmp_path);
-          strcpy (bp->b_bname, bname);
-          strcpy (bp->b_fname, "");
-        }
-    }
-
-  /* Cleanup temp file */
-  remove (tmp_path);
-
-  return TRUE;
-}
-
-/*
- * Run a one-liner in a subjob.
- * When the command returns, wait for a single
- * character to be typed, then mark the screen as
- * garbage so a full repaint is done.
- * Bound to "C-X !".
- */
-int
-spawncmd (int f, int n, int k)
-{
-  register int s;
-  static char line[NLINE];
-
-  if ((s = ereply ("! ", line, sizeof(line))) != TRUE)
-    return (s);
-
-  /* Force repaint */
-  eerase ();
-  sgarbf = TRUE;
-
-  /* Run the command */
-  ttputc ('\n');                /* Already have '\r'    */
-  ttcolor (CTEXT);              /* Normal color.        */
-  ttwindow (0, nrow - 1);       /* Full screen scroll.  */
-  ttmove (nrow - 1, 0);         /* Last line.           */
-  ttflush ();
-  ttclose ();
-  if (system (line) == -1)
-    printf ("Failed on system %s\n", line);
-  else
-    printf ("(End)");
-  fflush (stdout);              /* to be sure P.K.      */
-  while ((s = ttgetc ()) != EOF && s != '\n' && s != '\r');
-  printf ("\n");
-  ttopen ();
-  ttflush ();
-  return TRUE;
-}
-
-
-/*
  * Translates to POSIX drive paths (/c/dir/file)
  */
 static const char *
@@ -223,6 +134,184 @@ convertposix (const char *path, char *out_buf, size_t buf_size)
     }
   out_buf[j] = '\0';
   return out_buf;
+}
+
+/*
+ * Run a one-liner in a subjob.
+ * When the command returns, wait for a single
+ * character to be typed, then mark the screen as
+ * garbage so a full repaint is done.
+ * Bound to "C-X !".
+ */
+int
+spawncmd (int f, int n, int k)
+{
+  register int s;
+  static char line[NLINE];
+
+  if ((s = ereply ("! ", line, sizeof(line))) != TRUE)
+    return (s);
+
+  /* Force repaint */
+  eerase ();
+  sgarbf = TRUE;
+
+  /* Run the command */
+  ttputc ('\n');                /* Already have '\r'    */
+  ttcolor (CTEXT);              /* Normal color.        */
+  ttwindow (0, nrow - 1);       /* Full screen scroll.  */
+  ttmove (nrow - 1, 0);         /* Last line.           */
+  ttflush ();
+  ttclose ();
+  if (system (line) == -1)
+    printf ("Failed on system %s\n", line);
+  else
+    printf ("(End)");
+  fflush (stdout);              /* to be sure P.K.      */
+  while ((s = ttgetc ()) != EOF && s != '\n' && s != '\r');
+  printf ("\n");
+  ttopen ();
+  ttflush ();
+  return TRUE;
+}
+
+/*
+ * Pipe a one line command into a window
+ * Bound to "C-X @"
+ */
+int
+spawnpipe (int f, int n, int k)
+{
+  register int s;
+  register BUFFER *bp;        /* pointer to buffer to zot */
+  static char line[NLINE];
+  char tmp[NLINE];            /* Clean storage space for path string */
+  char bname[] = "*pipe*";
+  char cmd_buf[NLINE * 2 + 32]; /* Safe buffer to prevent truncation warnings */
+
+  if ((s = ereply ("Pipe: ", line, sizeof (line))) != TRUE)
+    {
+      return (s);
+    }
+
+  /* Force repaint */
+  eerase ();
+  sgarbf = TRUE;
+
+  if (gettempfile (tmp, sizeof (tmp), "dir") != TRUE)
+    {
+      goto end;
+    }
+
+  /* Construct the full shell command into the large safe buffer */
+  snprintf (cmd_buf, sizeof (cmd_buf), "%s >\"%s\" 2>&1", line, tmp);
+
+  if (system (cmd_buf) == -1)
+    {
+      printf ("Failed on system %s\n", cmd_buf);
+      goto end;
+    }
+  fflush (stdout);
+
+  /* Read back file contents and populate the target microEMACS buffer */
+  if ((bp = bfind (bname, TRUE)) != NULL)
+    {
+      bclear (bp);
+      swbuffer (bp);
+      if (readin (tmp) == FALSE)
+        {
+          goto end;
+        }
+      strcpy (bp->b_bname, bname);
+      strcpy (bp->b_fname, "");
+    }
+
+end:
+  if (tmp[0] != '\0')
+    {
+      remove (tmp);
+    }
+
+  return (TRUE);
+}
+
+/*
+ * Filter a buffer through an external program
+ * Bound to "C-X #"
+ */
+int
+spawnfilter (int f, int n, int k)
+{
+  register int s;          /* return status from CLI */
+  register BUFFER *bp;     /* pointer to buffer to zot */
+  static char line[NLINE];
+  char bname[] = "*filter*";
+  char filin[NLINE];       /* Safe storage space for input path string */
+  char filout[NLINE];      /* Safe storage space for output path string */
+  char cmd_buf[NLINE * 3 + 32]; /* Safe buffer to hold line + input path + output path */
+
+  if (curbp->b_flag & BFRO) /* if buffer is read-only       */
+    {
+      return (FALSE);       /* fail                         */
+    }
+
+  if ((s = ereply ("# ", line, sizeof (line))) != TRUE)
+    {
+      return (s);
+    }
+
+  /* Force repaint */
+  eerase ();
+  sgarbf = TRUE;
+
+  if (gettempfile (filin, sizeof (filin), "me") != TRUE
+      || gettempfile (filout, sizeof (filout), "me") != TRUE)
+    {
+      goto end;
+    }
+
+  if (writeout (filin) != TRUE)
+    {
+      goto end;
+    }
+
+  /* Construct the full filter command into the large safe buffer */
+  snprintf (cmd_buf, sizeof (cmd_buf), "%s \"%s\" >\"%s\" 2>&1",
+            line, filin, filout);
+
+  if (system (cmd_buf) == -1)
+    {
+      printf ("Failed on system %s\n", cmd_buf);
+      goto end;
+    }
+  fflush (stdout);
+
+  /* Read back filtered contents and populate the target buffer */
+  if ((bp = bfind (bname, TRUE)) != NULL)
+    {
+      bclear (bp);
+      swbuffer (bp);
+
+      if (readin (filout) == FALSE)
+        {
+          goto end;
+        }
+      strcpy (bp->b_bname, bname);
+      strcpy (bp->b_fname, "");
+    }
+
+end:
+  if (filin[0] != '\0')
+    {
+      remove (filin);
+    }
+
+  if (filout[0] != '\0')
+    {
+      remove (filout);
+    }
+
+  return (TRUE);
 }
 
 /*
@@ -281,6 +370,56 @@ changedir (int f, int n, int k)
     }
   else
     eprintf ("CWD: %s", dname);
+
+  return TRUE;
+}
+
+
+/*
+ * List current directory
+ * Bound to "C-X d".
+ */
+int
+dired (int f, int n, int k)
+{
+  register int s;
+  register BUFFER *bp;
+  static char line[NLINE];
+  static char buf[NLINE * 3];
+  char tmp_path[NLINE];
+  char bname[] = "*dired*";
+
+  s = egetdname ("Dired: ", line, sizeof(line));
+  if (s == FALSE || line[0] == '\0')
+    snprintf (line, sizeof(line), ".");
+  else if (s == ABORT)
+    return s;
+
+  /* Force repaint */
+  eerase ();
+  sgarbf = TRUE;
+
+  gettempfile (tmp_path, NLINE, NULL);
+
+  /* Wrap directory path in quotes to prevent shell breakage on spaces */
+  snprintf (buf, sizeof(buf),
+            "ls -aBhl --group-directories-first \"%s\" > \"%s\" 2>&1",
+            fftilde(line), tmp_path);
+
+  if (system (buf) == 0)
+    {
+      if ((bp = bfind (bname, TRUE)) != NULL)
+        {
+          bclear (bp);
+          swbuffer (bp);
+          readin (tmp_path);
+          strcpy (bp->b_bname, bname);
+          strcpy (bp->b_fname, "");
+        }
+    }
+
+  /* Cleanup temp file */
+  remove (tmp_path);
 
   return TRUE;
 }
