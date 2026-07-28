@@ -17,7 +17,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "def.h"
 #include <excpt.h>
+
 #if 0
 #include <windef.h>
 #include <winbase.h>
@@ -25,10 +27,8 @@
 #else
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#endif
-
 #include <io.h>
-#include "def.h"
+#endif
 
 #define BEL 0x07                   /* BEL character.               */
 

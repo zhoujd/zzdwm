@@ -17,7 +17,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "def.h"
 #include <excpt.h>
+#include <conio.h>
+
 #if 0
 #include <windef.h>
 #include <winbase.h>
@@ -28,11 +31,10 @@
 #include <io.h>  /* THIS DEFINES THE write() FUNCTION IN MINGW */
 #endif
 
-#include <conio.h>
-
-#include "def.h"
-
 /* Fallback definition for older MinGW compilers if missing */
+#ifndef ENABLE_VIRTUAL_TERMINAL_INPUT
+#define ENABLE_VIRTUAL_TERMINAL_INPUT 0x0200
+#endif
 #ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
 #define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
 #endif
@@ -67,10 +69,10 @@ ttopen (void)
   hout = GetStdHandle (STD_OUTPUT_HANDLE);
   hin =  GetStdHandle (STD_INPUT_HANDLE);
 
-  /* Save current keyboard mode, then disable line editing.
+  /* Save current keyboard mode.
    */
   GetConsoleMode (hin, &hinmode);
-  SetConsoleMode (hin, 0);         /* disable line mode */
+  SetConsoleMode (hin, ENABLE_VIRTUAL_TERMINAL_INPUT);
 
   /* Save current console output mode.
    */
