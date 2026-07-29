@@ -2,8 +2,7 @@
 
 IMGS := \
 	build \
-	tool \
-	platform
+	tool
 
 all: $(IMGS)
 
