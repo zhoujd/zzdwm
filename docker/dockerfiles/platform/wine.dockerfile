@@ -1,10 +1,6 @@
-ARG VARIANT=22.04
-ARG PLATFORM=linux/amd64
-FROM --platform=$PLATFORM ubuntu:$VARIANT
+FROM zhoujd/ubuntu:latest
 
-ARG MIRROR=mirrors.aliyun.com
-RUN sed -i "s/archive.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list && \
-    sed -i "s/security.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list
+USER root
 
 # Install prerequisites
 RUN apt-get update \
@@ -42,6 +38,5 @@ RUN wget -nv -O- https://dl.winehq.org/wine-builds/winehq.key | APT_KEY_DONT_WAR
 RUN wget -nv -O /usr/bin/winetricks https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks \
     && chmod +x /usr/bin/winetricks
 
-# Setup entrypoint
-COPY entrypoint.sh /
-ENTRYPOINT ["/entrypoint.sh"]
+ARG USER_NAME=zach
+USER $USER_NAME

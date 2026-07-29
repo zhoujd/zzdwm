@@ -17,6 +17,7 @@ IMGS=(
     zhoujd/alpine:base
     zhoujd/void-linux:base
     zhoujd/ubuntu:base
+    zhoujd/wine:base
 )
 
 RUN_PARAM=(
@@ -58,6 +59,10 @@ run() {
             shift
             img=${IMGS[2]}
             ;;
+        wine|-w )
+            shift
+            img=${IMGS[3]}
+            ;;
         * )
             img=${IMGS[0]}
             ;;
@@ -91,6 +96,10 @@ ssh() {
         ubuntu|-u )
             shift
             img=${IMGS[2]}
+            ;;
+        wine|-w )
+            shift
+            img=${IMGS[3]}
             ;;
         * )
             img=${IMGS[0]}
@@ -159,6 +168,7 @@ Args:
 alpine|-a     Alpine (default)
 void|-v       Void Linux
 ubuntu|-u     Ubuntu
+wine|-w       Wine
 +++           Addition parameters
 EOF
 }
