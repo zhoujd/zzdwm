@@ -138,6 +138,7 @@ valgrind() {
         -it \
         --privileged=true \
         --cap-add=ALL \
+        -h valgrind \
         -v $TOP:/workspace \
         -w /workspace \
         ${img} \
@@ -153,6 +154,7 @@ wine() {
         -it \
         --privileged=true \
         --cap-add=ALL \
+        -h wine \
         -v $TOP:/workspace \
         -w /workspace \
         ${img} \
