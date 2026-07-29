@@ -17,7 +17,6 @@ IMGS=(
     zhoujd/alpine:base
     zhoujd/void-linux:base
     zhoujd/ubuntu:base
-    zhoujd/wine:base
 )
 
 RUN_PARAM=(
@@ -59,10 +58,6 @@ run() {
             shift
             img=${IMGS[2]}
             ;;
-        wine|-w )
-            shift
-            img=${IMGS[3]}
-            ;;
         * )
             img=${IMGS[0]}
             ;;
@@ -96,10 +91,6 @@ ssh() {
         ubuntu|-u )
             shift
             img=${IMGS[2]}
-            ;;
-        wine|-w )
-            shift
-            img=${IMGS[3]}
             ;;
         * )
             img=${IMGS[0]}
@@ -145,8 +136,25 @@ valgrind() {
     docker run \
         --rm \
         -it \
-        --cap-add=SYS_PTRACE \
-        -v $(pwd):/workspace \
+        --privileged=true \
+        --cap-add=ALL \
+        -v $TOP:/workspace \
+        -w /workspace \
+        ${img} \
+        ${cmd}
+}
+
+wine() {
+    echo "Usage: wine ./program.exe"
+    local img=zhoujd/wine:latest
+    local cmd=bash
+    docker run \
+        --rm \
+        -it \
+        --privileged=true \
+        --cap-add=ALL \
+        -v $TOP:/workspace \
+        -w /workspace \
         ${img} \
         ${cmd}
 }
@@ -163,12 +171,12 @@ clean|-c      Clean
 shell|-s      Attach shell
 stop          Stop service
 status        Show status
-valgrind|-v   Run valgrind check
+valgrind|-v   Run valgrind
+wine|-w       Run wine
 Args:
 alpine|-a     Alpine (default)
 void|-v       Void Linux
 ubuntu|-u     Ubuntu
-wine|-w       Wine
 +++           Addition parameters
 EOF
 }
@@ -202,6 +210,10 @@ case $CMD in
     valgrind|-v )
         shift
         valgrind "$@"
+        ;;
+    wine|-w )
+        shift
+        wine "$@"
         ;;
     * )
         usage
