@@ -23,9 +23,9 @@ RUN pip3 config set global.index-url ${PIP_URL}
 RUN dpkg --add-architecture i386 \
     && apt-get update \
     && DEBIAN_FRONTEND="noninteractive" apt-get install -y --install-recommends \
-        wine wine32 \
-        libvulkan1 libvulkan1:i386 \
-        mesa-vulkan-drivers mesa-vulkan-drivers:i386 \
+    wine wine32 \
+    libvulkan1 libvulkan1:i386 \
+    mesa-vulkan-drivers mesa-vulkan-drivers:i386 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install winetricks
