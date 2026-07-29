@@ -9,8 +9,15 @@ RUN sed -i "s/archive.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list && \
 # Install prerequisites
 RUN apt-get update \
     && DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
-        wget \
+    build-essential musl-tools sudo git wget \
+    python3-pip python3-venv python3-docutils \
+    && rm -f /tmp/*.deb \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Config PIP
+ARG PIP_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip3 config set global.index-url ${PIP_URL}
 
 # Install wine
 RUN dpkg --add-architecture i386 \
