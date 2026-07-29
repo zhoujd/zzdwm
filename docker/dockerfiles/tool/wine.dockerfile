@@ -1,6 +1,10 @@
-FROM zhoujd/ubuntu:latest
+ARG VARIANT=22.04
+ARG PLATFORM=linux/amd64
+FROM --platform=$PLATFORM ubuntu:$VARIANT
 
-USER root
+ARG MIRROR=mirrors.aliyun.com
+RUN sed -i "s/archive.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list && \
+    sed -i "s/security.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list
 
 # Install prerequisites
 RUN apt-get update \
@@ -18,8 +22,6 @@ RUN dpkg --add-architecture i386 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install winetricks
-RUN wget -nv -O /usr/bin/winetricks https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks \
+ARG WINETRICKS_URL=https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks
+RUN wget -nv -O /usr/bin/winetricks ${WINETRICKS_URL} \
     && chmod +x /usr/bin/winetricks
-
-ARG USER_NAME=zach
-USER $USER_NAME
