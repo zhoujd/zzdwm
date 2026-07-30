@@ -13,7 +13,7 @@ RUN sed -i "s/archive.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list && \
 # Install prerequisites
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-    build-essential musl-tools sudo git wget \
+    sudo git wget ca-certificates \
     python3-pip python3-venv python3-docutils \
     && rm -f /tmp/*.deb \
     && apt-get clean \

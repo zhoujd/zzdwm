@@ -9,7 +9,7 @@ RUN sed -i "s/archive.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list && \
 # Install prerequisites
 RUN apt-get update \
     && DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
-    build-essential musl-tools sudo git wget \
+    sudo git wget ca-certificates \
     python3-pip python3-venv python3-docutils \
     && rm -f /tmp/*.deb \
     && apt-get clean \
@@ -22,10 +22,15 @@ RUN pip3 config set global.index-url ${PIP_URL}
 # Install wine
 RUN dpkg --add-architecture i386 \
     && apt-get update \
-    && DEBIAN_FRONTEND="noninteractive" apt-get install -y --install-recommends \
-    wine wine32 \
-    libvulkan1 libvulkan1:i386 \
-    mesa-vulkan-drivers mesa-vulkan-drivers:i386 \
+    && DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
+    ca-certificates \
+    wine \
+    wine64 \
+    wine32 \
+    libvulkan1 \
+    libvulkan1:i386 \
+    mesa-vulkan-drivers \
+    mesa-vulkan-drivers:i386 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install winetricks
