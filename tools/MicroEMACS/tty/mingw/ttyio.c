@@ -82,6 +82,11 @@ ttopen (void)
 
   /* Get screen size.
    */
+  windowrow = 0;
+  windowcol = 0;
+  nrow = 24;  /* Default fallback rows */
+  ncol = 80;  /* Default fallback columns */
+
   if (GetConsoleScreenBufferInfo (hout, &binfo) == TRUE)
     {
       windowrow = binfo.srWindow.Top;
