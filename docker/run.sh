@@ -146,7 +146,7 @@ valgrind() {
 }
 
 wine() {
-    echo "Usage: wine ./program.exe"
+    echo "Usage: wineconsole --backend=curses me.exe"
     local img=zhoujd/wine:latest
     local cmd=bash
     docker run \

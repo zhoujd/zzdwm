@@ -15,8 +15,6 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     sudo git wget ca-certificates \
     python3-pip python3-venv python3-docutils \
-    && rm -f /tmp/*.deb \
-    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Config PIP
@@ -24,7 +22,8 @@ ARG PIP_URL=https://pypi.tuna.tsinghua.edu.cn/simple
 RUN pip3 config set global.index-url ${PIP_URL}
 
 # Install build dependencies, Valgrind, and debug symbols
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
     build-essential \
     valgrind \
     libc6-dbg \

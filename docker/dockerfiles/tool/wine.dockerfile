@@ -6,20 +6,7 @@ ARG MIRROR=mirrors.aliyun.com
 RUN sed -i "s/archive.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list && \
     sed -i "s/security.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list
 
-# Install prerequisites
-RUN apt-get update \
-    && DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
-    sudo git wget ca-certificates \
-    python3-pip python3-venv python3-docutils \
-    && rm -f /tmp/*.deb \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Config PIP
-ARG PIP_URL=https://pypi.tuna.tsinghua.edu.cn/simple
-RUN pip3 config set global.index-url ${PIP_URL}
-
-# Install wine
+# Enable 32-bit architecture and install standard Wine components
 RUN dpkg --add-architecture i386 \
     && apt-get update \
     && DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
@@ -27,13 +14,10 @@ RUN dpkg --add-architecture i386 \
     wine \
     wine64 \
     wine32 \
-    libvulkan1 \
-    libvulkan1:i386 \
-    mesa-vulkan-drivers \
-    mesa-vulkan-drivers:i386 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install winetricks
-ARG WINETRICKS_URL=https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks
-RUN wget -nv -O /usr/bin/winetricks ${WINETRICKS_URL} \
-    && chmod +x /usr/bin/winetricks
+# Suppress Wine GUI popups for a cleaner terminal test
+ENV WINEDEBUG=-all
+ENV WINEPREFIX=/root/.wine
+
+WORKDIR /app
