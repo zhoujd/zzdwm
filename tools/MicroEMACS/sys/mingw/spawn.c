@@ -170,6 +170,7 @@ spawncmd (int f, int n, int k)
   printf ("\n");
   ttopen ();
   ttflush ();
+  sgarbf = TRUE;
   return TRUE;
 }
 
@@ -200,7 +201,7 @@ spawnpipe (int f, int n, int k)
   eerase ();
   sgarbf = TRUE;
 
-  if (gettempfile (tmp, sizeof (tmp), "dir") != TRUE)
+  if (gettempfile (tmp, sizeof (tmp), "me") != TRUE)
     goto end;
   /* Construct the full shell command into the large safe buffer */
   snprintf (cmd_buf, sizeof (cmd_buf), "%s >\"%s\" 2>&1", line, tmp);
@@ -382,7 +383,8 @@ dired (int f, int n, int k)
   eerase ();
   sgarbf = TRUE;
 
-  gettempfile (tmp_path, NLINE, NULL);
+  if (gettempfile (tmp_path, sizeof (tmp_path), "me") != TRUE)
+    goto end;
   /* Wrap directory path in quotes to prevent shell breakage on spaces */
   snprintf (buf, sizeof(buf),
             "ls -aBhl --group-directories-first \"%s\" > \"%s\" 2>&1",
@@ -398,6 +400,12 @@ dired (int f, int n, int k)
           strcpy (bp->b_fname, "");
         }
     }
+  else
+    {
+      printf ("Failed on system %s\n", buf);
+    }
+
+end:
   /* Cleanup temp file */
   remove (tmp_path);
   return TRUE;
