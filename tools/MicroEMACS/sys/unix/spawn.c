@@ -412,8 +412,6 @@ spawnpipe (int f, int n, int k)
   /* Setup the temporary file */
   if ((fd = mkstemp (tmp)) == -1)
     goto end;
-  if (unlink (tmp) == -1)
-    goto end;
 
   /* Run the command */
   snprintf (line + strlen(line), sizeof(line) - strlen(line),
@@ -439,7 +437,10 @@ spawnpipe (int f, int n, int k)
 end:
   /* Clean the temporary file */
   if (fd != -1)
-    close (fd);
+    {
+      close (fd);
+      unlink (tmp);
+    }
   return TRUE;
 }
 
@@ -473,9 +474,6 @@ spawnfilter (int f, int n, int k)
   if ((fdin = mkstemp (filin)) == -1 ||
       (fdout = mkstemp (filout)) == -1)
     goto end;
-  if (unlink (filin) == -1 ||
-      unlink (filout) == -1)
-    goto end;
 
   /* Write it out, checking for errors */
   if (writeout (filin) != TRUE)
@@ -506,9 +504,15 @@ spawnfilter (int f, int n, int k)
 end:
   /* Clean the temporary file */
   if (fdin != -1)
-    close (fdin);
+    {
+      close (fdin);
+      unlink (filin);
+    }
   if (fdout != -1)
-    close (fdout);
+    {
+      close (fdout);
+      unlink (filout);
+    }
   return TRUE;
 }
 
@@ -591,8 +595,6 @@ dired (int f, int n, int k)
   /* Setup the temporary file */
   if ((fd = mkstemp (tmp)) == -1)
     goto end;
-  if (unlink (tmp) == -1)
-    goto end;
 
   /* Wrap directory path in quotes to prevent shell breakage on spaces */
   snprintf (buf, sizeof(buf),
@@ -617,6 +619,9 @@ dired (int f, int n, int k)
 end:
   /* Clean the temporary file */
   if (fd != -1)
-    close (fd);
+    {
+      close (fd);
+      unlink (tmp);
+    }
   return TRUE;
 }
