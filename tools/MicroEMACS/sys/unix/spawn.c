@@ -382,9 +382,10 @@ spawncmd (int f, int n, int k)
   else
     printf ("(End)");
   fflush (stdout);              /* to be sure P.K.      */
-  while ((s = ttgetc ()) != EOF && s != '\n');
   ttopen ();
+  while ((s = ttgetc ()) != EOF && s != '\n' && s != '\r');
   ttflush ();
+  sgarbf = TRUE;
   return TRUE;
 }
 
