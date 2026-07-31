@@ -90,12 +90,15 @@ start:
         }
 
       /* ======================================================== */
-      /* DUAL-TRACK KEYBOARD INTERCEPTOR                          */
-      /* Track 1: Handle native cooked integer mappings generated */
-      /* by active ncurses configurations (258=DOWN, 259=UP).     */
+      /* TRIPLE-TRACK KEYBOARD INTERCEPTOR (PROD-READY)           */
       /* ======================================================== */
-      if (c == 258) c = CTRL_N;
-      if (c == 259) c = CTRL_P;
+      /* -------------------------------------------------------- */
+      /* Track 1: Cooked Integer Mappings (Linux/macOS & MinGW)   */
+      /* Matches standard ncurses (258/259) AND Windows Console   */
+      /* native virtual hardware constants (336/328).             */
+      /* -------------------------------------------------------- */
+      if (c == 258 || c == 336) c = CTRL_N;
+      if (c == 259 || c == 328) c = CTRL_P;
 
       /* ======================================================== */
       /* Track 2: Legacy escape multi-byte stream parsing via     */
