@@ -526,6 +526,7 @@ changedir (int f, int n, int k)
 {
   register int s;
   static char line[NLINE];
+  char resolved_path[NLINE];
   char *dname;
   int ret = FALSE;
 
@@ -542,12 +543,19 @@ changedir (int f, int n, int k)
   else if (s == TRUE)
     {
       dname = fftilde (line);
-      if (chdir (dname) != 0)
+      if (dname == NULL)
+        {
+          eprintf ("Failed to resolve path.");
+          goto end;
+        }
+      strncpy (resolved_path, dname, sizeof(resolved_path) - 1);
+      resolved_path[sizeof(resolved_path) - 1] = '\0';
+      if (chdir (resolved_path) != 0)
         {
           eprintf ("Failed to chdir.");
           goto end;
         }
-      eprintf ("CWD: %s", dname);
+      eprintf ("CWD: %s", resolved_path);
     }
   else
     return (s);
@@ -559,6 +567,10 @@ end:
     {
       eerase ();
       sgarbf = TRUE;
+    }
+  else
+    {
+      ttflush ();
     }
   return TRUE;
 }
