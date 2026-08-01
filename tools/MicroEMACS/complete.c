@@ -445,11 +445,21 @@ getfilename (char *prompt, char *buf, int nbuf)
       /* Ctrl+Q (0x11): quote */
       else if (c == CCHR ('Q') || c == 0x11)
         {
-          int q = ttgetc ();
-          eputc (q);
-          buf[cpos++] = q;
-          buf[cpos] = '\0';
-          ttflush ();
+          if (cpos < nbuf - 1)
+            {
+              int q = ttgetc ();
+              if (q != EOF)
+                {
+                  eputc (q);
+                  buf[cpos++] = (char)q;
+                  buf[cpos] = '\0';
+                  ttflush ();
+                }
+            }
+          else
+            {
+              ttbeep ();
+            }
         }
 
       /* Ctrl+F (0x06): Advance into DIRECTORIES ONLY */
