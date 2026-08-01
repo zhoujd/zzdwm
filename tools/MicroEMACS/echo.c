@@ -680,12 +680,12 @@ eread (const char *fp, char *buf, int nbuf, int flag, va_list ap)
       /* Space or tab means try to complete, ? or ^D means
        * pop up a list of choices.
        */
-      if ((c == ' ' || c == '\t' || c == '?' || c == '\004')
+      if ((c == ' ' || c == '\t' || c == '?' || c == ' ' || c == '\004')
           && (flag & (EFAUTO | EFFILE | EFBUF)) != 0)
         {
           int popup;
 
-          if ((popup = (c == '?' || c == '\t' || c == '\004')) != FALSE)
+          if ((popup = (c == '?' || c == '\t' || c == ' ' || c == '\004')) != FALSE)
             startchoices ();	/* start choice list    */
           nhits = 0;
           nxtra = HUGE;
