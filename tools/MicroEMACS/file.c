@@ -894,8 +894,7 @@ int
 setsavetabs (int f, int n, int k)
 {
   savetabs = f ? (n != 0) : !savetabs;
-  eprintf ("[Tabs will %sbe preserved when saving a file]",
-           savetabs ? "" : "not ");
+  eprintf ("[Tab saving now %s]", savetabs ? "ON" : "OFF");
   return (TRUE);
 }
 
@@ -906,7 +905,6 @@ int
 setnewline (int f, int n, int k)
 {
   autonewline = !autonewline;
-  eprintf ("[Newline will %sbe added to end of file]",
-           autonewline ? "" : "not ");
+  eprintf ("[Auto newline now %s]", autonewline ? "ON" : "OFF");
   return (TRUE);
 }
