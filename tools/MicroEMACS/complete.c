@@ -442,6 +442,19 @@ getfilename (char *prompt, char *buf, int nbuf)
           return ABORT;
         }
 
+      /* Ctrl+Q (0x11): quote */
+      else if (c == CCHR ('Q') || c == 0x11)
+        {
+          int q = ttgetc ();
+          if (q == ' ' || q == '?'  || q == '\t')
+            {
+              eputc (q);
+              buf[cpos++] = q;
+              buf[cpos] = '\0';
+            }
+          ttflush ();
+        }
+
       /* Ctrl+F (0x06): Advance into DIRECTORIES ONLY */
       else if (c == CCHR ('F') || c == 0x06)
         {
