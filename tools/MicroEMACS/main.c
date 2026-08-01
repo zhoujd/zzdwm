@@ -214,10 +214,7 @@ main (int argc, char *argv[])
                 {
                   tabsize = atoi (argv[n]);
                   if (tabsize < 2 || tabsize > 32)
-                    {
-                      eprintf ("[Illegal tab size %d]", tabsize);
-                      tabsize = 8;
-                    }
+                    tabsize = 8;
                 }
               break;
             case 'x':
