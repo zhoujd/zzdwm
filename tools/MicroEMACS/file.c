@@ -76,7 +76,6 @@
  */
 #include "def.h"
 
-int savetabs = 1;		/* TRUE if tabs are preserved when saving files */
 int autonewline = TRUE;		/* TRUE if automatic add newline to end of file */
 
 /*
