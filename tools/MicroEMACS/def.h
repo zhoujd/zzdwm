@@ -552,7 +552,7 @@ extern int casefold;
 extern int fillcol;
 extern int tabsize;
 extern int savetabs;
-extern int visflag;
+extern int autonewline;
 extern int tabmask;
 
 /*

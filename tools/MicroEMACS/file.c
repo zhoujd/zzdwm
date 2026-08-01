@@ -74,9 +74,8 @@
  *
  *
  */
-#include "def.h"
 
-int autonewline = TRUE;		/* TRUE if automatic add newline to end of file */
+#include "def.h"
 
 /*
  * Make sure a buffer name is unique

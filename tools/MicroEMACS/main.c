@@ -95,6 +95,7 @@ int casefold = TRUE;		/* True if searches fold case   */
 int fillcol = 70;		/* Fill column for paragraphs.  */
 int tabsize = 8;		/* No. of columns for a tab     */
 int savetabs = TRUE;		/* True if tabs are preserved   */
+int autonewline = TRUE;		/* True if automatic add newline */
 
 static int nbuf;		/* number of buffers    */
 
@@ -112,7 +113,7 @@ void
 usage (void)
 {
   fprintf (stderr,
-           "usage: me [-234bdmrsxz] [-c path] [-g line] [-p profile] [-t size]\n"
+           "usage: me [-234bdmNrTxz] [-c path] [-g line] [-p profile] [-t size]\n"
            "          [+[line]] [file(s)[:line[:column]] ...]\n");
 }
 
@@ -183,6 +184,9 @@ main (int argc, char *argv[])
             case 'm':
               mouse = TRUE;
               break;
+            case 'N':
+              autonewline = FALSE;
+              break;
             case 'p':
               n++;
               if (n < argc)
@@ -194,8 +198,8 @@ main (int argc, char *argv[])
             case 'r':
               rflag = TRUE;
               break;
-            case 's':
-              savetabs = !savetabs;
+            case 'T':
+              savetabs = FALSE;
               break;
             case 't':
               n++;
@@ -203,7 +207,10 @@ main (int argc, char *argv[])
                 {
                   tabsize = atoi (argv[n]);
                   if (tabsize < 2 || tabsize > 32)
-                    tabsize = 8;
+                    {
+                      eprintf ("[Illegal tab size %d]", tabsize);
+                      tabsize = 8;
+                    }
                 }
               break;
             case 'x':
