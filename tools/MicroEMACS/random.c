@@ -866,11 +866,11 @@ settabsize (int f, int n, int k)
     n = 8;			/* reset to default     */
   else if (n < 2 || n > 32)
     {
-      eprintf ("Illegal tab size %d", n);
+      eprintf ("[Illegal tab size %d]", n);
       return (FALSE);
     }
-  eprintf ("[Tab size set to %d characters]", n);
   tabsize = n;
+  eprintf ("[Tab size set to %d]", n);
   ALLWIND (wp)
   {
     wp->w_flag |= WFHARD;	/* redraw all windows */
