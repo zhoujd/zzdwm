@@ -446,12 +446,9 @@ getfilename (char *prompt, char *buf, int nbuf)
       else if (c == CCHR ('Q') || c == 0x11)
         {
           int q = ttgetc ();
-          if (q == ' ' || q == '?'  || q == '\t')
-            {
-              eputc (q);
-              buf[cpos++] = q;
-              buf[cpos] = '\0';
-            }
+          eputc (q);
+          buf[cpos++] = q;
+          buf[cpos] = '\0';
           ttflush ();
         }
 
