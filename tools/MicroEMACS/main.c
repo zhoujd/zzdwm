@@ -113,7 +113,11 @@ void
 usage (void)
 {
   fprintf (stderr,
-           "usage: me [-234bdmNrTxz] [-c path] [-g line] [-p profile] [-t size]\n"
+           "usage: me [-234"
+#if BACKUP
+           "b"
+#endif
+           "dmNrTxz] [-c path] [-g line] [-p profile] [-t size]\n"
            "          [+[line]] [file(s)[:line[:column]] ...]\n");
 }
 
