@@ -70,6 +70,13 @@
  */
 #include "def.h"
 
+/* Feature flag options */
+#if BACKUP
+#define OPT_BACKUP "b"
+#else
+#define OPT_BACKUP ""
+#endif
+
 int thisflag;			/* Flags, this command          */
 int lastflag;			/* Flags, last command          */
 int curgoal;			/* Goal column                  */
@@ -113,11 +120,7 @@ void
 usage (void)
 {
   fprintf (stderr,
-           "usage: me [-234"
-#if BACKUP
-           "b"
-#endif
-           "dmNrTxz] [-c path] [-g line] [-p profile] [-t size]\n"
+           "usage: me [-234" OPT_BACKUP "dmNrTxz] [-c path] [-g line] [-p profile] [-t size]\n"
            "          [+[line]] [file(s)[:line[:column]] ...]\n");
 }
 
