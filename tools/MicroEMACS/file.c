@@ -704,7 +704,7 @@ writeout (const char *fn)
   lp = lastline (curbp);	/* Last line.           */
   if (lp != curbp->b_linep && llength (lp) != 0 && kbdmop == NULL)
     {
-      if (autonewline == TRUE)
+      if (autonl == TRUE)
         {
           s = TRUE;
         }
@@ -902,7 +902,7 @@ setsavetabs (int f, int n, int k)
 int
 setnewline (int f, int n, int k)
 {
-  autonewline = !autonewline;
-  eprintf ("[Auto newline now %s]", autonewline ? "ON" : "OFF");
+  autonl = !autonl;
+  eprintf ("[Auto newline now %s]", autonl ? "ON" : "OFF");
   return (TRUE);
 }

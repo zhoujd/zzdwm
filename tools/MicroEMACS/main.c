@@ -95,7 +95,7 @@ int casefold = TRUE;		/* True if searches fold case   */
 int fillcol = 70;		/* Fill column for paragraphs.  */
 int tabsize = 8;		/* No. of columns for a tab     */
 int savetabs = TRUE;		/* True if tabs are preserved   */
-int autonewline = TRUE;		/* True if automatic add newline */
+int autonl = TRUE;		/* True if auto add newline     */
 
 static int nbuf;		/* number of buffers    */
 
@@ -185,7 +185,7 @@ main (int argc, char *argv[])
               mouse = TRUE;
               break;
             case 'N':
-              autonewline = FALSE;
+              autonl = FALSE;
               break;
             case 'p':
               n++;
