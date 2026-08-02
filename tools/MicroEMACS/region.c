@@ -427,6 +427,7 @@ replaceregion (int f, int n, int k)
   int c;
   int num_replaced = 0;
   int replace_all = FALSE;
+  int plen = 0, rlen = 0;
 
   if (curwp->w_mark.p == NULL)
     {
@@ -460,13 +461,11 @@ replaceregion (int f, int n, int k)
   curwp->w_dot.p = region.r_pos.p;
   curwp->w_dot.o = region.r_pos.o;
 
+  while (pat[plen]) plen++;
+  while (rpat[rlen]) rlen++;
+
   while (forwsrch () == TRUE)
     {
-      int plen = 0, rlen = 0;
-
-      while (pat[plen]) plen++;
-      while (rpat[rlen]) rlen++;
-
       if (line_cmp (curwp->w_dot.p, limit_p) > 0
           || (curwp->w_dot.p == limit_p && curwp->w_dot.o > limit_o))
         break;
