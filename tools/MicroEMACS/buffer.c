@@ -845,7 +845,8 @@ unmark (int f, int n, int k)
 static int
 dorevert (void)
 {
-  if (access (curbp->b_fname, R_OK) != F_OK)
+  /* Check if the file exists and is readable */
+  if (access (curbp->b_fname, R_OK) != 0)
     {
       ttbeep ();
       if (errno == ENOENT)
@@ -855,14 +856,18 @@ dorevert (void)
       return (FALSE);
     }
 
-  /* Prevent readin from asking if we want to kill the buffer. */
-  curbp->b_flag &= ~BFCHG;
+  /* Flush the undo history since the buffer contents are being replaced */
+  freeundostack ();
 
-  /* Clean up undo memory */
-  setundochanged ();
-
+  /* Perform the read */
   if (readin (curbp->b_fname))
-    return (TRUE);
+    {
+      /* Ensure buffer modified flag is completely cleared */
+      curbp->b_flag &= ~BFCHG;
+      setundochanged ();
+      eprintf ("Reverted %s from disk", curbp->b_fname);
+      return (TRUE);
+    }
 
   return (FALSE);
 }
@@ -875,15 +880,18 @@ revertbuffer (int f, int n, int k)
 {
   char fbuf[NFILEN + 32];
 
-  if (curbp->b_fname[0] == 0)
+  if (curbp->b_fname[0] == '\0')
     {
-      eprintf ("Cannot revert buffer not associated "
-          "with any files.");
+      eprintf ("Cannot revert buffer not associated with any file.");
       return (FALSE);
     }
 
+  /* Skip prompt if forced with argument (e.g. C-u M-x revert-buffer) */
+  if (f == TRUE)
+    return dorevert ();
+
   snprintf (fbuf, sizeof (fbuf), "Revert buffer from file %s",
-      curbp->b_fname);
+            curbp->b_fname);
 
   if (eyesno (fbuf) == TRUE)
     return dorevert ();

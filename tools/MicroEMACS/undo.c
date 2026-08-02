@@ -165,6 +165,69 @@ freeundo (UNDO *up)
   up->kind = UUNUSED;
 }
 
+/*
+ * Free dynamically allocated strings inside an UNDOGROUP
+ * and free its array and group structure.
+ */
+void
+freeundogroup (UNDOGROUP *g)
+{
+  int i;
+
+  if (g == NULL)
+    return;
+
+  if (g->undos != NULL)
+    {
+      /* g->next holds the count of used UNDO slots in this group */
+      for (i = 0; i < g->next; i++)
+        {
+          freeundo (&g->undos[i]);
+        }
+      free (g->undos); /* Free the dynamically allocated array of UNDO steps */
+    }
+
+  free (g); /* Free the group container itself */
+}
+
+/*
+ * Unlink and free all undo and redo history for the current buffer.
+ */
+void
+freeundostack (void)
+{
+  UNDOSTACK *st;
+  LINKS *head;
+  LINKS *curr;
+  LINKS *next_node;
+
+  if (curbp == NULL || curbp->b_undo == NULL)
+    return;
+
+  st = curbp->b_undo;
+
+  /* 1. Free all groups in undolist */
+  head = &st->undolist;
+  curr = head->next;
+  while (curr != head && curr != NULL)
+    {
+      next_node = curr->next;
+      freeundogroup ((UNDOGROUP *)curr);
+      curr = next_node;
+    }
+  initlinks (&st->undolist); /* Reset circular list head */
+
+  /* 2. Free all groups in redolist */
+  head = &st->redolist;
+  curr = head->next;
+  while (curr != head && curr != NULL)
+    {
+      next_node = curr->next;
+      freeundogroup ((UNDOGROUP *)curr);
+      curr = next_node;
+    }
+  initlinks (&st->redolist); /* Reset circular list head */
+}
 
 /*
  * Calculate the zero-based line number for a given line pointer.

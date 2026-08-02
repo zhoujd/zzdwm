@@ -1052,6 +1052,7 @@ void enablesaveundo (void);             /* Enable subsequent saveundos  */
 void killundo (BUFFER *bp);             /* Kill undo records for buffer */
 int lineno (const LINE *lp);            /* Get zero-based line number.  */
 void setundochanged (void);             /* Set buffer changed flags.    */
+void freeundostack (void);              /* Clear all undo/redo history  */
 
 /*
  * Defined by "utf8.c".
