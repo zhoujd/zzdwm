@@ -912,12 +912,18 @@ checkheap (int f, int n, int k)
  *
  * int f, n;		default flag and numeric repeat count
  */
+/*
+ * change tabs to spaces
+ *
+ * int f, n;    default flag and numeric repeat count
+ */
 int
 detab(int f, int n, int k)
 {
-  int inc;	/* increment to next line [sgn(n)] */
+  int inc;  /* increment to next line [sgn(n)] */
+  int spaces;
 
-  if (checkreadonly () == FALSE)	/* if buffer is read-only       */
+  if (checkreadonly () == FALSE)  /* if buffer is read-only       */
     return FALSE;               /* fail                         */
 
   if (f == FALSE)
@@ -927,7 +933,7 @@ detab(int f, int n, int k)
   inc = ((n > 0) ? 1 : -1);
   while (n)
     {
-      curwp->w_dot.o = 0;	/* start at the beginning */
+      curwp->w_dot.o = 0; /* start at the beginning */
 
       /* detab the entire current line */
       while (curwp->w_dot.o < wllength(curwp->w_dot.p))
@@ -935,23 +941,33 @@ detab(int f, int n, int k)
           /* if we have a tab */
           if (lgetc(curwp->w_dot.p, curwp->w_dot.o) == '\t')
             {
-              saveundo (UMOVE, &curwp->w_dot);
+              /* Calculate spaces needed BEFORE deleting the tab */
+              spaces = (tabmask + 1) - (curwp->w_dot.o & tabmask);
+
+              /* Record current position for undo */
+              saveundo(UMOVE, &curwp->w_dot);
+
+              /* Delete 1 char (ldelete should record UDELETE internally,
+                 or save undo here if your ldelete doesn't) */
               ldelete(1, FALSE);
-              insspace(TRUE,
-                  (tabmask + 1) -
-                  (curwp->w_dot.o & tabmask), KRANDOM);
-              saveundo (UMOVE, &curwp->w_dot);
+
+              /* Insert spaces (insspace advances dot offset automatically) */
+              insspace(TRUE, spaces, KRANDOM);
             }
-          forwchar(FALSE, 1, KRANDOM);
+          else
+            {
+              /* Only move forward if we DID NOT replace a tab */
+              forwchar(FALSE, 1, KRANDOM);
+            }
         }
 
       /* advance/or back to the next line */
       forwline(TRUE, inc, KRANDOM);
       n -= inc;
     }
-  curwp->w_dot.o = 0;	/* to the begining of the line */
-  thisflag &= ~CFCPCN;	/* flag that this resets the goal column */
-  lchange(WFEDIT);	/* yes, we have made at least an edit */
+  curwp->w_dot.o = 0; /* to the beginning of the line */
+  thisflag &= ~CFCPCN;  /* flag that this resets the goal column */
+  lchange(WFEDIT);  /* yes, we have made at least an edit */
   return TRUE;
 }
 
