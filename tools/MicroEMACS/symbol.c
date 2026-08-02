@@ -290,6 +290,7 @@ KEY key[] = {
   {-1,                  redo,              "redo"},
   {-1,                  eecho,             "echo"},
   {-1,                  checkheap,         "check-heap"},
+  {-1,                  replaceregion,     "replace-in-region"},
   {-1,                  filevisitreadonly, "file-visit-readonly"},
   {-1,                  viewfile,          "view-file"}
 };

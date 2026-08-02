@@ -392,3 +392,120 @@ reglines ()
   return (n);
 }
 
+/*
+ * Compare two line pointers in the current buffer.
+ * Returns > 0 if lp1 comes after lp2, < 0 if lp1 comes before lp2, 0 if equal.
+ */
+static int
+line_cmp (LINE *lp1, LINE *lp2)
+{
+  LINE *lp;
+
+  if (lp1 == lp2)
+    return 0;
+
+  for (lp = lp1; lp != curwp->w_bufp->b_linep; lp = lforw (lp))
+    {
+      if (lp == lp2)
+        return -1; /* lp1 comes BEFORE lp2.  */
+    }
+
+  return 1; /* lp1 comes AFTER lp2.  */
+}
+
+/*
+ * Interactively query and replace strings strictly within the selected region.
+ */
+int
+replaceregion (int f, int n, int k)
+{
+  LINE *orig_p, *limit_p;
+  int orig_o, limit_o;
+  REGION region;
+  char rpat[NPAT];
+  int status;
+  int c;
+  int num_replaced = 0;
+  int replace_all = FALSE;
+
+  if (curwp->w_mark.p == NULL)
+    {
+      eprintf ("No mark set in this window");
+      return FALSE;
+    }
+
+  orig_p = curwp->w_dot.p;
+  orig_o = curwp->w_dot.o;
+
+  if (getregion (&region) != TRUE)
+    return FALSE;
+
+  if ((status = readpattern ("Query replace in region")) != TRUE)
+    {
+      curwp->w_dot.p = orig_p;
+      curwp->w_dot.o = orig_o;
+      return status;
+    }
+
+  if ((status = ereply ("With: ", rpat, NPAT)) != TRUE)
+    {
+      curwp->w_dot.p = orig_p;
+      curwp->w_dot.o = orig_o;
+      return status;
+    }
+
+  limit_p = curwp->w_dot.p;
+  limit_o = curwp->w_dot.o;
+
+  curwp->w_dot.p = region.r_pos.p;
+  curwp->w_dot.o = region.r_pos.o;
+
+  while (forwsrch () == TRUE)
+    {
+      int plen = 0, rlen = 0;
+
+      while (pat[plen]) plen++;
+      while (rpat[rlen]) rlen++;
+
+      if (line_cmp (curwp->w_dot.p, limit_p) > 0
+          || (curwp->w_dot.p == limit_p && curwp->w_dot.o > limit_o))
+        break;
+
+      if (!replace_all)
+        {
+          curwp->w_dot.o -= plen;
+          curwp->w_flag |= WFMOVE;
+
+          eprintf ("Query replace? (y/n/!/^G)");
+
+          update ();
+          ttflush ();
+
+          c = getinp ();
+
+          curwp->w_dot.o += plen;
+
+          if (c == CCHR ('G'))
+            break;
+          if (c == '!')
+            replace_all = TRUE;
+          else if (c != 'y' && c != 'Y' && c != ' ')
+            continue;
+        }
+
+      if (curwp->w_dot.p == limit_p)
+        limit_o += (rlen - plen);
+
+      lreplace (plen, rpat, FALSE);
+      num_replaced++;
+    }
+
+  eprintf ("Replaced %d occurrence(s) in region", num_replaced);
+
+  curwp->w_dot.p = orig_p;
+  curwp->w_dot.o = orig_o;
+  curwp->w_flag |= WFMOVE;
+  update ();
+
+  return TRUE;
+}

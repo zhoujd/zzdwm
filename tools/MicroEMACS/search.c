@@ -149,7 +149,7 @@ unicodepat (void)
  * Display the old pattern, in the style of Jeff Lomicka. There is
  * some do-it-yourself control expansion.
  */
-static int
+int
 readpattern (const char *prompt)
 {
   register int s;
