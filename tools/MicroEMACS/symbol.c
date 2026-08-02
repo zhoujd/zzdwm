@@ -211,10 +211,11 @@ KEY key[] = {
   {KCTLX | 'V',         showversion,       "display-version"},
   {KCTLX | 'X',         nextbuffer,        "forw-buffer"},
   {KCTLX | 'Z',         enlargewind,       "enlarge-window"},
-  {KCTLX | '!',         spawncmd,          "cmd"},
-  {KCTLX | '@',         spawnpipe,         "pipe"},
-  {KCTLX | '#',         spawnfilter,       "filter"},
-  {KCTLX | '$',         changedir,         "cd"},
+  {KCTLX | '!',         spawncmd,          "spawn-cmd"},
+  {KCTLX | '@',         spawnpipe,         "spawn-pipe"},
+  {KCTLX | '#',         spawnfilter,       "spawn-filter"},
+  {KCTLX | '$',         changedir,         "change-dir"},
+  {KCTLX | '%',         replaceregion,     "replace-region"},
   {KMETA | KCTRL | 'C', wordcount,         "count-words"},
   {KMETA | KCTRL | 'E', gccerror,          "gcc-error"},
   {KMETA | KCTRL | 'F', foldcase,          "fold-case"},
@@ -290,7 +291,6 @@ KEY key[] = {
   {-1,                  redo,              "redo"},
   {-1,                  eecho,             "echo"},
   {-1,                  checkheap,         "check-heap"},
-  {-1,                  replaceregion,     "replace-in-region"},
   {-1,                  filevisitreadonly, "file-visit-readonly"},
   {-1,                  viewfile,          "view-file"}
 };
