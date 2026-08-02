@@ -25,13 +25,13 @@ CFLAGS = -std=c99 -D_GNU_SOURCE -DLINUX -DBACKUP $(INC) \
 ifeq ($(DEBUG), yes)
 CFLAGS := -g -O0 $(CFLAGS)
 else
-CFLAGS := -Os $(CFLAGS)
+CFLAGS := -Os -ffunction-sections -fdata-sections $(CFLAGS)
 endif
 
 LD = gcc
 LDFLAGS =
 ifeq ($(STATIC), yes)
-LDFLAGS := -static $(LDFLAGS)
+LDFLAGS := -static -Wl,--gc-sections $(LDFLAGS)
 endif
 ifeq ($(TERMCAP), yes)
 LIBS = -ltermcap
