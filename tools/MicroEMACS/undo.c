@@ -657,6 +657,7 @@ undo (int f, int n, int k)
   appendgroup (g, &st->redolist);
 
   undoing = FALSE;
+  eprintf ("Undo!");
   return status;
 }
 
@@ -760,6 +761,7 @@ redo (int f, int n, int k)
   unlinkgroup (g);
   appendgroup (g, &st->undolist);
   undoing = FALSE;
+  eprintf ("Redo!");
   return status;
 }
 

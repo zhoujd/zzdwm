@@ -387,7 +387,6 @@ loop:
       f = TRUE;
       n = 4;		/* with argument of 4 */
       mflag = 0;	/* that can be discarded. */
-      eprintf ("Arg: 4");
       while (((c = getkey ()) >= '0' && c <= '9') || c == (KCTRL | 'U')
             || c == '-' || c == (KCTRL | 'G'))
         {
