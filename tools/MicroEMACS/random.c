@@ -910,11 +910,6 @@ checkheap (int f, int n, int k)
 /*
  * change tabs to spaces
  *
- * int f, n;		default flag and numeric repeat count
- */
-/*
- * change tabs to spaces
- *
  * int f, n;    default flag and numeric repeat count
  */
 int
@@ -927,7 +922,7 @@ detab(int f, int n, int k)
     return FALSE;               /* fail                         */
 
   if (f == FALSE)
-    n = reglines();
+    n = reglines ();
 
   /* loop thru detabbing n lines */
   inc = ((n > 0) ? 1 : -1);
@@ -945,109 +940,142 @@ detab(int f, int n, int k)
               spaces = (tabmask + 1) - (curwp->w_dot.o & tabmask);
 
               /* Record current position for undo */
-              saveundo(UMOVE, &curwp->w_dot);
+              saveundo (UMOVE, &curwp->w_dot);
 
               /* Delete 1 char (ldelete should record UDELETE internally,
                  or save undo here if your ldelete doesn't) */
-              ldelete(1, FALSE);
+              ldelete (1, FALSE);
 
               /* Insert spaces (insspace advances dot offset automatically) */
-              insspace(TRUE, spaces, KRANDOM);
+              insspace (TRUE, spaces, KRANDOM);
             }
           else
             {
               /* Only move forward if we DID NOT replace a tab */
-              forwchar(FALSE, 1, KRANDOM);
+              forwchar (FALSE, 1, KRANDOM);
             }
         }
 
       /* advance/or back to the next line */
-      forwline(TRUE, inc, KRANDOM);
+      forwline (TRUE, inc, KRANDOM);
       n -= inc;
     }
   curwp->w_dot.o = 0; /* to the beginning of the line */
   thisflag &= ~CFCPCN;  /* flag that this resets the goal column */
-  lchange(WFEDIT);  /* yes, we have made at least an edit */
+  lchange (WFEDIT);  /* yes, we have made at least an edit */
   return TRUE;
 }
 
 /*
- * change spaces to tabs where posible
+ * change spaces to tabs where possible
  *
- * int f, n;		default flag and numeric repeat count
+ * int f, n;    default flag and numeric repeat count
  */
 int
 entab (int f, int n, int k)
 {
-  int inc;	/* increment to next line [sgn(n)] */
-  int fspace;	/* pointer to first space if in a run */
-  int ccol;	/* current cursor column */
-  char cchar;	/* current character */
+  int inc;        /* increment to next line [sgn(n)] */
+  int ccol;       /* visual display column */
+  int space_start_col; /* visual start column of space run */
+  int space_start_off; /* buffer offset start of space run */
+  int num_spaces;
+  char cchar;
 
-  if (checkreadonly () == FALSE)	/* if buffer is read-only       */
-    return FALSE;               /* fail                         */
+  if (checkreadonly () == FALSE)  /* if buffer is read-only */
+    return FALSE;
 
   if (f == FALSE)
-    n = reglines();
+    n = reglines ();
 
-  /* loop thru entabbing n lines */
   inc = ((n > 0) ? 1 : -1);
+
   while (n)
     {
-      curwp->w_dot.o = 0;	/* start at the beginning */
-
-      /* entab the entire current line */
-      fspace = -1;
+      curwp->w_dot.o = 0;  /* start at beginning of line */
       ccol = 0;
-      while (curwp->w_dot.o < wllength(curwp->w_dot.p))
+      space_start_col = -1;
+      space_start_off = -1;
+
+      while (curwp->w_dot.o <= wllength(curwp->w_dot.p))
         {
-          /* see if it is time to compress */
-          if ((fspace >= 0) && (nextab(fspace) <= ccol))
+          /* Read char or handle end-of-line boundary virtual char */
+          if (curwp->w_dot.o < wllength(curwp->w_dot.p))
+            cchar = lgetc(curwp->w_dot.p, curwp->w_dot.o);
+          else
+            cchar = '\0';  /* EOL sentinel to flush trailing space runs */
+
+          /* See if we need to replace a accumulated run of spaces */
+          if (space_start_col >= 0 && (nextab(space_start_col) <= ccol || cchar != ' '))
             {
-              if (ccol - fspace < 2)
-                fspace = -1;
-              else
+              num_spaces = ccol - space_start_col;
+
+              /* Only replace if it spans across at least 2 spaces to a tabstop */
+              if (num_spaces >= 2 && nextab(space_start_col) <= ccol)
                 {
-                  /* there is a bug here dealing with mixed space/tabed
-                      lines.......it will get fixed                */
-                  backchar(TRUE, ccol - fspace, KRANDOM);
+                  /* Return cursor to where the space run started */
+                  curwp->w_dot.o = space_start_off;
+
+                  /* Record undo move before edit */
                   saveundo (UMOVE, &curwp->w_dot);
-                  ldelete((long) (ccol - fspace), FALSE);
-                  linsert(1, '\t', NULLPTR);
-                  saveundo (UMOVE, &curwp->w_dot);
-                  fspace = -1;
+
+                  /* Delete the raw space bytes */
+                  ldelete ((long)num_spaces, FALSE);
+
+                  /* Insert 1 tab */
+                  linsert (1, '\t', NULLPTR);
+
+                  /* Recalculate ccol and offsets from new tab position */
+                  ccol = nextab(space_start_col);
+                  space_start_col = -1;
+                  space_start_off = -1;
+
+                  /* Process remaining spaces in the run if any exist */
+                  continue;
+                }
+              else if (cchar != ' ')
+                {
+                  space_start_col = -1;
+                  space_start_off = -1;
                 }
             }
 
-          /* get the current character */
-          cchar = lgetc(curwp->w_dot.p, curwp->w_dot.o);
-          switch (cchar)
+          if (cchar == '\0')
+            break;
+
+          /* Track display columns vs byte offsets */
+          if (cchar == ' ')
             {
-            case '\t':	/* a tab...count em up */
-              ccol = nextab(ccol);
-              break;
-
-            case ' ':	/* a space...compress? */
-              if (fspace == -1)
-                fspace = ccol;
+              if (space_start_col == -1)
+                {
+                  space_start_col = ccol;
+                  space_start_off = curwp->w_dot.o;
+                }
               ccol++;
-              break;
-
-            default:	/* any other char...just count */
-              ccol++;
-              fspace = -1;
-              break;
             }
-          forwchar(FALSE, 1, KRANDOM);
+          else if (cchar == '\t')
+            {
+              ccol = nextab(ccol);
+              space_start_col = -1;
+              space_start_off = -1;
+            }
+          else
+            {
+              ccol++;
+              space_start_col = -1;
+              space_start_off = -1;
+            }
+
+          curwp->w_dot.o++;
         }
 
-      /* advance/or back to the next line */
-      forwline(TRUE, inc, KRANDOM);
+      /* Advance to next line */
+      forwline (TRUE, inc, KRANDOM);
       n -= inc;
     }
-  curwp->w_dot.o = 0;	/* to the begining of the line */
-  thisflag &= ~CFCPCN;	/* flag that this resets the goal column */
-  lchange(WFEDIT);	/* yes, we have made at least an edit */
+
+  curwp->w_dot.o = 0;
+  thisflag &= ~CFCPCN;
+  lchange (WFEDIT);
   return TRUE;
 }
 
