@@ -1080,48 +1080,61 @@ entab (int f, int n, int k)
 }
 
 /*
- * Trim trailing whitespace from the point to eol with no arguments, it
- * trims the current region
+ * Trim trailing whitespace from the point to eol.
+ * With no arguments, it trims the current region.
  */
 int
 trim (int f, int n, int k)
 {
-  register LINE *lp;	/* current line pointer */
-  register int offset;	/* original line offset position */
-  register int length;	/* current length */
-  register int inc;	/* increment to next line [sgn(n)] */
+  LINE *lp;        /* current line pointer */
+  int offset;      /* start offset for trimming */
+  int length;      /* original line length */
+  int trim_len;    /* whitespace count to delete */
+  int inc;         /* increment to next line [sgn(n)] */
 
-  if (checkreadonly () == FALSE)	/* if buffer is read-only       */
-    return FALSE;               /* fail                         */
+  if (checkreadonly () == FALSE)  /* if buffer is read-only */
+    return FALSE;
 
   if (f == FALSE)
-    n = reglines();
+    n = reglines ();
 
-  /* loop thru trimming n lines */
   inc = ((n > 0) ? 1 : -1);
   while (n)
     {
-      saveundo (UMOVE, &curwp->w_dot);
-      lp = curwp->w_dot.p;	/* find current line text */
-      offset = curwp->w_dot.o;	/* save original offset */
-      length = lp->l_used;	/* find current length */
+      lp = curwp->w_dot.p;
+      length = wllength (lp);
 
-      /* trim the current line */
+      /* Default: trim from current point to EOL.
+         If trimming region lines, start from current offset or start of line. */
+      offset = curwp->w_dot.o;
+
+      /* Scan backwards from EOL until non-whitespace or reaching offset */
+      trim_len = 0;
       while (length > offset)
         {
-          if (lgetc(lp, length - 1) != ' ' &&
-              lgetc(lp, length - 1) != '\t')
+          char c = lgetc (lp, length - 1);
+          if (c != ' ' && c != '\t')
             break;
+          trim_len++;
           length--;
         }
-      lp->l_used = length;
 
-      /* advance/or back to the next line */
-      forwline(TRUE, inc, KRANDOM);
+      /* If trailing whitespace was found, delete it safely */
+      if (trim_len > 0)
+        {
+          curwp->w_dot.o = length;        /* Move dot to start of trailing spaces */
+          saveundo (UMOVE, &curwp->w_dot);  /* Save cursor state before delete */
+          ldelete ((long)trim_len, FALSE);  /* Properly record UDELETE and update buffer */
+        }
+
+      /* Advance to next line */
+      forwline (TRUE, inc, KRANDOM);
       n -= inc;
     }
-  lchange(WFEDIT);
-  thisflag &= ~CFCPCN;	/* flag that this resets the goal column */
+
+  curwp->w_dot.o = 0;
+  thisflag &= ~CFCPCN;  /* flag that this resets the goal column */
+  lchange (WFEDIT);
   return TRUE;
 }
 
