@@ -334,59 +334,67 @@ inword (void)
 int
 wordcount (int f, int n, int k)
 {
-  LINE *lp;       /* position while scanning */
-  long size;      /* size of region left to count */
-  int nlines;     /* number of lines */
-  long nbytes;    /* number of bytes */
+  LINE *lp;        /* position while scanning */
+  long size;       /* size of region left to count */
+  int nlines;      /* number of lines */
+  long nbytes;     /* number of bytes */
   long nwords;
   long nchars;
   int ch;
   int wordflag;
   int lastword;
   int offset;
-  int avgch;      /* average number of chars/word */
+  int avgch;       /* average number of chars/word (percentage/100) */
   REGION region;
 
   /* check for a valid region first */
-  if (getregion (&region) != TRUE )
-      return (FALSE);
+  if (getregion (&region) != TRUE)
+    return (FALSE);
+
   /* count up things */
   lastword = FALSE;
   lp = region.r_pos.p;
   offset = region.r_pos.o;
   size = region.r_size;
-  nbytes = region.r_size;;
-  nlines = 0;
+  nbytes = region.r_size;
+  nlines = 1;      /* A valid region spans at least 1 line */
   nwords = 0L;
   nchars = 0L;
+
   while (size--)
     {
-       /* get the current character */
-       if (offset == wllength (lp)) {	/* end of line */
-         ch = '\n';
-         lp = lforw (lp);
-         offset = 0;
-         ++nlines;
-       } else {
-         ch = lgetc (lp, offset);
-         ++offset;
-         ++nchars;
-       }
-       /* and tabulate it */
-       wordflag = CISWORD (ch);
-       if (wordflag == TRUE && lastword == FALSE)
-         ++nwords;
-       lastword = wordflag;
+      /* get the current character */
+      if (offset == wllength (lp))
+        {  /* end of line boundary */
+          ch = '\n';
+          lp = lforw (lp);
+          offset = 0;
+          ++nlines;
+        }
+      else
+        {
+          ch = lgetc (lp, offset);
+          ++offset;
+        }
+
+      ++nchars; /* Count all characters in region including \n */
+
+      /* and tabulate it */
+      wordflag = CISWORD (ch);
+      if (wordflag == TRUE && lastword == FALSE)
+        ++nwords;
+      lastword = wordflag;
     }
-  /* and report on the info */
+
+  /* calculate average chars per word */
   if (nwords > 0L)
     avgch = (int)((100L * nchars) / nwords);
   else
     avgch = 0;
-  /* update nlines */
-  ++nlines;
-  /* display results */
-  eprintf("[Word %l Char %l Line %d Byte %l Avg chars/word %d]",
-          nwords, nchars, nlines, nbytes, avgch);
+
+  /* display results using standard MicroEMACS %d specifiers */
+  eprintf("[Words %d Chars %d Lines %d Bytes %d Avg %d.%02d chars/word]",
+          (int)nwords, (int)nchars, nlines, (int)nbytes, avgch / 100, avgch % 100);
+
   return (TRUE);
 }
