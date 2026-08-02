@@ -885,6 +885,8 @@ int regqueryrepl (int f, int n, int k); /* Regexp query replace         */
 int regrepl (int f, int n, int k);      /* Regexp replace with no query */
 int searchparen (int f, int n, int k);  /* Search for matching paren    */
 int foldcase (int f, int n, int k);     /* Set casefold flag            */
+void unicodepat (void);                 /* Convert pat to Unicode       */
+int forwsrch (void);                    /* Real work of forward search  */
 
 /*
  * Defined by "spell.c".

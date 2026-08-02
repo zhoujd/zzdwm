@@ -123,7 +123,7 @@ foldcase (int f, int n, int k)
  * Convert pat to Unicode, store the result in upat,
  * and set patlen to the number of Unicode characters stored.
  */
-static void
+void
 unicodepat (void)
 {
   uchar *s;
@@ -330,7 +330,7 @@ backregsearch (int f, int n, int k)
 
 #ifndef SRCHASM
 
-static int
+int
 forwsrch (void)
 {
   register LINE *clp;

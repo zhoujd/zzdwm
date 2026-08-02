@@ -103,6 +103,7 @@ int fillcol = 70;		/* Fill column for paragraphs.  */
 int tabsize = 8;		/* No. of columns for a tab     */
 int savetabs = TRUE;		/* True if tabs are preserved   */
 int autonl = TRUE;		/* True if auto add newline     */
+char *srchstr = NULL;		/* Initial search string passed */
 
 static int nbuf;		/* number of buffers    */
 
@@ -120,7 +121,7 @@ void
 usage (void)
 {
   fprintf (stderr,
-           "usage: me [-234" OPT_BACKUP "dmNrTxz] [-c path] [-g line] [-p profile] [-t size]\n"
+           "usage: me [-234" OPT_BACKUP "dmNrTxz] [-c path] [-g line] [-p profile] [-s string] [-t size]\n"
            "          [+[line]] [file(s)[:line[:column]] ...]\n");
 }
 
@@ -205,6 +206,11 @@ main (int argc, char *argv[])
             case 'r':
               rflag = TRUE;
               break;
+            case 's':
+              n++;
+              if (n < argc && argv[n][0] != '-')
+                srchstr = argv[n];
+              break;
             case 'T':
               savetabs = FALSE;
               break;
@@ -250,6 +256,7 @@ main (int argc, char *argv[])
             case 'c':
             case 'g':
             case 'p':
+            case 's':
             case 't':
               n++;		/* skip name options    */
               break;
@@ -313,6 +320,17 @@ main (int argc, char *argv[])
     eprintf ("Unable to open profile %s", proptr);
   else
     eprintf ("");
+
+  /* Startup Search Execution */
+  if (srchstr != NULL && srchstr[0] != '\0')
+    {
+      strncpy ((char *)pat, srchstr, NPAT - 1);
+      pat[NPAT - 1] = '\0';
+      unicodepat ();            /* Convert pat -> upat & compute patlen! */
+      gotobob (FALSE, 1, KRANDOM);       /* Move cursor to Beginning Of Buffer first! */
+      forwsrch ();
+      update ();
+    }
 
 loop:
   if (!inprof && !ttstat ())	/* If not in a profile, */
