@@ -37,6 +37,7 @@
 #include <dirent.h>
 #include <pwd.h>
 #include <unistd.h>
+#include <string.h>
 
 /*
  * External declarations.
@@ -532,10 +533,19 @@ ffexedir (void)
 int
 ffcheckname (char *filename)
 {
-  /* check last character */
-  if (!filename || (filename[strlen (filename) - 1] == '/'))
+  register int len;
+  char *msg = "[Bad file name]";
+
+  if (!filename)
     {
-      eprintf ("[Bad file name]");
+      eprintf ("%s", msg);
+      return (FALSE);
+    }
+
+  len = strlen(filename);
+  if (len == 0 || filename[len - 1] == '/')
+    {
+      eprintf ("%s", msg);
       return (FALSE);
     }
   return (TRUE);
