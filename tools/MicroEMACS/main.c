@@ -258,7 +258,7 @@ main (int argc, char *argv[])
             case 'p':
             case 's':
             case 't':
-              n++;		/* skip name options    */
+              n++;             /* skip name options    */
               break;
             default:
               break;
@@ -287,15 +287,22 @@ main (int argc, char *argv[])
                 }
               line = atoi (lp);
             }
-          bufinit (arg);	/* make buffer & window */
-          //update ();
-          readin (arg);		/* read in the file     */
-          if (gotoflag)		/* goto line specified  */
+          /* Resolve filename and create buffer */
+          if (ffcheckname (arg) == TRUE)
             {
-              gotoline (TRUE, line, 0);
-              line = 0;
-              if (column != 0)
-                forwchar (TRUE, column - 1, KRANDOM);
+              /* File path is valid/resolvable */
+              bufinit (arg);
+              readin (arg);
+              if (gotoflag)		/* goto line specified  */
+                {
+                  gotoline (TRUE, line, 0);
+                  line = 0;
+                  if (column != 0)
+                    forwchar (TRUE, column - 1, KRANDOM);
+                  /* Reset line state after positioning */
+                  gotoflag = FALSE;
+                  line = 0;
+                }
             }
         }
     }
@@ -303,7 +310,6 @@ main (int argc, char *argv[])
   if (nbuf == 0)
     {				/* no files read in?    */
       bufinit ("main");		/* make an empty buffer */
-      //update ();
     }
   else
     {
