@@ -134,8 +134,8 @@ ttykeymapinit (void)
   keydup (KF2,		"file-save");
   keydup (KF3,		"file-visit");
   keydup (KF4,		"quit");
-  keydup (KF5,		"undo");
-  keydup (KF6,		"display-buffers");
+  keydup (KF5,		"revert-buffer");
+  keydup (KF6,		"undo");
   keydup (KF7,		"redo");
   keydup (KF8,		"forw-buffer");
   keydup (KF9,		"search-again");

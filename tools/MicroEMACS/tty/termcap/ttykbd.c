@@ -397,11 +397,11 @@ ttykeymapinit (void)
   keydup (KF0, "help");
   keydup (KF1, "file-save");
   keydup (KF2, "file-visit");
-  keydup (KF3, "quit");
-  keydup (KF4, "undo");
-  keydup (KF5, "display-buffers");
-  keydup (KF6, "forw-window");
-  keydup (KF7, "forw-buffer");
+  keydup (KF3, "forw-window");
+  keydup (KF4, "quit");
+  keydup (KF5, "revert-buffer");
+  keydup (KF6, "undo");
+  keydup (KF7, "redo");
   keydup (KF8, "search-again");
   keydup (KF9, "only-window");
   keydup (KSF0, "find-cscope");
