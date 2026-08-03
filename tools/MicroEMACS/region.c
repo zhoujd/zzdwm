@@ -393,27 +393,6 @@ reglines ()
 }
 
 /*
- * Compare two line pointers in the current buffer.
- * Returns > 0 if lp1 comes after lp2, < 0 if lp1 comes before lp2, 0 if equal.
- */
-static int
-line_cmp (LINE *lp1, LINE *lp2)
-{
-  LINE *lp;
-
-  if (lp1 == lp2)
-    return 0;
-
-  for (lp = lp1; lp != curwp->w_bufp->b_linep; lp = lforw (lp))
-    {
-      if (lp == lp2)
-        return -1; /* lp1 comes BEFORE lp2.  */
-    }
-
-  return 1; /* lp1 comes AFTER lp2.  */
-}
-
-/*
  * Interactively query and replace strings strictly within the selected region.
  */
 int
@@ -466,7 +445,7 @@ replaceregion (int f, int n, int k)
 
   while (forwsrch () == TRUE)
     {
-      if (line_cmp (curwp->w_dot.p, limit_p) > 0
+      if (lcmp (curwp->w_dot.p, limit_p) > 0
           || (curwp->w_dot.p == limit_p && curwp->w_dot.o > limit_o))
         break;
 

@@ -923,3 +923,24 @@ kremove (int n, uchar *buf)
   ++kindex;
   return len;
 }
+
+/*
+ * Compare two line pointers in the current buffer.
+ * Returns > 0 if lp1 comes after lp2, < 0 if lp1 comes before lp2, 0 if equal.
+ */
+int
+lcmp (LINE *lp1, LINE *lp2)
+{
+  LINE *lp;
+
+  if (lp1 == lp2)
+    return 0;
+
+  for (lp = lp1; lp != curwp->w_bufp->b_linep; lp = lforw (lp))
+    {
+      if (lp == lp2)
+        return -1; /* lp1 comes BEFORE lp2.  */
+    }
+
+  return 1; /* lp1 comes AFTER lp2.  */
+}

@@ -1148,16 +1148,16 @@ markall(int f, int n, int k)
 {
   register int s;
 
-  /* 1. Move cursor to the end of the buffer */
+  /* Move cursor to the end of the buffer */
   s = gotoeob(f, n, KRANDOM);
   if (s != TRUE)
     return (s);
 
-  /* 2. Set the mark at the current position (end) */
+  /* Set the mark at the current position (end) */
   s = setmark(f, n, KRANDOM);
   if (s != TRUE)
     return (s);
 
-  /* 3. Move cursor back to the beginning of the buffer */
+  /* Move cursor back to the beginning of the buffer */
   return gotobob(f, n, KRANDOM);
 }

@@ -792,6 +792,7 @@ int lreplace (int plen, const char *st, int f);
                                         /* Replace chars at dot         */
 int kinsert (const char *s, int n);     /* Insert text in kill buffer   */
 void kdelete (void);                    /* Delete text in kill buffer   */
+int lcmp (LINE *lp1, LINE *lp2);        /* Compare two line pointers    */
 
 /*
  * Defined by "main.c".

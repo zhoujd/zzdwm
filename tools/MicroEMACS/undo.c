@@ -206,7 +206,7 @@ freeundostack (void)
 
   st = curbp->b_undo;
 
-  /* 1. Free all groups in undolist */
+  /* Free all groups in undolist */
   head = &st->undolist;
   curr = head->next;
   while (curr != head && curr != NULL)
@@ -217,7 +217,7 @@ freeundostack (void)
     }
   initlinks (&st->undolist); /* Reset circular list head */
 
-  /* 2. Free all groups in redolist */
+  /* Free all groups in redolist */
   head = &st->redolist;
   curr = head->next;
   while (curr != head && curr != NULL)
