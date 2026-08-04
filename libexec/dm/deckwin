@@ -1,73 +1,70 @@
 #!/bin/bash
-# Dock a window to the side of a screen.
+# Dock active window to screen edges with gap spacing
 
 gap=${WINGAP:-5}
 
-focus() {
-    local id=$1
-    xdotool windowactivate $id
-    xdotool windowraise $id
-    xdotool windowfocus $id
-}
-
 prepare() {
     local id=$1
-    wmctrl -ir $id -b remove,maximized_vert,maximized_horz
+    wmctrl -ir "$id" -b remove,maximized_vert,maximized_horz
 }
 
 setwin() {
-    local id=$1
-    local pos_x=$2
-    local pos_y=$3
-    local size_x=$4
-    local size_y=$5
-    xdotool windowmove $id $pos_x $pos_y
-    xdotool windowsize $id $size_x $size_y
+    local id=$1 x=$2 y=$3 w=$4 h=$5
+    # gravity 0, x, y, width, height (wmctrl respects WM frame borders)
+    wmctrl -ir "$id" -e "0,$x,$y,$w,$h"
+    xdotool windowactivate "$id" windowraise "$id" windowfocus "$id"
 }
 
 main() {
     local kind=$1
-    local id=$(xdotool getactivewindow)
-    local mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
-    local mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
-    local fw=$(($mw-$gap*2))
-    local fh=$(($mh-$gap*2))
-    local hw=$((($mw-$gap*3)/2))
-    local hh=$((($mh-$gap*3)/2))
+    local id
+    id=$(xdotool getactivewindow 2>/dev/null)
+    [ -z "$id" ] && exit 0
 
-    case $kind in
-        --help|-h )
-            echo "usage: $(basename $0) {left|top|right|bottom|--help|-h}"
+    # Get total root dimensions
+    local mw mh
+    mw=$(xwininfo -root | awk '/Width:/ {print $2}')
+    mh=$(xwininfo -root | awk '/Height:/ {print $2}')
+
+    # Dimension math with gaps
+    local fw=$((mw - gap * 2))
+    local fh=$((mh - gap * 2))
+    local hw=$(((mw - gap * 3) / 2))
+    local hh=$(((mh - gap * 3) / 2))
+
+    case "$kind" in
+        --help|-h)
+            echo "Usage: $(basename "$0") {left|right|top|bottom|center|max}"
+            exit 0
             ;;
-        left )
-            prepare $id
-            setwin $id $gap $gap $hw $fh
-            focus $id
+        left)
+            prepare "$id"
+            setwin "$id" "$gap" "$gap" "$hw" "$fh"
             ;;
-        top )
-            prepare $id
-            setwin $id $gap $gap $fw $hh
-            focus $id
+        right)
+            prepare "$id"
+            setwin "$id" "$((mw / 2 + gap / 2))" "$gap" "$hw" "$fh"
             ;;
-        right )
-            prepare $id
-            setwin $id $(($mw/2+$gap/2)) $gap $hw $fh
-            focus $id
+        top)
+            prepare "$id"
+            setwin "$id" "$gap" "$gap" "$fw" "$hh"
             ;;
-        bottom )
-            prepare $id
-            setwin $id $gap $(($mh/2+$gap/2)) $fw $hh
-            focus $id
+        bottom)
+            prepare "$id"
+            setwin "$id" "$gap" "$((mh / 2 + gap / 2))" "$fw" "$hh"
             ;;
-        * )
-            ## Prepare window
-            prepare $id
-            ## Set window
-            setwin $id $(($mw/8)) $(($mh/8)) $(($hw*3/2)) $(($hh*3/2))
-            ## Set focus
-            focus $id
+        max)
+            wmctrl -ir "$id" -b add,maximized_vert,maximized_horz
+            ;;
+        center|*)
+            prepare "$id"
+            local cw=$((mw * 3 / 4))
+            local ch=$((mh * 3 / 4))
+            local cx=$(((mw - cw) / 2))
+            local cy=$(((mh - ch) / 2))
+            setwin "$id" "$cx" "$cy" "$cw" "$ch"
             ;;
     esac
 }
 
-main $@
+main "$@"
