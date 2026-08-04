@@ -10,8 +10,7 @@ num=$(wmctrl -xl 2>/dev/null | tr -s '[:blank:]' | cut -d ' ' -f 3 | \
           grep -i "^$app" | wc -l)
 
 app_run() {
-    hash $cmd 2>/dev/null
-    if [[ $? -eq 0 ]]; then
+    if command -v $cmd >/dev/null; then
         exec $cmd
     else
         echo "No $cmd can been found!"
