@@ -1,32 +1,39 @@
 #!/bin/bash
+# Previous window of same application ON CURRENT DESKTOP ONLY
 
-# get id of the focused window
-active_win_id=$(xprop -root | grep '^_NET_ACTIVE_W' | awk -F'# 0x' '{print $2}')
-if [ "$active_win_id" == "0" ]; then
-    active_win_id=""
+# Get active window ID (standardized hex format)
+active_win_id=$(xprop -root _NET_ACTIVE_WINDOW | awk '{print $NF}')
+
+if [ "$active_win_id" = "0x0" ] || [ -z "$active_win_id" ]; then
+    exit 0
 fi
 
-# get win_class from active_win_id
-win_class=$(wmctrl -xl | grep $active_win_id | awk '{print $3}')
+active_win_id=$(printf "0x%08x" "$active_win_id")
 
-# get current desktop
-desktop=$(xdotool get_desktop)
+# Get active desktop index
+current_desktop=$(xdotool get_desktop)
 
-# get list of all windows matching with the class above
-win_list=$(wmctrl -xl | grep -E "\s+${desktop}\s+" | \
-               grep -E "\s+${win_class}\s+" | awk '{print $1}')
+# Get window class of current active window
+win_class=$(wmctrl -xl | awk -v id="$active_win_id" 'tolower($1) == id {print $3}')
 
-# get previous window to focus on, removing id active
-switch_to=$(echo $win_list | sed s/0x[0]*$active_win_id.*// | awk '{print $NF}')
+if [ -n "$win_class" ]; then
+    # Fetch matching window IDs ONLY on current desktop (or sticky desktop -1)
+    win_list=($(wmctrl -xl | awk -v cls="$win_class" -v desk="$current_desktop" \
+      '$3 == cls && ($2 == desk || $2 == -1) {print $1}'))
 
-# if the current window is the last in the list ... take the last one
-if [ "$switch_to" == '' ]; then
-    switch_to=$(echo $win_list | awk '{print $NF}')
-fi
+    total=${#win_list[@]}
 
-# switch to window
-if [ "$switch_to" != '' ]; then
-    xdotool windowactivate $switch_to
-    xdotool windowraise $switch_to
-    xdotool windowfocus $switch_to
+    # Locate active index and step backward
+    for i in "${!win_list[@]}"; do
+        if [ "$(printf "0x%08x" "${win_list[$i]}")" = "$active_win_id" ]; then
+            prev_idx=$(( (i - 1 + total) % total ))
+            switch_to="${win_list[$prev_idx]}"
+            break
+        fi
+    done
+
+    # Switch focus
+    if [ -n "$switch_to" ]; then
+        wmctrl -i -a "$switch_to"
+    fi
 fi
