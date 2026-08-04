@@ -5,17 +5,18 @@ lines=10
 
 mktime() {
     DESC=$1
+
     # If Sunday, show the week number of the next week
-    if [ $(date +'%u') -gt 6 ]; then
-        WEEK=$(date +'W%-V' -d "next Mon")
+    if [ $(TZ="$TZ" date +'%u') -gt 6 ]; then
+        WEEK=$(TZ="$TZ" date +'W%-V' -d "next Mon")
     else
-        WEEK=$(date +'W%-V')
+        WEEK=$(TZ="$TZ" date +'W%-V')
     fi
-    TIME=$(date +'%a %-e %b %-l:%M %p %z %Z %Y')
-    # Add spaces to align the DESC
+
+    TIME=$(TZ="$TZ" date +'%a %-e %b %-l:%M %p %z %Z %Y')
     MAX=$(echo -n "${DESC}" | awk '{cur=length($1); \
-                                     max=(cur>max?cur:max)} END{print max}')
-    printf "%-3s - %s" "$(echo ${DESC})" "$(echo ${WEEK} ${TIME})"
+                                    max=(cur>max?cur:max)} END{print max}')
+    printf "%-${MAX}s - %s\n" "${DESC}" "${WEEK} ${TIME}"
 }
 
 opt=(
@@ -24,6 +25,7 @@ opt=(
     -p $title
 )
 
+# Stream the isolated cross-region time zones into dmenu mapping safely
 cat <<EOF | dmenu ${opt[@]}
 $(TZ="Asia/Shanghai" mktime "SH")
 $(TZ="UTC" mktime "UT")
