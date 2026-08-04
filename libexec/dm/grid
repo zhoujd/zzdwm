@@ -5,22 +5,33 @@ active=$(xdotool getactivewindow)
 desktop=$(xdotool get_desktop)
 mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
 mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
-windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
+
+# Get all window IDs on the current desktop
+raw_windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                tr -s '[:blank:]' |  awk '{print $1}'))
 
-## Move active window to first place
-windows=("$active", "${windows[@]/$(printf '0x0%x' $active)/}")
+# Safely convert active window to lowercase hex format for filtering
+hex_active=$(printf '0x0%x' $active)
+remaining_windows=()
+for win in "${raw_windows[@]}"; do
+    if [ "${win,,}" != "${hex_active,,}" ]; then
+        remaining_windows+=("$win")
+    fi
+done
+
+# Prepend the active window to the front without trailing comma corruption
+windows=("${active}" "${remaining_windows[@]}")
 
 focus() {
     local id=$1
-    xdotool windowactivate $id
-    xdotool windowraise $id
-    xdotool windowfocus $id
+    xdotool windowactivate $id 2>/dev/null
+    xdotool windowraise $id 2>/dev/null
+    xdotool windowfocus $id 2>/dev/null
 }
 
 prepare() {
     local id=$1
-    wmctrl -ir $id -b remove,maximized_vert,maximized_horz
+    wmctrl -ir $id -b remove,maximized_vert,maximized_horz 2>/dev/null
 }
 
 setwin() {
@@ -30,8 +41,8 @@ setwin() {
     local size_x=$4
     local size_y=$5
     prepare $id
-    xdotool windowmove $id $pos_x $pos_y
-    xdotool windowsize $id $size_x $size_y
+    xdotool windowmove $id $pos_x $pos_y 2>/dev/null
+    xdotool windowsize $id $size_x $size_y 2>/dev/null
 }
 
 grid1() {
@@ -110,10 +121,6 @@ usage() {
     cat <<EOF
 usage: $app {1|2|4|9|-h|--help}
 default: auto mode
-$app 1   --  1x1 mode
-$app 2   --  1x2 mode
-$app 4   --  2x2 mode
-$app 9   --  3x3 mode
 EOF
 }
 
