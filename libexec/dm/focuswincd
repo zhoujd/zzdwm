@@ -1,52 +1,54 @@
 #!/bin/bash
+# Run-or-Raise: Focus app on CURRENT DESKTOP, or launch it if missing on this workspace
 
-[[ $# -lt 1 ]] && cat <<EOF && exit
-usage: $(basename $0) {app} [cmd]
-EOF
+if [ "$#" -lt 1 ]; then
+    echo "Usage: $(basename "$0") {app_class} [launch_cmd]"
+    exit 1
+fi
 
-app=${1}
-cmd=${2:-$app}
-num=$(wmctrl -xl 2>/dev/null | tr -s '[:blank:]' | cut -d ' ' -f 3 | \
-          grep -i "^$app" | wc -l)
+app="$1"
+cmd="${2:-$app}"
 
-app_run() {
-    if command -v $cmd >/dev/null; then
-        exec $cmd
+# Get active desktop index
+current_desktop=$(xdotool get_desktop 2>/dev/null)
+
+# Get active window ID in standard 8-digit hex format
+active_win_id=$(xprop -root _NET_ACTIVE_WINDOW 2>/dev/null | awk '{print $NF}')
+[ "$active_win_id" = "0x0" ] && active_win_id=""
+[ -n "$active_win_id" ] && active_win_id=$(printf "0x%08x" "$active_win_id")
+
+# Find windows matching class ON CURRENT DESKTOP (or sticky -1)
+win_list=($(wmctrl -xl 2>/dev/null | awk -v app="$app" -v desk="$current_desktop" '
+    tolower($3) ~ tolower(app) && ($2 == desk || $2 == -1) { print $1 }
+'))
+
+# If no windows are found on the CURRENT workspace, launch the command
+if [ "${#win_list[@]}" -eq 0 ]; then
+    if command -v "$cmd" >/dev/null 2>&1; then
+        nohup "$cmd" >/dev/null 2>&1 &
+        exit 0
     else
-        echo "No $cmd can been found!"
+        echo "Error: Command '$cmd' not found in PATH." >&2
+        exit 1
     fi
-}
+fi
 
-app_focus() {
-    # get id of the focused window
-    active_win_id=$(xprop -root | grep '^_NET_ACTIVE_W' | awk -F'# 0x' '{print $2}')
-    if [ "$active_win_id" == "0" ]; then
-        active_win_id=""
-    fi
-    # get current desktop
-    desktop=$(xdotool get_desktop)
-    # get list of all windows matching with the class above
-    win_list=$(wmctrl -xl | grep -E "\s+${desktop}\s+" | sed 's/[a-zA-Z0-9-]*\.//' | \
-                   grep -i -E "\s+${app}\s+" | awk '{print $1}')
-    # get next window to focus on, removing id active
-    switch_to=$(echo $win_list | sed s/.*$active_win_id// | awk '{print $1}')
-    # if the current window is the last in the list ... take the first one
-    if [ "$switch_to" == '' ]; then
-        switch_to=$(echo $win_list | awk '{print $1}')
-    fi
-    # switch to window
-    if [ "$switch_to" != '' ]; then
-        xdotool windowactivate $switch_to
-        xdotool windowraise $switch_to
-        xdotool windowfocus $switch_to
-    fi
-}
+# Determine next window to focus on current desktop
+switch_to=""
+total=${#win_list[@]}
 
-case $num in
-    0 )
-        app_run
-        ;;
-    * )
-        app_focus
-        ;;
-esac
+for i in "${!win_list[@]}"; do
+    if [ "$(printf "0x%08x" "${win_list[$i]}")" = "$active_win_id" ]; then
+        next_idx=$(( (i + 1) % total ))
+        switch_to="${win_list[$next_idx]}"
+        break
+    fi
+done
+
+# If active window isn't currently focused, select the first local window
+if [ -z "$switch_to" ]; then
+    switch_to="${win_list[0]}"
+fi
+
+# Focus target window
+wmctrl -i -a "$switch_to"
