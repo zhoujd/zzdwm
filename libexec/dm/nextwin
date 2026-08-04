@@ -1,28 +1,35 @@
 #!/bin/bash
+# Next window of same application
 
-# get id of the focused window
-active_win_id=$(xprop -root | grep '^_NET_ACTIVE_W' | awk -F'# 0x' '{print $2}')
-if [ "$active_win_id" == "0" ]; then
-    active_win_id=""
+# Get active window ID in standard 8-digit hex format (e.g., 0x03a00004)
+active_win_id=$(xprop -root _NET_ACTIVE_WINDOW | awk '{print $NF}')
+
+# Exit early if desktop is focused or no active window
+if [ "$active_win_id" = "0x0" ] || [ -z "$active_win_id" ]; then
+    exit 0
 fi
 
-# get win_class from active_win_id
-win_class=$(wmctrl -xl | grep $active_win_id | awk '{print $3}')
+# Normalize hex string to lowercase for uniform comparison
+active_win_id=$(printf "0x%08x" "$active_win_id")
 
-# get list of all windows matching with the class above
-win_list=$(wmctrl -xl | grep -E "\s+${win_class}\s+" | awk '{print $1}')
+# Find the exact WM_CLASS of the active window
+win_class=$(wmctrl -xl | awk -v id="$active_win_id" 'tolower($1) == id {print $3}')
 
-# get next window to focus on, removing id active
-switch_to=$(echo $win_list | sed s/.*$active_win_id// | awk '{print $1}')
+if [ -n "$win_class" ]; then
+    # Get ordered list of window IDs belonging to this class
+    win_list=($(wmctrl -xl | awk -v cls="$win_class" '$3 == cls {print $1}'))
 
-# if the current window is the last in the list ... take the first one
-if [ "$switch_to" == '' ]; then
-    switch_to=$(echo $win_list | awk '{print $1}')
-fi
+    # Locate current window index and calculate next index
+    for i in "${!win_list[@]}"; do
+        if [ "$(printf "0x%08x" "${win_list[$i]}")" = "$active_win_id" ]; then
+            next_idx=$(( (i + 1) % ${#win_list[@]} ))
+            switch_to="${win_list[$next_idx]}"
+            break
+        fi
+    done
 
-# switch to window
-if [ "$switch_to" != '' ]; then
-    xdotool windowactivate $switch_to
-    xdotool windowraise $switch_to
-    xdotool windowfocus $switch_to
+    # Switch focus
+    if [ -n "$switch_to" ]; then
+        wmctrl -i -a "$switch_to"
+    fi
 fi
