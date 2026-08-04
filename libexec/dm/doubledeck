@@ -1,18 +1,18 @@
 #!/bin/bash
-# Deck windows
+# Deck/Stacking Windows Manager Script
 
 gap=${WINGAP:-5}
 
 focus() {
     local id=$1
-    xdotool windowactivate $id
-    xdotool windowraise $id
-    xdotool windowfocus $id
+    xdotool windowactivate "$id" 2>/dev/null
+    xdotool windowraise "$id" 2>/dev/null
+    xdotool windowfocus "$id" 2>/dev/null
 }
 
 prepare() {
     local id=$1
-    wmctrl -ir $id -b remove,maximized_vert,maximized_horz
+    wmctrl -ir "$id" -b remove,maximized_vert,maximized_horz 2>/dev/null
 }
 
 setwin() {
@@ -21,8 +21,8 @@ setwin() {
     local pos_y=$3
     local size_x=$4
     local size_y=$5
-    xdotool windowmove $id $pos_x $pos_y
-    xdotool windowsize $id $size_x $size_y
+    xdotool windowmove "$id" "$pos_x" "$pos_y" 2>/dev/null
+    xdotool windowsize "$id" "$size_x" "$size_y" 2>/dev/null
 }
 
 deck() {
@@ -30,29 +30,35 @@ deck() {
     local id=$2
     local mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
     local mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
-    local fw=$(($mw-$gap*2))
-    local fh=$(($mh-$gap*2))
-    local hw=$((($mw-$gap*3)/2))
-    local hh=$((($mh-$gap*3)/2))
+
+    local fw=$((mw - gap * 2))
+    local fh=$((mh - gap * 2))
+    local hw=$(( (mw - gap * 3) / 2 ))
+    local hh=$(( (mh - gap * 3) / 2 ))
+
     case $act in
         left )
-            prepare $id
-            setwin $id $gap $gap $hw $fh
+            prepare "$id"
+            setwin "$id" "$gap" "$gap" "$hw" "$fh"
             ;;
         top )
-            prepare $id
-            setwin $id $gap $gap $fw $hh
+            prepare "$id"
+            setwin "$id" "$gap" "$gap" "$fw" "$hh"
             ;;
         right )
-            prepare $id
-            setwin $id $(($mw/2+$gap/2)) $gap $hw $fh
+            prepare "$id"
+            # Align pixels perfectly to prevent screen gaps
+            local right_x=$((mw - hw - gap))
+            setwin "$id" "$right_x" "$gap" "$hw" "$fh"
             ;;
         bottom )
-            prepare $id
-            setwin $id $gap $(($mh/2+$gap/2)) $fw $hh
+            prepare "$id"
+            # Align pixels perfectly to prevent screen gaps
+            local bottom_y=$((mh - hh - gap))
+            setwin "$id" "$gap" "$bottom_y" "$fw" "$hh"
             ;;
         * )
-            echo "The $act doesn't support"
+            echo "The action '$act' is not supported"
             ;;
     esac
 }
@@ -60,53 +66,59 @@ deck() {
 vdeck() {
     local desktop=$(xdotool get_desktop)
     local id=$(xdotool getactivewindow)
+
+    # Standardize active ID to matching wmctrl lowercase hex format
+    local hex_id=$(printf '0x0%x' "$id")
+
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
-    for win in ${windows[@]}; do
-        if [[ $win -ne $id ]]; then
-            deck right $win
+
+    for win in "${windows[@]}"; do
+        # Safe case-insensitive string comparison for hex vs dec IDs
+        if [ "${win,,}" != "${hex_id,,}" ]; then
+            deck right "$win"
         fi
     done
-    deck left $id
-    focus $id
+    deck left "$id"
+    focus "$id"
 }
 
 hdeck() {
     local desktop=$(xdotool get_desktop)
     local id=$(xdotool getactivewindow)
+
+    # Standardize active ID to matching wmctrl lowercase hex format
+    local hex_id=$(printf '0x0%x' "$id")
+
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
-    for win in ${windows[@]}; do
-        if [[ $win -ne $id ]]; then
-            deck bottom $win
+
+    for win in "${windows[@]}"; do
+        # Safe case-insensitive string comparison for hex vs dec IDs
+        if [ "${win,,}" != "${hex_id,,}" ]; then
+            deck bottom "$win"
         fi
     done
-    deck top $id
-    focus $id
+    deck top "$id"
+    focus "$id"
 }
 
 usage() {
-    local app=$(basename $0)
+    local app=$(basename "$0")
     cat <<EOF
 usage: $app {v|h}
-v   -- doubledeck
-h   -- zetadeck
+v   -- doubledeck (Vertical split Master-Stack layout)
+h   -- zetadeck   (Horizontal split Master-Stack layout)
 EOF
 }
 
 main() {
     local kind=$1
     case $kind in
-        v )
-            vdeck
-            ;;
-        h )
-            hdeck
-            ;;
-        * )
-            usage
-            ;;
+        v ) vdeck ;;
+        h ) hdeck ;;
+        * ) usage ;;
     esac
 }
 
-main $@
+main "$@"
