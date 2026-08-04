@@ -39,7 +39,7 @@ hardstatus string "%n %t"
 windowlist string "%4n %t %h%=%f"
 EOF
 if [ -n "$STY" ]; then
-   exec screen ${@:-1}
+   exec screen "${@:-1}"
 else
-   exec screen -c "$tmpfile" $@
+   exec screen -c "$tmpfile" "$@"
 fi
