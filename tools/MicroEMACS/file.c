@@ -76,29 +76,36 @@
  */
 
 #include "def.h"
+#include <string.h>
 
 /*
  * Make sure a buffer name is unique
  */
 void
-unqname (char *name)
+unqname (char *name, int maxlen)
 {
-  char *sp;
+  register int len;
+  char last_char;
 
-  /* check to see if it is in the buffer list */
   while (bfind(name, FALSE) != NULL)
     {
-      /* go to the end of the name */
-      sp = name;
-      while (*sp)
-        ++sp;
-      if (sp == name || (*sp < '0' || *sp > '8'))
+      len = strlen(name);
+      if (len == 0 || len >= maxlen - 1)
         {
-          *sp++ = '0';
-          *sp = 0;
+          break;
+        }
+      last_char = name[len - 1];
+      if (last_char >= '0' && last_char <= '8')
+        {
+          /* If it ends in 0-8, simply increment it (e.g., "main0" -> "main1") */
+          name[len - 1] += 1;
         }
       else
-        *(--sp) += 1;
+        {
+          /* If it doesn't end in a digit (or ends in 9), safely append '0' */
+          name[len] = '0';
+          name[len + 1] = '\0';
+        }
     }
 }
 
@@ -122,7 +129,7 @@ getfile (char fname[])
         }
     }
   makename (bname, fname);	/* New buffer name */
-  unqname (bname);
+  unqname (bname, NBUFN);
   while ((bp = bfind (bname, FALSE)) != (BUFFER*)0)
     {
       s = ereply ("Buffer name: ", bname, NBUFN);
@@ -131,7 +138,7 @@ getfile (char fname[])
       if (s == FALSE)
         {			/* CR to clobber it */
           makename (bname, fname);
-          unqname (bname);
+          unqname (bname, NBUFN);
           break;
         }
     }
@@ -371,7 +378,7 @@ visit_file (char *fname)
         }
     }
   makename (bname, expanded_fname);	/* New buffer name.     */
-  unqname (bname);
+  unqname (bname, NBUFN);
   while ((bp = bfind (bname, FALSE)) != NULL)
     {
       s = ereply ("Buffer name: ", bname, NBUFN);

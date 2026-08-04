@@ -736,7 +736,7 @@ int checkreadonly (void);               /* Is current buffer readonly?  */
 int readlines (LINE *lp2, int *statptr);
                                         /* Read lines from file.        */
 void updatemode (void);                 /* Update mode lines.           */
-void unqname (char *name);              /* Unique buffer name.          */
+void unqname (char *name, int maxlen);  /* Unique buffer name.          */
 int writeout (const char *fn);          /* Performs the file writing    */
 
 /*
