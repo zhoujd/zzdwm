@@ -3,29 +3,42 @@
 title="info:"
 lines=10
 desktop=$(xdotool get_desktop)
-active=$(xprop -root | grep '^_NET_ACTIVE_W' | awk -F'# 0x' '{print $2}')
+
+raw_active=$(xprop -root 2>/dev/null | grep '^_NET_ACTIVE_W' | awk -F'# 0x' '{print $2}')
+active=""
+if [ -n "$raw_active" ] && [ "$raw_active" != "0" ]; then
+    active=$(printf '%08x' "0x$raw_active")
+fi
 windows=$(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+")
 apps=$(echo -n "$windows" | tr -s '[:blank:]' | cut -d ' ' -f 1-3,5- | \
-           grep ${active} | sed 's/[a-zA-Z0-9-]*\.//' | \
-           sed -r "s/0x.*${active}(\s+)//")
+           grep -i "${active}" | sed 's/[a-zA-Z0-9-]*\.//' | \
+           sed -r "s/0x0*${active}(\s+)//I")
 wm=$(wmctrl -m | grep Name: | awk '{print $2}')
 
 mkdesktop() {
     local labels=(one two three four five six seven eight nine)
     case $wm in
-        dwm ) echo ${labels[$desktop]} ;;
-        CWM ) echo ${labels[(($desktop-1))]} ;;
-        * ) echo "" ;;
+        dwm )
+            echo ${labels[$desktop]}
+            ;;
+        CWM )
+            if [ "$desktop" -le 0 ]; then
+                echo ${labels[0]}
+            else
+                echo ${labels[(($desktop-1))]}
+            fi
+            ;;
+        * )
+            echo ""
+            ;;
     esac
 }
 
 mkgeometry() {
     local kind=$1
-    local id=$(xdotool getactivewindow)
+    local id=$(xdotool getactivewindow 2>/dev/null)
     if [ -n "$id" ]; then
         xdotool getwindowgeometry --shell $id | grep $kind | cut -d= -f2
-    else
-        xdotool getdisplaygeometry --shell | grep $kind | cut -d= -f2
     fi
 }
 
@@ -35,6 +48,7 @@ opt=(
     -p $title
 )
 
+# Pipe the aligned data block straight into dmenu
 cat <<EOF | dmenu ${opt[@]}
 desktop - $(mkdesktop)
 class   - $(echo $apps | awk '{print $2}')
