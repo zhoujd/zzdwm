@@ -1,25 +1,36 @@
 #!/bin/bash
-# monocle windows
+
+# Configuration
+GAP=${WINGAP:-5}
+INTERVAL=30
 
 focus() {
     local id=$1
-    xdotool windowactivate $id
-    xdotool windowraise $id
-    xdotool windowfocus $id
+    xdotool windowactivate "$id" 2>/dev/null
+    xdotool windowraise "$id" 2>/dev/null
+    xdotool windowfocus "$id" 2>/dev/null
 }
 
 monocle() {
     local desktop=$(xdotool get_desktop)
     local id=$(xdotool getactivewindow)
+
+    # Standardize active ID to matching wmctrl lowercase hex format
+    local hex_id=$(printf '0x0%x' "$id")
+
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
-    wmctrl -ir $id -b add,maximized_vert,maximized_horz
-    for win in ${windows[@]}; do
-        if [[ $win -ne $id ]]; then
-            wmctrl -ir $win -b add,maximized_vert,maximized_horz
+
+    # Maximize the active window first
+    wmctrl -ir "$id" -b add,maximized_vert,maximized_horz 2>/dev/null
+
+    for win in "${windows[@]}"; do
+        # Use case-insensitive string comparison instead of numeric -ne
+        if [ "${win,,}" != "${hex_id,,}" ]; then
+            wmctrl -ir "$win" -b add,maximized_vert,maximized_horz 2>/dev/null
         fi
     done
-    focus $id
+    focus "$id"
 }
 
 float() {
@@ -27,24 +38,33 @@ float() {
     local id=$(xdotool getactivewindow)
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
+
     local mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
     local mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
-    local interval=30
-    local gap=5
-    local x=$gap
-    local y=$gap
-    local size_x=$(($mw*2/3))
-    local size_y=$(($mh*2/3))
-    for win in ${windows[@]}; do
-        wmctrl -ir $win -b remove,maximized_vert,maximized_horz
-        [ $(($x+$gap)) -gt $mw ] && x=$gap
-        [ $(($y+$gap)) -gt $mh ] && y=$gap
-        xdotool windowmove $win $x $y
-        xdotool windowsize $win $size_x $size_y
-        x=$(($x+$interval))
-        y=$(($y+$interval))
+
+    local x=$GAP
+    local y=$GAP
+    local size_x=$((mw * 2 / 3))
+    local size_y=$((mh * 2 / 3))
+
+    for win in "${windows[@]}"; do
+        wmctrl -ir "$win" -b remove,maximized_vert,maximized_horz 2>/dev/null
+
+        # Wrap around safely considering window size to prevent screen clipping
+        if [ $((x + size_x + GAP)) -gt "$mw" ]; then
+            x=$GAP
+        fi
+        if [ $((y + size_y + GAP)) -gt "$mh" ]; then
+            y=$GAP
+        fi
+
+        xdotool windowmove "$win" "$x" "$y" 2>/dev/null
+        xdotool windowsize "$win" "$size_x" "$size_y" 2>/dev/null
+
+        x=$((x + INTERVAL))
+        y=$((y + INTERVAL))
     done
-    focus $id
+    focus "$id"
 }
 
 other() {
@@ -52,38 +72,31 @@ other() {
     local id=$(xdotool getactivewindow)
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
-    for win in ${windows[@]}; do
-        wmctrl -ir $win -b remove,maximized_vert,maximized_horz
+
+    for win in "${windows[@]}"; do
+        wmctrl -ir "$win" -b remove,maximized_vert,maximized_horz 2>/dev/null
     done
-    focus $id
+    focus "$id"
 }
 
 usage() {
-    local app=$(basename $0)
+    local app=$(basename "$0")
     cat <<EOF
 usage: $app {m|f|o}
-m   -- monocle
-f   -- float
-o   -- other
+m   -- monocle (maximize all)
+f   -- float   (cascade floating windows)
+o   -- other   (restore all to floating layout)
 EOF
 }
 
 main() {
     local kind=$1
     case $kind in
-        m )
-            monocle
-            ;;
-        f )
-            float
-            ;;
-        o )
-            other
-            ;;
-        * )
-            usage
-            ;;
+        m ) monocle ;;
+        f ) float ;;
+        o ) other ;;
+        * ) usage ;;
     esac
 }
 
-main $@
+main "$@"
