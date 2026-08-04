@@ -1,5 +1,5 @@
 #!/bin/bash
-# Dock active window to screen edges with gap spacing
+# Deck active window to screen edges with gap spacing
 
 gap=${WINGAP:-5}
 
@@ -34,7 +34,7 @@ main() {
 
     case "$kind" in
         --help|-h)
-            echo "Usage: $(basename "$0") {left|right|top|bottom|center|max}"
+            echo "Usage: $(basename "$0") {left|right|top|bottom|center|full}"
             exit 0
             ;;
         left)
@@ -53,8 +53,9 @@ main() {
             prepare "$id"
             setwin "$id" "$gap" "$((mh / 2 + gap / 2))" "$fw" "$hh"
             ;;
-        max)
-            wmctrl -ir "$id" -b add,maximized_vert,maximized_horz
+        full)
+            prepare "$id"
+            setwin "$id" "$gap" "$gap" "$fw" "$fh"
             ;;
         center|*)
             prepare "$id"
