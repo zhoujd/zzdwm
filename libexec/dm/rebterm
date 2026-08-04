@@ -1,5 +1,5 @@
 #!/bin/sh
-export PATH="/usr/local/bin:/usr/bin:/bin:$HOME/.local/bin"
+
 W=$(xdotool getwindowfocus 2>/dev/null || xdotool getactivewindow)
 C=$(xprop -id "$W" WM_CLASS 2>/dev/null | awk -F '"' '{print tolower($4)}')
 case "$C" in
