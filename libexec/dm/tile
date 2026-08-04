@@ -1,25 +1,27 @@
 #!/bin/bash
-# tile windows
+# Master-Stack Tiling and Bottom-Stack Layout Engine
 
 gap=${WINGAP:-5}
 maxstack=8
 mw=$(xwininfo -root | grep Width | cut -d: -f2 | tr -d ' ')
 mh=$(xwininfo -root | grep Height | cut -d: -f2 | tr -d ' ')
-fw=$(($mw-$gap*2))
-fh=$(($mh-$gap*2))
-hw=$((($mw-$gap*3)/2))
-hh=$((($mh-$gap*3)/2))
+
+# Pre-calculate baseline dimensions
+fw=$((mw - gap * 2))
+fh=$((mh - gap * 2))
+hw=$(( (mw - gap * 3) / 2 ))
+hh=$(( (mh - gap * 3) / 2 ))
 
 focus() {
     local id=$1
-    xdotool windowactivate $id
-    xdotool windowraise $id
-    xdotool windowfocus $id
+    xdotool windowactivate "$id" 2>/dev/null
+    xdotool windowraise "$id" 2>/dev/null
+    xdotool windowfocus "$id" 2>/dev/null
 }
 
 prepare() {
     local id=$1
-    wmctrl -ir $id -b remove,maximized_vert,maximized_horz
+    wmctrl -ir "$id" -b remove,maximized_vert,maximized_horz 2>/dev/null
 }
 
 setwin() {
@@ -28,96 +30,122 @@ setwin() {
     local pos_y=$3
     local size_x=$4
     local size_y=$5
-    xdotool windowmove $id $pos_x $pos_y
-    xdotool windowsize $id $size_x $size_y
+    xdotool windowmove "$id" "$pos_x" "$pos_y" 2>/dev/null
+    xdotool windowsize "$id" "$size_x" "$size_y" 2>/dev/null
 }
 
 vtile() {
     local desktop=$(xdotool get_desktop)
     local id=$(xdotool getactivewindow)
+
+    # Standardize active ID to matching wmctrl lowercase hex format
+    local hex_id=$(printf '0x0%x' "$id")
+
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
     local stacks=()
-    for w in ${windows[@]}; do
-        if [[ $w -ne $id ]]; then
-            stacks+=($w)
+    for w in "${windows[@]}"; do
+        # Case-insensitive string comparison for hex vs dec IDs
+        if [ "${w,,}" != "${hex_id,,}" ]; then
+            stacks+=("$w")
         fi
     done
+
     local nstack=${#stacks[@]}
     local ns=$nstack
-    if [[ $ns -gt $maxstack ]]; then
+    if [ "$ns" -gt "$maxstack" ]; then
         ns=$maxstack
-    elif [[ $ns -eq 0 ]]; then
+    elif [ "$ns" -eq 0 ]; then
         ns=1
     fi
-    local ch=$((($mh-($ns+1)*$gap)/$ns))
-    local x=$(($hw+2*$gap))
-    for ((i=0; i<$nstack; i++)); do
+
+    # Calculate height for each stack cell
+    local ch=$(( (mh - (ns + 1) * gap) / ns ))
+    local x=$(( mw - hw - gap )) # Precise alignment for right stack column
+
+    for ((i=0; i<nstack; i++)); do
         local win=${stacks[$i]}
-        local n=$(($i%$ns))
-        local y=$((($gap+$ch)*$n+$gap))
-        prepare $win
-        setwin $win $x $y $hw $ch
+        local n=$((i % ns))
+        local y=$(( (gap + ch) * n + gap ))
+        prepare "$win"
+        setwin "$win" "$x" "$y" "$hw" "$ch"
     done
-    prepare $id
-    setwin $id $gap $gap $hw $((($ch+$gap)*$ns-$gap))
-    focus $id
+
+    prepare "$id"
+    if [ "$nstack" -eq 0 ]; then
+        # If no stack windows exist, Master takes full screen width
+        setwin "$id" "$gap" "$gap" "$fw" "$fh"
+    else
+        # Lock Master height to full vertical frame to align perfectly
+        setwin "$id" "$gap" "$gap" "$hw" "$fh"
+    fi
+    focus "$id"
 }
 
 htile() {
     local desktop=$(xdotool get_desktop)
     local id=$(xdotool getactivewindow)
+
+    # Standardize active ID to matching wmctrl lowercase hex format
+    local hex_id=$(printf '0x0%x' "$id")
+
     local windows=($(wmctrl -xl 2>/dev/null | grep -E "\s+${desktop}\s+" | \
                          tr -s '[:blank:]' |  awk '{print $1}'))
     local stacks=()
-    for w in ${windows[@]}; do
-        if [[ $w -ne $id ]]; then
-            stacks+=($w)
+    for w in "${windows[@]}"; do
+        # Case-insensitive string comparison for hex vs dec IDs
+        if [ "${w,,}" != "${hex_id,,}" ]; then
+            stacks+=("$w")
         fi
     done
+
     local nstack=${#stacks[@]}
     local ns=$nstack
-    if [[ $ns -gt $maxstack ]]; then
+    if [ "$ns" -gt "$maxstack" ]; then
         ns=$maxstack
-    elif [[ $ns -eq 0 ]]; then
+    elif [ "$ns" -eq 0 ]; then
         ns=1
     fi
-    local cw=$((($mw-($ns+1)*$gap)/$ns))
-    local y=$(($hh+2*$gap))
-    for ((i=0; i<$nstack; i++)); do
+
+    # Calculate width for each stack cell
+    local cw=$(( (mw - (ns + 1) * gap) / ns ))
+    local y=$(( mh - hh - gap )) # Precise alignment for bottom stack row
+
+    for ((i=0; i<nstack; i++)); do
         local win=${stacks[$i]}
-        local n=$(($i%$ns))
-        local x=$((($gap+$cw)*$n+$gap))
-        prepare $win
-        setwin $win $x $y $cw $hh
+        local n=$((i % ns))
+        local x=$(( (gap + cw) * n + gap ))
+        prepare "$win"
+        setwin "$win" "$x" "$y" "$cw" "$hh"
     done
-    prepare $id
-    setwin $id $gap $gap $((($cw+$gap)*$ns-$gap)) $hh
-    focus $id
+
+    prepare "$id"
+    if [ "$nstack" -eq 0 ]; then
+        # If no stack windows exist, Master takes full screen height
+        setwin "$id" "$gap" "$gap" "$fw" "$fh"
+    else
+        # Lock Master width to full horizontal frame to align perfectly
+        setwin "$id" "$gap" "$gap" "$fw" "$hh"
+    fi
+    focus "$id"
 }
 
 usage() {
-    local app=$(basename $0)
+    local app=$(basename "$0")
     cat <<EOF
 usage: $app {v|h}
-v   -- tile
-h   -- bstack
+v   -- tile   (Vertical Master-Stack layout)
+h   -- bstack (Bottom Master-Stack layout)
 EOF
 }
 
 main() {
     local kind=$1
     case $kind in
-        v )
-            vtile
-            ;;
-        h )
-            htile
-            ;;
-        * )
-            usage
-            ;;
+        v ) vtile ;;
+        h ) htile ;;
+        * ) usage ;;
     esac
 }
 
-main $@
+main "$@"
