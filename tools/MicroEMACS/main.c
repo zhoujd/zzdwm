@@ -258,7 +258,10 @@ main (int argc, char *argv[])
             case 'p':
             case 's':
             case 't':
-              n++;             /* skip name options    */
+              if (n + 1 < argc)
+                {		/* skip name options    */
+                  n++;
+                }
               break;
             default:
               break;
