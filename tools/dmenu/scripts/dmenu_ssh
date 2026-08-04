@@ -1,17 +1,21 @@
 #!/bin/bash
 
+# Ignore ~/.ssh/config.d/* if the directory is empty
+shopt -s nullglob
+
 title="ssh:"
 lines=10
 term_cmd=${TERM_CMD:-"st -x -e"}
 ssh_cmd=${SSH_CMD:-"ssh -t"}
 remote_cmd=${REMOTE_CMD}
+ssh_opt="-o ConnectTimeout=2 -o StrictHostKeyChecking=accept-new -q"
 
 configs=( ~/.ssh/config ~/.ssh/config.d/* )
-hosts=( $(grep -si "^Host\s\+[^*]" ${configs[@]} | grep -v 'git' | cut -d " " -f 2-) )
-target=$(printf '%s\n' ${hosts[@]} | sed -Ez '$ s/\n+$//' | dmenu -i -l $lines -p $title "$@")
+hosts=( $(grep -si "^Host\s\+[^*]" "${configs[@]}" | grep -v 'git' | cut -d " " -f 2-) )
+target=$(printf '%s\n' "${hosts[@]}" | sed -Ez '$ s/\n+$//' | dmenu -i -l $lines -p $title "$@")
 
 if [ -n "$target" ]; then
-    ssh $target hash mosh-server 2>/dev/null
+    ssh $ssh_opt $target command -v mosh-server 2>/dev/null
     if [ $? -eq 0 ]; then
         ssh_cmd="mosh"
     fi
