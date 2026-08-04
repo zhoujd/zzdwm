@@ -1,23 +1,32 @@
 #!/bin/bash
 
+# Configuration and path setups
 menupath=/usr/local/bin
-app=$(basename $0)
+app=$(basename "$0")
 title="menu:"
 lines=10
+
 ignores=(
-    $app
-    dmenu_path
+    "$app"
+    "dmenu_path"
 )
 
-menus=$(find $menupath/dmenu_* -maxdepth 1 -type f -executable 2>/dev/null \
-            | sed 's|^'$menupath/'||' \
+# Standardize find with native -name matching to bypass globbing truncation
+# Uses standard sed escaping to safely strip out the parent prefix path
+menus=$(find "$menupath" -maxdepth 1 -type f -executable -name "dmenu_*" 2>/dev/null \
+            | sed "s|^${menupath}/||" \
             | sort)
 
-for ig in ${ignores[@]}; do
-    menus=$(echo -n "$menus" | grep -v $ig)
+# Protect loop expansion against word-splitting and empty exclusions
+for ig in "${ignores[@]}"; do
+    if [ -n "$ig" ]; then
+        menus=$(echo -n "$menus" | grep -v -F "$ig")
+    fi
 done
 
-target=$(echo -n "$menus" | dmenu -p $title -l $lines)
+# Stream the refined sub-menu layout directly into dmenu
+target=$(echo -n "$menus" | dmenu -p "$title" -l "$lines")
+
 if [ -n "$target" ]; then
-    exec $menupath/$target
+    exec "$menupath/$target"
 fi
