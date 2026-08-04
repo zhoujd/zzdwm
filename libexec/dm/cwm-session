@@ -1,50 +1,62 @@
 #!/bin/bash
+# Autostart launcher for cwm (Calm Window Manager)
 
-log=$HOME/.cwm-errors
-kind=run
+log="$HOME/.cwm-errors"
+kind="${1:-run}"
 
+# Autostart applications list (binary name as first word)
 opt=(
-    "VBoxClient-all &"
-    "blackwalls &"
-    "keynav &"
-    "shotkey &"
-    "xbanish &"
-    "xcompmgr &"
+    "VBoxClient-all"
+    "blackwalls"
+    "keynav"
+    "shotkey"
+    "xbanish"
+    "xcompmgr"
 )
 
-log() {
-    echo "[$$.$(date +%N)]$@"
+log_msg() {
+    echo "[$$ | $(date '+%Y-%m-%d %H:%M:%S.%N')] $1"
 }
 
 spawn() {
-    for i in "${opt[@]}"; do
-        app=$(echo "$i" | awk '{print $1}')
-        if [ -n "$(which $app)" ]; then
-            log "[spawn] run $app."
-            eval "$i" >/dev/null 2>&1
+    for cmd in "${opt[@]}"; do
+        # Extract binary name (first word)
+        app=$(echo "$cmd" | awk '{print $1}')
+
+        # Check if binary exists in PATH
+        if command -v "$app" >/dev/null 2>&1; then
+            log_msg "[spawn] Running $cmd"
+            $cmd >/dev/null 2>&1 &
+        else
+            log_msg "[spawn] Warning: $app not found, skipping."
         fi
     done
 }
 
-run() {
-    log "[cwm] start cwm on run mode."
-    log "[cwm] start applications."
+run_session() {
+    log_msg "[cwm] Starting cwm in run mode."
     spawn
     exec cwm >/dev/null 2>&1
 }
 
-debug() {
-    log "[cwm] start cwm on debug mode."
-    log "[cwm] start applications."
+debug_session() {
+    log_msg "[cwm] Starting cwm in debug mode."
     spawn
     exec cwm
 }
 
-case $kind in
-    run|-r )
-        run >$log 2>&1
+# Redirect output to log file
+exec >> "$log" 2>&1
+
+case "$kind" in
+    run|-r)
+        run_session
         ;;
-    debug|-d )
-        debug >$log 2>&1
+    debug|-d)
+        debug_session
+        ;;
+    *)
+        echo "Usage: $(basename "$0") [run|-r|debug|-d]"
+        exit 1
         ;;
 esac
