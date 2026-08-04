@@ -1,36 +1,37 @@
 #!/bin/sh
+# Context-aware terminal spawner (Flat, Guarded Structure)
 
 TERM_CMD="st"
-PID=$(xprop -id "$(xprop -root | \
-       awk '/_NET_ACTIVE_WINDOW\(WINDOW\)/{print $NF}')" | \
-          grep -m 1 PID | \
-          cut -d " " -f 3)
-PID=$(pstree -lpA "$PID" | \
-          tail -n 1 | awk -F'---' '{print $NF}' | \
-          sed -re 's/[^0-9]//g')
-FCWD=/proc/"$PID"/cwd
-if [ -e $FCWD ]; then
-    PCWD=$(readlink $FCWD)
-fi
-FCMD=/proc/"$PID"/cmdline
-if [ -e $FCMD ]; then
-    PCMDLINE=$(cat $FCMD | tr '\0' ' ' | \
-                   sed -e 's/[[:space:]]*$//')
+
+# 1. Get active window ID (Exit early if no window active)
+WIN_ID=$(xprop -root _NET_ACTIVE_WINDOW 2>/dev/null | awk '{print $NF}')
+[ -z "$WIN_ID" ] || [ "$WIN_ID" = "0x0" ] && exec $TERM_CMD
+
+# 2. Get PID (Exit early if no PID found)
+PID=$(xprop -id "$WIN_ID" _NET_WM_PID 2>/dev/null | awk '{print $NF}')
+echo "$PID" | grep -qE '^[0-9]+$' || exec $TERM_CMD
+
+# 3. Find leaf child process PID in tree
+CHILD_PID=$(pstree -lpA "$PID" 2>/dev/null | tail -n 1 | awk -F'---' '{print $NF}' | sed -re 's/[^0-9]//g')
+[ -n "$CHILD_PID" ] && PID="$CHILD_PID"
+
+# 4. Extract CWD and Command Context
+[ -d "/proc/$PID/cwd" ] && PCWD=$(readlink "/proc/$PID/cwd" 2>/dev/null)
+
+if [ -f "/proc/$PID/cmdline" ]; then
+    PCMDLINE=$(tr '\0' ' ' < "/proc/$PID/cmdline" 2>/dev/null | sed -e 's/[[:space:]]*$//')
     PCMD=$(echo "$PCMDLINE" | awk '{print $1}')
 fi
-case $PCMD in
-    ssh )
-        if [ -n "$PCMDLINE" ]; then
-            exec $TERM_CMD -e $PCMDLINE
-        else
-            exec $TERM_CMD
-        fi
+
+# 5. Execute based on context
+case "$PCMD" in
+    ssh|*/ssh)
+        [ -n "$PCMDLINE" ] && exec $TERM_CMD -e $PCMDLINE
         ;;
-    * )
-        if [ -n "$PCWD" ]; then
-            exec $TERM_CMD -d $PCWD
-        else
-            exec $TERM_CMD
-        fi
+    *)
+        [ -d "$PCWD" ] && exec $TERM_CMD -d "$PCWD"
         ;;
 esac
+
+# Fallback default spawn
+exec $TERM_CMD
