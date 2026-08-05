@@ -1,17 +1,19 @@
 #!/bin/bash
-# Run-or-Raise: Focus app on CURRENT DESKTOP, or launch it if missing on this workspace
+# Run-or-Raise: Focus app on CURRENT DESKTOP, cycle instances, or launch if missing on this workspace
 
 if [ "$#" -lt 1 ]; then
-    echo "Usage: $(basename "$0") {app_class} [launch_cmd]"
+    echo "Usage: $(basename "$0") {app_class} [launch_cmd]" >&2
     exit 1
 fi
 
 app="$1"
 cmd="${2:-$app}"
 
+# Get current desktop index
 current_desktop=$(xprop -root _NET_CURRENT_DESKTOP 2>/dev/null | awk '{print $NF}')
 [ -z "$current_desktop" ] && current_desktop="0"
 
+# Get active window ID
 active_win_id=$(xprop -root _NET_ACTIVE_WINDOW 2>/dev/null | awk '{print $NF}')
 if [ "$active_win_id" = "0x0" ] || [ -z "$active_win_id" ]; then
     active_win_id=""
@@ -20,24 +22,28 @@ else
     active_win_id=$(printf "0x%08x" "0x$clean_active" 2>/dev/null)
 fi
 
-win_list=($(wmctrl -xl 2>/dev/null | awk -v app="$app" -v desk="$current_desktop" '
+# Filter window list by app class AND current desktop (or sticky -1)
+mapfile -t win_list < <(wmctrl -xl 2>/dev/null | awk -v app="$app" -v desk="$current_desktop" '
     (tolower($3) == tolower(app) || \
     (length($3) > length(app) && \
     substr(tolower($3), length($3) - length(app)) == "." tolower(app))) && \
     ($2 == desk || $2 == -1) \
     { print $1 }
-'))
+')
 
+# If no matching window on current desktop, launch app
 if [ "${#win_list[@]}" -eq 0 ]; then
-    if command -v "$cmd" >/dev/null 2>&1; then
-        nohup "$cmd" >/dev/null 2>&1 &
+    exec_bin=$(echo "$cmd" | awk '{print $1}')
+    if command -v "$exec_bin" >/dev/null 2>&1; then
+        eval "$cmd" >/dev/null 2>&1 & disown
         exit 0
     else
-        echo "Error: Command '$cmd' not found in PATH." >&2
+        echo "Error: Command '$exec_bin' not found in PATH." >&2
         exit 1
     fi
 fi
 
+# Round-robin cycle through windows on current workspace if already active
 switch_to=""
 total=${#win_list[@]}
 
@@ -55,4 +61,5 @@ if [ -z "$switch_to" ]; then
     switch_to="${win_list[0]}"
 fi
 
+# Activate window
 wmctrl -i -a "$switch_to"
