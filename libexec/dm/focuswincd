@@ -9,20 +9,25 @@ fi
 app="$1"
 cmd="${2:-$app}"
 
-# Get active desktop index
-current_desktop=$(xdotool get_desktop 2>/dev/null)
+current_desktop=$(xprop -root _NET_CURRENT_DESKTOP 2>/dev/null | awk '{print $NF}')
+[ -z "$current_desktop" ] && current_desktop="0"
 
-# Get active window ID in standard 8-digit hex format
 active_win_id=$(xprop -root _NET_ACTIVE_WINDOW 2>/dev/null | awk '{print $NF}')
-[ "$active_win_id" = "0x0" ] && active_win_id=""
-[ -n "$active_win_id" ] && active_win_id=$(printf "0x%08x" "$active_win_id")
+if [ "$active_win_id" = "0x0" ] || [ -z "$active_win_id" ]; then
+    active_win_id=""
+else
+    clean_active=$(echo "$active_win_id" | sed 's/^0x//')
+    active_win_id=$(printf "0x%08x" "0x$clean_active" 2>/dev/null)
+fi
 
-# Find windows matching class ON CURRENT DESKTOP (or sticky -1)
 win_list=($(wmctrl -xl 2>/dev/null | awk -v app="$app" -v desk="$current_desktop" '
-    tolower($3) ~ tolower(app) && ($2 == desk || $2 == -1) { print $1 }
+    (tolower($3) == tolower(app) || \
+    (length($3) > length(app) && \
+    substr(tolower($3), length($3) - length(app)) == "." tolower(app))) && \
+    ($2 == desk || $2 == -1) \
+    { print $1 }
 '))
 
-# If no windows are found on the CURRENT workspace, launch the command
 if [ "${#win_list[@]}" -eq 0 ]; then
     if command -v "$cmd" >/dev/null 2>&1; then
         nohup "$cmd" >/dev/null 2>&1 &
@@ -33,22 +38,21 @@ if [ "${#win_list[@]}" -eq 0 ]; then
     fi
 fi
 
-# Determine next window to focus on current desktop
 switch_to=""
 total=${#win_list[@]}
 
 for i in "${!win_list[@]}"; do
-    if [ "$(printf "0x%08x" "${win_list[$i]}")" = "$active_win_id" ]; then
+    clean_win=$(echo "${win_list[$i]}" | sed 's/^0x//')
+    norm_win=$(printf "0x%08x" "0x$clean_win" 2>/dev/null)
+    if [ "$norm_win" = "$active_win_id" ]; then
         next_idx=$(( (i + 1) % total ))
         switch_to="${win_list[$next_idx]}"
         break
     fi
 done
 
-# If active window isn't currently focused, select the first local window
 if [ -z "$switch_to" ]; then
     switch_to="${win_list[0]}"
 fi
 
-# Focus target window
 wmctrl -i -a "$switch_to"
