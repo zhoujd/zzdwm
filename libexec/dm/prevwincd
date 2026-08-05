@@ -2,16 +2,15 @@
 # Previous window of same application ON CURRENT DESKTOP ONLY
 
 # Get active window ID (standardized hex format)
-active_win_id=$(xprop -root _NET_ACTIVE_WINDOW | awk '{print $NF}')
+active_win_id=$(xprop -root _NET_ACTIVE_WINDOW 2>/dev/null | awk '{print $NF}')
+[ "$active_win_id" = "0x0" ] || [ -z "$active_win_id" ] && exit 0
 
-if [ "$active_win_id" = "0x0" ] || [ -z "$active_win_id" ]; then
-    exit 0
-fi
-
-active_win_id=$(printf "0x%08x" "$active_win_id")
+clean_active=$(echo "$active_win_id" | sed 's/^0x//')
+active_win_id=$(printf "0x%08x" "0x$clean_active" 2>/dev/null)
 
 # Get active desktop index
-current_desktop=$(xdotool get_desktop)
+current_desktop=$(xprop -root _NET_CURRENT_DESKTOP 2>/dev/null | awk '{print $NF}')
+[ -z "$current_desktop" ] && current_desktop="0"
 
 # Get window class of current active window
 win_class=$(wmctrl -xl | awk -v id="$active_win_id" 'tolower($1) == id {print $3}')
@@ -20,7 +19,6 @@ if [ -n "$win_class" ]; then
     # Fetch matching window IDs ONLY on current desktop (or sticky desktop -1)
     win_list=($(wmctrl -xl | awk -v cls="$win_class" -v desk="$current_desktop" \
       '$3 == cls && ($2 == desk || $2 == -1) {print $1}'))
-
     total=${#win_list[@]}
 
     # Locate active index and step backward

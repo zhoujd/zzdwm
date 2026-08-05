@@ -1,16 +1,12 @@
 #!/bin/bash
 # Next window of same application
 
-# Get active window ID in standard 8-digit hex format (e.g., 0x03a00004)
-active_win_id=$(xprop -root _NET_ACTIVE_WINDOW | awk '{print $NF}')
+# Get active window ID (standardized hex format)
+active_win_id=$(xprop -root _NET_ACTIVE_WINDOW 2>/dev/null | awk '{print $NF}')
+[ "$active_win_id" = "0x0" ] || [ -z "$active_win_id" ] && exit 0
 
-# Exit early if desktop is focused or no active window
-if [ "$active_win_id" = "0x0" ] || [ -z "$active_win_id" ]; then
-    exit 0
-fi
-
-# Normalize hex string to lowercase for uniform comparison
-active_win_id=$(printf "0x%08x" "$active_win_id")
+clean_active=$(echo "$active_win_id" | sed 's/^0x//')
+active_win_id=$(printf "0x%08x" "0x$clean_active" 2>/dev/null)
 
 # Find the exact WM_CLASS of the active window
 win_class=$(wmctrl -xl | awk -v id="$active_win_id" 'tolower($1) == id {print $3}')

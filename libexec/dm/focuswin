@@ -49,4 +49,5 @@ done
 if [ -z "$switch_to" ]; then
     switch_to="${win_list[0]}"
 fi
+
 wmctrl -i -a "$switch_to"
