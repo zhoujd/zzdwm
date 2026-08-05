@@ -66,6 +66,7 @@ install_dm() {
         $libexec/dm/prevwin
         $libexec/dm/nextwincd
         $libexec/dm/prevwincd
+        $libexec/dm/fclip
         $libexec/dm/focuswin
         $libexec/dm/focuswincd
         $libexec/dm/dupterm

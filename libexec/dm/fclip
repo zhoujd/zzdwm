@@ -1,0 +1,33 @@
+#!/bin/bash
+# fclip: Send file contents or stdin to X11 clipboard
+
+show_usage() {
+    echo "Usage: $(basename "$0") [FILE]" >&2
+    echo "       cat FILE | $(basename "$0")" >&2
+    exit 1
+}
+
+# Auto-detect available X11 clipboard backend
+if command -v xclip >/dev/null 2>&1; then
+    CLIP_CMD="xclip -selection clipboard"
+elif command -v xsel >/dev/null 2>&1; then
+    CLIP_CMD="xsel --clipboard --input"
+else
+    echo "Error: Neither 'xclip' nor 'xsel' is installed." >&2
+    exit 1
+fi
+
+# Case 1: Direct file argument
+if [ "$#" -eq 1 ]; then
+    if [ -f "$1" ]; then
+        $CLIP_CMD < "$1"
+    else
+        echo "Error: File '$1' not found." >&2
+        exit 1
+    fi
+# Case 2: Piped input (stdin)
+elif [ ! -t 0 ]; then
+    $CLIP_CMD
+else
+    show_usage
+fi
