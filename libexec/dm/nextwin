@@ -1,26 +1,32 @@
 #!/bin/bash
-# Next window of same application
+# Next window of same application (Same-App Window Cycler)
 
-# Get active window ID (standardized hex format)
+# Get active window ID
 active_win_id=$(xprop -root _NET_ACTIVE_WINDOW 2>/dev/null | awk '{print $NF}')
 [ "$active_win_id" = "0x0" ] || [ -z "$active_win_id" ] && exit 0
 
+# Standardize active ID to match wmctrl format (e.g., 0x04000004)
 clean_active=$(echo "$active_win_id" | sed 's/^0x//')
-active_win_id=$(printf "0x%08x" "0x$clean_active" 2>/dev/null)
+active_win_id=$(printf "0x%08x" "0x$clean_active" 2>/dev/null | tr '[:upper:]' '[:lower:]')
 
-# Find the exact WM_CLASS of the active window
-win_class=$(wmctrl -xl | awk -v id="$active_win_id" 'tolower($1) == id {print $3}')
+# Find exact WM_CLASS using your compact awk line
+win_class=$(wmctrl -xl 2>/dev/null | awk -v id="$active_win_id" 'tolower($1) == id {print $3}')
 
 if [ -n "$win_class" ]; then
     # Get ordered list of window IDs belonging to this class
-    win_list=($(wmctrl -xl | awk -v cls="$win_class" '$3 == cls {print $1}'))
+    mapfile -t win_list < <(wmctrl -xl 2>/dev/null | awk -v cls="$win_class" '$3 == cls {print $1}')
 
-    # Locate current window index and calculate next index
+    total=${#win_list[@]}
+    [ "$total" -le 1 ] && exit 0  # Only 1 window open, nothing to cycle
+
+    # Find current window index and cycle to next
+    switch_to=""
     for i in "${!win_list[@]}"; do
         clean_win=$(echo "${win_list[$i]}" | sed 's/^0x//')
-        norm_win=$(printf "0x%08x" "0x$clean_win" 2>/dev/null)
+        norm_win=$(printf "0x%08x" "0x$clean_win" 2>/dev/null | tr '[:upper:]' '[:lower:]')
+
         if [ "$norm_win" = "$active_win_id" ]; then
-            next_idx=$(( (i + 1) % ${#win_list[@]} ))
+            next_idx=$(( (i + 1) % total ))
             switch_to="${win_list[$next_idx]}"
             break
         fi
