@@ -18,7 +18,9 @@ if [ -n "$win_class" ]; then
 
     # Locate active index and select previous window
     for i in "${!win_list[@]}"; do
-        if [ "$(printf "0x%08x" "${win_list[$i]}")" = "$active_win_id" ]; then
+        clean_win=$(echo "${win_list[$i]}" | sed 's/^0x//')
+        norm_win=$(printf "0x%08x" "0x$clean_win" 2>/dev/null)
+        if [ "$norm_win" = "$active_win_id" ]; then
             prev_idx=$(( (i - 1 + total) % total ))
             switch_to="${win_list[$prev_idx]}"
             break
