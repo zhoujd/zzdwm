@@ -564,13 +564,45 @@ ffcheckname (char *filename)
   return (TRUE);
 }
 
-/* OS change directory */
+/*
+ * OS change directory
+ */
 int
 ffchdir (char *path)
 {
   char *dname;
+  static char win_path[NLINE];
+  int i = 0;
+  int j = 0;
 
-  dname = fftilde (path);
+  if (!path)
+    {
+      return FALSE;
+    }
+
+  /*
+   * If the input is a POSIX-style drive path (e.g., /c/dir),
+   * translate it back to a standard Win32 format (e.g., c:/dir)
+   * so that the native Windows APIs can recognize it properly.
+   */
+  if (path[0] == '/' && path[1] != '\0' && path[2] == '/')
+    {
+      win_path[j++] = path[1]; /* Extract the drive letter */
+      win_path[j++] = ':';     /* Append the trailing colon */
+      i = 2;                   /* Skip the leading /c prefix */
+    }
+
+  /* Copy the remainder of the path buffer string safely */
+  while (path[i] != '\0' && j < NLINE - 1)
+    {
+      win_path[j++] = path[i++];
+    }
+  win_path[j] = '\0';
+
+  /* Perform standard homedir or tilde expansion if applicable */
+  dname = fftilde (win_path);
+
+  /* Invoke native Win32 API to change current drive and path simultaneously */
   if (!SetCurrentDirectoryA (dname))
     {
       return FALSE;
