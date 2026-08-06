@@ -1,0 +1,13 @@
+#!/bin/sh
+
+FILE_PATH="$1"
+
+if [ -f "$FILE_PATH" ]; then
+    if [ -n "$DVTM" ]; then
+        dvtm-cmd create "me \"$FILE_PATH\""
+    else
+        me "$FILE_PATH"
+    fi
+else
+    xdg-open "$FILE_PATH" &
+fi

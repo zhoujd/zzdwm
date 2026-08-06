@@ -1,11 +1,12 @@
 #!/bin/sh
-
 FIFO="/tmp/dvtm-command.fifo"
 
 if [ ! -p "$FIFO" ]; then
-    echo "Error: dvtm command FIFO not found at $FIFO." >&2
-    echo "Make sure you started dvtm with: dvtm -c $FIFO" >&2
+    echo "Error: FIFO $FIFO not found." >&2
     exit 1
 fi
 
-echo "$@" > "$FIFO"
+ACTION="$1"
+shift
+
+echo "$ACTION '$*'" > "$FIFO"
