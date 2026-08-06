@@ -109,3 +109,16 @@ $ tfs -a mec -o me.bin ./mearchive
 ```
 M-H  search-again
 ```
+
+## Piping Input into MicroEMACS
+
+```
+$ me <(directory_listing_command)
+$ me <(ls -la)
+```
+
+## Piping Output Out of MicroEMACS
+
+```
+$ me temp_buffer.txt && cat temp_buffer.txt | grep "pattern" && rm temp_buffer.txt
+```
