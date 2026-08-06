@@ -358,7 +358,7 @@ gettempfile (char *path, int size, const char *prefix)
  * Bound to "C-X !".
  */
 int
-spawncmd (int f, int n, int k)
+runcli (int f, int n, int k)
 {
   register int s;
   static char line[NLINE];
@@ -394,7 +394,7 @@ spawncmd (int f, int n, int k)
  * Bound to "C-X @"
  */
 int
-spawnpipe (int f, int n, int k)
+pipecmd (int f, int n, int k)
 {
   register int s;
   register BUFFER *bp;        /* pointer to buffer to zot */
@@ -450,7 +450,7 @@ end:
  * Bound to "C-X #"
  */
 int
-spawnfilter (int f, int n, int k)
+filterbuf (int f, int n, int k)
 {
   register int    s;       /* return status from CLI */
   register BUFFER *bp;     /* pointer to buffer to zot */
