@@ -115,7 +115,7 @@ install_bin() {
         $CORE_ROOT/libexec/dvtm/dvtm-pager
         $CORE_ROOT/libexec/dvtm/dvtm-status
         $CORE_ROOT/libexec/dvtm/dvtm-cmd
-        $CORE_ROOT/libexec/dvtm/dvtm-opener
+        $CORE_ROOT/libexec/dvtm/dvtm-open
         $CORE_ROOT/libexec/emacs/ec
         $CORE_ROOT/libexec/emacs/etags
     )
