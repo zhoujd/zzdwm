@@ -34,6 +34,9 @@
  */
 char *cspec = NULL;		/* Command string.      */
 
+/* Forward declarations */
+static const char *convertposix (const char *path, char *out_buf, size_t buf_size);
+
 /*
  * Create a subjob with a copy
  * of the command intrepreter in it. When the
@@ -93,7 +96,7 @@ gettempfile (char *path, int size, const char *prefix)
 /*
  * Translates to POSIX drive paths (/c/dir/file)
  */
-static const char *
+const char *
 convertposix (const char *path, char *out_buf, size_t buf_size)
 {
   if (!path || !out_buf || buf_size == 0)
