@@ -83,7 +83,11 @@ install_dm() {
         $libexec/dm/cwm-session
     )
     for app in ${apps[@]}; do
-        sudo cp -fv $app $bin
+        if [ -f "$app" ]; then
+            sudo install -v -m 755 "$app" "$bin"
+        else
+            echo "Skipping: $app (not found)"
+        fi
     done
     echo "Install dm done"
 }
@@ -94,6 +98,7 @@ install_bin() {
         $CORE_ROOT/bin/me
         $CORE_ROOT/bin/sc
         $CORE_ROOT/bin/ag
+        $CORE_ROOT/bin/nnn
         $CORE_ROOT/bin/less
         $CORE_ROOT/bin/pick
         $CORE_ROOT/bin/cscope
@@ -113,7 +118,11 @@ install_bin() {
         $CORE_ROOT/libexec/emacs/etags
     )
     for app in ${apps[@]}; do
-        sudo cp -fv $app $bin
+        if [ -f "$app" ]; then
+            sudo install -v -m 755 "$app" "$bin"
+        else
+            echo "Skipping: $app (not found)"
+        fi
     done
     echo "Install bin done"
 }
