@@ -1,31 +1,20 @@
 #!/bin/sh
 
-FIFO="/tmp/dvtm-status.$$"
-trap 'rm -f "$FIFO"' 0 1 15
+STATUS_FIFO="/tmp/dvtm-status.$$"
+CMD_FIFO="/tmp/dvtm-command.fifo"
 
-[ -p "$FIFO" ] || mkfifo -m 600 "$FIFO" || exit 1
-
-mktime() {
-    # If Sunday, show the week number of the next week
-    if [ $(date +'%u') -gt 6 ]; then
-        WEEK=$(date +'W%-V' -d "next monday")
-    else
-        WEEK=$(date +'W%-V')
-    fi
-    TIME=$(date +'%a %-e %b %-l:%M %p')
-    echo ${WEEK} ${TIME}
-}
-
-display() {
-    echo "$(TZ=Asia/Shanghai mktime)"
-}
+[ -p "$STATUS_FIFO" ] || mkfifo -m 600 "$STATUS_FIFO" || exit 1
+[ -p "$CMD_FIFO" ] || mkfifo -m 600 "$CMD_FIFO" || exit 1
 
 while true; do
-    display
-    sleep 20
-done > "$FIFO" &
-
+    date +%H:%M
+    sleep 60
+done > "$STATUS_FIFO" &
 STATUS_PID=$!
-dvtm -s "$FIFO" "$@" 2> /dev/null
+
+dvtm -s "$STATUS_FIFO" -c "$CMD_FIFO" "$@" 2> /dev/null
+
 kill $STATUS_PID
 wait $STATUS_PID 2> /dev/null
+rm -f "$STATUS_FIFO"
+rm -f "$CMD_FIFO"

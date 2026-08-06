@@ -3,7 +3,7 @@
 include config.mk
 
 SRC = dvtm.c vt.c
-BIN = dvtm dvtm-status dvtm-editor dvtm-pager
+BIN = dvtm dvtm-status dvtm-editor dvtm-pager dvtm-cmd
 MANUALS = dvtm.1 dvtm-editor.1 dvtm-pager.1
 
 REV = $(shell git describe --always 2>/dev/null || echo "unknown")
