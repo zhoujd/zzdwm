@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# Ensure strict GNU Usage output with correct capitalization
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "Usage: $(basename "$0") [initial_directory]" >&2
+    exit 0
+fi
+
+# Inject local scoped environment variable safely
+export NNN_OPENER="dvtm-open"
+
+# Safely expand fallback target path to current PWD
+TARGET_DIR="${1:-$PWD}"
+
+# Replace the current process instantly with zero latency
+exec nnn -A -x "$TARGET_DIR"
