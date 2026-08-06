@@ -104,6 +104,7 @@ int tabsize = 8;		/* No. of columns for a tab     */
 int savetabs = TRUE;		/* True if tabs are preserved   */
 int autonl = TRUE;		/* True if auto add newline     */
 char *srchstr = NULL;		/* Initial search string passed */
+char *targetdir = NULL;	/* Target work directory passed */
 
 static int nbuf;		/* number of buffers    */
 
@@ -113,6 +114,7 @@ static int nbuf;		/* number of buffers    */
 static void bufinit (const char *fname);
 static int execute (int c, int f, int n);
 static void usage (void);
+static void dirinit (char *dname);
 
 /*
  * Usage
@@ -123,6 +125,19 @@ usage (void)
   fprintf (stderr,
            "usage: me [-234" OPT_BACKUP "mNrTuxz] [-c path] [-d path] [-g line] [-p profile] [-s string] [-t size]\n"
            "          [+[line]] [file(s)[:line[:column]] ...]\n");
+}
+
+/*
+ * Directory init.
+ */
+void
+dirinit (char *dname)
+{
+  if (dname != NULL && ffchdir (dname) != TRUE)
+    {
+      fprintf (stderr, "me: cannot change directory to %s\n", dname);
+      exit (EXIT_FAILURE);
+    }
 }
 
 /*
@@ -182,9 +197,9 @@ main (int argc, char *argv[])
               n++;
               if (n < argc)
                 {
-                  ffchdir (argv[n]);
+                  targetdir = argv[n];
                 }
-                break;
+              break;
             case 'g':
               n++;
               if (n < argc)
@@ -246,6 +261,11 @@ main (int argc, char *argv[])
           gotoflag = TRUE;
           line = atoi (&arg[1]);
         }
+    }
+
+  if (targetdir != NULL)
+    {
+      dirinit(targetdir);  /* work directory */
     }
   vtinit ();			/* Virtual terminal.    */
   if ((blistp = bcreate ("*blist*")) == NULL)	/* Special list buffer. */
