@@ -121,7 +121,7 @@ void
 usage (void)
 {
   fprintf (stderr,
-           "usage: me [-234" OPT_BACKUP "bmNrTuxz] [-c path] [-d path] [-g line] [-p profile] [-s string] [-t size]\n"
+           "usage: me [-234" OPT_BACKUP "mNrTuxz] [-c path] [-d path] [-g line] [-p profile] [-s string] [-t size]\n"
            "          [+[line]] [file(s)[:line[:column]] ...]\n");
 }
 
