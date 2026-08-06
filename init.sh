@@ -84,10 +84,10 @@ install_dm() {
     )
     for app in ${apps[@]}; do
         if [ -f "$app" ]; then
-            echo "Installing $app"
+            echo "Install $app"
             sudo install -m 755 "$app" "$bin"
         else
-            echo "Skipping: $app (not found)"
+            echo "Skip $app (not found)"
         fi
     done
     echo "Install dm done"
@@ -123,10 +123,10 @@ install_bin() {
     )
     for app in ${apps[@]}; do
         if [ -f "$app" ]; then
-            echo "Installing $app"
+            echo "Install $app"
             sudo install -m 755 "$app" "$bin"
         else
-            echo "Skipping: $app (not found)"
+            echo "Skip $app (not found)"
         fi
     done
     echo "Install bin done"
