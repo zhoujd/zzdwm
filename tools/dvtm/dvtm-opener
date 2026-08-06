@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if [ $# -lt 1 ] || [ -z "$1" ]; then
+    echo "Usage: $(basename "$0") <file_path>" >&2
+    exit 1
+fi
+
 FILE_PATH="$1"
 
 if [ -f "$FILE_PATH" ]; then
@@ -9,5 +14,5 @@ if [ -f "$FILE_PATH" ]; then
         me "$FILE_PATH"
     fi
 else
-    xdg-open "$FILE_PATH" &
+    xdg-open "$FILE_PATH" 2>/dev/null &
 fi
