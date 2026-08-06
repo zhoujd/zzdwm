@@ -550,3 +550,18 @@ ffcheckname (char *filename)
     }
   return (TRUE);
 }
+
+
+/* OS change directory */
+int
+ffchdir (char *path)
+{
+  char *dname;
+  dname = fftilde (path);
+
+  if (chdir (dname) != 0)
+    {
+      return FALSE;
+    }
+  return TRUE;
+}

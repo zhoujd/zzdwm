@@ -93,7 +93,7 @@ SYMBOL *symbol[NSHASH];		/* Symbol table listhead.       */
 int inprof;			/* True if reading profile      */
 int bflag;			/* True if -b option specified  */
 char *cscope_path = "cscope";	/* Name of cscope program	*/
-int noupdatecscope;		/* True if -d option specified	*/
+int noupdatecscope;		/* True if -u option specified	*/
 int mouse;			/* True if -m option specified  */
 int rflag;			/* True if -r option specified  */
 int xflag;			/* True if -x option specified  */
@@ -121,7 +121,7 @@ void
 usage (void)
 {
   fprintf (stderr,
-           "usage: me [-234" OPT_BACKUP "dmNrTxz] [-c path] [-g line] [-p profile] [-s string] [-t size]\n"
+           "usage: me [-234" OPT_BACKUP "bmNrTuxz] [-c path] [-d path] [-g line] [-p profile] [-s string] [-t size]\n"
            "          [+[line]] [file(s)[:line[:column]] ...]\n");
 }
 
@@ -179,8 +179,12 @@ main (int argc, char *argv[])
                 cscope_path = argv[n];
               break;
             case 'd':
-              noupdatecscope = TRUE;
-              break;
+              n++;
+              if (n < argc)
+                {
+                  ffchdir (argv[n]);
+                }
+                break;
             case 'g':
               n++;
               if (n < argc)
@@ -223,6 +227,9 @@ main (int argc, char *argv[])
                     tabsize = 8;
                 }
               break;
+            case 'u':
+              noupdatecscope = TRUE;
+              break;
             case 'x':
               xflag = TRUE;
               break;
@@ -254,6 +261,7 @@ main (int argc, char *argv[])
           switch (arg[1])
             {
             case 'c':
+            case 'd':
             case 'g':
             case 'p':
             case 's':

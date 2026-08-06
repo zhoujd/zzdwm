@@ -762,7 +762,7 @@ char *ffsearch (const char *name,       /* Find matching filename.      */
 int ffisdir (char *name, int cpos);     /* name[0..cpos-1] is dir?      */
 const char * ffexedir (void);           /* Get dir of pe executable.    */
 int ffcheckname (char *filename);       /* Check file name valid.       */
-
+int ffchdir(char *path);                /* OS change directory.         */
 
 /*
  * Defined by "kbd.c".
