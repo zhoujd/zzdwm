@@ -60,59 +60,42 @@ static const char *convertpath (const char *path, char *out_buf, size_t buf_size
 
 /*
  * Expand a filename that has a leading ~ or ~username.
- * Also automatically translates POSIX drive paths (/c/dir) to Win32 format (c:/dir).
+ * Also automatically translates POSIX drive paths (/c/dir) to Win32 format (C:/dir).
  */
 char *
 fftilde (char *arg)
 {
-  static char expanded[NLINE*2];
+  static char expanded[NLINE * 2];
   static char clean_arg[NLINE];
   const char *home = NULL;
-  char *slash;
-  int i = 0;
-  int j = 0;
+  const char *converted;
+  char *p;
 
   if (arg == NULL)
     {
-      return arg;
+      return NULL;
     }
 
   /*
-   * FIRST STEP: Universal Path Pre-washing (POSIX /c/dir -> Win32 c:/dir).
-   * This ensures that downstream Win32 file APIs can consume it instantly.
+   * FIRST STEP: Convert POSIX drive paths (/c/dir -> C:/dir).
+   * If convertpath returns the original pointer, we copy it safely to clean_arg.
    */
-  if (arg[0] == '/' && arg[1] != '\0' && arg[2] == '/')
+  converted = convertpath (arg, clean_arg, sizeof (clean_arg));
+  if (converted != clean_arg)
     {
-      clean_arg[j++] = arg[1]; /* Extract the drive letter */
-      clean_arg[j++] = ':';    /* Append the trailing colon */
-      i = 2;                   /* Skip the leading /c prefix */
+      strncpy (clean_arg, arg, sizeof (clean_arg) - 1);
+      clean_arg[sizeof (clean_arg) - 1] = '\0';
     }
-
-  /* Copy the remainder of the incoming buffer string safely */
-  while (arg[i] != '\0' && j < NLINE - 1)
-    {
-      clean_arg[j++] = arg[i++];
-    }
-  clean_arg[j] = '\0';
 
   /* SECOND STEP: Original Tilde (~/) Expansion Logic */
   if (clean_arg[0] != '~')
     {
-      /*
-       * If it doesn't start with a tilde, we return our washed clean_arg.
-       * Crucial: We can NOT use 'expanded' here, we must use a separate static buffer.
-       */
-      strncpy (expanded, clean_arg, NLINE);
+      strncpy (expanded, clean_arg, sizeof (expanded) - 1);
+      expanded[sizeof (expanded) - 1] = '\0';
       return expanded;
     }
 
-  slash = strchr (clean_arg, '/');
-  if (slash == NULL)
-    {
-      slash = strchr (clean_arg, '\\');
-    }
-
-  /* current user (~/path or ~) */
+  /* Current user (~/path or ~) */
   if (clean_arg[1] == '\0' || clean_arg[1] == '/' || clean_arg[1] == '\\')
     {
       home = getenv ("HOME");
@@ -123,7 +106,7 @@ fftilde (char *arg)
       if (home == NULL)
         {
           static char win_home[NLINE];
-          const char *drive = getenv ("HOMDRIVE");
+          const char *drive = getenv ("HOMEDRIVE");
           const char *path = getenv ("HOMEPATH");
           if (drive != NULL && path != NULL)
             {
@@ -131,16 +114,30 @@ fftilde (char *arg)
               home = win_home;
             }
         }
+
       if (home == NULL)
         {
-          strncpy (expanded, clean_arg, NLINE);
+          strncpy (expanded, clean_arg, sizeof (expanded) - 1);
+          expanded[sizeof (expanded) - 1] = '\0';
           return expanded;
         }
+
       snprintf (expanded, sizeof (expanded), "%s%s", home, clean_arg + 1);
+
+      /* Normalize backslashes to forward slashes for uniform cross-platform paths */
+      for (p = expanded; *p != '\0'; p++)
+        {
+          if (*p == '\\')
+            {
+              *p = '/';
+            }
+        }
+
       return expanded;
     }
 
-  strncpy (expanded, clean_arg, NLINE);
+  strncpy (expanded, clean_arg, sizeof (expanded) - 1);
+  expanded[sizeof (expanded) - 1] = '\0';
   return expanded;
 }
 
