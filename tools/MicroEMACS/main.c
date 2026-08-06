@@ -114,7 +114,6 @@ static int nbuf;		/* number of buffers    */
 static void bufinit (const char *fname);
 static int execute (int c, int f, int n);
 static void usage (void);
-static void dirinit (char *dname);
 
 /*
  * Usage
@@ -125,19 +124,6 @@ usage (void)
   fprintf (stderr,
            "usage: me [-234" OPT_BACKUP "mNrTuxz] [-c path] [-d path] [-g line] [-p profile] [-s string] [-t size]\n"
            "          [+[line]] [file(s)[:line[:column]] ...]\n");
-}
-
-/*
- * Directory init.
- */
-void
-dirinit (char *dname)
-{
-  if (dname != NULL && ffchdir (dname) != TRUE)
-    {
-      fprintf (stderr, "me: cannot change directory to %s\n", dname);
-      exit (EXIT_FAILURE);
-    }
 }
 
 /*
@@ -263,9 +249,10 @@ main (int argc, char *argv[])
         }
     }
 
-  if (targetdir != NULL)
-    {
-      dirinit(targetdir);  /* work directory */
+  if (targetdir != NULL && ffchdir (targetdir) != TRUE)
+    {     	/* Target work directory */
+      fprintf (stderr, "me: cannot change directory to %s\n", targetdir);
+      exit (EXIT_FAILURE);
     }
   vtinit ();			/* Virtual terminal.    */
   if ((blistp = bcreate ("*blist*")) == NULL)	/* Special list buffer. */
