@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <windows.h>
 
 #define	CTRLZ	0x1a		/* DOS end of file      */
 
@@ -59,29 +60,70 @@ static const char *convertpath (const char *path, char *out_buf, size_t buf_size
 
 /*
  * Expand a filename that has a leading ~ or ~username.
+ * Also automatically translates POSIX drive paths (/c/dir) to Win32 format (c:/dir).
  */
 char *
 fftilde (char *arg)
 {
-  static char expanded[NLINE];
+  static char expanded[NLINE*2];
+  static char clean_arg[NLINE];
   const char *home = NULL;
   char *slash;
+  int i = 0;
+  int j = 0;
 
-  if (arg == NULL || arg[0] != '~')
-    return arg;
-  slash = strchr (arg, '/');
+  if (arg == NULL)
+    {
+      return arg;
+    }
+
+  /*
+   * FIRST STEP: Universal Path Pre-washing (POSIX /c/dir -> Win32 c:/dir).
+   * This ensures that downstream Win32 file APIs can consume it instantly.
+   */
+  if (arg[0] == '/' && arg[1] != '\0' && arg[2] == '/')
+    {
+      clean_arg[j++] = arg[1]; /* Extract the drive letter */
+      clean_arg[j++] = ':';    /* Append the trailing colon */
+      i = 2;                   /* Skip the leading /c prefix */
+    }
+
+  /* Copy the remainder of the incoming buffer string safely */
+  while (arg[i] != '\0' && j < NLINE - 1)
+    {
+      clean_arg[j++] = arg[i++];
+    }
+  clean_arg[j] = '\0';
+
+  /* SECOND STEP: Original Tilde (~/) Expansion Logic */
+  if (clean_arg[0] != '~')
+    {
+      /*
+       * If it doesn't start with a tilde, we return our washed clean_arg.
+       * Crucial: We can NOT use 'expanded' here, we must use a separate static buffer.
+       */
+      strncpy (expanded, clean_arg, NLINE);
+      return expanded;
+    }
+
+  slash = strchr (clean_arg, '/');
   if (slash == NULL)
-    slash = strchr (arg, '\\');
+    {
+      slash = strchr (clean_arg, '\\');
+    }
+
   /* current user (~/path or ~) */
-  if (arg[1] == '\0' || arg[1] == '/' || arg[1] == '\\')
+  if (clean_arg[1] == '\0' || clean_arg[1] == '/' || clean_arg[1] == '\\')
     {
       home = getenv ("HOME");
       if (home == NULL)
-        home = getenv ("USERPROFILE");
+        {
+          home = getenv ("USERPROFILE");
+        }
       if (home == NULL)
         {
           static char win_home[NLINE];
-          const char *drive = getenv ("HOMEDRIVE");
+          const char *drive = getenv ("HOMDRIVE");
           const char *path = getenv ("HOMEPATH");
           if (drive != NULL && path != NULL)
             {
@@ -90,12 +132,18 @@ fftilde (char *arg)
             }
         }
       if (home == NULL)
-        return arg;
-      snprintf (expanded, sizeof (expanded), "%s%s", home, arg + 1);
+        {
+          strncpy (expanded, clean_arg, NLINE);
+          return expanded;
+        }
+      snprintf (expanded, sizeof (expanded), "%s%s", home, clean_arg + 1);
       return expanded;
     }
-  return arg;
+
+  strncpy (expanded, clean_arg, NLINE);
+  return expanded;
 }
+
 
 /*
  * Determine whether the first 'cpos' characters in the file 'name' refer
@@ -571,36 +619,9 @@ int
 ffchdir (char *path)
 {
   char *dname;
-  static char win_path[NLINE];
-  int i = 0;
-  int j = 0;
 
-  if (!path)
-    {
-      return FALSE;
-    }
-
-  /*
-   * If the input is a POSIX-style drive path (e.g., /c/dir),
-   * translate it back to a standard Win32 format (e.g., c:/dir)
-   * so that the native Windows APIs can recognize it properly.
-   */
-  if (path[0] == '/' && path[1] != '\0' && path[2] == '/')
-    {
-      win_path[j++] = path[1]; /* Extract the drive letter */
-      win_path[j++] = ':';     /* Append the trailing colon */
-      i = 2;                   /* Skip the leading /c prefix */
-    }
-
-  /* Copy the remainder of the path buffer string safely */
-  while (path[i] != '\0' && j < NLINE - 1)
-    {
-      win_path[j++] = path[i++];
-    }
-  win_path[j] = '\0';
-
-  /* Perform standard homedir or tilde expansion if applicable */
-  dname = fftilde (win_path);
+  /* Perform path conversion and tilde expansion via central engine */
+  dname = fftilde (path);
 
   /* Invoke native Win32 API to change current drive and path simultaneously */
   if (!SetCurrentDirectoryA (dname))
