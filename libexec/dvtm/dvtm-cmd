@@ -1,0 +1,28 @@
+#!/bin/sh
+
+FIFO="/tmp/dvtm-command.fifo"
+
+if [ $# -lt 1 ]; then
+    echo "Usage: dvtm-cmd <action> [command/args]" >&2
+    echo "Example: dvtm-cmd create \"me build.sh\"" >&2
+    exit 1
+fi
+
+if [ ! -p "$FIFO" ]; then
+    echo "Error: FIFO $FIFO not found." >&2
+    exit 1
+fi
+
+ACTION="$1"
+shift
+
+if [ "$ACTION" = "create" ] && [ -n "$1" ]; then
+    EDITOR_BIN="${1%% *}"
+    FILE_ARGS="${1#* }"
+    case "$FILE_ARGS" in
+        /*|~/*|~) echo "$ACTION '$EDITOR_BIN $FILE_ARGS'" > "$FIFO" ;;
+        *) echo "$ACTION '$EDITOR_BIN -d $PWD $FILE_ARGS'" > "$FIFO" ;;
+    esac
+else
+    echo "$ACTION '$*'" > "$FIFO"
+fi
