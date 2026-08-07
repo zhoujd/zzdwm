@@ -1,10 +1,17 @@
 #!/bin/sh
 
-STATUS_FIFO="/tmp/dvtm-status.$$"
+STATUS_FIFO="/tmp/dvtm-status.fifo"
 CMD_FIFO="/tmp/dvtm-command.fifo"
 
 [ -p "$STATUS_FIFO" ] || mkfifo -m 600 "$STATUS_FIFO" || exit 1
 [ -p "$CMD_FIFO" ] || mkfifo -m 600 "$CMD_FIFO" || exit 1
+
+cleanup() {
+    kill "$STATUS_PID" 2>/dev/null
+    wait "$STATUS_PID" 2>/dev/null
+    rm -f "$STATUS_FIFO" "$CMD_FIFO"
+}
+trap cleanup 0 1 15
 
 while true; do
     date +%H:%M
@@ -13,8 +20,6 @@ done > "$STATUS_FIFO" &
 STATUS_PID=$!
 
 dvtm -s "$STATUS_FIFO" -c "$CMD_FIFO" "$@" 2> /dev/null
+EXIT_STATUS=$?
 
-kill $STATUS_PID
-wait $STATUS_PID 2> /dev/null
-rm -f "$STATUS_FIFO"
-rm -f "$CMD_FIFO"
+exit $EXIT_STATUS
