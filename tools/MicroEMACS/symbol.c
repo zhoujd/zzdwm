@@ -213,7 +213,7 @@ KEY key[] = {
   {KCTLX | 'Z',         enlargewind,       "enlarge-window"},
   {KCTLX | '!',         runcli,            "shell-command"},
   {KCTLX | '@',         pipecmd,           "pipe-command"},
-  {KCTLX | '#',         filterbuf,         "filter-buffer"},
+  {KCTLX | '#',         filterbuffer,      "filter-buffer"},
   {KCTLX | '$',         changedir,         "change-dir"},
   {KCTLX | '%',         replaceregion,     "replace-region"},
   {KMETA | KCTRL | 'C', wordcount,         "count-words"},

@@ -903,7 +903,7 @@ int spellregion (int f, int n, int k);  /* Spell-check marked region.   */
 int spawncli (int f, int n, int k);     /* Run CLI in a subjob.         */
 int runcli (int f, int n, int k);       /* Run a one-liner in a subjob. */
 int pipecmd (int f, int n, int k);      /* Pipe a command into a window.*/
-int filterbuf (int f, int n, int k);    /* Filter a buffer via program. */
+int filterbuffer (int f, int n, int k); /* Filter a buffer via program. */
 int changedir (int f, int n, int k);    /* Change current directory.    */
 int dired (int f, int n, int k);        /* List current directory.      */
 

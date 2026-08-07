@@ -236,7 +236,7 @@ end:
  * Bound to "C-X #"
  */
 int
-filterbuf (int f, int n, int k)
+filterbuffer (int f, int n, int k)
 {
   register int s;          /* return status from CLI */
   register BUFFER *bp;     /* pointer to buffer to zot */
