@@ -229,8 +229,9 @@ ugetprevc (const uchar *s, int *len)
  * Return the number of bytes in the UTF-8 string.
  */
 int
-uputc (wchar_t c, uchar *s)
+uputc (wchar_t ch, uchar *s)
 {
+  unsigned int c = (unsigned int)ch;
   if (c < 0x80)
     {
       s[0] = c;
