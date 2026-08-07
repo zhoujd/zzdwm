@@ -181,6 +181,7 @@ typedef struct {
 /* commands for use by keybindings */
 static void create(const char *args[]);
 static void recreate(const char *args[]);
+static void cstack(const char *args[]);
 static void copymode(const char *args[]);
 static void focusn(const char *args[]);
 static void focusid(const char *args[]);
@@ -1242,6 +1243,13 @@ recreate(const char *args[]) {
 	const char *pargs[3] = { NULL, NULL, cwd };
 	create(pargs);
 	free(cwd);
+}
+
+static void
+cstack(const char *args[]) {
+	create(args);
+	zoom(NULL);
+	focusnext(NULL);
 }
 
 static void

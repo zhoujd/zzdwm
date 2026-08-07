@@ -146,6 +146,8 @@ static KeyBinding bindings[] = {
 	{ { MOD, 'a',            }, { togglerunall,   { NULL }                    } },
 	{ { MOD, CTRL('L'),      }, { redraw,         { NULL }                    } },
 	{ { MOD, 'r',            }, { recreate,       { NULL }                    } },
+	{ { MOD, 'w',            }, { cstack,         { NULL }                    } },
+	{ { MOD, 'W',            }, { cstack,         { NULL, NULL, "$CWD" }      } },
 	{ { MOD, 'e',            }, { copymode,       { "dvtm-editor" }           } },
 	{ { MOD, 'p',            }, { copymode,       { "dvtm-pager" }            } },
 	{ { MOD, '/',            }, { copymode,       { "dvtm-pager", "/" }       } },
@@ -234,6 +236,8 @@ static Cmd commands[] = {
 	{ "focus",  { focusid,	{ NULL } } },
 	/* tag <win_id> <tag> [tag ...]: add +tag, remove -tag or set tag of the window with the given identifier */
 	{ "tag",    { tagid,	{ NULL } } },
+	/* cstack [cmd]: create a new stack window, run `cmd` in the shell if specified */
+	{ "cstack", { cstack,	{ NULL } } },
 };
 
 /* gets executed when dvtm is started */
