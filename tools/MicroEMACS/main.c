@@ -249,11 +249,8 @@ main (int argc, char *argv[])
         }
     }
 
-  if (targetdir != NULL && ffchdir (targetdir) != TRUE)
-    {     	/* Target work directory */
-      fprintf (stderr, "me: cannot change directory to %s\n", targetdir);
-      exit (EXIT_FAILURE);
-    }
+  if (targetdir) /* Target work directory */
+    ffchdir (targetdir);
   vtinit ();			/* Virtual terminal.    */
   if ((blistp = bcreate ("*blist*")) == NULL)	/* Special list buffer. */
     abort ();
