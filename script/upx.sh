@@ -1,8 +1,12 @@
 #!/bin/sh
 
+## Compress the binary
+## $ upx --ultra-brute nnn
+## Revert it back to the original 1.3MB binary at any time
+## $ upx -d nnn
+
 # 1. Download the official static release
-#curl -LO https://github.com/upx/upx/releases/download/v4.2.2/upx-4.2.2-amd64_linux.tar.xz
-wget https://github.com/upx/upx/releases/download/v5.2.0/upx-5.2.0-amd64_linux.tar.xz
+curl -LO https://github.com/upx/upx/releases/download/v5.2.0/upx-5.2.0-amd64_linux.tar.xz
 
 # 2. Extract the archive
 tar -xf upx-4.2.2-amd64_linux.tar.xz
