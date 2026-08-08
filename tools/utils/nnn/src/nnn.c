@@ -7871,57 +7871,63 @@ static void statusbar(char *path)
 		       (cfg.apparentsz ? 'a' : 'd'), buf, coolsize(get_fs_info(path, VFS_AVAIL)),
 		       num_files, (ullong_t)pent->blocks << blk_shift, ptr);
 	} else { /* light or detail mode */
-		char sort[] = "\0\0\0\0\0";
+		/* Enable minimal mode if window width < 45 cols OR if NNN_MINIMAL_STATUS=1 */
+        if (xcols < 45 || getenv("NNN_MINIMAL_STATUS") != NULL) {
+            clrtoeol();
+        } else {
+            /* ORIGINAL DESIGN BELOW */
+            char sort[] = "\0\0\0\0\0";
 
-		if (cfg.filtermode)
-			addch('F');
+            if (cfg.filtermode)
+                addch('F');
 
-		getorderstr(sort) ? addstr(sort) : addch(' ');
+            getorderstr(sort) ? addstr(sort) : addch(' ');
 
-		/* Timestamp */
-		print_time(&pent->sec, pent->flags);
+            /* Timestamp */
+            print_time(&pent->sec, pent->flags);
 
-		addch(' ');
-		addstr(get_lsperms(pent->mode));
-		addch(' ');
+            addch(' ');
+            addstr(get_lsperms(pent->mode));
+            addch(' ');
 #ifndef NOUG
-		if (g_state.uidgid) {
-			addstr(getpwname(pent->uid));
-			addch(':');
-			addstr(getgrname(pent->gid));
-			addch(' ');
-		}
+            if (g_state.uidgid) {
+                addstr(getpwname(pent->uid));
+                addch(':');
+                addstr(getgrname(pent->gid));
+                addch(' ');
+            }
 #endif
-		if (S_ISLNK(pent->mode)) {
-			if (!cfg.fileinfo) {
-				i = readlink(pent->name, g_buf, PATH_MAX);
-				addstr(coolsize(i >= 0 ? i : pent->size)); /* Show symlink size */
-				if (i > 1) { /* Show symlink target */
-					int y;
+            if (S_ISLNK(pent->mode)) {
+                if (!cfg.fileinfo) {
+                    i = readlink(pent->name, g_buf, PATH_MAX);
+                    addstr(coolsize(i >= 0 ? i : pent->size)); /* Show symlink size */
+                    if (i > 1) { /* Show symlink target */
+                        int y;
 
-					addstr(" ->");
-					getyx(stdscr, len, y);
-					i = MIN(i, xcols - y);
-					g_buf[i] = '\0';
-					addstr(g_buf);
-				}
-			}
-		} else {
-			addstr(coolsize(pent->size));
-			addch(' ');
-			addstr(ptr);
-			if (pent->flags & HARD_LINK) {
-				struct stat sb;
+                        addstr(" ->");
+                        getyx(stdscr, len, y);
+                        i = MIN(i, xcols - y);
+                        g_buf[i] = '\0';
+                        addstr(g_buf);
+                    }
+                }
+            } else {
+                addstr(coolsize(pent->size));
+                addch(' ');
+                addstr(ptr);
+                if (pent->flags & HARD_LINK) {
+                    struct stat sb;
 
-				if (stat(pent->name, &sb) != -1) {
-					addch(' ');
-					addstr(xitoa((int)sb.st_nlink)); /* Show number of links */
-					addch('-');
-					addstr(xitoa((int)sb.st_ino)); /* Show inode number */
-				}
-			}
-		}
-		clrtoeol();
+                    if (stat(pent->name, &sb) != -1) {
+                        addch(' ');
+                        addstr(xitoa((int)sb.st_nlink)); /* Show number of links */
+                        addch('-');
+                        addstr(xitoa((int)sb.st_ino)); /* Show inode number */
+                    }
+                }
+            }
+            clrtoeol();
+        }
 	}
 
 	attroff(COLOR_PAIR(cfg.curctx + 1));
