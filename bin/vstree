@@ -8,6 +8,8 @@ fi
 
 # Inject local scoped environment variable safely
 export NNN_OPENER="dvtm-open"
+# Forces compact status bar
+export NNN_MINIMAL_STATUS="1"
 
 # Apply layout configuration via dvtm-cmd
 # (2>/dev/null silences errors if nnn is run outside dvtm)
