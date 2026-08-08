@@ -1243,6 +1243,10 @@ recreate(const char *args[]) {
 	const char *pargs[3] = { NULL, NULL, cwd };
 	create(pargs);
 	free(cwd);
+	if (args && args[0] && !strcmp(args[0], "1")) {
+		zoom(NULL);
+		focusnext(NULL);
+	}
 }
 
 static void

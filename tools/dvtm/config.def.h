@@ -150,6 +150,7 @@ static KeyBinding bindings[] = {
 	{ { MOD, 'a',            }, { togglerunall,   { NULL }                    } },
 	{ { MOD, CTRL('L'),      }, { redraw,         { NULL }                    } },
 	{ { MOD, 'r',            }, { recreate,       { NULL }                    } },
+	{ { MOD, 'R',            }, { recreate,       { "1" }                     } },
 	{ { MOD, 'w',            }, { cstack,         { NULL }                    } },
 	{ { MOD, 'W',            }, { cstack,         { NULL, NULL, "$CWD" }      } },
 	{ { MOD, 'e',            }, { copymode,       { "dvtm-editor" }           } },
