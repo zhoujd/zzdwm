@@ -1,16 +1,21 @@
 #!/bin/sh
 
-# Ensure strict GNU Usage output with correct capitalization
+# Ensure strict GNU Usage output
 if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "Usage: $(basename "$0") [initial_directory]" >&2
+    echo "Usage: ${0##*/} [initial_directory]"
     exit 0
 fi
 
 # Inject local scoped environment variable safely
 export NNN_OPENER="dvtm-open"
 
-# Safely expand fallback target path to current PWD
-TARGET_DIR="${1:-$PWD}"
+# Apply layout configuration via dvtm-cmd
+# (2>/dev/null silences errors if nnn is run outside dvtm)
+dvtm-cmd setlayout "[]=" 2>/dev/null
+dvtm-cmd setmfact "0.25" 2>/dev/null
 
-# Replace the current process instantly with zero latency
+# Safely expand fallback target path to current directory
+TARGET_DIR="${1:-.}"
+
+# Replace current process instantly with zero latency
 exec nnn -A -x "$TARGET_DIR"
