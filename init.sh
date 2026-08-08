@@ -120,6 +120,7 @@ install_bin() {
         $CORE_ROOT/libexec/dvtm/dvtm-open
         $CORE_ROOT/libexec/emacs/ec
         $CORE_ROOT/libexec/emacs/etags
+        $CORE_ROOT/libexec/utils/upx
     )
     for app in ${apps[@]}; do
         if [ -f "$app" ]; then
