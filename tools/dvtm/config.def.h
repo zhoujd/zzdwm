@@ -235,13 +235,17 @@ static Button buttons[] = {
 
 static Cmd commands[] = {
 	/* create [cmd]: create a new window, run `cmd` in the shell if specified */
-	{ "create", { create,	{ NULL } } },
+	{ "create",    { create,    { NULL } } },
 	/* focus <win_id>: focus the window whose `DVTM_WINDOW_ID` is `win_id` */
-	{ "focus",  { focusid,	{ NULL } } },
-	/* tag <win_id> <tag> [tag ...]: add +tag, remove -tag or set tag of the window with the given identifier */
-	{ "tag",    { tagid,	{ NULL } } },
+	{ "focus",     { focusid,   { NULL } } },
+	/* tag <win_id> <tag> [tag ...]: add +tag, remove -tag or set tag of the window with given identifier */
+	{ "tag",       { tagid,     { NULL } } },
 	/* cstack [cmd]: create a new stack window, run `cmd` in the shell if specified */
-	{ "cstack", { cstack,	{ NULL } } },
+	{ "cstack",    { cstack,    { NULL } } },
+	/* setmfact [factor]: set master area factor (+0.05, -0.05, 0.50, etc.) */
+	{ "setmfact",  { setmfact,  { NULL } } },
+	/* setlayout [symbol]: set layout mode ([]=, [M], etc.) */
+	{ "setlayout", { setlayout, { NULL } } },
 };
 
 /* gets executed when dvtm is started */
