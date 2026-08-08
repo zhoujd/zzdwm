@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Ensure strict GNU Usage output
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "Usage: ${0##*/} [initial_directory]"
+    exit 0
+fi
+
+# Inject local scoped environment variable safely
+export NNN_OPENER="dvtm-open"
+# Forces compact status bar
+export NNN_MINIMAL_STATUS="1"
+
+# Apply layout configuration via dvtm-cmd
+# (2>/dev/null silences errors if nnn is run outside dvtm)
+dvtm-cmd setlayout "[]=" 2>/dev/null
+dvtm-cmd setmfact "0.25" 2>/dev/null
+
+# Safely expand fallback target path to current directory
+TARGET_DIR="${1:-.}"
+
+# Replace current process instantly with zero latency
+exec nnn -A -x "$TARGET_DIR"
