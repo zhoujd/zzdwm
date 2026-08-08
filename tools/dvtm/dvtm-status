@@ -13,9 +13,24 @@ cleanup() {
 }
 trap cleanup 0 1 15
 
+mktime() {
+    # If Sunday, show the week number of the next week
+    if [ $(date +'%u') -gt 6 ]; then
+        WEEK=$(date +'W%-V' -d "next monday")
+    else
+        WEEK=$(date +'W%-V')
+    fi
+    TIME=$(date +'%a %-e %b %-l:%M %p')
+    echo ${WEEK} ${TIME}
+}
+
+display() {
+    echo "$(TZ=Asia/Shanghai mktime)"
+}
+
 while true; do
-    date +%H:%M
-    sleep 60
+    display
+    sleep 20
 done > "$STATUS_FIFO" &
 STATUS_PID=$!
 
