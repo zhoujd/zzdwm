@@ -1585,6 +1585,7 @@ setmfact(const char *args[]) {
 	}
 	pertag.mfact[pertag.curtag] = screen.mfact;
 	arrange();
+	redraw(NULL);
 }
 
 static void
