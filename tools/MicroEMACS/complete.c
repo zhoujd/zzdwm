@@ -159,7 +159,7 @@ normalize_path (char *path)
           continue;
         }
 
-      /* Check for '.' component */
+      /* Check for '.' component - skip without modifying dst */
       if (src[0] == '.' && (src[1] == '/' || src[1] == '\0'))
         {
           src += (src[1] == '\0') ? 1 : 2;
@@ -171,14 +171,38 @@ normalize_path (char *path)
         {
           src += (src[2] == '\0') ? 2 : 3;
 
-          /* Rewind dst safely */
+          /* Rewind dst safely if we have a parent directory to pop */
           if (dst > path + root_len)
             {
-              if (dst[-1] == '/')
-                dst--;
+              /* Check if the previous component in dst is itself a leading '..' */
+              char *prev = dst - 1;
+              if (prev > path + root_len && *prev == '/')
+                prev--;
 
-              while (dst > path + root_len && dst[-1] != '/')
-                dst--;
+              /* Find start of last component in dst */
+              while (prev > path + root_len && prev[-1] != '/')
+                prev--;
+
+              /* If previous component is not '..', pop it */
+              if (strncmp (prev, "..", 2) != 0 || (prev[2] != '/' && prev[2] != '\0'))
+                {
+                  if (dst > path + root_len && dst[-1] == '/')
+                    dst--;
+
+                  while (dst > path + root_len && dst[-1] != '/')
+                    dst--;
+
+                  continue;
+                }
+            }
+
+          /* If at root or preceded only by '..', keep the '..' for relative paths */
+          if (root_len == 0)
+            {
+              if (dst > path && dst[-1] != '/')
+                *dst++ = PATH_SEP;
+              *dst++ = '.';
+              *dst++ = '.';
             }
           continue;
         }
@@ -197,6 +221,7 @@ normalize_path (char *path)
 
   *dst = '\0';
 
+  /* If normalization reduced a relative path to empty, default to "." */
   if (path[0] == '\0')
     strcpy (path, ".");
 }
