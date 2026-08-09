@@ -65,6 +65,8 @@ make clean
 make LDFLAGS="-static -s -Os"
 EOF
     fi
+    upx --ultra-brute dvtm dvtm-editor
+    upx --best  dvtm dvtm-editor
     echo "Build publish done"
 }
 
