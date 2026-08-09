@@ -82,6 +82,8 @@ cat /etc/os-release
 make clean
 make STATIC=yes
 make strip
+upx --ultra-brute me
+upx --best me
 EOF
     fi
     echo "Build publish done"
