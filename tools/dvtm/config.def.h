@@ -43,6 +43,8 @@ static Color colors[] = {
 #define LOGIN_SHELL     true
 /* whether title shoud be hidden on border */
 #define SHOW_TITLE      false
+/* whether info shoud be hidden on border */
+#define SHOW_INFO       false
 /* whether border shoud be show force */
 #define FORCE_BORDER    true
 /* default tag on startup, 1 means default */
@@ -133,6 +135,7 @@ static KeyBinding bindings[] = {
 	{ { MOD, 'S',            }, { togglebarpos,   { NULL }                    } },
 	{ { MOD, 'M',            }, { togglemouse,    { NULL }                    } },
 	{ { MOD, 'T',            }, { toggletitle,    { NULL }                    } },
+	{ { MOD, 'I',            }, { toggleinfo,     { NULL }                    } },
 	{ { MOD, '\n',           }, { zoom ,          { NULL }                    } },
 	{ { MOD, '\r',           }, { zoom ,          { NULL }                    } },
 	{ { MOD, '1',            }, { focusn,         { "1" }                     } },

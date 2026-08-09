@@ -214,6 +214,7 @@ static void minimizeothers(const char *args[]);
 static void minimizeslaves(const char *args[]);
 static void togglemouse(const char *args[]);
 static void toggletitle(const char *args[]);
+static void toggleinfo(const char *args[]);
 static void togglerunall(const char *args[]);
 static void toggletag(const char *args[]);
 static void toggleview(const char *args[]);
@@ -270,6 +271,7 @@ static bool runinall = false;
 static bool defhide = BAR_DEFHIDE;
 static bool deflogin = LOGIN_SHELL;
 static bool showtitle = SHOW_TITLE;
+static bool showinfo = SHOW_INFO;
 static unsigned int deftag = DEF_TAG;
 static bool forceborder = FORCE_BORDER;
 static bool mod_key_pressed = false;
@@ -461,7 +463,6 @@ draw_border(Client *c) {
 	}
 
 	bool is_mod_active = (c == sel && mod_key_pressed && bar.pos == BAR_OFF);
-
 	mvwprintw(c->window, 0, 2, "[%s%s%s%d%s%d]",
 	          is_mod_active ? "> " : "",
 	          (*c->title && showtitle) ? c->title : "",
@@ -469,6 +470,13 @@ draw_border(Client *c) {
 	          c->order, "/", n);
 	if (t)
 		c->title[maxlen] = t;
+
+	if (showinfo) {
+		bool is_info_active = (showinfo || (sel && !sel->next && bar.pos == BAR_OFF));
+		int sym_len = strlen(layout->symbol);
+		mvwprintw(c->window, 0, c->w - sym_len - 1, "%s", is_info_active ? layout->symbol : "");
+	}
+
 	wmove(c->window, y, x);
 }
 
@@ -1729,6 +1737,12 @@ togglemouse(const char *args[]) {
 static void
 toggletitle(const char *args[]) {
 	showtitle = !showtitle;
+	draw_all();
+}
+
+static void
+toggleinfo(const char *args[]) {
+	showinfo = !showinfo;
 	draw_all();
 }
 
