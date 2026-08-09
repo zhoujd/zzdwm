@@ -473,8 +473,12 @@ draw_border(Client *c) {
 
 	if (showinfo) {
 		bool is_info_active = (showinfo || (sel && !sel->next && bar.pos == BAR_OFF));
-		int sym_len = strlen(layout->symbol);
-		mvwprintw(c->window, 0, c->w - sym_len - 1, "%s", is_info_active ? layout->symbol : "");
+		static char right_info[64];
+		snprintf(right_info, sizeof(right_info), " %s ",
+		         layout->symbol);
+		int len = strlen(right_info);
+		int offset = 1;
+		mvwprintw(c->window, 0, c->w - len - offset, "%s", right_info);
 	}
 
 	wmove(c->window, y, x);
