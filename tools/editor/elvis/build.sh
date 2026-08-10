@@ -48,6 +48,8 @@ make clean
 make CC="gcc -Os -s -static"
 EOF
     fi
+    upx --ultra-brute elvis fmt ctags
+    upx --best elvis fmt ctags
     echo "Build publish done"
 }
 
