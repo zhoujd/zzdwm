@@ -1523,6 +1523,7 @@ togglelayout(const char *args[]) {
 
 	pertag.layout[pertag.curtag] = layout;
 	arrange();
+	redraw(NULL);
 }
 
 static void
@@ -1556,6 +1557,7 @@ setlayout(const char *args[]) {
 	}
 	pertag.layout[pertag.curtag] = layout;
 	arrange();
+	redraw(NULL);
 }
 
 static void
