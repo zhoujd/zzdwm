@@ -14,24 +14,24 @@ if [ ! -p "$FIFO" ]; then
     exit 1
 fi
 
-# Helper function to format 'create' and 'cstack' commands cleanly
+# Function to format 'create' and 'cstack' commands cleanly
 format_create_cmd() {
     action="$1"
     cmd="$2"
 
-    # 1. No arguments (e.g. opens default shell)
+    # No arguments (e.g. opens default shell)
     if [ -z "$cmd" ]; then
         printf '%s\n' "$action"
         return
     fi
 
-    # 2. Single command without file args (e.g. "htop" or "zsh")
+    # Single command without file args (e.g. "htop" or "zsh")
     case "$cmd" in
         *" "*) ;; # Has arguments, continue below
         *) printf "%s '%s'\n" "$action" "$cmd"; return ;;
     esac
 
-    # 3. Command with arguments (e.g. "me file.c")
+    # Command with arguments (e.g. "me file.c")
     bin="${cmd%% *}"
     args="${cmd#* }"
 
