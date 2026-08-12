@@ -118,6 +118,21 @@ install_bin() {
         $CORE_ROOT/libexec/dvtm/dvtm-cmd
         $CORE_ROOT/libexec/dvtm/dvtm-open
         $CORE_ROOT/libexec/dvtm/dvtm-tree
+    )
+    for app in ${apps[@]}; do
+        if [ -f "$app" ]; then
+            echo "Install $app"
+            sudo install -m 755 "$app" "$bin"
+        else
+            echo "Skip $app (not found)"
+        fi
+    done
+    echo "Install bin done"
+}
+
+install_tool() {
+    local bin=/usr/local/bin
+    local apps=(
         $CORE_ROOT/libexec/emacs/ec
         $CORE_ROOT/libexec/emacs/etags
         $CORE_ROOT/libexec/utils/upx
@@ -130,7 +145,7 @@ install_bin() {
             echo "Skip $app (not found)"
         fi
     done
-    echo "Install bin done"
+    echo "Install tool done"
 }
 
 install_misc() {
@@ -165,6 +180,7 @@ install() {
     install_dm
     install_bin
     install_misc
+    install_tool
     echo "Install all done"
 }
 
@@ -200,6 +216,7 @@ all() {
     install_dm
     install_bin
     install_misc
+    install_tool
     build
     clean
     echo "Init all done"
@@ -214,6 +231,7 @@ dep           install depend package
 dm            install xsession
 bin           install bin
 misc          install misc
+tool          install tool
 install|-i    install all
 build|-b      build all
 clean|-c      clean all
@@ -234,6 +252,9 @@ case $CMD in
         ;;
     misc )
         install_misc
+        ;;
+    tool )
+        install_tool
         ;;
     install|-i )
         install
