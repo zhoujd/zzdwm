@@ -109,6 +109,7 @@ install_bin() {
         $CORE_ROOT/bin/xxd
         $CORE_ROOT/bin/ref
         $CORE_ROOT/bin/ctags
+        $CORE_ROOT/bin/etags
         $CORE_ROOT/bin/elvis
         $CORE_ROOT/bin/abduco
         $CORE_ROOT/libexec/dvtm/dvtm
@@ -134,7 +135,6 @@ install_tool() {
     local bin=/usr/local/bin
     local apps=(
         $CORE_ROOT/libexec/emacs/ec
-        $CORE_ROOT/libexec/emacs/etags
         $CORE_ROOT/libexec/utils/upx
     )
     for app in ${apps[@]}; do
