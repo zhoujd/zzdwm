@@ -75,16 +75,16 @@ publish() {
             --name="build-me-1" \
             --rm \
             -i \
-            -u root \
+            -u $HOST_UID:$HOST_GID \
             -e INSIDE_DOCKER=1 \
             -v "$MNT_DIR:$MNT_DIR" \
             -w "$WS" \
-            "$img" sh -c "
-                cat /etc/os-release
-                make clean
-                make STATIC=yes
-                make strip
-                chown -R $HOST_UID:$HOST_GID .
+            "$img" \
+            sh -c "
+            cat /etc/os-release
+            make clean
+            make STATIC=yes
+            make strip
             "
         upx --ultra-brute me
     fi
