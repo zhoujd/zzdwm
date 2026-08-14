@@ -84,8 +84,8 @@ publish() {
             make strip
             chown -R $(id -u):$(id -g) .
             "
+        upx --ultra-brute me
     fi
-    upx --ultra-brute me
     echo "Build publish done"
 }
 
