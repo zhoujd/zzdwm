@@ -100,7 +100,7 @@ version.o: $(REV)
 strip: $(TARGET)
 	strip -v $(TARGET)
 
-install: strip
+install:
 	cp -f $(TARGET) $(DEST)
 
 uninstall:
