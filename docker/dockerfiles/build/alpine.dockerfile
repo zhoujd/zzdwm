@@ -19,10 +19,12 @@ RUN apk update --no-cache \
     python3 py3-pip \
     && rm -rf /var/cache/apk/*
 
-# GNU screen utmp file
-RUN touch /var/run/utmp
+# Create directory and utmp file
+RUN if [ -L /var/run ]; then rm -f /var/run; fi \
+    && mkdir -p /var/run \
+    && touch /var/run/utmp
 
-# Trust all repositories
+# Git trust all repositories
 RUN git config --global --add safe.directory '*'
 
 ARG USER_NAME=zach
