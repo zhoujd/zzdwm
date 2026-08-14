@@ -75,7 +75,7 @@ publish() {
             --name="build-me-1" \
             --rm \
             -i \
-            -u $HOST_UID:$HOST_GID \
+            -u root \
             -e INSIDE_DOCKER=1 \
             -v "$MNT_DIR:$MNT_DIR" \
             -w "$WS" \
@@ -85,6 +85,7 @@ publish() {
             make clean
             make STATIC=yes
             make strip
+            chown -R $HOST_UID:$HOST_GID .
             "
         upx --ultra-brute me
     fi
