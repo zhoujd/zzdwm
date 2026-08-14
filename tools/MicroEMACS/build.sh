@@ -73,19 +73,19 @@ publish() {
             --name=build-me-1
             --rm
             -i
-            -u $(id -u):$(id -g)
+            -u root
             -v $MNT_DIR:$MNT_DIR
             -w $WS
             "
-        docker run $opt $img sh <<'EOF'
-cat /etc/os-release
-make clean
-make STATIC=yes
-make strip
-EOF
+        docker run $opt $img sh -c "
+            cat /etc/os-release
+            make clean
+            make STATIC=yes
+            make strip
+            chown -R $(id -u):$(id -g) .
+            "
     fi
     upx --ultra-brute me
-    upx --best me
     echo "Build publish done"
 }
 
@@ -109,7 +109,7 @@ clean() {
 }
 
 install() {
-    if [ "$(whoami)" = "root" ]; then
+    if [ "$(id -u)" -eq 0 ]; then
         make install
     else
         sudo make install
@@ -118,7 +118,7 @@ install() {
 }
 
 uninstall() {
-    if [ "$(whoami)" == "root" ]; then
+    if [ "$(id -u)" -eq 0 ]; then
         make uninstall
     else
         sudo make uninstall
