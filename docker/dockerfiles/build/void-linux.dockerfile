@@ -19,6 +19,9 @@ RUN xbps-install -Syu xbps \
 # GNU screen utmp file
 RUN touch /var/run/utmp
 
+# Trust all repositories
+RUN git config --global --add safe.directory '*'
+
 ARG USER_NAME=zach
 RUN useradd $USER_NAME -m \
     && usermod -aG wheel $USER_NAME \

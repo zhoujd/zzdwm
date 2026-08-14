@@ -22,6 +22,9 @@ RUN apk update --no-cache \
 # GNU screen utmp file
 RUN touch /var/run/utmp
 
+# Trust all repositories
+RUN git config --global --add safe.directory '*'
+
 ARG USER_NAME=zach
 ARG USER_SHELL=/bin/bash
 RUN adduser -D -s $USER_SHELL $USER_NAME \
