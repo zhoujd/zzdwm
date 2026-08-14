@@ -69,20 +69,22 @@ publish() {
         release
     else
         img=zhoujd/alpine
-        opt="
-            --name=build-me-1
-            --rm
-            -i
-            -u root
-            -v $MNT_DIR:$MNT_DIR
-            -w $WS
-            "
-        docker run $opt $img sh -c "
-            cat /etc/os-release
-            make clean
-            make STATIC=yes
-            make strip
-            chown -R $(id -u):$(id -g) .
+        HOST_UID=$(id -u)
+        HOST_GID=$(id -g)
+        docker run \
+            --name="build-me-1" \
+            --rm \
+            -i \
+            -u root \
+            -e INSIDE_DOCKER=1 \
+            -v "$MNT_DIR:$MNT_DIR" \
+            -w "$WS" \
+            "$img" sh -c "
+                cat /etc/os-release
+                make clean
+                make STATIC=yes
+                make strip
+                chown -R $HOST_UID:$HOST_GID .
             "
         upx --ultra-brute me
     fi
