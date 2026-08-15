@@ -1,9 +1,9 @@
 #!/bin/bash
 
 setup_common() {
-    echo "Setup ssh keys ..."
     local sshkeys=/mnt/sshkeys
     if [ -d $sshkeys ]; then
+        echo "Setup ssh keys ..."
         mkdir -p ~/.ssh
         cp -f $sshkeys/* ~/.ssh
         chmod 600 ~/.ssh/*
@@ -11,8 +11,11 @@ setup_common() {
 }
 
 setup_server() {
-    echo "Setup ssh server ..."
-    $HOME/zzdwm/script/ssh-server.sh &
+    local sshcmd=startssh
+    if command -v $sshcmd 2>/dev/null; then
+        echo "Setup ssh server ..."
+        $sshcmd &
+    fi
 }
 
 setup_sleep() {

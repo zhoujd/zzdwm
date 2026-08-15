@@ -16,6 +16,9 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Install tools
+COPY tools /usr/local/bin
+
 # Create directory and utmp file
 RUN if [ -L /var/run ]; then rm -f /var/run; fi \
     && mkdir -p /var/run \

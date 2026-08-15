@@ -1,0 +1,18 @@
+#!/bin/bash
+
+BIN=dropbearmulti
+PORT=${PORT:-2222}
+
+TARGET=~/.dropbear
+KEY=$TARGET/dropbear_ed25519_host_key
+
+rm -rf $TARGET
+mkdir -p $TARGET
+
+OPT=(
+    -p $PORT
+    -r $KEY
+)
+
+$BIN dropbearkey -t ed25519 -f $KEY
+$BIN dropbear ${OPT[@]}

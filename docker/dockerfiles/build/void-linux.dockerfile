@@ -16,6 +16,9 @@ RUN xbps-install -Syu xbps \
     openssh git findutils diffutils bash python3 python3-pip \
     && xbps-remove -Oo
 
+# Install tools
+COPY tools /usr/local/bin
+
 # Create directory and utmp file
 RUN if [ -L /var/run ]; then rm -f /var/run; fi \
     && mkdir -p /var/run \
