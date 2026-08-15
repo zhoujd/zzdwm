@@ -10,8 +10,9 @@ CTN_HOST=build
 CTN_PREFIX=zz-build
 CTN_NAME=${CTN_PREFIX}-1
 
-MNT=/home/$CTN_USER
-WS=$MNT/$(basename $TOP)
+MNT_ROOT=/home/$CTN_USER
+MNT_KEYS=/mnt/sshkeys
+WS=$MNT_ROOT/$(basename $TOP)
 
 IMGS=(
     zhoujd/alpine:base
@@ -29,6 +30,7 @@ RUN_PARAM=(
     --add-host="$CTN_HOST:127.0.1.1"
     -h $CTN_HOST
     -e INSIDE_DOCKER=yes
+    -v ~/.ssh:$MNT_KEYS
     -v $TOP:$WS
     -w $WS
 )
@@ -77,7 +79,6 @@ ssh() {
     local opt=(
         -d
         -e PORT=${port}
-        -v ~/.ssh:/home/$CTN_USER/.ssh:ro
     )
     case $kind in
         alpine|-a )
