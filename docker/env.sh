@@ -1,31 +1,37 @@
-## env.sh
+#!/bin/sh
+# Portable POSIX helper functions for Docker environment
 
-getctnname() {
-    CONTAINER_PREFIX=$1
-    LAST_INDEX=$(docker ps -a --format "{{.Names}}" \
-      | grep "^${CONTAINER_PREFIX}-" \
-      | sed "s/^${CONTAINER_PREFIX}-//" \
-      | sort -n | tail -n 1)
+getctnname() (
+    prefix="${1:-container}"
 
-    # Default to 0 if no container exists
-    if [ -z "$LAST_INDEX" ]; then
-	NEXT_INDEX=1
+    # Filter container names strictly matching ${prefix}-<digits>
+    last_index=$(docker ps -a --format '{{.Names}}' 2>/dev/null \
+        | grep -E "^${prefix}-[0-9]+$" \
+        | sed "s/^${prefix}-//" \
+        | sort -n \
+        | tail -n 1)
+
+    if [ -z "$last_index" ]; then
+        echo "${prefix}-1"
     else
-	NEXT_INDEX=$((LAST_INDEX + 1))
+        echo "${prefix}-$((last_index + 1))"
     fi
-    echo "${CONTAINER_PREFIX}-${NEXT_INDEX}"
-}
+)
 
-cleanexit() {
-    ps_list=$(docker ps -a | grep Exit )
-    if [ -n "$ps_list" ]; then
-        docker ps -a | grep Exit | cut -d ' ' -f 1 | xargs docker rm
+cleanexit() (
+    if command -v docker >/dev/null 2>&1; then
+        docker container prune -f >/dev/null 2>&1 || {
+            exited=$(docker ps -a -q -f "status=exited")
+            [ -n "$exited" ] && echo "$exited" | xargs docker rm >/dev/null 2>&1
+        }
     fi
-}
+)
 
-cleannone() {
-    img_list=$(docker images --filter "dangling=true" -q --no-trunc)
-    if [ -n "$img_list" ]; then
-        docker rmi $img_list
+cleannone() (
+    if command -v docker >/dev/null 2>&1; then
+        docker image prune -f >/dev/null 2>&1 || {
+            dangling=$(docker images -f "dangling=true" -q)
+            [ -n "$dangling" ] && echo "$dangling" | xargs docker rmi >/dev/null 2>&1
+        }
     fi
-}
+)
