@@ -12,7 +12,7 @@ setup_common() {
 
 setup_server() {
     echo "Setup ssh server ..."
-    $HOME/zzdwm/script/ssh-server.sh
+    $HOME/zzdwm/script/ssh-server.sh &
 }
 
 setup_sleep() {
