@@ -1,10 +1,53 @@
 #!/bin/sh
-# Rebirn/restart terminal session
+# Reborn active terminal in its current working directory (or SSH context)
 
-W=$(xdotool getwindowfocus 2>/dev/null || xdotool getactivewindow)
-C=$(xprop -id "$W" WM_CLASS 2>/dev/null | awk -F '"' '{print tolower($4)}')
-case "$C" in
-    st*|urxvt*|rxvt* )
-        setsid "${C%%-*}" >/dev/null 2>&1 & sleep 0.03; xdotool windowkill "$W"
+# Get active window ID and Window Class
+WIN_ID=$(xdotool getwindowfocus 2>/dev/null || xdotool getactivewindow)
+[ -z "$WIN_ID" ] || [ "$WIN_ID" = "0x0" ] && exit 0
+
+WIN_CLASS=$(xprop -id "$WIN_ID" WM_CLASS 2>/dev/null | awk -F '"' '{print tolower($4)}')
+
+case "$WIN_CLASS" in
+    st*|urxvt*|rxvt*|alacritty*|kitty*|foot*|xterm*)
+        TERM_CMD="${WIN_CLASS%%-*}"
+        ;;
+    *)
+        exit 0 # Exit if active window is not a supported terminal
         ;;
 esac
+
+# Extract main PID from window
+PID=$(xprop -id "$WIN_ID" _NET_WM_PID 2>/dev/null | awk '{print $NF}')
+
+if echo "$PID" | grep -qE '^[0-9]+$'; then
+    # Find leaf child process (shell/running program) in process tree
+    CHILD_PID=$(pstree -lpA "$PID" 2>/dev/null | tail -n 1 | awk -F'---' '{print $NF}' | sed -re 's/[^0-9]//g')
+    [ -n "$CHILD_PID" ] && PID="$CHILD_PID"
+
+    # Get Current Working Directory (CWD)
+    [ -d "/proc/$PID/cwd" ] && PCWD=$(readlink "/proc/$PID/cwd" 2>/dev/null)
+
+    # Check if running SSH command
+    if [ -f "/proc/$PID/cmdline" ]; then
+        PCMDLINE=$(tr '\0' ' ' < "/proc/$PID/cmdline" 2>/dev/null | sed -e 's/[[:space:]]*$//')
+        PCMD=$(echo "$PCMDLINE" | awk '{print $1}')
+    fi
+fi
+
+# Change script working directory before spawning
+if [ -d "$PCWD" ]; then
+    cd "$PCWD" || cd "$HOME"
+fi
+
+# Spawn new terminal & kill old window
+case "$PCMD" in
+    ssh|*/ssh)
+        setsid $TERM_CMD -e $PCMDLINE >/dev/null 2>&1 &
+        ;;
+    *)
+        setsid $TERM_CMD >/dev/null 2>&1 &
+        ;;
+esac
+
+sleep 0.05
+xdotool windowkill "$WIN_ID"
