@@ -4,15 +4,15 @@ SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 MNT_DIR=$(git rev-parse --show-toplevel)
 WS=$SCRIPT_DIR
 
-. /etc/os-release
+[ -f /etc/os-release ] && . /etc/os-release
 
 build() {
     ./configure \
-        --prefix=/usr/local
+        --prefix=/usr/local \
         --enable-colors256 \
         --disable-pam \
-        --disable-telnet \
-        --disable-utmp
+        --disable-telnet
+    cp -vf config.h.static config.h
     make clean
     make CFLAGS="-O0 -g"
     echo "Build done"
@@ -20,11 +20,11 @@ build() {
 
 release() {
     ./configure \
-        --prefix=/usr/local
+        --prefix=/usr/local \
         --enable-colors256 \
         --disable-pam \
-        --disable-telnet \
-        --disable-utmp
+        --disable-telnet
+    cp -vf config.h.static config.h
     make clean
     case $ID in
         alpine|void )
@@ -42,7 +42,7 @@ publish() {
         echo "Build release"
         release
     else
-        img=zhoujd/alpine
+        img=zhoujd/alpine:latest
         opt="
             --name=build-screen-1
             --rm
@@ -54,16 +54,19 @@ publish() {
         docker run $opt $img sh <<'EOF'
 cat /etc/os-release
 ./configure \
-    --prefix=/usr/local
+    --prefix=/usr/local \
     --enable-colors256 \
     --disable-pam \
-    --disable-telnet \
-    --disable-utmp
+    --disable-telnet
+cp -vf config.h.static config.h
 make clean
 make CFLAGS="-Os" LDFLAGS="-s -static"
+strip -v screen
 ls -l screen
 EOF
+    upx --ultra-brute screen
     fi
+
     echo "Build publish done"
 }
 
@@ -73,7 +76,7 @@ clean() {
 }
 
 install() {
-    if [ "$(whoami)" = "root" ]; then
+    if [ "$(id -u)" -eq 0 ]; then
         make install
     else
         sudo make install
@@ -82,7 +85,7 @@ install() {
 }
 
 uninstall() {
-    if [ "$(whoami)" == "root" ]; then
+    if [ "$(id -u)" -eq 0 ]; then
         make uninstall
     else
         sudo make uninstall
