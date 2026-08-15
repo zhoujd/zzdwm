@@ -1,18 +1,40 @@
-#!/bin/bash
+#!/bin/sh
 
-BIN=dropbearmulti
-PORT=${PORT:-2222}
+BIN="dropbearmulti"
+PORT="${PORT:-2222}"
 
-TARGET=~/.dropbear
-KEY=$TARGET/dropbear_ed25519_host_key
+# Determine writable directory for host keys based on user permissions
+if [ "$(id -u)" -eq 0 ]; then
+    TARGET="/etc/dropbear"
+else
+    # Non-root fallback: Use $HOME if writable, otherwise /tmp
+    if [ -n "$HOME" ] && [ "$HOME" != "/" ] && [ -w "$HOME" ]; then
+        TARGET="$HOME/.dropbear"
+    else
+        TARGET="/tmp/.dropbear"
+    fi
+fi
 
-rm -rf $TARGET
-mkdir -p $TARGET
+KEY="$TARGET/dropbear_ed25519_host_key"
 
-OPT=(
-    -p $PORT
-    -r $KEY
-)
+# Ensure host key directory exists
+mkdir -p "$TARGET"
 
-$BIN dropbearkey -t ed25519 -f $KEY
-$BIN dropbear ${OPT[@]}
+# Generate host key only if missing
+if [ ! -f "$KEY" ]; then
+    echo "Generating SSH host key in $TARGET..."
+    $BIN dropbearkey -t ed25519 -f "$KEY"
+fi
+
+# Password configuration (Root ONLY)
+if [ "$(id -u)" -eq 0 ] && [ -n "$ROOT_PASSWORD" ]; then
+    echo "root:$ROOT_PASSWORD" | chpasswd
+fi
+
+echo "Starting Dropbear SSH on port $PORT (UID: $(id -u))..."
+
+# -F : Foreground mode
+# -E : Log to stderr
+# -p : Bind port
+# -r : Host key path
+exec $BIN dropbear -F -E -p "$PORT" -r "$KEY"
