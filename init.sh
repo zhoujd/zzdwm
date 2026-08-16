@@ -131,23 +131,6 @@ install_bin() {
     echo "Install bin done"
 }
 
-install_tool() {
-    local bin=/usr/local/bin
-    local apps=(
-        $CORE_ROOT/libexec/emacs/ec
-        $CORE_ROOT/libexec/utils/upx
-    )
-    for app in ${apps[@]}; do
-        if [ -f "$app" ]; then
-            echo "Install $app"
-            sudo install -m 755 "$app" "$bin"
-        else
-            echo "Skip $app (not found)"
-        fi
-    done
-    echo "Install tool done"
-}
-
 install_misc() {
     echo "Install cwmrc"
     local cwm=$CORE_ROOT/misc/cwm
@@ -174,6 +157,23 @@ install_misc() {
         tic -sx $ti
     done
     echo "Install misc done"
+}
+
+install_tool() {
+    local bin=/usr/local/bin
+    local apps=(
+        $CORE_ROOT/libexec/emacs/ec
+        $CORE_ROOT/libexec/utils/upx
+    )
+    for app in ${apps[@]}; do
+        if [ -f "$app" ]; then
+            echo "Install $app"
+            sudo install -m 755 "$app" "$bin"
+        else
+            echo "Skip $app (not found)"
+        fi
+    done
+    echo "Install tool done"
 }
 
 install() {
