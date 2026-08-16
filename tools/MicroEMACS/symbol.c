@@ -203,6 +203,7 @@ KEY key[] = {
   {KCTLX | 'I',         spellregion,       "spell-region"},
 #endif
   {KCTLX | 'K',         killbuffer,        "kill-buffer"},
+  {KCTLX | 'M',         clearmark,         "clear-mark"},
   {KCTLX | 'N',         nextwind,          "forw-window"},
   {KCTLX | 'P',         prevwind,          "back-window"},
   {KCTLX | 'R',         backsearch,        "back-search"},

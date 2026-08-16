@@ -863,6 +863,7 @@ int entab (int f, int n, int k);        /* Change all spaces to tabs    */
 int getregion (REGION *rp);             /* Get current region bounds.   */
 int reglines ();                        /* Get lines in current region  */
 int replaceregion (int f, int n, int k);/* Replace in current region    */
+int clearmark (int f, int n, int k);    /* Clearing a Region Mark       */
 
 /*
  * Defined "ring.c".

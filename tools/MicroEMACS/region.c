@@ -487,3 +487,15 @@ replaceregion (int f, int n, int k)
 
   return TRUE;
 }
+
+/*
+ * Clearing a Region Mark
+ */
+int
+clearmark (int f, int n, int k)
+{
+  curwp->w_mark.p = NULL;
+  curwp->w_mark.o = 0;
+  eprintf ("[Mark cleared]");
+  return (TRUE);
+}
