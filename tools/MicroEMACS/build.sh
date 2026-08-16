@@ -64,6 +64,7 @@ release() {
 }
 
 publish() {
+    CMD=${1:-}
     if [ -n "$INSIDE_DOCKER" ]; then
         echo "Build release"
         release
@@ -87,7 +88,11 @@ publish() {
             make strip
             chown -R $HOST_UID:$HOST_GID .
             "
-        upx --ultra-brute me
+        case $CMD in
+            --upx|-u )
+                upx --ultra-brute me
+                ;;
+        esac
     fi
     echo "Build publish done"
 }
@@ -141,7 +146,8 @@ case $1 in
         release
         ;;
     publish|-p )
-        publish
+        shift
+        publish "$@"
         ;;
     clean|-c )
         shift
