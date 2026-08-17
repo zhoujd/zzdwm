@@ -137,20 +137,20 @@ usage() {
 Usage: $app {command} [distro] [+++ extra_docker_args]
 
 Commands:
-  run|-r      Run interactive container
-  ssh         Start SSH daemon background service
-  shell|-s    Attach a new shell to running container
-  stop        Stop running container
-  status      Show container status
-  build|-b    Build image stack
-  clean|-c    Clean stopped containers & untagged images
-  valgrind|-v Run Valgrind container environment
-  wine|-w     Run Wine container environment
+run|-r      Run interactive container
+ssh         Start SSH daemon background service
+shell|-s    Attach a new shell to running container
+stop        Stop running container
+status      Show container status
+build|-b    Build image stack
+clean|-c    Clean stopped containers & untagged images
+valgrind|-v Run Valgrind container environment
+wine|-w     Run Wine container environment
 
 Distros:
-  alpine|-a   Alpine Linux (default)
-  void|-v     Void Linux
-  ubuntu|-u   Ubuntu Linux
+alpine|-a   Alpine Linux (default)
+void|-v     Void Linux
+ubuntu|-u   Ubuntu Linux
 EOF
 }
 
