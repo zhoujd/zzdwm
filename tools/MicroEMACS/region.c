@@ -494,8 +494,13 @@ replaceregion (int f, int n, int k)
 int
 clearmark (int f, int n, int k)
 {
+  if (curwp->w_mark.p == NULL) {
+    eprintf ("No mark set in this window");
+    return (FALSE);
+  }
   curwp->w_mark.p = NULL;
   curwp->w_mark.o = 0;
+  curwp->w_flag |= WFHARD;
   eprintf ("[Mark cleared]");
   return (TRUE);
 }

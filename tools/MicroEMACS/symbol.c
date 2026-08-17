@@ -203,7 +203,6 @@ KEY key[] = {
   {KCTLX | 'I',         spellregion,       "spell-region"},
 #endif
   {KCTLX | 'K',         killbuffer,        "kill-buffer"},
-  {KCTLX | 'M',         clearmark,         "clear-mark"},
   {KCTLX | 'N',         nextwind,          "forw-window"},
   {KCTLX | 'P',         prevwind,          "back-window"},
   {KCTLX | 'R',         backsearch,        "back-search"},
@@ -289,6 +288,7 @@ KEY key[] = {
   {-1,                  listbuffers,       "display-buffers"},
   {-1,                  showvisable,       "display-visable"},
   {-1,                  setnewline,        "set-newline"},
+  {-1,                  clearmark,         "clear-mark"},
   {-1,                  redo,              "redo"},
   {-1,                  eecho,             "echo"},
   {-1,                  checkheap,         "check-heap"},
