@@ -42,6 +42,11 @@ fi
 # Spawn new terminal & kill old window
 case "$PCMD" in
     ssh|*/ssh)
+        case $TERM_CMD in
+            st* )
+                TERM_CMD="$TERM_CMD -x"
+                ;;
+        esac
         setsid $TERM_CMD -e $PCMDLINE >/dev/null 2>&1 &
         ;;
     *)
