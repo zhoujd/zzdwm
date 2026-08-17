@@ -27,9 +27,7 @@ fi
 case "$PCMD" in
     ssh|*/ssh)
         case $TERM_CMD in
-            st* )
-                TERM_CMD="$TERM_CMD -x"
-                ;;
+            st* ) TERM_CMD="$TERM_CMD -x" ;;
         esac
         [ -n "$PCMDLINE" ] && exec $TERM_CMD -e $PCMDLINE
         ;;
