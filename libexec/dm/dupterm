@@ -9,18 +9,17 @@ WIN_ID=$(xprop -root _NET_ACTIVE_WINDOW 2>/dev/null | awk '{print $NF}')
 [ -z "$WIN_ID" ] || [ "$WIN_ID" = "0x0" ] && exec $TERM_CMD
 
 # Auto-detect if current window is st or urxvt
-WM_CLASS=$(xprop -id "$WIN_ID" WM_CLASS 2>/dev/null)
-case "$WM_CLASS" in
-    *urxvt*|*rxvt-unicode*|*URxvt*)
+WIN_CLASS=$(xprop -id "$WIN_ID" WM_CLASS 2>/dev/null | awk -F '"' '{print tolower($4)}')
+case "$WIN_CLASS" in
+    urxvt*|rxvt* )
         TERM_CMD="urxvt"
         DIR_FLAG="-cd"
         ;;
-    *st*|*ST*)
+    st* )
         TERM_CMD="st"
         DIR_FLAG="-d"
         ;;
-    *)
-        # Default flags for fallback/other terminals
+    * )
         DIR_FLAG="-d"
         ;;
 esac
@@ -43,13 +42,13 @@ fi
 
 # Execute based on context
 case "$PCMD" in
-    ssh|*/ssh)
+    ssh|*/ssh )
         case $TERM_CMD in
             st* ) TERM_CMD="$TERM_CMD -x" ;;
         esac
         [ -n "$PCMDLINE" ] && exec $TERM_CMD -e $PCMDLINE
         ;;
-    *)
+    * )
         [ -d "$PCWD" ] && exec $TERM_CMD $DIR_FLAG "$PCWD"
         ;;
 esac

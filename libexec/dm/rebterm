@@ -1,18 +1,21 @@
 #!/bin/sh
 # Reborn active terminal in its current working directory (or SSH context)
 
-# Get active window ID and Window Class
-WIN_ID=$(xdotool getwindowfocus 2>/dev/null || xdotool getactivewindow)
-[ -z "$WIN_ID" ] || [ "$WIN_ID" = "0x0" ] && exit 0
+# Default terminal command fallback
+TERM_CMD="st"
 
+# Get active window ID (Exit early if no window active)
+WIN_ID=$(xprop -root _NET_ACTIVE_WINDOW 2>/dev/null | awk '{print $NF}')
+[ -z "$WIN_ID" ] || [ "$WIN_ID" = "0x0" ] && exec $TERM_CMD
+
+# Auto-detect if current window is st or urxvt
 WIN_CLASS=$(xprop -id "$WIN_ID" WM_CLASS 2>/dev/null | awk -F '"' '{print tolower($4)}')
-
 case "$WIN_CLASS" in
-    st*|urxvt*|rxvt*|alacritty*|kitty*|foot*|xterm*)
-        TERM_CMD="${WIN_CLASS%%-*}"
+    urxvt*|rxvt* )
+        TERM_CMD="urxvt"
         ;;
-    *)
-        exit 0 # Exit if active window is not a supported terminal
+    st* )
+        TERM_CMD="st"
         ;;
 esac
 
@@ -41,13 +44,13 @@ fi
 
 # Spawn new terminal & kill old window
 case "$PCMD" in
-    ssh|*/ssh)
+    ssh|*/ssh )
         case $TERM_CMD in
             st* ) TERM_CMD="$TERM_CMD -x" ;;
         esac
         setsid $TERM_CMD -e $PCMDLINE >/dev/null 2>&1 &
         ;;
-    *)
+    * )
         setsid $TERM_CMD >/dev/null 2>&1 &
         ;;
 esac
