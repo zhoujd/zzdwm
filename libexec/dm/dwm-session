@@ -41,13 +41,13 @@ debug_session() {
 exec >> "$log" 2>&1
 
 case "$kind" in
-    run|-r)
+    run|-r )
         run_session
         ;;
-    debug|-d)
+    debug|-d )
         debug_session
         ;;
-    *)
+    * )
         echo "Usage: $(basename "$0") [run|-r|debug|-d]"
         exit 1
         ;;

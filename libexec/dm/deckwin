@@ -33,31 +33,31 @@ main() {
     local hh=$(((mh - gap * 3) / 2))
 
     case "$kind" in
-        --help|-h)
+        --help|-h )
             echo "Usage: $(basename "$0") {left|right|top|bottom|center|full}"
             exit 0
             ;;
-        left)
+        left )
             prepare "$id"
             setwin "$id" "$gap" "$gap" "$hw" "$fh"
             ;;
-        right)
+        right )
             prepare "$id"
             setwin "$id" "$((mw / 2 + gap / 2))" "$gap" "$hw" "$fh"
             ;;
-        top)
+        top )
             prepare "$id"
             setwin "$id" "$gap" "$gap" "$fw" "$hh"
             ;;
-        bottom)
+        bottom )
             prepare "$id"
             setwin "$id" "$gap" "$((mh / 2 + gap / 2))" "$fw" "$hh"
             ;;
-        full)
+        full )
             prepare "$id"
             setwin "$id" "$gap" "$gap" "$fw" "$fh"
             ;;
-        center|*)
+        center|* )
             prepare "$id"
             local cw=$((mw * 3 / 4))
             local ch=$((mh * 3 / 4))
