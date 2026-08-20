@@ -1,8 +1,7 @@
 # syntax=docker/dockerfile:1
 
 ARG VARIANT=3.20
-ARG PLATFORM=linux/amd64
-FROM --platform=$PLATFORM ghcr.io/linuxcontainers/alpine:$VARIANT
+FROM ghcr.io/linuxcontainers/alpine:$VARIANT
 
 ARG VARIANT
 RUN cat > /etc/apk/repositories <<EOF

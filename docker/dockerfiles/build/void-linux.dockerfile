@@ -1,8 +1,7 @@
 # syntax=docker/dockerfile:1
 
 ARG VARIANT=20260101R1
-ARG PLATFORM=linux/amd64
-FROM --platform=$PLATFORM ghcr.io/void-linux/void-musl-full:$VARIANT
+FROM ghcr.io/void-linux/void-musl-full:$VARIANT
 
 ARG MIRROR=https://mirrors.tuna.tsinghua.edu.cn/voidlinux
 RUN mkdir -p /etc/xbps.d \
@@ -12,7 +11,7 @@ RUN mkdir -p /etc/xbps.d \
 
 RUN xbps-install -Syu xbps \
     && xbps-install -Sy gcc make cmake libtool autoconf automake pkg-config \
-    ncurses ncurses-devel wget file upx tar gzip bzip2 sudo shadow \
+    ncurses ncurses-devel wget file tar gzip bzip2 sudo shadow \
     openssh git findutils diffutils bash python3 python3-pip \
     && xbps-remove -Oo
 

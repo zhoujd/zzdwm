@@ -42,7 +42,7 @@ RUN useradd ${USER_NAME} -m -s ${USER_SHELL} && \
 
 USER ${USER_NAME}
 
-# Python pip mirror configuration (includes PEP 668 compatibility fix)
+# Python pip mirror configuration
 ARG PIP_URL=https://pypi.tuna.tsinghua.edu.cn/simple
 RUN pip3 config set global.index-url ${PIP_URL} && \
     pip3 config set global.break-system-packages true 2>/dev/null || true
