@@ -5,14 +5,21 @@ setup_common() {
     if [ -z "$HOME" ] || [ "$HOME" = "/" ] || [ ! -w "$HOME" ]; then
         export HOME="/tmp"
     fi
+
     local sshkeys="/mnt/sshkeys"
     local target_ssh="$HOME/.ssh"
+
     if [ -d "$sshkeys" ] && [ "$(ls -A "$sshkeys" 2>/dev/null)" ]; then
         echo "Setup ssh keys for UID $(id -u) in $target_ssh ..."
         mkdir -p "$target_ssh"
         chmod 700 "$target_ssh"
+
+        # Copy SSH keys
         cp -f "$sshkeys"/* "$target_ssh/" 2>/dev/null || true
         chmod 600 "$target_ssh"/* 2>/dev/null || true
+
+        # Ensure directory permissions remain 700 after copy
+        chmod 700 "$target_ssh"
     fi
 }
 
