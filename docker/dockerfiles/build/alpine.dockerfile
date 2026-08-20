@@ -42,17 +42,11 @@ USER $USER_NAME
 ARG PIP_URL=https://pypi.tuna.tsinghua.edu.cn/simple
 RUN pip3 config set global.index-url ${PIP_URL}
 
-RUN cat > ~/.profile <<EOF
-# .profile
-[ -f ~/.bashrc ] && . ~/.bashrc
-EOF
-
-RUN cat > ~/.bashrc <<EOF
-# .bashrc
-alias ls='ls --color=auto'
-TERM=xterm-256color
-PS1='[\u@\h \W]\$ '
-EOF
+# Shell configuration setup
+RUN echo '[ -f ~/.bashrc ] && . ~/.bashrc' > ~/.profile && \
+    echo "alias ls='ls --color=auto'" >> ~/.bashrc && \
+    echo "export TERM=xterm-256color" >> ~/.bashrc && \
+    echo "export PS1='[\u@\h \W]\$ '" >> ~/.bashrc
 
 # Setup entrypoint
 COPY entrypoint.sh /
