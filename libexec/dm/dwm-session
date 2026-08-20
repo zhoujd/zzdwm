@@ -1,12 +1,17 @@
 #!/bin/bash
-# Autostart launcher and session wrapper for dwm
+# Autostart launcher for dwm
 
 log="$HOME/.dwm-errors"
 kind="${1:-run}"
 
-# Autostart applications list
+# Autostart applications list (binary name as first word)
 opt=(
     "VBoxClient-all"
+    "blackwalls"
+    "keynav"
+    "shotkey"
+    "xbanish"
+    "xcompmgr"
 )
 
 log_msg() {
@@ -15,7 +20,10 @@ log_msg() {
 
 spawn() {
     for cmd in "${opt[@]}"; do
+        # Extract binary name (first word)
         app=$(echo "$cmd" | awk '{print $1}')
+
+        # Check if binary exists in PATH
         if command -v "$app" >/dev/null 2>&1; then
             log_msg "[spawn] Running $cmd"
             $cmd >/dev/null 2>&1 &
