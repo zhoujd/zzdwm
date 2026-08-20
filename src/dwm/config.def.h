@@ -57,14 +57,10 @@ static const unsigned int alphas[][3] = {
 
 /* auto start */
 static const char *const autostart[] = {
-	"blackwalls", NULL,
 	"dwmstatus", NULL,
-	"keynav", NULL,
-	"shotkey", NULL,
-	"xbanish", NULL,
-	"xcompmgr", NULL,
 	NULL /* terminate */
 };
+
 /* tagging */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 static const int taglayouts[] = { 2, 2, 0, 0, 0, 0, 0, 0, 0 };
