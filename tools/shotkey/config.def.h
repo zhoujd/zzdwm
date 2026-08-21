@@ -80,6 +80,8 @@ Key keys[] = {
   { MODKEY,                       XK_slash,      cmd("dmenu_man &") },
   { MODKEY,                       XK_apostrophe, cmd("dmenu_desk &") },
   { MODKEY,                       XK_grave,      cmd("dmenu_menu &") },
+  { MODKEY,                       XK_F11,        cmd("xsct 5000 &") },
+  { MODKEY,                       XK_F12,        cmd("xsct 4000 &") },
 };
 
 ModeProperties mode_properties[MODE_SIZE] = {
