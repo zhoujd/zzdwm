@@ -27,9 +27,9 @@ static const int maxtitle           = 75;  /* max title length in bytes, 0 means
 static const int autoraise          = 0;   /* 1 means raises floating window automatic, 0 means default */
 static const float minwfact         = 2.0; /* min window fact bases on font height in tile and bstack */
 static const char *fonts[]          = {
-	"SF Mono:size=11",
-	"PingFang SC:size=11",
-	"Symbols Nerd Font:size=11",
+	"SF Mono:size=11:antialias=true",
+	"PingFang SC:size=11:antialias=true",
+	"Symbols Nerd Font:size=12:antialias=true",
 };
 /* select the font index for statusbar
  * the index is zero based
