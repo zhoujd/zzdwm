@@ -4,7 +4,7 @@
 sticky                   yes
 
 # Default font
-fontname                 "SF Mono:pixelsize=11"
+fontname                 "SF Mono:pixelsize=11:antialias=true"
 
 # Appearance
 borderwidth              1
