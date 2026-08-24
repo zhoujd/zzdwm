@@ -64,24 +64,19 @@ ttopen (void)
   CONSOLE_SCREEN_BUFFER_INFO binfo;
   CONSOLE_CURSOR_INFO cinfo;
 
-  /* Get handles for console output and input
-   */
+  /* Get handles for console output and input */
   hout = GetStdHandle (STD_OUTPUT_HANDLE);
-  hin =  GetStdHandle (STD_INPUT_HANDLE);
+  hin  = GetStdHandle (STD_INPUT_HANDLE);
 
-  /* Save current keyboard mode.
-   */
+  /* Save current keyboard mode and enable VT input safely */
   GetConsoleMode (hin, &hinmode);
-  SetConsoleMode (hin, ENABLE_VIRTUAL_TERMINAL_INPUT);
+  SetConsoleMode (hin, hinmode | ENABLE_VIRTUAL_TERMINAL_INPUT);
 
-  /* Save current console output mode.
-   */
+  /* Save current console output mode and enable VT output */
   GetConsoleMode (hout, &houtmode);
-  houtmode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-  SetConsoleMode(hout, houtmode);
+  SetConsoleMode (hout, houtmode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 
-  /* Get screen size.
-   */
+  /* Get screen size */
   windowrow = 0;
   windowcol = 0;
   nrow = 24;  /* Default fallback rows */
@@ -95,12 +90,13 @@ ttopen (void)
       ncol = binfo.srWindow.Right  - windowcol + 1;
     }
 
-  /* Set block cursor
-   */
-  cinfo.dwSize = 100;     /* make it 100% visible */
+  /* Set block cursor via Win32 API */
+  cinfo.dwSize = 100;     /* 100% visible block cursor */
   cinfo.bVisible = TRUE;
   SetConsoleCursorInfo (hout, &cinfo);
-  write(1, "\033[?1049h", 8);
+
+  /* Enter alternate screen buffer via VT sequence */
+  write (1, "\033[?1049h", 8);
 }
 
 /*
