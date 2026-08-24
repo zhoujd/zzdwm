@@ -283,12 +283,69 @@ vtputc (int c)
     }
 }
 
+#if defined(MINGW) || defined(_WIN32)
 /*
  * Write a string to the virtual display.  Essentially similar
  * to vtputc(), except that a string and count are the parameters
  * instead of a single character.
  */
+static void
+vtputs (const uchar *s, int n)
+{
+  wchar_t c;
+  int ulen;
+  int w;
+  const uchar *end = s + n;
 
+  while (s < end)
+    {
+      c = ugetc (s, 0, &ulen);
+      s += ulen;
+      if (vtcol >= leftcol + ncol)
+        {
+          vttext[ncol - 1] = '$';
+          return;
+        }
+      else if (c == '\t')
+        vtputs (spaces, tabsize - (vtcol % tabsize));
+      else if (c < 0x80 && CISCTRL (c) != FALSE)
+        {
+          vtputc ('^');
+          vtputc (c ^ 0x40);
+        }
+      else
+        {
+          w = uwidth (c);
+          /* Double-width (CJK) character handling */
+          if (w == 2)
+            {
+              if (vtcol >= leftcol)
+                vttext[vtcol - leftcol] = c;
+              vtcol++;
+              /* Fill trailing column slot with 0 padding */
+              if (vtcol < leftcol + ncol)
+                {
+                  if (vtcol >= leftcol)
+                    vttext[vtcol - leftcol] = 0;
+                  vtcol++;
+                }
+            }
+          else
+            {
+              /* Standard single-width character */
+              if (vtcol >= leftcol)
+                vttext[vtcol - leftcol] = c;
+              vtcol++;
+            }
+        }
+    }
+}
+#else
+/*
+ * Write a string to the virtual display.  Essentially similar
+ * to vtputc(), except that a string and count are the parameters
+ * instead of a single character.
+ */
 static void
 vtputs (const uchar *s, int n)
 {
@@ -320,7 +377,7 @@ vtputs (const uchar *s, int n)
         }
     }
 }
-
+#endif
 
 /*
  * Put a null-terminated string out to the virtual screen.
@@ -700,6 +757,92 @@ ucopy (VIDEO *vvp, VIDEO *pvp)
 #endif
 }
 
+#if defined(MINGW) || defined(_WIN32)
+/*
+ * Update a single line. This routine only
+ * uses basic functionality (no insert and delete character,
+ * but erase to end of line). The "vvp" points at the VIDEO
+ * structure for the line on the virtual screen, and the "pvp"
+ * is the same for the physical screen. Avoid erase to end of
+ * line when updating CMODE color lines, because of the way that
+ * reverse video works on most terminals.
+ */
+static void
+uline (int row, VIDEO *vvp, VIDEO *pvp)
+{
+#if MEMMAP
+  ttcolor (vvp->v_color);
+  putline (row + 1, 1, (const wchar_t *) &vvp->v_text[0]);
+#else
+  register wchar_t *cp1;
+  register wchar_t *cp2;
+  register wchar_t *cp3;
+  register wchar_t *cp4;
+  register wchar_t *cp5;
+  register int nbflag;
+  int visual_col1 = 0;
+  int visual_len = 0;
+  wchar_t *p;
+
+  if (vvp->v_color != pvp->v_color)
+    { 		/* Wrong color, do a full redraw. */
+      ttmove (row, 0);
+      ttcolor (vvp->v_color);
+      ttputs (vvp->v_text, ncol);
+      ttcol += ncol;
+      return;
+    }
+  cp1 = &vvp->v_text[0]; 	/* Compute left match. */
+  cp2 = &pvp->v_text[0];
+  while (cp1 != &vvp->v_text[ncol] && cp1[0] == cp2[0])
+    {
+      ++cp1;
+      ++cp2;
+    }
+  if (cp1 == &vvp->v_text[ncol]) 	/* All equal. */
+    return;
+
+  nbflag = FALSE;
+  cp3 = &vvp->v_text[ncol]; /* Compute right match. */
+  cp4 = &pvp->v_text[ncol];
+  while (cp3[-1] == cp4[-1])
+    {
+      --cp3;
+      --cp4;
+      if (cp3[0] != ' ') 	/* Note non-blanks in the right match. */
+        nbflag = TRUE;
+    }
+  cp5 = cp3; 		/* Is erase good? */
+  if (nbflag == FALSE && vvp->v_color == CTEXT)
+    {
+      while (cp5 != cp1 && cp5[-1] == ' ')
+        --cp5;
+      if ((int) (cp3 - cp5) <= tceeol)
+        cp5 = cp3;
+    }
+  /* Calculate actual visual column offset */
+  for (p = &vvp->v_text[0]; p < cp1; ++p)
+    {
+      if (*p != 0) /* Skip padding nulls if present */
+        visual_col1 += uwidth(*p);
+    }
+  /* Calculate actual visual length of string to print */
+  for (p = cp1; p < cp5; ++p)
+    {
+      if (*p != 0)
+        visual_len += uwidth(*p);
+    }
+  /* Move cursor to correct visual column, not array index */
+  ttmove (row, visual_col1);
+  ttcolor (vvp->v_color);
+  /* Output string segment */
+  ttputs (cp1, (int) (cp5 - cp1));
+  ttcol += visual_len;
+  if (cp5 != cp3) 	/* Do erase. */
+    tteeol ();
+#endif
+}
+#else
 /*
  * Update a single line. This routine only
  * uses basic functionality (no insert and delete character,
@@ -776,6 +919,7 @@ uline (int row, VIDEO *vvp, VIDEO *pvp)
     tteeol ();
 #endif
 }
+#endif
 
 /*
  * Redisplay the mode line for
