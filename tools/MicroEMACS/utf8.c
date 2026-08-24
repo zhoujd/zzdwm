@@ -37,16 +37,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#ifdef MINGW
-static int
-wcwidth(wchar_t c)
-{
-  if (c == 0) return 0;
-  if (c < 32 || (c >= 0x7f && c < 0xa0)) return -1;
-  return 1; // Basic assumption for most characters
-}
-#endif
-
 /*
  * Return true if Unicode character c is a combining character,
  * i.e. is a non-spacing character that combines
@@ -287,9 +277,33 @@ uputc (wchar_t ch, uchar *s)
  * This is just a wrapper for wcwidth.
  */
 int
-uwidth (wchar_t c)
+uwidth (wchar_t ch)
 {
-  return wcwidth(c);
+#if defined(MINGW) || defined(_WIN32)
+  unsigned int c = (unsigned int)ch;
+  if (c == 0) return 0;
+  if (c < 32 || (c >= 0x7f && c < 0xa0)) return -1;
+  /* Combining / Non-spacing marks */
+  if ((c >= 0x0300 && c <= 0x06ff) || (c >= 0x20d0 && c <= 0x20ff))
+    return 0;
+  /* MinGW CJK range fallback */
+  if ((c >= 0x1100 && c <= 0x115f) ||
+      (c >= 0x2e80 && c <= 0xa4cf) ||
+      (c >= 0xac00 && c <= 0xd7a3) ||
+      (c >= 0xf900 && c <= 0xfaff) ||
+      (c >= 0xfe10 && c <= 0xfe19) ||
+      (c >= 0xfe30 && c <= 0xfe6f) ||
+      (c >= 0xff01 && c <= 0xff60) ||
+      (c >= 0xffe0 && c <= 0xffe6) ||
+      (c >= 0x20000 && c <= 0x3fffff))
+    {
+      return 2;
+    }
+  return 1;
+#else
+  /* Native Linux / POSIX glibc implementation */
+  return wcwidth(ch);
+#endif
 }
 
 /*
