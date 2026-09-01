@@ -67,11 +67,12 @@ static Color colors[] = {
 #define TAG_URGENT      (COLOR(BLUE) | A_NORMAL | A_BLINK)
 
 const char tags[][8] = { "1", "2", "3", "4", "5" };
-const int taglayouts[] = { 3, 3, 0, 0, 0 };
+const int taglayouts[] = { 4, 4, 0, 0, 0 };
 
 #include "tile.c"
 #include "grid.c"
 #include "bstack.c"
+#include "vstack.c"
 #include "fullscreen.c"
 
 /* by default the first layout entry is used */
@@ -79,6 +80,7 @@ static Layout layouts[] = {
 	{ "[]=", tile },
 	{ "+++", grid },
 	{ "TTT", bstack },
+	{ "===", vstack },
 	{ "[M]", fullscreen },
 };
 
@@ -114,6 +116,7 @@ static KeyBinding bindings[] = {
 	{ { MOD, 't',            }, { setlayout,      { "[]=" }                   } },
 	{ { MOD, 'g',            }, { setlayout,      { "+++" }                   } },
 	{ { MOD, 'b',            }, { setlayout,      { "TTT" }                   } },
+	{ { MOD, CTRL('V'),      }, { setlayout,      { "===" }                   } },
 	{ { MOD, 'm',            }, { setlayout,      { "[M]" }                   } },
 	{ { MOD, ',',            }, { setlayout,      { "-1" }                    } },
 	{ { MOD, '.',            }, { setlayout,      { "+1" }                    } },
