@@ -132,6 +132,7 @@ static KeyBinding bindings[] = {
 	{ { MOD, 'z',            }, { setmfact,       { "0.25" }                  } },
 	{ { MOD, 'Z',            }, { setmfact,       { "0.50" }                  } },
 	{ { MOD, 'n',            }, { toggleminimize, { NULL }                    } },
+	{ { MOD, 'N',            }, { unminimizeall,  { NULL }                    } },
 	{ { MOD, 'o',            }, { minimizeothers, { NULL }                    } },
 	{ { MOD, 'O',            }, { minimizeslaves, { NULL }                    } },
 	{ { MOD, 's',            }, { togglebar,      { NULL }                    } },
