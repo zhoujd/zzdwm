@@ -25,7 +25,6 @@ default via 10.0.2.2 dev enp0s3 proto dhcp src 10.0.2.15 metric 1024
 10.0.2.0/24 dev enp0s3 proto kernel scope link src 10.0.2.15
 10.0.2.2 dev enp0s3 proto dhcp scope link src 10.0.2.15 metric 1024
 10.0.2.3 dev enp0s3 proto dhcp scope link src 10.0.2.15 metric 1024
-172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1
 192.168.56.0/24 dev enp0s8 proto kernel scope link src 192.168.56.102 metric 1024
 
 $ networkctl
@@ -33,12 +32,9 @@ IDX LINK        TYPE     OPERATIONAL SETUP
   1 lo          loopback carrier     unmanaged
   2 enp0s3      ether    routable    configured
   3 enp0s8      ether    routable    configured
-  4 docker0     bridge   routable    unmanaged
-  5 vethd493735 ether    enslaved    unmanaged
 
 $ ls -l /etc/systemd/network/
 total 12
--rw-r--r-- 1 root root 42 Nov 21  2025 05-enp0s10.network
 -rw-r--r-- 1 root root 40 Mar 25  2025 05-enp0s3.network
 -rw-r--r-- 1 root root 41 Mar 25  2025 05-enp0s8.network
 
