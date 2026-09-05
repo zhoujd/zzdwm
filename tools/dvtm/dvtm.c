@@ -1491,7 +1491,7 @@ redraw(const char *args[]) {
 	for (Client *c = clients; c; c = c->next) {
 		if (!c->minimized) {
 			vt_dirty(c->term);
-			wclear(c->window);
+			redrawwin(c->window);
 			wnoutrefresh(c->window);
 		}
 	}
