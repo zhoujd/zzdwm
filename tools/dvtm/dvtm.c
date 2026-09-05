@@ -1496,6 +1496,9 @@ redraw(const char *args[]) {
 		}
 	}
 	resize_screen();
+	/* force terminal to completely repaint */
+	clearok(curscr, TRUE);
+	wrefresh(curscr);
 }
 
 static void
