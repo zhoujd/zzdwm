@@ -77,6 +77,7 @@ install_dm() {
         $libexec/dm/monocle
         $libexec/dm/grid
         $libexec/dm/tile
+        $libexec/dm/rclip
         $libexec/dm/startdwm
         $libexec/dm/startcwm
         $libexec/dm/dwm-session
