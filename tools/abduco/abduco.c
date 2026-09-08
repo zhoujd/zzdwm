@@ -419,8 +419,12 @@ static bool create_session(const char *name, char * const argv[]) {
 				close(server.socket);
 				close(server_pipe[0]);
 				if (fcntl(client_pipe[1], F_SETFD, FD_CLOEXEC) == 0 &&
-				    fcntl(server_pipe[1], F_SETFD, FD_CLOEXEC) == 0)
+				    fcntl(server_pipe[1], F_SETFD, FD_CLOEXEC) == 0) {
+					if (name) {
+						setenv("ABDUCO_SESSION", name, 1);
+					}
 					execvp(argv[0], argv);
+				}
 				snprintf(errormsg, sizeof(errormsg), "server-execvp: %s: %s\n",
 						 argv[0], strerror(errno));
 				write_all(client_pipe[1], errormsg, strlen(errormsg));
