@@ -2,6 +2,12 @@
 
 abduco() {
     if [ "$1" = "-k" ] && [ -n "$2" ]; then
+        if [ "$ABDUCO_SESSION" = "$2" ]; then
+            echo "Error: Safety lock triggered! You are inside session '$2'."
+            echo "To exit cleanly, please type 'exit' or press Ctrl+D instead."
+            return 1
+        fi
+
         if ! command abduco | grep -E "[[:space:]]$2$" >/dev/null 2>&1; then
             echo "Session '$2' not found."
             return 1
