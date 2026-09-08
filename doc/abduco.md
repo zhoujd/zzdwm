@@ -37,3 +37,9 @@ $ abduco -c dvtm-session
 ## -e <char>  Set the detach character to <char>, defaults to ^\.
 $ abduco -a dvtm-session
 ```
+
+## PID
+
+```
+## https://github.com/martanne/abduco/commit/884e3bb2ca3cbdb0e23799c10cce7d55139d1f1c
+```
