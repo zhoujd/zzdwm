@@ -1,6 +1,20 @@
 #!/bin/sh
 
+usage() {
+    echo "Usage: abdm [options] [args]"
+    echo "Options:"
+    echo "  -k <name>    Kill a detached abduco session safely by name"
+    echo "  -h, --help   Show this help menu"
+    echo ""
+    echo "All other options (e.g., -c, -A) are forwarded directly to abduco."
+}
+
 abduco() {
+    if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+        usage
+        return 0
+    fi
+
     if [ "$1" = "-k" ] && [ -n "$2" ]; then
         if [ "$ABDUCO_SESSION" = "$2" ]; then
             echo "Error: Safety lock triggered! You are inside session '$2'."
