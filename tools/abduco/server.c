@@ -75,27 +75,6 @@ static int server_set_socket_non_blocking(int sock) {
     	return fcntl(sock, F_SETFL, flags | O_NONBLOCK);
 }
 
-static Client *server_accept_client(void) {
-	int newfd = accept(server.socket, NULL, NULL);
-	if (newfd == -1 || server_set_socket_non_blocking(newfd) == -1)
-		goto error;
-	Client *c = client_malloc(newfd);
-	if (!c)
-		goto error;
-	if (!server.clients)
-		server_mark_socket_exec(true, true);
-	c->socket = newfd;
-	c->state = STATE_CONNECTED;
-	c->next = server.clients;
-	server.clients = c;
-	server.read_pty = true;
-	return c;
-error:
-	if (newfd != -1)
-		close(newfd);
-	return NULL;
-}
-
 static bool server_read_pty(Packet *pkt) {
 	pkt->type = MSG_CONTENT;
 	ssize_t len = read(server.pty, pkt->u.msg, sizeof(pkt->u.msg));
@@ -136,6 +115,33 @@ static bool server_send_packet(Client *c, Packet *pkt) {
 	debug("FAILED\n");
 	c->state = STATE_DISCONNECTED;
 	return false;
+}
+
+static Client *server_accept_client(void) {
+	int newfd = accept(server.socket, NULL, NULL);
+	if (newfd == -1 || server_set_socket_non_blocking(newfd) == -1)
+		goto error;
+	Client *c = client_malloc(newfd);
+	if (!c)
+		goto error;
+	if (!server.clients)
+		server_mark_socket_exec(true, true);
+	c->socket = newfd;
+	c->state = STATE_CONNECTED;
+	c->next = server.clients;
+	server.clients = c;
+	server.read_pty = true;
+	Packet pkt = {
+		.type = MSG_PID,
+		.len = sizeof pkt.u.l,
+		.u.l = getpid(),
+	};
+	server_send_packet(c, &pkt);
+	return c;
+error:
+	if (newfd != -1)
+		close(newfd);
+	return NULL;
 }
 
 static void server_pty_died_handler(int sig) {
