@@ -221,7 +221,7 @@ static void die(const char *s) {
 }
 
 static void usage(void) {
-	fprintf(stderr, "usage: abduco [-a|-A|-c|-n] [-r] [-l] [-f] [-e detachkey] name command\n");
+	fprintf(stderr, "usage: abduco [-a|-A|-c|-n] [-r] [-l] [-f] [-h] [-e detachkey] name command\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -609,7 +609,7 @@ int main(int argc, char *argv[]) {
 	server.name = basename(argv[0]);
 	gethostname(server.host+1, sizeof(server.host) - 1);
 
-	while ((opt = getopt(argc, argv, "aAclne:frv")) != -1) {
+	while ((opt = getopt(argc, argv, "aAclne:frvh")) != -1) {
 		switch (opt) {
 		case 'a':
 		case 'A':
@@ -636,6 +636,7 @@ int main(int argc, char *argv[]) {
 		case 'v':
 			version();
 			exit(EXIT_SUCCESS);
+		case 'h':
 		default:
 			usage();
 		}
