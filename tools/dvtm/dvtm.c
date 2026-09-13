@@ -186,6 +186,8 @@ static void copymode(const char *args[]);
 static void focusn(const char *args[]);
 static void focusid(const char *args[]);
 static void focusnext(const char *args[]);
+static void swapnext(const char *args[]);
+static void swapprev(const char *args[]);
 static void focusnextnm(const char *args[]);
 static void focusprev(const char *args[]);
 static void focusprevnm(const char *args[]);
@@ -1365,6 +1367,42 @@ focusnext(const char *args[]) {
 		for (c = clients; c && !isvisible(c); c = c->next);
 	if (c)
 		focus(c);
+}
+
+static void
+swapnext(const char *args[]) {
+	Client *c, *t;
+
+	if (!sel)
+		return;
+
+	c = sel->next;
+
+  if (!c)
+    return;
+
+  detach(sel);
+  attachafter(sel, c);
+  focus(sel);
+  arrange();
+}
+
+static void
+swapprev(const char *args[]) {
+	Client *c, *t;
+
+	if (!sel)
+		return;
+
+	c = sel->prev;
+
+  if (!c)
+    return;
+
+  detach(c);
+  attachafter(c, sel);
+  focus(sel);
+  arrange();
 }
 
 static void
