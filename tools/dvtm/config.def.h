@@ -164,6 +164,8 @@ static KeyBinding bindings[] = {
 	{ { MOD, 'y',            }, { paste,          { NULL }                    } },
 	{ { MOD, KEY_PPAGE,      }, { scrollback,     { "-10" }                   } },
 	{ { MOD, KEY_NPAGE,      }, { scrollback,     { "+10" }                   } },
+	{ { MOD, '\'', 'p'       }, { scrollback,     { "-10" }                   } },
+	{ { MOD, '\'', 'n'       }, { scrollback,     { "+10" }                   } },
 	{ { MOD, '?',            }, { create,         { "man dvtm", "dvtm help" } } },
 	{ { MOD, MOD,            }, { send,           { (const char []){MOD, 0} } } },
 	{ { KEY_SPREVIOUS,       }, { scrollback,     { "-10" }                   } },
