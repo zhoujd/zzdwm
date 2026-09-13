@@ -399,6 +399,9 @@ drawbar(void) {
 
 	getyx(stdscr, y, x);
 	(void)y;
+	if (bar.pos == BAR_TOP) {
+		wmove(stdscr, 0, x);
+	}
 	int maxwidth = screen.w - x - 2;
 
 	addch(BAR_BEGIN);
