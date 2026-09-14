@@ -1,3 +1,7 @@
+/*
+ * zlock.c
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,7 +19,7 @@ void draw_lock_screen() {
     /* Clear screen, home cursor, and hide cursor tracking */
     printf("\033[2J\033[H\033[?25l");
     printf("===========================================\n");
-    printf("   Terminal Session Locked (User Space)    \n");
+    printf("   Terminal Session Locked                 \n");
     printf("===========================================\n\n");
 }
 
