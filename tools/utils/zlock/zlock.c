@@ -78,19 +78,25 @@ int main() {
             if (failed_attempts >= MAX_ATTEMPTS) {
                 printf("Too many failed attempts!\n");
                 
+                /*
+                 * Turn off echoing IMMEDIATELY before the countdown.
+                 * This guarantees any panic-typing or snooping input remains completely invisible.
+                 */
+                set_echo(0);
+
                 /* Dynamic in-place countdown loop */
                 for (int i = LOCKOUT_DURATION_SECS; i > 0; i--) {
-                    /* \r moves cursor to the beginning of the line, keeping the screen clean */
                     printf("\r[!] Terminal cooling down... Try again in %d seconds. ", i);
                     fflush(stdout);
                     sleep(1);
                 }
                 
                 /* 
-                 * FIX: Purge all keys typed during the 10-second countdown.
-                 * TCIFLUSH flushes data received but not read from the terminal buffer.
+                 * Purge the background buffer first,
+                 * THEN turn echo back on right before re-rendering the clean layout.
                  */
                 tcflush(STDIN_FILENO, TCIFLUSH);
+                set_echo(1);
 
                 /* Reset counter */
                 failed_attempts = 0;
@@ -98,9 +104,6 @@ int main() {
                 /* Wipe out all previous input/output history visually and restart cleanly */
                 draw_lock_screen();
                 continue; 
-            } else {
-                /* Display remaining attempts left */
-                printf("Attempts remaining: %d\n\n", MAX_ATTEMPTS - failed_attempts);
             }
         }
     }
