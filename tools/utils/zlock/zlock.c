@@ -5,11 +5,12 @@
 #include <unistd.h>
 #include <signal.h>
 
-/* Default password used if the PW environment variable is not set at runtime */
+/* Configuration constants */
 #define BACKUP_PASSWORD "admin123"
 #define MAX_ATTEMPTS 3
+#define LOCKOUT_DURATION_SECS 10
 
-/* Extracted layout function to easily refresh the screen on failure thresholds */
+/* Extracted layout function to easily refresh the screen */
 void draw_lock_screen() {
     /* Clear screen, home cursor, and hide cursor tracking */
     printf("\033[2J\033[H\033[?25l");
@@ -29,7 +30,7 @@ void set_echo(int enable) {
 }
 
 int main() {
-    char input[256]; /* Fixed to a proper buffer array for holding passcodes */
+    char input[256]; /* Buffer array for holding passcodes safely */
     char *target_password;
     int failed_attempts = 0;
 
@@ -73,12 +74,30 @@ int main() {
             failed_attempts++;
             printf("Permission Denied.\n");
             
-            /* If failed 3 times, reset the interface and counter */
+            /* If failed 3 times, enforce a timed lockout penalty */
             if (failed_attempts >= MAX_ATTEMPTS) {
-                printf("Too many failed attempts. Re-initializing...\n");
-                sleep(2); /* Give user a brief moment to see the warning */
+                printf("Too many failed attempts!\n");
+                
+                /* Dynamic in-place countdown loop */
+                for (int i = LOCKOUT_DURATION_SECS; i > 0; i--) {
+                    /* \r moves cursor to the beginning of the line, keeping the screen clean */
+                    printf("\r[!] Terminal cooling down... Try again in %d seconds. ", i);
+                    fflush(stdout);
+                    sleep(1);
+                }
+                
+                /* 
+                 * FIX: Purge all keys typed during the 10-second countdown.
+                 * TCIFLUSH flushes data received but not read from the terminal buffer.
+                 */
+                tcflush(STDIN_FILENO, TCIFLUSH);
+
+                /* Reset counter */
                 failed_attempts = 0;
+                
+                /* Wipe out all previous input/output history visually and restart cleanly */
                 draw_lock_screen();
+                continue; 
             } else {
                 /* Display remaining attempts left */
                 printf("Attempts remaining: %d\n\n", MAX_ATTEMPTS - failed_attempts);
