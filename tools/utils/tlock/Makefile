@@ -8,8 +8,8 @@ CFLAGS   = -O2 -Wall -Wextra
 LDFLAGS  = -static
 
 # Target binary name and source files
-TARGET   = zlock
-SRC      = zlock.c
+TARGET   = tlock
+SRC      = tlock.c
 OBJ      = $(SRC:.c=.o)
 
 # Default rule: Compile and link the static binary

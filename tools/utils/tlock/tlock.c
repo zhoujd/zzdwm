@@ -1,5 +1,5 @@
 /*
- * zlock.c
+ * tlock.c
  */
 
 #include <stdio.h>
