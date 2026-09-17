@@ -6,7 +6,7 @@ me.exe
 me
 TAGS
 tags
-cscope.out
+cscope.out*
 regtest
 tcap
 utf8
