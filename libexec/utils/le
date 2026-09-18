@@ -7,13 +7,13 @@ EDITOR="me"
 usage() {
     cat <<EOF
 Usage:
-  $ $(basename $0)          - Pick from existing build log, or auto-run make
-  $ $(basename $0) {file}   - Pick and open errors from a specific log file
-  $ $(basename $0) -h       - Show this help message
+$ $(basename $0)          - Pick from existing build log, or auto-run make
+$ $(basename $0) {file}   - Pick and open errors from a specific log file
+$ $(basename $0) -h       - Show this help message
 
 Examples:
-  $ $(basename $0)
-  $ $(basename $0) build.log
+$ $(basename $0)
+$ $(basename $0) build.log
 EOF
 }
 
@@ -80,13 +80,13 @@ if [ -n "$MATCH" ]; then
     # Parse file path and line number from the chosen error line
     FILE=$(echo "$MATCH" | cut -d':' -f1)
     LINE=$(echo "$MATCH" | cut -d':' -f2)
-    
-    # If the file path is relative and we have a GIT_ROOT, 
+
+    # If the file path is relative and we have a GIT_ROOT,
     # ensure it maps properly if the build was run from the root
     if [ ! -f "$FILE" ] && [ -n "$GIT_ROOT" ] && [ -f "$GIT_ROOT/$FILE" ]; then
         FILE="$GIT_ROOT/$FILE"
     fi
-    
+
     if [ -f "$FILE" ]; then
         echo "Opening $FILE at line $LINE in MicroEMACS..."
         exec "$EDITOR" +"$LINE" "$FILE"

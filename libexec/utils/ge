@@ -7,15 +7,15 @@ EDITOR="me"
 usage() {
     cat <<EOF
 Usage:
-  $ $(basename $0)               - Pick and edit files changed in working tree
-  $ $(basename $0) {commit/rev}  - Pick and edit files changed in specific commit
-  $ $(basename $0) -l | --log    - Choose a historical commit from log first
-  $ $(basename $0) -h | --help   - Show this help message
+$ $(basename $0)               - Pick and edit files changed in working tree
+$ $(basename $0) {commit/rev}  - Pick and edit files changed in specific commit
+$ $(basename $0) -l | --log    - Choose a historical commit from log first
+$ $(basename $0) -h | --help   - Show this help message
 
 Examples:
-  $ $(basename $0)               (working tree)
-  $ $(basename $0) HEAD~2        (2 commits ago)
-  $ $(basename $0) a1b2c3d       (specific commit hash)
+$ $(basename $0)               (working tree)
+$ $(basename $0) HEAD~2        (2 commits ago)
+$ $(basename $0) a1b2c3d       (specific commit hash)
 EOF
 }
 
@@ -83,9 +83,9 @@ if [ -n "$MATCH" ] && [ -f "$GIT_ROOT/$MATCH" ]; then
         LINE=$(git diff "$GIT_ROOT/$MATCH" 2>/dev/null | grep -E "@@" | \
             head -n 1 | awk '{print $2}' | cut -d',' -f1 | tr -d '+-')
     fi
-    
+
     LINE=${LINE:-1}
-    
+
     # Open the file via its absolute root-anchored path
     echo "Opening $MATCH at line $LINE in MicroEMACS..."
     exec "$EDITOR" +"$LINE" "$GIT_ROOT/$MATCH"
