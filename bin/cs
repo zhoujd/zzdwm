@@ -1,23 +1,15 @@
 #!/bin/bash
 
-# Function to clean up cscope files in the current directory
-clean_cscope() {
-    echo "Cleaning up cscope index files in the current directory..."
-    rm -f ./cscope.out ./cscope.in.out ./cscope.po.out
-    echo "Done."
-    exit 0
-}
+# Define MicroEMACS as the default editor
+EDITOR="me"
 
-# Check for cleanup flags
-if [ "$1" == "-c" ] || [ "$1" == "--clean" ]; then
-    clean_cscope
-fi
-
-# Check if the correct number of arguments is provided for searching
-if [ $# != 2 ]; then
+# Function to print usage information
+usage() {
     cat <<EOF
 Usage: 
   $ $(basename $0) {n} {text/file} - Search code / List functions
+  $ $(basename $0) a {symbol}      - Auto-open specific function/symbol in MicroEMACS
+  $ $(basename $0) r               - Force rebuild cscope and ctags tags
   $ $(basename $0) -c | --clean    - Clean up cscope files in current dir
 
 The list of possible values for {n}
@@ -32,6 +24,43 @@ The list of possible values for {n}
 8: Find files #including this file
 9: Find places where this symbol is assigned a value
 EOF
+}
+
+# Function to clean up cscope files in the current directory
+clean_cscope() {
+    echo "Cleaning up cscope index files in the current directory..."
+    rm -f ./cscope.out ./cscope.in.out ./cscope.po.out ./tags
+    echo "Done."
+    exit 0
+}
+
+# Function to force a fresh rebuild of both cscope and ctags databases
+rebuild_tags() {
+    echo "Rebuilding cscope and ctags indexes in the current directory..."
+    cscope -bRq
+    ctags -R .
+    echo "Done."
+    exit 0
+}
+
+# Check for immediate control flags
+if [ "$1" == "-c" ] || [ "$1" == "--clean" ]; then
+    clean_cscope
+elif [ "$1" == "r" ] || [ "$1" == "--rebuild" ]; then
+    rebuild_tags
+fi
+
+# Check if the correct number of arguments is provided for searching
+if [ $# != 2 ]; then
+    usage
+    exit 1
+fi
+
+# Only allow exactly 0-9 or 'a' as the first parameter
+if [[ ! "$1" =~ ^[0-9a]$ ]]; then
+    echo "Error: Unrecognized option '$1'."
+    echo ""
+    usage
     exit 1
 fi
 
@@ -42,10 +71,24 @@ if [ "${1}" == "5" ]; then
         ctags -x "${2}"
     else
         echo "Searching for files matching '${2}' to list functions..."
-        # -R: recursively scan, -x: print tabular cross-reference list
-        ctags -R -x . | grep -i "${2}"
+        ctags -u -R -x . | grep -i "${2}"
     fi
     exit 0
+fi
+
+# Handle option 'a' to directly jump to code using MicroEMACS
+if [ "${1}" == "a" ]; then
+    echo "Locating definition for '${2}'..."
+    MATCH=$(ctags -u -R -x . | grep -i "${2}" | head -n 1)
+    if [ -n "$MATCH" ]; then
+        LINE=$(echo "$MATCH" | awk '{print $3}')
+        FILE=$(echo "$MATCH" | awk '{print $4}')
+        echo "Opening $FILE at line $LINE in MicroEMACS..."
+        exec "$EDITOR" +"$LINE" "$FILE"
+    else
+        echo "Error: Symbol '${2}' not found via ctags."
+    fi
+    exit 1
 fi
 
 # Function to search upward from the current directory for a specific file
@@ -67,13 +110,10 @@ elif [ -f "$HOME/.emacs.d/tags/cscope.out" ]; then
     TAG_FILE="$HOME/.emacs.d/tags/cscope.out"
 else
     echo "cscope.out not found anywhere. Generating a new index in the current directory..."
-    # -b: build the database only, do not enter GUI
-    # -R: recurse subdirectories for source files
-    # -q: build an inverted index for much faster subsequent searches
     cscope -bRq
     TAG_FILE="./cscope.out"
 fi
 
 echo "Use: $TAG_FILE"
-# Execute the query in line-oriented non-interactive mode (-d)
+# Execute the query safely since $1 is guaranteed to be 0-9 at this point
 cscope -d -f "$TAG_FILE" -R -L${1} ${2}
