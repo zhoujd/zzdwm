@@ -61,11 +61,35 @@ rebuild_tags() {
 }
 
 # Reshapes 'ctags -x' into GNU Emacs 'file:line: <symbol> code' format
+# Passes through lines unchanged if they are already formatted or unrecognized
 format_ctags() {
     awk '{
-        sym=$1; line=$3; file=$4;
-        $1=$2=$3=$4=""; sub(/^[ \t]+/, "");
-        printf "%s:%s: <%s> %s\n", file, line, sym, $0
+        # Save original line for passthrough fallback
+        orig = $0;
+
+        # Standard 4-column output check: $3 is line number, $4 is filename/path
+        if ($3 ~ /^[0-9]+$/ && $4 ~ /[^ ]+/) {
+            sym = $1; line = $3; file = $4;
+            $1 = $2 = $3 = $4 = "";
+            sub(/^[ \t]+/, "");
+            printf "%s:%s: <%s> %s\n", file, line, sym, $0;
+            next;
+        }
+
+        # Extended/Section tag check (e.g. Markdown headers)
+        line = ""; file = "";
+        for (i = 2; i <= NF; i++) {
+            if ($i ~ /^[0-9]+$/ && (i + 1) <= NF && $(i+1) ~ /[^ ]+/) {
+                sym = $1; line = $i; file = $(i+1);
+                for (j = 1; j <= i + 1; j++) $j = "";
+                sub(/^[ \t]+/, "");
+                printf "%s:%s: <%s> %s\n", file, line, sym, $0;
+                next;
+            }
+        }
+
+        # Fallback passthrough for any other format or blank lines
+        print orig;
     }'
 }
 
