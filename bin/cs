@@ -58,6 +58,24 @@ rebuild_tags() {
     exit 0
 }
 
+# Reshapes 'ctags -x' into GNU Emacs 'file:line: <symbol> code' format
+format_ctags() {
+    awk '{
+        sym=$1; line=$3; file=$4;
+        $1=$2=$3=$4=""; sub(/^[ \t]+/, ""); 
+        printf "%s:%s: <%s> %s\n", file, line, sym, $0
+    }'
+}
+
+# Reshapes native 'cscope' into GNU Emacs 'file:line: <func> code' format
+format_cscope() {
+    awk '{
+        file=$1; func_name=$2; line=$3;
+        $1=$2=$3=""; sub(/^[ \t]+/, "");
+        printf "%s:%s: <%s> %s\n", file, line, func_name, $0
+    }'
+}
+
 # Check for immediate control flags
 if [ "$1" == "-c" ] || [ "$1" == "--clean" ]; then
     clean_cscope
@@ -84,19 +102,11 @@ if [ "${1}" == "5" ]; then
     if [ -f "${2}" ]; then
         echo "Listing functions/definitions in file: ${2}"
         # Formats single file output to 'file:line: symbol code'
-        ctags -u -x "${2}" | awk '{
-            symbol=$1; line=$3; file=$4;
-            $1=$2=$3=$4=""; sub(/^[ \t]+/, ""); 
-            printf "%s:%s: <%s> %s\n", file, line, symbol, $0
-        }' | grep --color=always -i -E "${2}|$"
+        ctags -u -x "${2}" | format_ctags | grep --color=always -i -E "${2}|$"
     else
         echo "Searching for files matching '${2}' to list functions..."
         # Formats project recursive output to 'file:line: symbol code'
-        ctags -u -R -x . | awk '{
-            symbol=$1; line=$3; file=$4;
-            $1=$2=$3=$4=""; sub(/^[ \t]+/, ""); 
-            printf "%s:%s: <%s> %s\n", file, line, symbol, $0
-        }' | grep --color=always -i "${2}"
+        ctags -u -R -x . | format_ctags | grep --color=always -i "${2}"
     fi
     exit 0
 fi
@@ -141,10 +151,6 @@ fi
 
 echo "Use: $TAG_FILE"
 
-# Re-shapes native cscope output from "file function line code" into GNU Emacs standard 
-# "file:line: <function> code"
-cscope -d -f "$TAG_FILE" -R -L${1} ${2} | awk '{
-    file=$1; func_name=$2; line=$3;
-    $1=$2=$3=""; sub(/^[ \t]+/, "");
-    printf "%s:%s: <%s> %s\n", file, line, func_name, $0
-}' | grep --color=always -i "${2}"
+# Execute query, format output to Emacs buffer style, and apply highlighting
+cscope -d -f "$TAG_FILE" -R -L${1} ${2} | format_cscope | \
+    grep --color=always -i "${2}"
