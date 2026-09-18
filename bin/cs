@@ -55,7 +55,7 @@ clean_cscope() {
 rebuild_tags() {
     echo "Rebuilding cscope and ctags indexes in the current directory..."
     cscope -bRq
-    ctags -u -R .
+    ctags -u --exclude=build -R .
     echo "Done."
     exit 0
 }
