@@ -103,6 +103,7 @@ install_bin() {
         $CORE_ROOT/bin/nnn
         $CORE_ROOT/bin/less
         $CORE_ROOT/bin/pick
+        $CORE_ROOT/bin/cs
         $CORE_ROOT/bin/cscope
         $CORE_ROOT/bin/screen
         $CORE_ROOT/bin/busybox
