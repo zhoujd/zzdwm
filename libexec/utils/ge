@@ -1,0 +1,94 @@
+#!/bin/bash
+
+# Define MicroEMACS as the default editor
+EDITOR="me"
+
+# Print usage information
+usage() {
+    cat <<EOF
+Usage:
+  $ $(basename $0)               - Pick and edit files changed in working tree
+  $ $(basename $0) {commit/rev}  - Pick and edit files changed in specific commit
+  $ $(basename $0) -l | --log    - Choose a historical commit from log first
+  $ $(basename $0) -h | --help   - Show this help message
+
+Examples:
+  $ $(basename $0)               (working tree)
+  $ $(basename $0) HEAD~2        (2 commits ago)
+  $ $(basename $0) a1b2c3d       (specific commit hash)
+EOF
+}
+
+# Ensure we are inside a git repository
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "Error: Not a git repository (or any of the parent directories)"
+    exit 1
+fi
+
+# Get the absolute path of the Git repository root
+GIT_ROOT=$(git rev-parse --show-toplevel)
+
+TARGET_REV=""
+LIST=""
+
+# Parse arguments
+if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+    usage
+    exit 0
+elif [ "$1" == "-l" ] || [ "$1" == "--log" ]; then
+    echo "Loading git history log..."
+    COMMIT_LINE=$(git log --oneline -n 50 | pick)
+    if [ -n "$COMMIT_LINE" ]; then
+        TARGET_REV=$(echo "$COMMIT_LINE" | awk '{print $1}')
+    else
+        echo "No commit chosen."
+        exit 0
+    fi
+elif [ -n "$1" ]; then
+    if git rev-parse --verify "$1" >/dev/null 2>&1; then
+        TARGET_REV="$1"
+    else
+        echo "Error: '$1' is not a valid git commit or revision."
+        echo ""
+        usage
+        exit 1
+    fi
+fi
+
+# Fetch file list based on target revision
+if [ -n "$TARGET_REV" ]; then
+    echo "Fetching files changed in commit [$TARGET_REV]..."
+    LIST=$(git diff-tree --no-commit-id --name-only -r "$TARGET_REV")
+else
+    echo "Fetching modified files from working tree..."
+    LIST=$(git status --porcelain | awk '{print $2}')
+fi
+
+# Check if we have anything to edit
+if [ -z "$LIST" ]; then
+    echo "No files found to modify."
+    exit 0
+fi
+
+# Feed the file list to pick
+MATCH=$(echo "$LIST" | pick)
+
+# Validate file using its absolute path inside the Git repository
+if [ -n "$MATCH" ] && [ -f "$GIT_ROOT/$MATCH" ]; then
+    # Calculate starting line based on git diff
+    if [ -n "$TARGET_REV" ]; then
+        LINE=$(git diff "$TARGET_REV~1" "$TARGET_REV" -- "$GIT_ROOT/$MATCH" 2>/dev/null | \
+            grep -E "@@" | head -n 1 | awk '{print $3}' | cut -d',' -f1 | tr -d '+-')
+    else
+        LINE=$(git diff "$GIT_ROOT/$MATCH" 2>/dev/null | grep -E "@@" | \
+            head -n 1 | awk '{print $2}' | cut -d',' -f1 | tr -d '+-')
+    fi
+    
+    LINE=${LINE:-1}
+    
+    # Open the file via its absolute root-anchored path
+    echo "Opening $MATCH at line $LINE in MicroEMACS..."
+    exec "$EDITOR" +"$LINE" "$GIT_ROOT/$MATCH"
+else
+    echo "Cancelled or file does not exist."
+fi

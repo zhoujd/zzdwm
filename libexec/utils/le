@@ -1,0 +1,98 @@
+#!/bin/bash
+
+# Define MicroEMACS as the default editor
+EDITOR="me"
+
+# Print usage information
+usage() {
+    cat <<EOF
+Usage:
+  $ $(basename $0)          - Pick from existing build log, or auto-run make
+  $ $(basename $0) {file}   - Pick and open errors from a specific log file
+  $ $(basename $0) -h       - Show this help message
+
+Examples:
+  $ $(basename $0)
+  $ $(basename $0) build.log
+EOF
+}
+
+# Handle help flag
+if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+    usage
+    exit 0
+fi
+
+# Locate Git root if inside a repo to look for global logs
+GIT_ROOT=""
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    GIT_ROOT=$(git rev-parse --show-toplevel)
+fi
+
+LOG_FILE=""
+
+# Resolve the log source
+if [ -n "$1" ] && [ -f "$1" ]; then
+    LOG_FILE="$1"
+else
+    # Search for common log names in current dir or git root
+    for candidate in "make.log" "build.log" "err.log"; do
+        if [ -f "./$candidate" ]; then
+            LOG_FILE="./$candidate"
+            break
+        elif [ -n "$GIT_ROOT" ] && [ -f "$GIT_ROOT/$candidate" ]; then
+            LOG_FILE="$GIT_ROOT/$candidate"
+            break
+        fi
+    done
+fi
+
+# If no log file is found, proactively run make and capture its output
+if [ -z "$LOG_FILE" ]; then
+    if [ -f "./Makefile" ] || [ -f "./makefile" ]; then
+        echo "No pre-existing log found. Running 'make' to capture errors..."
+        LOG_FILE="./make.log"
+        # Captures both standard output and error output into the log
+        make > "$LOG_FILE" 2>&1
+    else
+        echo "Error: No log file found and no Makefile in the current directory."
+        echo ""
+        usage
+        exit 1
+    fi
+fi
+
+echo "Analyzing logs from: $LOG_FILE"
+
+# Extract classic compiler error/warning patterns (file:line:col or file:line:)
+# This regex filters typical gcc/clang line signatures cleanly
+ERR_LIST=$(grep -E '^([^ :]+):([0-9]+):' "$LOG_FILE")
+
+if [ -z "$ERR_LIST" ]; then
+    echo "Great! No compiler errors or warnings found in the log."
+    exit 0
+fi
+
+# Feed the filtered compiler errors to your pick tool
+MATCH=$(echo "$ERR_LIST" | pick)
+
+if [ -n "$MATCH" ]; then
+    # Parse file path and line number from the chosen error line
+    FILE=$(echo "$MATCH" | cut -d':' -f1)
+    LINE=$(echo "$MATCH" | cut -d':' -f2)
+    
+    # If the file path is relative and we have a GIT_ROOT, 
+    # ensure it maps properly if the build was run from the root
+    if [ ! -f "$FILE" ] && [ -n "$GIT_ROOT" ] && [ -f "$GIT_ROOT/$FILE" ]; then
+        FILE="$GIT_ROOT/$FILE"
+    fi
+    
+    if [ -f "$FILE" ]; then
+        echo "Opening $FILE at line $LINE in MicroEMACS..."
+        exec "$EDITOR" +"$LINE" "$FILE"
+    else
+        echo "Error: Target file '$FILE' does not exist."
+    fi
+else
+    echo "Cancelled."
+fi
