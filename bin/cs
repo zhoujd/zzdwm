@@ -21,7 +21,7 @@ Usage:
   $ $(basename $0) {n} {text/file} - Search code / List functions
   $ $(basename $0) a {symbol}      - Auto-open specific function/symbol in MicroEMACS
   $ $(basename $0) r               - Force rebuild cscope and ctags tags
-  $ $(basename $0) -c | --clean    - Clean up cscope files in current dir
+  $ $(basename $0) -c | --clean    - Clean up cscope files in current directory
 
 Environment Variables:
   CS_COLOR=color   - Control highlight color (red, green, yellow, blue, magenta, cyan)
