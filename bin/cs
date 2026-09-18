@@ -17,7 +17,7 @@ fi
 if [ $# != 2 ]; then
     cat <<EOF
 Usage: 
-  $ $(basename $0) {n} {text}      - Search code
+  $ $(basename $0) {n} {text/file} - Search code / List functions
   $ $(basename $0) -c | --clean    - Clean up cscope files in current dir
 
 The list of possible values for {n}
@@ -26,12 +26,26 @@ The list of possible values for {n}
 2: Find functions called by this function
 3: Find functions calling this function
 4: Find this text string
+5: List functions/definitions using ctags
 6: Find this egrep pattern
 7: Find this file
 8: Find files #including this file
 9: Find places where this symbol is assigned a value
 EOF
     exit 1
+fi
+
+# Handle option 5 early since it relies on ctags instead of cscope
+if [ "${1}" == "5" ]; then
+    if [ -f "${2}" ]; then
+        echo "Listing functions/definitions in file: ${2}"
+        ctags -x "${2}"
+    else
+        echo "Searching for files matching '${2}' to list functions..."
+        # -R: recursively scan, -x: print tabular cross-reference list
+        ctags -R -x . | grep -i "${2}"
+    fi
+    exit 0
 fi
 
 # Function to search upward from the current directory for a specific file
