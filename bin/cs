@@ -46,7 +46,7 @@ EOF
 # Function to clean up cscope files in the current directory
 clean_cscope() {
     echo "Cleaning up cscope index files in the current directory..."
-    rm -f ./cscope.out ./cscope.in.out ./cscope.po.out ./tags
+    rm -f ./cscope.out ./cscope.in.out ./cscope.po.out ./cscope.files ./tags
     echo "Done."
     exit 0
 }
@@ -54,7 +54,15 @@ clean_cscope() {
 # Function to force a fresh rebuild of both cscope and ctags databases
 rebuild_tags() {
     echo "Rebuilding cscope and ctags indexes in the current directory..."
-    cscope -bRq
+    # Find C/C++ source and header files while excluding the build directory
+    find . -path "./build" -prune -o \
+        -type f \( -name "*.[ch]" -o -name "*.cpp" -o -name "*.hpp" \) \
+        -print > cscope.files
+
+    # Build cscope index using the generated cscope.files list
+    cscope -bRq -i cscope.files
+
+    # Rebuild ctags
     ctags -u --exclude=build -R .
     echo "Done."
     exit 0
