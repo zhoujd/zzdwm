@@ -18,16 +18,16 @@ esac
 usage() {
     local app=$(basename $0)
     cat <<EOF
-Usage: 
-  $ $app {n} {text/file} [-p] - Search code (optional -p to pick & open)
-  $ $app a {symbol}           - Auto-open specific function/symbol in MicroEMACS
-  $ $app h {symbol}           - Show function header via ref tool
-  $ $app r                    - Force rebuild cscope and ctags tags
-  $ $app -c | --clean         - Clean up cscope files in current directory
+Usage:
+$ $app {n} {text/file} [-p]  - Search code (optional -p to pick & open)
+$ $app a {symbol}            - Auto-open specific function/symbol in MicroEMACS
+$ $app h {symbol}            - Show function header via ref tool
+$ $app r                     - Force rebuild cscope and ctags tags
+$ $app -c | --clean          - Clean up cscope files in current directory
 
 Environment Variables:
-  CS_COLOR=color   - Control highlight color (red, green, yellow, blue, magenta, cyan)
-                     Example: CS_COLOR=green cs 5 main
+CS_COLOR=color  - Control highlight color (red, green, yellow, blue, magenta, cyan)
+                  Example: CS_COLOR=green cs 5 main
 
 The list of possible values for {n}
 0: Find this C symbol
@@ -64,7 +64,7 @@ rebuild_tags() {
 format_ctags() {
     awk '{
         sym=$1; line=$3; file=$4;
-        $1=$2=$3=$4=""; sub(/^[ \t]+/, ""); 
+        $1=$2=$3=$4=""; sub(/^[ \t]+/, "");
         printf "%s:%s: <%s> %s\n", file, line, sym, $0
     }'
 }
@@ -120,7 +120,7 @@ if [ "${1}" == "h" ]; then
     echo "Locating function header for '${2}'..."
     # Resolve the tags file location to feed into ref -p
     SEARCH_TAGS=$(search_up "tags")
-    
+
     # Check if tags exists and convert it to an ABSOLUTE path to avoid sub-dir bugs
     if [ -n "$SEARCH_TAGS" ] && [ -f "$SEARCH_TAGS/tags" ]; then
         # Cd to the folder momentarily to get the full absolute path
