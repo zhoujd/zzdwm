@@ -53,7 +53,6 @@ clean_cscope() {
 rebuild_tags() {
     echo "Rebuilding cscope and ctags indexes in the current directory..."
     cscope -bRq
-    # Using -u here too just in case your local environment sort breaks during tag file creation
     ctags -u -R .
     echo "Done."
     exit 0
@@ -72,7 +71,6 @@ if [ $# != 2 ]; then
     exit 1
 fi
 
-# --- STALWART INPUT VALIDATION ---
 # Only allow exactly 0-9 or 'a' as the first parameter
 if [[ ! "$1" =~ ^[0-9a]$ ]]; then
     echo "Error: Unrecognized option '$1'."
@@ -85,12 +83,20 @@ fi
 if [ "${1}" == "5" ]; then
     if [ -f "${2}" ]; then
         echo "Listing functions/definitions in file: ${2}"
-        # We also pipe single file listing through grep just to colorize matches if any
-        ctags -u -x "${2}" | grep --color=always -i -E "${2}|$"
+        # Formats single file output to 'file:line: symbol code'
+        ctags -u -x "${2}" | awk '{
+            symbol=$1; line=$3; file=$4;
+            $1=$2=$3=$4=""; sub(/^[ \t]+/, ""); 
+            printf "%s:%s: <%s> %s\n", file, line, symbol, $0
+        }' | grep --color=always -i -E "${2}|$"
     else
         echo "Searching for files matching '${2}' to list functions..."
-        # Added -u flag to bypass system sort bug, and --color=always for highlighting
-        ctags -u -R -x . | grep --color=always -i "${2}"
+        # Formats project recursive output to 'file:line: symbol code'
+        ctags -u -R -x . | awk '{
+            symbol=$1; line=$3; file=$4;
+            $1=$2=$3=$4=""; sub(/^[ \t]+/, ""); 
+            printf "%s:%s: <%s> %s\n", file, line, symbol, $0
+        }' | grep --color=always -i "${2}"
     fi
     exit 0
 fi
@@ -98,7 +104,6 @@ fi
 # Handle option 'a' to directly jump to code using MicroEMACS
 if [ "${1}" == "a" ]; then
     echo "Locating definition for '${2}'..."
-    # Always search without sorting to avoid the system sort crash
     MATCH=$(ctags -u -R -x . | grep -i "${2}" | head -n 1)
     if [ -n "$MATCH" ]; then
         LINE=$(echo "$MATCH" | awk '{print $3}')
@@ -135,5 +140,11 @@ else
 fi
 
 echo "Use: $TAG_FILE"
-# Execute the query safely and pipe into grep to colorize cscope output as well
-cscope -d -f "$TAG_FILE" -R -L${1} ${2} | grep --color=always -i "${2}"
+
+# Re-shapes native cscope output from "file function line code" into GNU Emacs standard 
+# "file:line: <function> code"
+cscope -d -f "$TAG_FILE" -R -L${1} ${2} | awk '{
+    file=$1; func_name=$2; line=$3;
+    $1=$2=$3=""; sub(/^[ \t]+/, "");
+    printf "%s:%s: <%s> %s\n", file, line, func_name, $0
+}' | grep --color=always -i "${2}"
