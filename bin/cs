@@ -3,6 +3,17 @@
 # Define MicroEMACS as the default editor
 EDITOR="me"
 
+# Default color is red if CS_COLOR is not set.
+# Supported shorthand: red, green, yellow, blue, magenta, cyan
+case "${CS_COLOR,,}" in
+    green)   export GREP_COLORS="ms=01;32" ;; # Bold Green
+    yellow)  export GREP_COLORS="ms=01;33" ;; # Bold Yellow
+    blue)    export GREP_COLORS="ms=01;34" ;; # Bold Blue
+    magenta) export GREP_COLORS="ms=01;35" ;; # Bold Magenta
+    cyan)    export GREP_COLORS="ms=01;36" ;; # Bold Cyan
+    red|*)   export GREP_COLORS="ms=01;31" ;; # Bold Red (Default)
+esac
+
 # Function to print usage information
 usage() {
     cat <<EOF
@@ -11,6 +22,10 @@ Usage:
   $ $(basename $0) a {symbol}      - Auto-open specific function/symbol in MicroEMACS
   $ $(basename $0) r               - Force rebuild cscope and ctags tags
   $ $(basename $0) -c | --clean    - Clean up cscope files in current dir
+
+Environment Variables:
+  CS_COLOR=color   - Control highlight color (red, green, yellow, blue, magenta, cyan)
+                     Example: CS_COLOR=green cs 5 main
 
 The list of possible values for {n}
 0: Find this C symbol
@@ -38,7 +53,8 @@ clean_cscope() {
 rebuild_tags() {
     echo "Rebuilding cscope and ctags indexes in the current directory..."
     cscope -bRq
-    ctags -R .
+    # Using -u here too just in case your local environment sort breaks during tag file creation
+    ctags -u -R .
     echo "Done."
     exit 0
 }
@@ -56,6 +72,7 @@ if [ $# != 2 ]; then
     exit 1
 fi
 
+# --- STALWART INPUT VALIDATION ---
 # Only allow exactly 0-9 or 'a' as the first parameter
 if [[ ! "$1" =~ ^[0-9a]$ ]]; then
     echo "Error: Unrecognized option '$1'."
@@ -68,10 +85,12 @@ fi
 if [ "${1}" == "5" ]; then
     if [ -f "${2}" ]; then
         echo "Listing functions/definitions in file: ${2}"
-        ctags -x "${2}"
+        # We also pipe single file listing through grep just to colorize matches if any
+        ctags -u -x "${2}" | grep --color=always -i -E "${2}|$"
     else
         echo "Searching for files matching '${2}' to list functions..."
-        ctags -u -R -x . | grep -i "${2}"
+        # Added -u flag to bypass system sort bug, and --color=always for highlighting
+        ctags -u -R -x . | grep --color=always -i "${2}"
     fi
     exit 0
 fi
@@ -79,6 +98,7 @@ fi
 # Handle option 'a' to directly jump to code using MicroEMACS
 if [ "${1}" == "a" ]; then
     echo "Locating definition for '${2}'..."
+    # Always search without sorting to avoid the system sort crash
     MATCH=$(ctags -u -R -x . | grep -i "${2}" | head -n 1)
     if [ -n "$MATCH" ]; then
         LINE=$(echo "$MATCH" | awk '{print $3}')
@@ -115,5 +135,5 @@ else
 fi
 
 echo "Use: $TAG_FILE"
-# Execute the query safely since $1 is guaranteed to be 0-9 at this point
-cscope -d -f "$TAG_FILE" -R -L${1} ${2}
+# Execute the query safely and pipe into grep to colorize cscope output as well
+cscope -d -f "$TAG_FILE" -R -L${1} ${2} | grep --color=always -i "${2}"
