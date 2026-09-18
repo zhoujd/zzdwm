@@ -3,4 +3,4 @@
 *.o
 TAGS
 tags
-cscope.out
+cscope.out*
