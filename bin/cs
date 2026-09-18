@@ -18,10 +18,10 @@ esac
 usage() {
     cat <<EOF
 Usage: 
-  $ $(basename $0) {n} {text/file} - Search code / List functions
-  $ $(basename $0) a {symbol}      - Auto-open specific function/symbol in MicroEMACS
-  $ $(basename $0) r               - Force rebuild cscope and ctags tags
-  $ $(basename $0) -c | --clean    - Clean up cscope files in current directory
+  $ $(basename $0) {n} {text/file} [-p] - Search code (optional -p to pick & open)
+  $ $(basename $0) a {symbol}           - Auto-open specific function/symbol in MicroEMACS
+  $ $(basename $0) r                    - Force rebuild cscope and ctags tags
+  $ $(basename $0) -c | --clean         - Clean up cscope files in current directory
 
 Environment Variables:
   CS_COLOR=color   - Control highlight color (red, green, yellow, blue, magenta, cyan)
@@ -83,8 +83,14 @@ elif [ "$1" == "r" ] || [ "$1" == "--rebuild" ]; then
     rebuild_tags
 fi
 
+# Determine if the user wants to use 'pick' via the 3rd argument
+USE_PICK=0
+if [ "$3" == "-p" ] || [ "$3" == "p" ]; then
+    USE_PICK=1
+fi
+
 # Check if the correct number of arguments is provided for searching
-if [ $# != 2 ]; then
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
     usage
     exit 1
 fi
@@ -99,14 +105,24 @@ fi
 
 # Handle option 5 early since it relies on ctags instead of cscope
 if [ "${1}" == "5" ]; then
-    if [ -f "${2}" ]; then
-        echo "Listing functions/definitions in file: ${2}"
-        # Formats single file output to 'file:line: symbol code'
-        ctags -u -x "${2}" | format_ctags | grep --color=always -i -E "${2}|$"
+    if [ $USE_PICK -eq 1 ]; then
+        MATCH=$(ctags -u -R -x . | format_ctags | pick)
+        if [ -n "$MATCH" ]; then
+            FILE=$(echo "$MATCH" | cut -d':' -f1)
+            LINE=$(echo "$MATCH" | cut -d':' -f2)
+            echo "Opening $FILE at line $LINE in MicroEMACS..."
+            exec "$EDITOR" +"$LINE" "$FILE"
+        fi
     else
-        echo "Searching for files matching '${2}' to list functions..."
-        # Formats project recursive output to 'file:line: symbol code'
-        ctags -u -R -x . | format_ctags | grep --color=always -i "${2}"
+        if [ -f "${2}" ]; then
+            echo "Listing functions/definitions in file: ${2}"
+            # Formats single file output to 'file:line: symbol code'
+            ctags -u -x "${2}" | format_ctags | grep --color=always -i -E "${2}|$"
+        else
+            echo "Searching for files matching '${2}' to list functions..."
+            # Formats project recursive output to 'file:line: symbol code'
+            ctags -u -R -x . | format_ctags | grep --color=always -i "${2}"
+        fi
     fi
     exit 0
 fi
@@ -114,7 +130,7 @@ fi
 # Handle option 'a' to directly jump to code using MicroEMACS
 if [ "${1}" == "a" ]; then
     echo "Locating definition for '${2}'..."
-    MATCH=$(ctags -u -R -x . | grep -i "${2}" | head -n 1)
+    MATCH=$(ctags -u -R -x . | grep -i "${2}" | pick)
     if [ -n "$MATCH" ]; then
         LINE=$(echo "$MATCH" | awk '{print $3}')
         FILE=$(echo "$MATCH" | awk '{print $4}')
@@ -151,6 +167,17 @@ fi
 
 echo "Use: $TAG_FILE"
 
-# Execute query, format output to Emacs buffer style, and apply highlighting
-cscope -d -f "$TAG_FILE" -R -L${1} ${2} | format_cscope | \
-    grep --color=always -i "${2}"
+# Execute query based on the pick flag control
+if [ $USE_PICK -eq 1 ]; then
+    MATCH=$(cscope -d -f "$TAG_FILE" -R -L${1} ${2} | format_cscope | pick)
+    if [ -n "$MATCH" ]; then
+        FILE=$(echo "$MATCH" | cut -d':' -f1)
+        LINE=$(echo "$MATCH" | cut -d':' -f2)
+        echo "Opening $FILE at line $LINE in MicroEMACS..."
+        exec "$EDITOR" +"$LINE" "$FILE"
+    fi
+else
+    # Execute query, format output to Emacs buffer style, and apply highlighting
+    cscope -d -f "$TAG_FILE" -R -L${1} ${2} | format_cscope | \
+        grep --color=always -i "${2}"
+fi
