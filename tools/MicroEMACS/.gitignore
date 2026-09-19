@@ -1,12 +1,20 @@
 ## .gitignore
 
+# Related project files
 rev.h
 *.o
 me.exe
 me
+
+# Related tag files
 TAGS
 tags
-cscope.out*
+cscope.out
+cscope.in.out
+cscope.po.out
+cscope.files
+
+# Related tool files
 regtest
 tcap
 utf8
