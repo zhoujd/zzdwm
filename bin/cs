@@ -101,7 +101,7 @@ rebuild_cscope() {
 # Function to force a fresh rebuild ctags databases
 rebuild_ctags() {
     # Rebuild ctags
-    ctags -u --exclude=build --exclude=dist -R .
+    ctags -u --exclude=build --exclude=dist -R . 2>/dev/null
 }
 
 # Reshapes 'ctags -x' into GNU Emacs 'file:line: <symbol> code' format
@@ -223,7 +223,7 @@ fi
 # Handle option 5 early since it relies on ctags instead of cscope
 if [ "${1}" == "5" ]; then
     if [ $USE_PICK -eq 1 ]; then
-        MATCH=$(ctags -u -R -x . | format_ctags | pick)
+        MATCH=$(ctags -u -R -x . 2>/dev/null | format_ctags | pick)
         if [ -n "$MATCH" ]; then
             FILE=$(echo "$MATCH" | cut -d':' -f1)
             LINE=$(echo "$MATCH" | cut -d':' -f2)
@@ -234,11 +234,11 @@ if [ "${1}" == "5" ]; then
         if [ -f "${2}" ]; then
             echo "Listing functions/definitions in file: ${2}"
             # Formats single file output to 'file:line: symbol code'
-            ctags -u -x "${2}" | format_ctags | grep $GREP_COLOR_FLAG -i -E "${2}|$"
+            ctags -u -x "${2}" 2>/dev/null | format_ctags | grep $GREP_COLOR_FLAG -i -E "${2}|$"
         else
             echo "Searching for files matching '${2}' to list functions..."
             # Formats project recursive output to 'file:line: symbol code'
-            ctags -u -R -x . | format_ctags | grep $GREP_COLOR_FLAG -i "${2}"
+            ctags -u -R -x . 2>/dev/null | format_ctags | grep $GREP_COLOR_FLAG -i "${2}"
         fi
     fi
     exit 0
@@ -247,7 +247,7 @@ fi
 # Handle option 'a' to directly jump to code using MicroEMACS
 if [ "${1}" == "a" ]; then
     echo "Locating definition for '${2}'..."
-    MATCH=$(ctags -u -R -x . | grep -i "${2}" | pick)
+    MATCH=$(ctags -u -R -x . 2>/dev/null | grep -i "${2}" | pick)
     if [ -n "$MATCH" ]; then
         LINE=$(echo "$MATCH" | awk '{print $3}')
         FILE=$(echo "$MATCH" | awk '{print $4}')
