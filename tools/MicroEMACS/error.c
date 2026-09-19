@@ -23,7 +23,7 @@ EWINDOW *wfind(BUFFER *bp)
 }
 
 /*
- * Unified error / symbol navigation parser for MicroEMACS
+ * Unified error / symbol navigation.
  */
 int
 gotoerror (int f, int n, int k)
