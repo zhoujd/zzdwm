@@ -6,12 +6,12 @@ EDITOR="me"
 # Default color is red if CS_COLOR is not set.
 # Supported shorthand: red, green, yellow, blue, magenta, cyan
 case "${CS_COLOR,,}" in
-    green)   export GREP_COLORS="ms=01;32" ;; # Bold Green
-    yellow)  export GREP_COLORS="ms=01;33" ;; # Bold Yellow
-    blue)    export GREP_COLORS="ms=01;34" ;; # Bold Blue
-    magenta) export GREP_COLORS="ms=01;35" ;; # Bold Magenta
-    cyan)    export GREP_COLORS="ms=01;36" ;; # Bold Cyan
-    red|*)   export GREP_COLORS="ms=01;31" ;; # Bold Red (Default)
+    green )   export GREP_COLORS="ms=01;32" ;; # Bold Green
+    yellow )  export GREP_COLORS="ms=01;33" ;; # Bold Yellow
+    blue )    export GREP_COLORS="ms=01;34" ;; # Bold Blue
+    magenta ) export GREP_COLORS="ms=01;35" ;; # Bold Magenta
+    cyan )    export GREP_COLORS="ms=01;36" ;; # Bold Cyan
+    red|* )   export GREP_COLORS="ms=01;31" ;; # Bold Red (Default)
 esac
 
 # Function to print usage information
