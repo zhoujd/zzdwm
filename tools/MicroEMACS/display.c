@@ -264,7 +264,7 @@ vtmove (int row, int col)
  * Three guesses how we found this.
  */
 static void
-vtputc (int c)
+vtputc (unsigned int c)
 {
   if (vtcol >= leftcol + ncol)
     vttext[ncol - 1] = '$';
@@ -292,7 +292,7 @@ vtputc (int c)
 static void
 vtputs (const uchar *s, int n)
 {
-  wchar_t c;
+  unsigned int c;  /* Changed from wchar_t to unsigned int (UTF-32) */
   int ulen;
   int w;
   const uchar *end = s + n;
@@ -301,13 +301,16 @@ vtputs (const uchar *s, int n)
     {
       c = ugetc (s, 0, &ulen);
       s += ulen;
+
       if (vtcol >= leftcol + ncol)
         {
           vttext[ncol - 1] = '$';
           return;
         }
       else if (c == '\t')
-        vtputs (spaces, tabsize - (vtcol % tabsize));
+        {
+          vtputs (spaces, tabsize - (vtcol % tabsize));
+        }
       else if (c < 0x80 && CISCTRL (c) != FALSE)
         {
           vtputc ('^');
@@ -316,12 +319,25 @@ vtputs (const uchar *s, int n)
       else
         {
           w = uwidth (c);
-          /* Double-width (CJK) character handling */
-          if (w == 2)
+
+          if (w == 0)
             {
+              /*
+               * Zero-width combining character (Thai marks, diacritics):
+               * Do NOT advance vtcol. If vtcol is within visible bounds,
+               * append/combine if your terminal model supports it,
+               * but critically: leave vtcol unchanged!
+               */
+              /* Optional: handle combining mark attachment if vttext stores structures,
+                 or simply ignore column advancement so terminal renders in-place. */
+            }
+          else if (w == 2)
+            {
+              /* Double-width (CJK) character handling */
               if (vtcol >= leftcol)
                 vttext[vtcol - leftcol] = c;
               vtcol++;
+
               /* Fill trailing column slot with 0 padding */
               if (vtcol < leftcol + ncol)
                 {
@@ -332,7 +348,7 @@ vtputs (const uchar *s, int n)
             }
           else
             {
-              /* Standard single-width character */
+              /* Standard single-width character (w == 1) */
               if (vtcol >= leftcol)
                 vttext[vtcol - leftcol] = c;
               vtcol++;

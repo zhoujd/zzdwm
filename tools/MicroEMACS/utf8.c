@@ -283,10 +283,28 @@ uwidth (wchar_t ch)
   unsigned int c = (unsigned int)ch;
   if (c == 0) return 0;
   if (c < 32 || (c >= 0x7f && c < 0xa0)) return -1;
-  /* Combining / Non-spacing marks */
-  if ((c >= 0x0300 && c <= 0x06ff) || (c >= 0x20d0 && c <= 0x20ff))
-    return 0;
-  /* MinGW CJK range fallback */
+
+  /* Zero-Width Marks, Invisible Operators, Diacritics & Variation Selectors */
+  if ((c >= 0x0300 && c <= 0x036f) || /* Combining Diacritical Marks */
+      (c >= 0x0e31 && c <= 0x0e3a) || /* Thai Vowels & Combining Marks */
+      (c >= 0x0e47 && c <= 0x0e4e) || /* Thai Tone Marks */
+      (c >= 0x200b && c <= 0x200d) || /* Zero-Width Space, Non-Joiner, Joiner */
+      (c >= 0x2060 && c <= 0x206f) || /* Invisible Operators (Invisible Plus U+2064, etc.) */
+      (c >= 0x20d0 && c <= 0x20ff) || /* Combining Marks for Symbols */
+      (c >= 0xfe00 && c <= 0xfe0f))   /* Variation Selectors (e.g., Emoji Variation Selector-16) */
+    {
+      return 0;
+    }
+
+  /* Math Delimiters, Operators & Box Art (Width = 1) */
+  if ((c >= 0x2200 && c <= 0x22ff) || /* Math Operators (∮, ∑, ∏, ∀, ∈) */
+      (c >= 0x2300 && c <= 0x23ff) || /* Technical / Math Extensions (⎧, ⎪, ⎨, ⎷, ⌈, ⌉) */
+      (c >= 0x2500 && c <= 0x257f))   /* Box Drawing (┌, ─, ┐, │) */
+    {
+      return 1;
+    }
+
+  /* Fullwidth / CJK Characters (Width = 2) */
   if ((c >= 0x1100 && c <= 0x115f) ||
       (c >= 0x2e80 && c <= 0xa4cf) ||
       (c >= 0xac00 && c <= 0xd7a3) ||
@@ -299,6 +317,7 @@ uwidth (wchar_t ch)
     {
       return 2;
     }
+
   return 1;
 #else
   /* Native Linux / POSIX glibc implementation */
