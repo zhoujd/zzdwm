@@ -22,31 +22,6 @@ EWINDOW *wfind(BUFFER *bp)
   return NULL;
 }
 
-/* Strip ANSI escape sequences in-place */
-static void
-strip_ansi_escapes (char *str)
-{
-  char *src = str;
-  char *dst = str;
-
-  while (*src)
-    {
-      if (*src == '\033' && *(src + 1) == '[')
-        {
-          src += 2;
-          while (*src && !(*src >= '@' && *src <= '~'))
-            src++;
-          if (*src)
-            src++; /* Skip terminating letter (m, K, etc.) */
-        }
-      else
-        {
-          *dst++ = *src++;
-        }
-    }
-  *dst = '\0';
-}
-
 /*
  * Unified error / symbol navigation parser for MicroEMACS
  */
@@ -83,9 +58,6 @@ gotoerror (int f, int n, int k)
         }
       memcpy (copy, str, len);
       copy[len] = '\0';
-
-      /* Strip VT100 ANSI escape codes if present */
-      strip_ansi_escapes (copy);
 
       /* Skip header lines like "In file included from..." or empty lines */
       if (strncmp ((const char *) copy, pfx, pfxlen) != 0)
