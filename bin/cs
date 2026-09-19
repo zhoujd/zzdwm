@@ -89,7 +89,7 @@ format_ctags() {
             sym = $1; line = $3; file = $4;
             $1 = $2 = $3 = $4 = "";
             sub(/^[ \t]+/, "");
-            printf "%s:%s <%s> %s\n", file, line, sym, $0;
+            printf "%s:%s: <%s> %s\n", file, line, sym, $0;
             next;
         }
 
@@ -100,7 +100,7 @@ format_ctags() {
                 sym = $1; line = $i; file = $(i+1);
                 for (j = 1; j <= i + 1; j++) $j = "";
                 sub(/^[ \t]+/, "");
-                printf "%s:%s <%s> %s\n", file, line, sym, $0;
+                printf "%s:%s: <%s> %s\n", file, line, sym, $0;
                 next;
             }
         }
