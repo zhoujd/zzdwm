@@ -9,7 +9,7 @@ me
 # Related tag files
 TAGS
 tags
-cscope.out
+cscope.out*
 cscope.in.out
 cscope.po.out
 cscope.files
