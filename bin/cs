@@ -45,10 +45,12 @@ EOF
 
 # Function to clean up cscope files in the current directory
 clean_cscope() {
-    echo "Cleaning up cscope index files in the current directory..."
     rm -f ./cscope.files ./cscope.out ./cscope.in.out ./cscope.po.out
+}
+
+# Function to clean up ctags files in the current directory
+clean_ctags() {
     rm -f ./tags
-    echo "Done."
 }
 
 # Function to force a fresh rebuild of cscope databases
@@ -112,7 +114,11 @@ format_cscope() {
 
 # Check for immediate control flags
 if [ "$1" == "c" ] || [ "$1" == "--clean" ]; then
+    echo "Cleaning up cscope index files in the current directory..."
     clean_cscope
+    echo "Cleaning up ctags index files in the current directory..."
+    clean_ctags
+    echo "Done."
     exit 0
 elif [ "$1" == "r" ] || [ "$1" == "--rebuild" ]; then
     echo "Rebuilding cscope indexes in the current directory..."
