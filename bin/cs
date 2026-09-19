@@ -46,7 +46,7 @@ EOF
 # Function to clean up cscope files in the current directory
 clean_cscope() {
     echo "Cleaning up cscope index files in the current directory..."
-    rm -f ./cscope.out ./cscope.in.out ./cscope.po.out ./cscope.files
+    rm -f ./cscope.files ./cscope.out ./cscope.in.out ./cscope.po.out
     rm -f ./tags
     echo "Done."
 }
@@ -54,8 +54,9 @@ clean_cscope() {
 # Function to force a fresh rebuild of cscope databases
 rebuild_cscope() {
     # Find C/C++ source and header files while excluding the build directory
-    find . -path "./build" -prune -o \
-        -type f \( -name "*.[ch]" -o -name "*.cpp" -o -name "*.hpp" \) \
+    find . -type f \
+        \( -path "./build" -o -path "./cache" \) -prune -o \
+        \( -name "*.[ch]" -o -name "*.cpp" -o -name "*.hpp" \) \
         -print > cscope.files
     # Build cscope index using the generated cscope.files list
     cscope -bRq -i cscope.files
@@ -64,7 +65,7 @@ rebuild_cscope() {
 # Function to force a fresh rebuild ctags databases
 rebuild_ctags() {
     # Rebuild ctags
-    ctags -u --exclude=build -R .
+    ctags -u --exclude=build --exclude=cache -R .
 }
 
 # Reshapes 'ctags -x' into GNU Emacs 'file:line: <symbol> code' format
