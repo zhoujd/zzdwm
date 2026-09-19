@@ -1,9 +1,24 @@
 ## .gitignore
 
+# Build temp files
 *.o
-TAGS
-tags
-cscope.files
+*.pyc
+
+# Cscope database and index files
 cscope.out
 cscope.in.out
 cscope.po.out
+cscope.files
+
+# Exclude cscope files generated in any subdirectory
+/**/cscope.out
+/**/cscope.in.out
+/**/cscope.po.out
+/**/cscope.files
+
+# Related tag files (ctags / gtags / cscope)
+tags
+TAGS
+GPATH
+GRTAGS
+GTAGS
