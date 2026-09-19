@@ -14,7 +14,34 @@ case "${CS_COLOR,,}" in
     red|* )   export GREP_COLORS="ms=01;31" ;; # Bold Red (Default)
 esac
 
-# Disable color if stdout is piped (e.g., inside MicroEMACS compilation buffer)
+# Check if terminal supports color and stdout is an interactive TTY
+supports_color() {
+    # Respect the NO_COLOR standard (https://no-color.org)
+    [ -n "${NO_COLOR}" ] && return 1
+    # Return false if stdout is piped or redirected (e.g., into MicroEMACS)
+    [ ! -t 1 ] && return 1
+    # GNU Emacs subshells set INSIDE_EMACS or EMACS and process ANSI color codes
+    if [ -n "${INSIDE_EMACS}" ] || [ -n "${EMACS}" ]; then
+        return 0
+    fi
+    # Check for non-Emacs dumb terminal environments
+    if [ "${TERM}" = "dumb" ]; then
+        return 1
+    fi
+    # Check tput colors capability if available
+    if command -v tput >/dev/null 2>&1; then
+        local ncolors
+        ncolors=$(tput colors 2>/dev/null)
+        if [ -n "$ncolors" ] && [ "$ncolors" -ge 8 ]; then
+            return 0
+        else
+            return 1
+        fi
+    fi
+    return 0
+}
+
+# Disable color if stdout is piped (e.g., inside MicroEMACS)
 if [ ! -t 1 ]; then
     GREP_COLOR_FLAG="--color=never"
 else
