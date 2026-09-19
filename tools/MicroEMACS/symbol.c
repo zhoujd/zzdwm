@@ -211,6 +211,7 @@ KEY key[] = {
   {KCTLX | 'V',         showversion,       "display-version"},
   {KCTLX | 'X',         nextbuffer,        "forw-buffer"},
   {KCTLX | 'Z',         enlargewind,       "enlarge-window"},
+  {KCTLX | '`',         gotoerror,         "next-error" },
   {KCTLX | '!',         runcli,            "shell-command"},
   {KCTLX | '@',         pipecmd,           "pipe-command"},
   {KCTLX | '#',         filterbuffer,      "filter-buffer"},
