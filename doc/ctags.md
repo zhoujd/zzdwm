@@ -21,3 +21,10 @@ $ ./autogen.sh
 $ ./configure LDFLAGS="-static -s"
 $ make -j4
 ```
+
+## Win32
+
+```
+## https://github.com/universal-ctags/ctags-win32
+## https://github.com/universal-ctags/ctags-win32/releases
+```
