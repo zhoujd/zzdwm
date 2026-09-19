@@ -22,106 +22,160 @@ EWINDOW *wfind(BUFFER *bp)
   return NULL;
 }
 
+/* Strip ANSI escape sequences in-place */
+static void
+strip_ansi_escapes (char *str)
+{
+  char *src = str;
+  char *dst = str;
+
+  while (*src)
+    {
+      if (*src == '\033' && *(src + 1) == '[')
+        {
+          src += 2;
+          while (*src && !(*src >= '@' && *src <= '~'))
+            src++;
+          if (*src)
+            src++; /* Skip terminating letter (m, K, etc.) */
+        }
+      else
+        {
+          *dst++ = *src++;
+        }
+    }
+  *dst = '\0';
+}
+
 /*
- * Visit the file and line mentioned in the next gcc error message in the
- * current buffer.
+ * Unified error / symbol navigation parser for MicroEMACS
  */
 int
-gccerror (int f, int n, int k)
+gotoerror (int f, int n, int k)
 {
   LINE *lp;
   BUFFER *bp;
   EWINDOW *wp;
-  static const char *fmt = "%" STRINGIFY(NFILEN) "[^:]:%d:%d: %n";
   static const char *pfx = "In file included from";
   int pfxlen;
   char filename[NFILEN];
-  int line, column;
+  int line = 0, column = 0;
   uchar *str;
-  int len, chars, wlen;
-  uchar *copy = NULL;
+  int len, chars = 0, wlen;
+  char *copy = NULL;
 
-  lp = curwp->w_dot.p;		/* Cursor location.	*/
-  if (curwp->w_dot.o != 0)	/* Skip to next line	*/
-    lp = lforw (lp);		/*  if not at column 1	*/
+  lp = curwp->w_dot.p;         /* Start at current buffer line */
+  if (curwp->w_dot.o != 0)     /* If cursor is mid-line, advance to next line */
+    lp = lforw (lp);
+
   bp = curwp->w_bufp;
-  pfxlen = strlen(pfx);
+  pfxlen = strlen (pfx);
+
   while (lp != bp->b_linep)
     {
-      /* Make a copy of the line with a null termination
-       * so that sscanf won't run off the end.
-       */
       str = lgets (lp);
       len = llength (lp);
       copy = realloc (copy, len + 1);
+      if (copy == NULL)
+        {
+          eprintf ("Out of memory");
+          return FALSE;
+        }
       memcpy (copy, str, len);
       copy[len] = '\0';
 
-      /* Test that the line doesn't start with a non-error prefix,
-       * and that it starts with the pattern filename:line:column: .
-       */
-      if (strncmp ((const char *) copy, pfx, pfxlen) != 0 &&
-          sscanf ((const char *) copy, fmt, filename, &line, &column, &chars) == 3)
+      /* Strip VT100 ANSI escape codes if present */
+      strip_ansi_escapes (copy);
+
+      /* Skip header lines like "In file included from..." or empty lines */
+      if (strncmp ((const char *) copy, pfx, pfxlen) != 0)
         {
-          /* Move cursor past the filename:line:column.
-           */
-          curwp->w_dot.p = lp;
-          curwp->w_dot.o = unslen (str, chars);
-          curwp->w_flag |= WFMOVE;
+          char *scan_ptr = copy;
+          int drive_offset = 0;
+          int matched = 0;
 
-          /* Check if file exists.
-           */
-          if (access (filename, R_OK) != F_OK)
-            {
-              eprintf ("Cannot read '%s'", filename);
-              free (copy);
-              return FALSE;
-            }
+          /* Pattern 1: GCC format with line and column -> filename:line:col: */
+          matched = sscanf (scan_ptr, "%" STRINGIFY(NFILEN) "[^:]:%d:%d: %n",
+                            filename + drive_offset, &line, &column, &chars);
 
-          /* Pop up a window and read the indicated file into it.
-           */
-          if ((wp = wpopup ()) == NULL)
+          /* Pattern 2: Standard format with line only -> filename:line: */
+          if (matched < 2)
             {
-              free (copy);
-              return FALSE;
-            }
-          curwp = wp;
-          if (visit_file (filename) == FALSE)
-            {
-              free (copy);
-              return FALSE;
+              column = 0;
+              matched = sscanf (scan_ptr, "%" STRINGIFY(NFILEN) "[^:]:%d: %n",
+                                filename + drive_offset, &line, &chars);
             }
 
-          /* Move to the indicated line and column.
-           */
-          if (gotoline (TRUE, line, 0) == FALSE)
+          /* Pattern 3: Cscope fallback space delimiter -> filename:line */
+          if (matched < 2)
             {
-              free (copy);
-              return FALSE;
+              column = 0;
+              matched = sscanf (scan_ptr, "%" STRINGIFY(NFILEN) "[^:\t ] %d %n",
+                                filename + drive_offset, &line, &chars);
             }
-          wlen = wllength (curwp->w_dot.p);
-          if (column >= wlen)
-            curwp->w_dot.o = wlen;
-          else
-            curwp->w_dot.o = column - 1;
 
-          /* Put as much of the error message as will fit
-           * on the echo line.
-           */
-          len = len - chars;
-          str = copy + chars;
-          if (unslen (str, len) > ncol)
+          if (matched >= 2)
             {
-              len = uoffset (str, ncol);
-              str[len] = '\0';
+              chars += drive_offset;
+
+              /* Update cursor position in search/compiler buffer */
+              curwp->w_dot.p = lp;
+              curwp->w_dot.o = unslen (str, chars);
+              curwp->w_flag |= WFMOVE;
+
+              /* Ensure target file is accessible */
+              if (access (filename, R_OK) != 0)
+                {
+                  eprintf ("Cannot read '%s'", filename);
+                  free (copy);
+                  return FALSE;
+                }
+
+              /* Open file in popup window or switch buffer */
+              if ((wp = wpopup ()) == NULL)
+                {
+                  free (copy);
+                  return FALSE;
+                }
+              curwp = wp;
+
+              if (visit_file (filename) == FALSE)
+                {
+                  free (copy);
+                  return FALSE;
+                }
+
+              /* Jump to target line and column */
+              if (gotoline (TRUE, line, 0) == FALSE)
+                {
+                  free (copy);
+                  return FALSE;
+                }
+
+              wlen = wllength (curwp->w_dot.p);
+              if (column > 0)
+                curwp->w_dot.o = (column - 1 >= wlen) ? wlen : column - 1;
+              else
+                curwp->w_dot.o = 0;
+
+              /* Display remainder of error/match message in echo line */
+              len = len - chars;
+              str = (uchar *) copy + chars;
+              if (unslen (str, len) > ncol)
+                {
+                  len = uoffset (str, ncol);
+                  str[len] = '\0';
+                }
+              eprintf ("%s", str);
+
+              free (copy);
+              return TRUE;
             }
-          eprintf ("%s", str);
-          free (copy);
-          return TRUE;
         }
       lp = lforw (lp);
     }
-  eprintf ("gcc error not found");
+
+  eprintf ("No error or match found");
   if (copy)
     free (copy);
   return FALSE;

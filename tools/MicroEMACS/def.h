@@ -952,7 +952,7 @@ int freetags (int f, int n, int k);     /* Free up tag list             */
 /*
  * Defined by "error.c".
  */
-int gccerror (int f, int n, int k);     /* Find line in gcc error       */
+int gotoerror (int f, int n, int k);    /* Unified error navigation     */
 
 tagfile * findtagfile (const char *name);
 tagref * addtagref (const char *string, tagfile *file, int line, long offset,

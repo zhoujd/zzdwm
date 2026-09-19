@@ -217,7 +217,7 @@ KEY key[] = {
   {KCTLX | '$',         changedir,         "change-dir"},
   {KCTLX | '%',         replaceregion,     "replace-region"},
   {KMETA | KCTRL | 'C', wordcount,         "count-words"},
-  {KMETA | KCTRL | 'E', gccerror,          "gcc-error"},
+  {KMETA | KCTRL | 'E', gotoerror,         "goto-error"},
   {KMETA | KCTRL | 'F', foldcase,          "fold-case"},
   {KMETA | KCTRL | 'H', delbword,          "back-del-word"},
   {KMETA | KCTRL | 'I', settabsize,        "set-tab-size"},
