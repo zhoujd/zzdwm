@@ -5,13 +5,13 @@
 *.pyc
 
 # Cscope database and index files
-cscope.out
+cscope.out*
 cscope.in.out
 cscope.po.out
 cscope.files
 
 # Exclude cscope files generated in any subdirectory
-/**/cscope.out
+/**/cscope.out*
 /**/cscope.in.out
 /**/cscope.po.out
 /**/cscope.files
