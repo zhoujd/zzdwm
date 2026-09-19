@@ -46,7 +46,8 @@ EOF
 # Function to clean up cscope files in the current directory
 clean_cscope() {
     echo "Cleaning up cscope index files in the current directory..."
-    rm -f ./cscope.out ./cscope.in.out ./cscope.po.out ./cscope.files ./tags
+    rm -f ./cscope.out ./cscope.in.out ./cscope.po.out ./cscope.files
+    rm -f ./tags
     echo "Done."
 }
 
@@ -123,7 +124,7 @@ fi
 
 # Determine if the user wants to use 'pick' via the 3rd argument
 USE_PICK=0
-if [ "$3" == "-p" ] || [ "$3" == "p" ]; then
+if [ "$3" == "-p" ]; then
     USE_PICK=1
 fi
 
