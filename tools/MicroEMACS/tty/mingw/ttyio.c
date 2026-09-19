@@ -63,24 +63,28 @@ ttopen (void)
 {
   CONSOLE_SCREEN_BUFFER_INFO binfo;
   CONSOLE_CURSOR_INFO cinfo;
+  DWORD written;
 
   /* Get handles for console output and input */
   hout = GetStdHandle (STD_OUTPUT_HANDLE);
   hin  = GetStdHandle (STD_INPUT_HANDLE);
 
-  /* Save current keyboard mode and enable VT input safely */
+  /* Save current keyboard mode and enable VT input */
   GetConsoleMode (hin, &hinmode);
   SetConsoleMode (hin, hinmode | ENABLE_VIRTUAL_TERMINAL_INPUT);
 
   /* Save current console output mode and enable VT output */
   GetConsoleMode (hout, &houtmode);
-  SetConsoleMode (hout, houtmode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+  SetConsoleMode (hout, houtmode |
+                  ENABLE_VIRTUAL_TERMINAL_PROCESSING |
+                  DISABLE_NEWLINE_AUTO_RETURN);
 
-  /* Get screen size */
+  /* Enter alternate screen buffer FIRST so ConPTY initializes alternate buffer state */
+  WriteConsoleA (hout, "\033[?1049h", 8, &written, NULL);
+
+  /* Query screen size AFTER alternate screen buffer is active */
   windowrow = 0;
   windowcol = 0;
-  nrow = 24;  /* Default fallback rows */
-  ncol = 80;  /* Default fallback columns */
 
   if (GetConsoleScreenBufferInfo (hout, &binfo) == TRUE)
     {
@@ -90,13 +94,14 @@ ttopen (void)
       ncol = binfo.srWindow.Right  - windowcol + 1;
     }
 
+  /* Guard against invalid/corrupted dimensions during active resize */
+  if (nrow <= 0 || nrow > 300) nrow = 24;
+  if (ncol <= 0 || ncol > 500) ncol = 80;
+
   /* Set block cursor via Win32 API */
   cinfo.dwSize = 100;     /* 100% visible block cursor */
   cinfo.bVisible = TRUE;
   SetConsoleCursorInfo (hout, &cinfo);
-
-  /* Enter alternate screen buffer via VT sequence */
-  write (1, "\033[?1049h", 8);
 }
 
 /*
@@ -105,10 +110,15 @@ ttopen (void)
 void
 ttclose (void)
 {
-  SetConsoleMode (hin, hinmode);
-  write(1, "\033[?1049l", 8);
-}
+  DWORD written;
 
+  /* Restore input/output console modes */
+  SetConsoleMode (hin, hinmode);
+  SetConsoleMode (hout, houtmode);
+
+  /* Exit alternate screen buffer via direct Win32 handle */
+  WriteConsoleA (hout, "\033[?1049l", 8, &written, NULL);
+}
 /*
  * No operation in MS-DOS.
  */
