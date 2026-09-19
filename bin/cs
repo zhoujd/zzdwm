@@ -22,8 +22,8 @@ Usage:
 $ $app {n} {text/file} [-p]  - Search code (optional -p to pick & open)
 $ $app a {symbol}            - Auto-open specific function/symbol in MicroEMACS
 $ $app h {symbol}            - Show function header via ref tool
-$ $app r                     - Force rebuild cscope and ctags tags
-$ $app -c | --clean          - Clean up cscope files in current directory
+$ $app r | --rebuild         - Force rebuild cscope and ctags tags
+$ $app c | --clean           - Clean up cscope files in current directory
 
 Environment Variables:
 CS_COLOR=color  - Control highlight color (red, green, yellow, blue, magenta, cyan)
@@ -48,24 +48,22 @@ clean_cscope() {
     echo "Cleaning up cscope index files in the current directory..."
     rm -f ./cscope.out ./cscope.in.out ./cscope.po.out ./cscope.files ./tags
     echo "Done."
-    exit 0
 }
 
-# Function to force a fresh rebuild of both cscope and ctags databases
-rebuild_tags() {
-    echo "Rebuilding cscope and ctags indexes in the current directory..."
+# Function to force a fresh rebuild of cscope databases
+rebuild_cscope() {
     # Find C/C++ source and header files while excluding the build directory
     find . -path "./build" -prune -o \
         -type f \( -name "*.[ch]" -o -name "*.cpp" -o -name "*.hpp" \) \
         -print > cscope.files
-
     # Build cscope index using the generated cscope.files list
     cscope -bRq -i cscope.files
+}
 
+# Function to force a fresh rebuild ctags databases
+rebuild_ctags() {
     # Rebuild ctags
     ctags -u --exclude=build -R .
-    echo "Done."
-    exit 0
 }
 
 # Reshapes 'ctags -x' into GNU Emacs 'file:line: <symbol> code' format
@@ -111,10 +109,16 @@ format_cscope() {
 }
 
 # Check for immediate control flags
-if [ "$1" == "-c" ] || [ "$1" == "--clean" ]; then
+if [ "$1" == "c" ] || [ "$1" == "--clean" ]; then
     clean_cscope
+    exit 0
 elif [ "$1" == "r" ] || [ "$1" == "--rebuild" ]; then
-    rebuild_tags
+    echo "Rebuilding cscope indexes in the current directory..."
+    rebuild_cscope
+    echo "Rebuilding ctags indexes in the current directory..."
+    rebuild_ctags
+    echo "Done."
+    exit 0
 fi
 
 # Determine if the user wants to use 'pick' via the 3rd argument
@@ -221,8 +225,8 @@ if [ -n "$SEARCH" ]; then
 elif [ -f "$HOME/.emacs.d/tags/cscope.out" ]; then
     TAG_FILE="$HOME/.emacs.d/tags/cscope.out"
 else
-    echo "cscope.out not found anywhere. Generating a new index in the current directory..."
-    cscope -bRq
+    echo "cscope.out not found anywhere. Rebuild a new index in the current directory..."
+    rebuild_cscope
     TAG_FILE="./cscope.out"
 fi
 
