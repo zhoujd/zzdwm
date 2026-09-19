@@ -57,7 +57,7 @@ clean_ctags() {
 rebuild_cscope() {
     # Find C/C++ source and header files while excluding the build directory
     find . -type f \
-        \( -path "./build" -o -path "./cache" \) -prune -o \
+        \( -path "./build" -o -path "./dist" \) -prune -o \
         \( -name "*.[ch]" -o -name "*.cpp" -o -name "*.hpp" \) \
         -print > cscope.files
     # Build cscope index using the generated cscope.files list
@@ -67,7 +67,7 @@ rebuild_cscope() {
 # Function to force a fresh rebuild ctags databases
 rebuild_ctags() {
     # Rebuild ctags
-    ctags -u --exclude=build --exclude=cache -R .
+    ctags -u --exclude=build --exclude=dist -R .
 }
 
 # Reshapes 'ctags -x' into GNU Emacs 'file:line: <symbol> code' format
