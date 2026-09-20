@@ -17,12 +17,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define GOSLING 0			/* Use fancy redisplay. 	*/
-#define MEMMAP	1			/* Not memory mapped video.	*/
+#define GOSLING 0       /* Use fancy redisplay. 	*/
+#define MEMMAP  1       /* Not memory mapped video.	*/
 
 /* Modern terminal limits for 4K / Ultrawide displays */
-#define NROW    120         /* Supports up to 120 lines */
-#define NCOL    320         /* Supports up to 320 columns */
+#define NROW    256     /* Max supported rows    */
+#define NCOL    256     /* Max supported columns */
 
 /*
  * Special keys, as on the IBM PC.
