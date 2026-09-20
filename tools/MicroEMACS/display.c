@@ -198,6 +198,11 @@ vtinit (void)
   register VIDEO *vp;
   register int i;
 
+  if (nrow > NROW)
+    nrow = NROW;
+  if (ncol > NCOL)
+    ncol = NCOL;
+
   ttopen ();
   ttinit ();
   vp = &video[0];

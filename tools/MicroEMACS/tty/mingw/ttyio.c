@@ -55,48 +55,58 @@ void
 ttopen (void)
 {
   CONSOLE_SCREEN_BUFFER_INFO binfo;
-  CONSOLE_CURSOR_INFO cinfo;
   DWORD written;
 
   /* Get handles for console output and input */
   hout = GetStdHandle (STD_OUTPUT_HANDLE);
   hin  = GetStdHandle (STD_INPUT_HANDLE);
 
-  /* Save current keyboard mode and enable VT input */
+  /* Save current modes */
   GetConsoleMode (hin, &hinmode);
-  SetConsoleMode (hin, hinmode | ENABLE_VIRTUAL_TERMINAL_INPUT);
-
-  /* Save current console output mode and enable VT output */
   GetConsoleMode (hout, &houtmode);
+
+  /* Enable VT mode on Windows ConPTY / Win10 Console */
+  SetConsoleMode (hin, hinmode | ENABLE_VIRTUAL_TERMINAL_INPUT);
   SetConsoleMode (hout, houtmode |
                   ENABLE_VIRTUAL_TERMINAL_PROCESSING |
                   DISABLE_NEWLINE_AUTO_RETURN);
 
-  /* Enter alternate screen buffer FIRST so ConPTY initializes alternate buffer state */
+  /* Enter alternate screen buffer */
   WriteConsoleA (hout, "\033[?1049h", 8, &written, NULL);
 
-  /* Query screen size AFTER alternate screen buffer is active */
+  /* Query screen size with safety defaults */
   windowrow = 0;
   windowcol = 0;
+  nrow = 0;
+  ncol = 0;
 
   if (GetConsoleScreenBufferInfo (hout, &binfo) == TRUE)
     {
-      windowrow = binfo.srWindow.Top;
-      windowcol = binfo.srWindow.Left;
-      nrow = binfo.srWindow.Bottom - windowrow + 1;
-      ncol = binfo.srWindow.Right  - windowcol + 1;
+      /* Ensure window bounds make sense */
+      if (binfo.srWindow.Right >= binfo.srWindow.Left &&
+          binfo.srWindow.Bottom >= binfo.srWindow.Top)
+        {
+          windowrow = binfo.srWindow.Top;
+          windowcol = binfo.srWindow.Left;
+          nrow = binfo.srWindow.Bottom - windowrow + 1;
+          ncol = binfo.srWindow.Right  - windowcol + 1;
+        }
     }
 
-  /* Guard against invalid/corrupted dimensions during active resize */
-  if (nrow <= 0 || nrow > 300)
+  /*
+   * Sanity checks: Clamp strictly against NROW and NCOL.
+   * If ConPTY returns invalid/zero dimensions or exceeds static buffers,
+   * fall back or clamp to NCOL/NROW to prevent memory corruption.
+   */
+  if (nrow <= 3)
     nrow = 25;
-  if (ncol <= 0 || ncol > 500)
-    ncol = 80;
+  else if (nrow > NROW)
+    nrow = NROW;
 
-  /* Set block cursor via Win32 API */
-  cinfo.dwSize = 100;     /* 100% visible block cursor */
-  cinfo.bVisible = TRUE;
-  SetConsoleCursorInfo (hout, &cinfo);
+  if (ncol <= 10)
+    ncol = 80;
+  else if (ncol > NCOL)
+    ncol = NCOL;
 }
 
 /*
@@ -107,13 +117,14 @@ ttclose (void)
 {
   DWORD written;
 
-  /* Restore input/output console modes */
+  /* Leave alternate screen buffer */
+  WriteConsoleA (hout, "\033[?1049l", 8, &written, NULL);
+
+  /* Restore original console modes */
   SetConsoleMode (hin, hinmode);
   SetConsoleMode (hout, houtmode);
-
-  /* Exit alternate screen buffer via direct Win32 handle */
-  WriteConsoleA (hout, "\033[?1049l", 8, &written, NULL);
 }
+
 /*
  * No operation in MS-DOS.
  */
