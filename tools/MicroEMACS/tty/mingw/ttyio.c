@@ -21,15 +21,8 @@
 #include <excpt.h>
 #include <conio.h>
 
-#if 0
-#include <windef.h>
-#include <winbase.h>
-#include <wincon.h>
-#else
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <io.h>  /* THIS DEFINES THE write() FUNCTION IN MINGW */
-#endif
 
 /* Fallback definition for older MinGW compilers if missing */
 #ifndef ENABLE_VIRTUAL_TERMINAL_INPUT
@@ -95,8 +88,10 @@ ttopen (void)
     }
 
   /* Guard against invalid/corrupted dimensions during active resize */
-  if (nrow <= 0 || nrow > 300) nrow = 24;
-  if (ncol <= 0 || ncol > 500) ncol = 80;
+  if (nrow <= 0 || nrow > 300)
+    nrow = 25;
+  if (ncol <= 0 || ncol > 500)
+    ncol = 80;
 
   /* Set block cursor via Win32 API */
   cinfo.dwSize = 100;     /* 100% visible block cursor */
