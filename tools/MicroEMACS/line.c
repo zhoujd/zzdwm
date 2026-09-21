@@ -945,19 +945,22 @@ lcmp (LINE *lp1, LINE *lp2)
   return 1; /* lp1 comes AFTER lp2.  */
 }
 
-/* Reset read pointer to start of kill buffer */
+/*
+ * Reset read pointer to start of kill buffer
+ */
 void
 krewind (void)
 {
   kptr = (const uchar *)kbufp;
 }
 
-/* Get next byte from kill buffer; returns -1 when exhausted */
+/*
+ * Get next byte from kill buffer; returns -1 when exhausted
+ */
 int
 kgetc (void)
 {
   if (kptr == NULL || kbufp == NULL || kptr >= (const uchar *)(kbufp + kused))
     return -1;
-
   return *kptr++;
 }
