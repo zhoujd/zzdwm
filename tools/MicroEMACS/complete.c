@@ -416,6 +416,20 @@ collect_matches (const char *prefix,
   return match_count;
 }
 
+/* Move terminal cursor left N display columns */
+static void
+mvleft (int *cpos, char *buf)
+{
+  outstring ("\b");
+  --ttcol;
+  (*cpos)--;
+  if ((unsigned char)buf[*cpos] < 0x20)
+    {
+      outstring ("\b");
+      --ttcol;
+    }
+}
+
 /*
  * Basic filename completion
  */
@@ -465,6 +479,53 @@ getfilename (char *prompt, char *buf, int nbuf)
           eputc (c);
           ttflush ();
           return ABORT;
+        }
+
+      /* Ctrl+A (0x01): Beginning of line */
+      else if (c == CCHR ('A') || c == 0x01)
+        {
+          while (cpos > 0)
+            mvleft (&cpos, buf);
+          ttflush ();
+        }
+
+      /* Ctrl+E (0x05): End of line */
+      else if (c == CCHR ('E') || c == 0x05)
+        {
+          while (buf[cpos] != '\0')
+            {
+              int ch = buf[cpos++];
+              if ((ch < ' ') && (ch != '\n'))
+                {
+                  outstring ("^");
+                  ++ttcol;
+                  ch ^= 0x40;
+                }
+              ttputc (ch);
+              ++ttcol;
+            }
+          ttflush ();
+        }
+
+      /* Ctrl+K (0x0B): Kill/Erase to end of line */
+      else if (c == CCHR ('K') || c == 0x0B)
+        {
+          int save_pos = cpos;
+
+          /* Wipe trailing characters visually */
+          while (buf[cpos] != '\0')
+            {
+              outstring (" ");
+              if (buf[cpos++] < 0x20)
+                outstring (" ");
+            }
+
+          /* Rewind cursor back to kill point */
+          while (cpos > save_pos)
+            mvleft (&cpos, buf);
+
+          buf[cpos] = '\0';
+          ttflush ();
         }
 
       /* Ctrl+Y (0x19): Paste/Yank from kill buffer into filename prompt */
@@ -528,9 +589,21 @@ getfilename (char *prompt, char *buf, int nbuf)
       /* Ctrl+F (0x06): Advance into DIRECTORIES ONLY */
       else if (c == CCHR ('F') || c == 0x06)
         {
-          buf[cpos] = '\0';
+          /* Ensure cpos is at end of string so we see full path */
+          while (buf[cpos] != '\0')
+            {
+              int ch = buf[cpos++];
+              if ((ch < ' ') && (ch != '\n'))
+                {
+                  outstring ("^");
+                  ++ttcol;
+                  ch ^= 0x40;
+                }
+              ttputc (ch);
+              ++ttcol;
+            }
 
-          /* FAST GUARD: If current buffer points directly to a file, beep and do nothing */
+          /* Fast guard: If current buffer points directly to a file */
           if (is_regular_file (buf))
             {
               ttbeep ();
@@ -544,6 +617,7 @@ getfilename (char *prompt, char *buf, int nbuf)
             {
               int n;
 
+              /* Erase line visually from right to left */
               while (cpos > 0)
                 {
                   outstring ("\b \b");
@@ -588,8 +662,21 @@ getfilename (char *prompt, char *buf, int nbuf)
       /* Ctrl+B (0x02): Up to parent directory */
       else if (c == CCHR ('B') || c == 0x02)
         {
-          buf[cpos] = '\0';
+          /* Ensure cursor is at end of string before modifying path */
+          while (buf[cpos] != '\0')
+            {
+              int ch = buf[cpos++];
+              if ((ch < ' ') && (ch != '\n'))
+                {
+                  outstring ("^");
+                  ++ttcol;
+                  ch ^= 0x40;
+                }
+              ttputc (ch);
+              ++ttcol;
+            }
 
+          /* Clear terminal line visually */
           while (cpos > 0)
             {
               outstring ("\b \b");
