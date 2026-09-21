@@ -27,8 +27,10 @@
 #define XKEYS			/* Use termcap to handle function keys  */
 #define IGNORE_TERMCAP		/* Ignore termcap defs. of func. keys   */
 
-#define	NROW	132		/* Rows.                        */
-#define	NCOL	132		/* Columns.                     */
+/* Modern terminal limits for 4K / Ultrawide displays */
+#define	NROW	256		/* Rows.                        */
+#define	NCOL	320		/* Columns.                     */
+
 /* #define	MOVE_STANDOUT	*//* don't move in standout mode  */
 #define	STANDOUT_GLITCH		/* possible standout glitch     */
 #define	TERMCAP			/* for possible use in ttyio.c  */

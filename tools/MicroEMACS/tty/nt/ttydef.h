@@ -37,8 +37,9 @@
 #define GOSLING 0			/* Use fancy redisplay. 	*/
 #define MEMMAP	1			/* Not memory mapped video.	*/
 
-#define	NROW	66			/* Genius can do 60 rows	*/
-#define NCOL	132			/* Some VGAs can do 90 cols	*/
+/* Modern terminal limits for 4K / Ultrawide displays */
+#define NROW    256                     /* Max supported rows   */
+#define NCOL    320                     /* Max supported cols   */
 
 /*
  * Special keys, as on the IBM PC.

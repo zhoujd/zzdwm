@@ -22,7 +22,7 @@
 
 /* Modern terminal limits for 4K / Ultrawide displays */
 #define NROW    256     /* Max supported rows    */
-#define NCOL    256     /* Max supported columns */
+#define NCOL    320     /* Max supported columns */
 
 /*
  * Special keys, as on the IBM PC.

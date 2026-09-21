@@ -26,8 +26,9 @@
 #define XKEYS			/* Use termcap to handle function keys  */
 #define IGNORE_TERMCAP		/* Ignore termcap defs. of func. keys   */
 
+/* Modern terminal limits for 4K / Ultrawide displays */
 #define	NROW	256		/* Rows.                        */
-#define	NCOL	256		/* Columns.                     */
+#define	NCOL	320		/* Columns.                     */
 
 /*
  * Termcap function keys.  The last 10 keys correspond to the
