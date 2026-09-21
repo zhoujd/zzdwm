@@ -467,6 +467,44 @@ getfilename (char *prompt, char *buf, int nbuf)
           return ABORT;
         }
 
+      /* Ctrl+Y (0x19): Paste/Yank from kill buffer into filename prompt */
+      else if (c == CCHR ('Y') || c == 0x19)
+        {
+          int kc;
+
+          krewind ();
+
+          while ((kc = kgetc ()) >= 0)
+            {
+              /* Stop on newlines to prevent invalid path strings */
+              if (kc == '\r' || kc == '\n')
+                break;
+
+              if (cpos < nbuf - 1)
+                {
+                  buf[cpos++] = (char)kc;
+                  buf[cpos] = '\0';
+
+                  /* Handle control character visual representation */
+                  if ((kc < ' ') && (kc != '\n'))
+                    {
+                      outstring ("^");
+                      ++ttcol;
+                      kc ^= 0x40;
+                    }
+
+                  ttputc (kc);
+                  ++ttcol;
+                }
+              else
+                {
+                  ttbeep ();
+                  break;
+                }
+            }
+          ttflush ();
+        }
+
       /* Ctrl+Q (0x11): quote */
       else if (c == CCHR ('Q') || c == 0x11)
         {
