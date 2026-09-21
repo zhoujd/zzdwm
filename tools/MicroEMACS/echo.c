@@ -773,6 +773,42 @@ eread (const char *fp, char *buf, int nbuf, int flag, va_list ap)
             }
           break;
 
+        case 0x19:    /* C-y: Paste/Yank from kill buffer into minibuffer */
+          {
+            int kc;
+
+            /* Reset read pointer to the start of the flat kill buffer */
+            krewind ();
+
+            while ((kc = kgetc ()) >= 0)
+              {
+                /* Stop at newlines to keep minibuffer prompts single-line */
+                if (kc == '\r' || kc == '\n')
+                  break;
+
+                ulen = uputc (kc, ubuf);
+
+                if (buflen + ulen >= nbuf)
+                  {
+                    ettbeep ();
+                    break;
+                  }
+
+                /* Make room for inserted bytes if cursor is not at end-of-line */
+                if (cpos < buflen)
+                  memmove (&buf[cpos + ulen], &buf[cpos], buflen - cpos);
+
+                memcpy (&buf[cpos], ubuf, ulen);
+                cpos += ulen;
+                buflen += ulen;
+
+                einsertc (kc);
+              }
+
+            ettflush ();
+            break;
+          }
+
         case 0x0D:		/* Return, done.        */
           if ((flag & EFFILE) != 0)
             while (buflen > 0 && buf[buflen - 1] == ' ')

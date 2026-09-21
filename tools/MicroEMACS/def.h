@@ -793,6 +793,8 @@ int lreplace (int plen, const char *st, int f);
 int kinsert (const char *s, int n);     /* Insert text in kill buffer   */
 void kdelete (void);                    /* Delete text in kill buffer   */
 int lcmp (LINE *lp1, LINE *lp2);        /* Compare two line pointers    */
+void krewind (void);                    /* Reset read pointer to start  */
+int kgetc (void);                       /* Get next from kill buffer    */
 
 /*
  * Defined by "main.c".
