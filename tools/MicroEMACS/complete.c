@@ -416,20 +416,6 @@ collect_matches (const char *prefix,
   return match_count;
 }
 
-/* Move terminal cursor left N display columns */
-static void
-mvleft (int *cpos, char *buf)
-{
-  outstring ("\b");
-  --ttcol;
-  (*cpos)--;
-  if ((unsigned char)buf[*cpos] < 0x20)
-    {
-      outstring ("\b");
-      --ttcol;
-    }
-}
-
 /*
  * Basic filename completion
  */
@@ -485,7 +471,16 @@ getfilename (char *prompt, char *buf, int nbuf)
       else if (c == CCHR ('A') || c == 0x01)
         {
           while (cpos > 0)
-            mvleft (&cpos, buf);
+            {
+              outstring ("\b");
+              --ttcol;
+              cpos--;
+              if (buf[cpos] < 0x20)
+                {
+                  outstring ("\b");
+                  --ttcol;
+                }
+            }
           ttflush ();
         }
 
@@ -507,25 +502,34 @@ getfilename (char *prompt, char *buf, int nbuf)
           ttflush ();
         }
 
-      /* Ctrl+K (0x0B): Kill/Erase to end of line */
+      /* Ctrl+K (0x0B): Kill to end of line */
       else if (c == CCHR ('K') || c == 0x0B)
         {
-          int save_pos = cpos;
-
-          /* Wipe trailing characters visually */
-          while (buf[cpos] != '\0')
-            {
-              outstring (" ");
-              if (buf[cpos++] < 0x20)
-                outstring (" ");
-            }
-
-          /* Rewind cursor back to kill point */
-          while (cpos > save_pos)
-            mvleft (&cpos, buf);
-
           buf[cpos] = '\0';
+          tteeol ();
           ttflush ();
+        }
+
+      /* Ctrl+U (0x15): Kill whole line (matching your eread) */
+      else if (c == CCHR ('U') || c == 0x15)
+        {
+          if (cpos > 0 || buf[0] != '\0')
+            {
+              while (cpos > 0)
+                {
+                  outstring ("\b");
+                  --ttcol;
+                  cpos--;
+                  if (buf[cpos] < 0x20)
+                    {
+                      outstring ("\b");
+                      --ttcol;
+                    }
+                }
+              buf[0] = '\0';
+              tteeol ();
+              ttflush ();
+            }
         }
 
       /* Ctrl+Y (0x19): Paste/Yank from kill buffer into filename prompt */
@@ -762,29 +766,6 @@ getfilename (char *prompt, char *buf, int nbuf)
               buf[cpos] = '\0';
               ttflush ();
             }
-        }
-
-      /* Kill line (^U) */
-      else if (c == 0x15)
-        {
-          while (cpos != 0)
-            {
-              outstring ("\b \b");
-              --ttcol;
-
-              if (buf[--cpos] < 0x20)
-                {
-                  outstring ("\b \b");
-                  --ttcol;
-                }
-              if (buf[cpos] == '\n')
-                {
-                  outstring ("\b\b  \b\b");
-                  ttcol -= 2;
-                }
-            }
-          buf[0] = '\0';
-          ttflush ();
         }
 
       /* TAB / Space / '?' — Filename & Directory completion */
