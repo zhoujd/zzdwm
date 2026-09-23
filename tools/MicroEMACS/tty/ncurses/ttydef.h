@@ -27,7 +27,7 @@
 #define IGNORE_TERMCAP		/* Ignore termcap defs. of func. keys   */
 
 /* Modern terminal limits for 4K / Ultrawide displays */
-#define	NROW	256		/* Rows.                        */
+#define	NROW	320		/* Rows.                        */
 #define	NCOL	320		/* Columns.                     */
 
 /*

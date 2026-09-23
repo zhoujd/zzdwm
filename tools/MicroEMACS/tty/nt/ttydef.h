@@ -38,7 +38,7 @@
 #define MEMMAP	1			/* Not memory mapped video.	*/
 
 /* Modern terminal limits for 4K / Ultrawide displays */
-#define NROW    256                     /* Max supported rows   */
+#define NROW    320                     /* Max supported rows   */
 #define NCOL    320                     /* Max supported cols   */
 
 /*
