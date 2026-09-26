@@ -1262,16 +1262,18 @@ recreate(const char *args[]) {
 	create(pargs);
 	free(cwd);
 	if (args && args[0] && !strcmp(args[0], "1")) {
-		zoom(NULL);
-		focusnext(NULL);
+		for (int i = 0; i < screen.nmaster; i++) {
+			swapnext(NULL);
+		}
 	}
 }
 
 static void
 cstack(const char *args[]) {
 	create(args);
-	zoom(NULL);
-	focusnext(NULL);
+	for (int i = 0; i < screen.nmaster; i++) {
+		swapnext(NULL);
+	}
 }
 
 static void
