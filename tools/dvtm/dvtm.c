@@ -1254,25 +1254,19 @@ create(const char *args[]) {
 
 static void
 recreate(const char *args[]) {
-	bool is_stack;
-
 	if (!sel)
 		return;
-	if (sel->order > screen.nmaster)
-		is_stack = true;
-	else
-		is_stack = false;
+	bool is_stack = (sel->order > screen.nmaster) ? true : false;
 	killclient((const char* []){ NULL });
 	char *cwd = getcwd_by_pid(sel);
 	const char *pargs[3] = { NULL, NULL, cwd };
 	create(pargs);
 	free(cwd);
 	if (args && args[0] && !strcmp(args[0], "1")) {
-		for (int i = 0; i < screen.nmaster; i++) {
+		int nshift = is_stack ? screen.nmaster : screen.nmaster + 1;
+		for (int i = 0; i < nshift; i++) {
 			swapnext(NULL);
 		}
-		if (!is_stack)
-			swapnext(NULL);
 	}
 }
 
