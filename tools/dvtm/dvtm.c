@@ -1254,8 +1254,14 @@ create(const char *args[]) {
 
 static void
 recreate(const char *args[]) {
+	bool is_stack;
+
 	if (!sel)
 		return;
+	if (sel->order > screen.nmaster)
+		is_stack = true;
+	else
+		is_stack = false;
 	killclient((const char* []){ NULL });
 	char *cwd = getcwd_by_pid(sel);
 	const char *pargs[3] = { NULL, NULL, cwd };
@@ -1265,6 +1271,8 @@ recreate(const char *args[]) {
 		for (int i = 0; i < screen.nmaster; i++) {
 			swapnext(NULL);
 		}
+		if (!is_stack)
+			swapnext(NULL);
 	}
 }
 
