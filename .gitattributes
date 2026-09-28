@@ -1,0 +1,13 @@
+# Handle line endings automatically for text files
+* text=auto eol=lf
+
+# Explicitly declare text files to always use LF on checkout
+*.sh text eol=lf
+
+# Explicitly declare files to always use CRLF
+*.bat text eol=crlf
+
+# Denote images, PDFs, and audio as binary data
+*.png binary
+*.jpg binary
+*.pdf binary
