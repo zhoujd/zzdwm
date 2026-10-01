@@ -725,7 +725,8 @@ int filewrite (int f, int n, int k);    /* Write a file                 */
 int filesave (int f, int n, int k);     /* Save current file            */
 int filename (int f, int n, int k);     /* Adjust file name             */
 int setsavetabs (int f, int n, int k);  /* Set tab save flag            */
-int setnewline (int f, int n, int k);   /* Set auto newline flag        */
+int autonewline (int f, int n, int k);  /* Set auto newline flag        */
+int setnewline (int f, int n, int k);   /* Set newline (LF) flag        */
 int findfile (int f, int n, int k);     /* Find file                    */
 int viewfile (int f, int n, int k);     /* View file                    */
 

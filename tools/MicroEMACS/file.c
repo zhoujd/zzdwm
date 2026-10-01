@@ -904,12 +904,23 @@ setsavetabs (int f, int n, int k)
 }
 
 /*
- * Set auto add newline flag.
+ * Auto add newline flag.
+ */
+int
+autonewline (int f, int n, int k)
+{
+  autonl = !autonl;
+  eprintf ("[Auto newline now %s]", autonl ? "ON" : "OFF");
+  return (TRUE);
+}
+
+/*
+ * Set newline flag.
  */
 int
 setnewline (int f, int n, int k)
 {
-  autonl = !autonl;
-  eprintf ("[Auto newline now %s]", autonl ? "ON" : "OFF");
+  lflag = !lflag;
+  eprintf ("[LF newline now %s]", lflag ? "ON" : "OFF");
   return (TRUE);
 }

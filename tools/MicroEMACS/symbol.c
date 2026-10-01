@@ -237,6 +237,10 @@ KEY key[] = {
 #endif
   {KMETA | '!',         reposition,        "reposition-window"},
   {KMETA | '@',         filename,          "set-file-name"},
+#ifndef MINGW
+  {KMETA | '#',         spellword,         "spell-word"},
+#endif
+  {KMETA | '$',         setnewline,        "set-newline"},
   {KMETA | '>',         gotoeob,           "goto-eob"},
   {KMETA | '<',         gotobob,           "goto-bob"},
   {KMETA | '[',         gotobop,           "back-paragraph"},
@@ -244,9 +248,6 @@ KEY key[] = {
   {KMETA | '+',         indentregion,      "indent-region"},
   {KMETA | '/',         regrepl,           "reg-replace"},
   {KMETA | '?',         regqueryrepl,      "reg-query-replace"},
-#ifndef MINGW
-  {KMETA | '$',         spellword,         "spell-word"},
-#endif
   {KMETA | '~',         unmark,            "umark-buffer"},
   {KMETA | 'B',         backword,          "back-word"},
   {KMETA | 'C',         capword,           "cap-word"},
@@ -288,7 +289,7 @@ KEY key[] = {
   {-1,                  displaymessage,    "display-message"},
   {-1,                  listbuffers,       "display-buffers"},
   {-1,                  showvisable,       "display-visable"},
-  {-1,                  setnewline,        "set-newline"},
+  {-1,                  autonewline,       "auto-newline"},
   {-1,                  clearmark,         "clear-mark"},
   {-1,                  redo,              "redo"},
   {-1,                  eecho,             "echo"},
