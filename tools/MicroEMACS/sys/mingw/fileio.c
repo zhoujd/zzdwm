@@ -270,7 +270,12 @@ ffputline (const char *buf, int nbuf, int nl)
 {
   putbytes (buf, nbuf);
   if ((status >= 0) && nl)
-    putbytes ("\r\n", 2);
+    {
+      if (lflag)
+        putbytes ("\n", 1);
+      else
+        putbytes ("\r\n", 2);
+    }
   if (status < 0)
     {
       eprintf ("File write error");
@@ -344,7 +349,7 @@ ffgetline (char **bufp, int *nbytes)
           break;
         }
       if (c == EOF || c == '\n')	/* end of line/file?    */
-	break;
+        break;
 
       /*  If the buffer is too small, enlarge it.
        */

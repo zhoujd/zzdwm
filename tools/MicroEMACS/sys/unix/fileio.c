@@ -110,8 +110,14 @@ ffputline (const char *buf, int nbuf, int nl)
 
   for (i = 0; i < nbuf; ++i)
     putc (buf[i] & 0xFF, ffp);
-  if (ferror (ffp) == FALSE && nl)
+  if (ferror (ffp) == FALSE && nl) {
+    if (!lflag)
+      {
+        putc ('\r', ffp);
+      }
     putc ('\n', ffp);
+  }
+
   if (ferror (ffp) != FALSE)
     {
       eprintf ("Write I/O error");

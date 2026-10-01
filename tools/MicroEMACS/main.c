@@ -105,6 +105,7 @@ int savetabs = TRUE;		/* True if tabs are preserved   */
 int autonl = TRUE;		/* True if auto add newline     */
 char *srchstr = NULL;		/* Initial search string passed */
 char *targetdir = NULL;	/* Target work directory passed */
+int lflag = TRUE;		/* True if Unix NewLine (LF) used */
 
 static int nbuf;		/* number of buffers    */
 
@@ -122,7 +123,7 @@ void
 usage (void)
 {
   fprintf (stderr,
-           "usage: me [-234" OPT_BACKUP "mNrTuxz] [-c path] [-d path] [-g line] [-p profile] [-s string] [-t size]\n"
+           "usage: me [-234" OPT_BACKUP "LmNrTuxz] [-c path] [-d path] [-g line] [-p profile] [-s string] [-t size]\n"
            "          [+[line]] [file[:line[:column]] ...] [file://path[:line[:column]] ...]\n");
 }
 
@@ -193,6 +194,9 @@ main (int argc, char *argv[])
                   gotoflag = TRUE;
                   line = atoi (argv[n]);
                 }
+              break;
+            case 'L':
+              lflag = FALSE;
               break;
             case 'm':
               mouse = TRUE;

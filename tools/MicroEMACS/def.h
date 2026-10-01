@@ -554,6 +554,7 @@ extern int tabsize;
 extern int savetabs;
 extern int autonl;
 extern int tabmask;
+extern int lflag;
 
 /*
  * Internal defined functions.
