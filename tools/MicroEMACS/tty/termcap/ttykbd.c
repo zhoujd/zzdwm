@@ -120,23 +120,23 @@ char *keystrings[32] = {
  */
 #if SUNOS
 char *keycodes[32] = {
-/*80*/ NULL,        "\033OA", "\033OB",   "\033OD",
-/*84*/ "\033OC",    "\033[5~", "\033[6~", "\033O\377",
-/*88*/ "\033O\020", "\033[2~", NULL,      "\033OP",
-/*8c*/ "\033OQ",    "\033OR", "\033OS",   "\033OT",
-  "\033On", "\033Os", "\033Ow",   "\033Ox",
-  "\033Oy", NULL,     NULL,       NULL,
-  NULL,     NULL, NULL, NULL,
-  NULL,     NULL, NULL, NULL
+  NULL,        "\033OA",  "\033OB",  "\033OD",    /*80*/
+  "\033OC",    "\033[5~", "\033[6~", "\033O\377", /*84*/
+  "\033O\020", "\033[2~", NULL,      "\033OP",    /*88*/
+  "\033OQ",    "\033OR",  "\033OS",  "\033OT",    /*8c*/
+  "\033On",    "\033Os",  "\033Ow",  "\033Ox",
+  "\033Oy",    NULL,      NULL,      NULL,
+  NULL,        NULL,      NULL,      NULL,
+  NULL,        NULL,      NULL,      NULL
 };
 
 #else
 
 char *keycodes[32] = {
-/*80*/ NULL,     "\033OA",  "\033OB",  "\033OD",
-/*84*/ "\033OC", "\033[5~", "\033[6~", "\033OH",
-/*88*/ "\033OF", "\033[2~", NULL,      "\033OP",
-/*8c*/ "\033OQ", "\033OR", "\033OS",   "\033[15~",
+  NULL,       "\033OA",   "\033OB",   "\033OD",   /*80*/
+  "\033OC",   "\033[5~",  "\033[6~",  "\033OH",   /*84*/
+  "\033OF",   "\033[2~",  NULL,       "\033OP",   /*88*/
+  "\033OQ",   "\033OR",   "\033OS",   "\033[15~", /*8c*/
   "\033[17~", "\033[18~", "\033[19~", "\033[20~",
   "\033[21~", "\033[23~", "\033[24~", "\033[25~",
   "\033[26~", "\033[28~", "\033[29~", "\033[31~",
@@ -164,9 +164,9 @@ char *keystrings[] = {
  * Type declarations for data structure we
  * use to parse for function key sequences
  */
-#define	NODE		0	/* internal node                */
-#define	VALUE		1	/* internal key code value      */
-#define SENTINEL	2	/* sentinel value               */
+#define NODE     0  /* internal node                */
+#define VALUE    1  /* internal key code value      */
+#define SENTINEL 2  /* sentinel value               */
 
 typedef struct trienode
 {
@@ -193,7 +193,6 @@ static TRIE talloc (void);
 static TRIE tinsert (const char *kstring, KEY kcode, TRIE first);
 static int parse (TRIE first);
 static int parse_or_mouse (TRIE first);
-
 
 /*
  * Get keyboard character, and interpret

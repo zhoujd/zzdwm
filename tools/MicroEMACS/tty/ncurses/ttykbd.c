@@ -61,14 +61,14 @@ char *keystrings[32] = {
  * These keys map into the MicroEMACS internal key values K01 to K1F.
  */
 int specmap[32] = {
-  0,		KEY_UP,		KEY_DOWN,	KEY_LEFT,
-  KEY_RIGHT,	KEY_PPAGE,	KEY_NPAGE,	KEY_HOME,
-  KEY_END,	KEY_IC,		KEY_DC,		KEY_F(1),
-  KEY_F(2),	KEY_F(3),	KEY_F(4),	KEY_F(5),
-  KEY_F(6),	KEY_F(7),	KEY_F(8),	KEY_F(9),
-  KEY_F(10),	KEY_F(11),	KEY_F(12),	KEY_F(13),
-  KEY_F(14),	KEY_F(15),	KEY_F(16),	KEY_F(17),
-  KEY_F(18),	KEY_F(19),	KEY_F(20),	0
+  0,         KEY_UP,    KEY_DOWN,  KEY_LEFT,
+  KEY_RIGHT, KEY_PPAGE, KEY_NPAGE, KEY_HOME,
+  KEY_END,   KEY_IC,    KEY_DC,    KEY_F(1),
+  KEY_F(2),  KEY_F(3),  KEY_F(4),  KEY_F(5),
+  KEY_F(6),  KEY_F(7),  KEY_F(8),  KEY_F(9),
+  KEY_F(10), KEY_F(11), KEY_F(12), KEY_F(13),
+  KEY_F(14), KEY_F(15), KEY_F(16), KEY_F(17),
+  KEY_F(18), KEY_F(19), KEY_F(20), 0
 };
 
 /*
@@ -114,32 +114,32 @@ getkbd (void)
 void
 ttykeymapinit (void)
 {
-  keydup (KUP,		"back-line");
-  keydup (KDOWN,	"forw-line");
-  keydup (KLEFT,	"back-char");
-  keydup (KRIGHT,	"forw-char");
-  keydup (KCTRL|KLEFT,	"back-word");
-  keydup (KCTRL|KRIGHT,	"forw-word");
-  keydup (KPGUP,	"back-page");
-  keydup (KPGDN,	"forw-page");
-  keydup (KCTRL|KPGUP,	"up-window");
-  keydup (KCTRL|KPGDN,	"down-window");
-  keydup (KHOME,	"goto-bol");
-  keydup (KEND,		"goto-eol");
-  keydup (KCTRL|KHOME,	"goto-bob");
-  keydup (KCTRL|KEND,	"goto-eob");
-  keydup (KINS,		"set-overstrike");
-  keydup (KDEL,		"forw-del-char");
-  keydup (KF1,		"help");
-  keydup (KF2,		"file-save");
-  keydup (KF3,		"file-visit");
-  keydup (KF4,		"quit");
-  keydup (KF5,		"revert-buffer");
-  keydup (KF6,		"undo");
-  keydup (KF7,		"redo");
-  keydup (KF8,		"forw-buffer");
-  keydup (KF9,		"search-again");
-  keydup (KF10,		"only-window");
-  keydup (KF11,		"find-cscope");
-  keydup (KF12,		"next-cscope");
+  keydup (KUP,    "back-line");
+  keydup (KDOWN,  "forw-line");
+  keydup (KLEFT,  "back-char");
+  keydup (KRIGHT, "forw-char");
+  keydup (KCTRL|KLEFT,  "back-word");
+  keydup (KCTRL|KRIGHT, "forw-word");
+  keydup (KPGUP,  "back-page");
+  keydup (KPGDN,  "forw-page");
+  keydup (KCTRL|KPGUP,  "up-window");
+  keydup (KCTRL|KPGDN,  "down-window");
+  keydup (KHOME,  "goto-bol");
+  keydup (KEND,   "goto-eol");
+  keydup (KCTRL|KHOME, "goto-bob");
+  keydup (KCTRL|KEND,  "goto-eob");
+  keydup (KINS,  "set-overstrike");
+  keydup (KDEL,  "forw-del-char");
+  keydup (KF1,   "help");
+  keydup (KF2,   "file-save");
+  keydup (KF3,   "file-visit");
+  keydup (KF4,   "quit");
+  keydup (KF5,   "revert-buffer");
+  keydup (KF6,   "undo");
+  keydup (KF7,   "redo");
+  keydup (KF8,   "forw-buffer");
+  keydup (KF9,   "search-again");
+  keydup (KF10,  "only-window");
+  keydup (KF11,  "find-cscope");
+  keydup (KF12,  "next-cscope");
 }

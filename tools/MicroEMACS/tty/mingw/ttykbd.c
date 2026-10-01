@@ -25,14 +25,14 @@
  * the key name routine in "kbd.c".
  */
 char *keystrings[32] = {
-  NULL,		"Up",		"Down",		"Left",
-  "Right",	"PgUp",		"PgDn",		"Home",
-  "End",	"Insert",	"Delete",	"F1",
-  "F2",		"F3",		"F4",		"F5",
-  "F6",		"F7",		"F8",		"F9",
-  "F10",	"S-F1",		"S-F2",		"S-F3",
-  "S-F4",	"S-F5",		"S-F6",		"S-F7",
-  "S-F8",	"S-F9",		"F11",		"F12"
+  NULL,    "Up",     "Down",   "Left",
+  "Right", "PgUp",   "PgDn",   "Home",
+  "End",   "Insert", "Delete", "F1",
+  "F2",    "F3",     "F4",     "F5",
+  "F6",    "F7",     "F8",     "F9",
+  "F10",   "S-F1",   "S-F2",   "S-F3",
+  "S-F4",  "S-F5",   "S-F6",   "S-F7",
+  "S-F8",  "S-F9",   "F11",    "F12"
 };
 
 /*
@@ -44,14 +44,14 @@ char *keystrings[32] = {
  * These keys map into the MicroEMACS internal key values K01 to K1F.
  */
 int specmap[32] = {
-  0,		0x148,		0x150,		0x14b,
-  0x14d,	0x149,		0x151,		0x147,
-  0x14f,	0x152,		0x153,		0x13b,
-  0x13c,	0x13d,		0x13e,		0x13f,
-  0x140,	0x141,		0x142,		0x143,
-  0x144,	0x154,		0x155,		0x156,
-  0x157,	0x158,		0x159,		0x15a,
-  0x15b,	0x15c,		0x185,		0x186
+  0,     0x148, 0x150, 0x14b,
+  0x14d, 0x149, 0x151, 0x147,
+  0x14f, 0x152, 0x153, 0x13b,
+  0x13c, 0x13d, 0x13e, 0x13f,
+  0x140, 0x141, 0x142, 0x143,
+  0x144, 0x154, 0x155, 0x156,
+  0x157, 0x158, 0x159, 0x15a,
+  0x15b, 0x15c, 0x185, 0x186
 };
 
 /* This table gives the values of the special function keys when modified
@@ -59,11 +59,11 @@ int specmap[32] = {
  * by ALT and are not in this table.  This is a BIOS limitation.
  */
 int altmap[21] = {
-  0,		0,		0,		0,
-  0,		0,		0,		0,
-  0,		0,		0,		0x168,
-  0x169,	0x16a,		0x16b,		0x16c,
-  0x16d,	0x16e,		0x16f,		0x170,
+  0,     0,     0,     0,
+  0,     0,     0,     0,
+  0,     0,     0,     0x168,
+  0x169, 0x16a, 0x16b, 0x16c,
+  0x16d, 0x16e, 0x16f, 0x170,
   0x171
 };
 
@@ -72,11 +72,11 @@ int altmap[21] = {
  * by CTRL and are not in this table.  This is a BIOS limitation.
  */
 int ctrlmap[21] = {
-  0,		0,		0,		0x173,
-  0x174,	0x184,		0x176,		0x177,
-  0x175,	0,		0,		0x15e,
-  0x15f,	0x160,		0x161,		0x162,
-  0x163,	0x164,		0x165,		0x166,
+  0,     0,     0,     0x173,
+  0x174, 0x184, 0x176, 0x177,
+  0x175, 0,     0,     0x15e,
+  0x15f, 0x160, 0x161, 0x162,
+  0x163, 0x164, 0x165, 0x166,
   0x167
 };
 
@@ -120,7 +120,7 @@ getkbd (void)
 
   c = ttgetc ();
   if (c < 0x100)			/* normal key?		*/
-          return (c);			/* just return it	*/
+    return (c);			/* just return it	*/
 
   for (i = 0; i < 32; i++)		/* search SPECIAL map	*/
     if (c == specmap[i])		/* found it?		*/
@@ -159,32 +159,32 @@ ttykeymapinit (void)
   register SYMBOL	*sp;
   register int	i;
 
-  keydup (KUP,		"back-line");
-  keydup (KDOWN,	"forw-line");
-  keydup (KLEFT,	"back-char");
-  keydup (KRIGHT,	"forw-char");
-  keydup (KCTRL|KLEFT,	"back-word");
-  keydup (KCTRL|KRIGHT,	"forw-word");
-  keydup (KPGUP,	"back-page");
-  keydup (KPGDN,	"forw-page");
-  keydup (KCTRL|KPGUP,	"up-window");
-  keydup (KCTRL|KPGDN,	"down-window");
-  keydup (KHOME,	"goto-bol");
-  keydup (KEND,		"goto-eol");
-  keydup (KCTRL|KHOME,	"goto-bob");
-  keydup (KCTRL|KEND,	"goto-eob");
-  keydup (KINS,		"set-overstrike");
-  keydup (KDEL,		"forw-del-char");
-  keydup (KF1,		"help");
-  keydup (KF2,		"file-save");
-  keydup (KF3,		"file-visit");
-  keydup (KF4,		"quit");
-  keydup (KF5,		"revert-buffer");
-  keydup (KF6,		"undo");
-  keydup (KF7,		"redo");
-  keydup (KF8,		"forw-buffer");
-  keydup (KF9,		"search-again");
-  keydup (KF10,		"only-window");
+  keydup (KUP,    "back-line");
+  keydup (KDOWN,  "forw-line");
+  keydup (KLEFT,  "back-char");
+  keydup (KRIGHT, "forw-char");
+  keydup (KCTRL|KLEFT,  "back-word");
+  keydup (KCTRL|KRIGHT, "forw-word");
+  keydup (KPGUP, "back-page");
+  keydup (KPGDN, "forw-page");
+  keydup (KCTRL|KPGUP, "up-window");
+  keydup (KCTRL|KPGDN, "down-window");
+  keydup (KHOME, "goto-bol");
+  keydup (KEND,  "goto-eol");
+  keydup (KCTRL|KHOME, "goto-bob");
+  keydup (KCTRL|KEND,  "goto-eob");
+  keydup (KINS,   "set-overstrike");
+  keydup (KDEL,   "forw-del-char");
+  keydup (KF1,    "help");
+  keydup (KF2,    "file-save");
+  keydup (KF3,    "file-visit");
+  keydup (KF4,    "quit");
+  keydup (KF5,    "revert-buffer");
+  keydup (KF6,    "undo");
+  keydup (KF7,    "redo");
+  keydup (KF8,    "forw-buffer");
+  keydup (KF9,    "search-again");
+  keydup (KF10,   "only-window");
 
   /*
    * Bind all GR positions that correspond

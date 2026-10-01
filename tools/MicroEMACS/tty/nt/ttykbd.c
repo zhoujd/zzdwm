@@ -47,14 +47,14 @@
  * the key name routine in "kbd.c".
  */
 char *keystrings[32] = {
-  NULL,		"Up",		"Down",		"Left",
-  "Right",	"PgUp",		"PgDn",		"Home",
-  "End",	"Insert",	"Delete",	"F1",
-  "F2",		"F3",		"F4",		"F5",
-  "F6",		"F7",		"F8",		"F9",
-  "F10",	"S-F1",		"S-F2",		"S-F3",
-  "S-F4",	"S-F5",		"S-F6",		"S-F7",
-  "S-F8",	"S-F9",		"S-F10",	NULL
+  NULL,    "Up",     "Down",   "Left",
+  "Right", "PgUp",   "PgDn",   "Home",
+  "End",   "Insert", "Delete", "F1",
+  "F2",    "F3",     "F4",     "F5",
+  "F6",    "F7",     "F8",     "F9",
+  "F10",   "S-F1",   "S-F2",   "S-F3",
+  "S-F4",  "S-F5",   "S-F6",   "S-F7",
+  "S-F8",  "S-F9",   "S-F10",  NULL
 };
 
 /*
@@ -66,14 +66,14 @@ char *keystrings[32] = {
  * These keys map into the MicroEMACS internal key values K01 to K1F.
  */
 int specmap[32] = {
-  0,		0x148,		0x150,		0x14b,
-  0x14d,	0x149,		0x151,		0x147,
-  0x14f,	0x152,		0x153,		0x13b,
-  0x13c,	0x13d,		0x13e,		0x13f,
-  0x140,	0x141,		0x142,		0x143,
-  0x144,	0x154,		0x155,		0x156,
-  0x157,	0x158,		0x159,		0x15a,
-  0x15b,	0x15c,		0x15d,		0
+  0,       0x148,   0x150,    0x14b,
+  0x14d,   0x149,   0x151,    0x147,
+  0x14f,   0x152,   0x153,    0x13b,
+  0x13c,   0x13d,   0x13e,    0x13f,
+  0x140,   0x141,   0x142,    0x143,
+  0x144,   0x154,   0x155,    0x156,
+  0x157,   0x158,   0x159,    0x15a,
+  0x15b,   0x15c,   0x15d,    0
 };
 
 /* This table gives the values of the special function keys when modified
@@ -81,11 +81,11 @@ int specmap[32] = {
  * by ALT and are not in this table.  This is a BIOS limitation.
  */
 int altmap[21] = {
-  0,		0,		0,		0,
-  0,		0,		0,		0,
-  0,		0,		0,		0x168,
-  0x169,	0x16a,		0x16b,		0x16c,
-  0x16d,	0x16e,		0x16f,		0x170,
+  0,      0,      0,      0,
+  0,      0,      0,      0,
+  0,      0,      0,      0x168,
+  0x169,  0x16a,  0x16b,  0x16c,
+  0x16d,  0x16e,  0x16f,  0x170,
   0x171
 };
 
@@ -94,11 +94,11 @@ int altmap[21] = {
  * by CTRL and are not in this table.  This is a BIOS limitation.
  */
 int ctrlmap[21] = {
-  0,		0,		0,		0x173,
-  0x174,	0x184,		0x176,		0x177,
-  0x175,	0,		0,		0x15e,
-  0x15f,	0x160,		0x161,		0x162,
-  0x163,	0x164,		0x165,		0x166,
+  0,      0,      0,      0x173,
+  0x174,  0x184,  0x176,  0x177,
+  0x175,  0,      0,      0x15e,
+  0x15f,  0x160,  0x161,  0x162,
+  0x163,  0x164,  0x165,  0x166,
   0x167
 };
 

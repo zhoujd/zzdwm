@@ -51,7 +51,7 @@
 
 #include "def.h"
 
-#define BEL     0x07               /* BEL character.               */
+#define BEL 0x07               /* BEL character.               */
 
 static int ttattr;                 /* IBM PC screen attributes     */
 static int attinv = 0x70;          /* attributes for inverse video */

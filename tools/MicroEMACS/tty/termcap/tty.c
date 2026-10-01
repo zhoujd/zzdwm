@@ -51,8 +51,8 @@
 #include "def.h"
 #include <termcap.h>
 
-#define	BEL	0x07		/* BEL character.               */
-#define	LF	0x0A		/* Line feed.                   */
+#define	BEL 0x07    /* BEL character.               */
+#define	LF  0x0A    /* Line feed.                   */
 
 extern int ttrow;
 extern int ttcol;
@@ -60,12 +60,12 @@ extern int tttop;
 extern int ttbot;
 extern int tthue;
 
-int tceeol;			/* Costs are set later */
+int tceeol;         /* Costs are set later */
 int tcinsl[NROW + 1];
 int tcdell[NROW + 1];
-int xterm_mouse;		/* Are we doing mouse control on an xterm? */
+int xterm_mouse;    /* Are we doing mouse control on an xterm? */
 
-static int insdel;		/* Do we have both insert & delete line? */
+static int insdel;  /* Do we have both insert & delete line? */
 
 #define TCAPSLEN 1024
 
@@ -75,26 +75,26 @@ char tcapbuf[TCAPSLEN];
  * names unless you have a non-standard termlib.
  */
 
-int LI;				/* standard # lines */
+int LI;     /* standard # lines */
 char PC, *CM, *CE, *UP, *BC, *IM,	/* insert mode */
- *IC,				/* insert a single space */
- *EI,				/* end insert mode */
- *DC, *AL,			/* add line */
- *DL,				/* del line */
- *pAL,				/* parameterized add line */
- *pDL,				/* parameterized delete line */
- *TI,				/* term init -- start using cursor motion */
- *TE,				/* term end --- end using cursor motion */
- *SO, *SE, *CD, *CS,		/* set scroll region                    */
- *SR;				/* back index (used with scroll region  */
+ *IC,       /* insert a single space */
+ *EI,       /* end insert mode */
+ *DC, *AL,  /* add line */
+ *DL,       /* del line */
+ *pAL,      /* parameterized add line */
+ *pDL,      /* parameterized delete line */
+ *TI,       /* term init -- start using cursor motion */
+ *TE,       /* term end --- end using cursor motion */
+ *SO, *SE, *CD, *CS,  /* set scroll region                    */
+ *SR;       /* back index (used with scroll region  */
 #ifdef XKEYS
-char *K[NFKEYS],		/* other function key codes             */
- *L[NFKEYS],			/* labels for other functions keys      */
- *KS, *KE,			/* enter keypad mode, exit keypad mode  */
- *KH, *KU, *KD, *KL, *KR;	/* home, arrow keys                    */
+char *K[NFKEYS],  /* other function key codes             */
+ *L[NFKEYS],      /* labels for other functions keys      */
+ *KS, *KE,        /* enter keypad mode, exit keypad mode  */
+ *KH, *KU, *KD, *KL, *KR; /* home, arrow keys                    */
 #endif
-int SG;				/* number of glitches, 0 for invisable, -1 for none     */
-        /* (yes virginia, there are terminals with invisible glitches)  */
+int SG;     /* number of glitches, 0 for invisable, -1 for none     */
+            /* (yes virginia, there are terminals with invisible glitches)  */
 
 /*
  * Initialize the terminal when the editor
@@ -113,8 +113,8 @@ ttinit (void)
 {
   char *t, *p;
   char *tv_stype;
-  int cinsl;			/* cost of inserting a line     */
-  int cdell;			/* cost of deleting a line      */
+  int cinsl;      /* cost of inserting a line     */
+  int cdell;      /* cost of deleting a line      */
   int i;
 #ifdef XKEYS
   char kname[3], lname[3];

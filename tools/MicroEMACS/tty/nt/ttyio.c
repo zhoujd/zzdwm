@@ -101,7 +101,6 @@ ttopen()
   SetConsoleCursorInfo(hout, &cinfo);
 }
 
-
 /*
  * Set the tty to the "old" state, i.e., the state
  * it had before we changed it.  Return TRUE if successful,
@@ -113,7 +112,6 @@ ttold (void)
 {
   return SetConsoleMode(hin, conmode) != 0;
 }
-
 
 /*
  * Set the tty to the "new" state, i.e., the state
