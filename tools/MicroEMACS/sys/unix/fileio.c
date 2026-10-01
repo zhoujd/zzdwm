@@ -164,6 +164,22 @@ ffgetline (char **bufp, int *nbytes)
               ungetc (c, ffp);	/* put it back          */
               c = '\r';		/* put cr into line     */
             }
+          else
+            {
+              /* Detected \r\n -> switch to CRLF format */
+              lflag = FALSE;
+              break; /* Line completed */
+            }
+        }
+
+      if (c == '\n')
+        {
+          /* Detected bare \n -> switch to LF UNLESS forced to CRLF via -D */
+          if (!dosmode)
+            {
+              lflag = TRUE;
+            }
+          break;
         }
 
       if (c == EOF || c == '\n')	/* end of line/file?    */

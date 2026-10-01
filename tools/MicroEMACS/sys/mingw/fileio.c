@@ -339,6 +339,22 @@ ffgetline (char **bufp, int *nbytes)
               ungetbyte (c);	/* put it back          */
               c = '\r';		/* put cr into line     */
             }
+          else
+            {
+              /* Detected \r\n -> switch to CRLF format */
+              lflag = FALSE;
+              break; /* Line completed */
+            }
+        }
+
+      if (c == '\n')
+        {
+          /* Detected bare \n -> switch to LF UNLESS forced to CRLF via -D */
+          if (!dosmode)
+            {
+              lflag = TRUE;
+            }
+          break;
         }
 
       /*  Check for terminating character or end of file

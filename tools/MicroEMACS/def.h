@@ -555,6 +555,7 @@ extern int savetabs;
 extern int autonl;
 extern int tabmask;
 extern int lflag;
+extern int dosmode;
 
 /*
  * Internal defined functions.

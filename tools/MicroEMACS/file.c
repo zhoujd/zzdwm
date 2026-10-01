@@ -921,6 +921,6 @@ int
 setnewline (int f, int n, int k)
 {
   lflag = !lflag;
-  eprintf ("[LF newline now %s]", lflag ? "ON" : "OFF");
+  eprintf ("[Line ending mode: %s]", lflag ? "LF (Unix)" : "CRLF (DOS)");
   return (TRUE);
 }
