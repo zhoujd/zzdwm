@@ -1,6 +1,6 @@
 #!/bin/sh
 
-name=z1
+name=${name:-"z1"}
 case $TERM in
     dvtm* )
         echo "dvtm $name exists."
