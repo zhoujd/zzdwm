@@ -107,7 +107,6 @@ install_bin() {
         $CORE_ROOT/bin/cscope
         $CORE_ROOT/bin/screen
         $CORE_ROOT/bin/busybox
-        $CORE_ROOT/bin/fileview
         $CORE_ROOT/bin/xxd
         $CORE_ROOT/bin/ref
         $CORE_ROOT/bin/ctags
