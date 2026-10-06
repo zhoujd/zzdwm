@@ -159,9 +159,9 @@ showcpos (int f, int n, int k)
       if (ratio == 0 && cchar != 0)	/* Allow 0% only at the */
         ratio = 1;		/* start of the file.   */
     }
-  eprintf ("[Line %d/%d Row %d/%d Col %d/%d Char %d/%l (%d%%) char = %d (0x%x)]",
+  eprintf ("[Line %d/%d Row %d/%d Col %d/%d Char %d/%l (%d%%) char = %d (0x%x) %s]",
            cline, nline, row, nrow, getcolpos (), getcol (),
-           cchar, nchar, ratio, cbyte, cbyte);
+           cchar, nchar, ratio, cbyte, cbyte, lflag ? "LF": "CRLF");
   return (TRUE);
 }
 
