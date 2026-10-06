@@ -212,8 +212,7 @@ ffwopen (const char *fn)
 {
   char win_fn[1024];
   const char *real_fn = convertpath (fn, win_fn, sizeof (win_fn));
-  if ((ffp =
-       open (real_fn, O_TRUNC | O_WRONLY | O_CREAT | O_BINARY,
+  if ((ffp = open (real_fn, O_TRUNC | O_WRONLY | O_CREAT | O_BINARY,
 	     S_IREAD | S_IWRITE)) < 0)
     {
       eprintf ("Cannot open file for writing");
@@ -234,9 +233,9 @@ ffclose (void)
   if (writing)
     {				/* open for write?      */
       if (zflag)
-	putbytes ("\32", 1);	/* write a CTRLZ        */
+        putbytes ("\32", 1);	/* write a CTRLZ        */
       if (status >= 0)		/* write OK?            */
-	status = write (ffp, cbuf, cindex);	/* flush output */
+        status = write (ffp, cbuf, cindex);	/* flush output */
       close (ffp);
       if (status < cindex)
         {
@@ -244,7 +243,7 @@ ffclose (void)
           return (FIOERR);
         }
       else
-	return (FIOSUC);
+        return (FIOSUC);
     }
   else
     {				/* open for read        */
