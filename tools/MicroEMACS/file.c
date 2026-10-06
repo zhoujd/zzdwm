@@ -704,11 +704,13 @@ writeout (const char *fn)
   register int nline;
   register const char *buf;
   int llen;
+  int need_nl;
 
-  /* Check if the file has no terminating newline.  This is the
-   * case if the last line in the file is not empty.
+  /* Check if the file has no terminating newline.
+   * If the last line is not empty and autonl is enabled (or agreed by user),
+   * append a blank line node to the buffer in memory.
    */
-  lp = lastline (curbp);	/* Last line.           */
+  lp = lastline (curbp);  /* Last line.           */
   if (lp != curbp->b_linep && llength (lp) != 0 && kbdmop == NULL)
     {
       if (autonl == TRUE)
@@ -718,11 +720,11 @@ writeout (const char *fn)
       else
         {
           s = eyesno ("File doesn't end with a newline. Should I add one");
-          if (s == ABORT)		/* Aborted.             */
+          if (s == ABORT)   /* Aborted.             */
             return (FALSE);
         }
       if (s == TRUE)
-        {			/* Add the blank line.  */
+        {     /* Add the blank line to buffer.  */
           if ((fp = lallocx (0)) == NULL)
             return (FALSE);
           fp->l_fp = lp->l_fp;
@@ -733,37 +735,49 @@ writeout (const char *fn)
     }
 
   eprintf ("[Writing...]");
-  if ((s = ffwopen (fn)) != FIOSUC)	/* Open writes message. */
+  if ((s = ffwopen (fn)) != FIOSUC) /* Open writes message. */
     return (FALSE);
-  lp = firstline (curbp);		/* First line.          */
-  nline = 0;				/* Number of lines.     */
+
+  lp = firstline (curbp);   /* First line.          */
+  nline = 0;        /* Number of lines.     */
   while (lp != curbp->b_linep)
     {
       llen = llength (lp);
       fp = lforw (lp);
-      if (savetabs)			/* Preserving tabs?     */
-        buf = (const char *) lgets (lp);	/* Use line as is.      */
+
+      if (savetabs)     /* Preserving tabs?     */
+        buf = (const char *) lgets (lp);  /* Use line as is.      */
       else /* Else expand tabs.        */
         if ((buf = expand ((const char *) lgets (lp), &llen)) == NULL)
           buf = (const char *) lgets (lp);
 
       if (fp == curbp->b_linep)
-        {			/* Last line?           */
-          s = ffputline (buf, llen, FALSE);
-          if (llen != 0)	/* Line isn't blank?    */
-            ++nline;		/* Count it             */
+        {     /* Last line in buffer */
+          /* If last line is empty (e.g. created by pre-pass or existing trailing newline),
+           * do not write a terminating newline after it.
+           */
+          if (llen == 0)
+            need_nl = FALSE;
+          else
+            need_nl = autonl;
+
+          s = ffputline (buf, llen, need_nl);
+          if (need_nl || llen != 0)
+            ++nline;
         }
       else
-        {			/* Not the last line    */
+        {     /* Not the last line    */
           s = ffputline (buf, llen, TRUE);
           ++nline;
         }
+
       if (s != FIOSUC)
         break;
       lp = fp;
     }
+
   if (s == FIOSUC)
-    {				/* No write error.      */
+    {       /* No write error.      */
       s = ffclose ();
       if (s == FIOSUC && kbdmop == NULL)
         {
@@ -773,10 +787,12 @@ writeout (const char *fn)
             eprintf ("[Wrote %d lines]", nline);
         }
     }
-  else				/* Ignore close error       */
-    ffclose ();			/* if a write error.    */
-  if (s != FIOSUC)		/* Some sort of error.  */
+  else        /* Ignore close error       */
+    ffclose ();     /* if a write error.    */
+
+  if (s != FIOSUC)    /* Some sort of error.  */
     return (FALSE);
+
   return (TRUE);
 }
 
