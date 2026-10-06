@@ -105,7 +105,6 @@ int savetabs = TRUE;		/* True if tabs are preserved   */
 int autonl = TRUE;		/* True if auto add newline     */
 char *srchstr = NULL;		/* Initial search string passed */
 char *targetdir = NULL;	/* Target work directory passed */
-int lflag = TRUE;		/* True if Unix NewLine (LF) used */
 int dosmode = FALSE;		/* True if -D flag forces DOS/CRLF */
 
 static int nbuf;		/* number of buffers    */
@@ -190,7 +189,6 @@ main (int argc, char *argv[])
               break;
             case 'D':
               dosmode = TRUE;
-              lflag = FALSE;
               break;
             case 'g':
               n++;

@@ -66,6 +66,10 @@ ffropen (const char *fn)
   if ((ffp = fopen (fn, "r")) == NULL)
     return (FIOFNF);
   longline = FALSE;
+  if (dosmode)
+    curbp->b_crlf = TRUE;
+  else
+    curbp->b_crlf = FALSE;
   return (FIOSUC);
 }
 
@@ -111,7 +115,7 @@ ffputline (const char *buf, int nbuf, int nl)
   for (i = 0; i < nbuf; ++i)
     putc (buf[i] & 0xFF, ffp);
   if (ferror (ffp) == FALSE && nl) {
-    if (!lflag)
+    if (curbp->b_crlf)
       {
         putc ('\r', ffp);
       }
@@ -167,7 +171,7 @@ ffgetline (char **bufp, int *nbytes)
           else
             {
               /* Detected \r\n -> switch to CRLF format */
-              lflag = FALSE;
+              curbp->b_crlf = TRUE;
               break; /* Line completed */
             }
         }
@@ -177,7 +181,7 @@ ffgetline (char **bufp, int *nbytes)
           /* Detected bare \n -> switch to LF UNLESS forced to CRLF via -D */
           if (!dosmode)
             {
-              lflag = TRUE;
+              curbp->b_crlf = FALSE;
             }
           break;
         }

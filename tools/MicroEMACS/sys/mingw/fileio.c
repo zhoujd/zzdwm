@@ -198,6 +198,10 @@ ffropen (const char *fn)
   if ((ffp = open (real_fn, O_RDONLY | O_BINARY)) < 0)
     return (FIOFNF);
   cindex = csize = 0;		/* set up for getbyte() */
+  if (dosmode)
+    curbp->b_crlf = TRUE;
+  else
+    curbp->b_crlf = FALSE;
   return (FIOSUC);
 }
 
@@ -271,7 +275,7 @@ ffputline (const char *buf, int nbuf, int nl)
   putbytes (buf, nbuf);
   if ((status >= 0) && nl)
     {
-      if (lflag)
+      if (!curbp->b_crlf)
         putbytes ("\n", 1);
       else
         putbytes ("\r\n", 2);
@@ -342,7 +346,7 @@ ffgetline (char **bufp, int *nbytes)
           else
             {
               /* Detected \r\n -> switch to CRLF format */
-              lflag = FALSE;
+              curbp->b_crlf = TRUE;
               break; /* Line completed */
             }
         }
@@ -352,7 +356,7 @@ ffgetline (char **bufp, int *nbytes)
           /* Detected bare \n -> switch to LF UNLESS forced to CRLF via -D */
           if (!dosmode)
             {
-              lflag = TRUE;
+              curbp->b_crlf = FALSE;
             }
           break;
         }

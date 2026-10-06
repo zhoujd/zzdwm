@@ -592,6 +592,10 @@ bcreate (const char *bname)
   strcpy (bp->b_bname, bname);
   bp->b_undo = NULL;
   bp->b_mode = NULL;
+  if (dosmode)
+    bp->b_crlf = TRUE;
+  else
+    bp->b_crlf = FALSE;
   return (bp);
 }
 
@@ -616,6 +620,10 @@ bclear (BUFFER *bp)
       && (s = eyesno ("Discard changes")) != TRUE)
     return (s);
   bp->b_flag &= ~BFCHG;		/* Not changed          */
+  if (dosmode)
+    bp->b_crlf = TRUE;
+  else
+    bp->b_crlf = FALSE;
   lp = firstline (bp);
   while (lp != bp->b_linep)
     {

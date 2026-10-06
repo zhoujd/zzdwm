@@ -920,7 +920,7 @@ autonewline (int f, int n, int k)
 int
 setnewline (int f, int n, int k)
 {
-  lflag = !lflag;
-  eprintf ("[Line ending now %s]", lflag ? "LF" : "CRLF");
+  curbp->b_crlf = !curbp->b_crlf;
+  eprintf ("[Line ending now %s]", curbp->b_crlf ? "CRLF" : "LF");
   return (TRUE);
 }

@@ -161,7 +161,7 @@ showcpos (int f, int n, int k)
     }
   eprintf ("[Line %d/%d Row %d/%d Col %d/%d Char %d/%l (%d%%) char = %d (0x%x) %s]",
            cline, nline, row, nrow, getcolpos (), getcol (),
-           cchar, nchar, ratio, cbyte, cbyte, lflag ? "LF": "CRLF");
+           cchar, nchar, ratio, cbyte, cbyte, curbp->b_crlf ? "CRLF": "LF");
   return (TRUE);
 }
 
