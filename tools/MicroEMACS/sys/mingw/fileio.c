@@ -198,10 +198,7 @@ ffropen (const char *fn)
   if ((ffp = open (real_fn, O_RDONLY | O_BINARY)) < 0)
     return (FIOFNF);
   cindex = csize = 0;		/* set up for getbyte() */
-  if (dosmode)
-    curbp->b_crlf = TRUE;
-  else
-    curbp->b_crlf = FALSE;
+  curbp->b_crlf = dosmode ? TRUE : FALSE;
   return (FIOSUC);
 }
 

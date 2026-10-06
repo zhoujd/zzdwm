@@ -66,10 +66,7 @@ ffropen (const char *fn)
   if ((ffp = fopen (fn, "r")) == NULL)
     return (FIOFNF);
   longline = FALSE;
-  if (dosmode)
-    curbp->b_crlf = TRUE;
-  else
-    curbp->b_crlf = FALSE;
+  curbp->b_crlf = dosmode ? TRUE : FALSE;
   return (FIOSUC);
 }
 
