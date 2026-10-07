@@ -1,5 +1,5 @@
 /*
- * tlock.c
+ * Static User-Space Terminal Locker
  */
 
 #include <stdio.h>
