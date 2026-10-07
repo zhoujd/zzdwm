@@ -704,7 +704,7 @@ writeout (const char *fn)
   register int nline;
   register const char *buf;
   int llen;
-  int need_nl;
+  int neednl;
 
   /* Check if the file has no terminating newline.
    * If the last line is not empty and autonl is enabled (or agreed by user),
@@ -748,8 +748,10 @@ writeout (const char *fn)
       if (savetabs)     /* Preserving tabs?     */
         buf = (const char *) lgets (lp);  /* Use line as is.      */
       else /* Else expand tabs.        */
-        if ((buf = expand ((const char *) lgets (lp), &llen)) == NULL)
-          buf = (const char *) lgets (lp);
+        {
+          if ((buf = expand ((const char *) lgets (lp), &llen)) == NULL)
+            buf = (const char *) lgets (lp);
+        }
 
       if (fp == curbp->b_linep)
         {     /* Last line in buffer */
@@ -757,12 +759,12 @@ writeout (const char *fn)
            * do not write a terminating newline after it.
            */
           if (llen == 0)
-            need_nl = FALSE;
+            neednl = FALSE;
           else
-            need_nl = autonl;
+            neednl = autonl;
 
-          s = ffputline (buf, llen, need_nl);
-          if (need_nl || llen != 0)
+          s = ffputline (buf, llen, neednl);
+          if (neednl || llen != 0)
             ++nline;
         }
       else
@@ -920,18 +922,18 @@ setsavetabs (int f, int n, int k)
 }
 
 /*
- * Auto add newline flag.
+ * Auto add newline at EOF flag.
  */
 int
 autonewline (int f, int n, int k)
 {
   autonl = !autonl;
-  eprintf ("[Auto newline now %s]", autonl ? "ON" : "OFF");
+  eprintf ("[Auto newline at EOF now %s]", autonl ? "ON" : "OFF");
   return (TRUE);
 }
 
 /*
- * Set newline flag.
+ * Set newline CRLF flag.
  */
 int
 setnewline (int f, int n, int k)
