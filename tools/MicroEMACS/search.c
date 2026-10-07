@@ -75,15 +75,15 @@
 #include "regexp.h"
 #include <ctype.h>
 
-#define SRCH_BEGIN	(0)	/* Search sub-codes.    */
-#define	SRCH_FORW	(-1)
-#define SRCH_BACK	(-2)
-#define SRCH_PREV	(-3)
-#define SRCH_NEXT	(-4)
-#define SRCH_NOPR	(-5)
-#define SRCH_ACCM	(-6)
-#define SRCH_REGFORW	(-7)
-#define SRCH_REGBACK	(-8)
+#define SRCH_BEGIN    (0)   /* Search sub-codes.    */
+#define SRCH_FORW     (-1)
+#define SRCH_BACK     (-2)
+#define SRCH_PREV     (-3)
+#define SRCH_NEXT     (-4)
+#define SRCH_NOPR     (-5)
+#define SRCH_ACCM     (-6)
+#define SRCH_REGFORW  (-7)
+#define SRCH_REGBACK  (-8)
 
 typedef struct SRCHCOM
 {

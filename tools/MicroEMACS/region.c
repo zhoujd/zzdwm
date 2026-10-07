@@ -34,7 +34,7 @@
  * commands. Some functions are just for
  * internal use.
  */
-#include	"def.h"
+#include "def.h"
 
 
 /*

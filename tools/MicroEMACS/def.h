@@ -373,7 +373,7 @@ typedef struct BUFFER
   char b_fname[NFILEN];         /* File name                    */
   char b_bname[NBUFN];          /* Buffer name                  */
   struct MODE *b_mode;          /* Emacs-like major mode        */
-  char b_active;                /* window activated flag        */
+  char b_active;                /* Window activated flag        */
   char b_crlf;                  /* NewLine CRLF flag            */
 }
 BUFFER;
