@@ -5,7 +5,7 @@
 # Compiler configurations
 CC       = gcc
 CFLAGS   = -O2 -Wall -Wextra
-LDFLAGS  = -static
+LDFLAGS  = -static -s
 
 # Target binary name and source files
 TARGET   = tlock
