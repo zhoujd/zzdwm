@@ -16,7 +16,6 @@ const char *keywords[] = {
 };
 #define KEYWORD_COUNT (sizeof(keywords) / sizeof(keywords[0]))
 
-// Helper function to check if a word is a C keyword
 int is_keyword(const char *word) {
     for (size_t i = 0; i < KEYWORD_COUNT; i++) {
         if (strcmp(word, keywords[i]) == 0) return 1;
@@ -24,37 +23,64 @@ int is_keyword(const char *word) {
     return 0;
 }
 
-// Custom function to parse and draw a single line with colors
-void draw_syntax_line(int row, const char *line) {
+// Custom function to parse and draw a single line with multi-line comment state tracking
+void draw_syntax_line(int row, const char *line, int *in_block_comment) {
     int col = 0;
     int i = 0;
     int len = strlen(line);
 
-    // Initial state: default text color
-    attron(COLOR_PAIR(PAIR_TEXT));
-
     while (i < len) {
-        // 1. Handle single-line comments (//) or multi-line block comments (/*)
-        if ((line[i] == '/' && line[i+1] == '/') || (line[i] == '/' && line[i+1] == '*')) {
+        // 1. If we are currently inside an active multi-line block comment
+        if (*in_block_comment) {
             attron(COLOR_PAIR(PAIR_COMMENT));
-            while (i < len && line[i] != '\n') {
+            while (i < len) {
+                // Check if we hit the closing multi-line token "*/"
+                if (line[i] == '*' && i + 1 < len && line[i+1] == '/') {
+                    mvaddch(row, col++, line[i++]); // Print '*'
+                    mvaddch(row, col++, line[i++]); // Print '/'
+                    *in_block_comment = 0;          // Exit comment state
+                    attroff(COLOR_PAIR(PAIR_COMMENT));
+                    break; 
+                }
+                // Print comment contents
+                if (line[i] != '\n' && line[i] != '\r') {
+                    mvaddch(row, col++, line[i]);
+                }
+                i++;
+            }
+            continue;
+        }
+
+        // 2. Handle opening of a multi-line block comment (/*)
+        if (line[i] == '/' && i + 1 < len && line[i+1] == '*') {
+            *in_block_comment = 1;
+            attron(COLOR_PAIR(PAIR_COMMENT));
+            mvaddch(row, col++, line[i++]); // Print '/'
+            mvaddch(row, col++, line[i++]); // Print '*'
+            continue;
+        }
+
+        // 3. Handle single-line comments (//)
+        if (line[i] == '/' && i + 1 < len && line[i+1] == '/') {
+            attron(COLOR_PAIR(PAIR_COMMENT));
+            while (i < len && line[i] != '\n' && line[i] != '\r') {
                 mvaddch(row, col++, line[i++]);
             }
             attroff(COLOR_PAIR(PAIR_COMMENT));
             continue;
         }
 
-        // 2. Handle Preprocessor Directives (#include, etc)
+        // 4. Handle Preprocessor Directives (#include, etc)
         if (line[i] == '#') {
             attron(COLOR_PAIR(PAIR_INCLUDE));
-            while (i < len && !isspace(line[i])) {
+            while (i < len && !isspace((unsigned char)line[i])) {
                 mvaddch(row, col++, line[i++]);
             }
             attroff(COLOR_PAIR(PAIR_INCLUDE));
             continue;
         }
 
-        // 3. Handle Strings ("...")
+        // 5. Handle Strings ("...")
         if (line[i] == '"') {
             attron(COLOR_PAIR(PAIR_STRING));
             mvaddch(row, col++, line[i++]); // Print opening quote
@@ -68,11 +94,11 @@ void draw_syntax_line(int row, const char *line) {
             continue;
         }
 
-        // 4. Handle Word Tokens (Extract alphanumeric blocks to check for keywords)
-        if (isalpha(line[i]) || line[i] == '_') {
+        // 6. Handle Word Tokens (Keywords vs Identifiers)
+        if (isalpha((unsigned char)line[i]) || line[i] == '_') {
             char word[64];
             int w_len = 0;
-            while (i < len && (isalnum(line[i]) || line[i] == '_') && w_len < 63) {
+            while (i < len && (isalnum((unsigned char)line[i]) || line[i] == '_') && w_len < 63) {
                 word[w_len++] = line[i++];
             }
             word[w_len] = '\0';
@@ -84,26 +110,27 @@ void draw_syntax_line(int row, const char *line) {
             } else {
                 attron(COLOR_PAIR(PAIR_TEXT));
                 mvprintw(row, col, "%s", word);
+                attroff(COLOR_PAIR(PAIR_TEXT));
             }
             col += w_len;
             continue;
         }
 
-        // 5. Default: Print standard punctuation and whitespace
+        // 7. Default: Standard text / operators / whitespace
         attron(COLOR_PAIR(PAIR_TEXT));
         if (line[i] != '\n' && line[i] != '\r') {
             mvaddch(row, col++, line[i]);
         }
+        attroff(COLOR_PAIR(PAIR_TEXT));
         i++;
     }
 }
 
 int main() {
-    // Initialize ncurses environment
     initscr();
     cbreak();
     noecho();
-    curs_set(0); // Hide the terminal cursor
+    curs_set(0);
 
     if (!has_colors()) {
         endwin();
@@ -112,34 +139,31 @@ int main() {
     }
     start_color();
 
-    // Map color schemas
     init_pair(PAIR_TEXT,    COLOR_WHITE,   COLOR_BLACK);
     init_pair(PAIR_KEYWORD, COLOR_CYAN,    COLOR_BLACK);
     init_pair(PAIR_STRING,  COLOR_YELLOW,  COLOR_BLACK);
     init_pair(PAIR_COMMENT, COLOR_GREEN,   COLOR_BLACK);
     init_pair(PAIR_INCLUDE, COLOR_MAGENTA, COLOR_BLACK);
 
-    // Open target source code file
     FILE *file = fopen("hello.c", "r");
     if (!file) {
         endwin();
-        printf("Error: Could not open file 'hello.c'. Please create it first!\n");
+        printf("Error: Could not open file 'hello.c'.\n");
         return 1;
     }
 
-    // Read file line-by-line and feed lines to the color parser
     char buffer[256];
     int current_row = 1;
+    int in_block_comment = 0; // State persistent cross-line flag
     
     mvprintw(0, 0, "--- Rendering: hello.c (Press any key to exit) ---");
     
     while (fgets(buffer, sizeof(buffer), file) && current_row < LINES - 1) {
-        draw_syntax_line(current_row, buffer);
+        draw_syntax_line(current_row, buffer, &in_block_comment);
         current_row++;
     }
     fclose(file);
 
-    // Render loop processing finish
     refresh();
     getch();
 
