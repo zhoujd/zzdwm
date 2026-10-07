@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
 
 // Color pair definitions
 #define PAIR_TEXT     1
@@ -10,7 +11,7 @@
 #define PAIR_COMMENT  4
 #define PAIR_INCLUDE  5
 
-// A simple list of C keywords to check against
+// Simple list of C keywords
 const char *keywords[] = {
     "int", "char", "return", "if", "else", "while", "for", "void", "switch"
 };
@@ -23,26 +24,23 @@ int is_keyword(const char *word) {
     return 0;
 }
 
-// Custom function to parse and draw a single line with multi-line comment state tracking
+// Parses and draws a single line with multi-line comment state tracking
 void draw_syntax_line(int row, const char *line, int *in_block_comment) {
     int col = 0;
     int i = 0;
     int len = strlen(line);
 
     while (i < len) {
-        // 1. If we are currently inside an active multi-line block comment
         if (*in_block_comment) {
             attron(COLOR_PAIR(PAIR_COMMENT));
             while (i < len) {
-                // Check if we hit the closing multi-line token "*/"
                 if (line[i] == '*' && i + 1 < len && line[i+1] == '/') {
-                    mvaddch(row, col++, line[i++]); // Print '*'
-                    mvaddch(row, col++, line[i++]); // Print '/'
-                    *in_block_comment = 0;          // Exit comment state
+                    mvaddch(row, col++, line[i++]);
+                    mvaddch(row, col++, line[i++]);
+                    *in_block_comment = 0;
                     attroff(COLOR_PAIR(PAIR_COMMENT));
-                    break; 
+                    break;
                 }
-                // Print comment contents
                 if (line[i] != '\n' && line[i] != '\r') {
                     mvaddch(row, col++, line[i]);
                 }
@@ -51,16 +49,14 @@ void draw_syntax_line(int row, const char *line, int *in_block_comment) {
             continue;
         }
 
-        // 2. Handle opening of a multi-line block comment (/*)
         if (line[i] == '/' && i + 1 < len && line[i+1] == '*') {
             *in_block_comment = 1;
             attron(COLOR_PAIR(PAIR_COMMENT));
-            mvaddch(row, col++, line[i++]); // Print '/'
-            mvaddch(row, col++, line[i++]); // Print '*'
+            mvaddch(row, col++, line[i++]);
+            mvaddch(row, col++, line[i++]);
             continue;
         }
 
-        // 3. Handle single-line comments (//)
         if (line[i] == '/' && i + 1 < len && line[i+1] == '/') {
             attron(COLOR_PAIR(PAIR_COMMENT));
             while (i < len && line[i] != '\n' && line[i] != '\r') {
@@ -70,7 +66,6 @@ void draw_syntax_line(int row, const char *line, int *in_block_comment) {
             continue;
         }
 
-        // 4. Handle Preprocessor Directives (#include, etc)
         if (line[i] == '#') {
             attron(COLOR_PAIR(PAIR_INCLUDE));
             while (i < len && !isspace((unsigned char)line[i])) {
@@ -80,21 +75,19 @@ void draw_syntax_line(int row, const char *line, int *in_block_comment) {
             continue;
         }
 
-        // 5. Handle Strings ("...")
         if (line[i] == '"') {
             attron(COLOR_PAIR(PAIR_STRING));
-            mvaddch(row, col++, line[i++]); // Print opening quote
+            mvaddch(row, col++, line[i++]);
             while (i < len && line[i] != '"') {
                 mvaddch(row, col++, line[i++]);
             }
             if (i < len && line[i] == '"') {
-                mvaddch(row, col++, line[i++]); // Print closing quote
+                mvaddch(row, col++, line[i++]);
             }
             attroff(COLOR_PAIR(PAIR_STRING));
             continue;
         }
 
-        // 6. Handle Word Tokens (Keywords vs Identifiers)
         if (isalpha((unsigned char)line[i]) || line[i] == '_') {
             char word[64];
             int w_len = 0;
@@ -116,7 +109,6 @@ void draw_syntax_line(int row, const char *line, int *in_block_comment) {
             continue;
         }
 
-        // 7. Default: Standard text / operators / whitespace
         attron(COLOR_PAIR(PAIR_TEXT));
         if (line[i] != '\n' && line[i] != '\r') {
             mvaddch(row, col++, line[i]);
@@ -126,7 +118,21 @@ void draw_syntax_line(int row, const char *line, int *in_block_comment) {
     }
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    // 1. Validate that a file argument was provided
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <path_to_c_file>\n", argv[0]);
+        return 1;
+    }
+
+    // Try to open the user-provided file before initializing ncurses
+    FILE *file = fopen(argv[1], "r");
+    if (!file) {
+        perror("Error opening file");
+        return 1;
+    }
+
+    // 2. Initialize ncurses environment
     initscr();
     cbreak();
     noecho();
@@ -134,43 +140,31 @@ int main() {
 
     if (!has_colors()) {
         endwin();
+        fclose(file);
         printf("Error: Terminal doesn't support color.\n");
         return 1;
     }
     start_color();
 
-    /*
-     * 1. Tell ncurses to map color ID -1 to the terminal's
-     * true native default layout/canvas instead of hardware macros.
-     */
+    // Force strict black background profile settings
     use_default_colors();
     assume_default_colors(-1, -1);
 
-    // 2. Remap color pairs using -1 as the true black/default background
     init_pair(PAIR_TEXT,    COLOR_WHITE,   -1);
     init_pair(PAIR_KEYWORD, COLOR_CYAN,    -1);
     init_pair(PAIR_STRING,  COLOR_YELLOW,  -1);
     init_pair(PAIR_COMMENT, COLOR_GREEN,   -1);
     init_pair(PAIR_INCLUDE, COLOR_MAGENTA, -1);
 
-    // 3. Flood fill the empty canvas memory space with the transparent/true pair
     bkgd(COLOR_PAIR(PAIR_TEXT));
+    clear();
 
-    FILE *file = fopen("hello.c", "r");
-    if (!file) {
-        endwin();
-        printf("Error: Could not open file 'hello.c'.\n");
-        return 1;
-    }
+    // 3. Dynamic header using the passed filename
+    mvprintw(0, 0, "--- Rendering: %s (Press any key to exit) ---", argv[1]);
 
     char buffer[256];
     int current_row = 1;
-    int in_block_comment = 0; // State persistent cross-line flag
-
-    // Clear standard screen background layout before printing code lines
-    clear();
-
-    mvprintw(0, 0, "--- Rendering: hello.c (Press any key to exit) ---");
+    int in_block_comment = 0;
 
     while (fgets(buffer, sizeof(buffer), file) && current_row < LINES - 1) {
         draw_syntax_line(current_row, buffer, &in_block_comment);
