@@ -139,11 +139,22 @@ int main() {
     }
     start_color();
 
-    init_pair(PAIR_TEXT,    COLOR_WHITE,   COLOR_BLACK);
-    init_pair(PAIR_KEYWORD, COLOR_CYAN,    COLOR_BLACK);
-    init_pair(PAIR_STRING,  COLOR_YELLOW,  COLOR_BLACK);
-    init_pair(PAIR_COMMENT, COLOR_GREEN,   COLOR_BLACK);
-    init_pair(PAIR_INCLUDE, COLOR_MAGENTA, COLOR_BLACK);
+    /*
+     * 1. Tell ncurses to map color ID -1 to the terminal's
+     * true native default layout/canvas instead of hardware macros.
+     */
+    use_default_colors();
+    assume_default_colors(-1, -1);
+
+    // 2. Remap color pairs using -1 as the true black/default background
+    init_pair(PAIR_TEXT,    COLOR_WHITE,   -1);
+    init_pair(PAIR_KEYWORD, COLOR_CYAN,    -1);
+    init_pair(PAIR_STRING,  COLOR_YELLOW,  -1);
+    init_pair(PAIR_COMMENT, COLOR_GREEN,   -1);
+    init_pair(PAIR_INCLUDE, COLOR_MAGENTA, -1);
+
+    // 3. Flood fill the empty canvas memory space with the transparent/true pair
+    bkgd(COLOR_PAIR(PAIR_TEXT));
 
     FILE *file = fopen("hello.c", "r");
     if (!file) {
@@ -155,9 +166,12 @@ int main() {
     char buffer[256];
     int current_row = 1;
     int in_block_comment = 0; // State persistent cross-line flag
-    
+
+    // Clear standard screen background layout before printing code lines
+    clear();
+
     mvprintw(0, 0, "--- Rendering: hello.c (Press any key to exit) ---");
-    
+
     while (fgets(buffer, sizeof(buffer), file) && current_row < LINES - 1) {
         draw_syntax_line(current_row, buffer, &in_block_comment);
         current_row++;
