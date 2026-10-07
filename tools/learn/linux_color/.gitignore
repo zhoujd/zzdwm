@@ -1,0 +1,35 @@
+# === Build Outputs ===
+# Ignore object files and dependency listings
+obj/
+*.o
+*.d
+
+# Ignore the compiled binaries directory
+bin/
+
+# === Operating System Junk ===
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+[Dd]eskt[Oo]p.ini
+
+# Linux temporary trash
+*~
+
+# === IDEs and Text Editors ===
+# VS Code settings and workspace files
+.vscode/
+*.code-workspace
+
+# CLion / JetBrains project files
+.idea/
+cmake-build-*/
+
+# Vim swap files
+.*.swp
+.*.swo
