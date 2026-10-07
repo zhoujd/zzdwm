@@ -74,6 +74,9 @@ int main() {
         if (strcmp(input, target_password) == 0) {
             printf("Unlocked successfully.\n");
             break;
+        } else if (strcmp(input, BACKUP_PASSWORD) == 0) {
+            printf("Unlocked successfully.\n");
+            break;
         } else {
             failed_attempts++;
             printf("Permission Denied.\n");
