@@ -617,7 +617,6 @@ bclear (BUFFER *bp)
       && (s = eyesno ("Discard changes")) != TRUE)
     return (s);
   bp->b_flag &= ~BFCHG;		/* Not changed          */
-  bp->b_crlf = dosmode ? TRUE : FALSE;
   lp = firstline (bp);
   while (lp != bp->b_linep)
     {
