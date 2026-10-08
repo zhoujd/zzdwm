@@ -65,6 +65,10 @@ int tcinsl[NROW + 1];
 int tcdell[NROW + 1];
 int xterm_mouse;    /* Are we doing mouse control on an xterm? */
 
+#ifdef COLOR
+static int terminal_colors;
+#endif
+
 static int insdel;  /* Do we have both insert & delete line? */
 
 #define TCAPSLEN 1024
@@ -142,6 +146,10 @@ ttinit (void)
       strcat (tcbuf, tv_stype);
       panic (tcbuf);
     }
+
+#ifdef COLOR
+  terminal_colors = tgetnum ("Co");
+#endif
 
   p = tcapbuf;
   t = tgetstr ("pc", &p);
@@ -529,7 +537,10 @@ ttcolor (int color)
           switch (color)
             {
             case CMODE:
-              ttputs (L"\033[37;44m", 8);
+              if (terminal_colors >= 256)
+                ttputs (L"\033[38;5;15;48;5;22m", 18);
+              else
+                ttputs (L"\033[30;42m", 8);
               break;
             case CKEYWORD:
               ttputs (L"\033[1;34m", 7);

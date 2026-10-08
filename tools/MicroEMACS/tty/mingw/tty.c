@@ -220,7 +220,7 @@ ttcolor (int color)
       switch (color)
         {
         case CMODE:
-          ttattr = FOREGROUND_INTENSITY | BACKGROUND_BLUE;
+          ttattr = BACKGROUND_GREEN;
           break;
         case CKEYWORD:
           ttattr = (attnorm & 0xF0) | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
