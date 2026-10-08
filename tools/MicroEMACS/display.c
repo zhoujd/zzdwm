@@ -590,11 +590,14 @@ vteeol (void)
 #define SYNTAX_FEATURE_PREPROCESSOR    0x08
 #define SYNTAX_FEATURE_TRIPLE_STRINGS  0x10
 #define SYNTAX_FEATURE_BASH_VARIABLES  0x20
+#define SYNTAX_FEATURE_MARKDOWN        0x40
 
 #define SYNTAX_STATE_NONE              0
 #define SYNTAX_STATE_C_COMMENT         1
 #define SYNTAX_STATE_PYTHON_DQUOTE     2
 #define SYNTAX_STATE_PYTHON_SQUOTE     3
+#define SYNTAX_STATE_MARKDOWN_BACKTICK 4
+#define SYNTAX_STATE_MARKDOWN_TILDE    5
 
 struct syntax_definition
 {
@@ -663,6 +666,9 @@ static const char *const bash_extensions[] = {
   ".sh", ".bash", ".bashrc", ".bash_profile", ".profile"
 };
 static const char *const python_extensions[] = { ".py", ".pyw", ".pyi" };
+static const char *const markdown_extensions[] = {
+  ".md", ".markdown", ".mdown", ".mkd"
+};
 
 static const char *const bash_shebangs[] = { "bash", "sh" };
 static const char *const python_shebangs[] = { "python" };
@@ -693,6 +699,13 @@ static const struct syntax_definition syntax_definitions[] = {
     python_extensions, sizeof (python_extensions) / sizeof (python_extensions[0]),
     python_shebangs, sizeof (python_shebangs) / sizeof (python_shebangs[0]),
     SYNTAX_FEATURE_HASH_COMMENTS | SYNTAX_FEATURE_TRIPLE_STRINGS
+  },
+  {
+    NULL, 0,
+    markdown_extensions, sizeof (markdown_extensions)
+                           / sizeof (markdown_extensions[0]),
+    NULL, 0,
+    SYNTAX_FEATURE_MARKDOWN
   }
 };
 
@@ -811,6 +824,222 @@ is_identifier_char (uchar c)
          || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
 }
 
+static int
+syntax_markdown_indent_end (const uchar *s, int len)
+{
+  int pos = 0;
+
+  while (pos < 3 && pos < len && (s[pos] == ' ' || s[pos] == '\t'))
+    ++pos;
+  return pos;
+}
+
+static int
+syntax_markdown_rest_blank (const uchar *s, int len, int pos)
+{
+  while (pos < len && (s[pos] == ' ' || s[pos] == '\t'))
+    ++pos;
+  return pos == len;
+}
+
+static int
+syntax_markdown_is_heading (const uchar *s, int len)
+{
+  int pos = syntax_markdown_indent_end (s, len);
+  int end = pos;
+
+  while (end < len && s[end] == '#')
+    ++end;
+  return end > pos && end - pos <= 6
+         && (end == len || s[end] == ' ' || s[end] == '\t');
+}
+
+static int
+syntax_markdown_is_rule (const uchar *s, int len)
+{
+  int pos = syntax_markdown_indent_end (s, len);
+  int end = pos;
+  uchar marker;
+
+  if (pos >= len)
+    return FALSE;
+  marker = s[pos];
+  if (marker != '-' && marker != '*' && marker != '_')
+    return FALSE;
+  while (end < len && s[end] == marker)
+    ++end;
+  return end - pos >= 3 && syntax_markdown_rest_blank (s, len, end);
+}
+
+static int
+syntax_markdown_is_fence_start (const uchar *s, int len, int *state)
+{
+  int pos = syntax_markdown_indent_end (s, len);
+  int end = pos;
+  int scan;
+  uchar marker;
+
+  if (pos >= len)
+    return FALSE;
+  marker = s[pos];
+  if (marker != '`' && marker != '~')
+    return FALSE;
+  while (end < len && s[end] == marker)
+    ++end;
+  if (end - pos < 3)
+    return FALSE;
+  if (marker == '`')
+    {
+      for (scan = end; scan < len; ++scan)
+        {
+          if (s[scan] == '`')
+            return FALSE;
+        }
+    }
+  *state = marker == '`' ? SYNTAX_STATE_MARKDOWN_BACKTICK
+                         : SYNTAX_STATE_MARKDOWN_TILDE;
+  return TRUE;
+}
+
+static int
+syntax_markdown_is_fence_end (const uchar *s, int len, uchar marker)
+{
+  int pos = syntax_markdown_indent_end (s, len);
+  int end = pos;
+
+  while (end < len && s[end] == marker)
+    ++end;
+  return end - pos >= 3 && syntax_markdown_rest_blank (s, len, end);
+}
+
+static int
+syntax_markdown_prefix (const uchar *s, int len, int *prefix_end, int *color)
+{
+  int pos = syntax_markdown_indent_end (s, len);
+  int digits = pos;
+
+  if (pos >= len)
+    return FALSE;
+  if (s[pos] == '>')
+    {
+      *prefix_end = pos + 1;
+      *color = CPREPROC;
+      return TRUE;
+    }
+  if ((s[pos] == '-' || s[pos] == '+' || s[pos] == '*')
+      && (pos + 1 == len || s[pos + 1] == ' ' || s[pos + 1] == '\t'))
+    {
+      *prefix_end = pos + 1;
+      *color = CKEYWORD;
+      return TRUE;
+    }
+  while (digits < len && s[digits] >= '0' && s[digits] <= '9')
+    ++digits;
+  if (digits > pos && digits < len
+      && (s[digits] == '.' || s[digits] == ')')
+      && (digits + 1 == len || s[digits + 1] == ' '
+          || s[digits + 1] == '\t'))
+    {
+      *prefix_end = digits + 1;
+      *color = CKEYWORD;
+      return TRUE;
+    }
+  return FALSE;
+}
+
+static void
+syntax_draw_range (const uchar *s, int start, int end, int color, int draw)
+{
+  int pos = start;
+
+  while (pos < end)
+    {
+      int ulen;
+      wchar_t c = ugetc (s + pos, 0, &ulen);
+
+      if (ulen < 1)
+        ulen = 1;
+      if (draw != FALSE)
+        vtputc_color (c, color);
+      pos += ulen;
+    }
+}
+
+static int
+syntax_markdown_code_span_end (const uchar *s, int len, int start,
+                               int marker_len)
+{
+  int pos = start;
+
+  while (pos + marker_len <= len)
+    {
+      int i = 0;
+
+      while (i < marker_len && s[pos + i] == '`')
+        ++i;
+      if (i == marker_len)
+        return pos + marker_len;
+      ++pos;
+    }
+  return len;
+}
+
+static int
+syntax_markdown_link_end (const uchar *s, int len, int opening_end,
+                          int *text_end, int *url_start, int *url_end)
+{
+  int pos = opening_end;
+  int depth = 1;
+
+  while (pos < len)
+    {
+      if (s[pos] == '\\' && pos + 1 < len)
+        pos += 2;
+      else
+        {
+          if (s[pos] == '[')
+            ++depth;
+          else if (s[pos] == ']')
+            {
+              --depth;
+              if (depth == 0)
+                break;
+            }
+          ++pos;
+        }
+    }
+  if (pos >= len || depth != 0)
+    return FALSE;
+  *text_end = pos;
+  ++pos;
+  if (pos >= len || s[pos] != '(')
+    return FALSE;
+  ++pos;
+  *url_start = pos;
+  depth = 1;
+  while (pos < len)
+    {
+      if (s[pos] == '\\' && pos + 1 < len)
+        pos += 2;
+      else
+        {
+          if (s[pos] == '(')
+            ++depth;
+          else if (s[pos] == ')')
+            {
+              --depth;
+              if (depth == 0)
+                {
+                  *url_end = pos;
+                  return pos + 1;
+                }
+            }
+          ++pos;
+        }
+    }
+  return FALSE;
+}
+
 static void
 syntax_line (const struct syntax_definition *syntax,
              const uchar *s, int len, int *state, int draw)
@@ -824,6 +1053,97 @@ syntax_line (const struct syntax_definition *syntax,
 
       if (ulen < 1)
         ulen = 1;
+
+      if ((syntax->features & SYNTAX_FEATURE_MARKDOWN) != 0)
+        {
+          if (*state == SYNTAX_STATE_MARKDOWN_BACKTICK
+              || *state == SYNTAX_STATE_MARKDOWN_TILDE)
+            {
+              uchar marker = *state == SYNTAX_STATE_MARKDOWN_BACKTICK
+                               ? '`' : '~';
+
+              if (syntax_markdown_is_fence_end (s, len, marker) != FALSE)
+                *state = SYNTAX_STATE_NONE;
+              syntax_draw_range (s, 0, len, CCOMMENT, draw);
+              pos = len;
+              continue;
+            }
+
+          if (pos == 0)
+            {
+              int prefix_end;
+              int color;
+
+              if (syntax_markdown_is_heading (s, len) != FALSE
+                  || syntax_markdown_is_rule (s, len) != FALSE
+                  || syntax_markdown_is_fence_start (s, len, state) != FALSE)
+                {
+                  syntax_draw_range (s, 0, len, CPREPROC, draw);
+                  pos = len;
+                  continue;
+                }
+              if (syntax_markdown_prefix (s, len, &prefix_end, &color) != FALSE)
+                {
+                  syntax_draw_range (s, 0, prefix_end, color, draw);
+                  pos = prefix_end;
+                  continue;
+                }
+            }
+
+          if (c == '`')
+            {
+              int start = pos;
+              int end;
+
+              while (pos < len && s[pos] == '`')
+                ++pos;
+              end = syntax_markdown_code_span_end (s, len, pos,
+                                                   pos - start);
+              syntax_draw_range (s, start, end, CCOMMENT, draw);
+              pos = end;
+              continue;
+            }
+
+          if (c == '[' || (c == '!' && pos + 1 < len && s[pos + 1] == '['))
+            {
+              int opening_end = c == '[' ? pos + 1 : pos + 2;
+              int text_end;
+              int url_start;
+              int url_end;
+              int link_end;
+
+              if (syntax_markdown_link_end (s, len, opening_end, &text_end,
+                                            &url_start, &url_end) != FALSE)
+                {
+                  link_end = url_end + 1;
+                  syntax_draw_range (s, pos, opening_end, CKEYWORD, draw);
+                  syntax_draw_range (s, opening_end, text_end, CTEXT, draw);
+                  syntax_draw_range (s, text_end, url_start, CKEYWORD, draw);
+                  syntax_draw_range (s, url_start, url_end, CSTRING, draw);
+                  syntax_draw_range (s, url_end, link_end, CKEYWORD, draw);
+                  pos = link_end;
+                  continue;
+                }
+              syntax_draw_range (s, pos, opening_end, CKEYWORD, draw);
+              pos = opening_end;
+              continue;
+            }
+
+          if (c == '*' || c == '_')
+            {
+              int start = pos;
+
+              while (pos < len && s[pos] == (uchar) c)
+                ++pos;
+              syntax_draw_range (s, start, pos, CKEYWORD, draw);
+              continue;
+            }
+
+          if (draw != FALSE)
+            vtputc_color (c, CTEXT);
+          pos += ulen;
+          continue;
+        }
 
       if ((syntax->features & SYNTAX_FEATURE_TRIPLE_STRINGS) != 0
           && *state != SYNTAX_STATE_NONE)
