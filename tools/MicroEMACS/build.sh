@@ -12,12 +12,12 @@ usage() {
     cat <<EOF
 Usage: $app {option}
 Option:
-build|-b        build {test|-t|all|-a|windows|-w}
+build|-b        build {test|-t|all|-a}
 windows|-w      build Windows me.exe
-clean|-c        clean {test|-t|all|-a|windows|-w}
+clean|-c        clean {test|-t|all|-a}
 debug|-d        debug
 release|-r      release
-publish|-p      publish
+publish|-p      publish Linux static me
 package|-s      package MicroEMACS source code
 install|-i      install
 uninstall|-u    uninstall
@@ -26,11 +26,6 @@ EOF
 
 build() {
     case ${1:-""} in
-        windows|-w )
-            shift
-            windows "$@"
-            return
-            ;;
         test|-t )
             shift
             make -C "$TEST_DIR" "$@"
@@ -90,6 +85,7 @@ windows() {
         -w "$WS" \
         "$img" \
         sh -c '
+        cat /etc/os-release &&
         make -f Make.Mingw clean &&
         make -f Make.Mingw CC="$MINGW_CC" LD="$MINGW_CC" "$@"
         ' sh "$@"
@@ -177,17 +173,17 @@ clean() {
             make -C "$TEST_DIR" clean
             ;;
         all|-a )
-            make clean
-            make -f $TM clean
-            ;;
-        windows|-w )
+            make -f Make.Linux clean
             make -f Make.Mingw clean
+            make -C "$TEST_DIR" clean
             ;;
         -* )
             usage
+            exit 1
             ;;
         * )
-            make clean
+            make -f Make.Linux clean
+            make -f Make.Mingw clean
             ;;
     esac
     echo "Clean done"
