@@ -470,9 +470,17 @@ typedef struct LINE
   struct LINE *l_bp;            /* Link to the previous line    */
   int l_size;                   /* Allocated size               */
   int l_used;                   /* Used size                    */
+#ifdef COLOR
+  signed char l_syntax_in;      /* Comment state before line    */
+  signed char l_syntax_out;     /* Comment state after line     */
+#endif
   uchar l_text[];               /* A bunch of characters.       */
 }
 LINE;
+
+#ifdef COLOR
+#define SYNTAX_STATE_UNKNOWN (-1)
+#endif
 
 /*
  * Size of the line header with the l_text.
@@ -683,6 +691,16 @@ void vtinit (void);                     /* Initialize video display.    */
 void vttidy (void);                     /* Tidy display before exit.    */
 int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
 int showvisable (int f, int n, int k);  /* Show visable on modeline.    */
+#ifdef COLOR
+void syntax_cache_clear_line (LINE *lp);
+void syntax_cache_copy_line (LINE *dst, const LINE *src);
+void syntax_cache_after_edit (BUFFER *bp, LINE *lp);
+void syntax_cache_line_split (BUFFER *bp, LINE *prefix, LINE *suffix);
+void syntax_cache_lines_merged (BUFFER *bp, LINE *result, LINE *first,
+                                LINE *second);
+void syntax_cache_line_read (BUFFER *bp, LINE *lp);
+void syntax_cache_read_finished (BUFFER *bp, LINE *next, int old_state);
+#endif
 
 /*
  * Defined by "echo.c".

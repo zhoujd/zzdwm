@@ -769,15 +769,171 @@ syntax_line (const uchar *s, int len, int *in_comment, int draw)
 static int
 syntax_state_before (const BUFFER *bp, const LINE *lp)
 {
-  LINE *scan = firstline ((BUFFER *) bp);
+  LINE *scan;
+  LINE *target = (LINE *) lp;
   int in_comment = FALSE;
 
-  while (scan != bp->b_linep && scan != lp)
+  if (target != bp->b_linep
+      && target->l_syntax_in != SYNTAX_STATE_UNKNOWN)
+    return target->l_syntax_in;
+
+  scan = firstline ((BUFFER *) bp);
+  while (scan != bp->b_linep && scan != target)
     {
+      if (scan->l_syntax_out != SYNTAX_STATE_UNKNOWN)
+        {
+          in_comment = scan->l_syntax_out;
+          scan = lforw (scan);
+          continue;
+        }
+      if (scan->l_syntax_in != SYNTAX_STATE_UNKNOWN)
+        in_comment = scan->l_syntax_in;
+      else
+        scan->l_syntax_in = in_comment;
       syntax_line (lgets (scan), llength (scan), &in_comment, FALSE);
+      scan->l_syntax_out = in_comment;
       scan = lforw (scan);
     }
+  if (target != bp->b_linep)
+    target->l_syntax_in = in_comment;
   return in_comment;
+}
+
+static void
+syntax_cache_invalidate_from (BUFFER *bp, LINE *lp)
+{
+  while (lp != bp->b_linep)
+    {
+      syntax_cache_clear_line (lp);
+      lp = lforw (lp);
+    }
+}
+
+void
+syntax_cache_clear_line (LINE *lp)
+{
+  lp->l_syntax_in = SYNTAX_STATE_UNKNOWN;
+  lp->l_syntax_out = SYNTAX_STATE_UNKNOWN;
+}
+
+void
+syntax_cache_copy_line (LINE *dst, const LINE *src)
+{
+  dst->l_syntax_in = src->l_syntax_in;
+  dst->l_syntax_out = src->l_syntax_out;
+}
+
+void
+syntax_cache_after_edit (BUFFER *bp, LINE *lp)
+{
+  int old_in;
+  int old_out;
+  int new_state;
+
+  if (is_c_buffer (bp) == FALSE || lp == bp->b_linep)
+    {
+      syntax_cache_clear_line (lp);
+      return;
+    }
+
+  old_in = lp->l_syntax_in;
+  old_out = lp->l_syntax_out;
+  if (old_in == SYNTAX_STATE_UNKNOWN)
+    old_in = syntax_state_before (bp, lp);
+
+  new_state = old_in;
+  syntax_line (lgets (lp), llength (lp), &new_state, FALSE);
+  lp->l_syntax_in = old_in;
+  lp->l_syntax_out = new_state;
+
+  if (old_out != SYNTAX_STATE_UNKNOWN && old_out != new_state)
+    syntax_cache_invalidate_from (bp, lforw (lp));
+}
+
+void
+syntax_cache_line_split (BUFFER *bp, LINE *prefix, LINE *suffix)
+{
+  if (is_c_buffer (bp) == FALSE)
+    {
+      syntax_cache_clear_line (prefix);
+      syntax_cache_clear_line (suffix);
+      return;
+    }
+
+  syntax_cache_clear_line (suffix);
+  syntax_cache_after_edit (bp, prefix);
+  syntax_cache_after_edit (bp, suffix);
+}
+
+void
+syntax_cache_lines_merged (BUFFER *bp, LINE *result, LINE *first, LINE *second)
+{
+  if (is_c_buffer (bp) == FALSE)
+    {
+      syntax_cache_clear_line (result);
+      return;
+    }
+
+  if (first->l_syntax_in != SYNTAX_STATE_UNKNOWN
+      && second->l_syntax_out != SYNTAX_STATE_UNKNOWN)
+    {
+      result->l_syntax_in = first->l_syntax_in;
+      result->l_syntax_out = second->l_syntax_out;
+      return;
+    }
+
+  syntax_cache_clear_line (result);
+  syntax_cache_after_edit (bp, result);
+}
+
+void
+syntax_cache_line_read (BUFFER *bp, LINE *lp)
+{
+  LINE *previous;
+  int state;
+
+  if (is_c_buffer (bp) == FALSE)
+    {
+      syntax_cache_clear_line (lp);
+      return;
+    }
+
+  previous = lback (lp);
+  if (previous == bp->b_linep)
+    state = FALSE;
+  else if (previous->l_syntax_out != SYNTAX_STATE_UNKNOWN)
+    state = previous->l_syntax_out;
+  else
+    state = SYNTAX_STATE_UNKNOWN;
+
+  lp->l_syntax_in = state;
+  if (state == SYNTAX_STATE_UNKNOWN)
+    {
+      lp->l_syntax_out = SYNTAX_STATE_UNKNOWN;
+      return;
+    }
+
+  syntax_line (lgets (lp), llength (lp), &state, FALSE);
+  lp->l_syntax_out = state;
+}
+
+void
+syntax_cache_read_finished (BUFFER *bp, LINE *next, int old_state)
+{
+  LINE *last;
+
+  if (is_c_buffer (bp) == FALSE || next == bp->b_linep
+      || old_state == SYNTAX_STATE_UNKNOWN)
+    {
+      return;
+    }
+
+  last = lback (next);
+  if (last == bp->b_linep)
+    return;
+  if (last->l_syntax_out == SYNTAX_STATE_UNKNOWN
+      || last->l_syntax_out != old_state)
+    syntax_cache_invalidate_from (bp, next);
 }
 #endif
 

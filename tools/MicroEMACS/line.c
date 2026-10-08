@@ -92,6 +92,9 @@ lalloc (int used)
     }
   lp->l_size = size;
   lp->l_used = used;
+#ifdef COLOR
+  syntax_cache_clear_line (lp);
+#endif
   return (lp);
 }
 
@@ -112,6 +115,9 @@ lallocx (int used)
       return (NULL);
     }
   lp->l_size = lp->l_used = used;
+#ifdef COLOR
+  syntax_cache_clear_line (lp);
+#endif
   return (lp);
 }
 
@@ -311,6 +317,9 @@ linsert (int n, int c, char *s)
     {					/* Hard: reallocate     */
       if ((lp2 = lalloc (dot.p->l_used + bytes)) == NULL)
         return (FALSE);
+#ifdef COLOR
+      syntax_cache_copy_line (lp2, dot.p);
+#endif
       memcpy (&lp2->l_text[0], &dot.p->l_text[0], offset);
       memcpy (&lp2->l_text[offset + bytes], &dot.p->l_text[offset],
               dot.p->l_used - offset);	/* make room            */
@@ -338,6 +347,9 @@ linsert (int n, int c, char *s)
   else
     memcpy (&lp2->l_text[offset], s, bytes);	/* copy the characters  */
 
+#ifdef COLOR
+  syntax_cache_after_edit (curbp, lp2);
+#endif
   ALLWIND (wp)
   {				/* Update windows       */
     if (wp->w_linep == dot.p)
@@ -451,6 +463,9 @@ lnewline (void)
 
   if ((lp2 = lalloc (offset)) == NULL)	/* New first half line  */
     return (FALSE);
+#ifdef COLOR
+  syntax_cache_copy_line (lp2, lp1);
+#endif
   memcpy (&lp2->l_text[0], &lp1->l_text[0], offset);	/* shuffle text */
   if (offset != 0) {
     memmove (&lp1->l_text[0], &lp1->l_text[offset], lp1->l_used - offset);
@@ -472,6 +487,9 @@ lnewline (void)
     dot.o = doto;
     adjustfornewline (&dot, lp2, wp);
   }
+#ifdef COLOR
+  syntax_cache_line_split (curbp, lp2, lp1);
+#endif
   return (TRUE);
 }
 
@@ -524,6 +542,9 @@ ldelete (int n, int kflag)
   POS dot;
   int bytes, chars;
   register EWINDOW *wp;
+#ifdef COLOR
+  LINE *edited_line = NULL;
+#endif
 
   if (n < 0)
     {
@@ -554,8 +575,18 @@ ldelete (int n, int kflag)
       if (chars == 0)
         {			/* End of line, merge.  */
           lchange (WFHARD);
-          if (ldelnewline () == FALSE
-              || (kflag != FALSE && kinsert ("\n", 1) == FALSE))
+#ifdef COLOR
+          if (edited_line != NULL)
+            {
+              syntax_cache_after_edit (curbp, edited_line);
+              edited_line = NULL;
+            }
+#endif
+          if (ldelnewline () == FALSE)
+            {
+              return (FALSE);
+            }
+          if (kflag != FALSE && kinsert ("\n", 1) == FALSE)
             return (FALSE);
           saveundo(UDELETE, NULL, 1, 1, "\n");
           --n;
@@ -565,7 +596,13 @@ ldelete (int n, int kflag)
       cp2 = cp1 + bytes;			/* Scrunch text.        */
       if (kflag != FALSE)	/* Kill?                */
         if (kinsert ((const char *) cp1, bytes) == FALSE)
-          return (FALSE);
+          {
+#ifdef COLOR
+            if (edited_line != NULL)
+              syntax_cache_after_edit (curbp, edited_line);
+#endif
+            return (FALSE);
+          }
       saveundo(UDELETE, NULL, chars, bytes, cp1);
       memmove (cp1, cp2, end - cp2);
       dot.p->l_used -= bytes;
@@ -573,8 +610,15 @@ ldelete (int n, int kflag)
       {				/* Fix windows          */
         adjustfordelete (&dot, chars, wp);
       }
+#ifdef COLOR
+      edited_line = dot.p;
+#endif
       n -= chars;
     }
+#ifdef COLOR
+  if (edited_line != NULL)
+    syntax_cache_after_edit (curbp, edited_line);
+#endif
   return (TRUE);
 }
 
@@ -651,6 +695,9 @@ ldelnewline (void)
           }
       }
       lp1->l_used += lp2->l_used;
+#ifdef COLOR
+      syntax_cache_lines_merged (curbp, lp1, lp1, lp2);
+#endif
       lp1->l_fp = lp2->l_fp;
       lp2->l_fp->l_bp = lp1;
       free ((char *) lp2);
@@ -672,6 +719,9 @@ ldelnewline (void)
       wp->w_savep = lp3;
     adjustfordelnewline(lp1, lp2, lp3, wp);
   }
+#ifdef COLOR
+  syntax_cache_lines_merged (curbp, lp3, lp1, lp2);
+#endif
   free ((char *) lp1);
   free ((char *) lp2);
   return (TRUE);

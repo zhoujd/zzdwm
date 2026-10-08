@@ -555,6 +555,9 @@ readlines (
   register int nline;
   int nbytes;
   char *line;
+#ifdef COLOR
+  int old_syntax_state = lp2->l_syntax_in;
+#endif
 
   nline = 0;
   eprintf ("[Reading...]");
@@ -573,10 +576,17 @@ readlines (
       lp2->l_bp->l_fp = lp1;
       lp2->l_bp = lp1;
       lputs (lp1, line, nbytes);
+#ifdef COLOR
+      if (old_syntax_state != SYNTAX_STATE_UNKNOWN)
+        syntax_cache_line_read (curbp, lp1);
+#endif
       ++nline;
     }
   while (s == FIOSUC);		/* until error or EOF   */
   ffclose ();			/* Ignore errors.       */
+#ifdef COLOR
+  syntax_cache_read_finished (curbp, lp2, old_syntax_state);
+#endif
   if (s == FIOEOF && kbdmop == NULL)
     {				/* Don't zap an error.  */
       if (nline == 1)
