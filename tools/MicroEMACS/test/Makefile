@@ -1,7 +1,7 @@
 ## Test Makefile
 
 ROOT = ..
-TARGET = utf8 regtest tcap reftag syntax-test display-test
+TARGET = utf8 regtest tcap reftag syntax-test display-test cscope-test
 CFLAGS := -Os
 
 ifeq ($(INSIDE_DOCKER), yes)
@@ -39,6 +39,11 @@ display-test: display.c $(ROOT)/utf8.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \
 		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/mingw \
 		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DTEST $^
+
+cscope-test: cscope.c $(ROOT)/cscope.c $(ROOT)/sys/unix/spawn.c
+	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \
+		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/unix \
+		-I$(ROOT)/tty/ncurses -DTEST cscope.c $(ROOT)/sys/unix/spawn.c
 
 clean:
 	rm -f $(TARGET) *.[o]

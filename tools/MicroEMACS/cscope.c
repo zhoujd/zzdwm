@@ -19,9 +19,6 @@
 
 #include "def.h"
 
-/* Uncomment this line to build test program. */
-/* #define TEST 1 */
-
 /*
  * Local variables.
  */
@@ -36,11 +33,7 @@ ignore_prompt (void)
 {
   if (fgetc (cscope_input) != '>' || fgetc (cscope_input) != '>' ||
       fgetc (cscope_input) != ' ')
-    {
-#if TEST
-      printf ("bad prompt from cscope!\n");
-#endif
-    }
+    return;
 }
 
 /*
@@ -64,17 +57,11 @@ cscope_search (char search_field, const char *search_string)
   fputs (search_string, cscope_output);
   fputc ('\n', cscope_output);
   fflush (cscope_output);
-#if TEST
-  printf ("sent command '0%s'\n", search_string);
-#endif
 
   /* Read the first line, which is of the format 'cscope: n lines',
      and parse the 'n'. */
   if (fgets (buf, sizeof (buf), cscope_input) == NULL)
     return 0;
-#if TEST
-  printf ("result of query: '%s'\n", buf);
-#endif
   result = sscanf (buf, "cscope: %d lines", &nlines);
   return result == 1 ? nlines : 0;
 }
@@ -89,20 +76,10 @@ static void
 next_match (char *filename, char *where, int *line_number)
 {
   char buf[1024];
-#if TEST
-  int ret;
-#endif
 
   if (fgets (buf, sizeof (buf), cscope_input) == NULL)
     return;
-#if TEST
-  printf ("read line: '%s'\n", buf);
-  ret =
-#endif
   sscanf (buf, "%s %s %d", filename, where, line_number);
-#if TEST
-  printf ("sscanf returned %d\n", ret);
-#endif
 }
 
 /*
@@ -250,36 +227,3 @@ findgrep (int f, int n, int k)
 {
   return searchtag (f, n, prepgrep, "grep");
 }
-
-/*
- * test program
- */
-#if TEST
-int
-main (int argc, char *argv[])
-{
-  int i;
-  char filename[1024];
-  char where[1024];
-  int line;
-
-  if (open_cscope () == FALSE)
-    {
-      printf ("unable to open pipe to cscope\n");
-      return 1;
-    }
-
-  for (i = 1; i < argc; i++)
-    {
-      const char *search_string = argv[i];
-      int n = cscope_search ('0', search_string);
-      printf ("%d matches for %s:\n", n, search_string);
-      while (n-- > 0)
-        {
-          next_match (filename, where, &line);
-          printf ("%s:%d in %s\n", filename, line, where);
-        }
-    }
-  return 0;
-}
-#endif
