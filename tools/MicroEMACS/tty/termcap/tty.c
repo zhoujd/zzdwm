@@ -523,6 +523,29 @@ ttcolor (int color)
 {
   if (color != tthue)
     {
+#ifdef COLOR
+      switch (color)
+        {
+        case CMODE:
+          ttputs (L"\033[7m", 4);
+          break;
+        case CKEYWORD:
+          ttputs (L"\033[1;34m", 7);
+          break;
+        case CSTRING:
+          ttputs (L"\033[32m", 5);
+          break;
+        case CCOMMENT:
+          ttputs (L"\033[36m", 5);
+          break;
+        case CPREPROC:
+          ttputs (L"\033[35m", 5);
+          break;
+        default:
+          ttputs (L"\033[0m", 4);
+          break;
+        }
+#else
       if (color == CTEXT)
         {			/* Normal video.        */
           putpad (SE);
@@ -531,6 +554,7 @@ ttcolor (int color)
         {			/* Reverse video.       */
           putpad (SO);
         }
+#endif
       tthue = color;		/* Save the color.      */
     }
 }

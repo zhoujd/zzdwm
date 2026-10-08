@@ -74,6 +74,17 @@ ttopen (void)
   setlocale (LC_CTYPE, "");
   tcgetattr (0, &oldtty);
   initscr ();			/* initialize the curses library */
+#ifdef COLOR
+  if (has_colors () != FALSE)
+    {
+      start_color ();
+      use_default_colors ();
+      init_pair (1, COLOR_BLUE, -1);
+      init_pair (2, COLOR_GREEN, -1);
+      init_pair (3, COLOR_CYAN, -1);
+      init_pair (4, COLOR_MAGENTA, -1);
+    }
+#endif
   keypad (stdscr, TRUE);	/* enable keyboard mapping */
   nonl ();			/* tell curses not to do NL->CR/NL on output */
   cbreak ();			/* take input chars one at a time, no wait for \n */

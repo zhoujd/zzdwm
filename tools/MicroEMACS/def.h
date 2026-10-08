@@ -187,6 +187,12 @@ typedef unsigned char uchar;
 #define CNONE   0               /* Unknown color.               */
 #define CTEXT   1               /* Text color.                  */
 #define CMODE   2               /* Mode line color.             */
+#ifdef COLOR
+#define CKEYWORD 3              /* C keyword color.             */
+#define CSTRING  4              /* C string color.              */
+#define CCOMMENT 5              /* C comment color.             */
+#define CPREPROC 6              /* C preprocessor color.        */
+#endif
 
 /*
  * Flags for "eread".

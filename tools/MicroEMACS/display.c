@@ -105,6 +105,9 @@ typedef struct
   short v_color;		/* Color of the line.           */
   XSHORT v_cost;		/* Cost of display.             */
   wchar_t v_text[NCOL];		/* The actual characters.       */
+#ifdef COLOR
+  short v_attr[NCOL];		/* Color of each character.     */
+#endif
 }
 VIDEO;
 
@@ -132,6 +135,10 @@ int visflag = FALSE;		/* TRUE if show visable.        */
 int vtrow = 0;			/* Virtual cursor row.          */
 int vtcol = 0;			/* Virtual cursor column.       */
 wchar_t *vttext;		/* &(vscreen[vtrow]->v_text[0]) */
+#ifdef COLOR
+short *vtattrs;			/* &(vscreen[vtrow]->v_attr[0]) */
+static int vtattr = CTEXT;	/* Current virtual color.       */
+#endif
 int tthue = CNONE;		/* Current color.               */
 int ttrow = HUGE;		/* Physical cursor row.         */
 int ttcol = HUGE;		/* Physical cursor column.      */
@@ -172,9 +179,17 @@ SCORE score[NROW * NROW];
  * Forward declarations.
  */
 static void vtputs (const uchar *s, int n);
+static void vtputc (unsigned int c);
+static void vtputc_color (unsigned int c, int color);
 static void ucopy (VIDEO *vvp, VIDEO *pvp);
 static void uline (int row, VIDEO *vvp, VIDEO *pvp);
 static void modeline (EWINDOW *wp);
+#ifdef COLOR
+static void put_video_colors (wchar_t *text, short *attrs, int count);
+static int is_c_buffer (const BUFFER *bp);
+static int syntax_state_before (const BUFFER *bp, const LINE *lp);
+static void syntax_line (const uchar *s, int len, int *in_comment, int draw);
+#endif
 #if GOSLING
 static void hash (VIDEO *vp);
 static void setscores (int offs, int size);
@@ -219,6 +234,10 @@ vtinit (void)
     }
   blanks.v_color = CTEXT;
   wmemset (blanks.v_text, ' ', NCOL);
+#ifdef COLOR
+  for (i = 0; i < NCOL; ++i)
+    blanks.v_attr[i] = CTEXT;
+#endif
   memset (spaces, ' ', NCOL);
 }
 
@@ -254,6 +273,9 @@ vtmove (int row, int col)
   vtrow = row;
   vtcol = col;
   vttext = &(vscreen[vtrow]->v_text[0]);
+#ifdef COLOR
+  vtattrs = &(vscreen[vtrow]->v_attr[0]);
+#endif
 }
 
 /*
@@ -269,10 +291,20 @@ vtmove (int row, int col)
  * Three guesses how we found this.
  */
 static void
-vtputc (unsigned int c)
+vtputc_color (unsigned int c, int color)
 {
+#ifdef COLOR
+  vtattr = color;
+#else
+  (void) color;
+#endif
   if (vtcol >= leftcol + ncol)
-    vttext[ncol - 1] = '$';
+    {
+      vttext[ncol - 1] = '$';
+#ifdef COLOR
+      vtattrs[ncol - 1] = vtattr;
+#endif
+    }
   else if (c == '\t')
     vtputs (spaces, tabsize - (vtcol % tabsize));
   else if (CISCTRL (c) != FALSE)
@@ -283,9 +315,24 @@ vtputc (unsigned int c)
   else
     {
       if (vtcol >= leftcol)
-        vttext[vtcol - leftcol] = c;
+        {
+          vttext[vtcol - leftcol] = c;
+#ifdef COLOR
+          vtattrs[vtcol - leftcol] = vtattr;
+#endif
+        }
       vtcol++;
     }
+}
+
+static void
+vtputc (unsigned int c)
+{
+#ifdef COLOR
+  vtputc_color (c, vtattr);
+#else
+  vtputc_color (c, CTEXT);
+#endif
 }
 
 #if defined(MINGW) || defined(_WIN32)
@@ -307,11 +354,14 @@ vtputs (const uchar *s, int n)
       c = ugetc (s, 0, &ulen);
       s += ulen;
 
-      if (vtcol >= leftcol + ncol)
-        {
-          vttext[ncol - 1] = '$';
-          return;
-        }
+        if (vtcol >= leftcol + ncol)
+          {
+            vttext[ncol - 1] = '$';
+#ifdef COLOR
+            vtattrs[ncol - 1] = vtattr;
+#endif
+            return;
+          }
       else if (c == '\t')
         {
           vtputs (spaces, tabsize - (vtcol % tabsize));
@@ -340,14 +390,24 @@ vtputs (const uchar *s, int n)
             {
               /* Double-width (CJK) character handling */
               if (vtcol >= leftcol)
-                vttext[vtcol - leftcol] = c;
+                {
+                  vttext[vtcol - leftcol] = c;
+#ifdef COLOR
+                  vtattrs[vtcol - leftcol] = vtattr;
+#endif
+                }
               vtcol++;
 
               /* Fill trailing column slot with 0 padding */
               if (vtcol < leftcol + ncol)
                 {
                   if (vtcol >= leftcol)
-                    vttext[vtcol - leftcol] = 0;
+                    {
+                      vttext[vtcol - leftcol] = 0;
+#ifdef COLOR
+                      vtattrs[vtcol - leftcol] = vtattr;
+#endif
+                    }
                   vtcol++;
                 }
             }
@@ -355,7 +415,12 @@ vtputs (const uchar *s, int n)
             {
               /* Standard single-width character (w == 1) */
               if (vtcol >= leftcol)
-                vttext[vtcol - leftcol] = c;
+                {
+                  vttext[vtcol - leftcol] = c;
+#ifdef COLOR
+                  vtattrs[vtcol - leftcol] = vtattr;
+#endif
+                }
               vtcol++;
             }
         }
@@ -381,6 +446,9 @@ vtputs (const uchar *s, int n)
       if (vtcol >= leftcol + ncol)
         {
           vttext[ncol - 1] = '$';
+#ifdef COLOR
+          vtattrs[ncol - 1] = vtattr;
+#endif
           return;
         }
       else if (c == '\t')
@@ -393,7 +461,12 @@ vtputs (const uchar *s, int n)
       else
         {
           if (vtcol >= leftcol)
-            vttext[vtcol - leftcol] = c;
+            {
+              vttext[vtcol - leftcol] = c;
+#ifdef COLOR
+              vtattrs[vtcol - leftcol] = vtattr;
+#endif
+            }
           vtcol++;
         }
     }
@@ -416,12 +489,19 @@ static void
 vtepadc (char ch)
 {
   register int count;
+#ifdef COLOR
+  int i;
+#endif
 
   if (vtcol < leftcol)
     vtcol = leftcol;
   if ((count = ncol + leftcol - vtcol) <= 0)
     return;
   wmemset (&vttext[vtcol - leftcol], ch, count);
+#ifdef COLOR
+  for (i = 0; i < count; ++i)
+    vtattrs[vtcol - leftcol + i] = vtattr;
+#endif
   vtcol += count;
 }
 
@@ -502,6 +582,205 @@ vteeol (void)
   vtepadc(' ');
 }
 
+#ifdef COLOR
+static const char *const c_keywords[] = {
+  "_Alignas", "_Alignof", "_Atomic", "_Bool", "_Complex",
+  "_Generic", "_Imaginary", "_Noreturn", "_Static_assert",
+  "_Thread_local", "auto", "break", "case", "char", "const",
+  "continue", "default", "do", "double", "else", "enum", "extern",
+  "float", "for", "goto", "if", "inline", "int", "long", "register",
+  "restrict", "return", "short", "signed", "sizeof", "static",
+  "struct", "switch", "typedef", "union", "unsigned", "void",
+  "volatile", "while"
+};
+
+static int
+is_c_keyword (const uchar *word, int len)
+{
+  size_t i;
+
+  for (i = 0; i < sizeof (c_keywords) / sizeof (c_keywords[0]); ++i)
+    {
+      if ((int) strlen (c_keywords[i]) == len
+          && strncmp ((const char *) word, c_keywords[i], (size_t) len) == 0)
+        return TRUE;
+    }
+  return FALSE;
+}
+
+static int
+has_c_suffix (const char *name, const char *suffix)
+{
+  size_t name_len = strlen (name);
+  size_t suffix_len = strlen (suffix);
+
+  return name_len > suffix_len
+         && strcasecmp (name + name_len - suffix_len, suffix) == 0;
+}
+
+static int
+is_c_buffer (const BUFFER *bp)
+{
+  return has_c_suffix (bp->b_fname, ".c") || has_c_suffix (bp->b_fname, ".h");
+}
+
+static int
+is_identifier_start (wchar_t c)
+{
+  return c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+
+static int
+is_identifier_char (uchar c)
+{
+  return c == '_' || (c >= 'a' && c <= 'z')
+         || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
+}
+
+static void
+syntax_line (const uchar *s, int len, int *in_comment, int draw)
+{
+  int pos = 0;
+
+  while (pos < len)
+    {
+      int ulen;
+      wchar_t c = ugetc (s + pos, 0, &ulen);
+
+      if (ulen < 1)
+        ulen = 1;
+
+      if (c == '"' || c == '\'')
+        {
+          wchar_t quote = c;
+
+          if (draw != FALSE)
+            vtputc_color (c, CSTRING);
+          pos += ulen;
+          while (pos < len)
+            {
+              c = ugetc (s + pos, 0, &ulen);
+              if (ulen < 1)
+                ulen = 1;
+              if (draw != FALSE)
+                vtputc_color (c, CSTRING);
+              pos += ulen;
+              if (c == '\\' && pos < len)
+                {
+                  c = ugetc (s + pos, 0, &ulen);
+                  if (ulen < 1)
+                    ulen = 1;
+                  if (draw != FALSE)
+                    vtputc_color (c, CSTRING);
+                  pos += ulen;
+                }
+              else if (c == quote)
+                break;
+            }
+          continue;
+        }
+
+      if (*in_comment != FALSE)
+        {
+          if (c == '*' && pos + 1 < len && s[pos + 1] == '/')
+            {
+              if (draw != FALSE)
+                {
+                  vtputc_color ('*', CCOMMENT);
+                  vtputc_color ('/', CCOMMENT);
+                }
+              pos += 2;
+              *in_comment = FALSE;
+              continue;
+            }
+          if (draw != FALSE)
+            vtputc_color (c, CCOMMENT);
+          pos += ulen;
+          continue;
+        }
+
+      if (c == '/' && pos + 1 < len && s[pos + 1] == '/')
+        {
+          while (pos < len)
+            {
+              c = ugetc (s + pos, 0, &ulen);
+              if (ulen < 1)
+                ulen = 1;
+              if (draw != FALSE)
+                vtputc_color (c, CCOMMENT);
+              pos += ulen;
+            }
+          continue;
+        }
+
+      if (c == '/' && pos + 1 < len && s[pos + 1] == '*')
+        {
+          *in_comment = TRUE;
+          if (draw != FALSE)
+            {
+              vtputc_color ('/', CCOMMENT);
+              vtputc_color ('*', CCOMMENT);
+            }
+          pos += 2;
+          continue;
+        }
+
+      if (c == '#')
+        {
+          while (pos < len)
+            {
+              c = ugetc (s + pos, 0, &ulen);
+              if (ulen < 1)
+                ulen = 1;
+              if (c == ' ' || c == '\t')
+                break;
+              if (draw != FALSE)
+                vtputc_color (c, CPREPROC);
+              pos += ulen;
+            }
+          continue;
+        }
+
+      if (is_identifier_start (c) != FALSE)
+        {
+          int start = pos;
+          int color;
+
+          while (pos < len && is_identifier_char (s[pos]) != FALSE)
+            ++pos;
+          color = is_c_keyword (s + start, pos - start) != FALSE
+                    ? CKEYWORD : CTEXT;
+          if (draw != FALSE)
+            {
+              int i;
+
+              for (i = start; i < pos; ++i)
+                vtputc_color (s[i], color);
+            }
+          continue;
+        }
+
+      if (draw != FALSE)
+        vtputc_color (c, CTEXT);
+      pos += ulen;
+    }
+}
+
+static int
+syntax_state_before (const BUFFER *bp, const LINE *lp)
+{
+  LINE *scan = firstline ((BUFFER *) bp);
+  int in_comment = FALSE;
+
+  while (scan != bp->b_linep && scan != lp)
+    {
+      syntax_line (lgets (scan), llength (scan), &in_comment, FALSE);
+      scan = lforw (scan);
+    }
+  return in_comment;
+}
+#endif
+
 /*
  * Update the mode lines for all windows.
  */
@@ -539,6 +818,10 @@ update (void)
   register int hflag;
   register int offs;
   register int size;
+#endif
+#ifdef COLOR
+  int syntax_state;
+  int next_syntax_state;
 #endif
 
   if (curmsgf != FALSE || newmsgf != FALSE)
@@ -626,6 +909,17 @@ update (void)
         out:
           lp = wp->w_linep;	/* Try reduced update.  */
           i = wp->w_toprow;
+#ifdef COLOR
+          if ((wp->w_flag & WFEDIT) != 0 && is_c_buffer (wp->w_bufp))
+            {
+              syntax_state = syntax_state_before (wp->w_bufp, wp->w_dot.p);
+              next_syntax_state = syntax_state;
+              syntax_line (lgets (wp->w_dot.p), llength (wp->w_dot.p),
+                           &next_syntax_state, FALSE);
+              if (next_syntax_state != syntax_state)
+                wp->w_flag |= WFHARD;
+            }
+#endif
           if ((wp->w_flag & ~WFMODE) == WFEDIT)
             {
               while (lp != wp->w_dot.p)
@@ -637,7 +931,15 @@ update (void)
               vscreen[i]->v_flag |= (VFCHG | VFHBAD);
               leftcol = wp->w_leftcol;
               vtmove (i, 0);
-              vtputs (lgets (lp), llength (lp));
+#ifdef COLOR
+              if (is_c_buffer (wp->w_bufp))
+                {
+                  syntax_state = syntax_state_before (wp->w_bufp, lp);
+                  syntax_line (lgets (lp), llength (lp), &syntax_state, TRUE);
+                }
+              else
+#endif
+                vtputs (lgets (lp), llength (lp));
               vteeol ();
               leftcol = 0;
             }
@@ -647,6 +949,10 @@ update (void)
               hflag = TRUE;
 #endif
               leftcol = wp->w_leftcol;
+#ifdef COLOR
+              syntax_state = is_c_buffer (wp->w_bufp)
+                               ? syntax_state_before (wp->w_bufp, lp) : FALSE;
+#endif
               while (i < wp->w_toprow + wp->w_ntrows)
                 {
                   vscreen[i]->v_color = CTEXT;
@@ -654,7 +960,13 @@ update (void)
                   vtmove (i, 0);
                   if (lp != wp->w_bufp->b_linep)
                     {
-                      vtputs (lgets (lp), llength (lp));
+#ifdef COLOR
+                      if (is_c_buffer (wp->w_bufp))
+                        syntax_line (lgets (lp), llength (lp),
+                                     &syntax_state, TRUE);
+                      else
+#endif
+                        vtputs (lgets (lp), llength (lp));
                       lp = lforw (lp);
                     }
                   vteeol ();
@@ -755,6 +1067,45 @@ update (void)
   ttflush ();
 }
 
+#ifdef COLOR
+static void
+put_video_colors (wchar_t *text, short *attrs, int count)
+{
+  int i;
+  int color = attrs[0];
+
+  ttcolor (color);
+  for (i = 0; i < count; ++i)
+    {
+      if (attrs[i] != color)
+        {
+          color = attrs[i];
+          ttcolor (color);
+        }
+      ttputc (text[i]);
+      ttcol += uwidth (text[i]);
+    }
+}
+#endif
+
+#if !MEMMAP
+static int
+video_is_plain (const VIDEO *vp)
+{
+#ifdef COLOR
+  int i;
+
+  for (i = 0; i < ncol; ++i)
+    if (vp->v_attr[i] != CTEXT)
+      return FALSE;
+  return TRUE;
+#else
+  (void) vp;
+  return TRUE;
+#endif
+}
+#endif
+
 /*
  * Update a saved copy of a line,
  * kept in a VIDEO structure. The "vvp" is
@@ -774,7 +1125,10 @@ ucopy (VIDEO *vvp, VIDEO *pvp)
   pvp->v_hash = vvp->v_hash;
   pvp->v_cost = vvp->v_cost;
   pvp->v_color = vvp->v_color;
-  memcpy (pvp->v_text, vvp->v_text, ncol);
+  memcpy (pvp->v_text, vvp->v_text, ncol * sizeof (pvp->v_text[0]));
+#ifdef COLOR
+  memcpy (pvp->v_attr, vvp->v_attr, ncol * sizeof (pvp->v_attr[0]));
+#endif
 #endif
 }
 
@@ -792,8 +1146,13 @@ static void
 uline (int row, VIDEO *vvp, VIDEO *pvp)
 {
 #if MEMMAP
+#ifdef COLOR
+  ttmove (row, 0);
+  put_video_colors (vvp->v_text, vvp->v_attr, ncol);
+#else
   ttcolor (vvp->v_color);
   putline (row + 1, 1, (const wchar_t *) &vvp->v_text[0]);
+#endif
 #else
   register wchar_t *cp1;
   register wchar_t *cp2;
@@ -804,21 +1163,41 @@ uline (int row, VIDEO *vvp, VIDEO *pvp)
   int visual_col1 = 0;
   int visual_len = 0;
   wchar_t *p;
+#ifdef COLOR
+  short *attr1;
+  short *attr2;
+  short *attr5;
+#endif
 
   if (vvp->v_color != pvp->v_color)
     { 		/* Wrong color, do a full redraw. */
       ttmove (row, 0);
+#ifdef COLOR
+      put_video_colors (vvp->v_text, vvp->v_attr, ncol);
+#else
       ttcolor (vvp->v_color);
       ttputs (vvp->v_text, ncol);
       ttcol += ncol;
+#endif
       return;
     }
   cp1 = &vvp->v_text[0]; 	/* Compute left match. */
   cp2 = &pvp->v_text[0];
+#ifdef COLOR
+  attr1 = &vvp->v_attr[0];
+  attr2 = &pvp->v_attr[0];
+  while (cp1 != &vvp->v_text[ncol] && cp1[0] == cp2[0]
+         && attr1[0] == attr2[0])
+#else
   while (cp1 != &vvp->v_text[ncol] && cp1[0] == cp2[0])
+#endif
     {
       ++cp1;
       ++cp2;
+#ifdef COLOR
+      ++attr1;
+      ++attr2;
+#endif
     }
   if (cp1 == &vvp->v_text[ncol]) 	/* All equal. */
     return;
@@ -826,15 +1205,23 @@ uline (int row, VIDEO *vvp, VIDEO *pvp)
   nbflag = FALSE;
   cp3 = &vvp->v_text[ncol]; /* Compute right match. */
   cp4 = &pvp->v_text[ncol];
+#ifdef COLOR
+  attr5 = &vvp->v_attr[ncol];
+  while (cp3[-1] == cp4[-1] && attr5[-1] == pvp->v_attr[cp4 - pvp->v_text - 1])
+#else
   while (cp3[-1] == cp4[-1])
+#endif
     {
       --cp3;
       --cp4;
+#ifdef COLOR
+      --attr5;
+#endif
       if (cp3[0] != ' ') 	/* Note non-blanks in the right match. */
         nbflag = TRUE;
     }
   cp5 = cp3; 		/* Is erase good? */
-  if (nbflag == FALSE && vvp->v_color == CTEXT)
+  if (nbflag == FALSE && vvp->v_color == CTEXT && video_is_plain (vvp))
     {
       while (cp5 != cp1 && cp5[-1] == ' ')
         --cp5;
@@ -855,10 +1242,14 @@ uline (int row, VIDEO *vvp, VIDEO *pvp)
     }
   /* Move cursor to correct visual column, not array index */
   ttmove (row, visual_col1);
+#ifdef COLOR
+  put_video_colors (cp1, attr1, (int) (cp5 - cp1));
+#else
   ttcolor (vvp->v_color);
   /* Output string segment */
   ttputs (cp1, (int) (cp5 - cp1));
   ttcol += visual_len;
+#endif
   if (cp5 != cp3) 	/* Do erase. */
     tteeol ();
 #endif
@@ -877,8 +1268,13 @@ static void
 uline (int row, VIDEO *vvp, VIDEO *pvp)
 {
 #if MEMMAP
+#ifdef COLOR
+  ttmove (row, 0);
+  put_video_colors (vvp->v_text, vvp->v_attr, ncol);
+#else
   ttcolor (vvp->v_color);
   putline (row + 1, 1, (const wchar_t *) &vvp->v_text[0]);
+#endif
 #else
   register wchar_t *cp1;
   register wchar_t *cp2;
@@ -886,28 +1282,53 @@ uline (int row, VIDEO *vvp, VIDEO *pvp)
   register wchar_t *cp4;
   register wchar_t *cp5;
   register int nbflag;
+#ifdef COLOR
+  short *attr1;
+  short *attr2;
+#endif
 
   if (vvp->v_color != pvp->v_color)
     {				/* Wrong color, do a    */
       ttmove (row, 0);		/* full redraw.         */
+#ifdef COLOR
+      put_video_colors (vvp->v_text, vvp->v_attr, ncol);
+#else
       ttcolor (vvp->v_color);
       ttputs (vvp->v_text, ncol);
       ttcol += ncol;
+#endif
       return;
     }
   cp1 = &vvp->v_text[0];	/* Compute left match.  */
   cp2 = &pvp->v_text[0];
+#ifdef COLOR
+  attr1 = &vvp->v_attr[0];
+  attr2 = &pvp->v_attr[0];
+  while (cp1 != &vvp->v_text[ncol] && cp1[0] == cp2[0]
+         && attr1[0] == attr2[0])
+#else
   while (cp1 != &vvp->v_text[ncol] && cp1[0] == cp2[0])
+#endif
     {
       ++cp1;
       ++cp2;
+#ifdef COLOR
+      ++attr1;
+      ++attr2;
+#endif
     }
   if (cp1 == &vvp->v_text[ncol])	/* All equal.           */
     return;
   nbflag = FALSE;
   cp3 = &vvp->v_text[ncol];	/* Compute right match. */
   cp4 = &pvp->v_text[ncol];
+#ifdef COLOR
+  while (cp3[-1] == cp4[-1]
+         && vvp->v_attr[cp3 - vvp->v_text - 1]
+            == pvp->v_attr[cp4 - pvp->v_text - 1])
+#else
   while (cp3[-1] == cp4[-1])
+#endif
     {
       --cp3;
       --cp4;
@@ -915,7 +1336,7 @@ uline (int row, VIDEO *vvp, VIDEO *pvp)
         nbflag = TRUE;		/* the right match.     */
     }
   cp5 = cp3;			/* Is erase good?       */
-  if (nbflag == FALSE && vvp->v_color == CTEXT)
+  if (nbflag == FALSE && vvp->v_color == CTEXT && video_is_plain (vvp))
     {
       while (cp5 != cp1 && cp5[-1] == ' ')
         --cp5;
@@ -925,6 +1346,9 @@ uline (int row, VIDEO *vvp, VIDEO *pvp)
     }
   /* Alcyon hack */
   ttmove (row, (int) (cp1 - &vvp->v_text[0]));
+#ifdef COLOR
+  put_video_colors (cp1, attr1, (int) (cp5 - cp1));
+#else
   ttcolor (vvp->v_color);
 #if 0			/* old code */
   while (cp1 != cp5)
@@ -935,6 +1359,7 @@ uline (int row, VIDEO *vvp, VIDEO *pvp)
 #else /* new code */
   ttputs (cp1, (int) (cp5 - cp1));
   ttcol += (cp5 - cp1);
+#endif
 #endif
   if (cp5 != cp3)		/* Do erase.            */
     tteeol ();
@@ -964,6 +1389,9 @@ modeline (EWINDOW *wp)
   vtmove (n, 0);		/* Seek to right line.  */
   vscreen[n]->v_flag |= (VFCHG | VFHBAD);	/* Recompute, display.  */
   vscreen[n]->v_color = CMODE;	/* Mode line color.     */
+#ifdef COLOR
+  vtattr = CMODE;
+#endif
   if (wp == curwp)			/* mark the current buffer */
     lchar = '-';
   else
@@ -1024,6 +1452,9 @@ modeline (EWINDOW *wp)
 
   vtputc (' ');
   vtepadc (lchar);		/* Pad out with char.  */
+#ifdef COLOR
+  vtattr = CTEXT;
+#endif
 }
 
 #if GOSLING
@@ -1055,7 +1486,12 @@ hash (VIDEO *vp)
         n = tceeol;
       vp->v_cost = i + n;	/* Bytes + blanks.      */
       for (n = 0; i != 0; --i, --s)
-        n = (n << 5) + n + *s;
+        {
+          n = (n << 5) + n + *s;
+#ifdef COLOR
+          n = (n << 5) + n + vp->v_attr[i - 1];
+#endif
+        }
       vp->v_hash = n;		/* Hash code.           */
       vp->v_flag &= ~VFHBAD;	/* Flag as all done.    */
     }

@@ -208,6 +208,47 @@ void
 ttcolor (int color)
 {
   tthue = color;
+#ifdef COLOR
+  if (has_colors () != FALSE)
+    {
+      attr_t attrs = A_NORMAL;
+      short pair = 0;
+
+      switch (color)
+        {
+        case CMODE:
+          attrs = A_REVERSE;
+          break;
+        case CKEYWORD:
+          attrs = A_BOLD;
+          pair = 1;
+          break;
+        case CSTRING:
+          pair = 2;
+          break;
+        case CCOMMENT:
+          pair = 3;
+          break;
+        case CPREPROC:
+          pair = 4;
+          break;
+        default:
+          break;
+        }
+      bkgdset (' ' | COLOR_PAIR (pair) | attrs);
+      return;
+    }
+  if (color == CMODE)
+    {
+      bkgdset (' ' | A_REVERSE);
+      return;
+    }
+  if (color == CKEYWORD)
+    {
+      bkgdset (' ' | A_BOLD);
+      return;
+    }
+#endif
   bkgdset (' ' | (color == CMODE ? A_REVERSE : A_NORMAL));
 }
 
