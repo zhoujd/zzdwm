@@ -217,7 +217,7 @@ ttcolor (int color)
       switch (color)
         {
         case CMODE:
-          attrs = A_REVERSE;
+          pair = 5;
           break;
         case CKEYWORD:
           attrs = A_BOLD;

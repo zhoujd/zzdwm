@@ -528,6 +528,9 @@ ttcolor (int color)
         {
           switch (color)
             {
+            case CMODE:
+              ttputs (L"\033[37;44m", 8);
+              break;
             case CKEYWORD:
               ttputs (L"\033[1;34m", 7);
               break;
