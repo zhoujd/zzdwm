@@ -28,12 +28,17 @@
 #define SYNTAX_FEATURE_TRIPLE_STRINGS  0x10
 #define SYNTAX_FEATURE_BASH_VARIABLES  0x20
 #define SYNTAX_FEATURE_MARKDOWN        0x40
+#define SYNTAX_FEATURE_LISP            0x80
+#define SYNTAX_FEATURE_LISP_BLOCK_COMMENTS 0x100
+#define SYNTAX_FEATURE_SEMICOLON_COMMENTS 0x200
 
 #define SYNTAX_STATE_C_COMMENT         1
 #define SYNTAX_STATE_PYTHON_DQUOTE     2
 #define SYNTAX_STATE_PYTHON_SQUOTE     3
 #define SYNTAX_STATE_MARKDOWN_BACKTICK 4
 #define SYNTAX_STATE_MARKDOWN_TILDE    5
+#define SYNTAX_STATE_LISP_BLOCK_COMMENT 6
+#define SYNTAX_STATE_LISP_BLOCK_COMMENT_MAX 127
 
 struct syntax_definition
 {
@@ -94,6 +99,59 @@ static const char *const python_keywords[] = {
   "return", "try", "while", "with", "yield"
 };
 
+static const char *const lisp_keywords[] = {
+  "&aux", "&body", "&environment", "&key", "&optional", "&rest",
+  "&whole", "and", "block", "case", "ccase", "cond", "ctypecase",
+  "decf", "declare", "defclass", "defconstant", "defgeneric",
+  "define-compiler-macro", "define-modify-macro",
+  "define-setf-expander", "defmacro", "defmethod", "defpackage",
+  "defparameter", "defsetf", "defstruct", "deftype", "defun",
+  "defvar", "destructuring-bind", "do", "do*", "dolist", "dotimes",
+  "ecase", "etypecase", "flet", "function", "go", "handler-bind",
+  "handler-case", "if", "ignore-errors", "in-package", "incf",
+  "labels", "lambda", "let", "let*", "load-time-value", "locally",
+  "loop", "macrolet", "multiple-value-bind", "multiple-value-call",
+  "multiple-value-list", "multiple-value-prog1",
+  "multiple-value-setq", "nil", "or", "pop", "prog", "prog*",
+  "progn", "progv", "push", "pushnew", "quote", "remf",
+  "restart-bind", "restart-case", "return", "return-from",
+  "rotatef", "setf", "setq", "shiftf", "symbol-macrolet", "tagbody",
+  "the", "throw", "typecase", "unless", "unwind-protect", "when",
+  "with-accessors", "with-compilation-unit",
+  "with-condition-restarts", "with-hash-table-iterator",
+  "with-input-from-string", "with-open-file", "with-open-stream",
+  "with-output-to-string", "with-package-iterator", "with-restarts",
+  "with-simple-restart", "with-slots", "with-standard-io-syntax", "t"
+};
+
+static const char *const emacs_lisp_keywords[] = {
+  "&aux", "&body", "&environment", "&key", "&optional", "&rest",
+  "&whole", "and", "append", "apply", "arrayp", "atom", "autoload",
+  "backward-char", "buffer-file-name", "buffer-name", "car",
+  "car-safe", "cdr", "cdr-safe", "concat", "condition-case", "cons",
+  "consp", "copy-sequence", "defconst", "defcustom", "defface",
+  "defgroup", "define-derived-mode", "define-key",
+  "define-minor-mode", "defmacro", "defsubst", "defun", "defvar",
+  "delete-region", "dolist", "dotimes", "eq", "eql", "equal",
+  "error", "fboundp", "featurep", "format", "forward-char",
+  "funcall", "function", "goto-char", "if", "ignore", "insert",
+  "interactive", "kill-new", "lambda", "length", "let", "let*",
+  "list", "listp", "load", "lookup-key", "make-local-variable",
+  "make-variable-buffer-local", "mapc", "mapcar", "marker-position",
+  "max", "member", "message", "min", "mod", "narrow-to-region",
+  "nil", "not", "null", "numberp", "or", "point", "point-max",
+  "point-min", "prin1", "princ", "print", "prog1", "progn",
+  "propertize", "provide", "require", "reverse",
+  "save-current-buffer", "save-excursion", "save-match-data",
+  "save-restriction", "search-forward", "search-regexp", "set",
+  "setcar", "setcdr", "setq", "setq-local", "string-match",
+  "stringp", "substring", "symbol-name", "symbol-value", "t",
+  "throw", "unwind-protect", "vector", "vectorp", "when", "while",
+  "with-current-buffer", "with-output-to-temp-buffer",
+  "with-silent-modifications", "with-temp-buffer", "with-temp-file",
+  "y-or-n-p", "yes-or-no-p"
+};
+
 static const char *const cpp_extensions[] = {
   ".cpp", ".cc", ".cxx", ".C", ".hpp", ".hh", ".hxx", ".ipp", ".tcc"
 };
@@ -105,9 +163,17 @@ static const char *const python_extensions[] = { ".py", ".pyw", ".pyi" };
 static const char *const markdown_extensions[] = {
   ".md", ".markdown", ".mdown", ".mkd"
 };
+static const char *const lisp_extensions[] = {
+  ".lisp", ".lsp", ".l", ".cl"
+};
+static const char *const emacs_lisp_extensions[] = {
+  ".el", ".emacs"
+};
 
 static const char *const bash_shebangs[] = { "bash", "sh" };
 static const char *const python_shebangs[] = { "python" };
+static const char *const lisp_shebangs[] = { "sbcl", "clisp", "lisp" };
+static const char *const emacs_lisp_shebangs[] = { "emacs" };
 
 static const struct syntax_definition syntax_definitions[] = {
   {
@@ -142,6 +208,24 @@ static const struct syntax_definition syntax_definitions[] = {
                            / sizeof (markdown_extensions[0]),
     NULL, 0,
     SYNTAX_FEATURE_MARKDOWN
+  },
+  {
+    lisp_keywords, sizeof (lisp_keywords) / sizeof (lisp_keywords[0]),
+    lisp_extensions, sizeof (lisp_extensions)
+                     / sizeof (lisp_extensions[0]),
+    lisp_shebangs, sizeof (lisp_shebangs)
+                   / sizeof (lisp_shebangs[0]),
+    SYNTAX_FEATURE_LISP | SYNTAX_FEATURE_LISP_BLOCK_COMMENTS
+      | SYNTAX_FEATURE_SEMICOLON_COMMENTS
+  },
+  {
+    emacs_lisp_keywords,
+    sizeof (emacs_lisp_keywords) / sizeof (emacs_lisp_keywords[0]),
+    emacs_lisp_extensions,
+    sizeof (emacs_lisp_extensions) / sizeof (emacs_lisp_extensions[0]),
+    emacs_lisp_shebangs,
+    sizeof (emacs_lisp_shebangs) / sizeof (emacs_lisp_shebangs[0]),
+    SYNTAX_FEATURE_LISP | SYNTAX_FEATURE_SEMICOLON_COMMENTS
   }
 };
 
@@ -154,8 +238,12 @@ syntax_has_keyword (const struct syntax_definition *syntax,
   for (i = 0; i < syntax->keyword_count; ++i)
     {
       if ((int) strlen (syntax->keywords[i]) == len
-          && strncmp ((const char *) word, syntax->keywords[i],
-                      (size_t) len) == 0)
+          && (((syntax->features & SYNTAX_FEATURE_LISP) != 0
+               && strncasecmp ((const char *) word, syntax->keywords[i],
+                               (size_t) len) == 0)
+              || ((syntax->features & SYNTAX_FEATURE_LISP) == 0
+                  && strncmp ((const char *) word, syntax->keywords[i],
+                              (size_t) len) == 0)))
         return TRUE;
     }
   return FALSE;
@@ -258,6 +346,23 @@ is_identifier_char (uchar c)
 {
   return c == '_' || (c >= 'a' && c <= 'z')
          || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
+}
+
+static int
+is_lisp_symbol_start (wchar_t c)
+{
+  return is_identifier_start (c) != FALSE
+         || c == '*' || c == '+' || c == '-' || c == '/' || c == '<'
+         || c == '=' || c == '>' || c == '&' || c == '?' || c == '!';
+}
+
+static int
+is_lisp_symbol_char (uchar c)
+{
+  return is_identifier_char (c) != FALSE || c == '*' || c == '+'
+         || c == '-' || c == '/' || c == '<' || c == '=' || c == '>'
+         || c == '&' || c == '?' || c == '!' || c == '.' || c == '$'
+         || c == '%' || c == '@' || c == ':';
 }
 
 static int
@@ -595,9 +700,9 @@ syntax_line (const struct syntax_definition *syntax,
                 {
                   vtputc_color ('*', CCOMMENT);
                   vtputc_color ('/', CCOMMENT);
-                }
-              pos += 2;
+              }
               *state = SYNTAX_STATE_NONE;
+              pos += 2;
               continue;
             }
           if (draw != FALSE)
@@ -636,6 +741,40 @@ syntax_line (const struct syntax_definition *syntax,
           continue;
         }
 
+      if (*state >= SYNTAX_STATE_LISP_BLOCK_COMMENT
+          && (syntax->features & SYNTAX_FEATURE_LISP_BLOCK_COMMENTS) != 0)
+        {
+          if (c == '#' && pos + 1 < len && s[pos + 1] == '|')
+            {
+              if (*state < SYNTAX_STATE_LISP_BLOCK_COMMENT_MAX)
+                ++*state;
+              if (draw != FALSE)
+                {
+                  vtputc_color (c, CCOMMENT);
+                  vtputc_color (s[pos + 1], CCOMMENT);
+                }
+              pos += 2;
+              continue;
+            }
+            if (c == '|' && pos + 1 < len && s[pos + 1] == '#')
+              {
+                --*state;
+                if (*state < SYNTAX_STATE_LISP_BLOCK_COMMENT)
+                  *state = SYNTAX_STATE_NONE;
+                if (draw != FALSE)
+                  {
+                    vtputc_color ('|', CCOMMENT);
+                    vtputc_color ('#', CCOMMENT);
+                  }
+                pos += 2;
+                continue;
+              }
+          if (draw != FALSE)
+            vtputc_color (c, CCOMMENT);
+          pos += ulen;
+          continue;
+        }
+
       if ((syntax->features & SYNTAX_FEATURE_TRIPLE_STRINGS) != 0
           && (c == '"' || c == '\'')
           && pos + 2 < len && s[pos + 1] == c && s[pos + 2] == c)
@@ -649,6 +788,15 @@ syntax_line (const struct syntax_definition *syntax,
               vtputc_color (s[pos + 2], CSTRING);
             }
           pos += 3;
+          continue;
+        }
+
+      if ((syntax->features & SYNTAX_FEATURE_LISP) != 0
+          && (c == '\'' || c == '`' || c == ','))
+        {
+          if (draw != FALSE)
+            vtputc_color (c, CPREPROC);
+          pos += ulen;
           continue;
         }
 
@@ -679,6 +827,60 @@ syntax_line (const struct syntax_definition *syntax,
               else if (c == quote)
                 break;
             }
+          continue;
+        }
+
+      if ((syntax->features & SYNTAX_FEATURE_SEMICOLON_COMMENTS) != 0
+          && c == ';')
+        {
+          while (pos < len)
+            {
+              c = ugetc (s + pos, 0, &ulen);
+              if (ulen < 1)
+                ulen = 1;
+              if (draw != FALSE)
+                vtputc_color (c, CCOMMENT);
+              pos += ulen;
+            }
+          continue;
+        }
+
+      if ((syntax->features & SYNTAX_FEATURE_LISP_BLOCK_COMMENTS) != 0
+          && c == '#' && pos + 1 < len && s[pos + 1] == '|')
+        {
+          *state = SYNTAX_STATE_LISP_BLOCK_COMMENT;
+          if (draw != FALSE)
+            {
+              vtputc_color (c, CCOMMENT);
+              vtputc_color (s[pos + 1], CCOMMENT);
+            }
+          pos += 2;
+          continue;
+        }
+
+      if ((syntax->features & SYNTAX_FEATURE_LISP) != 0
+          && c == '#' && pos + 1 < len
+          && (s[pos + 1] == '\'' || s[pos + 1] == '+'
+              || s[pos + 1] == '-' || s[pos + 1] == ':'))
+        {
+          if (draw != FALSE)
+            {
+              vtputc_color (c, CPREPROC);
+              vtputc_color (s[pos + 1], CPREPROC);
+            }
+          pos += 2;
+          continue;
+        }
+
+      if ((syntax->features & SYNTAX_FEATURE_LISP) != 0
+          && c == ':')
+        {
+          int start = pos;
+
+          while (pos < len
+                 && (pos == start || is_lisp_symbol_char (s[pos]) != FALSE))
+            ++pos;
+          syntax_draw_range (s, start, pos, CPREPROC, draw);
           continue;
         }
 
@@ -777,6 +979,20 @@ syntax_line (const struct syntax_definition *syntax,
               for (i = start; i < pos; ++i)
                 vtputc_color (s[i], CPREPROC);
             }
+          continue;
+        }
+
+      if ((syntax->features & SYNTAX_FEATURE_LISP) != 0
+          && is_lisp_symbol_start (c) != FALSE)
+        {
+          int start = pos;
+          int color;
+
+          while (pos < len && is_lisp_symbol_char (s[pos]) != FALSE)
+            ++pos;
+          color = syntax_has_keyword (syntax, s + start, pos - start) != FALSE
+                    ? CKEYWORD : CTEXT;
+          syntax_draw_range (s, start, pos, color, draw);
           continue;
         }
 
