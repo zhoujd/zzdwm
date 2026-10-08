@@ -835,15 +835,21 @@ syntax_line (const struct syntax_definition *syntax,
               c = ugetc (s + pos, 0, &ulen);
               if (ulen < 1)
                 ulen = 1;
-              if (draw != FALSE)
-                vtputc_color (c, CSTRING);
               if (c == quote && pos + 2 < len
                   && s[pos + 1] == quote && s[pos + 2] == quote)
                 {
+                  if (draw != FALSE)
+                    {
+                      vtputc_color (c, CSTRING);
+                      vtputc_color (s[pos + 1], CSTRING);
+                      vtputc_color (s[pos + 2], CSTRING);
+                    }
                   pos += 3;
                   *state = SYNTAX_STATE_NONE;
                   break;
                 }
+              if (draw != FALSE)
+                vtputc_color (c, CSTRING);
               pos += ulen;
             }
           continue;
