@@ -51,6 +51,7 @@ OBJ := \
 	search.o \
 	spell.o \
 	symbol.o \
+	syntax.o \
 	version.o \
 	window.o \
 	word.o \

@@ -480,6 +480,8 @@ LINE;
 
 #ifdef COLOR
 #define SYNTAX_STATE_UNKNOWN (-1)
+#define SYNTAX_STATE_NONE 0
+struct syntax_definition;
 #endif
 
 /*
@@ -694,8 +696,19 @@ void vtinit (void);                     /* Initialize video display.    */
 void vttidy (void);                     /* Tidy display before exit.    */
 int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
 int showvisable (int f, int n, int k);  /* Show visable on modeline.    */
+void vtputc_color (unsigned int c, int color);
 #ifdef COLOR
 int setcolor (int f, int n, int k);     /* Set color display flag       */
+#endif
+
+/*
+ * Defined by "syntax.c".
+ */
+#ifdef COLOR
+const struct syntax_definition *syntax_for_buffer (const BUFFER *bp);
+int syntax_state_before (const BUFFER *bp, const LINE *lp);
+void syntax_line (const struct syntax_definition *syntax,
+                  const uchar *s, int len, int *state, int draw);
 void syntax_cache_clear_line (LINE *lp);
 void syntax_cache_clear_buffer (BUFFER *bp);
 void syntax_cache_copy_line (LINE *dst, const LINE *src);
