@@ -146,6 +146,7 @@ int tttop = HUGE;		/* Top of scroll region.        */
 int ttbot = HUGE;		/* Bottom of scroll region.     */
 
 int leftcol = 0;		/* Left column of window        */
+static int leftmargin;		/* Left margin of current line  */
 
 VIDEO *vscreen[NROW - 1];	/* Edge vector, virtual.        */
 VIDEO *pscreen[NROW - 1];	/* Edge vector, physical.       */
@@ -180,6 +181,14 @@ SCORE score[NROW * NROW];
  */
 static void vtputs (const uchar *s, int n);
 static void vtputc (unsigned int c);
+static void vttextmove (int row, int margin, int col);
+static int vttextcol (int col);
+static int vttextend (void);
+static int decimal_width (int value);
+static int is_buffer_end_marker (const LINE *lp, const BUFFER *bp);
+static void update_line_number_cache (EWINDOW *wp);
+static int window_gutter_width (const EWINDOW *wp);
+static void draw_line_number (int row, int number, int width);
 static void ucopy (VIDEO *vvp, VIDEO *pvp);
 static void uline (int row, VIDEO *vvp, VIDEO *pvp);
 static void modeline (EWINDOW *wp);
@@ -274,6 +283,26 @@ vtmove (int row, int col)
 #endif
 }
 
+static void
+vttextmove (int row, int margin, int col)
+{
+  leftmargin = margin;
+  leftcol = col;
+  vtmove (row, 0);
+}
+
+static int
+vttextcol (int col)
+{
+  return leftmargin + col - leftcol;
+}
+
+static int
+vttextend (void)
+{
+  return leftcol + ncol - leftmargin;
+}
+
 /*
  * Write a character to the virtual display,
  * dealing with long lines and the display of unprintable
@@ -294,7 +323,7 @@ vtputc_color (unsigned int c, int color)
 #else
   (void) color;
 #endif
-  if (vtcol >= leftcol + ncol)
+  if (vtcol >= vttextend ())
     {
       vttext[ncol - 1] = '$';
 #ifdef COLOR
@@ -312,9 +341,9 @@ vtputc_color (unsigned int c, int color)
     {
       if (vtcol >= leftcol)
         {
-          vttext[vtcol - leftcol] = c;
+          vttext[vttextcol (vtcol)] = c;
 #ifdef COLOR
-          vtattrs[vtcol - leftcol] = vtattr;
+          vtattrs[vttextcol (vtcol)] = vtattr;
 #endif
         }
       vtcol++;
@@ -350,7 +379,7 @@ vtputs (const uchar *s, int n)
       c = ugetc (s, 0, &ulen);
       s += ulen;
 
-        if (vtcol >= leftcol + ncol)
+        if (vtcol >= vttextend ())
           {
             vttext[ncol - 1] = '$';
 #ifdef COLOR
@@ -387,21 +416,21 @@ vtputs (const uchar *s, int n)
               /* Double-width (CJK) character handling */
               if (vtcol >= leftcol)
                 {
-                  vttext[vtcol - leftcol] = c;
+                  vttext[vttextcol (vtcol)] = c;
 #ifdef COLOR
-                  vtattrs[vtcol - leftcol] = vtattr;
+                  vtattrs[vttextcol (vtcol)] = vtattr;
 #endif
                 }
               vtcol++;
 
               /* Fill trailing column slot with 0 padding */
-              if (vtcol < leftcol + ncol)
+              if (vtcol < vttextend ())
                 {
                   if (vtcol >= leftcol)
                     {
-                      vttext[vtcol - leftcol] = 0;
+                      vttext[vttextcol (vtcol)] = 0;
 #ifdef COLOR
-                      vtattrs[vtcol - leftcol] = vtattr;
+                      vtattrs[vttextcol (vtcol)] = vtattr;
 #endif
                     }
                   vtcol++;
@@ -412,9 +441,9 @@ vtputs (const uchar *s, int n)
               /* Standard single-width character (w == 1) */
               if (vtcol >= leftcol)
                 {
-                  vttext[vtcol - leftcol] = c;
+                  vttext[vttextcol (vtcol)] = c;
 #ifdef COLOR
-                  vtattrs[vtcol - leftcol] = vtattr;
+                  vtattrs[vttextcol (vtcol)] = vtattr;
 #endif
                 }
               vtcol++;
@@ -439,7 +468,7 @@ vtputs (const uchar *s, int n)
     {
       c = ugetc (s, 0, &ulen);
       s += ulen;
-      if (vtcol >= leftcol + ncol)
+      if (vtcol >= vttextend ())
         {
           vttext[ncol - 1] = '$';
 #ifdef COLOR
@@ -458,9 +487,9 @@ vtputs (const uchar *s, int n)
         {
           if (vtcol >= leftcol)
             {
-              vttext[vtcol - leftcol] = c;
+              vttext[vttextcol (vtcol)] = c;
 #ifdef COLOR
-              vtattrs[vtcol - leftcol] = vtattr;
+              vtattrs[vttextcol (vtcol)] = vtattr;
 #endif
             }
           vtcol++;
@@ -478,6 +507,95 @@ vtstring (const char *s)
   vtputs ((const uchar *)s, strlen (s));
 }
 
+static int
+decimal_width (int value)
+{
+  int width = 1;
+
+  while (value >= 10)
+    {
+      value /= 10;
+      ++width;
+    }
+  return width;
+}
+
+static int
+is_buffer_end_marker (const LINE *lp, const BUFFER *bp)
+{
+  return lp != firstline (bp)
+    && lp == lastline (bp)
+    && llength (lp) == 0;
+}
+
+static void
+update_line_number_cache (EWINDOW *wp)
+{
+  BUFFER *bp = wp->w_bufp;
+  LINE *lp = firstline (bp);
+  int number = 1;
+  int lines;
+  int hide_last_line;
+
+  lines = 0;
+  while (lp != bp->b_linep)
+    {
+      if (lp == wp->w_linep)
+        wp->w_topline = number;
+      ++number;
+      ++lines;
+      lp = lforw (lp);
+    }
+  hide_last_line = lines > 1 && is_buffer_end_marker (lastline (bp), bp);
+  if (hide_last_line)
+    --lines;
+  if (wp->w_linep == bp->b_linep)
+    wp->w_topline = 0;
+  else if (hide_last_line && wp->w_linep == lastline (bp))
+    wp->w_topline = lines + 1;
+  wp->w_lwidth = decimal_width (lines) + 1;
+}
+
+static int
+window_gutter_width (const EWINDOW *wp)
+{
+  int width;
+
+  if (numberflag == FALSE)
+    return 0;
+  width = wp->w_lwidth;
+  if (width >= ncol)
+    width = ncol > 1 ? ncol - 1 : 0;
+  return width;
+}
+
+static void
+draw_line_number (int row, int number, int width)
+{
+  char text[32];
+  int pad;
+  int i;
+
+  leftmargin = 0;
+  leftcol = 0;
+  vtmove (row, 0);
+#ifdef COLOR
+  vtattr = CTEXT;
+#endif
+  if (number <= 0)
+    {
+      for (i = 0; i < width; ++i)
+        vtputc (' ');
+      return;
+    }
+  pad = width - 1 - decimal_width (number);
+  for (i = 0; i < pad; ++i)
+    vtputc (' ');
+  snprintf (text, sizeof (text), "%d", number);
+  vtstring (text);
+  vtputc (' ');
+}
+
 /*
  * Put a fill end of line with char.
  */
@@ -491,12 +609,12 @@ vtepadc (char ch)
 
   if (vtcol < leftcol)
     vtcol = leftcol;
-  if ((count = ncol + leftcol - vtcol) <= 0)
+  if ((count = ncol - leftmargin + leftcol - vtcol) <= 0)
     return;
-  wmemset (&vttext[vtcol - leftcol], ch, count);
+  wmemset (&vttext[vttextcol (vtcol)], ch, count);
 #ifdef COLOR
   for (i = 0; i < count; ++i)
-    vtattrs[vtcol - leftcol + i] = vtattr;
+    vtattrs[vttextcol (vtcol) + i] = vtattr;
 #endif
   vtcol += count;
 }
@@ -636,6 +754,9 @@ update (void)
   register int c;
   register int curcol;
   register int currow;
+  int gutter;
+  int text_width;
+  int line_number;
   uchar *s, *end;
 #if GOSLING
   register int hflag;
@@ -654,6 +775,12 @@ update (void)
     }
   curmsgf = newmsgf;		/* Sync. up right now.  */
 
+  if (numberflag != FALSE
+      && ((curwp->w_flag & WFHARD) != 0 || curwp->w_lwidth == 0))
+    update_line_number_cache (curwp);
+  gutter = window_gutter_width (curwp);
+  text_width = ncol - gutter;
+
   curcol = 0;			/* find current column  */
   lp = curwp->w_dot.p;		/* Cursor location.     */
   s = lgets (lp);
@@ -671,20 +798,21 @@ update (void)
       else
         curcol += uwidth(c);
     }
-  if (curcol >= ncol + curwp->w_leftcol)
+  if (curcol >= text_width + curwp->w_leftcol)
     {				/* need scroll right?   */
-      curwp->w_leftcol = curcol - ncol / 2;
+      curwp->w_leftcol = curcol - text_width / 2;
       curwp->w_flag |= WFHARD;	/* force redraw         */
     }
   else if (curcol < curwp->w_leftcol)
     {				/* need scroll left?    */
-      if (curcol < ncol / 2)	/* near left end?       */
+      if (curcol < text_width / 2)	/* near left end?       */
         curwp->w_leftcol = 0;	/* put left edge at 0   */
       else
-        curwp->w_leftcol = curcol - ncol / 2;
+        curwp->w_leftcol = curcol - text_width / 2;
       curwp->w_flag |= WFHARD;	/* force redraw         */
     }
   curcol -= curwp->w_leftcol;	/* adjust column        */
+  curcol += gutter;
 
 #if GOSLING
   hflag = FALSE;		/* Not hard.            */
@@ -735,6 +863,11 @@ update (void)
         out:
           lp = wp->w_linep;	/* Try reduced update.  */
           i = wp->w_toprow;
+          if (numberflag != FALSE
+              && ((wp->w_flag & WFHARD) != 0 || wp->w_lwidth == 0))
+            update_line_number_cache (wp);
+          gutter = window_gutter_width (wp);
+          line_number = wp->w_topline;
 #ifdef COLOR
           if ((wp->w_flag & WFEDIT) != 0 && syntax != NULL)
             {
@@ -751,12 +884,18 @@ update (void)
               while (lp != wp->w_dot.p)
                 {
                   ++i;
+                  ++line_number;
                   lp = lforw (lp);
                 }
               vscreen[i]->v_color = CTEXT;
               vscreen[i]->v_flag |= (VFCHG | VFHBAD);
-              leftcol = wp->w_leftcol;
-              vtmove (i, 0);
+              if (gutter != 0)
+                draw_line_number (i,
+                                  lp != wp->w_bufp->b_linep
+                                    && !is_buffer_end_marker (lp, wp->w_bufp)
+                                    ? line_number : 0,
+                                  gutter);
+              vttextmove (i, gutter, wp->w_leftcol);
 #ifdef COLOR
               if (syntax != NULL)
                 {
@@ -769,13 +908,13 @@ update (void)
                 vtputs (lgets (lp), llength (lp));
               vteeol ();
               leftcol = 0;
+              leftmargin = 0;
             }
           else if ((wp->w_flag & (WFEDIT | WFHARD)) != 0)
             {
 #if GOSLING
               hflag = TRUE;
 #endif
-              leftcol = wp->w_leftcol;
 #ifdef COLOR
               syntax_state = syntax != NULL
                                ? syntax_state_before (wp->w_bufp, lp)
@@ -785,7 +924,13 @@ update (void)
                 {
                   vscreen[i]->v_color = CTEXT;
                   vscreen[i]->v_flag |= (VFCHG | VFHBAD);
-                  vtmove (i, 0);
+                  if (gutter != 0)
+                    draw_line_number (i,
+                                      lp != wp->w_bufp->b_linep
+                                        && !is_buffer_end_marker (lp, wp->w_bufp)
+                                        ? line_number : 0,
+                                      gutter);
+                  vttextmove (i, gutter, wp->w_leftcol);
                   if (lp != wp->w_bufp->b_linep)
                     {
 #ifdef COLOR
@@ -795,12 +940,14 @@ update (void)
                       else
 #endif
                         vtputs (lgets (lp), llength (lp));
+                      ++line_number;
                       lp = lforw (lp);
                     }
                   vteeol ();
                   ++i;
                 }
               leftcol = 0;
+              leftmargin = 0;
             }
           if ((wp->w_flag & (WFMODE | WFHARD)) != 0)
             modeline (wp);
@@ -1221,6 +1368,8 @@ modeline (EWINDOW *wp)
   char lstr[32];
 
   n = wp->w_toprow + wp->w_ntrows;	/* Location.            */
+  leftmargin = 0;
+  leftcol = 0;
   vtmove (n, 0);		/* Seek to right line.  */
   vscreen[n]->v_flag |= (VFCHG | VFHBAD);	/* Recompute, display.  */
   vscreen[n]->v_color = CMODE;	/* Mode line color.     */
@@ -1540,5 +1689,26 @@ showvisable (int f, int n, int k)
 {
   visflag = !visflag;
   updatemode ();               /* Update mode lines    */
+  return (TRUE);
+}
+
+/*
+ * Set the line number display flag.
+ */
+int
+setnumber (int f, int n, int k)
+{
+  EWINDOW *wp;
+
+  numberflag = f ? (n != 0) : !numberflag;
+  ALLWIND (wp)
+    {
+      wp->w_lwidth = 0;
+      wp->w_topline = 0;
+      wp->w_flag |= WFHARD;
+    }
+  sgarbf = TRUE;
+  eprintf ("[Line numbers now %s]", numberflag ? "ON" : "OFF");
+  update ();
   return (TRUE);
 }

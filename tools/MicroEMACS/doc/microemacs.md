@@ -160,6 +160,11 @@ windows, each occupies half the screen.
 Windows can be created, deleted, and adjusted in
 size using MicroEMACS commands.
 
+Line numbers can be displayed in a narrow left gutter by starting
+MicroEMACS with the `-n` option, or by using the **set-number**
+command. The gutter is only as wide as the largest line number needs,
+and one space separates the number from the text.
+
 ## Mode Lines
 
 The last line of a window (the line, usually in reverse video,
@@ -523,13 +528,13 @@ and mark do not matter.
 Start editing by typing the command
 
 \begin{Verbatim}[commandchars=\\\{\}]
-pe [-b] [-d] [-x] [-z] [-p \emph{profile}] \emph{filename1} \emph{filename} ...
+pe [-b] [-n] [-d] [-x] [-z] [-p \emph{profile}] \emph{filename1} \emph{filename} ...
 \end{Verbatim}
 
 (The name `pe` was chosen to avoid confusion with other versions
 of MicroEMACS.  Think of it as an abbreviation of "puny emacs".)
 
-The options -b, -x, -z, and -p are optional.  They have the following
+The options -b, -n, -x, -z, and -p are optional.  They have the following
 meanings:
 
 -b
@@ -549,6 +554,11 @@ meanings:
 
     This option has no effect on VMS\index{VMS}, because VMS supports multiple
     file versions.
+
+-n
+
+:   Displays line numbers in each text window. The **set-number**
+    command can also toggle line numbers while MicroEMACS is running.
 
 -d
 

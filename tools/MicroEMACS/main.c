@@ -104,6 +104,7 @@ int rflag;			/* True if -r option specified  */
 int xflag;			/* True if -x option specified  */
 int zflag;			/* True if -z option specified  */
 int casefold = TRUE;		/* True if searches fold case   */
+int numberflag = FALSE;		/* True if line numbers shown   */
 #ifdef COLOR
 int colorflag = TRUE;		/* True if colors are enabled   */
 #endif
@@ -131,7 +132,7 @@ void
 usage (void)
 {
   fprintf (stderr,
-           "usage: me [-234" OPT_BACKUP OPT_COLOR "DmNrTuxz] [-c path] [-d path] [-g line] [-p profile] [-s string] [-t size]\n"
+           "usage: me [-234" OPT_BACKUP OPT_COLOR "DmnNrTuxz] [-c path] [-d path] [-g line] [-p profile] [-s string] [-t size]\n"
            "          [+[line]] [file[:line[:column]] ...] [file://path[:line[:column]] ...]\n");
 }
 
@@ -213,6 +214,9 @@ main (int argc, char *argv[])
               break;
             case 'm':
               mouse = TRUE;
+              break;
+            case 'n':
+              numberflag = TRUE;
               break;
             case 'N':
               autonl = FALSE;
@@ -609,6 +613,8 @@ bufinit (const char *fname)
       wp->w_force = 0;
       wp->w_flag = WFMODE | WFHARD;	/* Full.                */
       wp->w_leftcol = 0;	/* Display at left edge */
+      wp->w_lwidth = 0;
+      wp->w_topline = 0;
       wp->w_savep = NULL;
     }
 }

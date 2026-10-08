@@ -415,6 +415,8 @@ typedef struct EWINDOW
   char w_force;                 /* If NZ, forcing row.          */
   char w_flag;                  /* Flags.                       */
   int w_leftcol;                /* left column of window        */
+  short w_lwidth;               /* Width of line number gutter  */
+  int w_topline;                /* Line number of top line      */
 }
 EWINDOW;
 
@@ -545,6 +547,7 @@ extern char *cscope_path;
 extern int mouse;
 extern int xflag;
 extern int zflag;
+extern int numberflag;
 #ifdef COLOR
 extern int colorflag;
 #endif
@@ -696,6 +699,7 @@ void vtinit (void);                     /* Initialize video display.    */
 void vttidy (void);                     /* Tidy display before exit.    */
 int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
 int showvisable (int f, int n, int k);  /* Show visable on modeline.    */
+int setnumber (int f, int n, int k);    /* Set line number display      */
 void vtputc_color (unsigned int c, int color);
 #ifdef COLOR
 int setcolor (int f, int n, int k);     /* Set color display flag       */

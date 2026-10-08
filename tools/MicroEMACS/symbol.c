@@ -289,6 +289,7 @@ KEY key[] = {
   {-1,                  displaymessage,    "display-message"},
   {-1,                  listbuffers,       "display-buffers"},
   {-1,                  showvisable,       "display-visable"},
+  {-1,                  setnumber,         "set-number"},
 #ifdef COLOR
   {-1,                  setcolor,          "set-color"},
 #endif
