@@ -626,6 +626,9 @@ bclear (BUFFER *bp)
     }
   lp = bp->b_linep;		/* Header line          */
   lp->l_fp = lp->l_bp = lp;	/* Point it to itself   */
+#ifdef COLOR
+  syntax_cache_clear_line (lp);
+#endif
   addemptyline (bp);		/* Add an empty line	*/
   lp = firstline (bp);
   bp->b_dot.p = lp;		/* Make this the dot    */

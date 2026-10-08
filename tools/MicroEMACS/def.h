@@ -693,6 +693,7 @@ int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
 int showvisable (int f, int n, int k);  /* Show visable on modeline.    */
 #ifdef COLOR
 void syntax_cache_clear_line (LINE *lp);
+void syntax_cache_clear_buffer (BUFFER *bp);
 void syntax_cache_copy_line (LINE *dst, const LINE *src);
 void syntax_cache_after_edit (BUFFER *bp, LINE *lp);
 void syntax_cache_line_split (BUFFER *bp, LINE *prefix, LINE *suffix);

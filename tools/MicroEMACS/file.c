@@ -833,6 +833,9 @@ filewrite (int f, int n, int k)
   if ((s = writeout (expanded_fname)) == TRUE)
     {
       strcpy (curbp->b_fname, expanded_fname);
+#ifdef COLOR
+      syntax_cache_clear_buffer (curbp);
+#endif
       curbp->b_flag &= ~BFCHG;
       updatemode ();		/* Update mode lines.   */
     }
@@ -908,6 +911,9 @@ filename (int f, int n, int k)
   adjustcase (fname);
   expanded_fname = fftilde (fname);
   strcpy (curbp->b_fname, expanded_fname);	/* Fix name.            */
+#ifdef COLOR
+  syntax_cache_clear_buffer (curbp);
+#endif
   updatemode ();		/* Update mode lines    */
 #if BACKUP
   curbp->b_flag &= ~BFBAK;	/* No backup.           */
