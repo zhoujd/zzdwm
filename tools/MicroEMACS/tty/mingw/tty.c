@@ -213,10 +213,36 @@ ttnowindow (void)
 void
 ttcolor (int color)
 {
-  if ((tthue = color) == CMODE)             /* modeline color?      */
-    ttattr = attinv;                        /* inverse video        */
-  else
-    ttattr = attnorm;                       /* normal video         */
+  tthue = color;
+#ifdef COLOR
+  if (colorflag != FALSE)
+    {
+      switch (color)
+        {
+        case CMODE:
+          ttattr = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE
+                   | BACKGROUND_BLUE;
+          break;
+        case CKEYWORD:
+          ttattr = (attnorm & 0xF0) | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+          break;
+        case CSTRING:
+          ttattr = (attnorm & 0xF0) | FOREGROUND_GREEN;
+          break;
+        case CCOMMENT:
+          ttattr = (attnorm & 0xF0) | FOREGROUND_GREEN | FOREGROUND_BLUE;
+          break;
+        case CPREPROC:
+          ttattr = (attnorm & 0xF0) | FOREGROUND_RED | FOREGROUND_BLUE;
+          break;
+        default:
+          ttattr = attnorm;
+          break;
+        }
+      return;
+    }
+#endif
+  ttattr = color == CMODE ? attinv : attnorm;
 }
 
 /*
