@@ -82,41 +82,41 @@
 #define OPT_COLOR ""
 #endif
 
-int thisflag;			/* Flags, this command          */
-int lastflag;			/* Flags, last command          */
-int curgoal;			/* Goal column                  */
-BUFFER *curbp = 0;		/* Current buffer               */
-EWINDOW *curwp = 0;		/* Current window               */
-BUFFER *bheadp;			/* BUFFER listhead              */
-EWINDOW *wheadp;		/* EWINDOW listhead             */
-BUFFER *blistp;			/* Buffer list BUFFER           */
-int kbdm[NKBDM] = { KCTLX | ')' }; /* Macro                     */
-int *kbdmip;			/* Input  for above             */
-int *kbdmop;			/* Output for above             */
-uchar pat[NPAT] = { 0 };	/* Pattern                      */
-SYMBOL *symbol[NSHASH];		/* Symbol table listhead.       */
-int inprof;			/* True if reading profile      */
-int bflag;			/* True if -b option specified  */
-char *cscope_path = "cscope";	/* Name of cscope program	*/
-int noupdatecscope;		/* True if -u option specified	*/
-int mouse;			/* True if -m option specified  */
-int rflag;			/* True if -r option specified  */
-int xflag;			/* True if -x option specified  */
-int zflag;			/* True if -z option specified  */
-int casefold = TRUE;		/* True if searches fold case   */
-int numberflag = FALSE;		/* True if line numbers shown   */
+int thisflag;                      /* Flags, this command          */
+int lastflag;                      /* Flags, last command          */
+int curgoal;                       /* Goal column                  */
+BUFFER *curbp = 0;                 /* Current buffer               */
+EWINDOW *curwp = 0;                /* Current window               */
+BUFFER *bheadp;                    /* BUFFER listhead              */
+EWINDOW *wheadp;                   /* EWINDOW listhead             */
+BUFFER *blistp;                    /* Buffer list BUFFER           */
+int kbdm[NKBDM] = { KCTLX | ')' }; /* Macro                        */
+int *kbdmip;                       /* Input  for above             */
+int *kbdmop;                       /* Output for above             */
+uchar pat[NPAT] = { 0 };           /* Pattern                      */
+SYMBOL *symbol[NSHASH];            /* Symbol table listhead.       */
+int inprof;                        /* True if reading profile      */
+int bflag;                         /* True if -b option specified  */
+char *cscope_path = "cscope";      /* Name of cscope program       */
+int noupdatecscope;                /* True if -u option specified  */
+int mouse;                         /* True if -m option specified  */
+int rflag;                         /* True if -r option specified  */
+int xflag;                         /* True if -x option specified  */
+int zflag;                         /* True if -z option specified  */
+int casefold = TRUE;               /* True if searches fold case   */
+int numberflag = FALSE;            /* True if line numbers shown   */
 #ifdef COLOR
-int colorflag = TRUE;		/* True if colors are enabled   */
+int colorflag = TRUE;              /* True if colors are enabled   */
 #endif
-int fillcol = 70;		/* Fill column for paragraphs.  */
-int tabsize = 8;		/* No. of columns for a tab     */
-int savetabs = TRUE;		/* True if tabs are preserved   */
-int autonl = TRUE;		/* True if auto add newline     */
-char *srchstr = NULL;		/* Initial search string passed */
-char *targetdir = NULL;	/* Target work directory passed */
-int dosmode = FALSE;		/* True if -D flag forces DOS/CRLF */
+int fillcol = 70;                  /* Fill column for paragraphs.  */
+int tabsize = 8;                   /* No. of columns for a tab     */
+int savetabs = TRUE;               /* True if tabs are preserved   */
+int autonl = TRUE;                 /* True if auto add newline     */
+char *srchstr = NULL;              /* Initial search string passed */
+char *targetdir = NULL;            /* Target work directory passed */
+int dosmode = FALSE;               /* True if -D forces DOS/CRLF   */
 
-static int nbuf;		/* number of buffers    */
+static int nbuf;                   /* number of buffers            */
 
 /*
  * Forward declarations.
