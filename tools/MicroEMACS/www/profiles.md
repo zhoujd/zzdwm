@@ -136,7 +136,7 @@ when you invoke MicroEMACS.  If you name the above profile
 without entering any MicroEMACS commands,
 by invoking MicroEMACS with the following:
 
-    pe -p junk.pro filename
+    me -p junk.pro filename
 
 You can tell MicroEMACS to read a profile at any time, with the
 following command.

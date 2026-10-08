@@ -6,6 +6,10 @@ title: "Ruby Extensions"
 
 # Ruby Extensions
 
+This chapter describes the optional Ruby extension from an earlier MicroEMACS
+distribution. The current Linux and MinGW makefiles do not build or install
+Ruby support.
+
 
 It is possible to extend MicroEMACS by writing commands in Ruby.
 To add Ruby support, you must specify the `--with-ruby` flag to `configure` when you
@@ -440,4 +444,3 @@ code using:
 
 The helper code in `pe.rb` catches this signal and raises an exception that
 aborts the errant Ruby code and return control to MicroEMACS.
-

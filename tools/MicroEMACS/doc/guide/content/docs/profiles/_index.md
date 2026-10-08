@@ -166,7 +166,7 @@ when you invoke MicroEMACS.  If you name the above profile
 without entering any MicroEMACS commands,
 by invoking MicroEMACS with the following:
 
-    pe -p junk.pro filename
+    me -p junk.pro filename
 
 You can tell MicroEMACS to read a profile at any time, with the
 following command.
@@ -202,4 +202,3 @@ processing (or at any other time) with the following command.
         replace-string "CDOS\r" "FlexOS\r"
 
     Note the required carriage return (\\r) at the end of the string.
-

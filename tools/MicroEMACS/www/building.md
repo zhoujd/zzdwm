@@ -1,34 +1,28 @@
 # Building a MicroEMACS
 
-All versions of MicroEMACS are built from the two sets of
-source files. One set is independent of operating system and terminal,
-and the other set is dependent.
-
-Compile time options for the independent modules
-are selected by setting compilation
-switches in `def.h`, and then letting conditional compilation do the
-right thing.
-
-The dependent modules are briefly described below.
+MicroEMACS is built from portable editor sources plus a small set of
+operating-system and terminal sources. The top-level `Makefile` chooses
+`Make.Linux` on Linux and `Make.Mingw` on Windows. You can select a
+makefile explicitly with `make MF=Make.Linux` or `make MF=Make.Mingw`.
 
 ## Operating System
 
-MicroEMACS runs on several operating systems, including Linux,
-BSD, and Windows.  Support code for other operating systems has been lost
+MicroEMACS currently supports Linux and Windows. Support code for other
+operating systems has been lost
 (in the distant past, these included CP/M-86 and MS-DOS on the DEC Rainbow,
 VMS on the VAX, CP/M-68K, GEMDOS, and FlexOS V60/68K/286).
 The following modules contain code dependencies on the operating system:
 
-* `ttyio.c` - low level terminal I/O; independent of terminal type.
+* `sys/unix/ttyio.c` - low level UNIX terminal I/O.
+* `sys/mingw/ttyio.c` - low level Windows console I/O.
 
-* `spawn.c` - subjob creation.
+* `sys/unix/spawn.c` and `sys/mingw/spawn.c` - subjob creation.
 
-* `fileio.c` - low level file handling.
+* `sys/unix/fileio.c` and `sys/mingw/fileio.c` - low level file handling.
 
-* `bcopy.s` or `bcopy.asm` - fast byte copy and fill functions.
 
-Adding a new operating system consists mostly of changing these
-files, and the header file `sysdef.h`.
+Adding a new operating system consists mostly of adding a corresponding
+directory under `sys` and updating one of the makefiles.
 
 ## Terminal Support
 
@@ -44,7 +38,8 @@ The following modules contain code dependencies on the terminal type:
 * `ttykbd.c` - keyboard dependencies and extensions.
 
 Changing terminal type consists mostly of changing these files, and the header file `ttydef.h`
-These files are located in separate per-terminal subdirectories of the `tty` directory.
+These files are located in the `tty/ncurses`, `tty/termcap`, and
+`tty/mingw` directories.
 
 Some terminals have memory mapped displays, or interfaces that
 act as such.  These include ncurses and Windows text consoles.
@@ -59,44 +54,56 @@ for writing lines to the display.  On old DOS-base systems, this code
 was written in assembly language, but on modern terminals it is
 written in C and placed in `tty.c`.
 
-## Building with GCC
+## Building with build.sh
 
-To build MicroEMACs on Linux, BSD, or Windows using Cygwin
-or MinGW, use these commands:
+The `build.sh` wrapper is the recommended way to build, test, and install
+the editor. Run it from `tools/MicroEMACS`:
 
-    mkdir obj
-    cd obj
-    ../configure
-    make # gmake on BSD
+    ./build.sh -b          # Build the editor for the host system
+    ./build.sh -b test     # Build the test targets
+    ./build.sh -d          # Build a debug executable
+    ./build.sh -r          # Build and strip a local release
+    ./build.sh -p          # Build a static executable in Docker
+    ./build.sh -w          # Clean and build me.exe with MinGW in Docker
+    ./build.sh -i          # Install the Linux executable in /usr/local/bin
+    ./build.sh -c          # Remove generated build files
 
-You can supply one or more optional parameters to the `configure` command:
+The Linux build enables color support with `-DCOLOR`. To use termcap
+instead of ncursesw, pass `TERMCAP=yes` to make:
 
-`--with-termcap`
+    make MF=Make.Linux TERMCAP=yes clean all
 
-Use this option to make MicroEMACS use the **terminfo** / **termcap** libraries for
-screen management, instead of the default **ncursesw** library.
-This option will not work on Windows.
+The release wrapper selects a static build automatically on Alpine and
+Void Linux. The publish wrapper builds a stripped static executable in
+the `zhoujd/alpine` Docker image.
 
-`--enable-debug`
+## Windows Build
 
-Use this option to compile and build MicroEMACS with debugging information, so that
-it can be debugged with gdb.
+`./build.sh -w` builds a stripped `me.exe` with MinGW-w64. Outside
+Docker, the wrapper requires Docker and an image whose name defaults to
+`zhoujd/mingw:base`. Build that image from the repository root with:
 
-`--with-ruby`
+    make -C docker/dockerfiles/tool mingw-base
 
-Use this option to build support for Ruby extensions into MicroEMACS.
-This option will not work on Windows.
+Override the image and compiler with `MINGW_IMG` and `MINGW_CC` if needed:
 
-To get this option to work on BSD, provide a version parameter.
-The parameter should be the first two digits of the version printed by
-`ruby --version`.  For example, if the Ruby version is 3.2.9,
-use this option: `--with-ruby=3.2` .
+    MINGW_IMG=example/mingw:base MINGW_CC=x86_64-w64-mingw32-gcc \
+        ./build.sh -w
 
+The Windows build also enables color support with `-DCOLOR`.
 
-See the [Ruby Extensions](ruby.md) section for more information.
+## Direct Make Builds
 
-`--with-pcre2`
+The underlying makefiles remain available:
 
-Use this option to use the PCRE2 library for Perl-compatible regular expressions,
-instead of the default Henry Spencer (circa 1986) regular expressions.
+    make MF=Make.Linux clean all
+    make MF=Make.Linux DEBUG=yes clean all
+    make MF=Make.Mingw CC=x86_64-w64-mingw32-gcc \
+        LD=x86_64-w64-mingw32-gcc clean all
 
+Tests live in `test` and can be built directly:
+
+    make -C test
+    make -C test debug
+
+Ruby extensions and PCRE2 are not enabled by the current makefiles.

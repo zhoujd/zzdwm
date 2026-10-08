@@ -1,5 +1,9 @@
 # Ruby Extensions
 
+This chapter describes the optional Ruby extension from an earlier MicroEMACS
+distribution. The current Linux and MinGW makefiles do not build or install
+Ruby support.
+
 It is possible to extend MicroEMACS by writing commands in Ruby.
 First, install the Ruby development packages (ruby-dev or ruby-devel).
 Then specify the `--with-ruby` flag to `configure` when you
@@ -287,7 +291,7 @@ by passing it as a parameter when calling the command.
 As of this writing, the only command that looks at the keycode is **ins-self**.
 Given that fact, the following example inserts an 'x' character in to the current buffer:
 
-``
+```
 E.ins_self key('x')
 ```
 

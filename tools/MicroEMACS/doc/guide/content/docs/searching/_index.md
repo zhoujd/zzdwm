@@ -48,6 +48,9 @@ searches using a subset of POSIX regular expressions:
 
 * `+` (one or more occurrences)
 
+The current makefiles use MicroEMACS's built-in regular-expression engine.
+PCRE2 support is not enabled by these makefiles.
+
 C-S, M-S
 
 :   **forw-search**
@@ -258,4 +261,3 @@ M-\$
 
     Similar to **spell-region**, except that it checks only the word under
     the cursor.
-

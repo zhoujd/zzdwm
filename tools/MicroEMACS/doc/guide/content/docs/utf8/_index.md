@@ -1,5 +1,5 @@
 ---
-weight: 24
+weight: 25
 bookFlatSection: true
 title: "UTF-8 and Unicode"
 ---
@@ -49,4 +49,3 @@ in the edit buffer using the following command:
 
     As an example, entering the string `e0 e1 e2` would insert the characters
     `àáâ` into the buffer.
-

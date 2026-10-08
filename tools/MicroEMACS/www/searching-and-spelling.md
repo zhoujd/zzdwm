@@ -41,9 +41,8 @@ searches using a subset of POSIX regular expressions:
 
 * `+` (one or more occurrences)
 
-If you configure MicroEMACS with the `--with-pcre2` option, MicroEMACS
-will use the PCRE2 library to support Perl-compatible regular expressions.  See
-[Building a MicroEMACS](building.md).
+The current makefiles use MicroEMACS's built-in regular-expression engine.
+PCRE2 support is not enabled by these makefiles.
 
 
 **C-S, M-S** (**forw-search**)
@@ -247,4 +246,3 @@ suggestions; the suggestions are shown in the prompt on the echo line.
 
 Similar to **spell-region**, except that it checks only the word under
 the cursor.
-

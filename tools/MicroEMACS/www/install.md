@@ -1,8 +1,8 @@
 # Installation
 
-Fetch the source code repository and check it out in one step using:
+Clone or copy this MicroEMACS source tree, then change to the
+`tools/MicroEMACS` directory:
 
-    fossil clone https://www.bloovis.com/fossil/home/marka/fossils/pe
+    cd tools/MicroEMACS
 
-Change to the `pe` directory, and then read
-the instructions in [Building a MicroEMACS](building.md).
+Read the instructions in [Building a MicroEMACS](building.md).

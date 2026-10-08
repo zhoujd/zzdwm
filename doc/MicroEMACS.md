@@ -10,6 +10,34 @@ MicroEMACS
 ## https://github.com/DigitalMars/me
 ```
 
+## Current Source Tree
+
+This repository contains the MicroEMACS editor under `tools/MicroEMACS`.
+The current build supports Linux with ncursesw or termcap and Windows with
+MinGW-w64. Color support is compiled in with `-DCOLOR`.
+
+```bash
+cd tools/MicroEMACS
+
+./build.sh -b        # host build
+./build.sh -b test   # tests
+./build.sh -p        # static Linux build
+./build.sh -w        # Windows me.exe build in Docker
+```
+
+The editor supports UTF-8, C/C++, Bash, Python, Markdown, Lisp, and
+Emacs Lisp syntax highlighting. Colors and Vim-style line numbers can be
+disabled or enabled at runtime:
+
+```bash
+me -C file.c         # start with color disabled
+me -n file.c         # start with line numbers enabled
+```
+
+The unbound extended commands are `set-color` and `set-number`. They can be
+entered with `M-X`; a numeric argument of zero disables the feature and a
+nonzero argument enables it.
+
 ## Linux editors
 
 ```

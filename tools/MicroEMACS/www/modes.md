@@ -1,5 +1,10 @@
 # Modes
 
+This chapter describes the Ruby-based mode hooks from an earlier MicroEMACS
+distribution. The current makefiles do not build Ruby support, but syntax
+highlighting is selected automatically without a buffer mode; see
+[Display Features](display.md).
+
 If MicroEMACS has been built with Ruby support, it will also support
 the notion of modes, which are similar to major modes in Emacs.
 A mode consists of a name (which is arbitrary) and a set of key bindings

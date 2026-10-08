@@ -49,16 +49,22 @@ the once-popular Daniel Lawrence version, and the Linus Torvalds version.
 
 I have lost the original source of Conroy's version of MicroEMACS (including the TeX version
 of this document), and I cannot find it on Google's USENET archive.
-I have also lost my DOS and OS/2 source
-code, though the Windows code (in the `nt` subdirectory) still exists.
-This document contains many reference to historical machines and operating
-systems, but I have kept them for historical interest.  I maintain
-only the Linux version now.
+I have also lost my DOS and OS/2 source code. This document contains
+many historical references to machines and operating systems, but I have
+kept them for historical interest. The current source tree builds both
+Linux and Windows versions.
+
+### Current Source Tree
+
+This source tree currently builds a Linux executable with ncursesw or
+termcap, and a Windows executable with MinGW-w64. It includes UTF-8
+editing, syntax highlighting, optional colors, optional line numbers,
+tags, cscope, undo, and regular-expression search and replace.
 
 In the 80s, MicroEMACS was small enough to run easily from a floppy disk, but the amount of text that
 could be edited was limited by the very small amount of available RAM
 (640kb on PCs running MS-DOS).  Nowadays this limit is effectively non-existent, give the huge amount of memory
 found in modern computers, but MicroEMACS is still small enough to be run from a floppy disk
 (if one could be found); its code size is about the same as `/bin/ls` on a current 64-bit
-Linux distribution.
-
+Linux distribution. The current Linux and Windows executables remain
+small while including these features.
