@@ -3,7 +3,7 @@
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 MNT_DIR=$(git rev-parse --show-toplevel)
 WS=$SCRIPT_DIR
-TM=Make.Test
+TEST_DIR=test
 
 [ -f /etc/os-release ] && . /etc/os-release
 
@@ -32,11 +32,11 @@ build() {
             ;;
         test|-t )
             shift
-            make -f $TM $@
+            make -C "$TEST_DIR" "$@"
             ;;
         all|-a )
             make
-            make -f $TM
+            make -C "$TEST_DIR"
             ;;
         -* )
             usage
@@ -155,7 +155,7 @@ publish() {
 clean() {
     case ${1:-""} in
         test|-t )
-            make -f $TM clean
+            make -C "$TEST_DIR" clean
             ;;
         all|-a )
             make clean
