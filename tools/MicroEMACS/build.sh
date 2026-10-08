@@ -13,6 +13,7 @@ usage() {
 Usage: $app {option}
 Option:
 build|-b        build {test|-t|all|-a|windows|-w}
+windows|-w      build Windows me.exe
 clean|-c        clean {test|-t|all|-a|windows|-w}
 debug|-d        debug
 release|-r      release
@@ -195,6 +196,10 @@ case $1 in
     build|-b )
         shift
         build "$@"
+        ;;
+    windows|-w )
+        shift
+        windows "$@"
         ;;
     debug|-d )
         debug
