@@ -131,6 +131,25 @@ wine() {
         zhoujd/wine:latest bash
 }
 
+mingw() {
+    local img="${MINGW_IMG:-zhoujd/mingw:latest}"
+
+    echo "Usage inside container: x86_64-w64-mingw32-gcc --version"
+    if [ "$#" -eq 0 ]; then
+        docker run --rm -it \
+            -h mingw \
+            -v "$TOP:/workspace" \
+            -w /workspace \
+            "$img" bash
+    else
+        docker run --rm \
+            -h mingw \
+            -v "$TOP:/workspace" \
+            -w /workspace \
+            "$img" "$@"
+    fi
+}
+
 usage() {
     local app=$(basename "$0")
     cat <<EOF
@@ -146,6 +165,7 @@ build|-b    Build image stack
 clean|-c    Clean stopped containers & untagged images
 valgrind|-v Run Valgrind container environment
 wine|-w     Run Wine container environment
+mingw|-m    Run MinGW cross compiler container
 
 Distros:
 alpine|-a   Alpine Linux (default)
@@ -187,6 +207,10 @@ case "$CMD" in
     wine|-w )
         shift
         wine "$@"
+        ;;
+    mingw|-m )
+        shift
+        mingw "$@"
         ;;
     * )
         usage

@@ -19,7 +19,6 @@ release|-r      release
 publish|-p      publish
 install|-i      install
 uninstall|-u    uninstall
-dep|-D          install the MinGW cross compiler
 EOF
 }
 
@@ -49,98 +48,53 @@ build() {
     echo "Build done"
 }
 
+mingw_image() {
+    echo "${MINGW_IMG:-${IMG_NS:-zhoujd}/mingw:base}"
+}
+
 windows() {
     compiler=${MINGW_CC:-x86_64-w64-mingw32-gcc}
-    if ! command -v "$compiler" >/dev/null 2>&1; then
-        echo "MinGW compiler not found: $compiler" >&2
-        echo "Set MINGW_CC to another MinGW cross compiler." >&2
+    img=$(mingw_image)
+
+    if [ -n "$INSIDE_DOCKER" ]; then
+        if ! command -v "$compiler" >/dev/null 2>&1; then
+            echo "MinGW compiler not found: $compiler" >&2
+            exit 1
+        fi
+        make -f Make.Mingw clean || exit 1
+        make -f Make.Mingw CC="$compiler" LD="$compiler" "$@" || exit 1
+        echo "Build Windows done"
+        return
+    fi
+
+    if ! command -v docker >/dev/null 2>&1; then
+        echo "Docker is required to build me.exe" >&2
+        exit 1
+    fi
+    if ! docker image inspect "$img" >/dev/null 2>&1; then
+        echo "MinGW Docker image not found: $img" >&2
+        echo "Build it with: make -C docker/dockerfiles/tool mingw-base" >&2
         exit 1
     fi
 
-    make -f Make.Mingw clean
-    make -f Make.Mingw CC="$compiler" LD="$compiler" "$@"
+    if ! docker run \
+        --name="build-me-mingw-1" \
+        --rm \
+        -i \
+        -u "$(id -u):$(id -g)" \
+        -e INSIDE_DOCKER=1 \
+        -e MINGW_CC="$compiler" \
+        -v "$MNT_DIR:$MNT_DIR" \
+        -w "$WS" \
+        "$img" \
+        sh -c '
+        make -f Make.Mingw clean &&
+        make -f Make.Mingw CC="$MINGW_CC" LD="$MINGW_CC" "$@"
+        ' sh "$@"
+    then
+        exit 1
+    fi
     echo "Build Windows done"
-}
-
-dep() {
-    compiler=${MINGW_CC:-x86_64-w64-mingw32-gcc}
-    compiler_name=$(basename "$compiler")
-
-    case "$compiler_name" in
-        x86_64-w64-mingw32-gcc )
-            target=x86_64
-            debian_target=x86-64
-            ;;
-        i686-w64-mingw32-gcc )
-            target=i686
-            debian_target=i686
-            ;;
-        * )
-            echo "Unsupported MinGW compiler: $compiler" >&2
-            return 1
-            ;;
-    esac
-
-    if command -v "$compiler" >/dev/null 2>&1; then
-        echo "Cross compiler already installed: $compiler"
-        return 0
-    fi
-
-    if command -v apt-get >/dev/null 2>&1; then
-        package=gcc-mingw-w64-$debian_target-posix
-        if [ "$(id -u)" -eq 0 ]; then
-            apt-get update
-            apt-get install -y "$package"
-        else
-            sudo apt-get update
-            sudo apt-get install -y "$package"
-        fi
-    elif command -v dnf >/dev/null 2>&1; then
-        case "$target" in
-            x86_64 )
-                package=mingw64-gcc
-                ;;
-            i686 )
-                package=mingw32-gcc
-                ;;
-        esac
-        if [ "$(id -u)" -eq 0 ]; then
-            dnf install -y "$package"
-        else
-            sudo dnf install -y "$package"
-        fi
-    elif command -v pacman >/dev/null 2>&1; then
-        package=mingw-w64-gcc
-        if [ "$(id -u)" -eq 0 ]; then
-            pacman -Sy --needed "$package"
-        else
-            sudo pacman -Sy --needed "$package"
-        fi
-    elif command -v apk >/dev/null 2>&1; then
-        package=mingw-w64-gcc
-        if [ "$(id -u)" -eq 0 ]; then
-            apk add "$package"
-        else
-            sudo apk add "$package"
-        fi
-    elif command -v xbps-install >/dev/null 2>&1; then
-        package=cross-$target-w64-mingw32
-        if [ "$(id -u)" -eq 0 ]; then
-            xbps-install -Sy "$package"
-        else
-            sudo xbps-install -Sy "$package"
-        fi
-    else
-        echo "Unsupported package manager for MinGW compiler installation" >&2
-        return 1
-    fi
-
-    if ! command -v "$compiler" >/dev/null 2>&1; then
-        echo "MinGW compiler installation failed: $compiler" >&2
-        return 1
-    fi
-
-    echo "Cross compiler installed: $compiler"
 }
 
 debug() {
@@ -241,9 +195,6 @@ case $1 in
     build|-b )
         shift
         build "$@"
-        ;;
-    dep|-D )
-        dep
         ;;
     debug|-d )
         debug

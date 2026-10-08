@@ -1,6 +1,6 @@
 ### Build in Docker
 
-TARGET: valgrind-base wine-base
+TARGET: valgrind-base wine-base mingw-base
 
 CTN_USER ?= ${USER}
 IMG_NS ?= zhoujd
@@ -14,6 +14,9 @@ Valgrind_LATEST_TAG := $(IMG_NS)/valgrind:latest
 Wine_BASE_TAG := $(IMG_NS)/wine:base
 Wine_LATEST_TAG := $(IMG_NS)/wine:latest
 
+Mingw_BASE_TAG := $(IMG_NS)/mingw:base
+Mingw_LATEST_TAG := $(IMG_NS)/mingw:latest
+
 .PHONY: all
 all: $(TARGET)
 
@@ -25,9 +28,14 @@ wine-base: wine.dockerfile
 	docker build $(BUILD_ARG) -t $(Wine_BASE_TAG) -f $< .
 	docker tag $(Wine_BASE_TAG) $(Wine_LATEST_TAG)
 
+mingw-base: mingw.dockerfile
+	docker build $(BUILD_ARG) -t $(Mingw_BASE_TAG) -f $< .
+	docker tag $(Mingw_BASE_TAG) $(Mingw_LATEST_TAG)
+
 .PHONY: clean
 clean:
-	-docker rmi $(Valgrind_BASE_TAG) $(Valgrind_LATEST_TAG)
+	-docker rmi $(Valgrind_BASE_TAG) $(Valgrind_LATEST_TAG) \
+		$(Mingw_BASE_TAG) $(Mingw_LATEST_TAG)
 
 .PHONY: help
 help:
@@ -37,3 +45,4 @@ help:
 	@echo "$$ make help"
 	@echo "$$ make valgrind-base"
 	@echo "$$ make wine-base"
+	@echo "$$ make mingw-base"
