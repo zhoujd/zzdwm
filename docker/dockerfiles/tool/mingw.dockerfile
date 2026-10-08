@@ -11,6 +11,7 @@ RUN sed -i "s/archive.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list && \
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     ca-certificates \
+    git \
     make \
     gcc-mingw-w64-x86-64-posix \
     gcc-mingw-w64-i686-posix \
