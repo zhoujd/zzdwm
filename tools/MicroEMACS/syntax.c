@@ -586,6 +586,26 @@ syntax_line (const struct syntax_definition *syntax,
           continue;
         }
 
+      if (*state == SYNTAX_STATE_C_COMMENT
+          && (syntax->features & SYNTAX_FEATURE_BLOCK_COMMENT) != 0)
+        {
+          if (c == '*' && pos + 1 < len && s[pos + 1] == '/')
+            {
+              if (draw != FALSE)
+                {
+                  vtputc_color ('*', CCOMMENT);
+                  vtputc_color ('/', CCOMMENT);
+                }
+              pos += 2;
+              *state = SYNTAX_STATE_NONE;
+              continue;
+            }
+          if (draw != FALSE)
+            vtputc_color (c, CCOMMENT);
+          pos += ulen;
+          continue;
+        }
+
       if ((syntax->features & SYNTAX_FEATURE_TRIPLE_STRINGS) != 0
           && *state != SYNTAX_STATE_NONE)
         {
@@ -659,26 +679,6 @@ syntax_line (const struct syntax_definition *syntax,
               else if (c == quote)
                 break;
             }
-          continue;
-        }
-
-      if (*state == SYNTAX_STATE_C_COMMENT
-          && (syntax->features & SYNTAX_FEATURE_BLOCK_COMMENT) != 0)
-        {
-          if (c == '*' && pos + 1 < len && s[pos + 1] == '/')
-            {
-              if (draw != FALSE)
-                {
-                  vtputc_color ('*', CCOMMENT);
-                  vtputc_color ('/', CCOMMENT);
-                }
-             pos += 2;
-              *state = SYNTAX_STATE_NONE;
-              continue;
-            }
-          if (draw != FALSE)
-            vtputc_color (c, CCOMMENT);
-          pos += ulen;
           continue;
         }
 
