@@ -491,10 +491,15 @@ syntax_line (const struct syntax_definition *syntax,
               int color;
 
               if (syntax_markdown_is_heading (s, len) != FALSE
-                  || syntax_markdown_is_rule (s, len) != FALSE
-                  || syntax_markdown_is_fence_start (s, len, state) != FALSE)
+                  || syntax_markdown_is_rule (s, len) != FALSE)
                 {
                   syntax_draw_range (s, 0, len, CPREPROC, draw);
+                  pos = len;
+                  continue;
+                }
+              if (syntax_markdown_is_fence_start (s, len, state) != FALSE)
+                {
+                  syntax_draw_range (s, 0, len, CCOMMENT, draw);
                   pos = len;
                   continue;
                 }
