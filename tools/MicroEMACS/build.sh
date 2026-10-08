@@ -19,13 +19,17 @@ release|-r      release
 publish|-p      publish
 install|-i      install
 uninstall|-u    uninstall
-windows|-w      build me.exe for Windows
 dep|-D          install the MinGW cross compiler
 EOF
 }
 
 build() {
     case ${1:-""} in
+        windows|-w )
+            shift
+            windows "$@"
+            return
+            ;;
         test|-t )
             shift
             make -f $TM $@
@@ -237,10 +241,6 @@ case $1 in
     build|-b )
         shift
         build "$@"
-        ;;
-    windows|-w )
-        shift
-        windows "$@"
         ;;
     dep|-D )
         dep
