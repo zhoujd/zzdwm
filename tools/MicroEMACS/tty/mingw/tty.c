@@ -269,10 +269,55 @@ ttputc (int c)
 {
   DWORD nwritten;
   char c1 = (char)c;
-
   SetConsoleTextAttribute (hout, ttattr);
   WriteFile (hout, &c1, 1, &nwritten, NULL);
   return c;
+}
+
+int
+ttputs_color (const wchar_t *text, const short *attrs, int count)
+{
+  static CHAR_INFO cells[NCOL];
+  CONSOLE_SCREEN_BUFFER_INFO info;
+  COORD size, origin;
+  SMALL_RECT region;
+  int color;
+  int i;
+
+  if (count <= 0)
+    return TRUE;
+  if (count > NCOL)
+    return FALSE;
+  if (GetConsoleScreenBufferInfo (hout, &info) == FALSE)
+    return FALSE;
+
+  color = attrs[0];
+  ttcolor (color);
+  for (i = 0; i < count; ++i)
+    {
+      if (attrs[i] != color)
+        {
+          color = attrs[i];
+          ttcolor (color);
+        }
+      cells[i].Char.UnicodeChar = text[i];
+      cells[i].Attributes = (WORD)ttattr;
+    }
+
+  size.X = (SHORT)count;
+  size.Y = 1;
+  origin.X = 0;
+  origin.Y = 0;
+  region.Left = info.dwCursorPosition.X;
+  region.Top = info.dwCursorPosition.Y;
+  region.Right = region.Left + count - 1;
+  region.Bottom = region.Top;
+  if (WriteConsoleOutputW (hout, cells, size, origin, &region) == FALSE)
+    return FALSE;
+
+  info.dwCursorPosition.X += (SHORT)count;
+  SetConsoleCursorPosition (hout, info.dwCursorPosition);
+  return TRUE;
 }
 
 /*

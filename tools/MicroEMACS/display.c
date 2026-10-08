@@ -1550,6 +1550,13 @@ put_video_colors (wchar_t *text, short *attrs, int count)
   int i;
   int color = attrs[0];
 
+#if defined(MINGW) || defined(_WIN32)
+  if (ttputs_color (text, attrs, count) != FALSE)
+    {
+      ttcol += count;
+      return;
+    }
+#endif
   ttcolor (color);
   for (i = 0; i < count; ++i)
     {

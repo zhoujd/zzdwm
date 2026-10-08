@@ -1016,6 +1016,9 @@ void ttdell (int row, int bot, int nchunk);
 void ttresize (void);
 void ttbeep (void);
 void putpad (const char *str);
+#if defined(MINGW) || defined(_WIN32)
+int ttputs_color (const wchar_t *text, const short *attrs, int count);
+#endif
 
 /*
  * Defined by "ttyio.c".
