@@ -12,13 +12,15 @@ usage() {
     cat <<EOF
 Usage: $app {option}
 Option:
-build|-b        build {test|-t|all|-a}
-clean|-c        clean {test|-t|all|-a}
+build|-b        build {test|-t|all|-a|windows|-w}
+clean|-c        clean {test|-t|all|-a|windows|-w}
 debug|-d        debug
 release|-r      release
 publish|-p      publish
 install|-i      install
 uninstall|-u    uninstall
+windows|-w      build me.exe for Windows
+dep|-D          install the MinGW cross compiler
 EOF
 }
 
@@ -41,6 +43,100 @@ build() {
             ;;
     esac
     echo "Build done"
+}
+
+windows() {
+    compiler=${MINGW_CC:-x86_64-w64-mingw32-gcc}
+    if ! command -v "$compiler" >/dev/null 2>&1; then
+        echo "MinGW compiler not found: $compiler" >&2
+        echo "Set MINGW_CC to another MinGW cross compiler." >&2
+        exit 1
+    fi
+
+    make -f Make.Mingw clean
+    make -f Make.Mingw CC="$compiler" LD="$compiler" "$@"
+    echo "Build Windows done"
+}
+
+dep() {
+    compiler=${MINGW_CC:-x86_64-w64-mingw32-gcc}
+    compiler_name=$(basename "$compiler")
+
+    case "$compiler_name" in
+        x86_64-w64-mingw32-gcc )
+            target=x86_64
+            debian_target=x86-64
+            ;;
+        i686-w64-mingw32-gcc )
+            target=i686
+            debian_target=i686
+            ;;
+        * )
+            echo "Unsupported MinGW compiler: $compiler" >&2
+            return 1
+            ;;
+    esac
+
+    if command -v "$compiler" >/dev/null 2>&1; then
+        echo "Cross compiler already installed: $compiler"
+        return 0
+    fi
+
+    if command -v apt-get >/dev/null 2>&1; then
+        package=gcc-mingw-w64-$debian_target-posix
+        if [ "$(id -u)" -eq 0 ]; then
+            apt-get update
+            apt-get install -y "$package"
+        else
+            sudo apt-get update
+            sudo apt-get install -y "$package"
+        fi
+    elif command -v dnf >/dev/null 2>&1; then
+        case "$target" in
+            x86_64 )
+                package=mingw64-gcc
+                ;;
+            i686 )
+                package=mingw32-gcc
+                ;;
+        esac
+        if [ "$(id -u)" -eq 0 ]; then
+            dnf install -y "$package"
+        else
+            sudo dnf install -y "$package"
+        fi
+    elif command -v pacman >/dev/null 2>&1; then
+        package=mingw-w64-gcc
+        if [ "$(id -u)" -eq 0 ]; then
+            pacman -Sy --needed "$package"
+        else
+            sudo pacman -Sy --needed "$package"
+        fi
+    elif command -v apk >/dev/null 2>&1; then
+        package=mingw-w64-gcc
+        if [ "$(id -u)" -eq 0 ]; then
+            apk add "$package"
+        else
+            sudo apk add "$package"
+        fi
+    elif command -v xbps-install >/dev/null 2>&1; then
+        package=cross-$target-w64-mingw32
+        if [ "$(id -u)" -eq 0 ]; then
+            xbps-install -Sy "$package"
+        else
+            sudo xbps-install -Sy "$package"
+        fi
+    else
+        echo "Unsupported package manager for MinGW compiler installation" >&2
+        return 1
+    fi
+
+    if ! command -v "$compiler" >/dev/null 2>&1; then
+        echo "MinGW compiler installation failed: $compiler" >&2
+        return 1
+    fi
+
+    echo "Cross compiler installed: $compiler"
 }
 
 debug() {
@@ -106,6 +202,9 @@ clean() {
             make clean
             make -f $TM clean
             ;;
+        windows|-w )
+            make -f Make.Mingw clean
+            ;;
         -* )
             usage
             ;;
@@ -138,6 +237,13 @@ case $1 in
     build|-b )
         shift
         build "$@"
+        ;;
+    windows|-w )
+        shift
+        windows "$@"
+        ;;
+    dep|-D )
+        dep
         ;;
     debug|-d )
         debug
