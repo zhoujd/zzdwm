@@ -289,6 +289,9 @@ KEY key[] = {
   {-1,                  displaymessage,    "display-message"},
   {-1,                  listbuffers,       "display-buffers"},
   {-1,                  showvisable,       "display-visable"},
+#ifdef COLOR
+  {-1,                  setcolor,          "set-color"},
+#endif
   {-1,                  autonewline,       "auto-newline"},
   {-1,                  clearmark,         "clear-mark"},
   {-1,                  redo,              "redo"},

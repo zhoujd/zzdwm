@@ -1220,6 +1220,30 @@ syntax_cache_read_finished (BUFFER *bp, LINE *next, int old_state)
       || last->l_syntax_out != old_state)
     syntax_cache_invalidate_from (bp, next);
 }
+
+/*
+ * Set the color display flag. Clear the syntax cache when colors are
+ * enabled, so lines edited while colors were disabled are reparsed.
+ */
+int
+setcolor (int f, int n, int k)
+{
+  BUFFER *bp;
+  EWINDOW *wp;
+
+  colorflag = f ? (n != 0) : !colorflag;
+  if (colorflag != FALSE)
+    {
+      ALLBUF (bp)
+        syntax_cache_clear_buffer (bp);
+    }
+  ALLWIND (wp)
+    wp->w_flag |= WFMODE | WFHARD;
+  sgarbf = TRUE;
+  eprintf ("[Color now %s]", colorflag ? "ON" : "OFF");
+  update ();
+  return (TRUE);
+}
 #endif
 
 /*

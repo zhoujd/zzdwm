@@ -695,6 +695,7 @@ void vttidy (void);                     /* Tidy display before exit.    */
 int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
 int showvisable (int f, int n, int k);  /* Show visable on modeline.    */
 #ifdef COLOR
+int setcolor (int f, int n, int k);     /* Set color display flag       */
 void syntax_cache_clear_line (LINE *lp);
 void syntax_cache_clear_buffer (BUFFER *bp);
 void syntax_cache_copy_line (LINE *dst, const LINE *src);
