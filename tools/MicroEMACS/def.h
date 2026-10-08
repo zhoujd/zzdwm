@@ -543,6 +543,9 @@ extern char *cscope_path;
 extern int mouse;
 extern int xflag;
 extern int zflag;
+#ifdef COLOR
+extern int colorflag;
+#endif
 extern int nrow;
 extern int ncol;
 extern int npages;

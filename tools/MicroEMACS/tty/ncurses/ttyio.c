@@ -75,7 +75,7 @@ ttopen (void)
   tcgetattr (0, &oldtty);
   initscr ();			/* initialize the curses library */
 #ifdef COLOR
-  if (has_colors () != FALSE)
+  if (colorflag != FALSE && has_colors () != FALSE)
     {
       start_color ();
       use_default_colors ();

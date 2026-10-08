@@ -209,7 +209,7 @@ ttcolor (int color)
 {
   tthue = color;
 #ifdef COLOR
-  if (has_colors () != FALSE)
+  if (colorflag != FALSE && has_colors () != FALSE)
     {
       attr_t attrs = A_NORMAL;
       short pair = 0;
@@ -243,7 +243,7 @@ ttcolor (int color)
       bkgdset (' ' | A_REVERSE);
       return;
     }
-  if (color == CKEYWORD)
+  if (colorflag != FALSE && color == CKEYWORD)
     {
       bkgdset (' ' | A_BOLD);
       return;

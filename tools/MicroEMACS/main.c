@@ -76,6 +76,11 @@
 #else
 #define OPT_BACKUP ""
 #endif
+#ifdef COLOR
+#define OPT_COLOR "C"
+#else
+#define OPT_COLOR ""
+#endif
 
 int thisflag;			/* Flags, this command          */
 int lastflag;			/* Flags, last command          */
@@ -99,6 +104,9 @@ int rflag;			/* True if -r option specified  */
 int xflag;			/* True if -x option specified  */
 int zflag;			/* True if -z option specified  */
 int casefold = TRUE;		/* True if searches fold case   */
+#ifdef COLOR
+int colorflag = TRUE;		/* True if colors are enabled   */
+#endif
 int fillcol = 70;		/* Fill column for paragraphs.  */
 int tabsize = 8;		/* No. of columns for a tab     */
 int savetabs = TRUE;		/* True if tabs are preserved   */
@@ -123,7 +131,7 @@ void
 usage (void)
 {
   fprintf (stderr,
-           "usage: me [-234" OPT_BACKUP "DmNrTuxz] [-c path] [-d path] [-g line] [-p profile] [-s string] [-t size]\n"
+           "usage: me [-234" OPT_BACKUP OPT_COLOR "DmNrTuxz] [-c path] [-d path] [-g line] [-p profile] [-s string] [-t size]\n"
            "          [+[line]] [file[:line[:column]] ...] [file://path[:line[:column]] ...]\n");
 }
 
@@ -173,6 +181,11 @@ main (int argc, char *argv[])
 #if BACKUP
             case 'b':
               bflag = TRUE;
+              break;
+#endif
+#ifdef COLOR
+            case 'C':
+              colorflag = FALSE;
               break;
 #endif
             case 'c':

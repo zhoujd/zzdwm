@@ -777,6 +777,9 @@ syntax_for_buffer (const BUFFER *bp)
   size_t definition_index;
   size_t shebang_index;
 
+  if (colorflag == FALSE)
+    return NULL;
+
   if (syntax != NULL || first == bp->b_linep)
     return syntax;
   for (definition_index = 0;
