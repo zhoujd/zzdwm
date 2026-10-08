@@ -134,10 +134,10 @@ publish() {
             -w "$WS" \
             "$img" \
             sh -c "
-            cat /etc/os-release
-            make clean
-            make STATIC=yes
-            make strip
+            cat /etc/os-release &&
+            make clean &&
+            make STATIC=yes &&
+            make strip &&
             chown -R $HOST_UID:$HOST_GID .
             "
         case $CMD in
