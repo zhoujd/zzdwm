@@ -18,6 +18,7 @@ clean|-c        clean {test|-t|all|-a|windows|-w}
 debug|-d        debug
 release|-r      release
 publish|-p      publish
+package|-s      package MicroEMACS source code
 install|-i      install
 uninstall|-u    uninstall
 EOF
@@ -152,6 +153,24 @@ publish() {
     echo "Build publish done"
 }
 
+package() {
+    version=$(sed -n 's/.*"MicroEMACS"[[:space:]]*" \([0-9][0-9]*\) ".*/\1/p' \
+        "$WS/version.c")
+    if [ -z "$version" ]; then
+        echo "MicroEMACS version not found in version.c" >&2
+        exit 1
+    fi
+
+    archive="$WS/microemacs-$version.tar.gz"
+    rm -f "$archive"
+    git -C "$MNT_DIR" archive \
+        --format=tar.gz \
+        --prefix="microemacs-$version/" \
+        --output="$archive" \
+        HEAD:tools/MicroEMACS || exit 1
+    echo "Source package done: $archive"
+}
+
 clean() {
     case ${1:-""} in
         test|-t )
@@ -210,6 +229,9 @@ case $1 in
     publish|-p )
         shift
         publish "$@"
+        ;;
+    package|-s )
+        package
         ;;
     clean|-c )
         shift

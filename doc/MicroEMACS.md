@@ -22,6 +22,7 @@ cd tools/MicroEMACS
 ./build.sh -b        # host build
 ./build.sh -b test   # tests
 ./build.sh -p        # static Linux build
+./build.sh -s        # source package
 ./build.sh -w        # Windows me.exe build in Docker
 ```
 
@@ -37,6 +38,9 @@ me -n file.c         # start with line numbers enabled
 The unbound extended commands are `set-color` and `set-number`. They can be
 entered with `M-X`; a numeric argument of zero disables the feature and a
 nonzero argument enables it.
+
+`./build.sh -s` creates `microemacs-VERSION.tar.gz` from the MicroEMACS
+source tree.
 
 ## Linux editors
 

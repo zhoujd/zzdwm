@@ -3138,6 +3138,7 @@ editor. Run it from `tools/MicroEMACS`:
     ./build.sh -d          # Build a debug executable
     ./build.sh -r          # Build and strip a local release
     ./build.sh -p          # Build a static executable in Docker
+    ./build.sh -s          # Package the MicroEMACS source tree
     ./build.sh -w          # Clean and build me.exe with MinGW in Docker
     ./build.sh -i          # Install the Linux executable in /usr/local/bin
     ./build.sh -c          # Remove generated build files
@@ -3151,6 +3152,9 @@ termcap\index{termcap} instead of ncursesw\index{ncursesw}, pass
 The release wrapper selects a static build automatically on Alpine and Void
 Linux. The publish wrapper builds a stripped static executable in the
 `zhoujd/alpine` Docker image.
+
+The source package command creates `microemacs-VERSION.tar.gz` from the
+MicroEMACS source tree.
 
 ## Windows Build
 
