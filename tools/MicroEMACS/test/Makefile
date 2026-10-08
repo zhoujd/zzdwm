@@ -1,7 +1,7 @@
 ## Test Makefile
 
 ROOT = ..
-TARGET = utf8 regtest tcap reftag syntax-test
+TARGET = utf8 regtest tcap reftag syntax-test display-test
 CFLAGS := -Os
 
 ifeq ($(INSIDE_DOCKER), yes)
@@ -34,6 +34,11 @@ reftag: reftag.c
 syntax-test: syntax.c $(ROOT)/utf8.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ -I$(ROOT) -I$(ROOT)/sys/unix \
 		-I$(ROOT)/tty/ncurses -DCOLOR -DTEST $^
+
+display-test: display.c $(ROOT)/utf8.c
+	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \
+		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/mingw \
+		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DTEST $^
 
 clean:
 	rm -f $(TARGET) *.[o]

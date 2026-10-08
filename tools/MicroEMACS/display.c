@@ -303,6 +303,39 @@ vttextend (void)
   return leftcol + ncol - leftmargin;
 }
 
+static void
+vtput_display_char (unsigned int c)
+{
+#if defined(MINGW) || defined(_WIN32)
+  int width = uwidth (c);
+#else
+  const int width = 1;
+#endif
+
+  if (width == 0)
+    return;
+  if (vtcol >= leftcol)
+    {
+      vttext[vttextcol (vtcol)] = c;
+#ifdef COLOR
+      vtattrs[vttextcol (vtcol)] = vtattr;
+#endif
+    }
+  vtcol++;
+
+  if (width == 2 && vtcol < vttextend ())
+    {
+      if (vtcol >= leftcol)
+        {
+          vttext[vttextcol (vtcol)] = 0;
+#ifdef COLOR
+          vtattrs[vttextcol (vtcol)] = vtattr;
+#endif
+        }
+      vtcol++;
+    }
+}
+
 /*
  * Write a character to the virtual display,
  * dealing with long lines and the display of unprintable
@@ -338,16 +371,7 @@ vtputc_color (unsigned int c, int color)
       vtputc (c ^ 0x40);
     }
   else
-    {
-      if (vtcol >= leftcol)
-        {
-          vttext[vttextcol (vtcol)] = c;
-#ifdef COLOR
-          vtattrs[vttextcol (vtcol)] = vtattr;
-#endif
-        }
-      vtcol++;
-    }
+    vtput_display_char (c);
 }
 
 static void
@@ -360,98 +384,6 @@ vtputc (unsigned int c)
 #endif
 }
 
-#if defined(MINGW) || defined(_WIN32)
-/*
- * Write a string to the virtual display.  Essentially similar
- * to vtputc(), except that a string and count are the parameters
- * instead of a single character.
- */
-static void
-vtputs (const uchar *s, int n)
-{
-  unsigned int c;  /* Changed from wchar_t to unsigned int (UTF-32) */
-  int ulen;
-  int w;
-  const uchar *end = s + n;
-
-  while (s < end)
-    {
-      c = ugetc (s, 0, &ulen);
-      s += ulen;
-
-        if (vtcol >= vttextend ())
-          {
-            vttext[ncol - 1] = '$';
-#ifdef COLOR
-            vtattrs[ncol - 1] = vtattr;
-#endif
-            return;
-          }
-      else if (c == '\t')
-        {
-          vtputs (spaces, tabsize - (vtcol % tabsize));
-        }
-      else if (c < 0x80 && CISCTRL (c) != FALSE)
-        {
-          vtputc ('^');
-          vtputc (c ^ 0x40);
-        }
-      else
-        {
-          w = uwidth (c);
-
-          if (w == 0)
-            {
-              /*
-               * Zero-width combining character (Thai marks, diacritics):
-               * Do NOT advance vtcol. If vtcol is within visible bounds,
-               * append/combine if your terminal model supports it,
-               * but critically: leave vtcol unchanged!
-               */
-              /* Optional: handle combining mark attachment if vttext stores structures,
-                 or simply ignore column advancement so terminal renders in-place. */
-            }
-          else if (w == 2)
-            {
-              /* Double-width (CJK) character handling */
-              if (vtcol >= leftcol)
-                {
-                  vttext[vttextcol (vtcol)] = c;
-#ifdef COLOR
-                  vtattrs[vttextcol (vtcol)] = vtattr;
-#endif
-                }
-              vtcol++;
-
-              /* Fill trailing column slot with 0 padding */
-              if (vtcol < vttextend ())
-                {
-                  if (vtcol >= leftcol)
-                    {
-                      vttext[vttextcol (vtcol)] = 0;
-#ifdef COLOR
-                      vtattrs[vttextcol (vtcol)] = vtattr;
-#endif
-                    }
-                  vtcol++;
-                }
-            }
-          else
-            {
-              /* Standard single-width character (w == 1) */
-              if (vtcol >= leftcol)
-                {
-                  vttext[vttextcol (vtcol)] = c;
-#ifdef COLOR
-                  vtattrs[vttextcol (vtcol)] = vtattr;
-#endif
-                }
-              vtcol++;
-            }
-        }
-    }
-}
-#else
 /*
  * Write a string to the virtual display.  Essentially similar
  * to vtputc(), except that a string and count are the parameters
@@ -484,19 +416,9 @@ vtputs (const uchar *s, int n)
           vtputc (c ^ 0x40);
         }
       else
-        {
-          if (vtcol >= leftcol)
-            {
-              vttext[vttextcol (vtcol)] = c;
-#ifdef COLOR
-              vtattrs[vttextcol (vtcol)] = vtattr;
-#endif
-            }
-          vtcol++;
-        }
+        vtput_display_char (c);
     }
 }
-#endif
 
 /*
  * Put a null-terminated string out to the virtual screen.
