@@ -1,6 +1,5 @@
 /*
     Copyright (C) 2008 Mark Alexander
-    Copyright (C) 2026 Zachary Zhou
 
     This file is part of MicroEMACS, a small text editor.
 
