@@ -103,12 +103,19 @@ syntax_for_shebang (const char *text)
 int
 main (void)
 {
+  const struct syntax_definition *cpp = syntax_for_extension (".cpp");
   const struct syntax_definition *lisp = syntax_for_extension (".lisp");
   const struct syntax_definition *elisp = syntax_for_extension (".el");
   const struct syntax_definition *c_syntax = syntax_for_extension (".c");
+  const struct syntax_definition *bash = syntax_for_extension (".sh");
   int state = SYNTAX_STATE_NONE;
 
-  assert (lisp != NULL && elisp != NULL && c_syntax != NULL);
+  assert (cpp != NULL && lisp != NULL && elisp != NULL
+          && c_syntax != NULL && bash != NULL);
+  assert (syntax_for_name (".C") == cpp);
+  assert (syntax_for_name (".c") == c_syntax);
+  assert (syntax_for_name (".profile") == bash);
+  assert (syntax_for_name (".emacs") == elisp);
   assert (syntax_for_shebang ("#!/usr/bin/sbcl --script") == lisp);
   assert (syntax_for_shebang ("#!/usr/bin/emacs --script") == elisp);
 

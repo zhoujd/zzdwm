@@ -256,10 +256,10 @@ has_syntax_suffix (const char *name, const char *suffix)
   size_t suffix_len = strlen (suffix);
 
   if (strcmp (suffix, ".C") == 0)
-    return name_len > suffix_len
+    return name_len >= suffix_len
            && strcmp (name + name_len - suffix_len, suffix) == 0;
 
-  return name_len > suffix_len
+  return name_len >= suffix_len
          && strcasecmp (name + name_len - suffix_len, suffix) == 0;
 }
 
