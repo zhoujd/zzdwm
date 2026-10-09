@@ -1314,6 +1314,10 @@ modeline (EWINDOW *wp)
   vtputc (' ');
   vtstring ("MicroEMACS");
   mname = modename (bp);
+#ifdef COLOR
+  if (mname == NULL)
+    mname = syntax_name_for_buffer (bp);
+#endif
   if (mname != NULL)
     {
       vtstring (lstr);

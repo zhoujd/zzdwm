@@ -385,6 +385,7 @@ typedef struct BUFFER
   struct MODE *b_mode;          /* Emacs-like major mode        */
 #ifdef COLOR
   const SYNTAX *b_syntax;       /* Explicit syntax selection    */
+  int b_syntax_explicit;        /* Syntax override is active    */
 #endif
   char b_active;                /* Window activated flag        */
   char b_crlf;                  /* NewLine CRLF flag            */
@@ -716,6 +717,7 @@ int setcolor (int f, int n, int k);     /* Set color display flag       */
  */
 #ifdef COLOR
 const SYNTAX *syntax_for_buffer (const BUFFER *bp);
+const char *syntax_name_for_buffer (const BUFFER *bp);
 int syntax_set_buffer (BUFFER *bp, const char *filetype);
 void syntax_clear_buffer (BUFFER *bp);
 int syntax_state_before (const BUFFER *bp, const LINE *lp);

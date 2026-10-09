@@ -150,13 +150,28 @@ main (void)
   lforw (&header) = &header;
   lback (&header) = &header;
   assert (syntax_for_buffer (&buffer) == c_syntax);
+  assert (strcmp (syntax_name_for_buffer (&buffer), "C") == 0);
   assert (syntax_set_buffer (&buffer, "cpp") == TRUE);
   assert (syntax_for_buffer (&buffer) == cpp);
+  assert (strcmp (syntax_name_for_buffer (&buffer), "C++") == 0);
   assert (syntax_set_buffer (&buffer, "c++") == TRUE);
   assert (syntax_for_buffer (&buffer) == cpp);
-  assert (syntax_set_buffer (&buffer, "text") == FALSE);
+  assert (syntax_set_buffer (&buffer, "text") == TRUE);
+  assert (syntax_for_buffer (&buffer) == NULL);
+  assert (syntax_name_for_buffer (&buffer) == NULL);
   syntax_clear_buffer (&buffer);
   assert (syntax_for_buffer (&buffer) == c_syntax);
+
+  strcpy (buffer.b_fname, ".emacs");
+  assert (syntax_for_buffer (&buffer) == elisp);
+  assert (strcmp (syntax_name_for_buffer (&buffer), "Emacs Lisp") == 0);
+  colorflag = FALSE;
+  assert (syntax_for_buffer (&buffer) == NULL);
+  assert (strcmp (syntax_name_for_buffer (&buffer), "Emacs Lisp") == 0);
+  colorflag = TRUE;
+  assert (syntax_set_buffer (&buffer, "text") == TRUE);
+  assert (syntax_for_buffer (&buffer) == NULL);
+  assert (syntax_name_for_buffer (&buffer) == NULL);
 
   render_line (lisp, "; comment", &state);
   expect_length (9);

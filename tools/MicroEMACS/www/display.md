@@ -44,10 +44,14 @@ preprocessor directives, shell variables, Python triple-quoted strings,
 Markdown fenced code, and Lisp block comments. Multi-line constructs are
 highlighted consistently while scrolling.
 
+The mode line shows the automatically detected language, or the language
+selected with an explicit mode command.
+
 Use the `c-mode`, `cpp-mode`, `bash-mode`, `python-mode`, `markdown-mode`,
 `lisp-mode`, or `emacs-lisp-mode` extended command to select syntax for the
-current buffer explicitly. Use `text-mode` to clear that selection and return
-to automatic detection. These commands are not bound to keys.
+current buffer explicitly. Use `text-mode` to explicitly disable syntax
+highlighting and remove the mode-line indicator. These commands are not bound
+to keys.
 
 Only the lines currently visible in each window are rendered with syntax
 colors, and syntax state is cached to avoid redundant rescanning.
