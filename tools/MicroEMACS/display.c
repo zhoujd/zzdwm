@@ -744,7 +744,7 @@ update (void)
       if (wp->w_flag != 0)
         {			/* Need update.         */
 #ifdef COLOR
-          const struct syntax_definition *syntax = syntax_for_buffer (wp->w_bufp);
+          const SYNTAX *syntax = syntax_for_buffer (wp->w_bufp);
 #endif
           if ((wp->w_flag & WFFORCE) == 0)
             {

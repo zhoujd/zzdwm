@@ -292,6 +292,14 @@ KEY key[] = {
   {-1,                  setnumber,         "set-number"},
 #ifdef COLOR
   {-1,                  setcolor,          "set-color"},
+  {-1,                  cmode,             "c-mode"},
+  {-1,                  cppmode,           "cpp-mode"},
+  {-1,                  bashmode,          "bash-mode"},
+  {-1,                  pythonmode,        "python-mode"},
+  {-1,                  markdownmode,      "markdown-mode"},
+  {-1,                  lispmode,          "lisp-mode"},
+  {-1,                  emacslispmode,     "emacs-lisp-mode"},
+  {-1,                  textmode,          "text-mode"},
 #endif
   {-1,                  autonewline,       "auto-newline"},
   {-1,                  clearmark,         "clear-mark"},

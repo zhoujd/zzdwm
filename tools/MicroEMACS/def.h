@@ -356,6 +356,10 @@ typedef struct MARKRING
 }
 MARKRING;
 
+#ifdef COLOR
+typedef struct SYNTAX SYNTAX;
+#endif
+
 /*
  * Text is kept in buffers. A buffer header, described
  * below, exists for every buffer in the system. The buffers are
@@ -379,6 +383,9 @@ typedef struct BUFFER
   char b_fname[NFILEN];         /* File name                    */
   char b_bname[NBUFN];          /* Buffer name                  */
   struct MODE *b_mode;          /* Emacs-like major mode        */
+#ifdef COLOR
+  const SYNTAX *b_syntax;       /* Explicit syntax selection    */
+#endif
   char b_active;                /* Window activated flag        */
   char b_crlf;                  /* NewLine CRLF flag            */
 }
@@ -483,7 +490,6 @@ LINE;
 #ifdef COLOR
 #define SYNTAX_STATE_UNKNOWN (-1)
 #define SYNTAX_STATE_NONE 0
-struct syntax_definition;
 #endif
 
 /*
@@ -709,9 +715,11 @@ int setcolor (int f, int n, int k);     /* Set color display flag       */
  * Defined by "syntax.c".
  */
 #ifdef COLOR
-const struct syntax_definition *syntax_for_buffer (const BUFFER *bp);
+const SYNTAX *syntax_for_buffer (const BUFFER *bp);
+int syntax_set_buffer (BUFFER *bp, const char *filetype);
+void syntax_clear_buffer (BUFFER *bp);
 int syntax_state_before (const BUFFER *bp, const LINE *lp);
-void syntax_line (const struct syntax_definition *syntax,
+void syntax_line (const SYNTAX *syntax,
                   const uchar *s, int len, int *state, int draw);
 void syntax_cache_clear_line (LINE *lp);
 void syntax_cache_clear_buffer (BUFFER *bp);
@@ -722,6 +730,14 @@ void syntax_cache_lines_merged (BUFFER *bp, LINE *result, LINE *first,
                                 LINE *second);
 void syntax_cache_line_read (BUFFER *bp, LINE *lp);
 void syntax_cache_read_finished (BUFFER *bp, LINE *next, int old_state);
+int cmode (int f, int n, int k);
+int cppmode (int f, int n, int k);
+int bashmode (int f, int n, int k);
+int pythonmode (int f, int n, int k);
+int markdownmode (int f, int n, int k);
+int lispmode (int f, int n, int k);
+int emacslispmode (int f, int n, int k);
+int textmode (int f, int n, int k);
 #endif
 
 /*

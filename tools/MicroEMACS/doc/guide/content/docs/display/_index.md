@@ -50,6 +50,11 @@ preprocessor directives, shell variables, Python triple-quoted strings,
 Markdown fenced code, and Lisp block comments. Multi-line constructs are
 highlighted consistently while scrolling.
 
+Use the `c-mode`, `cpp-mode`, `bash-mode`, `python-mode`, `markdown-mode`,
+`lisp-mode`, or `emacs-lisp-mode` extended command to select syntax for the
+current buffer explicitly. Use `text-mode` to clear that selection and return
+to automatic detection. These commands are not bound to keys.
+
 Only the lines currently visible in each window are rendered with syntax
 colors, and syntax state is cached to avoid redundant rescanning.
 

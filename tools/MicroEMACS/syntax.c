@@ -40,8 +40,10 @@
 #define SYNTAX_STATE_LISP_BLOCK_COMMENT     6
 #define SYNTAX_STATE_LISP_BLOCK_COMMENT_MAX 127
 
-struct syntax_definition
+struct SYNTAX
 {
+  const char *const *filetypes;
+  size_t filetype_count;
   const char *const *keywords;
   size_t keyword_count;
   const char *const *extensions;
@@ -175,8 +177,17 @@ static const char *const python_shebangs[] = { "python" };
 static const char *const lisp_shebangs[] = { "sbcl", "clisp", "lisp" };
 static const char *const emacs_lisp_shebangs[] = { "emacs" };
 
-static const struct syntax_definition syntax_definitions[] = {
+static const char *const cpp_filetypes[] = { "cpp", "c++" };
+static const char *const c_filetypes[] = { "c" };
+static const char *const bash_filetypes[] = { "bash", "sh" };
+static const char *const python_filetypes[] = { "python" };
+static const char *const markdown_filetypes[] = { "markdown" };
+static const char *const lisp_filetypes[] = { "lisp" };
+static const char *const emacs_lisp_filetypes[] = { "emacs-lisp" };
+
+static const SYNTAX syntax_definitions[] = {
   {
+    cpp_filetypes, sizeof (cpp_filetypes) / sizeof (cpp_filetypes[0]),
     cpp_keywords, sizeof (cpp_keywords) / sizeof (cpp_keywords[0]),
     cpp_extensions, sizeof (cpp_extensions) / sizeof (cpp_extensions[0]),
     NULL, 0,
@@ -184,6 +195,7 @@ static const struct syntax_definition syntax_definitions[] = {
       | SYNTAX_FEATURE_PREPROCESSOR
   },
   {
+    c_filetypes, sizeof (c_filetypes) / sizeof (c_filetypes[0]),
     c_keywords, sizeof (c_keywords) / sizeof (c_keywords[0]),
     c_extensions, sizeof (c_extensions) / sizeof (c_extensions[0]),
     NULL, 0,
@@ -191,18 +203,23 @@ static const struct syntax_definition syntax_definitions[] = {
       | SYNTAX_FEATURE_PREPROCESSOR
   },
   {
+    bash_filetypes, sizeof (bash_filetypes) / sizeof (bash_filetypes[0]),
     bash_keywords, sizeof (bash_keywords) / sizeof (bash_keywords[0]),
     bash_extensions, sizeof (bash_extensions) / sizeof (bash_extensions[0]),
     bash_shebangs, sizeof (bash_shebangs) / sizeof (bash_shebangs[0]),
     SYNTAX_FEATURE_HASH_COMMENTS | SYNTAX_FEATURE_BASH_VARIABLES
   },
   {
+    python_filetypes,
+    sizeof (python_filetypes) / sizeof (python_filetypes[0]),
     python_keywords, sizeof (python_keywords) / sizeof (python_keywords[0]),
     python_extensions, sizeof (python_extensions) / sizeof (python_extensions[0]),
     python_shebangs, sizeof (python_shebangs) / sizeof (python_shebangs[0]),
     SYNTAX_FEATURE_HASH_COMMENTS | SYNTAX_FEATURE_TRIPLE_STRINGS
   },
   {
+    markdown_filetypes,
+    sizeof (markdown_filetypes) / sizeof (markdown_filetypes[0]),
     NULL, 0,
     markdown_extensions, sizeof (markdown_extensions)
                            / sizeof (markdown_extensions[0]),
@@ -210,6 +227,7 @@ static const struct syntax_definition syntax_definitions[] = {
     SYNTAX_FEATURE_MARKDOWN
   },
   {
+    lisp_filetypes, sizeof (lisp_filetypes) / sizeof (lisp_filetypes[0]),
     lisp_keywords, sizeof (lisp_keywords) / sizeof (lisp_keywords[0]),
     lisp_extensions, sizeof (lisp_extensions)
                      / sizeof (lisp_extensions[0]),
@@ -219,6 +237,8 @@ static const struct syntax_definition syntax_definitions[] = {
       | SYNTAX_FEATURE_SEMICOLON_COMMENTS
   },
   {
+    emacs_lisp_filetypes,
+    sizeof (emacs_lisp_filetypes) / sizeof (emacs_lisp_filetypes[0]),
     emacs_lisp_keywords,
     sizeof (emacs_lisp_keywords) / sizeof (emacs_lisp_keywords[0]),
     emacs_lisp_extensions,
@@ -230,7 +250,7 @@ static const struct syntax_definition syntax_definitions[] = {
 };
 
 static int
-syntax_has_keyword (const struct syntax_definition *syntax,
+syntax_has_keyword (const SYNTAX *syntax,
                     const uchar *word, int len)
 {
   size_t i;
@@ -263,7 +283,31 @@ has_syntax_suffix (const char *name, const char *suffix)
          && strcasecmp (name + name_len - suffix_len, suffix) == 0;
 }
 
-static const struct syntax_definition *
+static const SYNTAX *
+syntax_for_filetype (const char *filetype)
+{
+  size_t definition_index;
+  size_t filetype_index;
+
+  for (definition_index = 0;
+       definition_index < sizeof (syntax_definitions)
+                          / sizeof (syntax_definitions[0]);
+       ++definition_index)
+    {
+      const SYNTAX *syntax
+        = &syntax_definitions[definition_index];
+
+      for (filetype_index = 0;
+           filetype_index < syntax->filetype_count; ++filetype_index)
+        {
+          if (strcmp (filetype, syntax->filetypes[filetype_index]) == 0)
+            return syntax;
+        }
+    }
+  return NULL;
+}
+
+static const SYNTAX *
 syntax_for_name (const char *name)
 {
   size_t definition_index;
@@ -274,7 +318,7 @@ syntax_for_name (const char *name)
                           / sizeof (syntax_definitions[0]);
        ++definition_index)
     {
-      const struct syntax_definition *syntax
+      const SYNTAX *syntax
         = &syntax_definitions[definition_index];
 
       for (extension_index = 0;
@@ -306,10 +350,10 @@ line_has_shebang (const LINE *lp, const char *name)
   return FALSE;
 }
 
-const struct syntax_definition *
+const SYNTAX *
 syntax_for_buffer (const BUFFER *bp)
 {
-  const struct syntax_definition *syntax = syntax_for_name (bp->b_fname);
+  const SYNTAX *syntax;
   const LINE *first = firstline ((BUFFER *) bp);
   size_t definition_index;
   size_t shebang_index;
@@ -317,6 +361,10 @@ syntax_for_buffer (const BUFFER *bp)
   if (colorflag == FALSE)
     return NULL;
 
+  if (bp->b_syntax != NULL)
+    return bp->b_syntax;
+
+  syntax = syntax_for_name (bp->b_fname);
   if (syntax != NULL || first == bp->b_linep)
     return syntax;
   for (definition_index = 0;
@@ -333,6 +381,29 @@ syntax_for_buffer (const BUFFER *bp)
         }
     }
   return NULL;
+}
+
+int
+syntax_set_buffer (BUFFER *bp, const char *filetype)
+{
+  const SYNTAX *syntax = syntax_for_filetype (filetype);
+
+  if (bp == NULL || syntax == NULL)
+    return FALSE;
+
+  bp->b_syntax = syntax;
+  syntax_cache_clear_buffer (bp);
+  return TRUE;
+}
+
+void
+syntax_clear_buffer (BUFFER *bp)
+{
+  if (bp == NULL)
+    return;
+
+  bp->b_syntax = NULL;
+  syntax_cache_clear_buffer (bp);
 }
 
 static int
@@ -582,7 +653,7 @@ syntax_markdown_link_end (const uchar *s, int len, int opening_end,
 }
 
 void
-syntax_line (const struct syntax_definition *syntax,
+syntax_line (const SYNTAX *syntax,
              const uchar *s, int len, int *state, int draw)
 {
   int pos = 0;
@@ -1024,7 +1095,7 @@ syntax_line (const struct syntax_definition *syntax,
 int
 syntax_state_before (const BUFFER *bp, const LINE *lp)
 {
-  const struct syntax_definition *syntax = syntax_for_buffer (bp);
+  const SYNTAX *syntax = syntax_for_buffer (bp);
   LINE *scan;
   LINE *target = (LINE *) lp;
   int state = SYNTAX_STATE_NONE;
@@ -1091,7 +1162,7 @@ syntax_cache_clear_buffer (BUFFER *bp)
 void
 syntax_cache_after_edit (BUFFER *bp, LINE *lp)
 {
-  const struct syntax_definition *syntax = syntax_for_buffer (bp);
+  const SYNTAX *syntax = syntax_for_buffer (bp);
   int old_in;
   int old_out;
   int new_state;
@@ -1155,7 +1226,7 @@ syntax_cache_lines_merged (BUFFER *bp, LINE *result, LINE *first, LINE *second)
 void
 syntax_cache_line_read (BUFFER *bp, LINE *lp)
 {
-  const struct syntax_definition *syntax = syntax_for_buffer (bp);
+  const SYNTAX *syntax = syntax_for_buffer (bp);
   LINE *previous;
   int state;
 
@@ -1187,7 +1258,7 @@ syntax_cache_line_read (BUFFER *bp, LINE *lp)
 void
 syntax_cache_read_finished (BUFFER *bp, LINE *next, int old_state)
 {
-  const struct syntax_definition *syntax = syntax_for_buffer (bp);
+  const SYNTAX *syntax = syntax_for_buffer (bp);
   LINE *last;
 
   if (syntax == NULL || next == bp->b_linep
@@ -1202,6 +1273,111 @@ syntax_cache_read_finished (BUFFER *bp, LINE *next, int old_state)
   if (last->l_syntax_out == SYNTAX_STATE_UNKNOWN
       || last->l_syntax_out != old_state)
     syntax_cache_invalidate_from (bp, next);
+}
+
+static void
+syntax_mode_changed (BUFFER *bp)
+{
+  EWINDOW *wp;
+
+  ALLWIND (wp)
+    {
+      if (wp->w_bufp == bp)
+        wp->w_flag |= WFMODE | WFHARD;
+    }
+  sgarbf = TRUE;
+}
+
+static int
+set_syntax_mode (const char *filetype, const char *mode_name)
+{
+  if (curbp == NULL || syntax_set_buffer (curbp, filetype) == FALSE)
+    return FALSE;
+
+  createmode (mode_name);
+  syntax_mode_changed (curbp);
+  eprintf ("[Syntax mode: %s]", mode_name);
+  return TRUE;
+}
+
+int
+cmode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  return set_syntax_mode ("c", "C");
+}
+
+int
+cppmode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  return set_syntax_mode ("cpp", "C++");
+}
+
+int
+bashmode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  return set_syntax_mode ("bash", "Bash");
+}
+
+int
+pythonmode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  return set_syntax_mode ("python", "Python");
+}
+
+int
+markdownmode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  return set_syntax_mode ("markdown", "Markdown");
+}
+
+int
+lispmode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  return set_syntax_mode ("lisp", "Lisp");
+}
+
+int
+emacslispmode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  return set_syntax_mode ("emacs-lisp", "Emacs Lisp");
+}
+
+int
+textmode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+
+  if (curbp == NULL)
+    return FALSE;
+
+  syntax_clear_buffer (curbp);
+  removemode (curbp);
+  syntax_mode_changed (curbp);
+  eprintf ("[Syntax mode: Text]");
+  return TRUE;
 }
 
 #endif

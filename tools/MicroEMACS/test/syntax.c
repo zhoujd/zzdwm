@@ -2,10 +2,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "../syntax.c"
 
 int colorflag = TRUE;
+BUFFER *curbp;
+EWINDOW *wheadp;
+int sgarbf;
+
+void
+createmode (const char *name)
+{
+  (void) name;
+}
+
+void
+removemode (BUFFER *bp)
+{
+  (void) bp;
+}
+
+void
+eprintf (const char *format, ...)
+{
+  (void) format;
+}
 
 #define OUTPUT_MAX 256
 
@@ -22,7 +44,7 @@ vtputc_color (unsigned int c, int color)
   ++output_len;
 }
 
-static const struct syntax_definition *
+static const SYNTAX *
 syntax_for_extension (const char *extension)
 {
   char name[32];
@@ -32,7 +54,7 @@ syntax_for_extension (const char *extension)
 }
 
 static void
-render_line (const struct syntax_definition *syntax, const char *line,
+render_line (const SYNTAX *syntax, const char *line,
              int *state)
 {
   output_len = 0;
@@ -71,14 +93,14 @@ expect_all_colors (int color)
     expect_color_at (index, color);
 }
 
-static const struct syntax_definition *
+static const SYNTAX *
 syntax_for_shebang (const char *text)
 {
   BUFFER buffer;
   LINE header;
   LINE *line;
   size_t text_len = strlen (text);
-  const struct syntax_definition *syntax;
+  const SYNTAX *syntax;
 
   line = calloc (1, LINEHDR_SIZE + text_len);
   assert (line != NULL);
@@ -103,11 +125,13 @@ syntax_for_shebang (const char *text)
 int
 main (void)
 {
-  const struct syntax_definition *cpp = syntax_for_extension (".cpp");
-  const struct syntax_definition *lisp = syntax_for_extension (".lisp");
-  const struct syntax_definition *elisp = syntax_for_extension (".el");
-  const struct syntax_definition *c_syntax = syntax_for_extension (".c");
-  const struct syntax_definition *bash = syntax_for_extension (".sh");
+  const SYNTAX *cpp = syntax_for_extension (".cpp");
+  const SYNTAX *lisp = syntax_for_extension (".lisp");
+  const SYNTAX *elisp = syntax_for_extension (".el");
+  const SYNTAX *c_syntax = syntax_for_extension (".c");
+  const SYNTAX *bash = syntax_for_extension (".sh");
+  BUFFER buffer;
+  LINE header;
   int state = SYNTAX_STATE_NONE;
 
   assert (cpp != NULL && lisp != NULL && elisp != NULL
@@ -118,6 +142,21 @@ main (void)
   assert (syntax_for_name (".emacs") == elisp);
   assert (syntax_for_shebang ("#!/usr/bin/sbcl --script") == lisp);
   assert (syntax_for_shebang ("#!/usr/bin/emacs --script") == elisp);
+
+  memset (&buffer, 0, sizeof (buffer));
+  memset (&header, 0, sizeof (header));
+  strcpy (buffer.b_fname, "test.c");
+  buffer.b_linep = &header;
+  lforw (&header) = &header;
+  lback (&header) = &header;
+  assert (syntax_for_buffer (&buffer) == c_syntax);
+  assert (syntax_set_buffer (&buffer, "cpp") == TRUE);
+  assert (syntax_for_buffer (&buffer) == cpp);
+  assert (syntax_set_buffer (&buffer, "c++") == TRUE);
+  assert (syntax_for_buffer (&buffer) == cpp);
+  assert (syntax_set_buffer (&buffer, "text") == FALSE);
+  syntax_clear_buffer (&buffer);
+  assert (syntax_for_buffer (&buffer) == c_syntax);
 
   render_line (lisp, "; comment", &state);
   expect_length (9);
