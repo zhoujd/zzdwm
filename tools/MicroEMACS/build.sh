@@ -122,13 +122,11 @@ publish() {
         release
     else
         img=zhoujd/alpine
-        HOST_UID=$(id -u)
-        HOST_GID=$(id -g)
         docker run \
             --name="build-me-1" \
             --rm \
             -i \
-            -u root \
+            -u "$(id -u):$(id -g)" \
             -e INSIDE_DOCKER=1 \
             -v "$MNT_DIR:$MNT_DIR" \
             -w "$WS" \
@@ -137,8 +135,7 @@ publish() {
             cat /etc/os-release &&
             make clean &&
             make STATIC=yes &&
-            make strip &&
-            chown -R $HOST_UID:$HOST_GID .
+            make strip
             "
         case $CMD in
             --upx|-u )
