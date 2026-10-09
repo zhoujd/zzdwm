@@ -52,6 +52,8 @@ highlighted consistently while scrolling.
 
 The mode line shows the automatically detected language, or the language
 selected with an explicit mode command.
+When color is disabled, language names and explicit mode commands are disabled
+as well.
 
 Use the `c-mode`, `cpp-mode`, `bash-mode`, `python-mode`, `markdown-mode`,
 `lisp-mode`, or `emacs-lisp-mode` extended command to select syntax for the

@@ -402,8 +402,12 @@ syntax_for_buffer (const BUFFER *bp)
 const char *
 syntax_name_for_buffer (const BUFFER *bp)
 {
-  const SYNTAX *syntax = syntax_detect_for_buffer (bp);
+  const SYNTAX *syntax;
 
+  if (colorflag == FALSE)
+    return NULL;
+
+  syntax = syntax_detect_for_buffer (bp);
   if (syntax != NULL)
     return syntax->name;
   return NULL;
@@ -414,7 +418,7 @@ syntax_set_buffer (BUFFER *bp, const char *filetype)
 {
   const SYNTAX *syntax = NULL;
 
-  if (bp == NULL)
+  if (bp == NULL || colorflag == FALSE)
     return FALSE;
 
   if (strcmp (filetype, "text") != 0)
@@ -1328,11 +1332,16 @@ set_syntax_mode (const char *filetype)
 {
   const char *mode_name;
 
+  if (colorflag == FALSE)
+    {
+      eprintf ("[Color is disabled]");
+      return FALSE;
+    }
+
   if (curbp == NULL || syntax_set_buffer (curbp, filetype) == FALSE)
     return FALSE;
 
   mode_name = syntax_name_for_buffer (curbp);
-  createmode (mode_name);
   syntax_mode_changed (curbp);
   eprintf ("[Syntax mode: %s]", mode_name);
   return TRUE;
@@ -1408,10 +1417,15 @@ textmode (int f, int n, int k)
   (void) n;
   (void) k;
 
+  if (colorflag == FALSE)
+    {
+      eprintf ("[Color is disabled]");
+      return FALSE;
+    }
+
   if (curbp == NULL || syntax_set_buffer (curbp, "text") == FALSE)
     return FALSE;
 
-  removemode (curbp);
   syntax_mode_changed (curbp);
   eprintf ("[Syntax highlighting disabled]");
   return TRUE;

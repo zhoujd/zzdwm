@@ -12,18 +12,6 @@ EWINDOW *wheadp;
 int sgarbf;
 
 void
-createmode (const char *name)
-{
-  (void) name;
-}
-
-void
-removemode (BUFFER *bp)
-{
-  (void) bp;
-}
-
-void
 eprintf (const char *format, ...)
 {
   (void) format;
@@ -165,10 +153,26 @@ main (void)
   strcpy (buffer.b_fname, ".emacs");
   assert (syntax_for_buffer (&buffer) == elisp);
   assert (strcmp (syntax_name_for_buffer (&buffer), "Emacs Lisp") == 0);
+  strcpy (buffer.b_fname, "1.sh");
+  assert (syntax_for_buffer (&buffer) == bash);
+  assert (strcmp (syntax_name_for_buffer (&buffer), "Bash") == 0);
   colorflag = FALSE;
   assert (syntax_for_buffer (&buffer) == NULL);
-  assert (strcmp (syntax_name_for_buffer (&buffer), "Emacs Lisp") == 0);
+  assert (syntax_name_for_buffer (&buffer) == NULL);
+  assert (syntax_set_buffer (&buffer, "cpp") == FALSE);
+  curbp = &buffer;
+  assert (cmode (FALSE, 1, 0) == FALSE);
+  assert (textmode (FALSE, 1, 0) == FALSE);
+  assert (buffer.b_syntax_explicit == FALSE);
   colorflag = TRUE;
+  assert (cmode (FALSE, 1, 0) == TRUE);
+  assert (syntax_for_buffer (&buffer) == c_syntax);
+  colorflag = FALSE;
+  assert (syntax_for_buffer (&buffer) == NULL);
+  assert (syntax_name_for_buffer (&buffer) == NULL);
+  colorflag = TRUE;
+  assert (syntax_for_buffer (&buffer) == c_syntax);
+  syntax_clear_buffer (&buffer);
   assert (syntax_set_buffer (&buffer, "text") == TRUE);
   assert (syntax_for_buffer (&buffer) == NULL);
   assert (syntax_name_for_buffer (&buffer) == NULL);
