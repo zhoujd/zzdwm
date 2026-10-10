@@ -41,6 +41,7 @@ OBJ := \
 	file.o \
 	kbd.o \
 	line.o \
+	lisp.o \
 	main.o \
 	paragraph.o \
 	random.o \
