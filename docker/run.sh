@@ -202,9 +202,9 @@ build|-b    Build image stack
 clean|-c    Clean stopped containers & untagged images
 valgrind|-v Run Valgrind container environment
 wine|-w     Test me.exe with Wine
-           wine            Run headless me.exe version smoke test
-           wine gui        Run me.exe in Wine console
-           wine shell      Run shell in Wine image
+ {smoke}    Run headless me.exe version smoke test
+ {gui}      Run me.exe in Wine console
+ {shell}    Run shell in Wine image
 mingw|-m    Run MinGW cross compiler container
 
 Distros:
