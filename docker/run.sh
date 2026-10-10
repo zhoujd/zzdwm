@@ -194,13 +194,7 @@ Usage: $app {command} [args] [+++ extra_docker_args]
 
 Commands:
 run|-r        Run interactive container
-  alpine|-a   Run Alpine Linux (default)
-  void|-v     Run Void Linux
-  ubuntu|-u   Run Ubuntu Linux
 ssh           Start SSH daemon background service
-  alpine|-a   Start Alpine Linux (default)
-  void|-v     Start Void Linux
-  ubuntu|-u   Start Ubuntu Linux
 shell|-s      Attach a new shell to running container
 stop          Stop running container
 status        Show container status
@@ -208,10 +202,17 @@ build|-b      Build image stack
 clean|-c      Clean stopped containers & untagged images
 valgrind|-v   Run Valgrind container environment
 wine|-w       Test me.exe with Wine
-  smoke       Run headless me.exe version smoke test
-  gui         Run me.exe in Wine console
-  shell       Run shell in Wine image
 mingw|-m      Run MinGW cross compiler container
+
+Distro Args:
+alpine|-a     Alpine Linux (default)
+void|-v       Void Linux
+ubuntu|-u     Ubuntu Linux
+
+Wine Args:
+smoke         Run headless me.exe version smoke test
+gui           Run me.exe in Wine console
+shell         Run shell in Wine image
 EOF
 }
 
