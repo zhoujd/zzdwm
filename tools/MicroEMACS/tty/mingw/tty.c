@@ -62,6 +62,12 @@ void ttinit(), tttidy(), ttmove(), tteeol(), tteeop(), ttbeep(),
 #endif
 
 static HANDLE hout, hin;
+static int actual_nrow;
+static int actual_ncol;
+
+static void drawborders (void);
+static void get_actual_pos (int row, int col, int *actual_row,
+                            int *actual_col);
 
 /*
  * Initialize the terminal.  Get the handles for console input and output.
@@ -73,6 +79,7 @@ ttinit (void)
   CHAR_INFO buf;
   COORD size, coord;
   SMALL_RECT region;
+  int new_nrow, new_ncol;
 
   hout = GetStdHandle (STD_OUTPUT_HANDLE);
   hin =  GetStdHandle (STD_INPUT_HANDLE);
@@ -81,17 +88,74 @@ ttinit (void)
   size.Y = 1;
   coord.X = 0;
   coord.Y = 0;
-  region.Left = 0;
-  region.Top = nrow-1;
-  region.Right = 0;
-  region.Bottom = nrow-1;
+  region.Left = windowcol;
+  region.Top = nrow - 1 + windowrow;
+  region.Right = windowcol;
+  region.Bottom = region.Top;
   if (ReadConsoleOutput (hout, &buf, size, coord, &region) == TRUE)
     {
       attnorm = buf.Attributes;		  /* current attributes   */
       attinv  = (attnorm & 0x88)          /* blink, invert bits   */
               | ((attnorm >> 4) & 0x07)   /* foreground color     */
               | ((attnorm << 4) & 0x70);  /* background color     */
-      ttcolor (CTEXT);
+    }
+  ttcolor (CTEXT);
+
+  actual_nrow = nrow;
+  actual_ncol = ncol;
+
+  if (npages < 1 || npages > 4)
+    npages = 1;
+
+  new_nrow = nrow * npages;
+  new_ncol = (ncol - npages + 1) / npages;
+
+  if (new_nrow > NROW || new_ncol <= 0)
+    {
+      npages = 1;
+    }
+  else
+    {
+      nrow = new_nrow;
+      ncol = new_ncol;
+      drawborders ();
+    }
+}
+
+static void
+drawborders (void)
+{
+  COORD coord;
+  DWORD written;
+  int row, col;
+
+  for (row = 0; row < actual_nrow; ++row)
+    {
+      for (col = ncol; col < actual_ncol; col += ncol + 1)
+        {
+          coord.X = (SHORT) (col + windowcol);
+          coord.Y = (SHORT) (row + windowrow);
+          FillConsoleOutputCharacterW (hout, L'|', 1, coord, &written);
+          FillConsoleOutputAttribute (hout, (WORD) ttattr, 1, coord,
+                                     &written);
+        }
+    }
+}
+
+static void
+get_actual_pos (int row, int col, int *actual_row, int *actual_col)
+{
+  if (npages > 1)
+    {
+      int page = row / actual_nrow;
+
+      *actual_row = row % actual_nrow;
+      *actual_col = (page * (ncol + 1)) + col;
+    }
+  else
+    {
+      *actual_row = row;
+      *actual_col = col;
     }
 }
 
@@ -114,15 +178,17 @@ void
 ttmove (int row, int col)
 {
   COORD coord;
+  int actual_row, actual_col;
 
   if (ttrow!=row || ttcol!=col)
     {
-      if (row > nrow)
-        row = nrow;
-      if (col > ncol)
-        col = ncol;
-      coord.X = col + windowcol;
-      coord.Y = row + windowrow;
+      if (row >= nrow)
+        row = nrow - 1;
+      if (col >= ncol)
+        col = ncol - 1;
+      get_actual_pos (row, col, &actual_row, &actual_col);
+      coord.X = (SHORT) (actual_col + windowcol);
+      coord.Y = (SHORT) (actual_row + windowrow);
       SetConsoleCursorPosition (hout, coord);
       ttrow = row;
       ttcol = col;
@@ -136,20 +202,21 @@ void
 tteeol (void)
 {
   COORD coord;
-  char space = ' ';
+  int actual_row, actual_col;
+  int count;
   DWORD nwritten;
 
-  coord.X = ttcol + windowcol;
-  coord.Y = ttrow + windowrow;
+  if (ttcol >= ncol)
+    return;
 
-  /* Very inefficient.  Rewrite to blast entire string of spaces at once.
-   */
+  get_actual_pos (ttrow, ttcol, &actual_row, &actual_col);
+  count = ncol - ttcol;
+  coord.X = (SHORT) (actual_col + windowcol);
+  coord.Y = (SHORT) (actual_row + windowrow);
   SetConsoleTextAttribute (hout, ttattr);
-  while (coord.X < ncol + windowcol)
-    {
-      WriteConsoleOutputCharacter (hout, &space, 1, coord, &nwritten);
-      coord.X++;
-    }
+  FillConsoleOutputCharacterW (hout, L' ', (DWORD) count, coord, &nwritten);
+  FillConsoleOutputAttribute (hout, (WORD) ttattr, (DWORD) count, coord,
+                             &nwritten);
 }
 
 /*
@@ -159,26 +226,27 @@ void
 tteeop (void)
 {
   COORD coord;
-  char space = ' ';
+  int actual_row, actual_col;
+  int count;
+  int row, col;
   DWORD nwritten;
 
-  coord.X = ttcol + windowcol;
-  coord.Y = ttrow + windowrow;
-
-  /* Very inefficient.  Rewrite to blast entire string of spaces at once.
-   */
   SetConsoleTextAttribute (hout, ttattr);
-  while (coord.Y < ttrow + windowrow)
+  for (row = ttrow; row < nrow; ++row)
     {
-      while (coord.X < ttcol + windowcol)
-        {
-          WriteConsoleOutputCharacter (hout, &space, 1,
-                                       coord, &nwritten);
-          coord.X++;
-        }
-      coord.X = windowcol;
-      coord.Y++;
+      col = row == ttrow ? ttcol : 0;
+      if (col >= ncol)
+        continue;
+      count = ncol - col;
+      get_actual_pos (row, col, &actual_row, &actual_col);
+      coord.X = (SHORT) (actual_col + windowcol);
+      coord.Y = (SHORT) (actual_row + windowrow);
+      FillConsoleOutputCharacterW (hout, L' ', (DWORD) count, coord,
+                                  &nwritten);
+      FillConsoleOutputAttribute (hout, (WORD) ttattr, (DWORD) count, coord,
+                                 &nwritten);
     }
+  drawborders ();
 }
 
 /*
@@ -251,13 +319,33 @@ ttcolor (int color)
 void
 ttresize (void)
 {
-#if 0
-  qvmode (f);
-  nrow = nrow;
-  ncol = ncol;
-  if (nrow >= 43)                    /* high res screen?     */
-    qvcursor (2);                    /* block cursor         */
-#endif
+  CONSOLE_SCREEN_BUFFER_INFO info;
+
+  if (GetConsoleScreenBufferInfo (hout, &info) == TRUE
+      && info.srWindow.Right >= info.srWindow.Left
+      && info.srWindow.Bottom >= info.srWindow.Top)
+    {
+      windowrow = info.srWindow.Top;
+      windowcol = info.srWindow.Left;
+      nrow = info.srWindow.Bottom - windowrow + 1;
+      ncol = info.srWindow.Right - windowcol + 1;
+    }
+  else if (actual_nrow > 0 && actual_ncol > 0)
+    {
+      nrow = actual_nrow;
+      ncol = actual_ncol;
+    }
+
+  if (nrow <= 3)
+    nrow = 25;
+  else if (nrow > NROW)
+    nrow = NROW;
+  if (ncol <= 10)
+    ncol = 80;
+  else if (ncol > NCOL)
+    ncol = NCOL;
+
+  ttinit ();
 }
 
 /*
@@ -328,6 +416,7 @@ putline (int row, int col, const wchar_t *buf)
   COORD size, coord;
   SMALL_RECT region;
   static CHAR_INFO cinfo[NCOL];
+  int actual_row, actual_col;
   int i;
 
   /* Init cinfo */
@@ -337,6 +426,8 @@ putline (int row, int col, const wchar_t *buf)
    */
   row--;
   col--;
+  if (row < 0 || row >= nrow || col < 0 || col >= ncol)
+    return;
 
   /* The size of the data to copy is the remaining number of characters
    * on the line.
@@ -351,10 +442,11 @@ putline (int row, int col, const wchar_t *buf)
       cinfo[i].Attributes = ttattr;
     }
 
+  get_actual_pos (row, col, &actual_row, &actual_col);
   coord.X = 0;
   coord.Y = 0;
-  region.Left = windowcol + col;
-  region.Right = windowcol + ncol - 1;
-  region.Top = region.Bottom = windowrow + row;
+  region.Left = (SHORT) (windowcol + actual_col);
+  region.Right = (SHORT) (region.Left + size.X - 1);
+  region.Top = region.Bottom = (SHORT) (windowrow + actual_row);
   WriteConsoleOutputW (hout, cinfo, size, coord, &region);
 }
