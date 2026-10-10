@@ -1,0 +1,4 @@
+interface:
+  display_name: "MicroEMACS Testing"
+  short_description: "Build and test me and me.exe"
+  default_prompt: "Use $microemacs-test to build and validate MicroEMACS Linux and Windows binaries."
