@@ -31,6 +31,9 @@
 #ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
 #define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
 #endif
+#ifndef ENABLE_WINDOW_INPUT
+#define ENABLE_WINDOW_INPUT 0x0008
+#endif
 
 extern int attnorm;	/* In tty.c */
 
@@ -66,7 +69,8 @@ ttopen (void)
   GetConsoleMode (hout, &houtmode);
 
   /* Enable VT mode on Windows ConPTY / Win10 Console */
-  SetConsoleMode (hin, hinmode | ENABLE_VIRTUAL_TERMINAL_INPUT);
+  SetConsoleMode (hin, hinmode | ENABLE_VIRTUAL_TERMINAL_INPUT |
+                  ENABLE_WINDOW_INPUT);
   SetConsoleMode (hout, houtmode |
                   ENABLE_VIRTUAL_TERMINAL_PROCESSING |
                   DISABLE_NEWLINE_AUTO_RETURN);
@@ -140,6 +144,9 @@ int
 ttgetc (void)
 {
   int ch;
+  INPUT_RECORD record;
+  DWORD count;
+
 #if 0
   DWORD nread;
 
@@ -148,6 +155,27 @@ ttgetc (void)
   else
     return (ch);
 #else
+  for (;;)
+    {
+      if (WaitForSingleObject (hin, INFINITE) != WAIT_OBJECT_0)
+        return 0;
+      if (PeekConsoleInput (hin, &record, 1, &count) != TRUE)
+        return 0;
+
+      if (record.EventType == WINDOW_BUFFER_SIZE_EVENT)
+        {
+          if (ReadConsoleInput (hin, &record, 1, &count) != TRUE)
+            return 0;
+          return 'L' & 0x1f;
+        }
+
+      if (record.EventType == KEY_EVENT)
+        break;
+
+      if (ReadConsoleInput (hin, &record, 1, &count) != TRUE)
+        return 0;
+    }
+
   if ((ch = _getch ()) == 0 || ch == 0xe0)	/* extended key */
     {
       if ((ch = _getch ()) == 3)	/* null? */
