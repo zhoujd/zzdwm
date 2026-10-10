@@ -121,14 +121,51 @@ valgrind() {
 }
 
 wine() {
-    echo "Usage inside container: wineconsole --backend=curses me.exe"
-    docker run --rm -it \
-        --privileged=true \
-        --cap-add=ALL \
+    local img="${WINE_IMG:-${IMG_NS:-zhoujd}/wine:latest}"
+    local ws="/workspace/tools/MicroEMACS"
+    local tty=(-i)
+    local display=()
+    local mode="${1:-smoke}"
+
+    [ -t 0 ] && [ -t 1 ] && tty=(-it)
+
+    case "$mode" in
+        smoke|test|version )
+            set -- wine64 ./me.exe --version
+            ;;
+        gui )
+            shift
+            set -- wine64 wineconsole.exe ./me.exe "$@"
+            if [ -n "${DISPLAY:-}" ]; then
+                display=(-e DISPLAY)
+                [ -d /tmp/.X11-unix ] &&
+                    display+=(-v /tmp/.X11-unix:/tmp/.X11-unix)
+                if [ -n "${XAUTHORITY:-}" ]; then
+                    display+=(-e XAUTHORITY -v "$XAUTHORITY:$XAUTHORITY:ro")
+                elif [ -f "$HOME/.Xauthority" ]; then
+                    display+=(-e XAUTHORITY="$HOME/.Xauthority"
+                             -v "$HOME/.Xauthority:$HOME/.Xauthority:ro")
+                fi
+            else
+                set -- xvfb-run -a "$@"
+            fi
+            ;;
+        shell|bash )
+            shift
+            set -- bash "$@"
+            ;;
+        * )
+            set -- xvfb-run -a wine64 wineconsole.exe "$@"
+            ;;
+    esac
+
+    docker run --rm "${tty[@]}" \
         -h wine \
+        -e TERM="${TERM:-xterm}" \
+        "${display[@]}" \
         -v "$TOP:/workspace" \
-        -w /workspace \
-        zhoujd/wine:latest bash
+        -w "$ws" \
+        "$img" "$@"
 }
 
 mingw() {
@@ -164,7 +201,10 @@ status      Show container status
 build|-b    Build image stack
 clean|-c    Clean stopped containers & untagged images
 valgrind|-v Run Valgrind container environment
-wine|-w     Run Wine container environment
+wine|-w     Test me.exe with Wine
+           wine            Run headless me.exe version smoke test
+           wine gui        Run me.exe in Wine console
+           wine shell      Run shell in Wine image
 mingw|-m    Run MinGW cross compiler container
 
 Distros:

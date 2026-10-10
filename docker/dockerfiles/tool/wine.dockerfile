@@ -6,18 +6,22 @@ ARG MIRROR=mirrors.aliyun.com
 RUN sed -i "s/archive.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list && \
     sed -i "s/security.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list
 
-# Enable 32-bit architecture and install standard Wine components
-RUN dpkg --add-architecture i386 \
-    && apt-get update \
+# Install the 64-bit Wine runtime used to test the MinGW me.exe build.
+RUN apt-get update \
     && DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
     ca-certificates \
-    wine \
     wine64 \
-    wine32 \
+    xvfb \
     && rm -rf /var/lib/apt/lists/*
 
-# Suppress Wine GUI popups for a cleaner terminal test
+RUN ln -s /usr/bin/wine64-stable /usr/local/bin/wine64
+
+# Suppress Wine GUI popups and optional runtime downloads.
 ENV WINEDEBUG=-all
+ENV WINEDLLOVERRIDES=mscoree,mshtml=
 ENV WINEPREFIX=/root/.wine
+
+# Initialize the Wine prefix once so test containers start quickly.
+RUN wine64 wineboot.exe -i
 
 WORKDIR /app
