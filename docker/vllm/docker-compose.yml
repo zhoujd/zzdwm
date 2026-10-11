@@ -1,0 +1,37 @@
+# Project: Local AI Testing Environment (vLLM CPU Optimized)
+
+services:
+  vllm-coder:
+    image: vllm/vllm-openai:latest
+    container_name: vllm_cpu_coder
+    restart: unless-stopped
+    # vLLM needs shared memory for matrix multiplication optimization
+    shm_size: '4gb' 
+    cpuset: "0-15"
+    volumes:
+      - /opt/tool/vllm:/root/.cache/huggingface
+    ports:
+      - "11434:8000" # Expose OpenAI-compatible API on Ollama's old port
+    environment:
+      - HF_ENDPOINT=https://hf-mirror.com # Domestic Chinese high-speed mirror
+      - VLLM_TARGET_DEVICE=cpu
+      - OMP_NUM_THREADS=16                # CPU Thread allocation matching your socket
+    command: >
+      --model Qwen/Qwen2.5-Coder-7B-Instruct
+      --kv-cache-dtype fp16
+      --max-model-len 4096
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open_webui_interface
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    volumes:
+      - /opt/tool/open-webui:/app/backend/data
+    environment:
+      # Route Open-WebUI to vLLM via its OpenAI-compatible endpoint pipeline
+      - OPENAI_API_BASE_URL=http://vllm-coder:8000/v1
+      - OPENAI_API_KEY=vllm-not-needed
+    depends_on:
+      - vllm-coder
