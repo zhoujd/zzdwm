@@ -1,6 +1,3 @@
-README
-======
-
 # Local AI Testing Environment (CPU Optimized)
 
 This repository contains the deployment configuration for a localized, highly optimized AI inference testing stack. It bundles **Ollama** alongside the **Open WebUI** interface. 
