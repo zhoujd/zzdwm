@@ -1,6 +1,6 @@
 # Local AI Testing Environment (CPU Optimized)
 
-This repository contains the deployment configuration for a localized, highly optimized AI inference testing stack. It bundles **Ollama** alongside the **Open WebUI** interface. 
+This repository contains the deployment configuration for a localized, highly optimized AI inference testing stack. It bundles **Ollama** alongside the **Open WebUI** interface.
 
 The architecture is specifically configured for **single-user testing on high-core Linux servers (100+ cores)**, restricting processing to a single NUMA node cluster to eliminate thread synchronization delays and cache thrashing.
 
@@ -21,7 +21,7 @@ sudo chmod 777 /opt/tool/ollama /opt/tool/open-webui
 Save the following configuration block as `docker-compose.yml` in your deployment directory:
 
 ```yaml
-version: '3.8'
+# Project: Local AI Testing Environment (CPU Optimized)
 
 services:
   ollama:
@@ -61,7 +61,6 @@ docker compose up -d
 ---
 
 ## Pre-loading Testing Models
-
 To ensure a smooth first-time login experience, pre-download the leading quantized CPU-friendly models directly to your host storage location using the following execution hooks:
 
 | Model Type | Best Testing Model | Download Command |
@@ -73,7 +72,6 @@ To ensure a smooth first-time login experience, pre-download the leading quantiz
 ---
 
 ## Accessing the Interface
-
 1. Open your web browser and navigate to: `http://<your-server-ip>:3000`
 2. Click **Sign Up** to establish your local administrator credentials. *(All account metrics remain entirely offline on your hardware)*.
 3. Select your pre-loaded model from the drop-down menu at the top center of the UI and begin testing.
@@ -81,14 +79,12 @@ To ensure a smooth first-time login experience, pre-download the leading quantiz
 ---
 
 ## ️Performance Tuning (Troubleshooting)
-
 If you experience textual stuttering or slow tokens-per-second output during prompt processing, apply these localized adjustments:
 
 * **Verify Thread Lock:** Ensure the container is honoring the restriction layout. You can inspect the live hardware load across your server via `htop` or `top`. Only cores 0 through 15 should peak during generations.
 * **Reduce Core Mapping:** If memory bandwidth latency limits your throughput, downscale the compute footprint. Run `docker compose down`, change `cpuset` to `"0-7"`, change `OLLAMA_NUM_THREADS` to `8`, and run `docker compose up -d`. Smaller models frequently type faster when running completely within a smaller, unified CPU L3 cache boundary.
 
 ## Management & Monitoring Script
-
 The workspace includes a diagnostic utility script (`manage_ai.sh`) to simplify local administration.
 
 ### Operational Features
@@ -97,7 +93,43 @@ The workspace includes a diagnostic utility script (`manage_ai.sh`) to simplify 
 3. **Storage Inspector:** Tracks physical storage footprint consumption inside `/opt/tool/ollama`.
 
 ### Execution
+
 ```bash
 chmod +x manage_ai.sh
 ./manage_ai.sh
 ```
+
+## Codex Configuration
+
+### Example .codex/config.toml
+```
+[codex]
+# Primary engine designation
+default_model = "qwen2.5-coder:7b"
+purpose = "code-generation"
+
+[provider.ollama]
+# Internal Docker network endpoint or localhost endpoint
+base_url = "http://localhost:11434"
+request_timeout = 60
+
+[[models]]
+name = "qwen2.5-coder:7b"
+role = "default"
+temperature = 0.2
+top_p = 0.9
+
+[[models]]
+name = "deepseek-r1:8b"
+role = "reasoning"
+temperature = 0.6
+
+[[models]]
+name = "llama3.1"
+role = "chat"
+temperature = 0.7
+```
+
+### Context Verification
+- Local Machine Access: If your system parsing .codex/config.toml runs directly on your host operating system, keep base_url as http://localhost:11434.
+- Dockerized Codex Access: If your Codex instance is running inside another container on the same Docker network, change the base_url line to "http://ollama:11434".
