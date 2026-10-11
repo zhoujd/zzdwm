@@ -122,5 +122,5 @@ request_timeout = 60
 trust_level = "trusted"
 
 codex --oss -m "qwen2.5-coder:7b" -c max_tokens=2048 -c stream_mode=raw
-codex --oss -m "qwen2.5-coder:7b" -c max_tokens=2048 -c stream=true
+codex --oss -m "qwen2.5-coder:7b" -c max_tokens=1024 -c stream=true
 ```
