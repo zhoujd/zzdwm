@@ -1,4 +1,4 @@
-version: '3.8'
+# Project: Local AI Testing Environment (CPU Optimized)
 
 services:
   ollama:
