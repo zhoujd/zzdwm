@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama_cpu_core
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    # 1. Isolate to a single CPU core socket/cluster to prevent cross-talk slowdowns
+    cpuset: "0-15"
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      # 2. Strict thread limitation for single-user peak performance
+      - OLLAMA_NUM_THREADS=16
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_MAX_LOADED_MODELS=1
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open_webui_interface
+    restart: unless-stopped
+    ports:
+      - "3000:8080" # Access via http://<your-server-ip>:3000
+    volumes:
+      - webui_data:/app/backend/data
+    environment:
+      # 3. Direct internal networking connection to your Ollama container
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - ollama
+
+volumes:
+  ollama_data:
+  webui_data:
