@@ -65,7 +65,7 @@ docker compose up -d
 
 ---
 
-## 📥 Pre-loading Testing Models
+## Pre-loading Testing Models
 
 To ensure a smooth first-time login experience, pre-download the leading quantized CPU-friendly models directly to your host storage location using the following execution hooks:
 
@@ -77,7 +77,7 @@ To ensure a smooth first-time login experience, pre-download the leading quantiz
 
 ---
 
-## 🌐 Accessing the Interface
+## Accessing the Interface
 
 1. Open your web browser and navigate to: `http://<your-server-ip>:3000`
 2. Click **Sign Up** to establish your local administrator credentials. *(All account metrics remain entirely offline on your hardware)*.
@@ -85,14 +85,14 @@ To ensure a smooth first-time login experience, pre-download the leading quantiz
 
 ---
 
-## 🛠️ Performance Tuning (Troubleshooting)
+## ️Performance Tuning (Troubleshooting)
 
 If you experience textual stuttering or slow tokens-per-second output during prompt processing, apply these localized adjustments:
 
 * **Verify Thread Lock:** Ensure the container is honoring the restriction layout. You can inspect the live hardware load across your server via `htop` or `top`. Only cores 0 through 15 should peak during generations.
 * **Reduce Core Mapping:** If memory bandwidth latency limits your throughput, downscale the compute footprint. Run `docker compose down`, change `cpuset` to `"0-7"`, change `OLLAMA_NUM_THREADS` to `8`, and run `docker compose up -d`. Smaller models frequently type faster when running completely within a smaller, unified CPU L3 cache boundary.
 
-## 🛠️ Management & Monitoring Script
+## Management & Monitoring Script
 
 The workspace includes a diagnostic utility script (`manage_ai.sh`) to simplify local administration.
 
