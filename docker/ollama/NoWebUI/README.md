@@ -60,19 +60,23 @@ snapshot_download(
 To wire your local terminal development tools, autonomous agents, or scripts straight into this engine, use the following local socket mapping footprint:
 
 ```toml
+# Force the open-source flag and provider bypass
+oss = true
+local_provider = "ollama"
+ollama_mode = "responses"  # Bypasses the Chat vs Responses prompt
+
 [codex]
 default_model = "qwen2.5-coder:7b"
 purpose = "code-generation"
 
 [provider.ollama]
-base_url = "http://localhost:11434"
+base_url = "http://localhost:11434/v1"
 request_timeout = 60
+stream_idle_timeout_ms = 1800000
 
-[[models]]
-name = "qwen2.5-coder:7b"
-role = "default"
-temperature = 0.2
-top_p = 0.9
+[context]
+max_tokens = 1024
+stream = true
 ```
 
 ### 2. Connectivity Sanity Check
