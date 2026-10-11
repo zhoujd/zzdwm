@@ -84,6 +84,8 @@ If you experience textual stuttering or slow tokens-per-second output during pro
 * **Verify Thread Lock:** Ensure the container is honoring the restriction layout. You can inspect the live hardware load across your server via `htop` or `top`. Only cores 0 through 15 should peak during generations.
 * **Reduce Core Mapping:** If memory bandwidth latency limits your throughput, downscale the compute footprint. Run `docker compose down`, change `cpuset` to `"0-7"`, change `OLLAMA_NUM_THREADS` to `8`, and run `docker compose up -d`. Smaller models frequently type faster when running completely within a smaller, unified CPU L3 cache boundary.
 
+---
+
 ## Management & Monitoring Script
 The workspace includes a diagnostic utility script (`manage_ai.sh`) to simplify local administration.
 
@@ -98,6 +100,8 @@ The workspace includes a diagnostic utility script (`manage_ai.sh`) to simplify 
 chmod +x manage_ai.sh
 ./manage_ai.sh
 ```
+
+---
 
 ## Codex Configuration
 
