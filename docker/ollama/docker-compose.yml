@@ -22,12 +22,8 @@ services:
     ports:
       - "3000:8080"
     volumes:
-      - webui_data:/app/backend/data
+      - /opt/tool/open-webui:/app/backend/data
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
     depends_on:
       - ollama
-
-volumes:
-  # Removed ollama_data from here since it is now a physical host path
-  webui_data:

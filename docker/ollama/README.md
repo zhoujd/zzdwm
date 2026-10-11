@@ -12,11 +12,12 @@ The architecture is specifically configured for **single-user testing on high-co
 ## Quick Start Deployment
 
 ### 1. Initialize Host Storage Paths
-Before launching the containers, create the host directory and configure loose permissions so Ollama's internal container root user can read and write model blobs directly.
+Create the centralized tool directories under `/opt/tool/` and configure permissions so the internal container root users can safely execute disk read/write loops.
 
 ```bash
 sudo mkdir -p /opt/tool/ollama
-sudo chmod 777 /opt/tool/ollama  # Ensures Docker's internal root user can write models
+sudo mkdir -p /opt/tool/open-webui
+sudo chmod 777 /opt/tool/ollama /opt/tool/open-webui
 ```
 
 ### 2. Create the Configuration File
@@ -46,14 +47,11 @@ services:
     ports:
       - "3000:8080" # Exposed User Interface port
     volumes:
-      - webui_data:/app/backend/data
+      - /opt/tool/open-webui:/app/backend/data
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434 # Uses secure internal Docker routing
     depends_on:
       - ollama
-
-volumes:
-  webui_data:
 ```
 
 ### 3. Launch the Stack
