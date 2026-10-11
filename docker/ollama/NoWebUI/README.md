@@ -128,3 +128,27 @@ trust_level = "trusted"
 codex --oss -m "qwen2.5-coder:7b" -c max_tokens=2048 -c stream_mode=raw
 codex --oss -m "qwen2.5-coder:7b" -c max_tokens=1024 -c stream=true
 ```
+
+---
+
+## Use the Local REST API
+
+### Generate a completion
+
+```
+curl http://localhost:11434/api/generate -d '{
+  "model": "llama3.1",
+  "prompt": "Why is the sky blue?"
+}'
+```
+
+### Chat endpoint
+
+```
+curl http://localhost:11434/api/chat -d '{
+  "model": "llama3.1",
+  "messages": [
+    { "role": "user", "content": "Hello!" }
+  ]
+}'
+```
