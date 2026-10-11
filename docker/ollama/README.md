@@ -138,3 +138,29 @@ temperature = 0.7
 ### Context Verification
 - Local Machine Access: If your system parsing .codex/config.toml runs directly on your host operating system, keep base_url as http://localhost:11434.
 - Dockerized Codex Access: If your Codex instance is running inside another container on the same Docker network, change the base_url line to "http://ollama:11434".
+
+---
+
+## HF-Mirror Model Seeding (No Proxy Alternative)
+
+### Fetch the model
+If you cannot route out via a proxy network pipeline, you can bypass the registry altogether. You can fetch the model directly via the high-speed domestic mirror Hugging Face Mirror (hf-mirror.com) and initialize it locally.
+For instance, to manually download the Qwen2.5-Coder-7B model:
+1. Download the GGUF asset file directly through your browser or an optimized download manager from the domestic mirror site.
+2. Save the .gguf file to your persistent host directory at /opt/tool/ollama/.
+3. Create a plain text configuration file named Modelfile inside that folder:dockerfile
+```
+FROM /root/.ollama/qwen2.5-coder-7b.gguf
+```
+4. Build the model into your local registry cache instantly without any network download overhead:
+```
+docker exec -it ollama_cpu_core ollama create qwen2.5-coder:7b -f /root/.ollama/Modelfile
+```
+
+### Model Mapping Registry
+
+| Model Type | Target Model | Official Hugging Face Model ID | Target File Name (Q4_K_M) |
+| :--- | :--- | :--- | :--- |
+| **Logic & Reasoning** | DeepSeek R1 (8B) | `unsloth/DeepSeek-R1-Distill-Llama-8B-GGUF` | `DeepSeek-R1-Distill-Llama-8B-Q4_K_M.gguf` |
+| **Code Generation** | Qwen 2.5 Coder (7B) | `Qwen/Qwen2.5-Coder-7B-Instruct-GGUF` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` |
+| **Balanced Chat** | Llama 3.1 (8B) | `lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF` | `Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf` |
