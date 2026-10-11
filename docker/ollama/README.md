@@ -91,3 +91,18 @@ If you experience textual stuttering or slow tokens-per-second output during pro
 
 * **Verify Thread Lock:** Ensure the container is honoring the restriction layout. You can inspect the live hardware load across your server via `htop` or `top`. Only cores 0 through 15 should peak during generations.
 * **Reduce Core Mapping:** If memory bandwidth latency limits your throughput, downscale the compute footprint. Run `docker compose down`, change `cpuset` to `"0-7"`, change `OLLAMA_NUM_THREADS` to `8`, and run `docker compose up -d`. Smaller models frequently type faster when running completely within a smaller, unified CPU L3 cache boundary.
+
+## 🛠️ Management & Monitoring Script
+
+The workspace includes a diagnostic utility script (`manage_ai.sh`) to simplify local administration.
+
+### Operational Features
+1. **CPU Tracker:** Isolates process observation to verify that only physical cores `0-15` hit execution load, confirming that zero NUMA latency boundaries are breached.
+2. **Speed Profiler:** Runs a live `time`-tracked text terminal generator to check model throughput speeds directly in raw stdout without using WebUI overhead.
+3. **Storage Inspector:** Tracks physical storage footprint consumption inside `/opt/tool/ollama`.
+
+### Execution
+```bash
+chmod +x manage_ai.sh
+./manage_ai.sh
+```
