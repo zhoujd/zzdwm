@@ -90,3 +90,37 @@ curl http://localhost:11434/api/tags
 * **`cpuset: "0-15"`**: Hardlocks execution threads exclusively to physical cores `0` through `15`. This prevents high-latency multi-socket bus cross-talk and scheduling jitter.
 * **`OLLAMA_NUM_THREADS=16`**: Configures the underlying compute matrix math engine to match your exact physical core allocation allocation.
 * **`OLLAMA_NUM_PARALLEL=1` & `OLLAMA_MAX_LOADED_MODELS=1`**: Locks runtime focus onto a single model instance. This guarantees that your CPU L3 cache fields are completely dedicated to giving you peak token generation speeds.
+
+---
+
+## The Ultimate 2-Step Fix
+
+### Step 1: Open an SSH Tunnel
+
+```
+ssh -L 11434:localhost:11434 user@remotehost
+```
+
+### Step 2: Launch Codex Normally
+
+```
+cat config.toml
+# Force the open-source flag and provider bypass
+oss = true
+local_provider = "ollama"
+ollama_mode = "responses"  # Bypasses the Chat vs Responses prompt
+
+[codex]
+default_model = "qwen2.5-coder:7b"
+purpose = "code-generation"
+
+[provider.ollama]
+base_url = "http://localhost:11434"
+request_timeout = 60
+
+[projects."/home/zach/.codex"]
+trust_level = "trusted"
+
+codex --oss -m "qwen2.5-coder:7b" -c max_tokens=2048 -c stream_mode=raw
+codex --oss -m "qwen2.5-coder:7b" -c max_tokens=2048 -c stream=true
+```
