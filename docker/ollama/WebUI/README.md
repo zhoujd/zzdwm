@@ -4,6 +4,11 @@ This repository contains the deployment configuration for a localized, highly op
 
 The architecture is specifically configured for **single-user testing on high-core Linux servers (100+ cores)**, restricting processing to a single NUMA node cluster to eliminate thread synchronization delays and cache thrashing.
 
+Interface Workspace Mode Execution Boundaries
+* **Primary Target Context**: Collaborative multi-user testing sessions, visual chat prompts, fine-tuning evaluations.
+* **Network Strategy**: Employs reverse-proxy acceleration for swift container loading.
+* **Connectivity Endpoint**: Workspace browser panel accessible at `http://localhost:3000`.
+
 ---
 
 ## Quick Start Deployment

@@ -2,6 +2,13 @@
 
 A lightweight, high-performance LLM runtime environment engineered specifically for local x86_64 CPU architectures. This configuration removes all heavy web-frontend dependencies, running **Ollama** as a decoupled background engine to serve your developer environment directly.
 
+Headless Mode Execution Boundaries
+* **Primary Target Context**: Low-overhead IDE extensions, `Emacs`, `.codex/config.toml` automation loops.
+* **Network Strategy**: Complete bypass of GHCR image pulling limitations.
+* **Connectivity Endpoint**: Accessible at `http://localhost:11434`.
+
+---
+
 ## Infrastructure Architecture
 
 | Component | Implementation | Host Port | Role Description |

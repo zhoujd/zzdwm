@@ -1,0 +1,17 @@
+# Project: Local AI Testing Environment (Core Headless Configuration)
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama_cpu_core
+    restart: unless-stopped
+    volumes:
+      - /opt/tool/ollama:/root/.ollama
+    ports:
+      - "11434:11434" # Exposed so your local host tools can talk to it directly
+    cpuset: "0-15"    # Physical core socket binding
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_NUM_THREADS=16       
+      - OLLAMA_NUM_PARALLEL=1       
+      - OLLAMA_MAX_LOADED_MODELS=1  
