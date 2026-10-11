@@ -161,6 +161,6 @@ docker exec -it ollama_cpu_core ollama create qwen2.5-coder:7b -f /root/.ollama/
 
 | Model Type | Target Model | Official Hugging Face Model ID | Target File Name (Q4_K_M) |
 | :--- | :--- | :--- | :--- |
-| **Logic & Reasoning** | DeepSeek R1 (8B) | `unsloth/DeepSeek-R1-Distill-Llama-8B-GGUF` | `DeepSeek-R1-Distill-Llama-8B-Q4_K_M.gguf` |
-| **Code Generation** | Qwen 2.5 Coder (7B) | `Qwen/Qwen2.5-Coder-7B-Instruct-GGUF` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` |
-| **Balanced Chat** | Llama 3.1 (8B) | `lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF` | `Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf` |
+| **Logic & Reasoning** | DeepSeek R1 (8B) | [`unsloth/DeepSeek-R1-Distill-Llama-8B-GGUF`](https://huggingface.co/unsloth/DeepSeek-R1-Distill-Llama-8B-GGUF) | `DeepSeek-R1-Distill-Llama-8B-Q4_K_M.gguf` |
+| **Code Generation** | Qwen 2.5 Coder (7B) | [`Qwen/Qwen2.5-Coder-7B-Instruct-GGUF`](https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF) | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` |
+| **Balanced Chat** | Llama 3.1 (8B) | [`lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF`](https://hf-mirror.com/unsloth/Llama-3.1-8B-Instruct-GGUF) | `Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf` |
