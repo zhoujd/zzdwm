@@ -102,6 +102,7 @@ chmod +x manage_ai.sh
 ## Codex Configuration
 
 ### Example .codex/config.toml
+
 ```
 [codex]
 # Primary engine designation
