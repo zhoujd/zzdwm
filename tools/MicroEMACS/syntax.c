@@ -25,6 +25,7 @@
 #define SYNTAX_FEATURE_SCHEME               0x20000
 #define SYNTAX_FEATURE_DASH_COMMENTS        0x40000
 #define SYNTAX_FEATURE_LINE_KEYS            0x80000
+#define SYNTAX_FEATURE_LINE_KEYWORDS        0x100000
 
 #define SYNTAX_STATE_C_COMMENT              1
 #define SYNTAX_STATE_PYTHON_DQUOTE          2
@@ -125,6 +126,12 @@ static const char *const makefile_keywords[] = {
   "define", "else", "endef", "endif", "export", "ifdef", "ifeq",
   "ifndef", "ifneq", "include", "override", "sinclude", "unexport",
   "vpath"
+};
+
+static const char *const dockerfile_keywords[] = {
+  "ADD", "ARG", "CMD", "COPY", "ENTRYPOINT", "ENV", "EXPOSE",
+  "FROM", "HEALTHCHECK", "LABEL", "MAINTAINER", "ONBUILD", "RUN",
+  "SHELL", "STOPSIGNAL", "USER", "VOLUME", "WORKDIR"
 };
 
 static const char *const lisp_keywords[] = {
@@ -240,6 +247,9 @@ static const char *const makefile_extensions[] = {
   ".mak", ".mk", "GNUmakefile", "Makefile", "makefile"
 };
 static const char *const sql_extensions[] = { ".sql" };
+static const char *const dockerfile_extensions[] = {
+  "Dockerfile", ".dockerfile"
+};
 
 static const char *const bash_shebangs[] = { "bash", "sh" };
 static const char *const python_shebangs[] = { "python" };
@@ -263,6 +273,7 @@ static const char *const toml_filetypes[] = { "toml" };
 static const char *const cmake_filetypes[] = { "cmake" };
 static const char *const makefile_filetypes[] = { "makefile", "make" };
 static const char *const sql_filetypes[] = { "sql" };
+static const char *const dockerfile_filetypes[] = { "dockerfile" };
 
 static const SYNTAX syntax_definitions[] = {
   {
@@ -358,6 +369,18 @@ static const SYNTAX syntax_definitions[] = {
     SYNTAX_FEATURE_MARKDOWN
   },
   {
+    "Dockerfile",
+    dockerfile_filetypes,
+    sizeof (dockerfile_filetypes) / sizeof (dockerfile_filetypes[0]),
+    dockerfile_keywords,
+    sizeof (dockerfile_keywords) / sizeof (dockerfile_keywords[0]),
+    dockerfile_extensions,
+    sizeof (dockerfile_extensions) / sizeof (dockerfile_extensions[0]),
+    NULL, 0,
+    SYNTAX_FEATURE_HASH_COMMENTS | SYNTAX_FEATURE_VARIABLES
+      | SYNTAX_FEATURE_CASE_INSENSITIVE | SYNTAX_FEATURE_LINE_KEYWORDS
+  },
+  {
     "Lisp",
     lisp_filetypes, sizeof (lisp_filetypes) / sizeof (lisp_filetypes[0]),
     lisp_keywords, sizeof (lisp_keywords) / sizeof (lisp_keywords[0]),
@@ -441,6 +464,31 @@ has_syntax_suffix (const char *name, const char *suffix)
          && strcasecmp (name + name_len - suffix_len, suffix) == 0;
 }
 
+static int
+is_dockerfile_name (const char *name)
+{
+  const char *slash = strrchr (name, '/');
+  const char *backslash = strrchr (name, '\\');
+  const char *base;
+  size_t length;
+
+  if (backslash != NULL && (slash == NULL || backslash > slash))
+    base = backslash;
+  else
+    base = slash;
+  if (base != NULL)
+    ++base;
+  else
+    base = name;
+  length = strlen (base);
+
+  return strcasecmp (base, "Dockerfile") == 0
+         || strncasecmp (base, "Dockerfile.", sizeof ("Dockerfile.") - 1) == 0
+         || (length >= sizeof (".Dockerfile") - 1
+             && strcasecmp (base + length - (sizeof (".Dockerfile") - 1),
+                            ".Dockerfile") == 0);
+}
+
 static const SYNTAX *
 syntax_for_filetype (const char *filetype)
 {
@@ -470,6 +518,9 @@ syntax_for_name (const char *name)
 {
   size_t definition_index;
   size_t extension_index;
+
+  if (is_dockerfile_name (name) != FALSE)
+    return syntax_for_filetype ("dockerfile");
 
   for (definition_index = 0;
        definition_index < sizeof (syntax_definitions)
@@ -782,14 +833,26 @@ syntax_plain_key_end (const uchar *s, int len, int start)
 }
 
 static int
-syntax_plain_key_at_line_start (const uchar *s, int start)
+syntax_word_at_line_start (const uchar *s, int start)
 {
   int pos = 0;
 
   while (pos < start && (s[pos] == ' ' || s[pos] == '\t'))
     ++pos;
-  if (pos == start)
+  return pos == start;
+}
+
+static int
+syntax_plain_key_at_line_start (const uchar *s, int start)
+{
+  int pos;
+
+  if (syntax_word_at_line_start (s, start) != FALSE)
     return TRUE;
+
+  pos = 0;
+  while (pos < start && (s[pos] == ' ' || s[pos] == '\t'))
+    ++pos;
   if (pos + 1 < start && s[pos] == '-'
       && (s[pos + 1] == ' ' || s[pos + 1] == '\t'))
     {
@@ -1581,6 +1644,8 @@ syntax_line (const SYNTAX *syntax,
                 ? '=' : ':';
           int line_keys
             = (syntax->features & SYNTAX_FEATURE_LINE_KEYS) != FALSE;
+          int line_keywords
+            = (syntax->features & SYNTAX_FEATURE_LINE_KEYWORDS) != FALSE;
 
           if (key_syntax != FALSE)
             pos = syntax_plain_key_end (s, len, pos);
@@ -1597,6 +1662,9 @@ syntax_line (const SYNTAX *syntax,
             }
           color = syntax_has_keyword (syntax, s + start, pos - start) != FALSE
                     ? CKEYWORD : CTEXT;
+          if (line_keywords != FALSE
+              && syntax_word_at_line_start (s, start) == FALSE)
+            color = CTEXT;
           if (draw != FALSE)
             {
               int i;
@@ -1872,6 +1940,15 @@ markdownmode (int f, int n, int k)
   (void) n;
   (void) k;
   return set_syntax_mode ("markdown");
+}
+
+int
+dockerfilemode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  return set_syntax_mode ("dockerfile");
 }
 
 int

@@ -134,6 +134,7 @@ main (void)
   const SYNTAX *cmake = syntax_for_extension (".cmake");
   const SYNTAX *makefile = syntax_for_extension (".mk");
   const SYNTAX *sql = syntax_for_filetype ("sql");
+  const SYNTAX *dockerfile = syntax_for_name ("Dockerfile");
   BUFFER buffer;
   LINE header;
   int state = SYNTAX_STATE_NONE;
@@ -142,7 +143,7 @@ main (void)
           && scheme != NULL
           && c_syntax != NULL && bash != NULL && json != NULL
           && yaml != NULL && toml != NULL && cmake != NULL
-          && makefile != NULL && sql != NULL);
+          && makefile != NULL && sql != NULL && dockerfile != NULL);
   assert (syntax_for_name (".C") == cpp);
   assert (syntax_for_name (".c") == c_syntax);
   assert (syntax_for_name (".profile") == bash);
@@ -150,6 +151,12 @@ main (void)
   assert (syntax_for_name ("test.ss") == scheme);
   assert (syntax_for_name ("CMakeLists.txt") == cmake);
   assert (syntax_for_name ("Makefile") == makefile);
+  assert (syntax_for_name ("Dockerfile") == dockerfile);
+  assert (syntax_for_name ("Dockerfile.dev") == dockerfile);
+  assert (syntax_for_name ("/build/Dockerfile.alpine") == dockerfile);
+  assert (syntax_for_name ("C:\\build\\Dockerfile.alpine") == dockerfile);
+  assert (syntax_for_name ("production.Dockerfile") == dockerfile);
+  assert (syntax_for_name ("test.dockerfile") == dockerfile);
   assert (syntax_for_name ("test.sql") == sql);
   assert (syntax_for_name ("test.SQL") == sql);
   assert (syntax_for_first_line ("#!/usr/bin/sbcl --script") == lisp);
@@ -185,6 +192,9 @@ main (void)
   assert (syntax_for_buffer (&buffer) == cmake);
   assert (syntax_set_buffer (&buffer, "makefile") == TRUE);
   assert (syntax_for_buffer (&buffer) == makefile);
+  assert (syntax_set_buffer (&buffer, "dockerfile") == TRUE);
+  assert (syntax_for_buffer (&buffer) == dockerfile);
+  assert (strcmp (syntax_name_for_buffer (&buffer), "Dockerfile") == 0);
   assert (syntax_set_buffer (&buffer, "scheme") == TRUE);
   assert (syntax_for_buffer (&buffer) == scheme);
   assert (strcmp (syntax_name_for_buffer (&buffer), "Scheme") == 0);
@@ -373,6 +383,32 @@ main (void)
   expect_length (14);
   expect_color_range (4, 7, CPREPROC);
   expect_color_range (7, 14, CTEXT);
+
+  render_line (dockerfile, "# syntax=docker/dockerfile:1", &state);
+  expect_length (28);
+  expect_all_colors (CCOMMENT);
+
+  render_line (dockerfile, "FROM alpine:3.20 AS build", &state);
+  expect_length (25);
+  expect_color_range (0, 4, CKEYWORD);
+  expect_color_range (4, 25, CTEXT);
+
+  render_line (dockerfile, "run echo ${MESSAGE}", &state);
+  expect_length (19);
+  expect_color_range (0, 3, CKEYWORD);
+  expect_color_range (3, 9, CTEXT);
+  expect_color_range (9, 19, CPREPROC);
+
+  render_line (dockerfile, "COPY --from=build . /app", &state);
+  expect_length (24);
+  expect_color_range (0, 4, CKEYWORD);
+  expect_color_range (4, 24, CTEXT);
+
+  render_line (dockerfile, "ENV PATH=\"/usr/bin\"", &state);
+  expect_length (19);
+  expect_color_range (0, 3, CKEYWORD);
+  expect_color_range (3, 9, CTEXT);
+  expect_color_range (9, 19, CSTRING);
 
   render_line (toml, "[package]", &state);
   expect_length (9);

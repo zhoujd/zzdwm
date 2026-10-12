@@ -738,6 +738,7 @@ int cppmode (int f, int n, int k);
 int bashmode (int f, int n, int k);
 int pythonmode (int f, int n, int k);
 int markdownmode (int f, int n, int k);
+int dockerfilemode (int f, int n, int k);
 int jsonmode (int f, int n, int k);
 int yamlmode (int f, int n, int k);
 int tomlmode (int f, int n, int k);

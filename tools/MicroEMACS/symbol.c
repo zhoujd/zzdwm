@@ -300,6 +300,7 @@ KEY key[] = {
   {-1,                  bashmode,          "bash-mode"},
   {-1,                  pythonmode,        "python-mode"},
   {-1,                  markdownmode,      "markdown-mode"},
+  {-1,                  dockerfilemode,    "dockerfile-mode"},
   {-1,                  jsonmode,          "json-mode"},
   {-1,                  yamlmode,          "yaml-mode"},
   {-1,                  tomlmode,          "toml-mode"},

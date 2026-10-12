@@ -2521,6 +2521,7 @@ built-in definitions cover:
 * TOML: `.toml`
 * CMake: `.cmake`, `CMakeLists.txt`
 * Makefile: `.mk`, `.mak`, `Makefile`, `makefile`, `GNUmakefile`, and files with `Makefile` or `makefile` in the first comment line
+* Dockerfile: `Dockerfile`, `Dockerfile.<variant>`, `<name>.Dockerfile`, and `.dockerfile`
 * Lisp: `.lisp`, `.lsp`, `.l`, `.cl`, and `sbcl`, `clisp`, or `lisp` shebangs
 * Emacs Lisp: `.el`, `.emacs`, and `emacs` shebangs
 * Scheme: `.scm`, `.ss`, `.sps`, `.sls`, `.sld`, and `guile`, `gosh`, `csi`, `gsi`, or `scheme` shebangs
@@ -2529,13 +2530,13 @@ built-in definitions cover:
 The renderers support block comments, line comments, strings, keywords,
 preprocessor directives, shell variables, Python triple-quoted strings,
 Markdown fenced code, Lisp block comments, Scheme booleans, configuration
-keys, TOML tables, CMake variables and bracket comments, and Makefile targets,
-variables, recipes, and SQL comments. Multi-line constructs are highlighted
-consistently while scrolling.
+keys, TOML tables, CMake variables and bracket comments, Makefile targets,
+variables, and recipes, Dockerfile instructions and build variables, and SQL
+comments. Multi-line constructs are highlighted consistently while scrolling.
 
 Use the `c-mode`, `cpp-mode`, `bash-mode`, `python-mode`, `markdown-mode`,
 `json-mode`, `yaml-mode`, `toml-mode`, `cmake-mode`, `makefile-mode`,
-`lisp-mode`, `emacs-lisp-mode`, or `scheme-mode` extended command to select
+`dockerfile-mode`, `lisp-mode`, `emacs-lisp-mode`, or `scheme-mode` extended command to select
 syntax for the current buffer explicitly. Use `text-mode` to explicitly disable syntax
 highlighting and remove the mode-line indicator. These commands are not bound
 to keys.

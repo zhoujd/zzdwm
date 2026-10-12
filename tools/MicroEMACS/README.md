@@ -11,7 +11,7 @@ and Windows while keeping the executable small and fast.
 * Undo, keyboard macros, profiles, and buffer/window management.
 * Optional color and Vim-style line numbers.
 * Syntax highlighting for C, C++, Bash, Python, Markdown, JSON, YAML,
-  TOML, CMake, Makefile, Lisp, Emacs Lisp, Scheme, and SQL.
+  TOML, CMake, Makefile, Dockerfile, Lisp, Emacs Lisp, Scheme, and SQL.
 * Tiny Lisp extensions, editor command bridges, and Lisp startup configuration.
 * Tags, cscope, grep, GCC error navigation, and ispell integration.
 * Linux terminal support through ncursesw or termcap.
