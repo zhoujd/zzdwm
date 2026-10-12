@@ -9,3 +9,5 @@
 ## To evaluate a Lisp script using your runtime key combination (C-x F)
 
 {KCTLX | 'F',         readprofile,       "read-profile"},
+
+## Enabling the Native Floating-Point System in Lisp Extend
