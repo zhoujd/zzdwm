@@ -272,7 +272,9 @@ KEY key[] = {
   {-1,                  help,              "help"},
   {-1,                  wallchart,         "display-bindings"},
   {-1,                  bindtokey,         "bind-to-key"},
+#ifdef LISP
   {-1,                  lispeval,          "eval-lisp"},
+#endif
   {-1,                  namemacro,         "name-macro"},
   {-1,                  fillword,          "ins-self-with-wrap"},
   {-1,                  setfillcol,        "set-fill-column"},

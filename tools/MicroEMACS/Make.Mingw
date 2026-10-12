@@ -11,10 +11,16 @@ SYS = ./sys/mingw
 VPATH = $(SYS):$(TTY)
 INC = -I$(srcdir) -I$(SYS) -I$(TTY)
 
+COLOR ?= yes
+LISP ?= yes
+COLOR_FLAG := $(if $(filter yes,$(COLOR)),-DCOLOR,)
+LISP_FLAG := $(if $(filter yes,$(LISP)),-DLISP,)
+
 # Compilers, linkers, and their flags.
 
 CC = gcc
-CFLAGS = -std=c99 -D_POSIX_C_SOURCE=200809L -DMINGW -DBACKUP -DCOLOR $(INC) \
+CFLAGS = -std=c99 -D_POSIX_C_SOURCE=200809L -DMINGW -DBACKUP \
+         $(COLOR_FLAG) $(LISP_FLAG) $(INC) \
          -Wall -Wextra -pedantic \
          -Wno-unused-parameter \
          -Wno-implicit-fallthrough
@@ -28,7 +34,15 @@ LD = gcc
 LDFLAGS := -s $(LDFLAGS)
 LIBS = -lkernel32 -lntdll -lmsvcrt
 
+BUILD_FLAGS = $(CC) $(CFLAGS) $(LD) $(LDFLAGS) $(LIBS)
+BUILD_FLAGS_FILE = .build-flags
+
 # Objects comprising MicroEMACS.
+
+LISP_OBJ :=
+ifeq ($(LISP), yes)
+LISP_OBJ := lisp.o tinylisp.o
+endif
 
 OBJ := \
 	basic.o \
@@ -41,8 +55,7 @@ OBJ := \
 	file.o \
 	kbd.o \
 	line.o \
-	lisp.o \
-	tinylisp.o \
+	$(LISP_OBJ) \
 	main.o \
 	paragraph.o \
 	random.o \
@@ -69,6 +82,14 @@ OBJ := \
 	bufmenu.o \
 	error.o
 
+$(BUILD_FLAGS_FILE): FORCE
+	@printf '%s\n' '$(BUILD_FLAGS)' > $@.tmp
+	@if cmp -s $@.tmp $@; then \
+	  rm -f $@.tmp; \
+	else \
+	  mv -f $@.tmp $@; \
+	fi
+
 # How to compile a module.
 
 .c.o:
@@ -81,6 +102,8 @@ REV = rev.h
 
 $(TARGET): $(OBJ)
 	$(LD) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
+
+$(OBJ): $(BUILD_FLAGS_FILE)
 
 lisp.o: lisp.c
 	$(CC) -c $(CFLAGS) -fno-asynchronous-unwind-tables $<
@@ -97,4 +120,9 @@ strip: $(TARGET)
 	strip -v $(TARGET)
 
 clean:
-	rm -f *.[o] $(TARGET) $(REV)
+	rm -f *.[o] $(TARGET) $(REV) $(BUILD_FLAGS_FILE) \
+	      $(BUILD_FLAGS_FILE).tmp
+
+FORCE:
+
+.PHONY: FORCE

@@ -81,6 +81,11 @@
 #else
 #define OPT_COLOR ""
 #endif
+#ifdef LISP
+#define OPT_LISP " [-l lisp]"
+#else
+#define OPT_LISP ""
+#endif
 
 int thisflag;                      /* Flags, this command          */
 int lastflag;                      /* Flags, last command          */
@@ -132,7 +137,8 @@ void
 usage (void)
 {
   fprintf (stderr,
-           "usage: me [-234" OPT_BACKUP OPT_COLOR "DmnNrTuxz] [-c path] [-d path] [-g line] [-l lisp] [-p profile] [-s string] [-t size]\n"
+           "usage: me [-234" OPT_BACKUP OPT_COLOR "DmnNrTuxz] [-c path] [-d path] [-g line]"
+           OPT_LISP " [-p profile] [-s string] [-t size]\n"
            "          [+[line]] [file[:line[:column]] ...] [file://path[:line[:column]] ...]\n");
 }
 
@@ -148,7 +154,9 @@ main (int argc, char *argv[])
   register int mflag;
   register char *arg;
   char *proptr;
+#ifdef LISP
   char *lispptr;
+#endif
   int line = 0;
   int gotoflag = FALSE;
   int basec;		/* c stripped of meta character */
@@ -168,7 +176,9 @@ main (int argc, char *argv[])
     }
 
   proptr = NULLPTR;		/* profile name         */
+#ifdef LISP
   lispptr = NULLPTR;		/* Lisp startup file    */
+#endif
   for (n = 1; n < argc; n++)
     {				/* Search for options   */
       arg = argv[n];
@@ -214,6 +224,7 @@ main (int argc, char *argv[])
                   line = atoi (argv[n]);
                 }
               break;
+#ifdef LISP
             case 'l':
               n++;
               if (n < argc)
@@ -222,6 +233,7 @@ main (int argc, char *argv[])
                   adjustcase (lispptr);
                 }
               break;
+#endif
             case 'm':
               mouse = TRUE;
               break;
@@ -298,7 +310,9 @@ main (int argc, char *argv[])
             case 'c':
             case 'd':
             case 'g':
+#ifdef LISP
             case 'l':
+#endif
             case 'p':
             case 's':
             case 't':
@@ -378,7 +392,9 @@ main (int argc, char *argv[])
   else
     eprintf ("");
 
+#ifdef LISP
   lispstartup (lispptr);
+#endif
   update ();
 
   /* Startup Search Execution */

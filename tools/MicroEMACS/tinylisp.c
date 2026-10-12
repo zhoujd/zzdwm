@@ -1185,9 +1185,9 @@ Object *evalExpr(Object **object, Object **env, GC_PARAM) {
 
 // STANDARD LIBRARY ///////////////////////////////////////////////////////////
 
-#define LISP(...) #__VA_ARGS__
+#define TINY_LISP_SOURCE(...) #__VA_ARGS__
 
-static const char *stdlib = LISP(
+static const char *stdlib = TINY_LISP_SOURCE(
   (setq list (lambda args args))
 
   (setq defmacro (macro (name params . body)

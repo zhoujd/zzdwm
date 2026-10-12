@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef LISP
+
 #define LISP_EXPRESSION_SIZE 256
 #define LISP_OUTPUT_SIZE     256
 #if defined(MINGW) || defined(DOS)
@@ -230,3 +232,5 @@ lispeval (int f, int n, int k)
     eprintf ("[Lisp error: %s]", result);
   return status;
 }
+
+#endif

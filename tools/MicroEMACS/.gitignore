@@ -2,6 +2,7 @@
 
 # Related project files
 rev.h
+.build-flags
 *.o
 me.exe
 me

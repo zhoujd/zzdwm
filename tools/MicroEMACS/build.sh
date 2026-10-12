@@ -17,6 +17,7 @@ windows|-w      build Windows me.exe
 clean|-c        clean {test|-t|all|-a}
 debug|-d        debug
 release|-r      release
+minimal|-m      build minimal me without color and Lisp
 publish|-p      publish Linux static me
 package|-s      package MicroEMACS source code
 install|-i      install
@@ -105,14 +106,19 @@ release() {
     make clean
     case $ID in
         alpine|void )
-            make STATIC=yes
+            make STATIC=yes strip
             ;;
         * )
-            make
+            make strip
             ;;
     esac
-    make strip
     echo "Build release on $ID done"
+}
+
+minimal() {
+    make clean || exit 1
+    make min || exit 1
+    echo "Build minimal done"
 }
 
 publish() {
@@ -134,8 +140,7 @@ publish() {
             sh -c "
             cat /etc/os-release &&
             make clean &&
-            make STATIC=yes &&
-            make strip
+            make STATIC=yes strip
             "
         case $CMD in
             --upx|-u )
@@ -218,6 +223,9 @@ case $1 in
         ;;
     release|-r )
         release
+        ;;
+    minimal|-m )
+        minimal
         ;;
     publish|-p )
         shift

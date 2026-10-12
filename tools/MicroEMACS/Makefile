@@ -13,6 +13,9 @@ endif
 all:
 	$(MAKE) -f $(MF) $(TARGET)
 
+min:
+	$(MAKE) -f $(MF) COLOR=no LISP=no $(TARGET)
+
 clean: TARGET=clean
 clean: all
 
@@ -28,6 +31,7 @@ strip: all
 help:
 	@echo "make MF=Make.Linux"
 	@echo "make MF=Make.Mingw"
+	@echo "make min"
 	@echo "make -C test"
 
-.PHONY: all clean install uninstall strip help
+.PHONY: all min clean install uninstall strip help

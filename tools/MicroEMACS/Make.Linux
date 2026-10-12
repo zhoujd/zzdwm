@@ -15,10 +15,16 @@ SYS = ./sys/unix
 VPATH = $(SYS):$(TTY)
 INC = -I$(srcdir) -I$(SYS) -I$(TTY)
 
+COLOR ?= yes
+LISP ?= yes
+COLOR_FLAG := $(if $(filter yes,$(COLOR)),-DCOLOR,)
+LISP_FLAG := $(if $(filter yes,$(LISP)),-DLISP,)
+
 # Compilers, linkers, and their flags.
 
 CC = gcc
-CFLAGS = -std=c99 -D_GNU_SOURCE -DLINUX -DBACKUP -DCOLOR $(INC) \
+CFLAGS = -std=c99 -D_GNU_SOURCE -DLINUX -DBACKUP \
+         $(COLOR_FLAG) $(LISP_FLAG) $(INC) \
          -Wall -Wextra -pedantic \
          -Wno-unused-parameter \
          -Wno-implicit-fallthrough
@@ -40,7 +46,15 @@ else
 LIBS = -lncursesw
 endif
 
+BUILD_FLAGS = $(CC) $(CFLAGS) $(LD) $(LDFLAGS) $(LIBS)
+BUILD_FLAGS_FILE = .build-flags
+
 # Objects comprising MicroEMACS.
+
+LISP_OBJ :=
+ifeq ($(LISP), yes)
+LISP_OBJ := lisp.o tinylisp.o
+endif
 
 OBJ := \
 	basic.o \
@@ -53,8 +67,7 @@ OBJ := \
 	file.o \
 	kbd.o \
 	line.o \
-	lisp.o \
-	tinylisp.o \
+	$(LISP_OBJ) \
 	main.o \
 	paragraph.o \
 	random.o \
@@ -81,6 +94,14 @@ OBJ := \
 	bufmenu.o \
 	error.o
 
+$(BUILD_FLAGS_FILE): FORCE
+	@printf '%s\n' '$(BUILD_FLAGS)' > $@.tmp
+	@if cmp -s $@.tmp $@; then \
+	  rm -f $@.tmp; \
+	else \
+	  mv -f $@.tmp $@; \
+	fi
+
 # How to compile a module.
 
 .c.o:
@@ -95,6 +116,8 @@ REV = rev.h
 
 $(TARGET): $(OBJ)
 	$(LD) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
+
+$(OBJ): $(BUILD_FLAGS_FILE)
 
 $(REV):
 	@$(srcdir)/ver.sh $@
@@ -114,4 +137,9 @@ uninstall:
 	rm -f $(DEST)
 
 clean:
-	rm -f *.[o] $(TARGET) $(REV)
+	rm -f *.[o] $(TARGET) $(REV) $(BUILD_FLAGS_FILE) \
+	      $(BUILD_FLAGS_FILE).tmp
+
+FORCE:
+
+.PHONY: FORCE
