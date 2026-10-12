@@ -45,10 +45,11 @@ cscope-test: cscope.c $(ROOT)/cscope.c $(ROOT)/sys/unix/spawn.c
 		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/unix \
 		-I$(ROOT)/tty/ncurses -DTEST cscope.c $(ROOT)/sys/unix/spawn.c
 
-lisp-test: lisp.c $(ROOT)/lisp.c
+lisp-test: lisp.c $(ROOT)/lisp.c $(ROOT)/tinylisp.c $(ROOT)/tinylisp.h
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections \
 		-fno-asynchronous-unwind-tables $(LDFLAGS) -Wl,--gc-sections \
-		-o $@ -I$(ROOT) -I$(ROOT)/sys/unix -I$(ROOT)/tty/ncurses $<
+		-o $@ -I$(ROOT) -I$(ROOT)/sys/unix -I$(ROOT)/tty/ncurses \
+		$< $(ROOT)/tinylisp.c
 
 clean:
 	rm -f $(TARGET) *.[o]

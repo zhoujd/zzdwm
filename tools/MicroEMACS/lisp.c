@@ -3,121 +3,13 @@
  */
 
 #include "def.h"
-#include <ctype.h>
+#include "tinylisp.h"
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define TYPE_SYMBOL 1
-#define TYPE_STRING 2
-#define TYPE_LIST   3
-
-typedef struct LispNode
-{
-  int type;
-  char *val;
-  struct LispNode *list;
-  struct LispNode *next;
-} LispNode;
-
-static void free_sexpr (LispNode *node);
-
-static char *
-lisp_strndup (const char *text, size_t length)
-{
-  size_t used = 0;
-  char *copy;
-
-  while (used < length && text[used] != 0)
-    ++used;
-  copy = malloc (used + 1);
-  if (copy == NULL)
-    return NULL;
-  memcpy (copy, text, used);
-  copy[used] = 0;
-  return copy;
-}
-
-/* Parse one S-expression and advance the source pointer. */
-static LispNode *
-parse_sexpr (const char **src)
-{
-  LispNode *node;
-  LispNode **current;
-  const char *start;
-  size_t length;
-
-  while (**src != 0 && isspace ((uchar) **src))
-    ++*src;
-  if (**src == 0)
-    return NULL;
-
-  node = calloc (1, sizeof (LispNode));
-  if (node == NULL)
-    return NULL;
-
-  if (**src == '(')
-    {
-      ++*src;
-      node->type = TYPE_LIST;
-      current = &node->list;
-      while (**src != 0 && **src != ')')
-        {
-          LispNode *child = parse_sexpr (src);
-
-          if (child == NULL)
-            {
-              free_sexpr (node);
-              return NULL;
-            }
-          *current = child;
-          current = &child->next;
-        }
-      if (**src != ')')
-        {
-          free_sexpr (node);
-          return NULL;
-        }
-      ++*src;
-    }
-  else if (**src == '"')
-    {
-      ++*src;
-      start = *src;
-      while (**src != 0 && **src != '"')
-        ++*src;
-      if (**src != '"')
-        {
-          free (node);
-          return NULL;
-        }
-      length = *src - start;
-      node->type = TYPE_STRING;
-      node->val = lisp_strndup (start, length);
-      ++*src;
-    }
-  else
-    {
-      start = *src;
-      while (**src != 0 && !isspace ((uchar) **src) && **src != '('
-             && **src != ')' && **src != '"')
-        ++*src;
-      length = *src - start;
-      if (length == 0)
-        {
-          free (node);
-          return NULL;
-        }
-      node->type = TYPE_SYMBOL;
-      node->val = lisp_strndup (start, length);
-    }
-  if (node->type != TYPE_LIST && node->val == NULL)
-    {
-      free (node);
-      return NULL;
-    }
-  return node;
-}
+#define LISP_EXPRESSION_SIZE 256
+#define LISP_OUTPUT_SIZE     256
 
 /* Convert a MicroEMACS key name to its internal key code. */
 static int
@@ -157,31 +49,37 @@ lisp_key_code (const char *name)
 }
 
 static int
-lisp_bind_key (const char *key_name, const char *command)
+lisp_bind_key (int argc, const char *const *argv)
 {
   SYMBOL *symbol;
-  int key = lisp_key_code (key_name);
+  int key;
 
-  if (key < 0 || (symbol = symlookup (command)) == NULL)
+  if (argc != 2)
+    return FALSE;
+  key = lisp_key_code (argv[0]);
+  if (key < 0 || (symbol = symlookup (argv[1])) == NULL)
     return FALSE;
   setbinding (key, symbol);
   return TRUE;
 }
 
 static int
-lisp_set_variable (const char *name, const char *value_text)
+lisp_set_variable (int argc, const char *const *argv)
 {
   char *end;
   long value;
 
-  value = strtol (value_text, &end, 10);
-  if (*value_text == 0 || *end != 0 || value <= 0 || value > INT_MAX)
+  if (argc != 2)
+    return FALSE;
+  value = strtol (argv[1], &end, 10);
+  if (argv[1][0] == 0 || *end != 0 || value <= 0 || value > INT_MAX)
     return FALSE;
 
   value = (int) value;
-  if (strcmp (name, "tab-size") == 0 || strcmp (name, "tab-width") == 0)
+  if (strcmp (argv[0], "tab-size") == 0
+      || strcmp (argv[0], "tab-width") == 0)
     tabsize = value;
-  else if (strcmp (name, "fill-column") == 0)
+  else if (strcmp (argv[0], "fill-column") == 0)
     fillcol = value;
   else
     return FALSE;
@@ -189,60 +87,22 @@ lisp_set_variable (const char *name, const char *value_text)
 }
 
 static int
-eval_sexpr (const LispNode *node)
+lisp_register_hosts (void)
 {
-  const LispNode *func;
-  const LispNode *first;
-  const LispNode *second;
+  static int registered = FALSE;
 
-  if (!node || node->type != TYPE_LIST || !node->list)
-    return FALSE;
-
-  func = node->list;
-  first = func->next;
-  second = first != NULL ? first->next : NULL;
-  if (func->type == TYPE_SYMBOL)
-    {
-      /* (define-key "C-x C-b" "buffer-menu") */
-      if (strcmp (func->val, "define-key") == 0)
-        {
-          if (first == NULL || second == NULL || second->next != NULL
-              || first->type != TYPE_STRING || second->type != TYPE_STRING)
-            return FALSE;
-          return lisp_bind_key (first->val, second->val);
-        }
-      /* (set-variable "tab-width" "8") */
-      else if (strcmp (func->val, "set-variable") == 0)
-        {
-          if (first == NULL || second == NULL || second->next != NULL
-              || first->type != TYPE_STRING || second->type != TYPE_STRING)
-            return FALSE;
-          return lisp_set_variable (first->val, second->val);
-        }
-    }
-  return FALSE;
-}
-
-/* Simple Cleanup Loop */
-static void
-free_sexpr (LispNode *node)
-{
-  if (!node)
-    return;
-  if (node->type == TYPE_LIST)
-    free_sexpr (node->list);
-  free_sexpr (node->next);
-  if (node->val)
-    free (node->val);
-  free (node);
+  if (registered == TRUE)
+    return TRUE;
+  registered = tiny_lisp_define_host ("define-key", lisp_bind_key) == 1
+               && tiny_lisp_define_host ("set-variable", lisp_set_variable) == 1;
+  return registered;
 }
 
 int
 lispeval (int f, int n, int k)
 {
-  char expr[128];
-  const char *scan = expr;
-  LispNode *node;
+  char expr[LISP_EXPRESSION_SIZE];
+  char result[LISP_OUTPUT_SIZE];
   int status;
 
   (void) f;
@@ -251,16 +111,16 @@ lispeval (int f, int n, int k)
 
   if (ereadv ("Lisp: ", expr, sizeof (expr), EFNEW | EFCR) != TRUE)
     return FALSE;
-  node = parse_sexpr (&scan);
-  status = node != NULL;
-  if (status == TRUE)
+  if (lisp_register_hosts () != TRUE)
     {
-      while (*scan != 0 && isspace ((uchar) *scan))
-        ++scan;
-      status = *scan == 0 && eval_sexpr (node) == TRUE;
+      eprintf ("[Lisp host commands unavailable]");
+      return FALSE;
     }
-  free_sexpr (node);
-  if (status == FALSE)
-    eprintf ("[Lisp expression failed]");
+
+  status = tiny_lisp_eval (expr, result, sizeof (result));
+  if (status == TRUE)
+    eprintf ("[Lisp: %s]", result);
+  else
+    eprintf ("[Lisp error: %s]", result);
   return status;
 }

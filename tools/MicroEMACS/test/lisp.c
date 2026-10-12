@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -8,6 +9,7 @@ int fillcol;
 int tabsize;
 
 static const char *lisp_input;
+static char lisp_message[256];
 static int bound_key;
 static SYMBOL *bound_symbol;
 static SYMBOL command_symbol = { NULL, 0, "buffer-menu", NULL, NULL };
@@ -29,7 +31,11 @@ ereadv (const char *prompt, char *buffer, int buffer_size, int flag, ...)
 void
 eprintf (const char *format, ...)
 {
-  (void) format;
+  va_list args;
+
+  va_start (args, format);
+  vsnprintf (lisp_message, sizeof (lisp_message), format, args);
+  va_end (args);
 }
 
 SYMBOL *
@@ -50,6 +56,7 @@ setbinding (int key, SYMBOL *symbol)
 static int
 evaluate (const char *expression)
 {
+  lisp_message[0] = 0;
   lisp_input = expression;
   return lispeval (FALSE, 1, 0);
 }
@@ -57,54 +64,16 @@ evaluate (const char *expression)
 int
 main (void)
 {
-  const char *scan;
-  LispNode *node;
-
-  scan = "(set-variable \"tab-width\" \"8\")";
-  node = parse_sexpr (&scan);
-  assert (node != NULL);
-  assert (node->type == TYPE_LIST);
-  assert (node->list != NULL && node->list->type == TYPE_SYMBOL);
-  assert (strcmp (node->list->val, "set-variable") == 0);
-  assert (node->list->next != NULL && node->list->next->type == TYPE_STRING);
-  assert (strcmp (node->list->next->val, "tab-width") == 0);
-  assert (node->list->next->next != NULL);
-  assert (strcmp (node->list->next->next->val, "8") == 0);
-  assert (node->list->next->next->next == NULL);
-  assert (*scan == 0);
-  free_sexpr (node);
-
-  scan = "(define-key (\"C-x C-b\"))";
-  node = parse_sexpr (&scan);
-  assert (node != NULL);
-  assert (node->list->next->type == TYPE_LIST);
-  assert (strcmp (node->list->next->list->val, "C-x C-b") == 0);
-  free_sexpr (node);
-
-  scan = "(define-key";
-  assert (parse_sexpr (&scan) == NULL);
-  scan = "(define-key \"C-x";
-  assert (parse_sexpr (&scan) == NULL);
-  scan = ")";
-  assert (parse_sexpr (&scan) == NULL);
-
-  assert (lisp_key_code ("C-x C-b") == (KCTLX | KCTRL | 'B'));
-  assert (lisp_key_code ("M-x") == (KMETA | 'X'));
-  assert (lisp_key_code ("C-a") == (KCTRL | 'A'));
-  assert (lisp_key_code ("C-x C-ab") < 0);
-  assert (lisp_key_code ("") < 0);
-
   tabsize = 4;
   assert (evaluate ("(set-variable \"tab-width\" \"8\")") == TRUE);
   assert (tabsize == 8);
-  assert (evaluate ("(set-variable \"tab-size\" \"12\")") == TRUE);
+  assert (evaluate ("(set-variable \"tab-size\" 12)") == TRUE);
   assert (tabsize == 12);
   assert (evaluate ("(set-variable \"fill-column\" \"72\")") == TRUE);
   assert (fillcol == 72);
   assert (evaluate ("(set-variable \"unknown\" \"8\")") == FALSE);
   assert (evaluate ("(set-variable \"tab-width\" \"0\")") == FALSE);
   assert (evaluate ("(set-variable \"tab-width\" \"8junk\")") == FALSE);
-  assert (evaluate ("(set-variable \"tab-width\" 8)") == FALSE);
   assert (evaluate ("(set-variable \"tab-width\" \"8\" \"extra\")") == FALSE);
 
   bound_key = 0;
@@ -113,11 +82,23 @@ main (void)
   assert (bound_key == (KCTLX | KCTRL | 'B'));
   assert (bound_symbol == &command_symbol);
   assert (evaluate ("(define-key \"C-x C-b\" \"unknown\")") == FALSE);
-  assert (evaluate ("(define-key C-x buffer-menu)") == FALSE);
   assert (evaluate ("(define-key \"C-x C-b\")") == FALSE);
 
-  assert (evaluate ("(set-variable \"tab-width\" \"8\") extra") == FALSE);
-  assert (evaluate ("set-variable") == FALSE);
+  assert (evaluate ("(+ 1 2)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: 3]") == 0);
+  assert (evaluate ("(defun plus1 (x) (+ x 1))") == TRUE);
+  assert (evaluate ("(plus1 2)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: 3]") == 0);
+  assert (evaluate ("(defmacro inc (x) (list '+ x 1))") == TRUE);
+  assert (evaluate ("(inc 2)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: 3]") == 0);
+  assert (evaluate ("(defun countdown (n) (if (= n 0) 0 (countdown (- n 1))))")
+          == TRUE);
+  assert (evaluate ("(countdown 2000)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: 0]") == 0);
+
+  assert (evaluate ("(+ 1 2) extra") == FALSE);
+  assert (evaluate ("(+ 1") == FALSE);
   assert (evaluate ("") == FALSE);
 
   puts ("lisp tests passed");

@@ -54,6 +54,7 @@ OBJ := \
 	kbd.o \
 	line.o \
 	lisp.o \
+	tinylisp.o \
 	main.o \
 	paragraph.o \
 	random.o \
@@ -99,6 +100,9 @@ $(REV):
 	@$(srcdir)/ver.sh $@
 
 version.o: $(REV)
+
+tinylisp.o: tinylisp.c tinylisp.h
+	$(CC) -c $(CFLAGS) -std=c11 -fno-asynchronous-unwind-tables $<
 
 strip: $(TARGET)
 	strip -v $(TARGET)

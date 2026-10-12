@@ -42,6 +42,7 @@ OBJ := \
 	kbd.o \
 	line.o \
 	lisp.o \
+	tinylisp.o \
 	main.o \
 	paragraph.o \
 	random.o \
@@ -83,6 +84,9 @@ $(TARGET): $(OBJ)
 
 lisp.o: lisp.c
 	$(CC) -c $(CFLAGS) -fno-asynchronous-unwind-tables $<
+
+tinylisp.o: tinylisp.c tinylisp.h
+	$(CC) -c $(CFLAGS) -std=c11 -fno-asynchronous-unwind-tables $<
 
 $(REV):
 	@$(srcdir)/ver.sh $@
