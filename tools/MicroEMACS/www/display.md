@@ -44,13 +44,14 @@ The built-in definitions cover:
 * Lisp: `.lisp`, `.lsp`, `.l`, `.cl`, and `sbcl`, `clisp`, or `lisp` shebangs
 * Emacs Lisp: `.el`, `.emacs`, and `emacs` shebangs
 * Scheme: `.scm`, `.ss`, `.sps`, `.sls`, `.sld`, and `guile`, `gosh`, `csi`, `gsi`, or `scheme` shebangs
+* SQL: explicit selection with `(set-syntax "sql")`
 
 The renderers support block comments, line comments, strings, keywords,
 preprocessor directives, shell variables, Python triple-quoted strings,
 Markdown fenced code, Lisp block comments, Scheme booleans, configuration
 keys, TOML tables, CMake variables and bracket comments, and Makefile targets,
-variables, and recipes. Multi-line constructs are highlighted consistently
-while scrolling.
+variables, recipes, and SQL comments. Multi-line constructs are highlighted
+consistently while scrolling.
 
 The mode line shows the automatically detected language, or the language
 selected with an explicit mode command.
@@ -63,6 +64,8 @@ Use the `c-mode`, `cpp-mode`, `bash-mode`, `python-mode`, `markdown-mode`,
 syntax for the current buffer explicitly. Use `text-mode` to explicitly disable syntax
 highlighting and remove the mode-line indicator. These commands are not bound
 to keys.
+SQL has no automatic file-extension rule or extended command; select it with
+**M-X eval-lisp** and `(set-syntax "sql")`.
 
 Only the lines currently visible in each window are rendered with syntax
 colors, and syntax state is cached to avoid redundant rescanning.

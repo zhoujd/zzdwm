@@ -2839,15 +2839,18 @@ list operations and output primitives:
     (defmacro inc (x) (list '+ x 1))
     (inc 2)
 
-Two forms also provide access to MicroEMACS state:
+Three forms also provide access to MicroEMACS state:
 
     (define-key "C-x C-b" "buffer-menu")
     (set-variable "tab-width" 8)
+    (set-syntax "sql")
 
 The first form binds a key to a MicroEMACS command. Key names support
 the **C-X**, **C-** and **M-** prefixes followed by one ASCII character.
 The second form sets **tab-width** (or **tab-size**) or **fill-column**
 to a positive integer. A quoted string is also accepted for the value.
+The third form selects a syntax definition for the current buffer. It is
+available when color is enabled.
 
 # Modes
 
@@ -3033,13 +3036,14 @@ built-in definitions cover:
 * Lisp: `.lisp`, `.lsp`, `.l`, `.cl`, and `sbcl`, `clisp`, or `lisp` shebangs
 * Emacs Lisp: `.el`, `.emacs`, and `emacs` shebangs
 * Scheme: `.scm`, `.ss`, `.sps`, `.sls`, `.sld`, and `guile`, `gosh`, `csi`, `gsi`, or `scheme` shebangs
+* SQL: explicit selection with `(set-syntax "sql")`
 
 The renderers support block comments, line comments, strings, keywords,
 preprocessor directives, shell variables, Python triple-quoted strings,
 Markdown fenced code, Lisp block comments, Scheme booleans, configuration
 keys, TOML tables, CMake variables and bracket comments, and Makefile targets,
-variables, and recipes. Multi-line constructs are highlighted consistently
-while scrolling.
+variables, recipes, and SQL comments. Multi-line constructs are highlighted
+consistently while scrolling.
 
 Use the `c-mode`, `cpp-mode`, `bash-mode`, `python-mode`, `markdown-mode`,
 `json-mode`, `yaml-mode`, `toml-mode`, `cmake-mode`, `makefile-mode`,
@@ -3047,6 +3051,8 @@ Use the `c-mode`, `cpp-mode`, `bash-mode`, `python-mode`, `markdown-mode`,
 syntax for the current buffer explicitly. Use `text-mode` to explicitly disable syntax
 highlighting and remove the mode-line indicator. These commands are not bound
 to keys.
+SQL has no automatic file-extension rule or extended command; select it with
+**M-X eval-lisp** and `(set-syntax "sql")`.
 
 Only the lines currently visible in each window are rendered with syntax
 colors, and syntax state is cached to avoid redundant rescanning.

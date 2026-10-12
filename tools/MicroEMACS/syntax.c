@@ -23,6 +23,7 @@
 #define SYNTAX_FEATURE_BRACKET_COMMENTS     0x8000
 #define SYNTAX_FEATURE_CASE_INSENSITIVE     0x10000
 #define SYNTAX_FEATURE_SCHEME               0x20000
+#define SYNTAX_FEATURE_DASH_COMMENTS        0x40000
 
 #define SYNTAX_STATE_C_COMMENT              1
 #define SYNTAX_STATE_PYTHON_DQUOTE          2
@@ -198,6 +199,16 @@ static const char *const scheme_keywords[] = {
   "when", "write", "zero?"
 };
 
+static const char *const sql_keywords[] = {
+  "alter", "and", "as", "begin", "by", "case", "check", "commit",
+  "constraint", "create", "default", "delete", "desc", "distinct",
+  "drop", "else", "end", "foreign", "from", "group", "having", "in",
+  "index", "inner", "insert", "into", "is", "join", "key", "left",
+  "like", "limit", "not", "null", "on", "or", "order", "primary",
+  "references", "rollback", "select", "set", "table", "then",
+  "union", "update", "values", "when", "where"
+};
+
 static const char *const cpp_extensions[] = {
   ".cpp", ".cc", ".cxx", ".C", ".hpp", ".hh", ".hxx", ".ipp", ".tcc"
 };
@@ -249,6 +260,7 @@ static const char *const yaml_filetypes[] = { "yaml", "yml" };
 static const char *const toml_filetypes[] = { "toml" };
 static const char *const cmake_filetypes[] = { "cmake" };
 static const char *const makefile_filetypes[] = { "makefile", "make" };
+static const char *const sql_filetypes[] = { "sql" };
 
 static const SYNTAX syntax_definitions[] = {
   {
@@ -376,6 +388,15 @@ static const SYNTAX syntax_definitions[] = {
     sizeof (scheme_shebangs) / sizeof (scheme_shebangs[0]),
     SYNTAX_FEATURE_LISP | SYNTAX_FEATURE_LISP_BLOCK_COMMENTS
       | SYNTAX_FEATURE_SEMICOLON_COMMENTS | SYNTAX_FEATURE_SCHEME
+  },
+  {
+    "SQL",
+    sql_filetypes, sizeof (sql_filetypes) / sizeof (sql_filetypes[0]),
+    sql_keywords, sizeof (sql_keywords) / sizeof (sql_keywords[0]),
+    NULL, 0,
+    NULL, 0,
+    SYNTAX_FEATURE_BLOCK_COMMENT | SYNTAX_FEATURE_DASH_COMMENTS
+      | SYNTAX_FEATURE_CASE_INSENSITIVE
   }
 };
 
@@ -1413,6 +1434,14 @@ syntax_line (const SYNTAX *syntax,
           continue;
         }
 
+      if ((syntax->features & SYNTAX_FEATURE_DASH_COMMENTS) != 0
+          && c == '-' && pos + 1 < len && s[pos + 1] == '-')
+        {
+          syntax_draw_range (s, pos, len, CCOMMENT, draw);
+          pos = len;
+          continue;
+        }
+
       if ((syntax->features & SYNTAX_FEATURE_BLOCK_COMMENT) != 0
           && c == '/' && pos + 1 < len && s[pos + 1] == '*')
         {
@@ -1737,7 +1766,7 @@ syntax_cache_read_finished (BUFFER *bp, LINE *next, int old_state)
     syntax_cache_invalidate_from (bp, next);
 }
 
-static void
+void
 syntax_mode_changed (BUFFER *bp)
 {
   EWINDOW *wp;

@@ -7,12 +7,17 @@
 
 int fillcol;
 int tabsize;
+int colorflag;
+BUFFER *curbp;
 
 static const char *lisp_input;
 static char lisp_message[256];
 static int bound_key;
 static SYMBOL *bound_symbol;
 static SYMBOL command_symbol = { NULL, 0, "buffer-menu", NULL, NULL };
+static BUFFER syntax_buffer;
+static char syntax_filetype[32];
+static BUFFER *syntax_mode_buffer;
 
 int
 ereadv (const char *prompt, char *buffer, int buffer_size, int flag, ...)
@@ -53,6 +58,22 @@ setbinding (int key, SYMBOL *symbol)
   bound_symbol = symbol;
 }
 
+int
+syntax_set_buffer (BUFFER *bp, const char *filetype)
+{
+  if (colorflag == FALSE || bp != curbp || filetype == NULL
+      || strcmp (filetype, "sql") != 0)
+    return FALSE;
+  snprintf (syntax_filetype, sizeof (syntax_filetype), "%s", filetype);
+  return TRUE;
+}
+
+void
+syntax_mode_changed (BUFFER *bp)
+{
+  syntax_mode_buffer = bp;
+}
+
 static int
 evaluate (const char *expression)
 {
@@ -83,6 +104,14 @@ main (void)
   assert (bound_symbol == &command_symbol);
   assert (evaluate ("(define-key \"C-x C-b\" \"unknown\")") == FALSE);
   assert (evaluate ("(define-key \"C-x C-b\")") == FALSE);
+
+  colorflag = TRUE;
+  curbp = &syntax_buffer;
+  assert (evaluate ("(set-syntax \"sql\")") == TRUE);
+  assert (strcmp (syntax_filetype, "sql") == 0);
+  assert (syntax_mode_buffer == &syntax_buffer);
+  colorflag = FALSE;
+  assert (evaluate ("(set-syntax \"sql\")") == FALSE);
 
   assert (evaluate ("(+ 1 2)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: 3]") == 0);

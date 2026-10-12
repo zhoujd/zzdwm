@@ -124,6 +124,7 @@ main (void)
   const SYNTAX *toml = syntax_for_extension (".toml");
   const SYNTAX *cmake = syntax_for_extension (".cmake");
   const SYNTAX *makefile = syntax_for_extension (".mk");
+  const SYNTAX *sql = syntax_for_filetype ("sql");
   BUFFER buffer;
   LINE header;
   int state = SYNTAX_STATE_NONE;
@@ -132,7 +133,7 @@ main (void)
           && scheme != NULL
           && c_syntax != NULL && bash != NULL && json != NULL
           && yaml != NULL && toml != NULL && cmake != NULL
-          && makefile != NULL);
+          && makefile != NULL && sql != NULL);
   assert (syntax_for_name (".C") == cpp);
   assert (syntax_for_name (".c") == c_syntax);
   assert (syntax_for_name (".profile") == bash);
@@ -140,6 +141,7 @@ main (void)
   assert (syntax_for_name ("test.ss") == scheme);
   assert (syntax_for_name ("CMakeLists.txt") == cmake);
   assert (syntax_for_name ("Makefile") == makefile);
+  assert (syntax_for_name ("test.sql") == NULL);
   assert (syntax_for_first_line ("#!/usr/bin/sbcl --script") == lisp);
   assert (syntax_for_first_line ("#!/usr/bin/emacs --script") == elisp);
   assert (syntax_for_first_line ("#!/usr/bin/guile --no-auto-compile")
@@ -176,6 +178,9 @@ main (void)
   assert (syntax_set_buffer (&buffer, "scheme") == TRUE);
   assert (syntax_for_buffer (&buffer) == scheme);
   assert (strcmp (syntax_name_for_buffer (&buffer), "Scheme") == 0);
+  assert (syntax_set_buffer (&buffer, "sql") == TRUE);
+  assert (syntax_for_buffer (&buffer) == sql);
+  assert (strcmp (syntax_name_for_buffer (&buffer), "SQL") == 0);
   assert (syntax_set_buffer (&buffer, "text") == TRUE);
   assert (syntax_for_buffer (&buffer) == NULL);
   assert (syntax_name_for_buffer (&buffer) == NULL);
@@ -261,6 +266,37 @@ main (void)
   expect_color_at (8, CTEXT);
   expect_color_at (11, CPREPROC);
   expect_color_at (12, CPREPROC);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (sql, "SELECT name FROM users", &state);
+  expect_length (22);
+  expect_color_at (0, CKEYWORD);
+  expect_color_at (7, CTEXT);
+  expect_color_at (12, CKEYWORD);
+  expect_color_at (17, CTEXT);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (sql, "-- comment", &state);
+  expect_length (10);
+  expect_all_colors (CCOMMENT);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (sql, "'text'", &state);
+  expect_length (6);
+  expect_all_colors (CSTRING);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (sql, "/* outer", &state);
+  expect_length (8);
+  expect_all_colors (CCOMMENT);
+  assert (state == SYNTAX_STATE_C_COMMENT);
+
+  render_line (sql, "still */ code", &state);
+  expect_length (13);
+  expect_color_at (0, CCOMMENT);
+  expect_color_at (7, CCOMMENT);
+  expect_color_at (8, CTEXT);
+  expect_color_at (9, CTEXT);
   assert (state == SYNTAX_STATE_NONE);
 
   render_line (scheme, "; comment", &state);

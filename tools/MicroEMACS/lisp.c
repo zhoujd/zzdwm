@@ -63,6 +63,19 @@ lisp_bind_key (int argc, const char *const *argv)
   return TRUE;
 }
 
+#ifdef COLOR
+static int
+lisp_set_syntax (int argc, const char *const *argv)
+{
+  if (argc != 1 || colorflag == FALSE || curbp == NULL)
+    return FALSE;
+  if (syntax_set_buffer (curbp, argv[0]) == FALSE)
+    return FALSE;
+  syntax_mode_changed (curbp);
+  return TRUE;
+}
+#endif
+
 static int
 lisp_set_variable (int argc, const char *const *argv)
 {
@@ -94,7 +107,12 @@ lisp_register_hosts (void)
   if (registered == TRUE)
     return TRUE;
   registered = tiny_lisp_define_host ("define-key", lisp_bind_key) == 1
-               && tiny_lisp_define_host ("set-variable", lisp_set_variable) == 1;
+               && tiny_lisp_define_host ("set-variable",
+                                         lisp_set_variable) == 1;
+#ifdef COLOR
+  registered = registered != FALSE
+               && tiny_lisp_define_host ("set-syntax", lisp_set_syntax) == 1;
+#endif
   return registered;
 }
 

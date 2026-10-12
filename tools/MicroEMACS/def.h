@@ -720,6 +720,7 @@ const SYNTAX *syntax_for_buffer (const BUFFER *bp);
 const char *syntax_name_for_buffer (const BUFFER *bp);
 int syntax_set_buffer (BUFFER *bp, const char *filetype);
 void syntax_clear_buffer (BUFFER *bp);
+void syntax_mode_changed (BUFFER *bp);
 int syntax_state_before (const BUFFER *bp, const LINE *lp);
 void syntax_line (const SYNTAX *syntax,
                   const uchar *s, int len, int *state, int draw);

@@ -18,12 +18,15 @@ list operations and output primitives:
     (defmacro inc (x) (list '+ x 1))
     (inc 2)
 
-Two forms also provide access to MicroEMACS state:
+Three forms also provide access to MicroEMACS state:
 
     (define-key "C-x C-b" "buffer-menu")
     (set-variable "tab-width" 8)
+    (set-syntax "sql")
 
 The first form binds a key to a MicroEMACS command. Key names support
 the **C-X**, **C-** and **M-** prefixes followed by one ASCII character.
 The second form sets **tab-width** (or **tab-size**) or **fill-column**
 to a positive integer. A quoted string is also accepted for the value.
+The third form selects a syntax definition for the current buffer. It is
+available when color is enabled.
