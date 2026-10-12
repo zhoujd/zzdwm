@@ -2998,13 +2998,28 @@ built-in definitions cover:
 * Bash: `.sh`, `.bash`, `.bashrc`, `.bash_profile`, `.profile`, and `bash` or `sh` shebangs
 * Python: `.py`, `.pyw`, `.pyi`, and `python` shebangs
 * Markdown: `.md`, `.markdown`, `.mdown`, `.mkd`
+* JSON: `.json`
+* YAML: `.yaml`, `.yml`
+* TOML: `.toml`
+* CMake: `.cmake`, `CMakeLists.txt`
+* Makefile: `.mk`, `.mak`, `Makefile`, `makefile`, `GNUmakefile`, and files with `Makefile` or `makefile` in the first comment line
 * Lisp: `.lisp`, `.lsp`, `.l`, `.cl`, and `sbcl`, `clisp`, or `lisp` shebangs
 * Emacs Lisp: `.el`, `.emacs`, and `emacs` shebangs
+* Scheme: `.scm`, `.ss`, `.sps`, `.sls`, `.sld`, and `guile`, `gosh`, `csi`, `gsi`, or `scheme` shebangs
 
 The renderers support block comments, line comments, strings, keywords,
 preprocessor directives, shell variables, Python triple-quoted strings,
-Markdown fenced code, and Lisp block comments. Multi-line constructs are
-highlighted consistently while scrolling.
+Markdown fenced code, Lisp block comments, Scheme booleans, configuration
+keys, TOML tables, CMake variables and bracket comments, and Makefile targets,
+variables, and recipes. Multi-line constructs are highlighted consistently
+while scrolling.
+
+Use the `c-mode`, `cpp-mode`, `bash-mode`, `python-mode`, `markdown-mode`,
+`json-mode`, `yaml-mode`, `toml-mode`, `cmake-mode`, `makefile-mode`,
+`lisp-mode`, `emacs-lisp-mode`, or `scheme-mode` extended command to select
+syntax for the current buffer explicitly. Use `text-mode` to explicitly disable syntax
+highlighting and remove the mode-line indicator. These commands are not bound
+to keys.
 
 Only the lines currently visible in each window are rendered with syntax
 colors, and syntax state is cached to avoid redundant rescanning.

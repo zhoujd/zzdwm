@@ -82,7 +82,7 @@ expect_all_colors (int color)
 }
 
 static const SYNTAX *
-syntax_for_shebang (const char *text)
+syntax_for_first_line (const char *text)
 {
   BUFFER buffer;
   LINE header;
@@ -116,20 +116,38 @@ main (void)
   const SYNTAX *cpp = syntax_for_extension (".cpp");
   const SYNTAX *lisp = syntax_for_extension (".lisp");
   const SYNTAX *elisp = syntax_for_extension (".el");
+  const SYNTAX *scheme = syntax_for_extension (".scm");
   const SYNTAX *c_syntax = syntax_for_extension (".c");
   const SYNTAX *bash = syntax_for_extension (".sh");
+  const SYNTAX *json = syntax_for_extension (".json");
+  const SYNTAX *yaml = syntax_for_extension (".yaml");
+  const SYNTAX *toml = syntax_for_extension (".toml");
+  const SYNTAX *cmake = syntax_for_extension (".cmake");
+  const SYNTAX *makefile = syntax_for_extension (".mk");
   BUFFER buffer;
   LINE header;
   int state = SYNTAX_STATE_NONE;
 
   assert (cpp != NULL && lisp != NULL && elisp != NULL
-          && c_syntax != NULL && bash != NULL);
+          && scheme != NULL
+          && c_syntax != NULL && bash != NULL && json != NULL
+          && yaml != NULL && toml != NULL && cmake != NULL
+          && makefile != NULL);
   assert (syntax_for_name (".C") == cpp);
   assert (syntax_for_name (".c") == c_syntax);
   assert (syntax_for_name (".profile") == bash);
   assert (syntax_for_name (".emacs") == elisp);
-  assert (syntax_for_shebang ("#!/usr/bin/sbcl --script") == lisp);
-  assert (syntax_for_shebang ("#!/usr/bin/emacs --script") == elisp);
+  assert (syntax_for_name ("test.ss") == scheme);
+  assert (syntax_for_name ("CMakeLists.txt") == cmake);
+  assert (syntax_for_name ("Makefile") == makefile);
+  assert (syntax_for_first_line ("#!/usr/bin/sbcl --script") == lisp);
+  assert (syntax_for_first_line ("#!/usr/bin/emacs --script") == elisp);
+  assert (syntax_for_first_line ("#!/usr/bin/guile --no-auto-compile")
+          == scheme);
+  assert (syntax_for_first_line
+          ("# Makefile - makefile input file for MicroEMACS.") == makefile);
+  assert (syntax_for_first_line ("# makefile input file") == makefile);
+  assert (syntax_for_first_line ("# editor settings") == NULL);
 
   memset (&buffer, 0, sizeof (buffer));
   memset (&header, 0, sizeof (header));
@@ -144,6 +162,20 @@ main (void)
   assert (strcmp (syntax_name_for_buffer (&buffer), "C++") == 0);
   assert (syntax_set_buffer (&buffer, "c++") == TRUE);
   assert (syntax_for_buffer (&buffer) == cpp);
+  assert (syntax_set_buffer (&buffer, "json") == TRUE);
+  assert (syntax_for_buffer (&buffer) == json);
+  assert (strcmp (syntax_name_for_buffer (&buffer), "JSON") == 0);
+  assert (syntax_set_buffer (&buffer, "yaml") == TRUE);
+  assert (syntax_for_buffer (&buffer) == yaml);
+  assert (syntax_set_buffer (&buffer, "toml") == TRUE);
+  assert (syntax_for_buffer (&buffer) == toml);
+  assert (syntax_set_buffer (&buffer, "cmake") == TRUE);
+  assert (syntax_for_buffer (&buffer) == cmake);
+  assert (syntax_set_buffer (&buffer, "makefile") == TRUE);
+  assert (syntax_for_buffer (&buffer) == makefile);
+  assert (syntax_set_buffer (&buffer, "scheme") == TRUE);
+  assert (syntax_for_buffer (&buffer) == scheme);
+  assert (strcmp (syntax_name_for_buffer (&buffer), "Scheme") == 0);
   assert (syntax_set_buffer (&buffer, "text") == TRUE);
   assert (syntax_for_buffer (&buffer) == NULL);
   assert (syntax_name_for_buffer (&buffer) == NULL);
@@ -221,6 +253,112 @@ main (void)
   expect_color_at (7, CTEXT);
   expect_color_at (12, CCOMMENT);
   expect_color_at (20, CCOMMENT);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (scheme, "(define x) #t", &state);
+  expect_length (13);
+  expect_color_at (1, CKEYWORD);
+  expect_color_at (8, CTEXT);
+  expect_color_at (11, CPREPROC);
+  expect_color_at (12, CPREPROC);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (scheme, "; comment", &state);
+  expect_length (9);
+  expect_all_colors (CCOMMENT);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (scheme, "#| outer #| inner", &state);
+  expect_length (17);
+  expect_all_colors (CCOMMENT);
+  assert (state == SYNTAX_STATE_LISP_BLOCK_COMMENT + 1);
+
+  state = SYNTAX_STATE_NONE;
+  render_line (json, "{\"name\": true}", &state);
+  expect_length (14);
+  expect_color_at (0, CTEXT);
+  expect_color_at (1, CPREPROC);
+  expect_color_at (6, CPREPROC);
+  expect_color_at (7, CTEXT);
+  expect_color_at (9, CKEYWORD);
+  expect_color_at (12, CKEYWORD);
+  expect_color_at (13, CTEXT);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (yaml, "key: value # comment", &state);
+  expect_length (20);
+  expect_color_at (0, CPREPROC);
+  expect_color_at (2, CPREPROC);
+  expect_color_at (3, CTEXT);
+  expect_color_at (5, CTEXT);
+  expect_color_at (10, CTEXT);
+  expect_color_at (11, CCOMMENT);
+  expect_color_at (19, CCOMMENT);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (toml, "[package]", &state);
+  expect_length (9);
+  expect_all_colors (CPREPROC);
+  render_line (toml, "name = \"value\"", &state);
+  expect_length (14);
+  expect_color_at (0, CPREPROC);
+  expect_color_at (3, CPREPROC);
+  expect_color_at (5, CTEXT);
+  expect_color_at (7, CSTRING);
+  expect_color_at (13, CSTRING);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (cmake, "set(VERSION ${PROJECT_VERSION}) # comment", &state);
+  expect_length (41);
+  expect_color_at (0, CKEYWORD);
+  expect_color_at (2, CKEYWORD);
+  expect_color_at (4, CTEXT);
+  expect_color_at (12, CPREPROC);
+  expect_color_at (29, CPREPROC);
+  expect_color_at (32, CCOMMENT);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (cmake, "#[=[ multi", &state);
+  expect_length (10);
+  expect_all_colors (CCOMMENT);
+  assert (state == SYNTAX_STATE_CMAKE_BRACKET_COMMENT + 1);
+  render_line (cmake, "still ]=] code", &state);
+  expect_length (14);
+  expect_color_at (7, CCOMMENT);
+  expect_color_at (8, CCOMMENT);
+  expect_color_at (9, CTEXT);
+  expect_color_at (10, CTEXT);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (makefile, "all: build", &state);
+  expect_length (10);
+  expect_color_at (0, CPREPROC);
+  expect_color_at (2, CPREPROC);
+  expect_color_at (3, CTEXT);
+  expect_color_at (5, CTEXT);
+  render_line (makefile, ".PHONY: all", &state);
+  expect_length (11);
+  expect_color_at (0, CPREPROC);
+  expect_color_at (5, CPREPROC);
+  expect_color_at (6, CTEXT);
+  expect_color_at (8, CTEXT);
+  render_line (makefile, "CC = gcc", &state);
+  expect_length (8);
+  expect_color_at (0, CPREPROC);
+  expect_color_at (1, CPREPROC);
+  expect_color_at (3, CTEXT);
+  expect_color_at (5, CTEXT);
+  render_line (makefile, "\tgcc -O2", &state);
+  expect_length (8);
+  expect_all_colors (CPREPROC);
+  render_line (makefile, "$(VAR)", &state);
+  expect_length (6);
+  expect_all_colors (CPREPROC);
+  render_line (makefile, "include Makefile", &state);
+  expect_length (16);
+  expect_color_at (0, CKEYWORD);
+  expect_color_at (6, CKEYWORD);
+  expect_color_at (8, CTEXT);
   assert (state == SYNTAX_STATE_NONE);
 
   state = SYNTAX_STATE_NONE;

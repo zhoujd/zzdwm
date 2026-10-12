@@ -737,8 +737,14 @@ int cppmode (int f, int n, int k);
 int bashmode (int f, int n, int k);
 int pythonmode (int f, int n, int k);
 int markdownmode (int f, int n, int k);
+int jsonmode (int f, int n, int k);
+int yamlmode (int f, int n, int k);
+int tomlmode (int f, int n, int k);
+int cmakemode (int f, int n, int k);
+int makefilemode (int f, int n, int k);
 int lispmode (int f, int n, int k);
 int emacslispmode (int f, int n, int k);
+int schememode (int f, int n, int k);
 int textmode (int f, int n, int k);
 #endif
 

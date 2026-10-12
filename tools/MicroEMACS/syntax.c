@@ -15,6 +15,14 @@
 #define SYNTAX_FEATURE_LISP                 0x80
 #define SYNTAX_FEATURE_LISP_BLOCK_COMMENTS  0x100
 #define SYNTAX_FEATURE_SEMICOLON_COMMENTS   0x200
+#define SYNTAX_FEATURE_COLON_KEYS           0x400
+#define SYNTAX_FEATURE_EQUAL_KEYS           0x800
+#define SYNTAX_FEATURE_BRACKET_HEADERS      0x1000
+#define SYNTAX_FEATURE_VARIABLES            0x2000
+#define SYNTAX_FEATURE_MAKEFILE             0x4000
+#define SYNTAX_FEATURE_BRACKET_COMMENTS     0x8000
+#define SYNTAX_FEATURE_CASE_INSENSITIVE     0x10000
+#define SYNTAX_FEATURE_SCHEME               0x20000
 
 #define SYNTAX_STATE_C_COMMENT              1
 #define SYNTAX_STATE_PYTHON_DQUOTE          2
@@ -23,6 +31,8 @@
 #define SYNTAX_STATE_MARKDOWN_TILDE         5
 #define SYNTAX_STATE_LISP_BLOCK_COMMENT     6
 #define SYNTAX_STATE_LISP_BLOCK_COMMENT_MAX 127
+#define SYNTAX_STATE_CMAKE_BRACKET_COMMENT  7
+#define SYNTAX_STATE_CMAKE_BRACKET_MAX      31
 
 struct SYNTAX
 {
@@ -86,6 +96,35 @@ static const char *const python_keywords[] = {
   "return", "try", "while", "with", "yield"
 };
 
+static const char *const json_keywords[] = {
+  "false", "null", "true"
+};
+
+static const char *const yaml_keywords[] = {
+  "false", "null", "no", "off", "on", "true", "yes"
+};
+
+static const char *const toml_keywords[] = {
+  "false", "true"
+};
+
+static const char *const cmake_keywords[] = {
+  "add_executable", "add_library", "add_subdirectory", "break",
+  "cmake_minimum_required", "continue", "else", "elseif", "endif",
+  "endforeach", "endfunction", "endmacro", "endwhile", "find_package",
+  "foreach", "function", "if", "include", "install", "list", "macro",
+  "math", "message", "option", "project", "return", "set", "string",
+  "target_compile_definitions", "target_compile_options",
+  "target_include_directories", "target_link_libraries", "unset",
+  "while"
+};
+
+static const char *const makefile_keywords[] = {
+  "define", "else", "endef", "endif", "export", "ifdef", "ifeq",
+  "ifndef", "ifneq", "include", "override", "sinclude", "unexport",
+  "vpath"
+};
+
 static const char *const lisp_keywords[] = {
   "&aux", "&body", "&environment", "&key", "&optional", "&rest",
   "&whole", "and", "block", "case", "ccase", "cond", "ctypecase",
@@ -139,6 +178,26 @@ static const char *const emacs_lisp_keywords[] = {
   "y-or-n-p", "yes-or-no-p"
 };
 
+static const char *const scheme_keywords[] = {
+  "&aux", "&body", "&key", "&opt", "&optional", "&rest", "&whole",
+  "and", "append", "apply", "begin", "boolean?", "car", "case",
+  "case-lambda", "cdr", "cond", "cond-expand", "cons", "define",
+  "define-library", "define-record-type", "define-syntax",
+  "define-values", "delay", "delay-force", "display", "do", "else",
+  "end", "environment", "eq?", "equal?", "eqv?", "error", "even?",
+  "exact", "exact?", "export", "features", "for-each", "guard", "if",
+  "import", "include", "include-ci", "inexact", "inexact?", "lambda",
+  "length",
+  "let", "let*", "let*-values", "let-syntax", "let-values", "letrec",
+  "letrec*", "letrec-syntax", "list", "list?", "map", "newline",
+  "not", "null?", "number?", "odd?", "or", "parameterize",
+  "positive?", "quasiquote", "quote", "read", "reverse", "set!",
+  "sqrt", "string-append", "string-length", "string->number",
+  "string->symbol", "substring", "symbol->string", "syntax-rules",
+  "unquote", "unquote-splicing", "unless", "vector", "vector?",
+  "when", "write", "zero?"
+};
+
 static const char *const cpp_extensions[] = {
   ".cpp", ".cc", ".cxx", ".C", ".hpp", ".hh", ".hxx", ".ipp", ".tcc"
 };
@@ -156,11 +215,26 @@ static const char *const lisp_extensions[] = {
 static const char *const emacs_lisp_extensions[] = {
   ".el", ".emacs"
 };
+static const char *const scheme_extensions[] = {
+  ".scm", ".ss", ".sps", ".sls", ".sld"
+};
+static const char *const json_extensions[] = { ".json" };
+static const char *const yaml_extensions[] = { ".yaml", ".yml" };
+static const char *const toml_extensions[] = { ".toml" };
+static const char *const cmake_extensions[] = {
+  ".cmake", "CMakeLists.txt"
+};
+static const char *const makefile_extensions[] = {
+  ".mak", ".mk", "GNUmakefile", "Makefile", "makefile"
+};
 
 static const char *const bash_shebangs[] = { "bash", "sh" };
 static const char *const python_shebangs[] = { "python" };
 static const char *const lisp_shebangs[] = { "sbcl", "clisp", "lisp" };
 static const char *const emacs_lisp_shebangs[] = { "emacs" };
+static const char *const scheme_shebangs[] = {
+  "guile", "gosh", "csi", "gsi", "scheme"
+};
 
 static const char *const cpp_filetypes[] = { "cpp", "c++" };
 static const char *const c_filetypes[] = { "c" };
@@ -169,6 +243,12 @@ static const char *const python_filetypes[] = { "python" };
 static const char *const markdown_filetypes[] = { "markdown" };
 static const char *const lisp_filetypes[] = { "lisp" };
 static const char *const emacs_lisp_filetypes[] = { "emacs-lisp" };
+static const char *const scheme_filetypes[] = { "scheme" };
+static const char *const json_filetypes[] = { "json" };
+static const char *const yaml_filetypes[] = { "yaml", "yml" };
+static const char *const toml_filetypes[] = { "toml" };
+static const char *const cmake_filetypes[] = { "cmake" };
+static const char *const makefile_filetypes[] = { "makefile", "make" };
 
 static const SYNTAX syntax_definitions[] = {
   {
@@ -207,6 +287,52 @@ static const SYNTAX syntax_definitions[] = {
     SYNTAX_FEATURE_HASH_COMMENTS | SYNTAX_FEATURE_TRIPLE_STRINGS
   },
   {
+    "JSON",
+    json_filetypes, sizeof (json_filetypes) / sizeof (json_filetypes[0]),
+    json_keywords, sizeof (json_keywords) / sizeof (json_keywords[0]),
+    json_extensions, sizeof (json_extensions) / sizeof (json_extensions[0]),
+    NULL, 0,
+    SYNTAX_FEATURE_COLON_KEYS
+  },
+  {
+    "YAML",
+    yaml_filetypes, sizeof (yaml_filetypes) / sizeof (yaml_filetypes[0]),
+    yaml_keywords, sizeof (yaml_keywords) / sizeof (yaml_keywords[0]),
+    yaml_extensions, sizeof (yaml_extensions) / sizeof (yaml_extensions[0]),
+    NULL, 0,
+    SYNTAX_FEATURE_HASH_COMMENTS | SYNTAX_FEATURE_COLON_KEYS
+  },
+  {
+    "TOML",
+    toml_filetypes, sizeof (toml_filetypes) / sizeof (toml_filetypes[0]),
+    toml_keywords, sizeof (toml_keywords) / sizeof (toml_keywords[0]),
+    toml_extensions, sizeof (toml_extensions) / sizeof (toml_extensions[0]),
+    NULL, 0,
+    SYNTAX_FEATURE_HASH_COMMENTS | SYNTAX_FEATURE_EQUAL_KEYS
+      | SYNTAX_FEATURE_BRACKET_HEADERS | SYNTAX_FEATURE_TRIPLE_STRINGS
+  },
+  {
+    "CMake",
+    cmake_filetypes, sizeof (cmake_filetypes) / sizeof (cmake_filetypes[0]),
+    cmake_keywords, sizeof (cmake_keywords) / sizeof (cmake_keywords[0]),
+    cmake_extensions, sizeof (cmake_extensions) / sizeof (cmake_extensions[0]),
+    NULL, 0,
+    SYNTAX_FEATURE_HASH_COMMENTS | SYNTAX_FEATURE_VARIABLES
+      | SYNTAX_FEATURE_BRACKET_COMMENTS | SYNTAX_FEATURE_CASE_INSENSITIVE
+  },
+  {
+    "Makefile",
+    makefile_filetypes,
+    sizeof (makefile_filetypes) / sizeof (makefile_filetypes[0]),
+    makefile_keywords,
+    sizeof (makefile_keywords) / sizeof (makefile_keywords[0]),
+    makefile_extensions,
+    sizeof (makefile_extensions) / sizeof (makefile_extensions[0]),
+    NULL, 0,
+    SYNTAX_FEATURE_HASH_COMMENTS | SYNTAX_FEATURE_VARIABLES
+      | SYNTAX_FEATURE_MAKEFILE
+  },
+  {
     "Markdown",
     markdown_filetypes,
     sizeof (markdown_filetypes) / sizeof (markdown_filetypes[0]),
@@ -238,6 +364,18 @@ static const SYNTAX syntax_definitions[] = {
     emacs_lisp_shebangs,
     sizeof (emacs_lisp_shebangs) / sizeof (emacs_lisp_shebangs[0]),
     SYNTAX_FEATURE_LISP | SYNTAX_FEATURE_SEMICOLON_COMMENTS
+  },
+  {
+    "Scheme",
+    scheme_filetypes,
+    sizeof (scheme_filetypes) / sizeof (scheme_filetypes[0]),
+    scheme_keywords, sizeof (scheme_keywords) / sizeof (scheme_keywords[0]),
+    scheme_extensions,
+    sizeof (scheme_extensions) / sizeof (scheme_extensions[0]),
+    scheme_shebangs,
+    sizeof (scheme_shebangs) / sizeof (scheme_shebangs[0]),
+    SYNTAX_FEATURE_LISP | SYNTAX_FEATURE_LISP_BLOCK_COMMENTS
+      | SYNTAX_FEATURE_SEMICOLON_COMMENTS | SYNTAX_FEATURE_SCHEME
   }
 };
 
@@ -250,10 +388,14 @@ syntax_has_keyword (const SYNTAX *syntax,
   for (i = 0; i < syntax->keyword_count; ++i)
     {
       if ((int) strlen (syntax->keywords[i]) == len
-          && (((syntax->features & SYNTAX_FEATURE_LISP) != 0
+          && (((syntax->features
+                & (SYNTAX_FEATURE_LISP
+                   | SYNTAX_FEATURE_CASE_INSENSITIVE)) != 0
                && strncasecmp ((const char *) word, syntax->keywords[i],
                                (size_t) len) == 0)
-              || ((syntax->features & SYNTAX_FEATURE_LISP) == 0
+              || ((syntax->features
+                   & (SYNTAX_FEATURE_LISP
+                      | SYNTAX_FEATURE_CASE_INSENSITIVE)) == 0
                   && strncmp ((const char *) word, syntax->keywords[i],
                               (size_t) len) == 0)))
         return TRUE;
@@ -342,6 +484,24 @@ line_has_shebang (const LINE *lp, const char *name)
   return FALSE;
 }
 
+static int
+line_has_makefile_marker (const LINE *lp)
+{
+  const uchar *text = lgets ((LINE *) lp);
+  int len = llength ((LINE *) lp);
+  int pos;
+
+  if (len < 1 || text[0] != '#')
+    return FALSE;
+  for (pos = 1; pos + 8 <= len; ++pos)
+    {
+      if (strncasecmp ((const char *) text + pos, "Makefile",
+                       sizeof ("Makefile") - 1) == 0)
+        return TRUE;
+    }
+  return FALSE;
+}
+
 static const SYNTAX *
 syntax_detect_for_buffer (const BUFFER *bp)
 {
@@ -359,6 +519,8 @@ syntax_detect_for_buffer (const BUFFER *bp)
   syntax = syntax_for_name (bp->b_fname);
   if (syntax != NULL || first == bp->b_linep)
     return syntax;
+  if (line_has_makefile_marker (first))
+    return syntax_for_filetype ("makefile");
   for (definition_index = 0;
        definition_index < sizeof (syntax_definitions)
                           / sizeof (syntax_definitions[0]);
@@ -578,6 +740,159 @@ syntax_markdown_prefix (const uchar *s, int len, int *prefix_end, int *color)
     {
       *prefix_end = digits + 1;
       *color = CKEYWORD;
+      return TRUE;
+    }
+  return FALSE;
+}
+
+static int
+syntax_plain_key_end (const uchar *s, int len, int start)
+{
+  int pos = start;
+
+  while (pos < len
+         && (is_identifier_char (s[pos]) != FALSE
+             || s[pos] == '-' || s[pos] == '.'))
+    ++pos;
+  return pos;
+}
+
+static int
+syntax_key_delimiter_after (const uchar *s, int len, int pos,
+                            uchar delimiter)
+{
+  while (pos < len && (s[pos] == ' ' || s[pos] == '\t'))
+    ++pos;
+  return pos < len && s[pos] == delimiter;
+}
+
+static int
+syntax_quoted_end (const uchar *s, int len, int start)
+{
+  uchar quote = s[start];
+  int pos = start + 1;
+
+  while (pos < len)
+    {
+      if (s[pos] == '\\')
+        {
+          pos += 2;
+          continue;
+        }
+      if (s[pos] == quote)
+        return pos + 1;
+      ++pos;
+    }
+  return -1;
+}
+
+static int
+syntax_scheme_boolean_end (const uchar *s, int len, int pos)
+{
+  int end = -1;
+
+  if (pos + 1 >= len || s[pos] != '#')
+    return -1;
+  if (s[pos + 1] == 't')
+    {
+      if (pos + 2 == len || is_lisp_symbol_char (s[pos + 2]) == FALSE)
+        end = pos + 2;
+      else if (pos + 6 <= len
+               && strncmp ((const char *) s + pos + 1, "true", 4) == 0
+               && (pos + 6 == len
+                   || is_lisp_symbol_char (s[pos + 6]) == FALSE))
+        end = pos + 6;
+    }
+  else if (s[pos + 1] == 'f')
+    {
+      if (pos + 2 == len || is_lisp_symbol_char (s[pos + 2]) == FALSE)
+        end = pos + 2;
+      else if (pos + 7 <= len
+               && strncmp ((const char *) s + pos + 1, "false", 5) == 0
+               && (pos + 7 == len
+                   || is_lisp_symbol_char (s[pos + 7]) == FALSE))
+        end = pos + 7;
+    }
+  return end;
+}
+
+static int
+syntax_cmake_bracket_start (const uchar *s, int len, int pos, int *end,
+                            int *level)
+{
+  int scan = pos + 2;
+  int equals = 0;
+
+  if (pos + 1 >= len || s[pos] != '#' || s[pos + 1] != '[')
+    return FALSE;
+  while (scan < len && s[scan] == '=')
+    {
+      ++scan;
+      ++equals;
+    }
+  if (scan >= len || s[scan] != '[' || equals > 15)
+    return FALSE;
+
+  *end = scan + 1;
+  *level = SYNTAX_STATE_CMAKE_BRACKET_COMMENT + equals;
+  return TRUE;
+}
+
+static int
+syntax_cmake_bracket_end (const uchar *s, int len, int pos, int level,
+                          int *end)
+{
+  int equals = level - SYNTAX_STATE_CMAKE_BRACKET_COMMENT;
+  int scan;
+
+  while (pos < len)
+    {
+      if (s[pos] != ']')
+        {
+          ++pos;
+          continue;
+        }
+      scan = pos + 1;
+      while (scan < len && s[scan] == '=')
+        ++scan;
+      if (scan - pos - 1 == equals && scan < len && s[scan] == ']')
+        {
+          *end = scan + 1;
+          return TRUE;
+        }
+      ++pos;
+    }
+  return FALSE;
+}
+
+static int
+syntax_makefile_prefix (const uchar *s, int len, int *end, int *color)
+{
+  int pos = 0;
+  int token_end;
+
+  if (len > 0 && s[0] == '\t')
+    {
+      *end = len;
+      *color = CPREPROC;
+      return TRUE;
+    }
+
+  if (len == 0
+      || (is_identifier_start (s[0]) == FALSE && s[0] != '.'))
+    return FALSE;
+  while (pos < len
+         && (is_identifier_char (s[pos]) != FALSE
+             || s[pos] == '/' || s[pos] == '-' || s[pos] == '.'
+             || s[pos] == '%'))
+    ++pos;
+  token_end = pos;
+  while (pos < len && (s[pos] == ' ' || s[pos] == '\t'))
+    ++pos;
+  if (pos < len && (s[pos] == ':' || s[pos] == '='))
+    {
+      *end = token_end;
+      *color = CPREPROC;
       return TRUE;
     }
   return FALSE;
@@ -806,6 +1121,41 @@ syntax_line (const SYNTAX *syntax,
           continue;
         }
 
+      if (*state >= SYNTAX_STATE_CMAKE_BRACKET_COMMENT
+          && *state <= SYNTAX_STATE_CMAKE_BRACKET_MAX
+          && (syntax->features & SYNTAX_FEATURE_BRACKET_COMMENTS) != 0)
+        {
+          int end = len;
+
+          if (syntax_cmake_bracket_end (s, len, pos, *state, &end) != FALSE)
+            *state = SYNTAX_STATE_NONE;
+          syntax_draw_range (s, pos, end, CCOMMENT, draw);
+          pos = end;
+          continue;
+        }
+
+      if (pos == 0 && *state == SYNTAX_STATE_NONE
+          && (syntax->features & SYNTAX_FEATURE_MAKEFILE) != 0)
+        {
+          int prefix_end;
+          int color;
+
+          if (syntax_makefile_prefix (s, len, &prefix_end, &color) != FALSE)
+            {
+              syntax_draw_range (s, 0, prefix_end, color, draw);
+              pos = prefix_end;
+              continue;
+            }
+        }
+
+      if (pos == 0 && *state == SYNTAX_STATE_NONE && c == '['
+          && (syntax->features & SYNTAX_FEATURE_BRACKET_HEADERS) != 0)
+        {
+          syntax_draw_range (s, 0, len, CPREPROC, draw);
+          pos = len;
+          continue;
+        }
+
       if ((syntax->features & SYNTAX_FEATURE_TRIPLE_STRINGS) != 0
           && *state != SYNTAX_STATE_NONE)
         {
@@ -895,6 +1245,24 @@ syntax_line (const SYNTAX *syntax,
           continue;
         }
 
+      if ((c == '"' || c == '\'')
+          && (syntax->features
+              & (SYNTAX_FEATURE_COLON_KEYS
+                 | SYNTAX_FEATURE_EQUAL_KEYS)) != 0)
+        {
+          int end = syntax_quoted_end (s, len, pos);
+          uchar delimiter
+            = (syntax->features & SYNTAX_FEATURE_EQUAL_KEYS) != 0 ? '=' : ':';
+
+          if (end > pos
+              && syntax_key_delimiter_after (s, len, end, delimiter) != FALSE)
+            {
+              syntax_draw_range (s, pos, end, CPREPROC, draw);
+              pos = end;
+              continue;
+            }
+        }
+
       if (c == '"' || c == '\'')
         {
           wchar_t quote = c;
@@ -953,6 +1321,18 @@ syntax_line (const SYNTAX *syntax,
           continue;
         }
 
+      if ((syntax->features & SYNTAX_FEATURE_SCHEME) != 0 && c == '#')
+        {
+          int end = syntax_scheme_boolean_end (s, len, pos);
+
+          if (end >= 0)
+            {
+              syntax_draw_range (s, pos, end, CPREPROC, draw);
+              pos = end;
+              continue;
+            }
+        }
+
       if ((syntax->features & SYNTAX_FEATURE_LISP) != 0
           && c == '#' && pos + 1 < len
           && (s[pos + 1] == '\'' || s[pos + 1] == '+'
@@ -994,6 +1374,22 @@ syntax_line (const SYNTAX *syntax,
               pos += ulen;
             }
           continue;
+        }
+
+      if ((syntax->features & SYNTAX_FEATURE_BRACKET_COMMENTS) != 0
+          && c == '#')
+        {
+          int end;
+          int level;
+
+          if (syntax_cmake_bracket_start (s, len, pos, &end, &level)
+              != FALSE)
+            {
+              *state = level;
+              syntax_draw_range (s, pos, end, CCOMMENT, draw);
+              pos = end;
+              continue;
+            }
         }
 
       if ((syntax->features & SYNTAX_FEATURE_SLASH_COMMENTS) != 0
@@ -1077,6 +1473,32 @@ syntax_line (const SYNTAX *syntax,
           continue;
         }
 
+      if ((syntax->features & SYNTAX_FEATURE_VARIABLES) != 0
+          && c == '$')
+        {
+          int start = pos;
+          uchar closing = 0;
+
+          ++pos;
+          if (pos < len && (s[pos] == '{' || s[pos] == '('))
+            {
+              closing = s[pos] == '{' ? '}' : ')';
+              ++pos;
+              while (pos < len && s[pos] != closing)
+                ++pos;
+              if (pos < len)
+                ++pos;
+            }
+          else if (pos < len
+                   && is_identifier_start ((wchar_t) s[pos]) != FALSE)
+            {
+              while (pos < len && is_identifier_char (s[pos]) != FALSE)
+                ++pos;
+            }
+          syntax_draw_range (s, start, pos, CPREPROC, draw);
+          continue;
+        }
+
       if ((syntax->features & SYNTAX_FEATURE_LISP) != 0
           && is_lisp_symbol_start (c) != FALSE)
         {
@@ -1095,9 +1517,25 @@ syntax_line (const SYNTAX *syntax,
         {
           int start = pos;
           int color;
+          int key_syntax
+            = (syntax->features
+               & (SYNTAX_FEATURE_COLON_KEYS
+                  | SYNTAX_FEATURE_EQUAL_KEYS)) != 0;
+          uchar delimiter
+            = (syntax->features & SYNTAX_FEATURE_EQUAL_KEYS) != 0
+                ? '=' : ':';
 
-          while (pos < len && is_identifier_char (s[pos]) != FALSE)
-            ++pos;
+          if (key_syntax != FALSE)
+            pos = syntax_plain_key_end (s, len, pos);
+          else
+            while (pos < len && is_identifier_char (s[pos]) != FALSE)
+              ++pos;
+          if (key_syntax != FALSE
+              && syntax_key_delimiter_after (s, len, pos, delimiter) != FALSE)
+            {
+              syntax_draw_range (s, start, pos, CPREPROC, draw);
+              continue;
+            }
           color = syntax_has_keyword (syntax, s + start, pos - start) != FALSE
                     ? CKEYWORD : CTEXT;
           if (draw != FALSE)
@@ -1378,6 +1816,51 @@ markdownmode (int f, int n, int k)
 }
 
 int
+jsonmode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  return set_syntax_mode ("json");
+}
+
+int
+yamlmode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  return set_syntax_mode ("yaml");
+}
+
+int
+tomlmode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  return set_syntax_mode ("toml");
+}
+
+int
+cmakemode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  return set_syntax_mode ("cmake");
+}
+
+int
+makefilemode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  return set_syntax_mode ("makefile");
+}
+
+int
 lispmode (int f, int n, int k)
 {
   (void) f;
@@ -1393,6 +1876,15 @@ emacslispmode (int f, int n, int k)
   (void) n;
   (void) k;
   return set_syntax_mode ("emacs-lisp");
+}
+
+int
+schememode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  return set_syntax_mode ("scheme");
 }
 
 int
