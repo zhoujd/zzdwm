@@ -1,5 +1,5 @@
 
-# TODO
+# TIP
 
 ## Extra Quality-of-Life Tips (logline-prefer.l)
 
@@ -11,3 +11,19 @@
 {KCTLX | 'F',         readprofile,       "read-profile"},
 
 ## Enabling the Native Floating-Point System in Lisp Extend
+
+## The Architecture: Exposing Editor Primitives to Lisp
+Implement this cleanly by mapping just four core primitive functions inside your C code to bridge into tiny-lisp:
+
+```
+// Example structural conceptual bridge to register inside tinylisp.c
+{ "get-char",       me_getchar },    // Returns character under cursor
+{ "insert-char",    me_insertchar }, // Inserts character at cursor
+{ "get-line",       me_getline },    // Returns current line as a string
+{ "editor-cmd",     me_editorcmd }   // Executes any internal MicroEMACS C string
+```
+
+## To add (message ...) support to embedded Lisp engine
+
+// Add to your symbol table array in tinylisp.c:
+{ "message", me_primitive_message },
