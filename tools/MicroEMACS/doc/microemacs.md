@@ -57,7 +57,7 @@ formerly at:\\
 \vspace{.5in}
 
 \begin{center}
-Feb 13, 2018\\
+October 12, 2026\\
 \end{center}
 
 \newpage
@@ -1745,7 +1745,9 @@ C-X E
 
     The execute keyboard macro command replays the current keyboard
     macro. If an argument is present, it specifies the number of times the macro
-    should be executed. If no argument is present, it runs the macro once.
+    should be executed. If no argument is present and the mark is set, the macro
+    runs once for each line in the region and dot moves to the beginning of the
+    region. Otherwise, it runs the macro once.
     Execution of the macro stops if an error occurs (such as a failed
     search).
 

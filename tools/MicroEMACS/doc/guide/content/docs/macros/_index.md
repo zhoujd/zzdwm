@@ -40,7 +40,9 @@ C-X E
 
     The execute keyboard macro command replays the current keyboard
     macro. If an argument is present, it specifies the number of times the macro
-    should be executed. If no argument is present, it runs the macro once.
+    should be executed. If no argument is present and the mark is set, the macro
+    runs once for each line in the region and dot moves to the beginning of the
+    region. Otherwise, it runs the macro once.
     Execution of the macro stops if an error occurs (such as a failed
     search).
 
@@ -63,4 +65,3 @@ C-X E
     buffer in a format that can be used later in a profile.
     MicroEMACS prompts for the name of the macro.  If you don't enter a name,
     the current macro is used.
-

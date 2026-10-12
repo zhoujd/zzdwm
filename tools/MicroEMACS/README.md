@@ -84,6 +84,7 @@ default. Build the required tool images from the repository root with:
 ```sh
 make -C docker/dockerfiles/tool mingw-base
 make -C docker/dockerfiles/tool wine-base
+make -C docker/dockerfiles/tool docs-base
 ```
 
 ## Testing
@@ -108,9 +109,20 @@ build `me.exe` and run the Wine smoke test from the repository root:
 ## Documentation
 
 * [`doc/microemacs.md`](doc/microemacs.md) — complete user and build manual.
+* [`doc/microemacs.pdf`](doc/microemacs.pdf) — generated PDF version of the manual.
 * [`www/building.md`](www/building.md) — web version of the build guide.
 * [`doc/guide/content`](doc/guide/content) — source for the Hugo user guide.
 * [`ChangeLog`](ChangeLog) — historical release notes.
+
+Rebuild the PDF with the docs tool image:
+
+```sh
+docker run --rm --user "$(id -u):$(id -g)" \
+    -v "$PWD/tools/MicroEMACS/doc:/workspace" \
+    -w /workspace \
+    zhoujd/docs:base \
+    sh -c 'make clean && make microemacs.pdf'
+```
 
 ## License
 
