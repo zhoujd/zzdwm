@@ -94,17 +94,6 @@ C-J
     argument of 16 (i.e. two `Control-U`s) is specified, reduce indentation by three
     spaces.  Otherwise retain the same indentation.
 
-[unbound]
-
-:   **ruby-indent**
-
-    This command is like a **ins-nl-and-indent**, but also attempts to indent
-    according to commonly accepted Ruby conventions.
-    If the previous line starts with `{` or one of the many block-start keywords, or an argument
-    of four (i.e. a single `Control-U`) is specified, indent by two spaces. If an
-    argument of 16 (i.e. two `Control-U`s) is specified, reduce indentation by two
-    spaces.  Otherwise retain the same indentation.
-
 C-O
 
 :   **ins-nl-and-backup**

@@ -111,5 +111,3 @@ Tests live in `test` and can be built directly:
 
     make -C test
     make -C test debug
-
-Ruby extensions and PCRE2 are not enabled by the current makefiles.
