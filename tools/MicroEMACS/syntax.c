@@ -24,6 +24,7 @@
 #define SYNTAX_FEATURE_CASE_INSENSITIVE     0x10000
 #define SYNTAX_FEATURE_SCHEME               0x20000
 #define SYNTAX_FEATURE_DASH_COMMENTS        0x40000
+#define SYNTAX_FEATURE_LINE_KEYS            0x80000
 
 #define SYNTAX_STATE_C_COMMENT              1
 #define SYNTAX_STATE_PYTHON_DQUOTE          2
@@ -314,6 +315,7 @@ static const SYNTAX syntax_definitions[] = {
     yaml_extensions, sizeof (yaml_extensions) / sizeof (yaml_extensions[0]),
     NULL, 0,
     SYNTAX_FEATURE_HASH_COMMENTS | SYNTAX_FEATURE_COLON_KEYS
+      | SYNTAX_FEATURE_LINE_KEYS
   },
   {
     "TOML",
@@ -777,6 +779,25 @@ syntax_plain_key_end (const uchar *s, int len, int start)
              || s[pos] == '-' || s[pos] == '.'))
     ++pos;
   return pos;
+}
+
+static int
+syntax_plain_key_at_line_start (const uchar *s, int start)
+{
+  int pos = 0;
+
+  while (pos < start && (s[pos] == ' ' || s[pos] == '\t'))
+    ++pos;
+  if (pos == start)
+    return TRUE;
+  if (pos + 1 < start && s[pos] == '-'
+      && (s[pos + 1] == ' ' || s[pos + 1] == '\t'))
+    {
+      pos += 2;
+      while (pos < start && (s[pos] == ' ' || s[pos] == '\t'))
+        ++pos;
+    }
+  return pos == start;
 }
 
 static int
@@ -1275,9 +1296,13 @@ syntax_line (const SYNTAX *syntax,
           int end = syntax_quoted_end (s, len, pos);
           uchar delimiter
             = (syntax->features & SYNTAX_FEATURE_EQUAL_KEYS) != 0 ? '=' : ':';
+          int line_keys
+            = (syntax->features & SYNTAX_FEATURE_LINE_KEYS) != FALSE;
 
           if (end > pos
-              && syntax_key_delimiter_after (s, len, end, delimiter) != FALSE)
+              && syntax_key_delimiter_after (s, len, end, delimiter) != FALSE
+              && (line_keys == FALSE
+                  || syntax_plain_key_at_line_start (s, pos) != FALSE))
             {
               syntax_draw_range (s, pos, end, CPREPROC, draw);
               pos = end;
@@ -1554,6 +1579,8 @@ syntax_line (const SYNTAX *syntax,
           uchar delimiter
             = (syntax->features & SYNTAX_FEATURE_EQUAL_KEYS) != 0
                 ? '=' : ':';
+          int line_keys
+            = (syntax->features & SYNTAX_FEATURE_LINE_KEYS) != FALSE;
 
           if (key_syntax != FALSE)
             pos = syntax_plain_key_end (s, len, pos);
@@ -1561,7 +1588,9 @@ syntax_line (const SYNTAX *syntax,
             while (pos < len && is_identifier_char (s[pos]) != FALSE)
               ++pos;
           if (key_syntax != FALSE
-              && syntax_key_delimiter_after (s, len, pos, delimiter) != FALSE)
+              && syntax_key_delimiter_after (s, len, pos, delimiter) != FALSE
+              && (line_keys == FALSE
+                  || syntax_plain_key_at_line_start (s, start) != FALSE))
             {
               syntax_draw_range (s, start, pos, CPREPROC, draw);
               continue;

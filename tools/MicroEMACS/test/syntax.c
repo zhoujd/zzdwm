@@ -81,6 +81,15 @@ expect_all_colors (int color)
     expect_color_at (index, color);
 }
 
+static void
+expect_color_range (int start, int end, int color)
+{
+  int index;
+
+  for (index = start; index < end; ++index)
+    expect_color_at (index, color);
+}
+
 static const SYNTAX *
 syntax_for_first_line (const char *text)
 {
@@ -337,6 +346,33 @@ main (void)
   expect_color_at (11, CCOMMENT);
   expect_color_at (19, CCOMMENT);
   assert (state == SYNTAX_STATE_NONE);
+
+  render_line (yaml, "image: ollama/ollama:latest", &state);
+  expect_length (27);
+  expect_color_range (0, 5, CPREPROC);
+  expect_color_range (5, 27, CTEXT);
+
+  render_line (yaml, "      - /opt/tool/ollama:/root/.ollama", &state);
+  expect_length (38);
+  expect_all_colors (CTEXT);
+
+  render_line (yaml, "image: ghcr.io/open-webui/open-webui:main", &state);
+  expect_length (41);
+  expect_color_range (0, 5, CPREPROC);
+  expect_color_range (5, 41, CTEXT);
+
+  render_line (yaml, "      - /opt/tool/open-webui:/app/backend/data", &state);
+  expect_length (46);
+  expect_all_colors (CTEXT);
+
+  render_line (yaml, "      - OLLAMA_BASE_URL=http://ollama:11434", &state);
+  expect_length (43);
+  expect_all_colors (CTEXT);
+
+  render_line (yaml, "  - key: value", &state);
+  expect_length (14);
+  expect_color_range (4, 7, CPREPROC);
+  expect_color_range (7, 14, CTEXT);
 
   render_line (toml, "[package]", &state);
   expect_length (9);
