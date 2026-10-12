@@ -634,10 +634,8 @@ getbindingforcmd (const char *s)
 int
 namemacro (int f, int n, int k)
 {
-  register SYMBOL *sp;          /* Symbol name pointer. */
-  register int *mp;             /* Macro pointer.       */
   char xname[NXNAME];           /* Symbol name.         */
-  register int msize;           /* Size of macro.       */
+  size_t count;                 /* Size of macro.       */
   register int s;               /* Status code.         */
 
   /* Can't do this while executing or defining a macro.
@@ -654,58 +652,63 @@ namemacro (int f, int n, int k)
   if ((s = ereadv ("Macro name: ", xname, NXNAME, EFAUTO)) != TRUE)
     return (s);
 
-  /* Compute the size of the macro, then allocate space
-   * to copy the macro into.
+  /* Compute the size of the macro, including its terminator.
    */
-  msize = sizeof (kbdm[0]);
-  for (mp = kbdm; *mp != (KCTLX | ')'); mp++)
-    msize += sizeof (kbdm[0]);
-  if ((mp = (int *) malloc (msize)) == NULL)
+  for (count = 1; kbdm[count - 1] != (KCTLX | ')'); count++)
+    {
+      if (count == NKBDM)
+        return (FALSE);
+    }
+  return symdefmacro (xname, kbdm, count);
+}
+
+/*
+ * Define or replace a named keyboard macro. The macro must be terminated
+ * by C-X ). This is used by name-macro and the Lisp extension bridge.
+ */
+int
+symdefmacro (const char *name, const int *macro, size_t count)
+{
+  SYMBOL *sp;                   /* Symbol name pointer. */
+  int *copy;                    /* Macro copy.          */
+
+  if (name == NULL || *name == 0 || macro == NULL || count == 0
+      || macro[count - 1] != (KCTLX | ')'))
+    return (FALSE);
+
+  copy = malloc (count * sizeof (*copy));
+  if (copy == NULL)
     {
       eprintf ("Out of memory.");
       return (FALSE);
     }
-  memcpy (mp, kbdm, msize);     /* Copy the macro       */
+  memcpy (copy, macro, count * sizeof (*copy));
 
-  /* See if the symbol already exists.  If it doesn't, create
-   * a new symbol; otherwise reuse it if it isn't a function.
-   */
-  if ((sp = symlookup (xname)) == NULL)
+  if ((sp = symlookup (name)) == NULL)
     {
-      /* Allocate a new symbol structure.
-       */
-      if ((sp = (SYMBOL *) malloc (sizeof (SYMBOL))) == NULL)
+      sp = malloc (sizeof (*sp));
+      if (sp == NULL || (sp->s_name = strdup (name)) == NULL)
         {
           eprintf ("Out of memory.");
-          free (mp);
-          return (FALSE);
-        }
-
-      /* Copy the symbol name and add the symbol to the hash chain.
-       */
-      if ((sp->s_name = strdup (xname)) == NULL)
-        {
-          eprintf ("Out of memory.");
-          free (mp);
           free (sp);
+          free (copy);
           return (FALSE);
         }
       sp->s_nkey = 0;
       addsym (sp);
     }
-  else
-    {                           /* Symbol exists.       */
-      if (sp->s_macro == NULL)
-        {                       /* Symbol isn't macro?  */
-          eprintf ("Symbol is already defined.");
-          free (mp);
-          return (FALSE);
-        }
-      free (sp->s_macro);       /* Get rid of old macro */
+  else if (sp->s_macro == NULL)
+    {
+      eprintf ("Symbol is already defined.");
+      free (copy);
+      return (FALSE);
     }
+  else
+    free (sp->s_macro);
 
-  sp->s_macro = mp;             /* Set the macro ptr.   */
-  return (TRUE);                /* Successful return.   */
+  sp->s_funcp = NULL;
+  sp->s_macro = copy;
+  return (TRUE);
 }
 
 /*

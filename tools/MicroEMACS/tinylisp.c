@@ -656,6 +656,11 @@ Object *readExpr(Stream *stream, GC_PARAM) {
     int ch = readNext(stream);
     if (ch == EOF)
       return NULL;
+    else if (ch == '#' && streamPeek(stream) == '\'')
+      {
+        streamGetc(stream);
+        return readUnary(stream, "function", GC_ROOTS);
+      }
     else if (ch == '\'')
       return readUnary(stream, "quote", GC_ROOTS);
     else if (ch == '"')
@@ -923,6 +928,7 @@ typedef struct Primitive {
 
 Primitive primitives[] = {
   { "quote",  1,  1, NULL /* special form */ },
+  { "function", 1, 1, NULL /* special form */ },
   { "setq",   0, -2, NULL /* special form */ },
   { "progn",  0, -1, NULL /* special form */ },
   { "if",     2,  3, NULL /* special form */ },
@@ -950,6 +956,7 @@ Primitive primitives[] = {
 // Special forms handled by evalExpr. Must be in the same order as above.
 enum {
   PRIMITIVE_QUOTE,
+  PRIMITIVE_FUNCTION,
   PRIMITIVE_SETQ,
   PRIMITIVE_PROGN,
   PRIMITIVE_IF,
@@ -1166,6 +1173,7 @@ Object *evalExpr(Object **object, Object **env, GC_PARAM) {
 
       switch ((*gcFunc)->primitive) {
       case PRIMITIVE_QUOTE:  return (*gcArgs)->car;
+      case PRIMITIVE_FUNCTION: return (*gcArgs)->car;
       case PRIMITIVE_SETQ:   return evalSetq(gcArgs, gcEnv, GC_ROOTS);
       case PRIMITIVE_PROGN:  *gcObject = evalProgn(gcArgs, gcEnv, GC_ROOTS);
                              break;

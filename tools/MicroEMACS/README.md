@@ -12,7 +12,7 @@ and Windows while keeping the executable small and fast.
 * Optional color and Vim-style line numbers.
 * Syntax highlighting for C, C++, Bash, Python, Markdown, JSON, YAML,
   TOML, CMake, Makefile, Lisp, Emacs Lisp, Scheme, and SQL.
-* Tiny Lisp extensions and Lisp startup configuration.
+* Tiny Lisp extensions, editor command bridges, and Lisp startup configuration.
 * Tags, cscope, grep, GCC error navigation, and ispell integration.
 * Linux terminal support through ncursesw or termcap.
 * Native Windows console support built with MinGW-w64.
@@ -114,6 +114,7 @@ build `me.exe` and run the Wine smoke test from the repository root:
 * [`www/building.md`](www/building.md) — web version of the build guide.
 * [`doc/guide/content`](doc/guide/content) — source for the Hugo user guide.
 * [`examples/logline.pro`](examples/logline.pro) — runnable profile and keyboard macro example.
+* [`examples/logline.l`](examples/logline.l) — equivalent Tiny Lisp editing example.
 * [`ChangeLog`](ChangeLog) — historical release notes.
 
 Rebuild the PDF with the docs tool image:

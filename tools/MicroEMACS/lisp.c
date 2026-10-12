@@ -13,6 +13,7 @@
 
 #define LISP_EXPRESSION_SIZE 256
 #define LISP_OUTPUT_SIZE     256
+#define LISP_COMMAND_OVERHEAD 13
 #if defined(MINGW) || defined(DOS)
 #define LISP_CONFIG_FILE     "me.l"
 #else
@@ -71,6 +72,173 @@ lisp_bind_key (int argc, const char *const *argv)
   return TRUE;
 }
 
+static int
+lisp_integer (const char *text, int *value)
+{
+  char *end;
+  long parsed;
+
+  if (text == NULL || text[0] == 0)
+    return FALSE;
+  parsed = strtol (text, &end, 10);
+  if (*end != 0 || parsed < INT_MIN || parsed > INT_MAX)
+    return FALSE;
+  *value = (int) parsed;
+  return TRUE;
+}
+
+static int
+lisp_execute_command (int argc, const char *const *argv)
+{
+  SYMBOL *symbol;
+  int count = 1;
+  int explicit_count;
+
+  if (argc < 1 || argc > 2 || curwp == NULL)
+    return FALSE;
+  explicit_count = argc == 2;
+  if (explicit_count && lisp_integer (argv[1], &count) == FALSE)
+    return FALSE;
+  if ((symbol = symlookup (argv[0])) == NULL)
+    return FALSE;
+  if (symbol->s_macro != NULL && (kbdmip != NULL || kbdmop != NULL))
+    return FALSE;
+
+  startsaveundo ();
+  if (symbol->s_macro != NULL)
+    count = domacro (symbol->s_macro, count);
+  else if (symbol->s_funcp != NULL)
+    count = (*symbol->s_funcp) (explicit_count, count, KRANDOM);
+  else
+    count = FALSE;
+  endsaveundo ();
+  return count;
+}
+
+static int
+lisp_insert_once (const char *text)
+{
+  const char *start = text;
+
+  for (;;)
+    {
+      const char *newline = strchr (start, '\n');
+      size_t length = newline != NULL
+                      ? (size_t) (newline - start) : strlen (start);
+
+      if (length != 0
+          && linsert ((int) length, 0, (char *) start) == FALSE)
+        return FALSE;
+      if (newline == NULL)
+        return TRUE;
+      if (lnewline () == FALSE)
+        return FALSE;
+      start = newline + 1;
+    }
+}
+
+static int
+lisp_insert_string (int argc, const char *const *argv)
+{
+  int count = 1;
+  int index;
+
+  if (argc < 1 || argc > 2 || curwp == NULL)
+    return FALSE;
+  if (argc == 2
+      && (lisp_integer (argv[1], &count) == FALSE || count <= 0))
+    return FALSE;
+  startsaveundo ();
+  for (index = 0; index < count; index++)
+    {
+      if (lisp_insert_once (argv[0]) == FALSE)
+        {
+          endsaveundo ();
+          return FALSE;
+        }
+    }
+  endsaveundo ();
+  return TRUE;
+}
+
+static int
+lisp_goto_bol (int argc, const char *const *argv)
+{
+  (void) argv;
+  if (argc != 0 || curwp == NULL)
+    return FALSE;
+  return gotobol (FALSE, 1, KRANDOM);
+}
+
+static int
+lisp_goto_eol (int argc, const char *const *argv)
+{
+  (void) argv;
+  if (argc != 0 || curwp == NULL)
+    return FALSE;
+  return gotoeol (FALSE, 1, KRANDOM);
+}
+
+static int
+lisp_forward_line (int argc, const char *const *argv)
+{
+  int count = 1;
+
+  if (argc > 1 || curwp == NULL)
+    return FALSE;
+  if (argc == 1 && lisp_integer (argv[0], &count) == FALSE)
+    return FALSE;
+  return forwline (argc == 1, count, KRANDOM);
+}
+
+static int
+lisp_define_command (int argc, const char *const *argv)
+{
+  int macro[NKBDM];
+  char expression[LISP_EXPRESSION_SIZE];
+  const char *command_expression;
+  const char *text;
+  size_t argument_length;
+  size_t expression_length;
+  size_t length = 0;
+
+  if (argc != 2 || argv[0][0] == 0 || strlen (argv[0]) >= NXNAME
+      || argv[1][0] == 0
+      || kbdmip != NULL || kbdmop != NULL)
+    return FALSE;
+
+  argument_length = strlen (argv[1]);
+  if (argv[1][0] == '(' && argv[1][argument_length - 1] == ')')
+    {
+      command_expression = argv[1];
+      expression_length = argument_length;
+    }
+  else
+    {
+      if (argument_length >= sizeof (expression) - 2)
+        return FALSE;
+      expression[0] = '(';
+      memcpy (expression + 1, argv[1], argument_length);
+      expression[argument_length + 1] = ')';
+      expression[argument_length + 2] = 0;
+      command_expression = expression;
+      expression_length = argument_length + 2;
+    }
+  if (expression_length > NKBDM - LISP_COMMAND_OVERHEAD)
+    return FALSE;
+
+  macro[length++] = KMETA | 'X';
+  for (text = "eval-lisp"; *text != 0; text++)
+    macro[length++] = *text;
+  macro[length++] = 0;
+  for (text = command_expression; *text != 0; text++)
+    macro[length++] = *text;
+  macro[length++] = 0;
+  macro[length++] = KCTLX | ')';
+
+  return symdefmacro (argv[0], macro, length);
+}
+
 #ifdef COLOR
 static int
 lisp_set_syntax (int argc, const char *const *argv)
@@ -119,6 +287,22 @@ lisp_register_hosts (void)
   registered = tiny_lisp_define_host ("define-key", lisp_bind_key) == 1
                && tiny_lisp_define_host ("set-variable",
                                          lisp_set_variable) == 1;
+  registered = registered != FALSE
+               && tiny_lisp_define_host ("execute-command",
+                                         lisp_execute_command) == 1;
+  registered = registered != FALSE
+               && tiny_lisp_define_host ("insert-string",
+                                         lisp_insert_string) == 1;
+  registered = registered != FALSE
+               && tiny_lisp_define_host ("goto-bol", lisp_goto_bol) == 1;
+  registered = registered != FALSE
+               && tiny_lisp_define_host ("goto-eol", lisp_goto_eol) == 1;
+  registered = registered != FALSE
+               && tiny_lisp_define_host ("forward-line",
+                                         lisp_forward_line) == 1;
+  registered = registered != FALSE
+               && tiny_lisp_define_host ("define-lisp-command",
+                                         lisp_define_command) == 1;
 #ifdef COLOR
   registered = registered != FALSE
                && tiny_lisp_define_host ("set-syntax", lisp_set_syntax) == 1;

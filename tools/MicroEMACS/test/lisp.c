@@ -9,12 +9,31 @@ int fillcol;
 int tabsize;
 int colorflag;
 BUFFER *curbp;
+EWINDOW *curwp;
+int *kbdmip;
+int *kbdmop;
 
 static const char *lisp_input;
 static char lisp_message[256];
 static int bound_key;
 static SYMBOL *bound_symbol;
+static int command_flag;
+static int command_count;
+static int goto_bol_called;
+static int goto_eol_called;
+static int forward_line_flag;
+static int forward_line_count;
+static int undo_start_count;
+static int undo_end_count;
+static int newline_count;
+static char inserted_text[256];
+static const char *defined_macro_name;
+static int defined_macro_count;
+static int defined_macro_called;
+static int defined_macro_count_argument;
+static int command_macro[NKBDM] = { KCTLX | ')' };
 static SYMBOL command_symbol = { NULL, 0, "buffer-menu", NULL, NULL };
+static SYMBOL macro_symbol = { NULL, 0, "test-macro", NULL, command_macro };
 static BUFFER syntax_buffer;
 static char syntax_filetype[32];
 static BUFFER *syntax_mode_buffer;
@@ -58,6 +77,106 @@ setbinding (int key, SYMBOL *symbol)
   bound_symbol = symbol;
 }
 
+static int
+test_command (int flag, int count, int key)
+{
+  (void) key;
+  command_flag = flag;
+  command_count = count;
+  return TRUE;
+}
+
+int
+gotobol (int flag, int count, int key)
+{
+  (void) flag;
+  (void) count;
+  (void) key;
+  goto_bol_called++;
+  return TRUE;
+}
+
+int
+gotoeol (int flag, int count, int key)
+{
+  (void) flag;
+  (void) count;
+  (void) key;
+  goto_eol_called++;
+  return TRUE;
+}
+
+int
+forwline (int flag, int count, int key)
+{
+  (void) key;
+  forward_line_flag = flag;
+  forward_line_count = count;
+  return TRUE;
+}
+
+int
+linsert (int count, int character, char *text)
+{
+  size_t length = strlen (inserted_text);
+
+  (void) character;
+  if (text == NULL || count < 0
+      || length + (size_t) count >= sizeof (inserted_text))
+    return FALSE;
+  memcpy (inserted_text + length, text, (size_t) count);
+  inserted_text[length + count] = 0;
+  return TRUE;
+}
+
+int
+lnewline (void)
+{
+  size_t length = strlen (inserted_text);
+
+  if (length + 1 >= sizeof (inserted_text))
+    return FALSE;
+  inserted_text[length] = '\n';
+  inserted_text[length + 1] = 0;
+  newline_count++;
+  return TRUE;
+}
+
+int
+domacro (int *macro, int count)
+{
+  (void) macro;
+  defined_macro_called++;
+  defined_macro_count_argument = count;
+  return TRUE;
+}
+
+void
+startsaveundo (void)
+{
+  undo_start_count++;
+}
+
+void
+endsaveundo (void)
+{
+  undo_end_count++;
+}
+
+int
+symdefmacro (const char *name, const int *macro, size_t count)
+{
+  if (name == NULL || macro == NULL || count == 0
+      || macro[count - 1] != (KCTLX | ')'))
+    return FALSE;
+  if (strcmp (name, "buffer-menu") == 0)
+    return FALSE;
+  defined_macro_name = name;
+  defined_macro_count = (int) count;
+  memcpy (command_macro, macro, count * sizeof (*macro));
+  return TRUE;
+}
+
 char *
 fftilde (char *arg)
 {
@@ -91,6 +210,7 @@ evaluate (const char *expression)
 int
 main (void)
 {
+  command_symbol.s_funcp = test_command;
   tabsize = 4;
   assert (evaluate ("(set-variable \"tab-width\" \"8\")") == TRUE);
   assert (tabsize == 8);
@@ -110,6 +230,61 @@ main (void)
   assert (bound_symbol == &command_symbol);
   assert (evaluate ("(define-key \"C-x C-b\" \"unknown\")") == FALSE);
   assert (evaluate ("(define-key \"C-x C-b\")") == FALSE);
+
+  curwp = (EWINDOW *) &curwp;
+  undo_start_count = 0;
+  undo_end_count = 0;
+  assert (evaluate ("(execute-command \"buffer-menu\")") == TRUE);
+  assert (command_flag == FALSE && command_count == 1);
+  assert (evaluate ("(execute-command \"buffer-menu\" 3)") == TRUE);
+  assert (command_flag == TRUE && command_count == 3);
+  assert (evaluate ("(execute-command \"unknown\")") == FALSE);
+  assert (undo_start_count == 2 && undo_end_count == 2);
+
+  undo_start_count = 0;
+  undo_end_count = 0;
+  assert (evaluate ("(insert-string \"hello\")") == TRUE);
+  assert (strcmp (inserted_text, "hello") == 0);
+  assert (evaluate ("(insert-string \"!\" 3)") == TRUE);
+  assert (strcmp (inserted_text, "hello!!!") == 0);
+  assert (evaluate ("(insert-string \"x\" 0)") == FALSE);
+  assert (undo_start_count == 2 && undo_end_count == 2);
+
+  undo_start_count = 0;
+  undo_end_count = 0;
+  assert (evaluate ("(insert-string \"\\nnext\")") == TRUE);
+  assert (strcmp (inserted_text, "hello!!!\nnext") == 0);
+  assert (newline_count == 1);
+  assert (undo_start_count == 1 && undo_end_count == 1);
+
+  assert (evaluate ("(goto-bol)") == TRUE);
+  assert (goto_bol_called == 1);
+  assert (evaluate ("(goto-eol)") == TRUE);
+  assert (goto_eol_called == 1);
+  assert (evaluate ("(forward-line)") == TRUE);
+  assert (forward_line_flag == FALSE && forward_line_count == 1);
+  assert (evaluate ("(forward-line -2)") == TRUE);
+  assert (forward_line_flag == TRUE && forward_line_count == -2);
+
+  assert (evaluate ("#'format-log-line") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: format-log-line]") == 0);
+  assert (evaluate ("(eq #'format-log-line 'format-log-line)") == TRUE);
+
+  assert (evaluate ("(define-lisp-command \"format-log-line\" "
+                   "#'format-log-line)") == TRUE);
+  assert (strcmp (defined_macro_name, "format-log-line") == 0);
+  assert (defined_macro_count == 30);
+  assert (command_macro[0] == (KMETA | 'X'));
+  assert (command_macro[1] == 'e');
+  assert (command_macro[10] == 0);
+  assert (command_macro[11] == '(');
+  assert (command_macro[28] == 0);
+  assert (command_macro[29] == (KCTLX | ')'));
+  assert (evaluate ("(define-lisp-command \"format-log-line\" "
+                   "\"(format-log-line)\")") == TRUE);
+  assert (defined_macro_count == 30);
+  assert (evaluate ("(define-lisp-command \"buffer-menu\" \"(x)\")")
+          == FALSE);
 
   colorflag = TRUE;
   curbp = &syntax_buffer;

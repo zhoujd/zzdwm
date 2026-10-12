@@ -1007,6 +1007,9 @@ int gettempfile (char *path,            /* Create temp file path.       */
  * Defined by "symbol.c".
  */
 int namemacro (int f, int n, int k);    /* Assign a name to cur. macro  */
+int symdefmacro (const char *name,      /* Define a named macro         */
+                 const int *macro,
+                 size_t count);
 
 void keymapinit ();
 void keyadd (int new,                   /* Add a function, bind to key  */
