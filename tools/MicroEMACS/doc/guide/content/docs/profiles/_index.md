@@ -163,6 +163,39 @@ by invoking MicroEMACS with the following:
 
     me -p junk.pro filename
 
+The historical `logline.pro` file at the root of the source tree contains
+only the macro-definition line shown below.  Loading it with
+`me -p logline.pro filename` defines the current macro and changes one line;
+press **C-X E** to replay it on the next line.
+
+The source tree also contains a complete profile example in
+`examples/logline.pro`.  It defines a macro that changes a line to
+`TAB * text:` format, gives the macro the name `format-log-line`, and
+binds it to `M-L`:
+
+    [C-X (] [C-A] [Tab] "* " [C-E] ":" [C-N] [C-A] [C-X )]
+    name-macro "format-log-line\r"
+    bind-to-key "format-log-line\r" [M-L]
+    2 format-log-line
+    file-save
+    quit
+
+The first line both defines and executes the macro once: profile input is
+interpreted as keystrokes, so the definition changes the current line and
+leaves dot on the next line.  Therefore `2 format-log-line` executes the
+macro for the two remaining sample lines, for three changed lines in total.
+
+With the three-line file `examples/logline-input.txt`, run:
+
+    cp examples/logline-input.txt /tmp/logline.txt
+    me -p examples/logline.pro /tmp/logline.txt
+
+The saved file contains:
+
+    TAB * first:
+    TAB * second:
+    TAB * third:
+
 You can tell MicroEMACS to read a profile at any time, with the
 following command.
 

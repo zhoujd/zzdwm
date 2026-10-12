@@ -113,6 +113,7 @@ build `me.exe` and run the Wine smoke test from the repository root:
 * [`doc/microemacs.pdf`](doc/microemacs.pdf) — generated PDF version of the manual.
 * [`www/building.md`](www/building.md) — web version of the build guide.
 * [`doc/guide/content`](doc/guide/content) — source for the Hugo user guide.
+* [`examples/logline.pro`](examples/logline.pro) — runnable profile and keyboard macro example.
 * [`ChangeLog`](ChangeLog) — historical release notes.
 
 Rebuild the PDF with the docs tool image:
