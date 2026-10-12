@@ -223,7 +223,7 @@ C-X F : read-profile
 
 C-X C-E : echo
 
-## Tags, GCC
+## Tags and Errors
 
 `M-,` : find-cscope
 
@@ -231,7 +231,9 @@ C-X C-E : echo
 
 `M-.` : find-tag
 
-`M-C-E` : gcc-error
+``C-X ` `` : next-error
+
+`M-C-E` : goto-error
 
 ## PC Function Keys
 

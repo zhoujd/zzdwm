@@ -20,7 +20,7 @@
 * [Messages](messages.md)
 * [Key Binding Commands](key-binding.md)
 * [Tags](tags.md)
-* [GCC errors](gcc-errors.md)
+* [Error navigation](gcc-errors.md)
 * [Undo](undo.md)
 * [Profiles](profiles.md)
 * [Ruby Extensions](ruby.md) (historical)

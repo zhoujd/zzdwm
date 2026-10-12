@@ -157,14 +157,15 @@ section.
 | C-X F | read-profile |
 | C-X C-E | echo |
 
-## Tags, GCC
+## Tags and Errors
 
 | Key | Command Name |
 | --- | ------------ |
 | M-, | find-cscope |
 | M-G | find-grep |
 | M-. | find-tag |
-| M-C-E | gcc-error |
+| C-X ` | next-error |
+| M-C-E | goto-error |
 
 ## PC Function Keys
 

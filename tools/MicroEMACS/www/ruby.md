@@ -49,7 +49,7 @@ Before delving into details about how to write commands in Ruby,
 let's look at an example.  Here is a file called `gccerr.rb`
 that implements a command to parse gcc compiler errors and go to
 the relevant lines of code.  This is essentially a rewrite of
-the built-in **gcc-error** command:
+the built-in **goto-error** command:
 
 ```
 

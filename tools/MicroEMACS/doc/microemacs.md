@@ -2129,32 +2129,37 @@ M-.
     finds the next occurence.  The command then visits the corresponding
     file and places the dot at the line containing the identifier.
 
-# GCC errors
+# Error navigation
 
-\index{GCC errors}
-MicroEMACS is able to parse a file containing gcc error messages, and
-load the source files mentioned in the error messages.  Typically, you would
-save the error messages to a file when running `make`:
+\index{Error navigation}
+MicroEMACS is able to parse a buffer containing compiler error messages,
+standard `filename:line` locations, or cscope-style matches, and load the
+source files mentioned in those messages.  Typically, you would save compiler
+error messages to a file when running `make`:
 
     make >&errs
 
-Then load the resulting `errs` file into MicroEMACS and use
-the following command to process the error messages contained within:
+Then load the resulting `errs` file into MicroEMACS and use either of the
+following equivalent commands to process the messages contained within:
 
 M-C-E
 
-:   **gcc-error**\index{gcc-error}
+:   **goto-error**\index{goto-error}
 
-    This command looks for the next gcc error message in the current buffer.
+C-X `
+
+:   **next-error**\index{next-error}
+
+    These commands look for the next location in the current buffer.
     If one is found, then a new window is opened if there is currently only
     one window; otherwise the next window below the current one is used.
     MicroEMACS reads into that window the file indicated in
-    the error message, positions the cursor at the line and column given
-    in the error message, and displays the remainder of the error message
+    the location, positions the cursor at the line and column given
+    in the location, and displays the remainder of the message
     in the echo line.  To find the next error location, switch
     back to the error buffer (using the `back-window` command (**C-X P**)
     or the `forw-window` command (**C-X N**)),
-    and issue this command again.
+    and issue either command again.
 
 # Undo
 
@@ -2439,7 +2444,7 @@ Before delving into details about how to write commands in Ruby,
 let's look at an example.  Here is a file called `gccerr.rb`
 that implements a command to parse gcc compiler errors and go to
 the relevant lines of code.  This is essentially a rewrite of
-the built-in **gcc-error**\index{gcc-error} command:
+the built-in **goto-error**\index{goto-error} command:
 
     def gccerr(n)
       keepgoing = true
@@ -3689,7 +3694,7 @@ C-X C-E
 
 :   echo
 
-*Tags, GCC*
+*Tags and Errors*
 
 M-,
 
@@ -3705,7 +3710,11 @@ M-.
 
 M-C-E
 
-:   gcc-error
+:   goto-error
+
+C-X `
+
+:   next-error
 
 *PC Function Keys*
 

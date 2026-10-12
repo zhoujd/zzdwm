@@ -35,7 +35,7 @@ of built-in displays.
 * [Messages]({{< relref "messages" >}})
 * [Key Binding Commands]({{< relref "binding" >}})
 * [Tags]({{< relref "tagging" >}})
-* [GCC Errors]({{< relref "gcc" >}})
+* [Error Navigation]({{< relref "gcc" >}})
 * [Undo]({{< relref "undo" >}})
 * [Profiles]({{< relref "profiles" >}})
 * [Ruby Extensions]({{< relref "ruby" >}}) (historical)
