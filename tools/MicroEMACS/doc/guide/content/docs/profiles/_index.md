@@ -19,13 +19,14 @@ file(s) you specify on the command line (if any).  You might use the
 startup profile to set up some favorite key bindings,
 or define a macro,
 or read in more files.
+Before profile commands are executed, MicroEMACS loads its Lisp startup
+file, if one is present. See [Lisp Extensions](../lisp/) for details.
 
 You can use the **-p profile** option when you invoke MicroEMACS to specify
 the name of the startup profile.  If you don't use this option, MicroEMACS
 will use a default profile name.
-The name of the default
-profile is `PE.PRO` on all systems except UNIX, where it is
-named `.pepro`.  MicroEMACS will look for this profile in the
+The name of the default profile is `.mepro` on UNIX-like systems and
+`me.pro` on Windows.  MicroEMACS will look for this profile in the
 current directory.  If the profile is not found, MicroEMACS will
 look in a second directory, as follows:
 

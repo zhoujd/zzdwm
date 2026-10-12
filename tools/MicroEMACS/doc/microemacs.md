@@ -536,7 +536,7 @@ Start editing by typing the command
 
 \begin{Verbatim}[commandchars=\\\{\}]
 me [-234bCDmnNrTuxz] [-c \emph{path}] [-d \emph{path}] [-g \emph{line}]
-   [-p \emph{profile}] [-s \emph{string}] [-t \emph{size}] [+\emph{line}]
+   [-l \emph{lisp}] [-p \emph{profile}] [-s \emph{string}] [-t \emph{size}] [+\emph{line}]
    \emph{file}[:\emph{line}[:\emph{column}]] ...
 \end{Verbatim}
 
@@ -596,6 +596,12 @@ meanings:
 :   Tells MicroEMACS to move to the specified line number in the first file
     specified on the command line. The `+line` form is provided for
     compatibility with other editors.
+
+-l *lisp*
+
+:   Tells MicroEMACS to load the specified Lisp startup file instead of the
+    default Lisp startup file. See the [**Lisp Extensions**](#lisp-extensions)
+    section for more information.
 
 -m
 
@@ -2195,13 +2201,15 @@ file(s) you specify on the command line (if any).  You might use the
 startup profile to set up some favorite key bindings\index{Key binding},
 or define a macro\index{Macro},
 or read in more files\index{File, reading}\index{Reading a file}.
+Before profile commands are executed, MicroEMACS loads its Lisp startup
+file, if one is present. See the [**Lisp Extensions**](#lisp-extensions)
+section for details.
 
 You can use the **-p profile** option when you invoke MicroEMACS to specify
 the name of the startup profile.  If you don't use this option, MicroEMACS
 will use a default profile name.
-The name of the default
-profile is `PE.PRO` on all systems except UNIX\index{UNIX}, where it is
-named `.pepro`.  MicroEMACS will look for this profile in the
+The name of the default profile is `.mepro` on UNIX-like systems and
+`me.pro` on Windows.  MicroEMACS will look for this profile in the
 current directory.  If the profile is not found, MicroEMACS will
 look in a second directory, as follows:
 
@@ -2851,6 +2859,19 @@ The second form sets **tab-width** (or **tab-size**) or **fill-column**
 to a positive integer. A quoted string is also accepted for the value.
 The third form selects a syntax definition for the current buffer. It is
 available when color is enabled.
+
+MicroEMACS also loads a Lisp startup file after the files named on the command
+line and before commands from the startup profile are executed. The default
+name is `.mel` on UNIX-like systems and `me.l` on Windows. MicroEMACS looks
+for it in the current directory, then in the user's home directory.
+If no default file is found, startup continues normally. Use the **-l**
+option to load a specific Lisp file instead.
+
+    ; MicroEMACS Lisp startup file
+    (set-variable "tab-width" 8)
+    (set-variable "fill-column" 72)
+    (define-key "C-x C-b" "buffer-menu")
+    (defun double (x) (* x 2))
 
 # Modes
 

@@ -132,7 +132,7 @@ void
 usage (void)
 {
   fprintf (stderr,
-           "usage: me [-234" OPT_BACKUP OPT_COLOR "DmnNrTuxz] [-c path] [-d path] [-g line] [-p profile] [-s string] [-t size]\n"
+           "usage: me [-234" OPT_BACKUP OPT_COLOR "DmnNrTuxz] [-c path] [-d path] [-g line] [-l lisp] [-p profile] [-s string] [-t size]\n"
            "          [+[line]] [file[:line[:column]] ...] [file://path[:line[:column]] ...]\n");
 }
 
@@ -148,6 +148,7 @@ main (int argc, char *argv[])
   register int mflag;
   register char *arg;
   char *proptr;
+  char *lispptr;
   int line = 0;
   int gotoflag = FALSE;
   int basec;		/* c stripped of meta character */
@@ -167,6 +168,7 @@ main (int argc, char *argv[])
     }
 
   proptr = NULLPTR;		/* profile name         */
+  lispptr = NULLPTR;		/* Lisp startup file    */
   for (n = 1; n < argc; n++)
     {				/* Search for options   */
       arg = argv[n];
@@ -210,6 +212,14 @@ main (int argc, char *argv[])
                 {
                   gotoflag = TRUE;
                   line = atoi (argv[n]);
+                }
+              break;
+            case 'l':
+              n++;
+              if (n < argc)
+                {
+                  lispptr = argv[n];
+                  adjustcase (lispptr);
                 }
               break;
             case 'm':
@@ -288,6 +298,7 @@ main (int argc, char *argv[])
             case 'c':
             case 'd':
             case 'g':
+            case 'l':
             case 'p':
             case 's':
             case 't':
@@ -358,7 +369,6 @@ main (int argc, char *argv[])
       curbp = curwp->w_bufp;	/* reset current buffer */
     }
 
-  update ();
   lastflag = 0;			/* Fake last flags.     */
 
   inprof = enoecho = (ffpopen (proptr) == FIOSUC);
@@ -367,6 +377,9 @@ main (int argc, char *argv[])
     eprintf ("Unable to open profile %s", proptr);
   else
     eprintf ("");
+
+  lispstartup (lispptr);
+  update ();
 
   /* Startup Search Execution */
   if (srchstr != NULL && srchstr[0] != '\0')

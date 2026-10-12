@@ -787,6 +787,7 @@ int insertmacro (int f, int n, int k);  /* Insert macro text in buffer. */
  * Defined by "lisp.c".
  */
 int lispeval (int f, int n, int k);     /* Evaluate a Lisp expression.  */
+int lispstartup (const char *fname);    /* Load startup Lisp file.      */
 
 /*
  * Defined by "file.c".

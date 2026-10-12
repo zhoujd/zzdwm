@@ -1300,15 +1300,16 @@ tiny_lisp_define_host(const char *name, HostFunction function)
   return 1;
 }
 
-int
-tiny_lisp_eval(const char *expression, char *output, size_t output_size)
+static int
+eval_source(const char *source, char *output, size_t output_size,
+            bool single_expression)
 {
   Object *gcRoots = nil;
   Object envRoot = { TYPE_CONS, .car = NULL, .cdr = gcRoots };
   Object **gcEnv = &envRoot.car;
   Stream stream;
 
-  if (expression == NULL || output == NULL || output_size == 0)
+  if (source == NULL || output == NULL || output_size == 0)
     return 0;
 
   outputBuffer.data = output;
@@ -1336,19 +1337,39 @@ tiny_lisp_eval(const char *expression, char *output, size_t output_size)
     envRoot.car = environment;
   }
 
-  stream.buffer = expression;
-  stream.length = strlen(expression);
+  stream.buffer = source;
+  stream.length = strlen(source);
   stream.offset = 0;
 
   GC_TRACE(gcObject, nil);
   if (peekNext(&stream) == EOF)
-    exception("empty expression");
+    {
+      if (single_expression)
+        exception("empty expression");
+      *gcObject = nil;
+    }
+  else
+    while (peekNext(&stream) != EOF)
+      {
+        *gcObject = readExpr(&stream, gcRoots);
+        if (single_expression && peekNext(&stream) != EOF)
+          exception("unexpected data after expression");
+        *gcObject = evalExpr(gcObject, gcEnv, gcRoots);
+        environment = *gcEnv;
+      }
 
-  *gcObject = readExpr(&stream, gcRoots);
-  if (peekNext(&stream) != EOF)
-    exception("unexpected data after expression");
-  *gcObject = evalExpr(gcObject, gcEnv, gcRoots);
-  environment = *gcEnv;
   writeObject(*gcObject, true, &outputBuffer);
   return 1;
+}
+
+int
+tiny_lisp_eval(const char *expression, char *output, size_t output_size)
+{
+  return eval_source(expression, output, output_size, true);
+}
+
+int
+tiny_lisp_eval_source(const char *source, char *output, size_t output_size)
+{
+  return eval_source(source, output, output_size, false);
 }

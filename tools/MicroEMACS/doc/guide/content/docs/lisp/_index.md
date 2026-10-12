@@ -30,3 +30,27 @@ The second form sets **tab-width** (or **tab-size**) or **fill-column**
 to a positive integer. A quoted string is also accepted for the value.
 The third form selects a syntax definition for the current buffer. It is
 available when color is enabled.
+
+## Startup File
+
+MicroEMACS loads a Lisp startup file after the files named on the command
+line and before commands from the startup profile are executed. The default
+name is `.mel` on UNIX-like systems and `me.l` on Windows. MicroEMACS looks
+for it in the current directory, then in the user's home directory.
+If no default file is found, startup continues normally.
+
+Use the **-l** option to load a specific Lisp file instead:
+
+```sh
+me -l startup.lisp file.c
+```
+
+The startup file may contain comments and multiple top-level expressions:
+
+```lisp
+; MicroEMACS Lisp startup file
+(set-variable "tab-width" 8)
+(set-variable "fill-column" 72)
+(define-key "C-x C-b" "buffer-menu")
+(defun double (x) (* x 2))
+```

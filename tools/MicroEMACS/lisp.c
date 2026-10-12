@@ -5,11 +5,17 @@
 #include "def.h"
 #include "tinylisp.h"
 #include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define LISP_EXPRESSION_SIZE 256
 #define LISP_OUTPUT_SIZE     256
+#if defined(MINGW) || defined(DOS)
+#define LISP_CONFIG_FILE     "me.l"
+#else
+#define LISP_CONFIG_FILE     ".mel"
+#endif
 
 /* Convert a MicroEMACS key name to its internal key code. */
 static int
@@ -67,8 +73,10 @@ lisp_bind_key (int argc, const char *const *argv)
 static int
 lisp_set_syntax (int argc, const char *const *argv)
 {
-  if (argc != 1 || colorflag == FALSE || curbp == NULL)
+  if (argc != 1 || curbp == NULL)
     return FALSE;
+  if (colorflag == FALSE)
+    return TRUE;
   if (syntax_set_buffer (curbp, argv[0]) == FALSE)
     return FALSE;
   syntax_mode_changed (curbp);
@@ -114,6 +122,86 @@ lisp_register_hosts (void)
                && tiny_lisp_define_host ("set-syntax", lisp_set_syntax) == 1;
 #endif
   return registered;
+}
+
+static int
+lisp_open_file (const char *filename, FILE **file)
+{
+  char expanded[NFILEN];
+
+  if (filename == NULL)
+    {
+      *file = fopen (LISP_CONFIG_FILE, "rb");
+      if (*file != NULL)
+        return TRUE;
+      if (snprintf (expanded, sizeof (expanded), "~/%s",
+                    LISP_CONFIG_FILE) >= (int) sizeof (expanded))
+        return FALSE;
+    }
+  else
+    {
+      if (snprintf (expanded, sizeof (expanded), "%s",
+                    filename) >= (int) sizeof (expanded))
+        return FALSE;
+    }
+
+  filename = fftilde (expanded);
+  *file = fopen (filename, "rb");
+  return *file != NULL;
+}
+
+static int
+lisp_read_file (const char *filename, char **source)
+{
+  FILE *file;
+  long length;
+
+  if (lisp_open_file (filename, &file) != TRUE)
+    return FALSE;
+  if (fseek (file, 0, SEEK_END) != 0 || (length = ftell (file)) < 0)
+    {
+      fclose (file);
+      return FALSE;
+    }
+  rewind (file);
+  *source = malloc ((size_t) length + 1);
+  if (*source == NULL
+      || fread (*source, 1, (size_t) length, file) != (size_t) length)
+    {
+      free (*source);
+      *source = NULL;
+      fclose (file);
+      return FALSE;
+    }
+  (*source)[length] = 0;
+  fclose (file);
+  return TRUE;
+}
+
+int
+lispstartup (const char *filename)
+{
+  char result[LISP_OUTPUT_SIZE];
+  char *source;
+  int status;
+
+  if (lisp_register_hosts () != TRUE)
+    {
+      eprintf ("[Lisp host commands unavailable]");
+      return FALSE;
+    }
+  if (lisp_read_file (filename, &source) != TRUE)
+    {
+      if (filename != NULL)
+        eprintf ("Unable to open Lisp file %s", filename);
+      return filename == NULL;
+    }
+
+  status = tiny_lisp_eval_source (source, result, sizeof (result));
+  free (source);
+  if (status != TRUE)
+    eprintf ("[Lisp error: %s]", result);
+  return status;
 }
 
 int

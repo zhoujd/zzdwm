@@ -58,6 +58,12 @@ setbinding (int key, SYMBOL *symbol)
   bound_symbol = symbol;
 }
 
+char *
+fftilde (char *arg)
+{
+  return arg;
+}
+
 int
 syntax_set_buffer (BUFFER *bp, const char *filetype)
 {
@@ -111,7 +117,7 @@ main (void)
   assert (strcmp (syntax_filetype, "sql") == 0);
   assert (syntax_mode_buffer == &syntax_buffer);
   colorflag = FALSE;
-  assert (evaluate ("(set-syntax \"sql\")") == FALSE);
+  assert (evaluate ("(set-syntax \"sql\")") == TRUE);
 
   assert (evaluate ("(+ 1 2)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: 3]") == 0);
@@ -129,6 +135,39 @@ main (void)
   assert (evaluate ("(+ 1 2) extra") == FALSE);
   assert (evaluate ("(+ 1") == FALSE);
   assert (evaluate ("") == FALSE);
+
+  {
+    char result[LISP_OUTPUT_SIZE];
+    int status;
+
+    status = tiny_lisp_eval_source ("; MicroEMACS startup file\n"
+                                    "(setq answer 42)\n"
+                                    "answer", result, sizeof (result));
+    if (status != 1)
+      fprintf (stderr, "source error: %s\n", result);
+    assert (status == 1);
+    assert (strcmp (result, "42") == 0);
+    assert (tiny_lisp_eval_source ("", result, sizeof (result)) == 1);
+    assert (strcmp (result, "nil") == 0);
+    assert (tiny_lisp_eval_source ("(+ 1 2) (bad)", result,
+                                   sizeof (result)) == 0);
+  }
+
+  {
+    FILE *file = fopen (".mel", "wb");
+
+    assert (file != NULL);
+    assert (fputs ("(set-variable \"tab-width\" \"9\")\n"
+                   "(defun double (x) (* x 2))\n"
+                   "(double 12)",
+                   file) != EOF);
+    assert (fclose (file) == 0);
+    tabsize = 8;
+    assert (lispstartup (NULL) == TRUE);
+    assert (tabsize == 9);
+    assert (remove (".mel") == 0);
+    assert (lispstartup ("missing.lisp") == FALSE);
+  }
 
   puts ("lisp tests passed");
   return 0;
