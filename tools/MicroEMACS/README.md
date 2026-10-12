@@ -59,6 +59,7 @@ The default Linux and Windows builds enable color and Lisp support with
 ./build.sh -m        # Build without color or Lisp
 ./build.sh -p        # Build a stripped static Linux executable
 ./build.sh -w        # Build me.exe with MinGW in Docker
+./build.sh -D        # Regenerate the PDF manual
 ./build.sh -c        # Remove generated build files
 ```
 
@@ -117,11 +118,7 @@ build `me.exe` and run the Wine smoke test from the repository root:
 Rebuild the PDF with the docs tool image:
 
 ```sh
-docker run --rm --user "$(id -u):$(id -g)" \
-    -v "$PWD/tools/MicroEMACS/doc:/workspace" \
-    -w /workspace \
-    zhoujd/docs:base \
-    sh -c 'make clean && make microemacs.pdf'
+./build.sh -D
 ```
 
 ## License

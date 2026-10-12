@@ -14,6 +14,7 @@ Usage: $app {option}
 Option:
 build|-b        build {test|-t|all|-a}
 windows|-w      build Windows me.exe
+docs|-D         update PDF documentation
 clean|-c        clean {test|-t|all|-a}
 debug|-d        debug
 release|-r      release
@@ -48,6 +49,10 @@ build() {
 
 mingw_image() {
     echo "${MINGW_IMG:-${IMG_NS:-zhoujd}/mingw:base}"
+}
+
+docs_image() {
+    echo "${DOCS_IMG:-${IMG_NS:-zhoujd}/docs:base}"
 }
 
 windows() {
@@ -94,6 +99,37 @@ windows() {
         exit 1
     fi
     echo "Build Windows done"
+}
+
+docs() {
+    img=$(docs_image)
+
+    if ! command -v docker >/dev/null 2>&1; then
+        echo "Docker is required to update the documentation" >&2
+        exit 1
+    fi
+    if ! docker image inspect "$img" >/dev/null 2>&1; then
+        echo "Docs Docker image not found: $img" >&2
+        echo "Build it with: make -C docker/dockerfiles/tool docs-base" >&2
+        exit 1
+    fi
+
+    if ! docker run \
+        --name="build-me-docs-1" \
+        --rm \
+        -i \
+        -u "$(id -u):$(id -g)" \
+        -v "$MNT_DIR:$MNT_DIR" \
+        -w "$WS/doc" \
+        "$img" \
+        sh -c '
+        make clean &&
+        make microemacs.pdf
+        '
+    then
+        exit 1
+    fi
+    echo "Documentation update done"
 }
 
 debug() {
@@ -217,6 +253,9 @@ case $1 in
     windows|-w )
         shift
         windows "$@"
+        ;;
+    docs|-D )
+        docs
         ;;
     debug|-d )
         debug
