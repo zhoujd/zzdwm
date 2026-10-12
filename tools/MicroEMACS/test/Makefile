@@ -1,7 +1,7 @@
 ## Test Makefile
 
 ROOT = ..
-TARGET = utf8 regtest tcap reftag syntax-test display-test cscope-test
+TARGET = utf8 regtest tcap reftag syntax-test display-test cscope-test lisp-test
 CFLAGS := -Os
 
 ifeq ($(INSIDE_DOCKER), yes)
@@ -44,6 +44,11 @@ cscope-test: cscope.c $(ROOT)/cscope.c $(ROOT)/sys/unix/spawn.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \
 		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/unix \
 		-I$(ROOT)/tty/ncurses -DTEST cscope.c $(ROOT)/sys/unix/spawn.c
+
+lisp-test: lisp.c $(ROOT)/lisp.c
+	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections \
+		-fno-asynchronous-unwind-tables $(LDFLAGS) -Wl,--gc-sections \
+		-o $@ -I$(ROOT) -I$(ROOT)/sys/unix -I$(ROOT)/tty/ncurses $<
 
 clean:
 	rm -f $(TARGET) *.[o]

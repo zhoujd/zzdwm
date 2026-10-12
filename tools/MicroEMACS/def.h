@@ -783,6 +783,11 @@ int bindtokey (int f, int n, int k);    /* Modify key bindings.         */
 int insertmacro (int f, int n, int k);  /* Insert macro text in buffer. */
 
 /*
+ * Defined by "lisp.c".
+ */
+int lispeval (int f, int n, int k);     /* Evaluate a Lisp expression.  */
+
+/*
  * Defined by "file.c".
  */
 int fileread (int f, int n, int k);     /* Get a file, read only        */

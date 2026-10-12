@@ -39,6 +39,7 @@ of built-in displays.
 * [Undo]({{< relref "undo" >}})
 * [Profiles]({{< relref "profiles" >}})
 * [Ruby Extensions]({{< relref "ruby" >}}) (historical)
+* [Lisp Extensions]({{< relref "lisp" >}})
 * [Modes]({{< relref "modes" >}}) (historical)
 * [Display Features]({{< relref "display" >}})
 * [UTF-8 and Unicode]({{< relref "utf8" >}})

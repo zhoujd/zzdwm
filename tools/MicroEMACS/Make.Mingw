@@ -81,6 +81,9 @@ REV = rev.h
 $(TARGET): $(OBJ)
 	$(LD) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 
+lisp.o: lisp.c
+	$(CC) -c $(CFLAGS) -fno-asynchronous-unwind-tables $<
+
 $(REV):
 	@$(srcdir)/ver.sh $@
 

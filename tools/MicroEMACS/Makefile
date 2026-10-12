@@ -4,8 +4,10 @@ OS = $(shell uname -s)
 
 ifeq ($(OS), Linux)
 MF = Make.Linux
+TARGET = me
 else
 MF = Make.Mingw
+TARGET = me.exe
 endif
 
 all:

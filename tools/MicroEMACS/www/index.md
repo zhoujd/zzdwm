@@ -24,6 +24,7 @@
 * [Undo](undo.md)
 * [Profiles](profiles.md)
 * [Ruby Extensions](ruby.md) (historical)
+* [Lisp Extensions](lisp.md)
 * [Modes](modes.md) (historical)
 * [Display Features](display.md)
 * [UTF-8 and Unicode](utf8.md)
