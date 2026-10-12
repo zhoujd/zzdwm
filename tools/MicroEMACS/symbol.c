@@ -306,6 +306,7 @@ KEY key[] = {
   {-1,                  lispmode,          "lisp-mode"},
   {-1,                  emacslispmode,     "emacs-lisp-mode"},
   {-1,                  schememode,        "scheme-mode"},
+  {-1,                  sqlmode,           "sql-mode"},
   {-1,                  textmode,          "text-mode"},
 #endif
   {-1,                  autonewline,       "auto-newline"},

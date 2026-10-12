@@ -141,7 +141,8 @@ main (void)
   assert (syntax_for_name ("test.ss") == scheme);
   assert (syntax_for_name ("CMakeLists.txt") == cmake);
   assert (syntax_for_name ("Makefile") == makefile);
-  assert (syntax_for_name ("test.sql") == NULL);
+  assert (syntax_for_name ("test.sql") == sql);
+  assert (syntax_for_name ("test.SQL") == sql);
   assert (syntax_for_first_line ("#!/usr/bin/sbcl --script") == lisp);
   assert (syntax_for_first_line ("#!/usr/bin/emacs --script") == elisp);
   assert (syntax_for_first_line ("#!/usr/bin/guile --no-auto-compile")
@@ -204,11 +205,16 @@ main (void)
   colorflag = TRUE;
   assert (cmode (FALSE, 1, 0) == TRUE);
   assert (syntax_for_buffer (&buffer) == c_syntax);
+  assert (sqlmode (FALSE, 1, 0) == TRUE);
+  assert (syntax_for_buffer (&buffer) == sql);
+  assert (strcmp (syntax_name_for_buffer (&buffer), "SQL") == 0);
+  syntax_clear_buffer (&buffer);
+  assert (syntax_for_buffer (&buffer) == bash);
   colorflag = FALSE;
   assert (syntax_for_buffer (&buffer) == NULL);
   assert (syntax_name_for_buffer (&buffer) == NULL);
   colorflag = TRUE;
-  assert (syntax_for_buffer (&buffer) == c_syntax);
+  assert (syntax_for_buffer (&buffer) == bash);
   syntax_clear_buffer (&buffer);
   assert (syntax_set_buffer (&buffer, "text") == TRUE);
   assert (syntax_for_buffer (&buffer) == NULL);

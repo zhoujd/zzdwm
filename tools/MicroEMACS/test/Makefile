@@ -31,9 +31,9 @@ tcap: tcap.c
 reftag: reftag.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
-syntax-test: syntax.c $(ROOT)/utf8.c
+syntax-test: syntax.c $(ROOT)/utf8.c $(ROOT)/syntax.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ -I$(ROOT) -I$(ROOT)/sys/unix \
-		-I$(ROOT)/tty/ncurses -DCOLOR -DTEST $^
+		-I$(ROOT)/tty/ncurses -DCOLOR -DTEST syntax.c $(ROOT)/utf8.c
 
 display-test: display.c $(ROOT)/utf8.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \

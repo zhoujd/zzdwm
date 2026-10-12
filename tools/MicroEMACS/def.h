@@ -746,6 +746,7 @@ int makefilemode (int f, int n, int k);
 int lispmode (int f, int n, int k);
 int emacslispmode (int f, int n, int k);
 int schememode (int f, int n, int k);
+int sqlmode (int f, int n, int k);
 int textmode (int f, int n, int k);
 #endif
 

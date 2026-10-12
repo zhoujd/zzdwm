@@ -238,6 +238,7 @@ static const char *const cmake_extensions[] = {
 static const char *const makefile_extensions[] = {
   ".mak", ".mk", "GNUmakefile", "Makefile", "makefile"
 };
+static const char *const sql_extensions[] = { ".sql" };
 
 static const char *const bash_shebangs[] = { "bash", "sh" };
 static const char *const python_shebangs[] = { "python" };
@@ -393,7 +394,7 @@ static const SYNTAX syntax_definitions[] = {
     "SQL",
     sql_filetypes, sizeof (sql_filetypes) / sizeof (sql_filetypes[0]),
     sql_keywords, sizeof (sql_keywords) / sizeof (sql_keywords[0]),
-    NULL, 0,
+    sql_extensions, sizeof (sql_extensions) / sizeof (sql_extensions[0]),
     NULL, 0,
     SYNTAX_FEATURE_BLOCK_COMMENT | SYNTAX_FEATURE_DASH_COMMENTS
       | SYNTAX_FEATURE_CASE_INSENSITIVE
@@ -1914,6 +1915,15 @@ schememode (int f, int n, int k)
   (void) n;
   (void) k;
   return set_syntax_mode ("scheme");
+}
+
+int
+sqlmode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  return set_syntax_mode ("sql");
 }
 
 int
