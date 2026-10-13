@@ -23,7 +23,7 @@ Instead of linking heavy third-party networking dependencies (like `libcurl`), w
 ---
 
 ## 2. Implementation: Core C Infrastructure
-This C code should be integrated directly into your editor's communication layer (e.g., `file.c` or a dedicated `ai.c` file) and exposed to `tinylisp.c`.
+This C code should be integrated directly into editor's communication layer (e.g., `file.c` or a dedicated `ai.c` file) and exposed to `tinylisp.c`.
 
 ```c
 #include <stdio.h>
@@ -96,7 +96,7 @@ Register the primitive function inside the core primitive structural dispatch ta
 ---
 
 ## 3. High-Level Automation: Lisp Scripting Interface
-Once the structural C interface is compiled, students can write lean, high-level code inside their profile configuration files (`~/.emacsrc` or loaded via `C-x F`) without recompiling the editor.
+Once the structural C interface is compiled, students can write lean, high-level code inside their profile configuration files (`~/.mel` or loaded via `C-x F`) without recompiling the editor.
 
 ```lisp
 ;;; ~/.config/me/ai-assist.lsp
