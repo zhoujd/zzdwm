@@ -24,6 +24,8 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (define-key "C-x C-b" "buffer-menu")
     (set-variable "tab-width" 8)
     (message "Done: %s" "ok")
+    (set-lisp-debug 2)
+    (debug-message 1 "Done: %s" "ok")
     (set-syntax "sql")
     (set-modeline-color 15 22 0 2)
     (execute-command "file-save")
@@ -47,6 +49,12 @@ These forms also provide access to MicroEMACS state and the current buffer:
 positive integer; a quoted string is also accepted for the value.
 `message` formats text with `%s`, `%S`, `%d`, and `%%`, displays it on the
 echo line, and returns the formatted string.
+`set-lisp-debug` sets the Lisp debug level; level 0 disables debug output.
+`debug-message` takes a positive message level, a format string, and optional
+arguments. It uses the same conversions as `message`, displays
+`[Lisp debug: ...]` when its level is less than or equal to the current debug
+level, and returns `t`. A final `t` result is quiet unless the debug level is
+nonzero.
 `set-syntax` selects a syntax definition for the current buffer and is
 available when color is enabled. `execute-command`, also available as
 `editor-cmd`, runs a MicroEMACS command by name with an optional numeric

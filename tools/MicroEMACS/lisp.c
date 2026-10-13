@@ -22,6 +22,7 @@
 #endif
 
 static int lisp_message_displayed;
+static int lisp_debug_level;
 
 /* Convert a MicroEMACS key name to its internal key code. */
 static int
@@ -464,8 +465,8 @@ lisp_append_text (char *result, size_t *length, size_t result_size,
 }
 
 static int
-lisp_message_form (int argc, const char *const *argv,
-                   char *result, size_t result_size)
+lisp_format_message (int argc, const char *const *argv,
+                     char *result, size_t result_size)
 {
   size_t length = 0;
   size_t index;
@@ -526,9 +527,50 @@ lisp_message_form (int argc, const char *const *argv,
   if (argument != argc || length >= result_size)
     return FALSE;
   result[length] = 0;
+  return TRUE;
+}
+
+static int
+lisp_message_form (int argc, const char *const *argv,
+                   char *result, size_t result_size)
+{
+  if (lisp_format_message (argc, argv, result, result_size) != TRUE)
+    return FALSE;
   eprintf ("%s", result);
   lisp_message_displayed = TRUE;
   return TINY_LISP_HOST_STRING;
+}
+
+static int
+lisp_set_debug_level (int argc, const char *const *argv,
+                      char *result, size_t result_size)
+{
+  int level;
+
+  (void) result;
+  (void) result_size;
+  if (argc != 1 || lisp_integer (argv[0], &level) == FALSE || level < 0)
+    return FALSE;
+  lisp_debug_level = level;
+  return TRUE;
+}
+
+static int
+lisp_debug_message (int argc, const char *const *argv,
+                    char *result, size_t result_size)
+{
+  int level;
+
+  if (argc < 2 || lisp_integer (argv[0], &level) == FALSE || level < 1
+      || lisp_format_message (argc - 1, argv + 1, result, result_size)
+         != TRUE)
+    return FALSE;
+  if (level <= lisp_debug_level)
+    {
+      eprintf ("[Lisp debug: %s]", result);
+      lisp_message_displayed = TRUE;
+    }
+  return TRUE;
 }
 
 static int
@@ -582,6 +624,8 @@ lisp_register_hosts (void)
     { "define-key", lisp_bind_key },
     { "set-variable", lisp_set_variable },
     { "message", lisp_message_form },
+    { "set-lisp-debug", lisp_set_debug_level },
+    { "debug-message", lisp_debug_message },
     { "execute-command", lisp_execute_command },
     { "editor-cmd", lisp_execute_command },
     { "get-char", lisp_get_char },
@@ -716,7 +760,8 @@ lispload (const char *filename, int report)
   free (source);
   if (status != TRUE)
     eprintf ("[Lisp error: %s]", result);
-  else if (report != FALSE && lisp_message_displayed == FALSE)
+  else if (report != FALSE && lisp_message_displayed == FALSE
+           && (lisp_debug_level > 0 || strcmp (result, "t") != 0))
     eprintf ("[Lisp: %s]", result);
   return status;
 }
@@ -781,7 +826,8 @@ lispeval (int f, int n, int k)
   status = tiny_lisp_eval (source, result, sizeof (result));
   if (status != TRUE)
     eprintf ("[Lisp error: %s]", result);
-  else if (lisp_message_displayed == FALSE)
+  else if (lisp_message_displayed == FALSE
+           && (lisp_debug_level > 0 || strcmp (result, "t") != 0))
     eprintf ("[Lisp: %s]", result);
   return status;
 }

@@ -350,6 +350,28 @@ main (void)
     assert (strcmp (lisp_message, "interactive test") == 0);
   }
 
+  assert (evaluate ("(set-lisp-debug -1)") == FALSE);
+  assert (evaluate ("(set-lisp-debug 2)") == TRUE);
+  assert (lisp_debug_level == 2);
+  lisp_message[0] = 0;
+  assert (evaluate ("(debug-message 1 \"step %s %d\" \"one\" 2)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp debug: step one 2]") == 0);
+  assert (evaluate ("(debug-message 3 \"hidden\")") == TRUE);
+  assert (strncmp (lisp_message, "[Lisp debug:", 12) != 0);
+  assert (evaluate ("(debug-message 0 \"invalid-level\")") == FALSE);
+  assert (evaluate ("(debug-message 1 \"bad %q\" \"argument\")") == FALSE);
+  assert (evaluate ("(set-lisp-debug 0)") == TRUE);
+  assert (lisp_debug_level == 0);
+  lisp_message[0] = 0;
+  assert (evaluate ("(setq default-quiet-result t)") == TRUE);
+  assert (lisp_message[0] == 0);
+  assert (evaluate ("(set-lisp-debug 1)") == TRUE);
+  lisp_message[0] = 0;
+  assert (evaluate ("(setq debug-quiet-result t)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: t]") == 0);
+  assert (evaluate ("(set-lisp-debug 0)") == TRUE);
+  assert (lisp_debug_level == 0);
+
   assert (lispfile ("runtime.L") == TRUE);
   assert (lispfile ("runtime.Lisp") == TRUE);
   assert (lispfile ("runtime.MEL") == TRUE);
@@ -492,7 +514,7 @@ main (void)
   assert (evaluate ("(/ 1 4)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: 0.25]") == 0);
   assert (evaluate ("(< 2 4 6.8)") == TRUE);
-  assert (strcmp (lisp_message, "[Lisp: t]") == 0);
+  assert (lisp_message[0] == 0);
   assert (evaluate ("(defun plus1 (x) (+ x 1))") == TRUE);
   assert (evaluate ("(plus1 2)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: 3]") == 0);
@@ -531,11 +553,11 @@ main (void)
   assert (evaluate ("(unless (= 1 2) 9)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: 9]") == 0);
   assert (evaluate ("(fboundp 'car)") == TRUE);
-  assert (strcmp (lisp_message, "[Lisp: t]") == 0);
+  assert (lisp_message[0] == 0);
   assert (evaluate ("(fboundp 'save-buffer)") == TRUE);
-  assert (strcmp (lisp_message, "[Lisp: t]") == 0);
+  assert (lisp_message[0] == 0);
   assert (evaluate ("(fboundp 'kill-emacs)") == TRUE);
-  assert (strcmp (lisp_message, "[Lisp: t]") == 0);
+  assert (lisp_message[0] == 0);
   assert (evaluate ("(save-buffer)") == TRUE);
   assert (save_buffer_called == 1);
   assert (evaluate ("(kill-emacs)") == TRUE);
@@ -562,9 +584,9 @@ main (void)
   curbp = &eobp_buffer;
   curwp = &eobp_window;
   assert (evaluate ("(fboundp 'eobp)") == TRUE);
-  assert (strcmp (lisp_message, "[Lisp: t]") == 0);
+  assert (lisp_message[0] == 0);
   assert (evaluate ("(eobp)") == TRUE);
-  assert (strcmp (lisp_message, "[Lisp: t]") == 0);
+  assert (lisp_message[0] == 0);
   eobp_window.w_dot.p = &eobp_end;
   assert (evaluate ("(eobp)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: nil]") == 0);
@@ -613,6 +635,48 @@ main (void)
     assert (lispevalfile (FALSE, 1, 0) == TRUE);
     assert (strcmp (lisp_message, "[Lisp: 8]") == 0);
     assert (remove ("runtime.l") == 0);
+  }
+
+  {
+    FILE *file = fopen ("runtime-true.l", "wb");
+
+    assert (file != NULL);
+    assert (fputs ("(setq loaded-configuration t)", file) != EOF);
+    assert (fclose (file) == 0);
+    lisp_input = "runtime-true.l";
+    lisp_message[0] = 0;
+    assert (lispevalfile (FALSE, 1, 0) == TRUE);
+    assert (lisp_message[0] == 0);
+    assert (remove ("runtime-true.l") == 0);
+  }
+
+  {
+    FILE *file = fopen ("runtime-debug-true.l", "wb");
+
+    assert (file != NULL);
+    assert (fputs ("(set-lisp-debug 1)\n"
+                   "(setq loaded-debug-configuration t)", file) != EOF);
+    assert (fclose (file) == 0);
+    lisp_input = "runtime-debug-true.l";
+    lisp_message[0] = 0;
+    assert (lispevalfile (FALSE, 1, 0) == TRUE);
+    assert (strcmp (lisp_message, "[Lisp: t]") == 0);
+    assert (remove ("runtime-debug-true.l") == 0);
+    assert (evaluate ("(set-lisp-debug 0)") == TRUE);
+  }
+
+  {
+    FILE *file = fopen ("runtime-suppressed-debug.l", "wb");
+
+    assert (file != NULL);
+    assert (fputs ("(debug-message 2 \"hidden startup detail\")", file)
+            != EOF);
+    assert (fclose (file) == 0);
+    lisp_input = "runtime-suppressed-debug.l";
+    lisp_message[0] = 0;
+    assert (lispevalfile (FALSE, 1, 0) == TRUE);
+    assert (lisp_message[0] == 0);
+    assert (remove ("runtime-suppressed-debug.l") == 0);
   }
 
   puts ("lisp tests passed");
