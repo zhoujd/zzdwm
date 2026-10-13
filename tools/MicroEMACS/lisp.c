@@ -412,8 +412,20 @@ static int
 lisp_set_variable (int argc, const char *const *argv,
                    char *result, size_t result_size)
 {
+  typedef struct LispVariable
+  {
+    const char *name;
+    int *value;
+  } LispVariable;
+
+  static const LispVariable variables[] = {
+    { "tab-size", &tabsize },
+    { "tab-width", &tabsize },
+    { "fill-column", &fillcol }
+  };
   char *end;
   long value;
+  size_t index;
 
   (void) result;
   (void) result_size;
@@ -424,14 +436,14 @@ lisp_set_variable (int argc, const char *const *argv,
     return FALSE;
 
   value = (int) value;
-  if (strcmp (argv[0], "tab-size") == 0
-      || strcmp (argv[0], "tab-width") == 0)
-    tabsize = value;
-  else if (strcmp (argv[0], "fill-column") == 0)
-    fillcol = value;
-  else
-    return FALSE;
-  return TRUE;
+  for (index = 0; index < sizeof (variables) / sizeof (variables[0]);
+       index++)
+    if (strcmp (argv[0], variables[index].name) == 0)
+      {
+        *variables[index].value = value;
+        return TRUE;
+      }
+  return FALSE;
 }
 
 static int
