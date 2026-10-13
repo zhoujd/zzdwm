@@ -1,5 +1,5 @@
 
-# TIP
+# Lisp Extensions
 
 ## Extra Quality-of-Life Tips (logline-prefer.l) [DONE]
 
