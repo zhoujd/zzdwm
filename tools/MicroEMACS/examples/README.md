@@ -45,3 +45,9 @@ cat /tmp/logline.txt
 ```
 
 The expected result is the same as the Lisp example.
+
+## Defensive Lisp variant
+
+`logline-prefer.l` is the same editing example with explicit fallbacks for
+`save-buffer` and `kill-emacs`. It is useful when a startup configuration may
+not have registered those Lisp bridge commands.
