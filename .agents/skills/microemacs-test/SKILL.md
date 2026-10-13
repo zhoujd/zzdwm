@@ -9,6 +9,11 @@ description: Build and test MicroEMACS Linux me and Windows me.exe binaries. Use
 
 Validate the Linux `me` and Windows `me.exe` builds using the repository test suite, Docker-based MinGW build, and Wine smoke test.
 
+## Commit Convention
+
+Use the `ME: ` prefix for MicroEMACS commit subjects, for example:
+`ME: add Lisp editor primitives`.
+
 ## Workflow
 
 ### 1. Run source tests
