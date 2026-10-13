@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "../lisp.c"
@@ -43,6 +44,10 @@ static EWINDOW eobp_window;
 static BUFFER eobp_buffer;
 static LINE eobp_line;
 static LINE eobp_end;
+static LINE *primitive_line;
+static LINE primitive_end;
+static BUFFER primitive_buffer;
+static EWINDOW primitive_window;
 
 int
 ereadv (const char *prompt, char *buffer, int buffer_size, int flag, ...)
@@ -145,11 +150,19 @@ int
 linsert (int count, int character, char *text)
 {
   size_t length = strlen (inserted_text);
+  uchar utf8[6];
+  int utf8_length;
 
-  (void) character;
-  if (text == NULL || count < 0
+  if (count < 0
       || length + (size_t) count >= sizeof (inserted_text))
     return FALSE;
+  if (text == NULL)
+    {
+      utf8_length = uputc (character, utf8);
+      memcpy (inserted_text + length, utf8, (size_t) utf8_length);
+      inserted_text[length + utf8_length] = 0;
+      return TRUE;
+    }
   memcpy (inserted_text + length, text, (size_t) count);
   inserted_text[length + count] = 0;
   return TRUE;
@@ -241,6 +254,30 @@ evaluate_with_prefix (const char *expression, int flag, int count)
   return lispeval (flag, count, 0);
 }
 
+static void
+set_primitive_line (const char *text)
+{
+  size_t length = strlen (text);
+
+  primitive_line = malloc (LINEHDR_SIZE + length);
+  assert (primitive_line != NULL);
+  primitive_line->l_size = (int) length;
+  primitive_line->l_used = (int) length;
+  memcpy (lgets (primitive_line), text, length);
+
+  lforw (primitive_line) = &primitive_end;
+  lback (primitive_line) = &primitive_end;
+  lforw (&primitive_end) = primitive_line;
+  lback (&primitive_end) = primitive_line;
+
+  primitive_buffer.b_linep = &primitive_end;
+  primitive_window.w_bufp = &primitive_buffer;
+  primitive_window.w_dot.p = primitive_line;
+  primitive_window.w_dot.o = 0;
+  curbp = &primitive_buffer;
+  curwp = &primitive_window;
+}
+
 int
 main (void)
 {
@@ -274,6 +311,10 @@ main (void)
   assert (command_flag == TRUE && command_count == 3);
   assert (evaluate ("(execute-command \"unknown\")") == FALSE);
   assert (undo_start_count == 2 && undo_end_count == 2);
+  command_flag = FALSE;
+  command_count = 0;
+  assert (evaluate ("(editor-cmd \"buffer-menu\" 3)") == TRUE);
+  assert (command_flag == TRUE && command_count == 3);
 
   undo_start_count = 0;
   undo_end_count = 0;
@@ -299,6 +340,34 @@ main (void)
   assert (forward_line_flag == FALSE && forward_line_count == 1);
   assert (evaluate ("(forward-line -2)") == TRUE);
   assert (forward_line_flag == TRUE && forward_line_count == -2);
+
+  set_primitive_line ("héllo");
+  assert (evaluate ("(get-char)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: \"h\"]") == 0);
+  primitive_window.w_dot.o = 1;
+  assert (evaluate ("(get-char)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: \"é\"]") == 0);
+  assert (evaluate ("(get-line)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: \"héllo\"]") == 0);
+  primitive_window.w_dot.o = wllength (primitive_line);
+  assert (evaluate ("(get-char)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: nil]") == 0);
+
+  inserted_text[0] = 0;
+  undo_start_count = 0;
+  undo_end_count = 0;
+  assert (evaluate ("(insert-char \"X\")") == TRUE);
+  assert (strcmp (inserted_text, "X") == 0);
+  assert (evaluate ("(insert-char 65)") == TRUE);
+  assert (strcmp (inserted_text, "XA") == 0);
+  assert (evaluate ("(insert-char 233)") == TRUE);
+  assert (strcmp (inserted_text, "XAé") == 0);
+  assert (evaluate ("(insert-char \"xy\")") == FALSE);
+  assert (evaluate ("(insert-char \"\\n\")") == FALSE);
+  assert (evaluate ("(insert-char 0)") == FALSE);
+  assert (evaluate ("(insert-char)") == FALSE);
+  assert (strcmp (inserted_text, "XAé") == 0);
+  assert (undo_start_count == 6 && undo_end_count == 6);
 
   assert (evaluate ("#'format-log-line") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: format-log-line]") == 0);

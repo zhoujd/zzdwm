@@ -14,7 +14,7 @@
 #define MAX_HOST_ARGS        8
 #define HOST_ARG_SIZE        32
 
-typedef int (*HostFunction)(int argc, const char *const *argv);
+typedef TinyLispHostFunction HostFunction;
 
 typedef struct Object Object;
 
@@ -1194,10 +1194,9 @@ Object *evalList(Object **args, Object **env, GC_PARAM) {
 Object *callHost(Object **function, Object **args, GC_PARAM) {
   const char *argv[MAX_HOST_ARGS];
   char numbers[MAX_HOST_ARGS][HOST_ARG_SIZE];
+  char result[TINY_LISP_HOST_RESULT_SIZE];
   HostFunction eval = (*function)->eval;
   int argc = 0;
-
-  (void) gcRoots;
 
   for (Object *object = *args; object != nil; object = object->cdr, argc++) {
     if (argc == MAX_HOST_ARGS)
@@ -1216,11 +1215,21 @@ Object *callHost(Object **function, Object **args, GC_PARAM) {
       exceptionWithObject(object->car, "is not a number or string");
   }
 
-  int result = eval(argc, argv);
+  result[0] = 0;
+  int status = eval(argc, argv, result, sizeof (result));
 
-  if (result == 0)
+  if (status == 0)
     exception("host command failed");
-  return result == TINY_LISP_HOST_NIL ? nil : t;
+  if (status == TINY_LISP_HOST_NIL)
+    return nil;
+  if (status == TINY_LISP_HOST_STRING) {
+    size_t length = strlen(result);
+    Object *object = newObjectWithString(TYPE_STRING, length + 1, GC_ROOTS);
+
+    memcpy(object->string, result, length + 1);
+    return object;
+  }
+  return t;
 }
 
 Object *evalExpr(Object **object, Object **env, GC_PARAM) {

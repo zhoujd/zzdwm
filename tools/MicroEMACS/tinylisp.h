@@ -7,9 +7,12 @@
 
 #include <stddef.h>
 
-typedef int (*TinyLispHostFunction)(int argc, const char *const *argv);
+typedef int (*TinyLispHostFunction)(int argc, const char *const *argv,
+                                    char *result, size_t result_size);
 
 #define TINY_LISP_HOST_NIL 2
+#define TINY_LISP_HOST_STRING 3
+#define TINY_LISP_HOST_RESULT_SIZE 512
 
 int tiny_lisp_define_host(const char *name, TinyLispHostFunction function);
 int tiny_lisp_eval(const char *expression, char *output, size_t output_size);

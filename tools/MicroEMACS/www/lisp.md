@@ -21,31 +21,41 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (set-variable "tab-width" 8)
     (set-syntax "sql")
     (execute-command "file-save")
+    (get-char)
+    (get-line)
+    (insert-string "text")
+    (insert-char "X")
     (save-buffer)
     (kill-emacs)
-    (insert-string "text")
     (goto-bol)
     (goto-eol)
     (forward-line 2)
     (eobp)
     (define-lisp-command "format-log-line" #'format-log-line)
 
-The first form binds a key to a MicroEMACS command. Key names support
-the **C-X**, **C-** and **M-** prefixes followed by one ASCII character.
-The second form sets **tab-width** (or **tab-size**) or **fill-column**
-to a positive integer. A quoted string is also accepted for the value.
-The third form selects a syntax definition for the current buffer. It is
-available when color is enabled.
-The fourth form runs a MicroEMACS command by name, with an optional numeric
-argument. It is intended for commands that do not require an echo-line reply;
-use the direct buffer forms when a command would otherwise prompt for text.
-The next two forms save the current buffer and exit MicroEMACS.
-The next four forms insert text at dot and move dot without replaying keys.
-`eobp` returns `t` when dot is at the end of the buffer and `nil` otherwise.
-The final form registers a Lisp function as a named MicroEMACS command.
-Use `#'name` to pass a function reference. For compatibility, a quoted
-expression string is also accepted. The generated expression can be invoked
-with **M-X**, or bound with `define-key`, and is limited to 243 bytes.
+`define-key` binds a key to a MicroEMACS command. Key names support the
+**C-X**, **C-** and **M-** prefixes followed by one ASCII character.
+`set-variable` sets **tab-width** (or **tab-size**) or **fill-column** to a
+positive integer; a quoted string is also accepted for the value.
+`set-syntax` selects a syntax definition for the current buffer and is
+available when color is enabled. `execute-command`, also available as
+`editor-cmd`, runs a MicroEMACS command by name with an optional numeric
+argument; use direct buffer forms when a command would otherwise prompt for
+text.
+
+`get-char` returns the UTF-8 character under dot as a string, or `nil` at the
+end of a line. `get-line` returns the current line as a string without the
+newline; the current line must fit in the host result buffer. `insert-string`
+inserts a string at dot, while `insert-char` inserts one character given as a
+Unicode code point or a one-character string. `goto-bol`, `goto-eol`, and
+`forward-line` move dot without replaying keys. `save-buffer` and `kill-emacs`
+perform those editor actions directly. `eobp` returns `t` when dot is at the
+end of the buffer and `nil` otherwise.
+
+`define-lisp-command` registers a Lisp function as a named MicroEMACS
+command. Use `#'name` to pass a function reference. For compatibility, a
+quoted expression string is also accepted. The generated expression can be
+invoked with **M-X**, or bound with `define-key`, and is limited to 243 bytes.
 An interactive Lisp command can declare `(interactive "p")`; the command's
 numeric prefix is placed in its first optional parameter. For example, `M-L`
 runs `format-log-line` once and `M-3 M-L` runs it three times.

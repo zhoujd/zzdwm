@@ -58,11 +58,14 @@ lisp_key_code (const char *name)
 }
 
 static int
-lisp_bind_key (int argc, const char *const *argv)
+lisp_bind_key (int argc, const char *const *argv,
+               char *result, size_t result_size)
 {
   SYMBOL *symbol;
   int key;
 
+  (void) result;
+  (void) result_size;
   if (argc != 2)
     return FALSE;
   key = lisp_key_code (argv[0]);
@@ -88,12 +91,15 @@ lisp_integer (const char *text, int *value)
 }
 
 static int
-lisp_execute_command (int argc, const char *const *argv)
+lisp_execute_command (int argc, const char *const *argv,
+                      char *result, size_t result_size)
 {
   SYMBOL *symbol;
   int count = 1;
   int explicit_count;
 
+  (void) result;
+  (void) result_size;
   if (argc < 1 || argc > 2 || curwp == NULL)
     return FALSE;
   explicit_count = argc == 2;
@@ -138,11 +144,14 @@ lisp_insert_once (const char *text)
 }
 
 static int
-lisp_insert_string (int argc, const char *const *argv)
+lisp_insert_string (int argc, const char *const *argv,
+                    char *result, size_t result_size)
 {
   int count = 1;
   int index;
 
+  (void) result;
+  (void) result_size;
   if (argc < 1 || argc > 2 || curwp == NULL)
     return FALSE;
   if (argc == 2
@@ -162,28 +171,37 @@ lisp_insert_string (int argc, const char *const *argv)
 }
 
 static int
-lisp_goto_bol (int argc, const char *const *argv)
+lisp_goto_bol (int argc, const char *const *argv,
+               char *result, size_t result_size)
 {
   (void) argv;
+  (void) result;
+  (void) result_size;
   if (argc != 0 || curwp == NULL)
     return FALSE;
   return gotobol (FALSE, 1, KRANDOM);
 }
 
 static int
-lisp_goto_eol (int argc, const char *const *argv)
+lisp_goto_eol (int argc, const char *const *argv,
+               char *result, size_t result_size)
 {
   (void) argv;
+  (void) result;
+  (void) result_size;
   if (argc != 0 || curwp == NULL)
     return FALSE;
   return gotoeol (FALSE, 1, KRANDOM);
 }
 
 static int
-lisp_forward_line (int argc, const char *const *argv)
+lisp_forward_line (int argc, const char *const *argv,
+                   char *result, size_t result_size)
 {
   int count = 1;
 
+  (void) result;
+  (void) result_size;
   if (argc > 1 || curwp == NULL)
     return FALSE;
   if (argc == 1 && lisp_integer (argv[0], &count) == FALSE)
@@ -192,9 +210,12 @@ lisp_forward_line (int argc, const char *const *argv)
 }
 
 static int
-lisp_eobp (int argc, const char *const *argv)
+lisp_eobp (int argc, const char *const *argv,
+           char *result, size_t result_size)
 {
   (void) argv;
+  (void) result;
+  (void) result_size;
 
   if (argc != 0 || curwp == NULL || curbp == NULL)
     return FALSE;
@@ -203,9 +224,102 @@ lisp_eobp (int argc, const char *const *argv)
 }
 
 static int
-lisp_save_buffer (int argc, const char *const *argv)
+lisp_get_char (int argc, const char *const *argv,
+               char *result, size_t result_size)
+{
+  LINE *line;
+  const uchar *text;
+  int length;
+
+  (void) argv;
+  if (argc != 0 || curwp == NULL || curbp == NULL)
+    return FALSE;
+  line = curwp->w_dot.p;
+  if (line == curbp->b_linep
+      || curwp->w_dot.o >= wllength (line))
+    return TINY_LISP_HOST_NIL;
+
+  text = wlgetcptr (line, curwp->w_dot.o);
+  length = uclen (text);
+  if (length <= 0 || (size_t) length >= result_size)
+    return FALSE;
+  memcpy (result, text, (size_t) length);
+  result[length] = 0;
+  return TINY_LISP_HOST_STRING;
+}
+
+static int
+lisp_get_line (int argc, const char *const *argv,
+               char *result, size_t result_size)
+{
+  LINE *line;
+  int length;
+
+  (void) argv;
+  if (argc != 0 || curwp == NULL || curbp == NULL)
+    return FALSE;
+  line = curwp->w_dot.p;
+  if (line == curbp->b_linep)
+    return FALSE;
+
+  length = llength (line);
+  if (length < 0 || (size_t) length >= result_size)
+    return FALSE;
+  memcpy (result, lgets (line), (size_t) length);
+  result[length] = 0;
+  return TINY_LISP_HOST_STRING;
+}
+
+static int
+lisp_insert_char (int argc, const char *const *argv,
+                  char *result, size_t result_size)
+{
+  int character;
+  int length;
+  int status;
+
+  (void) result;
+  (void) result_size;
+  if (argc != 1 || curwp == NULL)
+    return FALSE;
+
+  startsaveundo ();
+  if (lisp_integer (argv[0], &character) == TRUE)
+    {
+      if (character <= 0 || character > 0x10ffff)
+        {
+          endsaveundo ();
+          return FALSE;
+        }
+      status = linsert (1, character, NULL);
+    }
+  else
+    {
+      length = (int) strlen (argv[0]);
+      if (length <= 0 || strchr (argv[0], '\n') != NULL
+          || unslen ((const uchar *) argv[0], length) != 1)
+        {
+          endsaveundo ();
+          return FALSE;
+        }
+      status = linsert (length, 0, (char *) argv[0]);
+    }
+  if (status == FALSE)
+    {
+      endsaveundo ();
+      return FALSE;
+    }
+  endsaveundo ();
+  return TRUE;
+}
+
+static int
+lisp_save_buffer (int argc, const char *const *argv,
+                  char *result, size_t result_size)
 {
   (void) argv;
+  (void) result;
+  (void) result_size;
 
   if (argc != 0)
     return FALSE;
@@ -213,9 +327,12 @@ lisp_save_buffer (int argc, const char *const *argv)
 }
 
 static int
-lisp_kill_emacs (int argc, const char *const *argv)
+lisp_kill_emacs (int argc, const char *const *argv,
+                 char *result, size_t result_size)
 {
   (void) argv;
+  (void) result;
+  (void) result_size;
 
   if (argc != 0)
     return FALSE;
@@ -223,7 +340,8 @@ lisp_kill_emacs (int argc, const char *const *argv)
 }
 
 static int
-lisp_define_command (int argc, const char *const *argv)
+lisp_define_command (int argc, const char *const *argv,
+                     char *result, size_t result_size)
 {
   int macro[NKBDM];
   char expression[LISP_EXPRESSION_SIZE];
@@ -233,6 +351,8 @@ lisp_define_command (int argc, const char *const *argv)
   size_t expression_length;
   size_t length = 0;
 
+  (void) result;
+  (void) result_size;
   if (argc != 2 || argv[0][0] == 0 || strlen (argv[0]) >= NXNAME
       || argv[1][0] == 0
       || kbdmip != NULL || kbdmop != NULL)
@@ -272,8 +392,11 @@ lisp_define_command (int argc, const char *const *argv)
 
 #ifdef COLOR
 static int
-lisp_set_syntax (int argc, const char *const *argv)
+lisp_set_syntax (int argc, const char *const *argv,
+                 char *result, size_t result_size)
 {
+  (void) result;
+  (void) result_size;
   if (argc != 1 || curbp == NULL)
     return FALSE;
   if (colorflag == FALSE)
@@ -286,11 +409,14 @@ lisp_set_syntax (int argc, const char *const *argv)
 #endif
 
 static int
-lisp_set_variable (int argc, const char *const *argv)
+lisp_set_variable (int argc, const char *const *argv,
+                   char *result, size_t result_size)
 {
   char *end;
   long value;
 
+  (void) result;
+  (void) result_size;
   if (argc != 2)
     return FALSE;
   value = strtol (argv[1], &end, 10);
@@ -311,42 +437,43 @@ lisp_set_variable (int argc, const char *const *argv)
 static int
 lisp_register_hosts (void)
 {
+  typedef struct LispHost
+  {
+    const char *name;
+    TinyLispHostFunction function;
+  } LispHost;
+
+  static const LispHost hosts[] = {
+    { "define-key", lisp_bind_key },
+    { "set-variable", lisp_set_variable },
+    { "execute-command", lisp_execute_command },
+    { "editor-cmd", lisp_execute_command },
+    { "get-char", lisp_get_char },
+    { "insert-char", lisp_insert_char },
+    { "get-line", lisp_get_line },
+    { "save-buffer", lisp_save_buffer },
+    { "kill-emacs", lisp_kill_emacs },
+    { "insert-string", lisp_insert_string },
+    { "goto-bol", lisp_goto_bol },
+    { "goto-eol", lisp_goto_eol },
+    { "forward-line", lisp_forward_line },
+    { "eobp", lisp_eobp },
+    { "define-lisp-command", lisp_define_command },
+#ifdef COLOR
+    { "set-syntax", lisp_set_syntax }
+#endif
+  };
   static int registered = FALSE;
+  size_t index;
 
   if (registered == TRUE)
     return TRUE;
-  registered = tiny_lisp_define_host ("define-key", lisp_bind_key) == 1
-               && tiny_lisp_define_host ("set-variable",
-                                         lisp_set_variable) == 1;
-  registered = registered != FALSE
-               && tiny_lisp_define_host ("execute-command",
-                                         lisp_execute_command) == 1;
-  registered = registered != FALSE
-               && tiny_lisp_define_host ("save-buffer",
-                                         lisp_save_buffer) == 1;
-  registered = registered != FALSE
-               && tiny_lisp_define_host ("kill-emacs",
-                                         lisp_kill_emacs) == 1;
-  registered = registered != FALSE
-               && tiny_lisp_define_host ("insert-string",
-                                         lisp_insert_string) == 1;
-  registered = registered != FALSE
-               && tiny_lisp_define_host ("goto-bol", lisp_goto_bol) == 1;
-  registered = registered != FALSE
-               && tiny_lisp_define_host ("goto-eol", lisp_goto_eol) == 1;
-  registered = registered != FALSE
-               && tiny_lisp_define_host ("forward-line",
-                                         lisp_forward_line) == 1;
-  registered = registered != FALSE
-               && tiny_lisp_define_host ("eobp", lisp_eobp) == 1;
-  registered = registered != FALSE
-               && tiny_lisp_define_host ("define-lisp-command",
-                                         lisp_define_command) == 1;
-#ifdef COLOR
-  registered = registered != FALSE
-               && tiny_lisp_define_host ("set-syntax", lisp_set_syntax) == 1;
-#endif
-  return registered;
+  for (index = 0; index < sizeof (hosts) / sizeof (hosts[0]); index++)
+    if (tiny_lisp_define_host (hosts[index].name,
+                               hosts[index].function) != 1)
+      return FALSE;
+  registered = TRUE;
+  return TRUE;
 }
 
 static int
