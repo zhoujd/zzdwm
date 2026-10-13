@@ -5,6 +5,7 @@
 #include "def.h"
 
 #ifdef COLOR
+
 #define SYNTAX_FEATURE_BLOCK_COMMENT        0x01
 #define SYNTAX_FEATURE_SLASH_COMMENTS       0x02
 #define SYNTAX_FEATURE_HASH_COMMENTS        0x04
