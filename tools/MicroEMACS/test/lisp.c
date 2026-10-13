@@ -63,6 +63,12 @@ ereadv (const char *prompt, char *buffer, int buffer_size, int flag, ...)
   return TRUE;
 }
 
+int
+egetfname (const char *prompt, char *buffer, int buffer_size)
+{
+  return ereadv (prompt, buffer, buffer_size, EFNEW | EFCR | EFFILE);
+}
+
 void
 eprintf (const char *format, ...)
 {
@@ -222,6 +228,12 @@ fftilde (char *arg)
   return arg;
 }
 
+void
+adjustcase (char *filename)
+{
+  (void) filename;
+}
+
 int
 syntax_set_buffer (BUFFER *bp, const char *filetype)
 {
@@ -293,6 +305,11 @@ main (void)
   assert (evaluate ("(set-variable \"tab-width\" \"0\")") == FALSE);
   assert (evaluate ("(set-variable \"tab-width\" \"8junk\")") == FALSE);
   assert (evaluate ("(set-variable \"tab-width\" \"8\" \"extra\")") == FALSE);
+  assert (lispfile ("runtime.L") == TRUE);
+  assert (lispfile ("runtime.Lisp") == TRUE);
+  assert (lispfile ("runtime.MEL") == TRUE);
+  assert (lispfile ("runtime.pro") == FALSE);
+  assert (lispfile (NULL) == FALSE);
 
   bound_key = 0;
   bound_symbol = NULL;
@@ -500,6 +517,19 @@ main (void)
     assert (tabsize == 9);
     assert (remove (".mel") == 0);
     assert (lispstartup ("missing.lisp") == FALSE);
+  }
+
+  {
+    FILE *file = fopen ("runtime.l", "wb");
+
+    assert (file != NULL);
+    assert (fputs ("(+ 1 7)", file) != EOF);
+    assert (fclose (file) == 0);
+    lisp_input = "runtime.l";
+    lisp_message[0] = 0;
+    assert (lispevalfile (FALSE, 1, 0) == TRUE);
+    assert (strcmp (lisp_message, "[Lisp: 8]") == 0);
+    assert (remove ("runtime.l") == 0);
   }
 
   puts ("lisp tests passed");

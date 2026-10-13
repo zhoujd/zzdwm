@@ -2395,6 +2395,10 @@ following command.
     a profile.  Execution of a profile does *not* stop if an error occurs (such
     as a failed search).
 
+When Lisp support is enabled, files ending in `.l`, `.lisp`, or `.mel`
+are evaluated as Lisp source instead of profiles.  Use **M-X read-lisp**
+to evaluate a Lisp file explicitly.
+
 You can display messages on the echo line\index{Echo line} during profile
 processing (or at any other time) with the following command.
 
@@ -2482,6 +2486,10 @@ name is `.mel` on UNIX-like systems and `me.l` on Windows. MicroEMACS looks
 for it in the current directory, then in the user's home directory.
 If no default file is found, startup continues normally. Use the **-l**
 option to load a specific Lisp file instead.
+
+At runtime, **C-x F** evaluates files ending in `.l`, `.lisp`, or `.mel`
+as Lisp source; other files are read as profiles.  The explicit
+**M-X read-lisp** command always evaluates a Lisp file.
 
     ; MicroEMACS Lisp startup file
     (set-variable "tab-width" 8)

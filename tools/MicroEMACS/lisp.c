@@ -4,6 +4,7 @@
 
 #include "def.h"
 #include "tinylisp.h"
+#include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -489,6 +490,31 @@ lisp_register_hosts (void)
 }
 
 static int
+lisp_has_suffix (const char *filename, const char *suffix)
+{
+  size_t filename_length = strlen (filename);
+  size_t suffix_length = strlen (suffix);
+  size_t offset;
+
+  if (filename_length < suffix_length)
+    return FALSE;
+  filename += filename_length - suffix_length;
+  for (offset = 0; offset < suffix_length; offset++)
+    if (tolower ((unsigned char) filename[offset]) != suffix[offset])
+      return FALSE;
+  return TRUE;
+}
+
+int
+lispfile (const char *filename)
+{
+  return filename != NULL
+         && (lisp_has_suffix (filename, ".l")
+             || lisp_has_suffix (filename, ".lisp")
+             || lisp_has_suffix (filename, ".mel"));
+}
+
+static int
 lisp_open_file (const char *filename, FILE **file)
 {
   char expanded[NFILEN];
@@ -542,8 +568,8 @@ lisp_read_file (const char *filename, char **source)
   return TRUE;
 }
 
-int
-lispstartup (const char *filename)
+static int
+lispload (const char *filename, int report)
 {
   char result[LISP_OUTPUT_SIZE];
   char *source;
@@ -565,7 +591,38 @@ lispstartup (const char *filename)
   free (source);
   if (status != TRUE)
     eprintf ("[Lisp error: %s]", result);
+  else if (report != FALSE)
+    eprintf ("[Lisp: %s]", result);
   return status;
+}
+
+int
+lispstartup (const char *filename)
+{
+  return lispload (filename, FALSE);
+}
+
+int
+lisprun (const char *filename)
+{
+  return lispload (filename, TRUE);
+}
+
+int
+lispevalfile (int f, int n, int k)
+{
+  char filename[NFILEN];
+  int status;
+
+  (void) f;
+  (void) n;
+  (void) k;
+
+  status = egetfname ("Read Lisp: ", filename, NFILEN);
+  if (status != TRUE)
+    return status;
+  adjustcase (filename);
+  return lisprun (filename);
 }
 
 int

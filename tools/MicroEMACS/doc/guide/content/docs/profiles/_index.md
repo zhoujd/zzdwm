@@ -213,6 +213,10 @@ following command.
     a profile.  Execution of a profile does *not* stop if an error occurs (such
     as a failed search).
 
+When Lisp support is enabled, files ending in `.l`, `.lisp`, or `.mel`
+are evaluated as Lisp source instead of profiles. Use **M-X read-lisp**
+to evaluate a Lisp file explicitly.
+
 You can display messages on the echo line during profile
 processing (or at any other time) with the following command.
 

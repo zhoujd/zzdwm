@@ -791,6 +791,9 @@ int insertmacro (int f, int n, int k);  /* Insert macro text in buffer. */
 #ifdef LISP
 int lispeval (int f, int n, int k);     /* Evaluate a Lisp expression.  */
 int lispstartup (const char *fname);    /* Load startup Lisp file.      */
+int lispfile (const char *fname);       /* Is this a Lisp source file?  */
+int lisprun (const char *fname);        /* Load and evaluate Lisp file. */
+int lispevalfile (int f, int n, int k); /* Read and evaluate Lisp file. */
 #endif
 
 /*

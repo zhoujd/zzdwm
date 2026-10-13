@@ -78,6 +78,10 @@ Use the **-l** option to load a specific Lisp file instead:
 me -l startup.lisp file.c
 ```
 
+At runtime, **C-x F** evaluates files ending in `.l`, `.lisp`, or `.mel`
+as Lisp source; other files are read as profiles. The explicit
+**M-X read-lisp** command always evaluates a Lisp file.
+
 The startup file may contain comments and multiple top-level expressions:
 
 ```lisp

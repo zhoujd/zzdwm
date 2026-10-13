@@ -45,6 +45,9 @@ Useful startup options include:
 On Linux, MicroEMACS also loads `./.mel` or `~/.mel` automatically when
 Lisp support is enabled. Windows uses `me.l`. Lisp configuration can
 define keys, set variables, and select syntax definitions.
+At runtime, `C-x F` evaluates `.l`, `.lisp`, and `.mel` files as Lisp;
+other files are read as profiles. `M-X read-lisp` always evaluates a
+Lisp file.
 
 ## Building
 

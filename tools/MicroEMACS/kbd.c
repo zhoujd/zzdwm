@@ -613,6 +613,10 @@ readprofile (int f, int n, int k)
   if ((s = egetfname ("Read profile: ", fname, NFILEN)) != TRUE)
     return (s);
   adjustcase (fname);
+#ifdef LISP
+  if (lispfile (fname))
+    return (lisprun (fname));
+#endif
   expanded_fname = fftilde (fname);
   s = ffpopen (expanded_fname);
   if (s != FIOSUC)

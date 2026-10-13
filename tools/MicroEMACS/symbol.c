@@ -274,6 +274,7 @@ KEY key[] = {
   {-1,                  bindtokey,         "bind-to-key"},
 #ifdef LISP
   {-1,                  lispeval,          "eval-lisp"},
+  {-1,                  lispevalfile,      "read-lisp"},
 #endif
   {-1,                  namemacro,         "name-macro"},
   {-1,                  fillword,          "ins-self-with-wrap"},
