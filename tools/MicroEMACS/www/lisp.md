@@ -19,6 +19,7 @@ These forms also provide access to MicroEMACS state and the current buffer:
 
     (define-key "C-x C-b" "buffer-menu")
     (set-variable "tab-width" 8)
+    (message "Done: %s" "ok")
     (set-syntax "sql")
     (execute-command "file-save")
     (get-char)
@@ -37,6 +38,8 @@ These forms also provide access to MicroEMACS state and the current buffer:
 **C-X**, **C-** and **M-** prefixes followed by one ASCII character.
 `set-variable` sets **tab-width** (or **tab-size**) or **fill-column** to a
 positive integer; a quoted string is also accepted for the value.
+`message` formats text with `%s`, `%S`, `%d`, and `%%`, displays it on the
+echo line, and returns the formatted string.
 `set-syntax` selects a syntax definition for the current buffer and is
 available when color is enabled. `execute-command`, also available as
 `editor-cmd`, runs a MicroEMACS command by name with an optional numeric

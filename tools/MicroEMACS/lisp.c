@@ -21,6 +21,8 @@
 #define LISP_CONFIG_FILE     ".mel"
 #endif
 
+static int lisp_message_displayed;
+
 /* Convert a MicroEMACS key name to its internal key code. */
 static int
 lisp_key_code (const char *name)
@@ -410,6 +412,85 @@ lisp_set_syntax (int argc, const char *const *argv,
 #endif
 
 static int
+lisp_append_text (char *result, size_t *length, size_t result_size,
+                  const char *text, size_t text_length)
+{
+  if (*length + text_length >= result_size)
+    return FALSE;
+  memcpy (result + *length, text, text_length);
+  *length += text_length;
+  return TRUE;
+}
+
+static int
+lisp_message_form (int argc, const char *const *argv,
+                   char *result, size_t result_size)
+{
+  size_t length = 0;
+  size_t index;
+  int argument;
+
+  if (argc < 1)
+    return FALSE;
+  argument = 1;
+  for (index = 0; argv[0][index] != 0; index++)
+    {
+      char character = argv[0][index];
+
+      if (character != '%')
+        {
+          if (lisp_append_text (result, &length, result_size,
+                                &character, 1) == FALSE)
+            return FALSE;
+          continue;
+        }
+      index++;
+      character = argv[0][index];
+      if (character == '%')
+        {
+          if (lisp_append_text (result, &length, result_size,
+                                "%", 1) == FALSE)
+            return FALSE;
+        }
+      else if (character == 's' || character == 'S')
+        {
+          if (argument >= argc
+              || lisp_append_text (result, &length, result_size,
+                                   argv[argument],
+                                   strlen (argv[argument])) == FALSE)
+            return FALSE;
+          argument++;
+        }
+      else if (character == 'd')
+        {
+          char number[32];
+          int value;
+          int number_length;
+
+          if (argument >= argc
+              || lisp_integer (argv[argument], &value) == FALSE)
+            return FALSE;
+          number_length = snprintf (number, sizeof (number), "%d", value);
+          if (number_length < 0
+              || (size_t) number_length >= sizeof (number)
+              || lisp_append_text (result, &length, result_size,
+                                   number, (size_t) number_length)
+                 == FALSE)
+            return FALSE;
+          argument++;
+        }
+      else
+        return FALSE;
+    }
+  if (argument != argc || length >= result_size)
+    return FALSE;
+  result[length] = 0;
+  eprintf ("%s", result);
+  lisp_message_displayed = TRUE;
+  return TINY_LISP_HOST_STRING;
+}
+
+static int
 lisp_set_variable (int argc, const char *const *argv,
                    char *result, size_t result_size)
 {
@@ -459,6 +540,7 @@ lisp_register_hosts (void)
   static const LispHost hosts[] = {
     { "define-key", lisp_bind_key },
     { "set-variable", lisp_set_variable },
+    { "message", lisp_message_form },
     { "execute-command", lisp_execute_command },
     { "editor-cmd", lisp_execute_command },
     { "get-char", lisp_get_char },
@@ -587,11 +669,12 @@ lispload (const char *filename, int report)
       return filename == NULL;
     }
 
+  lisp_message_displayed = FALSE;
   status = tiny_lisp_eval_source (source, result, sizeof (result));
   free (source);
   if (status != TRUE)
     eprintf ("[Lisp error: %s]", result);
-  else if (report != FALSE)
+  else if (report != FALSE && lisp_message_displayed == FALSE)
     eprintf ("[Lisp: %s]", result);
   return status;
 }
@@ -652,11 +735,12 @@ lispeval (int f, int n, int k)
       >= (int) sizeof (source))
     return FALSE;
 
+  lisp_message_displayed = FALSE;
   status = tiny_lisp_eval (source, result, sizeof (result));
-  if (status == TRUE)
-    eprintf ("[Lisp: %s]", result);
-  else
+  if (status != TRUE)
     eprintf ("[Lisp error: %s]", result);
+  else if (lisp_message_displayed == FALSE)
+    eprintf ("[Lisp: %s]", result);
   return status;
 }
 

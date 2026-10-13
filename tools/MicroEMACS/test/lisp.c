@@ -305,6 +305,28 @@ main (void)
   assert (evaluate ("(set-variable \"tab-width\" \"0\")") == FALSE);
   assert (evaluate ("(set-variable \"tab-width\" \"8junk\")") == FALSE);
   assert (evaluate ("(set-variable \"tab-width\" \"8\" \"extra\")") == FALSE);
+
+  {
+    char result[LISP_OUTPUT_SIZE];
+
+    lisp_message[0] = 0;
+    assert (tiny_lisp_eval ("(message \"hello %s\" \"world\")",
+                            result, sizeof (result)) == 1);
+    assert (strcmp (lisp_message, "hello world") == 0);
+    assert (strcmp (result, "\"hello world\"") == 0);
+    assert (tiny_lisp_eval ("(message \"count %d%%\" 3)",
+                            result, sizeof (result)) == 1);
+    assert (strcmp (lisp_message, "count 3%") == 0);
+    assert (strcmp (result, "\"count 3%\"") == 0);
+    assert (tiny_lisp_eval ("(message)", result, sizeof (result)) == 0);
+    assert (tiny_lisp_eval ("(message \"unused\" \"argument\")",
+                            result, sizeof (result)) == 0);
+    assert (tiny_lisp_eval ("(message \"bad %q\" \"argument\")",
+                            result, sizeof (result)) == 0);
+    assert (evaluate ("(message \"interactive %s\" \"test\")") == TRUE);
+    assert (strcmp (lisp_message, "interactive test") == 0);
+  }
+
   assert (lispfile ("runtime.L") == TRUE);
   assert (lispfile ("runtime.Lisp") == TRUE);
   assert (lispfile ("runtime.MEL") == TRUE);

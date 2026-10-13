@@ -10,7 +10,7 @@
 
 #define MEMORY_SIZE          131072UL
 #define ERROR_SIZE           256
-#define MAX_HOST_FUNCTIONS   16
+#define MAX_HOST_FUNCTIONS   24
 #define MAX_HOST_ARGS        8
 #define HOST_ARG_SIZE        32
 
