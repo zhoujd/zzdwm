@@ -517,6 +517,18 @@ main (void)
   expect_color_range (17, 26, CCOMMENT);
   assert (state == SYNTAX_STATE_NONE);
 
+  render_line (assembly, ".word 0 # don't zap any C reg variables", &state);
+  expect_length (39);
+  expect_color_range (0, 5, CPREPROC);
+  expect_color_range (5, 8, CTEXT);
+  expect_color_range (8, 39, CCOMMENT);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (assembly, "mov r0, #1", &state);
+  expect_length (10);
+  expect_all_colors (CTEXT);
+  assert (state == SYNTAX_STATE_NONE);
+
   render_line (assembly, "mov eax, 1 // note", &state);
   expect_length (18);
   expect_color_range (0, 11, CTEXT);

@@ -896,6 +896,18 @@ syntax_assembly_directive_end (const uchar *s, int len, int pos, int *end)
 }
 
 static int
+syntax_assembly_hash_comment (const uchar *s, int len, int pos)
+{
+  if (pos >= len || s[pos] != '#')
+    return FALSE;
+  if (pos == 0)
+    return TRUE;
+  if (s[pos - 1] != ' ' && s[pos - 1] != '\t')
+    return FALSE;
+  return pos + 1 >= len || s[pos + 1] == ' ' || s[pos + 1] == '\t';
+}
+
+static int
 syntax_plain_key_at_line_start (const uchar *s, int start)
 {
   int pos;
@@ -1657,6 +1669,15 @@ syntax_line (const SYNTAX *syntax,
                 vtputc_color (c, CCOMMENT);
               pos += ulen;
             }
+          continue;
+        }
+
+      if ((syntax->features & SYNTAX_FEATURE_ASSEMBLY) != 0
+          && c == '#'
+          && syntax_assembly_hash_comment (s, len, pos) != FALSE)
+        {
+          syntax_draw_range (s, pos, len, CCOMMENT, draw);
+          pos = len;
           continue;
         }
 
