@@ -476,6 +476,27 @@ main (void)
   assert (state == SYNTAX_STATE_NONE);
 
   state = SYNTAX_STATE_NONE;
+  render_line (c_syntax, "#include <stdio.h>", &state);
+  expect_length (18);
+  expect_color_range (0, 8, CPREPROC);
+  expect_color_at (8, CTEXT);
+  expect_color_range (9, 18, CSTRING);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (cpp, "#include <vector>", &state);
+  expect_length (17);
+  expect_color_range (0, 8, CPREPROC);
+  expect_color_at (8, CTEXT);
+  expect_color_range (9, 17, CSTRING);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (cpp, "#include \"local.h\"", &state);
+  expect_length (18);
+  expect_color_range (0, 8, CPREPROC);
+  expect_color_at (8, CTEXT);
+  expect_color_range (9, 18, CSTRING);
+  assert (state == SYNTAX_STATE_NONE);
+
   render_line (c_syntax, "/* comment */ int x;", &state);
   expect_length (20);
   expect_color_at (12, CCOMMENT);

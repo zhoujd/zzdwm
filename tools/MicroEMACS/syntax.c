@@ -27,6 +27,7 @@
 #define SYNTAX_FEATURE_DASH_COMMENTS        0x40000
 #define SYNTAX_FEATURE_LINE_KEYS            0x80000
 #define SYNTAX_FEATURE_LINE_KEYWORDS        0x100000
+#define SYNTAX_FEATURE_ANGLE_HEADERS        0x200000
 
 #define SYNTAX_STATE_C_COMMENT              1
 #define SYNTAX_STATE_PYTHON_DQUOTE          2
@@ -284,7 +285,7 @@ static const SYNTAX syntax_definitions[] = {
     cpp_extensions, sizeof (cpp_extensions) / sizeof (cpp_extensions[0]),
     NULL, 0,
     SYNTAX_FEATURE_BLOCK_COMMENT | SYNTAX_FEATURE_SLASH_COMMENTS
-      | SYNTAX_FEATURE_PREPROCESSOR
+      | SYNTAX_FEATURE_PREPROCESSOR | SYNTAX_FEATURE_ANGLE_HEADERS
   },
   {
     "C",
@@ -293,7 +294,7 @@ static const SYNTAX syntax_definitions[] = {
     c_extensions, sizeof (c_extensions) / sizeof (c_extensions[0]),
     NULL, 0,
     SYNTAX_FEATURE_BLOCK_COMMENT | SYNTAX_FEATURE_SLASH_COMMENTS
-      | SYNTAX_FEATURE_PREPROCESSOR
+      | SYNTAX_FEATURE_PREPROCESSOR | SYNTAX_FEATURE_ANGLE_HEADERS
   },
   {
     "Bash",
@@ -874,6 +875,41 @@ syntax_key_delimiter_after (const uchar *s, int len, int pos,
 }
 
 static int
+syntax_c_angle_header_end (const uchar *s, int len, int pos, int *end)
+{
+  int scan = 0;
+  int index;
+
+  while (scan < len && (s[scan] == ' ' || s[scan] == '\t'))
+    ++scan;
+  if (scan >= len || s[scan] != '#')
+    return FALSE;
+  ++scan;
+  while (scan < len && (s[scan] == ' ' || s[scan] == '\t'))
+    ++scan;
+  if (scan + (int) sizeof ("include") - 1 > len
+      || strncmp ((const char *) s + scan, "include",
+                  sizeof ("include") - 1) != 0)
+    return FALSE;
+  scan += sizeof ("include") - 1;
+  while (scan < len && (s[scan] == ' ' || s[scan] == '\t'))
+    ++scan;
+  if (scan != pos || pos >= len || s[pos] != '<')
+    return FALSE;
+
+  *end = len;
+  for (index = pos + 1; index < len; ++index)
+    {
+      if (s[index] == '>')
+        {
+          *end = index + 1;
+          break;
+        }
+    }
+  return TRUE;
+}
+
+static int
 syntax_quoted_end (const uchar *s, int len, int start)
 {
   uchar quote = s[start];
@@ -1261,6 +1297,19 @@ syntax_line (const SYNTAX *syntax,
           syntax_draw_range (s, 0, len, CPREPROC, draw);
           pos = len;
           continue;
+        }
+
+      if (c == '<'
+          && (syntax->features & SYNTAX_FEATURE_ANGLE_HEADERS) != 0)
+        {
+          int end;
+
+          if (syntax_c_angle_header_end (s, len, pos, &end) != FALSE)
+            {
+              syntax_draw_range (s, pos, end, CSTRING, draw);
+              pos = end;
+              continue;
+            }
         }
 
       if ((syntax->features & SYNTAX_FEATURE_TRIPLE_STRINGS) != 0
