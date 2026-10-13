@@ -123,6 +123,7 @@ int
 main (void)
 {
   const SYNTAX *cpp = syntax_for_extension (".cpp");
+  const SYNTAX *assembly = syntax_for_extension (".s");
   const SYNTAX *lisp = syntax_for_extension (".lisp");
   const SYNTAX *elisp = syntax_for_extension (".el");
   const SYNTAX *scheme = syntax_for_extension (".scm");
@@ -145,6 +146,8 @@ main (void)
           && yaml != NULL && toml != NULL && cmake != NULL
           && makefile != NULL && sql != NULL && dockerfile != NULL);
   assert (syntax_for_name (".C") == cpp);
+  assert (syntax_for_name (".S") == assembly);
+  assert (syntax_for_name ("test.asm") == assembly);
   assert (syntax_for_name (".c") == c_syntax);
   assert (syntax_for_name (".profile") == bash);
   assert (syntax_for_name (".emacs") == elisp);
@@ -179,6 +182,11 @@ main (void)
   assert (syntax_set_buffer (&buffer, "cpp") == TRUE);
   assert (syntax_for_buffer (&buffer) == cpp);
   assert (strcmp (syntax_name_for_buffer (&buffer), "C++") == 0);
+  assert (syntax_set_buffer (&buffer, "assembly") == TRUE);
+  assert (syntax_for_buffer (&buffer) == assembly);
+  assert (strcmp (syntax_name_for_buffer (&buffer), "Assembly") == 0);
+  assert (syntax_set_buffer (&buffer, "asm") == TRUE);
+  assert (syntax_for_buffer (&buffer) == assembly);
   assert (syntax_set_buffer (&buffer, "c++") == TRUE);
   assert (syntax_for_buffer (&buffer) == cpp);
   assert (syntax_set_buffer (&buffer, "json") == TRUE);
@@ -224,6 +232,8 @@ main (void)
   colorflag = TRUE;
   assert (cmode (FALSE, 1, 0) == TRUE);
   assert (syntax_for_buffer (&buffer) == c_syntax);
+  assert (assemblymode (FALSE, 1, 0) == TRUE);
+  assert (syntax_for_buffer (&buffer) == assembly);
   assert (sqlmode (FALSE, 1, 0) == TRUE);
   assert (syntax_for_buffer (&buffer) == sql);
   assert (strcmp (syntax_name_for_buffer (&buffer), "SQL") == 0);
@@ -476,6 +486,49 @@ main (void)
   assert (state == SYNTAX_STATE_NONE);
 
   state = SYNTAX_STATE_NONE;
+  render_line (assembly, ".text", &state);
+  expect_length (5);
+  expect_all_colors (CPREPROC);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (assembly, "main:", &state);
+  expect_length (5);
+  expect_all_colors (CPREPROC);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (assembly, ".L1:", &state);
+  expect_length (4);
+  expect_all_colors (CPREPROC);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (assembly, "1:", &state);
+  expect_length (2);
+  expect_all_colors (CPREPROC);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (assembly, "msg: .asciz \"hi\" ; comment", &state);
+  expect_length (26);
+  expect_color_range (0, 4, CPREPROC);
+  expect_color_at (4, CTEXT);
+  expect_color_range (5, 11, CPREPROC);
+  expect_color_at (11, CTEXT);
+  expect_color_range (12, 16, CSTRING);
+  expect_color_at (16, CTEXT);
+  expect_color_range (17, 26, CCOMMENT);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (assembly, "mov eax, 1 // note", &state);
+  expect_length (18);
+  expect_color_range (0, 11, CTEXT);
+  expect_color_range (11, 18, CCOMMENT);
+  assert (state == SYNTAX_STATE_NONE);
+
+  render_line (assembly, "%macro MyMacro 0", &state);
+  expect_length (16);
+  expect_color_range (0, 6, CPREPROC);
+  expect_color_range (6, 16, CTEXT);
+  assert (state == SYNTAX_STATE_NONE);
+
   render_line (c_syntax, "#include <stdio.h>", &state);
   expect_length (18);
   expect_color_range (0, 8, CPREPROC);

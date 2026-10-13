@@ -28,6 +28,7 @@
 #define SYNTAX_FEATURE_LINE_KEYS            0x80000
 #define SYNTAX_FEATURE_LINE_KEYWORDS        0x100000
 #define SYNTAX_FEATURE_ANGLE_HEADERS        0x200000
+#define SYNTAX_FEATURE_ASSEMBLY             0x400000
 
 #define SYNTAX_STATE_C_COMMENT              1
 #define SYNTAX_STATE_PYTHON_DQUOTE          2
@@ -219,6 +220,7 @@ static const char *const sql_keywords[] = {
   "union", "update", "values", "when", "where"
 };
 
+static const char *const assembly_extensions[] = { ".s", ".asm" };
 static const char *const cpp_extensions[] = {
   ".cpp", ".cc", ".cxx", ".C", ".hpp", ".hh", ".hxx", ".ipp", ".tcc"
 };
@@ -276,6 +278,7 @@ static const char *const cmake_filetypes[] = { "cmake" };
 static const char *const makefile_filetypes[] = { "makefile", "make" };
 static const char *const sql_filetypes[] = { "sql" };
 static const char *const dockerfile_filetypes[] = { "dockerfile" };
+static const char *const assembly_filetypes[] = { "assembly", "asm" };
 
 static const SYNTAX syntax_definitions[] = {
   {
@@ -303,6 +306,17 @@ static const SYNTAX syntax_definitions[] = {
     bash_extensions, sizeof (bash_extensions) / sizeof (bash_extensions[0]),
     bash_shebangs, sizeof (bash_shebangs) / sizeof (bash_shebangs[0]),
     SYNTAX_FEATURE_HASH_COMMENTS | SYNTAX_FEATURE_BASH_VARIABLES
+  },
+  {
+    "Assembly",
+    assembly_filetypes,
+    sizeof (assembly_filetypes) / sizeof (assembly_filetypes[0]),
+    NULL, 0,
+    assembly_extensions,
+    sizeof (assembly_extensions) / sizeof (assembly_extensions[0]),
+    NULL, 0,
+    SYNTAX_FEATURE_BLOCK_COMMENT | SYNTAX_FEATURE_SLASH_COMMENTS
+      | SYNTAX_FEATURE_SEMICOLON_COMMENTS | SYNTAX_FEATURE_ASSEMBLY
   },
   {
     "Python",
@@ -842,6 +856,43 @@ syntax_word_at_line_start (const uchar *s, int start)
   while (pos < start && (s[pos] == ' ' || s[pos] == '\t'))
     ++pos;
   return pos == start;
+}
+
+static int
+syntax_assembly_label_end (const uchar *s, int len, int pos, int *end)
+{
+  int scan = pos;
+
+  if (syntax_word_at_line_start (s, pos) == FALSE
+      || (is_identifier_start ((wchar_t) s[pos]) == FALSE
+          && (s[pos] < '0' || s[pos] > '9')))
+    return FALSE;
+  while (scan < len && is_identifier_char (s[scan]) != FALSE)
+    ++scan;
+  if (scan >= len || s[scan] != ':')
+    return FALSE;
+
+  *end = scan + 1;
+  return TRUE;
+}
+
+static int
+syntax_assembly_directive_end (const uchar *s, int len, int pos, int *end)
+{
+  int scan = pos + 1;
+
+  if ((s[pos] != '.' && s[pos] != '%')
+      || (s[pos] == '%' && syntax_word_at_line_start (s, pos) == FALSE)
+      || scan >= len
+      || is_identifier_start ((wchar_t) s[scan]) == FALSE)
+    return FALSE;
+  while (scan < len && is_identifier_char (s[scan]) != FALSE)
+    ++scan;
+  if (scan < len && s[scan] == ':')
+    ++scan;
+
+  *end = scan;
+  return TRUE;
 }
 
 static int
@@ -1609,6 +1660,34 @@ syntax_line (const SYNTAX *syntax,
           continue;
         }
 
+      if ((syntax->features & SYNTAX_FEATURE_ASSEMBLY) != 0
+          && (c == '.' || c == '%'))
+        {
+          int end;
+
+          if (syntax_assembly_directive_end (s, len, pos, &end) != FALSE)
+            {
+              syntax_draw_range (s, pos, end, CPREPROC, draw);
+              pos = end;
+              continue;
+            }
+        }
+
+      if ((syntax->features & SYNTAX_FEATURE_ASSEMBLY) != 0
+          && syntax_word_at_line_start (s, pos) != FALSE
+          && (is_identifier_start (c) != FALSE
+              || (c >= '0' && c <= '9')))
+        {
+          int end;
+
+          if (syntax_assembly_label_end (s, len, pos, &end) != FALSE)
+            {
+              syntax_draw_range (s, pos, end, CPREPROC, draw);
+              pos = end;
+              continue;
+            }
+        }
+
       if ((syntax->features & SYNTAX_FEATURE_BASH_VARIABLES) != 0
           && c == '$')
         {
@@ -1963,6 +2042,15 @@ cppmode (int f, int n, int k)
   (void) n;
   (void) k;
   return set_syntax_mode ("cpp");
+}
+
+int
+assemblymode (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  return set_syntax_mode ("assembly");
 }
 
 int

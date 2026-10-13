@@ -739,6 +739,7 @@ void syntax_cache_line_read (BUFFER *bp, LINE *lp);
 void syntax_cache_read_finished (BUFFER *bp, LINE *next, int old_state);
 int cmode (int f, int n, int k);
 int cppmode (int f, int n, int k);
+int assemblymode (int f, int n, int k);
 int bashmode (int f, int n, int k);
 int pythonmode (int f, int n, int k);
 int markdownmode (int f, int n, int k);

@@ -298,6 +298,7 @@ KEY key[] = {
   {-1,                  setcolor,          "set-color"},
   {-1,                  cmode,             "c-mode"},
   {-1,                  cppmode,           "cpp-mode"},
+  {-1,                  assemblymode,      "assembly-mode"},
   {-1,                  bashmode,          "bash-mode"},
   {-1,                  pythonmode,        "python-mode"},
   {-1,                  markdownmode,      "markdown-mode"},
