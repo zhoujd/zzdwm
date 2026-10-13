@@ -50,6 +50,7 @@
  */
 #include "def.h"
 #include <termcap.h>
+#include <wchar.h>
 
 #define	BEL 0x07    /* BEL character.               */
 #define	LF  0x0A    /* Line feed.                   */
@@ -537,10 +538,24 @@ ttcolor (int color)
           switch (color)
             {
             case CMODE:
-              if (terminal_colors >= 256)
-                ttputs (L"\033[38;5;15;48;5;22m", 18);
-              else
-                ttputs (L"\033[30;42m", 8);
+              {
+                wchar_t sequence[32];
+                int length;
+
+                if (terminal_colors >= 256)
+                  length = swprintf (sequence,
+                                     sizeof (sequence) / sizeof (sequence[0]),
+                                     L"\033[38;5;%d;48;5;%dm",
+                                     modefg256, modebg256);
+                else
+                  length = swprintf (sequence,
+                                     sizeof (sequence) / sizeof (sequence[0]),
+                                     L"\033[%d;%dm",
+                                     30 + (modefg & 7),
+                                     40 + (modebg & 7));
+                if (length > 0)
+                  ttputs (sequence, length);
+              }
               break;
             case CKEYWORD:
               ttputs (L"\033[1;34m", 7);
@@ -580,6 +595,21 @@ ttcolor (int color)
       tthue = color;		/* Save the color.      */
     }
 }
+
+#ifdef COLOR
+/*
+ * Termcap builds the escape sequence from the mode line variables when the
+ * mode line is drawn, so no initialization is needed here.
+ */
+void
+ttsetmodecolor (int fg256, int bg256, int fg, int bg)
+{
+  (void) fg256;
+  (void) bg256;
+  (void) fg;
+  (void) bg;
+}
+#endif
 
 /*
  * This routine is called by the

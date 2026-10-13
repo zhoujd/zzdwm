@@ -409,6 +409,31 @@ lisp_set_syntax (int argc, const char *const *argv,
   syntax_mode_changed (curbp);
   return TRUE;
 }
+
+static int
+lisp_set_modeline_color (int argc, const char *const *argv,
+                         char *result, size_t result_size)
+{
+  int colors[4];
+  int index;
+
+  (void) result;
+  (void) result_size;
+  if (argc != 4)
+    return FALSE;
+  for (index = 0; index < 4; index++)
+    if (lisp_integer (argv[index], &colors[index]) == FALSE
+        || colors[index] < 0 || colors[index] > 255)
+      return FALSE;
+
+  modefg256 = colors[0];
+  modebg256 = colors[1];
+  modefg = colors[2];
+  modebg = colors[3];
+  ttsetmodecolor (modefg256, modebg256, modefg, modebg);
+  updatemode ();
+  return TRUE;
+}
 #endif
 
 static int
@@ -555,6 +580,7 @@ lisp_register_hosts (void)
     { "eobp", lisp_eobp },
     { "define-lisp-command", lisp_define_command },
 #ifdef COLOR
+    { "set-modeline-color", lisp_set_modeline_color },
     { "set-syntax", lisp_set_syntax }
 #endif
   };

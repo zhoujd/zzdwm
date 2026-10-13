@@ -9,6 +9,10 @@
 int fillcol;
 int tabsize;
 int colorflag;
+int modefg256 = 15;
+int modebg256 = 22;
+int modefg = 0;
+int modebg = 2;
 BUFFER *curbp;
 EWINDOW *curwp;
 int *kbdmip;
@@ -40,6 +44,8 @@ static SYMBOL macro_symbol = { NULL, 0, "test-macro", NULL, command_macro };
 static BUFFER syntax_buffer;
 static char syntax_filetype[32];
 static BUFFER *syntax_mode_buffer;
+static int tt_mode_color_called;
+static int updatemode_called;
 static EWINDOW eobp_window;
 static BUFFER eobp_buffer;
 static LINE eobp_line;
@@ -77,6 +83,22 @@ eprintf (const char *format, ...)
   va_start (args, format);
   vsnprintf (lisp_message, sizeof (lisp_message), format, args);
   va_end (args);
+}
+
+void
+ttsetmodecolor (int fg256, int bg256, int fg, int bg)
+{
+  tt_mode_color_called++;
+  assert (fg256 == modefg256);
+  assert (bg256 == modebg256);
+  assert (fg == modefg);
+  assert (bg == modebg);
+}
+
+void
+updatemode (void)
+{
+  updatemode_called++;
 }
 
 SYMBOL *
@@ -435,6 +457,20 @@ main (void)
   assert (syntax_mode_buffer == &syntax_buffer);
   colorflag = FALSE;
   assert (evaluate ("(set-syntax \"sql\")") == TRUE);
+  colorflag = TRUE;
+  assert (evaluate ("(set-modeline-color 15 22 0 2)") == TRUE);
+  assert (modefg256 == 15 && modebg256 == 22);
+  assert (modefg == 0 && modebg == 2);
+  assert (tt_mode_color_called == 1 && updatemode_called == 1);
+  colorflag = FALSE;
+  assert (evaluate ("(set-modeline-color 16 23 1 3)") == TRUE);
+  assert (modefg256 == 16 && modebg256 == 23);
+  assert (modefg == 1 && modebg == 3);
+  assert (tt_mode_color_called == 2 && updatemode_called == 2);
+  colorflag = TRUE;
+  assert (evaluate ("(set-modeline-color 15 22 0)") == FALSE);
+  assert (evaluate ("(set-modeline-color 15 22 0 256)") == FALSE);
+  assert (evaluate ("(set-modeline-color 15 22 0 -1)") == FALSE);
 
   assert (evaluate ("(+ 1 2)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: 3]") == 0);

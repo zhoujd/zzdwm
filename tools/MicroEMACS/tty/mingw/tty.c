@@ -36,6 +36,25 @@ static int ttattr;                 /* creen attributes             */
 static int attinv  = 0x70;         /* attributes for inverse video */
        int attnorm = 7;            /* attributes for normal video  */
 
+static const int windows_colors[16] = {
+  0,
+  FOREGROUND_RED,
+  FOREGROUND_GREEN,
+  FOREGROUND_RED | FOREGROUND_GREEN,
+  FOREGROUND_BLUE,
+  FOREGROUND_RED | FOREGROUND_BLUE,
+  FOREGROUND_GREEN | FOREGROUND_BLUE,
+  FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
+  FOREGROUND_INTENSITY,
+  FOREGROUND_RED | FOREGROUND_INTENSITY,
+  FOREGROUND_GREEN | FOREGROUND_INTENSITY,
+  FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY,
+  FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+  FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+  FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+  FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY
+};
+
 extern int tttop;
 extern int ttbot;
 extern int tthue;
@@ -288,7 +307,8 @@ ttcolor (int color)
       switch (color)
         {
         case CMODE:
-          ttattr = BACKGROUND_GREEN;
+          ttattr = (windows_colors[modebg & 15] << 4)
+                   | windows_colors[modefg & 15];
           break;
         case CKEYWORD:
           ttattr = (attnorm & 0xF0) | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
@@ -311,6 +331,21 @@ ttcolor (int color)
 #endif
   ttattr = color == CMODE ? attinv : attnorm;
 }
+
+#ifdef COLOR
+/*
+ * The Windows console builds attributes from the mode line variables when
+ * the mode line is drawn, so no initialization is needed here.
+ */
+void
+ttsetmodecolor (int fg256, int bg256, int fg, int bg)
+{
+  (void) fg256;
+  (void) bg256;
+  (void) fg;
+  (void) bg;
+}
+#endif
 
 /*
  * Resize the screen.  Pass the flag (0 or 1) to qvinit.  The flag

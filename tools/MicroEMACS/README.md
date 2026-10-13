@@ -12,7 +12,8 @@ and Windows while keeping the executable small and fast.
 * Optional color and Vim-style line numbers.
 * Syntax highlighting for C, C++, Bash, Python, Markdown, JSON, YAML,
   TOML, CMake, Makefile, Dockerfile, Lisp, Emacs Lisp, Scheme, and SQL.
-* Tiny Lisp extensions, editor command bridges, and Lisp startup configuration.
+* Tiny Lisp extensions, editor command bridges, Lisp startup configuration,
+  and configurable mode-line colors.
 * Tags, cscope, grep, GCC error navigation, and ispell integration.
 * Linux terminal support through ncursesw or termcap.
 * Native Windows console support built with MinGW-w64.

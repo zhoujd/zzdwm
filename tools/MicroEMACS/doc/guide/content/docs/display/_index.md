@@ -18,6 +18,17 @@ ncursesw or termcap colors, and the MinGW build uses the native Windows
 console API. Mode lines are rendered with a distinct color when color
 output is active.
 
+When Lisp support is also enabled, configure the mode line colors in a Lisp
+startup file with:
+
+```lisp
+(set-modeline-color 15 22 0 2)
+```
+
+The first two values are the foreground and background 256-color indexes; the
+last two are the fallback colors for 8/16-color terminals and the Windows
+console.
+
 Start MicroEMACS with `-C` to disable color for a session:
 
 ```

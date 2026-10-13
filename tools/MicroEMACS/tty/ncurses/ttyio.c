@@ -84,9 +84,9 @@ ttopen (void)
       init_pair (3, COLOR_CYAN, -1);
       init_pair (4, COLOR_MAGENTA, -1);
       if (COLORS >= 256)
-        init_pair (5, 15, 22);
+        init_pair (5, modefg256, modebg256);
       else
-        init_pair (5, COLOR_BLACK, COLOR_GREEN);
+        init_pair (5, modefg % COLORS, modebg % COLORS);
     }
 #endif
   keypad (stdscr, TRUE);	/* enable keyboard mapping */

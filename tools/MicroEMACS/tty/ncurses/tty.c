@@ -252,6 +252,22 @@ ttcolor (int color)
   bkgdset (' ' | (color == CMODE ? A_REVERSE : A_NORMAL));
 }
 
+#ifdef COLOR
+/*
+ * Update the mode line color pair after Lisp configuration changes it.
+ */
+void
+ttsetmodecolor (int fg256, int bg256, int fg, int bg)
+{
+  if (has_colors () == FALSE)
+    return;
+  if (COLORS >= 256)
+    init_pair (5, fg256 % COLORS, bg256 % COLORS);
+  else
+    init_pair (5, fg % COLORS, bg % COLORS);
+}
+#endif
+
 /*
  * This routine is called by the
  * "refresh the screen" command to try and resize

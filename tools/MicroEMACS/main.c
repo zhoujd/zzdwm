@@ -112,6 +112,10 @@ int casefold = TRUE;               /* True if searches fold case   */
 int numberflag = FALSE;            /* True if line numbers shown   */
 #ifdef COLOR
 int colorflag = TRUE;              /* True if colors are enabled   */
+int modefg256 = 15;                /* 256-color mode line foreground */
+int modebg256 = 22;                /* 256-color mode line background */
+int modefg = 0;                    /* Basic mode line foreground    */
+int modebg = 2;                    /* Basic mode line background    */
 #endif
 int fillcol = 70;                  /* Fill column for paragraphs.  */
 int tabsize = 8;                   /* No. of columns for a tab     */

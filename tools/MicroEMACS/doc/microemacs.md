@@ -2441,6 +2441,7 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (set-variable "tab-width" 8)
     (message "Done: %s" "ok")
     (set-syntax "sql")
+    (set-modeline-color 15 22 0 2)
     (execute-command "file-save")
     (get-char)
     (get-line)
@@ -2465,6 +2466,10 @@ available when color is enabled. `execute-command`, also available as
 `editor-cmd`, runs a MicroEMACS command by name with an optional numeric
 argument; use direct buffer forms when a command would otherwise prompt for
 text.
+`set-modeline-color` customizes the mode line when color is enabled. The
+first two arguments are the foreground and background 256-color indexes; the
+last two are the fallback colors for 8/16-color terminals and the Windows
+console. All color indexes must be from 0 through 255.
 
 `get-char` returns the UTF-8 character under dot as a string, or `nil` at the
 end of a line. `get-line` returns the current line as a string without the
@@ -2522,6 +2527,17 @@ Color support is compiled in with the `COLOR` macro. The Linux build uses
 ncursesw or termcap colors, and the MinGW build uses the native Windows
 console API. Mode lines are rendered with a distinct color when color output
 is active.
+
+When Lisp support is also enabled, configure the mode line colors in a Lisp
+startup file with:
+
+```lisp
+(set-modeline-color 15 22 0 2)
+```
+
+The first two values are the foreground and background 256-color indexes; the
+last two are the fallback colors for 8/16-color terminals and the Windows
+console.
 
 Start MicroEMACS with `-C` to disable color for a session:
 
