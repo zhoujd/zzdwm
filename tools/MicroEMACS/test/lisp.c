@@ -438,6 +438,14 @@ main (void)
 
   assert (evaluate ("(+ 1 2)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: 3]") == 0);
+  assert (evaluate ("(+ .1 .2)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: 0.3]") == 0);
+  assert (evaluate ("(- 5 3.2 .6)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: 1.2]") == 0);
+  assert (evaluate ("(/ 1 4)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: 0.25]") == 0);
+  assert (evaluate ("(< 2 4 6.8)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: t]") == 0);
   assert (evaluate ("(defun plus1 (x) (+ x 1))") == TRUE);
   assert (evaluate ("(plus1 2)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: 3]") == 0);

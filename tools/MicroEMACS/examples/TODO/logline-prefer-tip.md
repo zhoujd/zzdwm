@@ -29,4 +29,8 @@ Implement this cleanly by mapping just four core primitive functions inside your
 echo line, and returns the formatted string. It supports `%s`, `%S`, `%d`,
 and `%%`. The existing `echo` editor command remains available for profiles.
 
-## Enabling the Native Floating-Point System in Lisp Extend
+## Enabling the Native Floating-Point System in Lisp Extend [DONE]
+
+Tiny Lisp already stores numbers as native `double` values. Decimal literals,
+arithmetic, and comparisons work without an additional numeric subsystem; for
+example, `(+ .1 .2)` evaluates to `0.3`.
