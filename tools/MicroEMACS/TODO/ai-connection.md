@@ -9,7 +9,7 @@ By embracing a binary profile slightly over **400 KB**, we unlock full **64-bit 
 
 Instead of linking heavy third-party networking dependencies (like `libcurl`), we implement a direct POSIX socket layer to communicate with a local **Ollama** AI service. This preserves our fast, lightweight execution profile while introducing advanced scripting flexibility for students.
 
-### 📂 Structural Blueprint
+### Structural Blueprint
 ```text
   [ C Text Buffer ] <---> [ tiny-lisp Evaluation Engine ]
                                    | (NaN-Boxed Floats)
@@ -85,7 +85,7 @@ double me_ai_complete(const char *prompt, char *output_buffer, int max_len) {
 }
 ```
 
-### 🔗 Mapping into `tinylisp.c`
+### Mapping into `tinylisp.c`
 Register the primitive function inside the core primitive structural dispatch table of the Robert van Engelen NaN-boxed layout:
 
 ```c
