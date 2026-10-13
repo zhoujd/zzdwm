@@ -888,6 +888,24 @@ Object *primitiveFboundp(Object **args, GC_PARAM) {
           || object->type == TYPE_HOST) ? t : nil;
 }
 
+Object *primitiveCountChar(Object **args, GC_PARAM) {
+  GC_TRACE(gcText, (*args)->car);
+  GC_TRACE(gcTarget, (*args)->cdr->car);
+  size_t count = 0;
+
+  if ((*gcText)->type != TYPE_STRING)
+    exceptionWithObject(*gcText, "is not a string");
+  if ((*gcTarget)->type != TYPE_STRING
+      || strlen((*gcTarget)->string) != 1)
+    exceptionWithObject(*gcTarget, "is not a one-character string");
+
+  for (const char *text = (*gcText)->string; *text != 0; text++)
+    if (*text == (*gcTarget)->string[0])
+      count++;
+
+  return newNumber((double) count, GC_ROOTS);
+}
+
 Object *primitiveCar(Object **args, GC_PARAM) {
   Object *first = (*args)->car;
 
@@ -1007,6 +1025,7 @@ Primitive primitives[] = {
   { "atom",   1,  1, primitiveAtom         },
   { "eq",     2,  2, primitiveEq           },
   { "fboundp", 1, 1, primitiveFboundp      },
+  { "count-char", 2, 2, primitiveCountChar },
   { "car",    1,  1, primitiveCar          },
   { "cdr",    1,  1, primitiveCdr          },
   { "cons",   2,  2, primitiveCons         },

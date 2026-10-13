@@ -2445,6 +2445,8 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (execute-command "file-save")
     (get-char)
     (get-line)
+    (get-line -1)
+    (count-char "{}}" "{")
     (insert-string "text")
     (insert-char "X")
     (save-buffer)
@@ -2473,7 +2475,9 @@ console. All color indexes must be from 0 through 255.
 
 `get-char` returns the UTF-8 character under dot as a string, or `nil` at the
 end of a line. `get-line` returns the current line as a string without the
-newline; the current line must fit in the host result buffer. `insert-string`
+newline; with a numeric argument, it returns a line relative to dot and
+returns `nil` outside the buffer. `count-char` returns the number of
+occurrences of a one-character string in another string. `insert-string`
 inserts a string at dot, while `insert-char` inserts one character given as a
 Unicode code point or a one-character string. `goto-bol`, `goto-eol`, and
 `forward-line` move dot without replaying keys. `save-buffer` and `kill-emacs`
@@ -2511,6 +2515,12 @@ that function as the `format-log-line` command, binds it to `M-L`, formats
 three lines, saves the file, and quits:
 
     me -l examples/logline.l filename
+
+The `examples/smart-indent.l` file is a startup-ready auto-indentation
+example. It counts unmatched braces with `count-char`, scans surrounding lines
+with relative `get-line` forms, and binds **Enter** to `smart-indent`:
+
+    me -l examples/smart-indent.l examples/smart-indent-input.c
 
 # Display Features
 

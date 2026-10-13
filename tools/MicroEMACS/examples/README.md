@@ -51,3 +51,20 @@ The expected result is the same as the Lisp example.
 `logline-prefer.l` is the same editing example with explicit fallbacks for
 `save-buffer` and `kill-emacs`. It is useful when a startup configuration may
 not have registered those Lisp bridge commands.
+
+## Lisp-driven auto-indentation
+
+`smart-indent.l` is a startup-ready Lisp configuration. It defines the
+`smart-indent` command, counts unmatched braces on preceding lines with the
+built-in `count-char` primitive, and binds **Enter** (`C-m`) to contextual
+indentation.
+
+Use it directly for interactive testing:
+
+```sh
+./me -l examples/smart-indent.l examples/smart-indent-input.c
+```
+
+Move dot to the end of the `if (x) {` line and press **Enter**. The new line is
+indented by eight spaces. Copy the file to `.mel` or `me.l` to use it as your
+normal Lisp startup configuration.

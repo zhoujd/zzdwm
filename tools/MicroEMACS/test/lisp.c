@@ -28,6 +28,7 @@ static int goto_bol_called;
 static int goto_eol_called;
 static int forward_line_flag;
 static int forward_line_count;
+static int forward_line_status = TRUE;
 static int save_buffer_called;
 static int kill_emacs_called;
 static int undo_start_count;
@@ -151,7 +152,7 @@ forwline (int flag, int count, int key)
   (void) key;
   forward_line_flag = flag;
   forward_line_count = count;
-  return TRUE;
+  return forward_line_status;
 }
 
 int
@@ -401,6 +402,10 @@ main (void)
   assert (forward_line_flag == FALSE && forward_line_count == 1);
   assert (evaluate ("(forward-line -2)") == TRUE);
   assert (forward_line_flag == TRUE && forward_line_count == -2);
+  forward_line_status = FALSE;
+  assert (evaluate ("(forward-line -1)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: nil]") == 0);
+  forward_line_status = TRUE;
 
   set_primitive_line ("héllo");
   assert (evaluate ("(get-char)") == TRUE);
@@ -410,6 +415,12 @@ main (void)
   assert (strcmp (lisp_message, "[Lisp: \"é\"]") == 0);
   assert (evaluate ("(get-line)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: \"héllo\"]") == 0);
+  assert (evaluate ("(get-line 0)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: \"héllo\"]") == 0);
+  assert (evaluate ("(get-line 1)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: nil]") == 0);
+  assert (evaluate ("(get-line -1)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: nil]") == 0);
   primitive_window.w_dot.o = wllength (primitive_line);
   assert (evaluate ("(get-char)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: nil]") == 0);
@@ -506,6 +517,12 @@ main (void)
 
   assert (evaluate ("(let ((x 2) (y 3)) (* x y))") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: 6]") == 0);
+  assert (evaluate ("(count-char \"a{b}{\" \"{\")") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: 2]") == 0);
+  assert (evaluate ("(+ (count-char \"{}{\" \"{\") 1)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: 3]") == 0);
+  assert (evaluate ("(count-char \"x\" \"xy\")") == FALSE);
+  assert (evaluate ("(count-char 1 \"x\")") == FALSE);
   assert (evaluate ("(let ((x 0))"
                    " (dotimes (i 3) (setq x (+ x 1))) x)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: 3]") == 0);

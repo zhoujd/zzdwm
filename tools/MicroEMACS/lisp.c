@@ -202,6 +202,7 @@ lisp_forward_line (int argc, const char *const *argv,
                    char *result, size_t result_size)
 {
   int count = 1;
+  int status;
 
   (void) result;
   (void) result_size;
@@ -209,7 +210,8 @@ lisp_forward_line (int argc, const char *const *argv,
     return FALSE;
   if (argc == 1 && lisp_integer (argv[0], &count) == FALSE)
     return FALSE;
-  return forwline (argc == 1, count, KRANDOM);
+  status = forwline (argc == 1, count, KRANDOM);
+  return status == TRUE ? TRUE : TINY_LISP_HOST_NIL;
 }
 
 static int
@@ -256,14 +258,28 @@ lisp_get_line (int argc, const char *const *argv,
                char *result, size_t result_size)
 {
   LINE *line;
+  int offset = 0;
   int length;
 
-  (void) argv;
-  if (argc != 0 || curwp == NULL || curbp == NULL)
+  if (argc > 1 || curwp == NULL || curbp == NULL)
+    return FALSE;
+  if (argc == 1 && lisp_integer (argv[0], &offset) == FALSE)
     return FALSE;
   line = curwp->w_dot.p;
+  while (offset > 0 && line != curbp->b_linep)
+    {
+      line = lforw (line);
+      offset--;
+    }
+  while (offset < 0 && line != curbp->b_linep)
+    {
+      line = lback (line);
+      offset++;
+    }
+  if (offset != 0)
+    return TINY_LISP_HOST_NIL;
   if (line == curbp->b_linep)
-    return FALSE;
+    return TINY_LISP_HOST_NIL;
 
   length = llength (line);
   if (length < 0 || (size_t) length >= result_size)

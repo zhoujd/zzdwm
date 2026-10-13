@@ -19,14 +19,16 @@
 ---
 
 ## The Architecture: Exposing Editor Primitives to Lisp [DONE]
-Implement this cleanly by mapping just four core primitive functions inside your C code to bridge into tiny-lisp:
+The editor bridge is registered in `lisp.c` with `tiny_lisp_define_host`.
+The original four-primitive concept evolved into direct buffer operations plus
+the command bridge:
 
 ```
-// Example structural conceptual bridge to register inside tinylisp.c
-{ "get-char",       me_getchar },    // Returns character under cursor
-{ "insert-char",    me_insertchar }, // Inserts character at cursor
-{ "get-line",       me_getline },    // Returns current line as a string
-{ "editor-cmd",     me_editorcmd }   // Executes any internal MicroEMACS C string
+{ "get-char",        lisp_get_char },        // Character under dot
+{ "insert-char",     lisp_insert_char },     // One character at dot
+{ "get-line",        lisp_get_line },        // Current line as a string
+{ "execute-command", lisp_execute_command }, // Run an editor command
+{ "editor-cmd",      lisp_execute_command }  // Alias for execute-command
 ```
 
 ---
@@ -47,55 +49,47 @@ example, `(+ .1 .2)` evaluates to `0.3`.
 
 ---
 
-## Lisp-Driven Auto-Indentation Pipeline
+## Lisp-Driven Auto-Indentation Pipeline [DONE]
 
-To decouple syntax rules from our core C binary, we implement language-agnostic indentation frameworks directly within the runtime Lisp interpreter loop.
+Language-specific indentation rules now live in Lisp while the C core provides
+only compact generic primitives.
 
-### How It Coordinates With Core Primitives
-1. **`editor-cmd`**: Seamlessly moves the cursor across line boundaries behind the scenes to scan surrounding blocks.
-2. **`get-line`**: Extracts historical text lines straight from the active editor buffer to evaluate code structures.
-3. **`insert-char`**: Rapidly stream-injects exact padding spaces into the current line point.
-4. **`message`**: Logs diagnostic calculation matrices straight down to the user's echo line window.
+### Implementation Notes
 
-This approach keeps our memory allocation completely lightweight and preserves our stable **399 KB static footprint** while providing advanced IDE intelligence.
+- `editor-cmd` is only an alias for `execute-command`; both names call the same
+  host function. No separate `editor-command` primitive is needed.
+- `get-line` accepts an optional relative line offset, so indentation scripts
+  can scan surrounding lines without moving dot.
+- `count-char` is a Tiny Lisp numeric primitive and keeps brace counting out
+  of language-specific C code.
+- `forward-line` returns Lisp `nil` at a buffer boundary instead of raising a
+  host-command error.
+- `insert-string` inserts a newline and accepts a repeat count, so indentation
+  uses direct buffer primitives instead of replaying editor commands.
 
-### Auto-Indentation Engine Source Blueprint
+The runnable startup example is `examples/smart-indent.l`, with the test
+fixture `examples/smart-indent-input.c`. It defines `smart-indent`, registers
+it as a MicroEMACS command, and binds **Enter** (`C-m`).
+
 ```lisp
-(defun count-char-in-string (str target-char)
-  "Helper function to count occurrences of a specific character in a string."
-  (let ((count 0) (len (length str)) (i 0))
-    (while (< i len)
-      (if (equal (substring str i (+ i 1)) target-char)
-          (setq count (+ count 1)))
-      (setq i (+ i 1)))
-    count))
-
-(defun calculate-indentation-depth ()
-  "Walks backward through lines to compute open vs closed structural brackets."
-  (let ((open-brackets 0) (closed-brackets 0) (lines-to-scan 20) (current-scan 0))
-    (while (and (< current-scan lines-to-scan) (not (bobp)))
-      (editor-cmd "previous-line")
-      (let ((line-text (get-line)))
-        (setq open-brackets (+ open-brackets (count-char-in-string line-text "{")))
-        (setq closed-brackets (+ closed-brackets (count-char-in-string line-text "}"))))
-      (setq current-scan (+ current-scan 1)))
-    (let ((i 0))
-      (while (< i current-scan) (editor-cmd "next-line") (setq i (+ i 1))))
+(defun smart-indent-depth ()
+  "Count unmatched opening braces on this and preceding lines."
+  (let ((open-brackets 0)
+        (closed-brackets 0)
+        (lines-to-scan 20)
+        (scanned-lines 0))
+    (while (and (< scanned-lines lines-to-scan)
+                (get-line (- scanned-lines)))
+      (let ((line-text (get-line (- scanned-lines))))
+        (setq open-brackets
+              (+ open-brackets (count-char line-text "{")))
+        (setq closed-brackets
+              (+ closed-brackets (count-char line-text "}"))))
+      (setq scanned-lines (+ scanned-lines 1)))
     (let ((depth (- open-brackets closed-brackets)))
       (if (< depth 0) (setq depth 0))
-      (* depth 4))))
+      depth)))
 
-(defun lisp-auto-indent ()
-  "Main interactive command to insert a newline and calculate contextual indent space."
-  (interactive)
-  (let ((target-spaces (calculate-indentation-depth)))
-    (editor-cmd "newline")
-    (let ((inserted 0))
-      (while (< inserted target-spaces)
-        (insert-char " ")
-        (setq inserted (+ inserted 1))))
-    (message "Contextual Indentation Applied: %d spaces" target-spaces)))
-
-(define-lisp-command "smart-indent" #'lisp-auto-indent)
+(define-lisp-command "smart-indent" #'smart-indent)
 (define-key "C-m" "smart-indent")
 ```

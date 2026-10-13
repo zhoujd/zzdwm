@@ -119,6 +119,7 @@ build `me.exe` and run the Wine smoke test from the repository root:
 * [`doc/guide/content`](doc/guide/content) — source for the Hugo user guide.
 * [`examples/logline.pro`](examples/logline.pro) — runnable profile and keyboard macro example.
 * [`examples/logline.l`](examples/logline.l) — equivalent Tiny Lisp editing example.
+* [`examples/smart-indent.l`](examples/smart-indent.l) — startup-ready Lisp auto-indentation example.
 * [`ChangeLog`](ChangeLog) — historical release notes.
 
 Rebuild the PDF with the docs tool image:
