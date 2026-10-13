@@ -38,7 +38,7 @@ endif
 LD = gcc
 LDFLAGS =
 ifeq ($(STATIC), yes)
-LDFLAGS := -static -Wl,--gc-sections $(LDFLAGS)
+LDFLAGS := -static -Wl,--gc-sections -Wl,-z,noseparate-code $(LDFLAGS)
 endif
 ifeq ($(TERMCAP), yes)
 LIBS = -ltermcap

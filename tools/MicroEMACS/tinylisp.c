@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "tinylisp.h"
+
 #define MEMORY_SIZE          131072UL
 #define ERROR_SIZE           256
 #define MAX_HOST_FUNCTIONS   16
@@ -85,6 +87,7 @@ static void bufferPutc(Buffer *buffer, char value);
 static void bufferPuts(Buffer *buffer, const char *value);
 static void bufferPrintf(Buffer *buffer, const char *format, ...);
 static void writeObject(Object *object, bool readably, Buffer *buffer);
+Object *reverseList(Object *list);
 
 // EXCEPTION HANDLING /////////////////////////////////////////////////////////
 
@@ -447,32 +450,68 @@ Object *newHost(HostFunction eval, const char *name, GC_PARAM) {
   return object;
 }
 
+static bool
+isOptionalParameter (Object *object)
+{
+  return object != nil && object != t && object->type == TYPE_SYMBOL
+         && strcmp (object->string, "&optional") == 0;
+}
+
 Object *newEnv(Object **func, Object **vals, GC_PARAM) {
   Object *object = newObject(TYPE_ENV, GC_ROOTS);
 
   if ((*func) == nil)
     object->parent = object->vars = object->vals = nil;
   else {
+    GC_TRACE(gcVars, nil);
+    GC_TRACE(gcVals, nil);
+    GC_TRACE(gcVar, nil);
+    GC_TRACE(gcVal, nil);
     Object *param = (*func)->params, *val = *vals;
+    bool optional = false;
+    int nArgs = 0;
 
-    for (int nArgs = 0;; param = param->cdr, val = val->cdr, ++nArgs) {
-      if (param == nil && val == nil)
-        break;
-      else if (param != nil && param->type == TYPE_SYMBOL)
-        break;
-      else if (val != nil && val->type != TYPE_CONS)
-        exceptionWithObject(val, "is not a list");
-      else if (param == nil && val != nil)
-        exceptionWithObject(*func, "expects at most %d arguments", nArgs);
-      else if (param != nil && val == nil) {
-        for (; param->type == TYPE_CONS; param = param->cdr, ++nArgs);
-        exceptionWithObject(*func, "expects at least %d arguments", nArgs);
+    while (param != nil && param->type == TYPE_CONS) {
+      *gcVar = param->car;
+      if (isOptionalParameter (*gcVar) != false) {
+        optional = true;
+        *gcVal = nil;
+      } else {
+        if (val == nil) {
+          if (!optional)
+            exceptionWithObject(*func, "expects at least %d arguments", nArgs);
+          *gcVal = nil;
+        } else {
+          if (val->type != TYPE_CONS)
+            exceptionWithObject(val, "is not a list");
+          *gcVal = val->car;
+          val = val->cdr;
+        }
+        ++nArgs;
       }
+      *gcVars = newCons(gcVar, gcVars, GC_ROOTS);
+      *gcVals = newCons(gcVal, gcVals, GC_ROOTS);
+      param = param->cdr;
     }
 
+    if (param != nil) {
+      if (param->type != TYPE_SYMBOL)
+        exceptionWithObject(param, "is not a symbol");
+      if (val != nil && val->type != TYPE_CONS)
+        exceptionWithObject(val, "is not a list");
+      *gcVar = param;
+      *gcVal = val;
+      *gcVars = newCons(gcVar, gcVars, GC_ROOTS);
+      *gcVals = newCons(gcVal, gcVals, GC_ROOTS);
+      ++nArgs;
+      val = nil;
+    }
+    if (val != nil)
+      exceptionWithObject(*func, "expects at most %d arguments", nArgs);
+
     object->parent = (*func)->env;
-    object->vars = (*func)->params;
-    object->vals = *vals;
+    object->vars = reverseList(*gcVars);
+    object->vals = reverseList(*gcVals);
   }
 
   return object;
@@ -803,6 +842,21 @@ Object *envSet(Object **var, Object **val, Object **env, GC_PARAM) {
   }
 }
 
+Object *envLookupOptional(Object *var, Object *env) {
+  for (; env != nil; env = env->parent) {
+    Object *vars = env->vars, *vals = env->vals;
+
+    for (; vars->type == TYPE_CONS; vars = vars->cdr, vals = vals->cdr)
+      if (vars->car == var)
+        return vals->car;
+
+    if (vars == var)
+      return vals;
+  }
+
+  return nil;
+}
+
 // PRIMITIVES /////////////////////////////////////////////////////////////////
 
 Object *primitiveAtom(Object **args, GC_PARAM) {
@@ -818,6 +872,16 @@ Object *primitiveEq(Object **args, GC_PARAM) {
     return !strcmp(first->string, second->string) ? t : nil;
   else
     return (first == second) ? t : nil;
+}
+
+Object *primitiveFboundp(Object **args, GC_PARAM) {
+  Object *object = envLookupOptional((*args)->car, environment);
+
+  (void) gcRoots;
+  return (object->type == TYPE_LAMBDA
+          || object->type == TYPE_MACRO
+          || object->type == TYPE_PRIMITIVE
+          || object->type == TYPE_HOST) ? t : nil;
 }
 
 Object *primitiveCar(Object **args, GC_PARAM) {
@@ -935,8 +999,10 @@ Primitive primitives[] = {
   { "cond",   0, -1, NULL /* special form */ },
   { "lambda", 1, -1, NULL /* special form */ },
   { "macro",  1, -1, NULL /* special form */ },
+  { "interactive", 0, 1, NULL /* special form */ },
   { "atom",   1,  1, primitiveAtom         },
   { "eq",     2,  2, primitiveEq           },
+  { "fboundp", 1, 1, primitiveFboundp      },
   { "car",    1,  1, primitiveCar          },
   { "cdr",    1,  1, primitiveCdr          },
   { "cons",   2,  2, primitiveCons         },
@@ -962,7 +1028,8 @@ enum {
   PRIMITIVE_IF,
   PRIMITIVE_COND,
   PRIMITIVE_LAMBDA,
-  PRIMITIVE_MACRO
+  PRIMITIVE_MACRO,
+  PRIMITIVE_INTERACTIVE
 };
 
 // EVALUATION /////////////////////////////////////////////////////////////////
@@ -1039,6 +1106,37 @@ Object *evalCond(Object **args, Object **env, GC_PARAM) {
       return evalCond(gcArgs, env, GC_ROOTS);
     }
   }
+}
+
+Object *evalInteractive(Object **args, Object **env, GC_PARAM) {
+  GC_TRACE(gcPrefixSymbol, newSymbol("prefix-arg", GC_ROOTS));
+  GC_TRACE(gcPrefix, envLookup(*gcPrefixSymbol, *env));
+
+  if (*args != nil) {
+    Object *spec = (*args)->car;
+
+    if (spec->type != TYPE_STRING || strcmp(spec->string, "p") != 0)
+      exceptionWithObject(spec, "is not a supported interactive specification");
+  }
+
+  {
+    Object *vars = (*env)->vars, *vals = (*env)->vals;
+    bool optional = false;
+
+    if ((*env)->parent != nil)
+      for (; vars->type == TYPE_CONS; vars = vars->cdr, vals = vals->cdr) {
+        if (isOptionalParameter(vars->car) != false) {
+          optional = true;
+          continue;
+        }
+        if (optional != false && vals->car == nil) {
+          vals->car = *gcPrefix;
+          return *gcPrefix;
+        }
+      }
+  }
+
+  return *gcPrefix;
 }
 
 Object *evalLambda(Object **args, Object **env, GC_PARAM) {
@@ -1118,9 +1216,11 @@ Object *callHost(Object **function, Object **args, GC_PARAM) {
       exceptionWithObject(object->car, "is not a number or string");
   }
 
-  if (!eval(argc, argv))
+  int result = eval(argc, argv);
+
+  if (result == 0)
     exception("host command failed");
-  return t;
+  return result == TINY_LISP_HOST_NIL ? nil : t;
 }
 
 Object *evalExpr(Object **object, Object **env, GC_PARAM) {
@@ -1183,6 +1283,8 @@ Object *evalExpr(Object **object, Object **env, GC_PARAM) {
                              break;
       case PRIMITIVE_LAMBDA: return evalLambda(gcArgs, gcEnv, GC_ROOTS);
       case PRIMITIVE_MACRO:  return evalMacro(gcArgs, gcEnv, GC_ROOTS);
+      case PRIMITIVE_INTERACTIVE:
+                             return evalInteractive(gcArgs, gcEnv, GC_ROOTS);
       default:               *gcArgs = evalList(gcArgs, gcEnv, GC_ROOTS);
                              return primitive->eval(gcArgs, GC_ROOTS);
       }
@@ -1196,6 +1298,8 @@ Object *evalExpr(Object **object, Object **env, GC_PARAM) {
 #define TINY_LISP_SOURCE(...) #__VA_ARGS__
 
 static const char *stdlib = TINY_LISP_SOURCE(
+  (setq prefix-arg 1)
+
   (setq list (lambda args args))
 
   (setq defmacro (macro (name params . body)
@@ -1245,6 +1349,36 @@ static const char *stdlib = TINY_LISP_SOURCE(
     (if (null xs)
         y
         (cons (car xs) (append (cdr xs) y))))
+
+  (defun cadr (x) (car (cdr x)))
+
+  (defun binding-value (binding)
+    (if (cdr binding) (cadr binding) nil))
+
+  (defmacro let (bindings . body)
+    (cons (cons (quote lambda)
+                (cons (map1 car bindings) body))
+          (map1 binding-value bindings)))
+
+  (defmacro unless (condition . body)
+    (list (quote if) condition nil (cons (quote progn) body)))
+
+  (defmacro when (condition . body)
+    (list (quote if) condition (cons (quote progn) body)))
+
+  (defmacro dotimes (spec . body)
+    (list (quote let) (list (list (car spec) 0))
+      (list (quote while) (list (quote <) (car spec) (cadr spec))
+        (cons (quote progn) body)
+        (list (quote setq) (car spec)
+              (list (quote +) (car spec) 1)))))
+
+  (defmacro while (condition . body)
+    (list (quote if) condition
+          (cons (quote progn)
+                (cons (cons (quote progn) body)
+                      (list (list (quote while) condition . body))))
+          nil))
 );
 
 // MAIN ///////////////////////////////////////////////////////////////////////

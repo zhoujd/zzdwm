@@ -192,6 +192,17 @@ lisp_forward_line (int argc, const char *const *argv)
 }
 
 static int
+lisp_eobp (int argc, const char *const *argv)
+{
+  (void) argv;
+
+  if (argc != 0 || curwp == NULL || curbp == NULL)
+    return FALSE;
+  return curwp->w_dot.p == lastline (curbp)
+           ? TRUE : TINY_LISP_HOST_NIL;
+}
+
+static int
 lisp_define_command (int argc, const char *const *argv)
 {
   int macro[NKBDM];
@@ -301,6 +312,8 @@ lisp_register_hosts (void)
                && tiny_lisp_define_host ("forward-line",
                                          lisp_forward_line) == 1;
   registered = registered != FALSE
+               && tiny_lisp_define_host ("eobp", lisp_eobp) == 1;
+  registered = registered != FALSE
                && tiny_lisp_define_host ("define-lisp-command",
                                          lisp_define_command) == 1;
 #ifdef COLOR
@@ -394,14 +407,16 @@ int
 lispeval (int f, int n, int k)
 {
   char expr[LISP_EXPRESSION_SIZE];
+  char source[LISP_EXPRESSION_SIZE + 64];
   char result[LISP_OUTPUT_SIZE];
+  int prefix;
   int status;
 
-  (void) f;
-  (void) n;
   (void) k;
 
   if (ereadv ("Lisp: ", expr, sizeof (expr), EFNEW | EFCR) != TRUE)
+    return FALSE;
+  if (expr[0] == 0)
     return FALSE;
   if (lisp_register_hosts () != TRUE)
     {
@@ -409,7 +424,13 @@ lispeval (int f, int n, int k)
       return FALSE;
     }
 
-  status = tiny_lisp_eval (expr, result, sizeof (result));
+  prefix = f != FALSE ? n : 1;
+  if (snprintf (source, sizeof (source),
+                "(progn (setq prefix-arg %d) %s)", prefix, expr)
+      >= (int) sizeof (source))
+    return FALSE;
+
+  status = tiny_lisp_eval (source, result, sizeof (result));
   if (status == TRUE)
     eprintf ("[Lisp: %s]", result);
   else

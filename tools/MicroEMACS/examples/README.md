@@ -11,7 +11,9 @@ editor first:
 
 `logline.l` defines a Tiny Lisp function, registers it as the
 `format-log-line` command with `#'format-log-line`, binds it to `M-L`,
-formats the three sample lines, saves the buffer, and exits.
+formats the three sample lines, saves the buffer, and exits. When used
+interactively, `M-L` formats one line and `M-3 M-L` formats three lines; the
+function stops at the end of the buffer.
 
 Copy the input file before running the example so the source fixture is not
 modified:
