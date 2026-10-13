@@ -2437,6 +2437,8 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (set-variable "tab-width" 8)
     (set-syntax "sql")
     (execute-command "file-save")
+    (save-buffer)
+    (kill-emacs)
     (insert-string "text")
     (goto-bol)
     (goto-eol)
@@ -2453,6 +2455,7 @@ available when color is enabled.
 The fourth form runs a MicroEMACS command by name, with an optional numeric
 argument. It is intended for commands that do not require an echo-line reply;
 use the direct buffer forms when a command would otherwise prompt for text.
+The next two forms save the current buffer and exit MicroEMACS.
 The next four forms insert text at dot and move dot without replaying keys.
 `eobp` returns `t` when dot is at the end of the buffer and `nil` otherwise.
 The final form registers a Lisp function as a named MicroEMACS command.

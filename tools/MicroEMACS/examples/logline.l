@@ -18,10 +18,5 @@
 (format-log-line 3)
 
 ;; Safe, direct file operations.
-(if (fboundp 'save-buffer)
-    (save-buffer)
-  (execute-command "file-save"))
-
-(if (fboundp 'kill-emacs)
-    (kill-emacs)
-  (execute-command "quit"))
+(save-buffer)
+(kill-emacs)

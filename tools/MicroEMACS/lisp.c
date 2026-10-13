@@ -203,6 +203,26 @@ lisp_eobp (int argc, const char *const *argv)
 }
 
 static int
+lisp_save_buffer (int argc, const char *const *argv)
+{
+  (void) argv;
+
+  if (argc != 0)
+    return FALSE;
+  return filesave (FALSE, 1, KRANDOM);
+}
+
+static int
+lisp_kill_emacs (int argc, const char *const *argv)
+{
+  (void) argv;
+
+  if (argc != 0)
+    return FALSE;
+  return quit (TRUE, 1, KRANDOM);
+}
+
+static int
 lisp_define_command (int argc, const char *const *argv)
 {
   int macro[NKBDM];
@@ -301,6 +321,12 @@ lisp_register_hosts (void)
   registered = registered != FALSE
                && tiny_lisp_define_host ("execute-command",
                                          lisp_execute_command) == 1;
+  registered = registered != FALSE
+               && tiny_lisp_define_host ("save-buffer",
+                                         lisp_save_buffer) == 1;
+  registered = registered != FALSE
+               && tiny_lisp_define_host ("kill-emacs",
+                                         lisp_kill_emacs) == 1;
   registered = registered != FALSE
                && tiny_lisp_define_host ("insert-string",
                                          lisp_insert_string) == 1;

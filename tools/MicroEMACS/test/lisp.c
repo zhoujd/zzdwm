@@ -23,6 +23,8 @@ static int goto_bol_called;
 static int goto_eol_called;
 static int forward_line_flag;
 static int forward_line_count;
+static int save_buffer_called;
+static int kill_emacs_called;
 static int undo_start_count;
 static int undo_end_count;
 static int newline_count;
@@ -116,6 +118,26 @@ forwline (int flag, int count, int key)
   (void) key;
   forward_line_flag = flag;
   forward_line_count = count;
+  return TRUE;
+}
+
+int
+filesave (int flag, int count, int key)
+{
+  (void) flag;
+  (void) count;
+  (void) key;
+  save_buffer_called++;
+  return TRUE;
+}
+
+int
+quit (int flag, int count, int key)
+{
+  (void) flag;
+  (void) count;
+  (void) key;
+  kill_emacs_called++;
   return TRUE;
 }
 
@@ -342,7 +364,13 @@ main (void)
   assert (evaluate ("(fboundp 'car)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: t]") == 0);
   assert (evaluate ("(fboundp 'save-buffer)") == TRUE);
-  assert (strcmp (lisp_message, "[Lisp: nil]") == 0);
+  assert (strcmp (lisp_message, "[Lisp: t]") == 0);
+  assert (evaluate ("(fboundp 'kill-emacs)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: t]") == 0);
+  assert (evaluate ("(save-buffer)") == TRUE);
+  assert (save_buffer_called == 1);
+  assert (evaluate ("(kill-emacs)") == TRUE);
+  assert (kill_emacs_called == 1);
 
   assert (evaluate ("(defun prefix-value (&optional arg)"
                    " (interactive \"p\") arg)") == TRUE);
