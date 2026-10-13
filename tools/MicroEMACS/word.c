@@ -34,7 +34,7 @@
  * mode commands, they are likely to be put in
  * this file.
  */
-#include	"def.h"
+#include "def.h"
 
 /*
  * Move the cursor backward by
