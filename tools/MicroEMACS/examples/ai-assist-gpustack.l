@@ -8,6 +8,7 @@
     (ai-set-endpoint "http://10.11.70.11:8090/v1/chat/completions"
                      ai-api-key)
   (message "GPUSTACK_API_KEY or OPENAI_API_KEY is not set"))
+(ai-set-timeout 180)
 (ai-set-reasoning-effort "low")
 
 (defun ai-ask-line ()
@@ -30,3 +31,25 @@
 
 (define-lisp-command "ai-ask-line" #'ai-ask-line)
 (define-key "M-A" "ai-ask-line")
+
+(defun ai-ask-region ()
+  (interactive)
+  (if ai-api-key
+      (let ((prompt (get-region)))
+        (if prompt
+            (let ((completion (ai-complete-region "glm-5.3" 1024)))
+              (if completion
+                  (progn
+                    (switch-to-buffer "*AI*")
+                    (set-syntax "markdown")
+                    (execute-command "goto-eob")
+                    (insert-string "\n\n### You\n\n")
+                    (insert-string prompt)
+                    (insert-string "\n\n### Assistant\n\n")
+                    (insert-string completion)
+                    (insert-string "\n"))
+                (message "AI completion failed: %s" (ai-last-error))))))
+    (message "GPUSTACK_API_KEY or OPENAI_API_KEY is not set")))
+
+(define-lisp-command "ai-ask-region" #'ai-ask-region)
+(define-key "C-x a" "ai-ask-region")

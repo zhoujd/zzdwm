@@ -6,6 +6,7 @@
 #include "tinylisp.h"
 #include <ctype.h>
 #include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -229,6 +230,101 @@ lisp_eobp (int argc, const char *const *argv,
            ? TRUE : TINY_LISP_HOST_NIL;
 }
 
+static int
+lisp_region_append (char **buffer, size_t *used, size_t *size,
+                    const char *text, size_t length)
+{
+  size_t needed;
+  char *grown;
+
+  if (length > SIZE_MAX - *used - 1)
+    return FALSE;
+  needed = *used + length + 1;
+  if (needed > *size)
+    {
+      size_t new_size = *size;
+
+      while (new_size < needed)
+        {
+          if (new_size > SIZE_MAX / 2)
+            return FALSE;
+          new_size *= 2;
+        }
+      grown = realloc (*buffer, new_size);
+      if (grown == NULL)
+        return FALSE;
+      *buffer = grown;
+      *size = new_size;
+    }
+  memcpy (*buffer + *used, text, length);
+  *used += length;
+  (*buffer)[*used] = 0;
+  return TRUE;
+}
+
+static char *
+lisp_region_text (void)
+{
+  REGION region;
+  LINE *line;
+  int offset;
+  char *buffer;
+  size_t used = 0;
+  size_t size = 256;
+
+  if (getregion (&region) != TRUE)
+    {
+      lisp_message_displayed = TRUE;
+      return NULL;
+    }
+  buffer = malloc (size);
+  if (buffer == NULL)
+    {
+      eprintf ("[Lisp: region allocation failed]");
+      lisp_message_displayed = TRUE;
+      return NULL;
+    }
+  buffer[0] = 0;
+  line = region.r_pos.p;
+  offset = region.r_pos.o;
+  while (region.r_size > 0)
+    {
+      const uchar *text;
+      int chunk;
+      int bytes;
+
+      if (offset == wllength (line))
+        {
+          if (lisp_region_append (&buffer, &used, &size, "\n", 1)
+              == FALSE)
+            goto failed;
+          line = lforw (line);
+          offset = 0;
+          region.r_size--;
+          continue;
+        }
+      chunk = wllength (line) - offset;
+      if (chunk > region.r_size)
+        chunk = region.r_size;
+      text = wlgetcptr (line, offset);
+      bytes = unblen (text, chunk);
+      if (bytes <= 0
+          || lisp_region_append (&buffer, &used, &size,
+                                 (const char *) text, (size_t) bytes)
+             == FALSE)
+        goto failed;
+      offset += chunk;
+      region.r_size -= chunk;
+    }
+  return buffer;
+
+failed:
+  free (buffer);
+  eprintf ("[Lisp: region allocation failed]");
+  lisp_message_displayed = TRUE;
+  return NULL;
+}
+
 #ifdef AI
 static int
 lisp_switch_buffer (int argc, const char *const *argv,
@@ -305,6 +401,32 @@ lisp_get_line (int argc, const char *const *argv,
     return FALSE;
   memcpy (result, lgets (line), (size_t) length);
   result[length] = 0;
+  return TINY_LISP_HOST_STRING;
+}
+
+static int
+lisp_get_region (int argc, const char *const *argv,
+                 char *result, size_t result_size)
+{
+  char *text;
+  size_t length;
+
+  (void) argv;
+  if (argc != 0)
+    return FALSE;
+  text = lisp_region_text ();
+  if (text == NULL)
+    return TINY_LISP_HOST_NIL;
+  length = strlen (text);
+  if (length >= result_size)
+    {
+      free (text);
+      eprintf ("[Lisp: region is too large]");
+      lisp_message_displayed = TRUE;
+      return TINY_LISP_HOST_NIL;
+    }
+  memcpy (result, text, length + 1);
+  free (text);
   return TINY_LISP_HOST_STRING;
 }
 
@@ -698,6 +820,25 @@ lisp_ai_set_reasoning_effort (int argc, const char *const *argv,
 }
 
 static int
+lisp_ai_set_timeout (int argc, const char *const *argv,
+                     char *result, size_t result_size)
+{
+  int seconds;
+
+  (void) result;
+  (void) result_size;
+  if (argc != 1 || lisp_integer (argv[0], &seconds) == FALSE)
+    return FALSE;
+  if (ai_set_timeout (seconds) != TRUE)
+    {
+      eprintf ("[AI: %s]", ai_last_error ());
+      lisp_message_displayed = TRUE;
+      return TINY_LISP_HOST_NIL;
+    }
+  return TRUE;
+}
+
+static int
 lisp_ai_complete (int argc, const char *const *argv,
                   char *result, size_t result_size)
 {
@@ -716,6 +857,39 @@ lisp_ai_complete (int argc, const char *const *argv,
     model = argv[1];
   if (ai_complete (argv[0], model, num_predict,
                    result, result_size) != TRUE)
+    {
+      eprintf ("[AI: %s]", ai_last_error ());
+      lisp_message_displayed = TRUE;
+      return TINY_LISP_HOST_NIL;
+    }
+  return TINY_LISP_HOST_STRING;
+}
+
+static int
+lisp_ai_complete_region (int argc, const char *const *argv,
+                         char *result, size_t result_size)
+{
+  const char *model = NULL;
+  char *prompt;
+  int num_predict = 0;
+  int status;
+
+  if (argc > 2)
+    return FALSE;
+  if (argc >= 1 && argv[0][0] == 0)
+    return FALSE;
+  if (argc == 2
+      && (lisp_integer (argv[1], &num_predict) == FALSE
+          || num_predict <= 0))
+    return FALSE;
+  if (argc >= 1)
+    model = argv[0];
+  prompt = lisp_region_text ();
+  if (prompt == NULL)
+    return TINY_LISP_HOST_NIL;
+  status = ai_complete (prompt, model, num_predict, result, result_size);
+  free (prompt);
+  if (status != TRUE)
     {
       eprintf ("[AI: %s]", ai_last_error ());
       lisp_message_displayed = TRUE;
@@ -745,6 +919,7 @@ lisp_register_hosts (void)
     { "get-char", lisp_get_char },
     { "insert-char", lisp_insert_char },
     { "get-line", lisp_get_line },
+    { "get-region", lisp_get_region },
     { "save-buffer", lisp_save_buffer },
     { "kill-emacs", lisp_kill_emacs },
     { "insert-string", lisp_insert_string },
@@ -758,7 +933,9 @@ lisp_register_hosts (void)
     { "switch-to-buffer", lisp_switch_buffer },
     { "ai-set-endpoint", lisp_ai_set_endpoint },
     { "ai-set-reasoning-effort", lisp_ai_set_reasoning_effort },
+    { "ai-set-timeout", lisp_ai_set_timeout },
     { "ai-complete", lisp_ai_complete },
+    { "ai-complete-region", lisp_ai_complete_region },
     { "ai-last-error", lisp_ai_last_error },
 #endif
 #ifdef COLOR

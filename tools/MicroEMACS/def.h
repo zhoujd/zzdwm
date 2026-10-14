@@ -809,6 +809,7 @@ int ai_configure (const char *endpoint, const char *api_key);
                                         /* Configure the AI endpoint.    */
 int ai_set_reasoning_effort (const char *effort);
                                         /* Configure reasoning effort.   */
+int ai_set_timeout (int seconds);       /* Configure AI timeout.        */
 int ai_complete (const char *prompt, const char *model, int num_predict,
                  char *output, size_t output_size);
 const char *ai_last_error (void);

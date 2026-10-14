@@ -32,6 +32,7 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (get-char)
     (get-line)
     (get-line -1)
+    (get-region)
     (count-char "{}}" "{")
     (insert-string "text")
     (insert-char "X")
@@ -73,11 +74,16 @@ console. All color indexes must be from 0 through 255.
 `ai-complete` sends a prompt to the configured AI service, returns the
 generated Markdown text as a string, and returns `nil` after displaying an
 error. The optional arguments select the model and positive prediction limit.
+`ai-complete-region` sends the marked region instead of a string prompt and
+accepts the same optional arguments. The AI examples use `get-region` to copy
+the selected prompt into the `*AI*` Markdown transcript.
 `ai-set-endpoint` configures an HTTP endpoint and optional Bearer API key.
 The default endpoint is local Ollama. AI is enabled in the default builds and
 can be disabled with `AI=no`.
 `ai-set-reasoning-effort` optionally sends `minimal`, `low`, `medium`, or
 `high` to OpenAI-compatible services that support reasoning-effort control.
+`ai-set-timeout` sets the connect/read timeout from 1 through 86400 seconds.
+The AI examples bind `ai-ask-line` to **M-A** and `ai-ask-region` to **C-X A**.
 Anthropic Claude is not supported directly because its official API requires
 HTTPS and a different wire format; use an OpenAI-compatible HTTP proxy such as
 LiteLLM when Claude access is needed.
@@ -85,7 +91,8 @@ LiteLLM when Claude access is needed.
 `get-char` returns the UTF-8 character under dot as a string, or `nil` at the
 end of a line. `get-line` returns the current line as a string without the
 newline; with a numeric argument, it returns a line relative to dot and
-returns `nil` outside the buffer. `count-char` returns the number of
+returns `nil` outside the buffer. `get-region` returns the text between dot
+and the mark as a string. `count-char` returns the number of
 occurrences of a one-character string in another string. `insert-string`
 inserts a string at dot, while `insert-char` inserts one character given as a
 Unicode code point or a one-character string. `goto-bol`, `goto-eol`, and

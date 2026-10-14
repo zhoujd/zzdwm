@@ -30,6 +30,7 @@
 #define AI_DEFAULT_MODEL       "qwen2.5-coder:1.5b"
 #define AI_DEFAULT_NUM_PREDICT 128
 #define AI_TIMEOUT_SECONDS     30
+#define AI_MAX_TIMEOUT_SECONDS 86400
 #define AI_MAX_REQUEST_SIZE    (1024 * 1024)
 #define AI_MAX_RESPONSE_SIZE   (256 * 1024)
 #define AI_ERROR_SIZE          160
@@ -59,6 +60,7 @@ static int ai_port = 11434;
 static char ai_path[AI_PATH_SIZE] = "/api/generate";
 static char ai_api_key[AI_API_KEY_SIZE];
 static char ai_reasoning_effort[AI_REASONING_EFFORT_SIZE];
+static int ai_timeout_seconds = AI_TIMEOUT_SECONDS;
 
 static int
 ai_is_chat_endpoint (void)
@@ -206,6 +208,19 @@ ai_set_reasoning_effort (const char *effort)
   return TRUE;
 }
 
+int
+ai_set_timeout (int seconds)
+{
+  ai_error[0] = 0;
+  if (seconds <= 0 || seconds > AI_MAX_TIMEOUT_SECONDS)
+    {
+      ai_set_error ("Invalid AI timeout");
+      return FALSE;
+    }
+  ai_timeout_seconds = seconds;
+  return TRUE;
+}
+
 static int
 ai_wait (AI_SOCKET socket, int write)
 {
@@ -215,7 +230,7 @@ ai_wait (AI_SOCKET socket, int write)
 
   FD_ZERO (&set);
   FD_SET (socket, &set);
-  timeout.tv_sec = AI_TIMEOUT_SECONDS;
+  timeout.tv_sec = ai_timeout_seconds;
   timeout.tv_usec = 0;
 #ifdef MINGW
   result = select (0, write == FALSE ? &set : NULL,

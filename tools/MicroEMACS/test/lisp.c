@@ -22,6 +22,8 @@ static const char *lisp_input;
 static char lisp_message[256];
 static int bound_key;
 static SYMBOL *bound_symbol;
+static int bound_line_key;
+static int bound_region_key;
 static int command_flag;
 static int command_count;
 static int goto_bol_called;
@@ -45,7 +47,10 @@ static int command_macro[NKBDM] = { KCTLX | ')' };
 static SYMBOL command_symbol = { NULL, 0, "buffer-menu", NULL, NULL };
 static SYMBOL macro_symbol = { NULL, 0, "test-macro", NULL, command_macro };
 static SYMBOL ai_command_symbol = { NULL, 0, "ai-ask-line", NULL, NULL };
+static SYMBOL ai_region_command_symbol = { NULL, 0, "ai-ask-region",
+                                           NULL, NULL };
 static int ai_command_defined;
+static int ai_region_command_defined;
 static BUFFER syntax_buffer;
 static char syntax_filetype[32];
 static BUFFER *syntax_mode_buffer;
@@ -58,7 +63,10 @@ static int ai_status = TRUE;
 static char ai_endpoint[256];
 static char ai_api_key[256];
 static char ai_reasoning_effort[32];
+static int ai_timeout;
 static int ai_configure_status = TRUE;
+static int getregion_status = TRUE;
+static REGION test_region;
 static EWINDOW eobp_window;
 static BUFFER eobp_buffer;
 static LINE eobp_line;
@@ -120,6 +128,9 @@ symlookup (const char *name)
   if (ai_command_defined
       && strcmp (name, ai_command_symbol.s_name) == 0)
     return &ai_command_symbol;
+  if (ai_region_command_defined
+      && strcmp (name, ai_region_command_symbol.s_name) == 0)
+    return &ai_region_command_symbol;
   if (strcmp (name, command_symbol.s_name) == 0)
     return &command_symbol;
   return NULL;
@@ -130,6 +141,10 @@ setbinding (int key, SYMBOL *symbol)
 {
   bound_key = key;
   bound_symbol = symbol;
+  if (symbol == &ai_command_symbol)
+    bound_line_key = key;
+  if (symbol == &ai_region_command_symbol)
+    bound_region_key = key;
 }
 
 static int
@@ -277,6 +292,11 @@ symdefmacro (const char *name, const int *macro, size_t count)
       ai_command_defined = TRUE;
       ai_command_symbol.s_macro = command_macro;
     }
+  if (strcmp (name, ai_region_command_symbol.s_name) == 0)
+    {
+      ai_region_command_defined = TRUE;
+      ai_region_command_symbol.s_macro = command_macro;
+    }
   defined_macro_name = name;
   defined_macro_count = (int) count;
   memcpy (command_macro, macro, count * sizeof (*macro));
@@ -316,8 +336,11 @@ ai_complete (const char *prompt, const char *model, int num_predict,
              char *output, size_t output_size)
 {
   size_t index;
+  char *prompt_copy;
 
-  ai_prompt = prompt;
+  prompt_copy = strdup (prompt);
+  free ((void *) ai_prompt);
+  ai_prompt = prompt_copy;
   ai_model = model;
   ai_num_predict = num_predict;
   if (ai_status != TRUE)
@@ -356,6 +379,25 @@ ai_set_reasoning_effort (const char *effort)
          || strcmp (effort, "low") == 0
          || strcmp (effort, "medium") == 0
          || strcmp (effort, "high") == 0;
+}
+
+int
+ai_set_timeout (int seconds)
+{
+  ai_timeout = seconds;
+  return seconds > 0 && seconds <= 86400;
+}
+
+int
+getregion (REGION *region)
+{
+  if (getregion_status != TRUE)
+    {
+      eprintf ("No mark in this window");
+      return FALSE;
+    }
+  *region = test_region;
+  return TRUE;
 }
 
 static int
@@ -575,6 +617,23 @@ main (void)
   primitive_window.w_dot.o = wllength (primitive_line);
   assert (evaluate ("(get-char)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: nil]") == 0);
+  test_region.r_pos.p = primitive_line;
+  test_region.r_pos.o = 0;
+  test_region.r_size = wllength (primitive_line) + 1;
+  inserted_text[0] = 0;
+  assert (evaluate ("(insert-string (get-region))") == TRUE);
+  assert (strcmp (inserted_text, "h\xc3\xa9llo\n") == 0);
+  assert (evaluate ("(get-region 1)") == FALSE);
+  test_region.r_size = (long) TINY_LISP_HOST_RESULT_SIZE + 1;
+  lisp_message[0] = 0;
+  assert (evaluate ("(get-region)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: region is too large]") == 0);
+  test_region.r_size = wllength (primitive_line) + 1;
+  getregion_status = FALSE;
+  lisp_message[0] = 0;
+  assert (evaluate ("(get-region)") == TRUE);
+  assert (strcmp (lisp_message, "No mark in this window") == 0);
+  getregion_status = TRUE;
   switched_buffer_name[0] = 0;
   assert (evaluate ("(switch-to-buffer \"*AI*\")") == TRUE);
   assert (strcmp (switched_buffer_name, "*AI*") == 0);
@@ -868,6 +927,37 @@ main (void)
   assert (evaluate ("(ai-set-reasoning-effort \"invalid\")") == TRUE);
   assert (strcmp (lisp_message, "[AI: mock error]") == 0);
   assert (evaluate ("(ai-set-reasoning-effort)") == FALSE);
+  ai_timeout = 0;
+  assert (evaluate ("(ai-set-timeout 180)") == TRUE);
+  assert (ai_timeout == 180);
+  assert (evaluate ("(ai-set-timeout 0)") == TRUE);
+  assert (strcmp (lisp_message, "[AI: mock error]") == 0);
+  assert (evaluate ("(ai-set-timeout)") == FALSE);
+
+  set_primitive_line ("héllo");
+  test_region.r_pos.p = primitive_line;
+  test_region.r_pos.o = 0;
+  test_region.r_size = 6;
+  getregion_status = TRUE;
+  ai_prompt = NULL;
+  ai_model = NULL;
+  ai_num_predict = 0;
+  assert (evaluate ("(ai-complete-region)") == TRUE);
+  assert (strcmp (ai_prompt, "h\xc3\xa9llo\n") == 0);
+  assert (ai_model == NULL && ai_num_predict == 0);
+  assert (evaluate ("(ai-complete-region \"test-model\" 3)") == TRUE);
+  assert (strcmp (ai_prompt, "h\xc3\xa9llo\n") == 0);
+  assert (strcmp (ai_model, "test-model") == 0);
+  assert (ai_num_predict == 3);
+  assert (evaluate ("(ai-complete-region \"\")") == FALSE);
+  assert (evaluate ("(ai-complete-region \"model\" 0)") == FALSE);
+  assert (evaluate ("(ai-complete-region \"model\" 3 \"extra\")")
+          == FALSE);
+  getregion_status = FALSE;
+  lisp_message[0] = 0;
+  assert (evaluate ("(ai-complete-region)") == TRUE);
+  assert (strcmp (lisp_message, "No mark in this window") == 0);
+  getregion_status = TRUE;
 
   {
     char result[LISP_OUTPUT_SIZE];
@@ -875,29 +965,38 @@ main (void)
     assert (unsetenv ("GPUSTACK_API_KEY") == 0);
     assert (setenv ("OPENAI_API_KEY", "fallback-key", 1) == 0);
     ai_command_defined = FALSE;
+    ai_region_command_defined = FALSE;
     bound_key = 0;
     bound_symbol = NULL;
+    bound_line_key = 0;
+    bound_region_key = 0;
     assert (evaluate_example_file ("examples/ai-assist-ollama.l",
                                    result, sizeof (result)) == TRUE);
-    assert (bound_key == (KMETA | 'A'));
-    assert (bound_symbol == &ai_command_symbol);
+    assert (bound_line_key == (KMETA | 'A'));
+    assert (bound_region_key == (KCTLX | 'A'));
     bound_key = 0;
     bound_symbol = NULL;
+    bound_line_key = 0;
+    bound_region_key = 0;
     assert (evaluate_example_file ("examples/ai-assist-gpustack.l",
                                    result, sizeof (result)) == TRUE);
-    assert (bound_key == (KMETA | 'A'));
-    assert (bound_symbol == &ai_command_symbol);
+    assert (bound_line_key == (KMETA | 'A'));
+    assert (bound_region_key == (KCTLX | 'A'));
     assert (strcmp (ai_reasoning_effort, "low") == 0);
+    assert (ai_timeout == 180);
     assert (strcmp (ai_api_key, "fallback-key") == 0);
 
     assert (setenv ("GPUSTACK_API_KEY", "primary-key", 1) == 0);
     ai_command_defined = FALSE;
+    ai_region_command_defined = FALSE;
     bound_key = 0;
     bound_symbol = NULL;
+    bound_line_key = 0;
+    bound_region_key = 0;
     assert (evaluate_example_file ("examples/ai-assist-gpustack.l",
                                    result, sizeof (result)) == TRUE);
-    assert (bound_key == (KMETA | 'A'));
-    assert (bound_symbol == &ai_command_symbol);
+    assert (bound_line_key == (KMETA | 'A'));
+    assert (bound_region_key == (KCTLX | 'A'));
     assert (strcmp (ai_api_key, "primary-key") == 0);
     assert (unsetenv ("GPUSTACK_API_KEY") == 0);
     assert (unsetenv ("OPENAI_API_KEY") == 0);

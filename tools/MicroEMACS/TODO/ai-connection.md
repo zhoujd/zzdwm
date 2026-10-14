@@ -24,6 +24,9 @@ status checking, chunked-body decoding, and JSON response parsing.
 (ai-complete "prompt")
 (ai-complete "prompt" "model-name")
 (ai-complete "prompt" "model-name" 64)
+(ai-complete-region)
+(ai-complete-region "model-name")
+(ai-complete-region "model-name" 64)
 ```
 
 The first form uses `qwen2.5-coder:1.5b` and a 128-token prediction limit.
@@ -35,6 +38,11 @@ Requests include a built-in system instruction that asks the model for concise
 Markdown assistant commentary, including explanations and useful code rather
 than code-only output.
 Scripts can also retrieve the last failure with `(ai-last-error)`.
+`ai-complete-region` sends the text between dot and the mark instead of a
+string prompt. It accepts the same optional model and prediction-limit
+arguments as `ai-complete`, and does not modify dot, the mark, or the kill
+ring. The examples use `get-region` before requesting a completion so the
+selected region appears under `### You` in the `*AI*` transcript.
 
 `ai-set-endpoint` changes the HTTP endpoint and optionally sets a Bearer API
 key. The default endpoint is the local Ollama service. An endpoint ending in
@@ -46,6 +54,7 @@ formats:
 (ai-set-endpoint "http://your-gpustack-host:8090/v1/chat/completions"
                  (getenv "GPUSTACK_API_KEY"))
 (ai-set-reasoning-effort "low")
+(ai-set-timeout 180)
 (ai-complete "prompt" "glm-5.3" 1024)
 ```
 
@@ -74,9 +83,9 @@ OpenAI-compatible HTTP proxy such as LiteLLM when Claude access is needed:
 (ai-complete "prompt" "claude-model-name" 1024)
 ```
 
-The client uses a 30-second connect/read timeout. A GPUStack service can wait
-up to 120 seconds for a provider slot; in that case MicroEMACS reports a
-receive timeout before GPUStack returns its `503 ServiceUnavailable` response.
+The client uses a 30-second connect/read timeout by default. `ai-set-timeout`
+accepts a value from 1 through 86400 seconds. A GPUStack service can wait up
+to 120 seconds for a provider slot, so its example uses 180 seconds.
 
 Ollama does not return a meaningful confidence score for a completed
 response, so this extension deliberately does not expose one. Scripts can
@@ -85,10 +94,6 @@ inspect or transform the returned text instead.
 `examples/ai-assist-ollama.l` and `examples/ai-assist-gpustack.l` define an
 `ai-ask-line` command on **M-A**. They send the current line to the configured
 model and append a Markdown transcript with `### You` and `### Assistant`
-headings to the `*AI*` buffer.
-
-## Future Work
-
-* Add an `ai-complete-region` form when the Lisp bridge has a safe region API.
-* Add configurable timeout variables if local deployments need different
-  connection limits.
+headings to the `*AI*` buffer. They also define `ai-ask-region` on **C-X A**;
+mark a region and it sends the region to the configured model, preserving both
+the selected text and the assistant response in the same transcript.

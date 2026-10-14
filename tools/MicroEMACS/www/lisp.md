@@ -28,6 +28,7 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (get-char)
     (get-line)
     (get-line -1)
+    (get-region)
     (count-char "{}}" "{")
     (insert-string "text")
     (insert-char "X")
@@ -77,12 +78,19 @@ limit:
 ```lisp
 (ai-complete "prompt")
 (ai-complete "prompt" "qwen2.5-coder:1.5b" 64)
+(ai-complete-region)
+(ai-complete-region "qwen2.5-coder:1.5b" 64)
 ```
 
 On failure, `ai-complete` returns `nil` after displaying the underlying error.
 The `ai-last-error` form returns that error text as a string for scripts that
 need to format it themselves.
 An empty or whitespace-only successful response is treated as a failure.
+`ai-complete-region` sends the text between dot and the mark, accepts the same
+optional model and prediction-limit arguments, and leaves dot, the mark, and
+the kill ring unchanged. The AI examples use `get-region` to retain that text
+so both the selected prompt and the assistant response appear in the Markdown
+transcript.
 
 `ai-set-endpoint` configures an HTTP endpoint and optionally sets a Bearer API
 key. An endpoint ending in `/v1/chat/completions` uses the OpenAI-compatible
@@ -94,6 +102,7 @@ socket client. Keep API keys in a local startup file that is not committed:
 (ai-set-endpoint "http://your-gpustack-host:8090/v1/chat/completions"
                  (getenv "GPUSTACK_API_KEY"))
 (ai-set-reasoning-effort "low")
+(ai-set-timeout 180)
 ```
 
 `ai-set-reasoning-effort` accepts `minimal`, `low`, `medium`, or `high` for
@@ -101,6 +110,9 @@ OpenAI-compatible services that support the field. An empty string disables it,
 and configuring a new endpoint clears it. Use `low` with reasoning models that
 can otherwise consume the entire
 token limit before producing final message content.
+`ai-set-timeout` sets the connect/read timeout from 1 through 86400 seconds;
+the default is 30 seconds.
+The AI examples bind `ai-ask-line` to **M-A** and `ai-ask-region` to **C-X A**.
 
 Anthropic Claude is not supported directly because the official Messages API
 requires HTTPS and uses different request and response formats. Claude Code and
@@ -115,7 +127,10 @@ HTTP proxy, such as LiteLLM, when Claude access is needed:
 `get-char` returns the UTF-8 character under dot as a string, or `nil` at the
 end of a line. `get-line` returns the current line as a string without the
 newline; with a numeric argument, it returns a line relative to dot and
-returns `nil` outside the buffer. In AI-enabled builds, `getenv` returns an
+returns `nil` outside the buffer. `get-region` returns the text between dot
+and the mark, including newline characters, as a string; it returns `nil`
+when no region is marked or the region is too large for the Lisp result
+buffer. In AI-enabled builds, `getenv` returns an
 environment variable as a string, or `nil` when it is not set. `count-char` returns the number of
 occurrences of a one-character string in another string. `insert-string`
 inserts a string at dot, while `insert-char` inserts one character given as a

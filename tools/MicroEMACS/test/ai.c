@@ -65,6 +65,11 @@ main (void)
   free (request);
   assert (ai_set_reasoning_effort ("invalid") == FALSE);
   assert (strcmp (ai_last_error (), "Invalid AI reasoning effort") == 0);
+  assert (ai_set_timeout (0) == FALSE);
+  assert (strcmp (ai_last_error (), "Invalid AI timeout") == 0);
+  assert (ai_set_timeout (86401) == FALSE);
+  assert (ai_set_timeout (150) == TRUE);
+  assert (ai_timeout_seconds == 150);
 
   assert (ai_configure ("http://bad host/", NULL) == FALSE);
   assert (ai_configure ("https://example.test", NULL) == FALSE);

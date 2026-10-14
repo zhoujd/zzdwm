@@ -77,8 +77,13 @@ normal Lisp startup configuration.
 Both define `ai-ask-line` on **M-A**, send the current line to the configured
 model, and append a Markdown transcript to the `*AI*` buffer. AI is enabled in
 the default builds; use `AI=no` to build without it.
+Both also define `ai-ask-region` on **C-X A** for the text between dot and the
+mark. The region transcript includes the selected prompt and the assistant
+response.
 The GPUStack example sets reasoning effort to `low`, which prevents reasoning
 models from using the entire token budget before generating final content.
+It also raises the AI timeout to 180 seconds because GPUStack can wait for a
+provider slot.
 Anthropic Claude is not supported directly; use an OpenAI-compatible HTTP proxy
 such as LiteLLM and point `ai-set-endpoint` at the proxy's
 `/v1/chat/completions` URL.
