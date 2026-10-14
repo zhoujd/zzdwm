@@ -142,7 +142,7 @@ install_misc() {
     ln -sfTv $keynav/keynavrc ~/.keynavrc
     echo "Install me lisp"
     local keynav=$CORE_ROOT/misc/me
-    ln -sfTv $keynav/mel ~/.mel
+    ln -sfTv $keynav/me.l ~/.mel
     echo "Install terminfo"
     local term=$CORE_ROOT/misc/term
     tis=(
