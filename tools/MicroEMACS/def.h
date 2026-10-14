@@ -807,6 +807,8 @@ int lispevalfile (int f, int n, int k); /* Read and evaluate Lisp file. */
 #if defined(LISP) && defined(AI)
 int ai_configure (const char *endpoint, const char *api_key);
                                         /* Configure the AI endpoint.    */
+int ai_set_reasoning_effort (const char *effort);
+                                        /* Configure reasoning effort.   */
 int ai_complete (const char *prompt, const char *model, int num_predict,
                  char *output, size_t output_size);
 const char *ai_last_error (void);

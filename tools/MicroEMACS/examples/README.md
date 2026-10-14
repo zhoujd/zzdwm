@@ -73,10 +73,12 @@ normal Lisp startup configuration.
 
 `ai-assist-ollama.l` uses the default local Ollama endpoint.
 `ai-assist-gpustack.l` uses an OpenAI-compatible GPUStack endpoint and reads
-`GPUSTACK_API_KEY` from the environment. Both define `ai-ask-line` on **M-A**,
-send the current line to the configured model, and append a Markdown transcript
-to the `*AI*` buffer. AI is enabled in the default builds; use `AI=no` to
-build without it.
+`GPUSTACK_API_KEY` from the environment, falling back to `OPENAI_API_KEY`.
+Both define `ai-ask-line` on **M-A**, send the current line to the configured
+model, and append a Markdown transcript to the `*AI*` buffer. AI is enabled in
+the default builds; use `AI=no` to build without it.
+The GPUStack example sets reasoning effort to `low`, which prevents reasoning
+models from using the entire token budget before generating final content.
 Anthropic Claude is not supported directly; use an OpenAI-compatible HTTP proxy
 such as LiteLLM and point `ai-set-endpoint` at the proxy's
 `/v1/chat/completions` URL.

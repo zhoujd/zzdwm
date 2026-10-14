@@ -45,8 +45,19 @@ formats:
 (ai-set-endpoint "http://127.0.0.1:11434/api/generate")
 (ai-set-endpoint "http://your-gpustack-host:8090/v1/chat/completions"
                  (getenv "GPUSTACK_API_KEY"))
+(ai-set-reasoning-effort "low")
 (ai-complete "prompt" "glm-5.3" 1024)
 ```
+
+`ai-set-reasoning-effort` accepts `minimal`, `low`, `medium`, or `high` for
+OpenAI-compatible services that support the field. An empty string disables
+it, and configuring a new endpoint clears it. The GPUStack example uses `low`
+so reasoning models leave room in
+`max_tokens` for final message content instead of returning an empty
+`message.content`.
+
+The GPUStack example reads `GPUSTACK_API_KEY` first and falls back to
+`OPENAI_API_KEY`, matching a LiteLLM provider configured for Codex.
 
 HTTPS endpoints are not supported by the compact socket client. Keep API keys
 in an environment variable or a local startup file that is not committed to

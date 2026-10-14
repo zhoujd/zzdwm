@@ -93,7 +93,14 @@ socket client. Keep API keys in a local startup file that is not committed:
 (ai-set-endpoint "http://127.0.0.1:11434/api/generate")
 (ai-set-endpoint "http://your-gpustack-host:8090/v1/chat/completions"
                  (getenv "GPUSTACK_API_KEY"))
+(ai-set-reasoning-effort "low")
 ```
+
+`ai-set-reasoning-effort` accepts `minimal`, `low`, `medium`, or `high` for
+OpenAI-compatible services that support the field. An empty string disables it,
+and configuring a new endpoint clears it. Use `low` with reasoning models that
+can otherwise consume the entire
+token limit before producing final message content.
 
 Anthropic Claude is not supported directly because the official Messages API
 requires HTTPS and uses different request and response formats. Claude Code and

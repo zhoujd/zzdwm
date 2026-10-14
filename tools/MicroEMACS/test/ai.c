@@ -53,13 +53,28 @@ main (void)
   assert (strstr (request, "\"max_tokens\":1024}") != NULL);
   free (request);
 
+  assert (ai_set_reasoning_effort ("low") == TRUE);
+  assert (ai_build_request ("He said \"hello\"\n", "glm-5.3",
+                            32, &request, &length) == TRUE);
+  assert (strstr (request, "\"reasoning_effort\":\"low\"") != NULL);
+  free (request);
+  assert (ai_set_reasoning_effort ("") == TRUE);
+  assert (ai_build_request ("He said \"hello\"\n", "glm-5.3",
+                            32, &request, &length) == TRUE);
+  assert (strstr (request, "reasoning_effort") == NULL);
+  free (request);
+  assert (ai_set_reasoning_effort ("invalid") == FALSE);
+  assert (strcmp (ai_last_error (), "Invalid AI reasoning effort") == 0);
+
   assert (ai_configure ("http://bad host/", NULL) == FALSE);
   assert (ai_configure ("https://example.test", NULL) == FALSE);
   assert (ai_configure ("http://example.test:70000", NULL) == FALSE);
   assert (ai_configure ("http://example.test/v1/chat/completions",
                         "bad\nkey") == FALSE);
+  assert (ai_set_reasoning_effort ("low") == TRUE);
   assert (ai_configure ("http://127.0.0.1:11434/api/generate", NULL)
           == TRUE);
+  assert (ai_reasoning_effort[0] == 0);
 
   memset (large_prompt, 'x', sizeof (large_prompt));
   large_prompt[sizeof (large_prompt) - 1] = 0;

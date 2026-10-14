@@ -76,6 +76,8 @@ error. The optional arguments select the model and positive prediction limit.
 `ai-set-endpoint` configures an HTTP endpoint and optional Bearer API key.
 The default endpoint is local Ollama. AI is enabled in the default builds and
 can be disabled with `AI=no`.
+`ai-set-reasoning-effort` optionally sends `minimal`, `low`, `medium`, or
+`high` to OpenAI-compatible services that support reasoning-effort control.
 Anthropic Claude is not supported directly because its official API requires
 HTTPS and a different wire format; use an OpenAI-compatible HTTP proxy such as
 LiteLLM when Claude access is needed.

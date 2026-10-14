@@ -57,6 +57,7 @@ static int ai_num_predict;
 static int ai_status = TRUE;
 static char ai_endpoint[256];
 static char ai_api_key[256];
+static char ai_reasoning_effort[32];
 static int ai_configure_status = TRUE;
 static EWINDOW eobp_window;
 static BUFFER eobp_buffer;
@@ -343,6 +344,18 @@ ai_configure (const char *endpoint, const char *api_key)
   snprintf (ai_api_key, sizeof (ai_api_key), "%s",
             api_key != NULL ? api_key : "");
   return ai_configure_status;
+}
+
+int
+ai_set_reasoning_effort (const char *effort)
+{
+  snprintf (ai_reasoning_effort, sizeof (ai_reasoning_effort), "%s",
+            effort != NULL ? effort : "");
+  return effort == NULL || effort[0] == 0
+         || strcmp (effort, "minimal") == 0
+         || strcmp (effort, "low") == 0
+         || strcmp (effort, "medium") == 0
+         || strcmp (effort, "high") == 0;
 }
 
 static int
@@ -847,10 +860,20 @@ main (void)
   assert (evaluate ("(ai-set-endpoint)") == FALSE);
   assert (evaluate ("(ai-set-endpoint \"http://example.test\" \"\")")
           == FALSE);
+  ai_reasoning_effort[0] = 0;
+  assert (evaluate ("(ai-set-reasoning-effort \"low\")") == TRUE);
+  assert (strcmp (ai_reasoning_effort, "low") == 0);
+  assert (evaluate ("(ai-set-reasoning-effort \"\")") == TRUE);
+  assert (ai_reasoning_effort[0] == 0);
+  assert (evaluate ("(ai-set-reasoning-effort \"invalid\")") == TRUE);
+  assert (strcmp (lisp_message, "[AI: mock error]") == 0);
+  assert (evaluate ("(ai-set-reasoning-effort)") == FALSE);
 
   {
     char result[LISP_OUTPUT_SIZE];
 
+    assert (unsetenv ("GPUSTACK_API_KEY") == 0);
+    assert (setenv ("OPENAI_API_KEY", "fallback-key", 1) == 0);
     ai_command_defined = FALSE;
     bound_key = 0;
     bound_symbol = NULL;
@@ -864,6 +887,20 @@ main (void)
                                    result, sizeof (result)) == TRUE);
     assert (bound_key == (KMETA | 'A'));
     assert (bound_symbol == &ai_command_symbol);
+    assert (strcmp (ai_reasoning_effort, "low") == 0);
+    assert (strcmp (ai_api_key, "fallback-key") == 0);
+
+    assert (setenv ("GPUSTACK_API_KEY", "primary-key", 1) == 0);
+    ai_command_defined = FALSE;
+    bound_key = 0;
+    bound_symbol = NULL;
+    assert (evaluate_example_file ("examples/ai-assist-gpustack.l",
+                                   result, sizeof (result)) == TRUE);
+    assert (bound_key == (KMETA | 'A'));
+    assert (bound_symbol == &ai_command_symbol);
+    assert (strcmp (ai_api_key, "primary-key") == 0);
+    assert (unsetenv ("GPUSTACK_API_KEY") == 0);
+    assert (unsetenv ("OPENAI_API_KEY") == 0);
   }
 
   puts ("lisp tests passed");

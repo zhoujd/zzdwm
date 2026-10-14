@@ -36,6 +36,7 @@
 #define AI_HOST_SIZE           128
 #define AI_PATH_SIZE           256
 #define AI_API_KEY_SIZE        256
+#define AI_REASONING_EFFORT_SIZE 32
 #define AI_SYSTEM_PROMPT                                                 \
   "You are a helpful assistant inside MicroEMACS. Write concise "        \
   "assistant commentary in Markdown: explain the answer, assumptions, "  \
@@ -57,6 +58,7 @@ static char ai_host[AI_HOST_SIZE] = "127.0.0.1";
 static int ai_port = 11434;
 static char ai_path[AI_PATH_SIZE] = "/api/generate";
 static char ai_api_key[AI_API_KEY_SIZE];
+static char ai_reasoning_effort[AI_REASONING_EFFORT_SIZE];
 
 static int
 ai_is_chat_endpoint (void)
@@ -181,6 +183,26 @@ ai_configure (const char *endpoint, const char *api_key)
     strcpy (ai_api_key, api_key);
   else
     ai_api_key[0] = 0;
+  ai_reasoning_effort[0] = 0;
+  return TRUE;
+}
+
+int
+ai_set_reasoning_effort (const char *effort)
+{
+  ai_error[0] = 0;
+  if (effort == NULL || effort[0] == 0)
+    {
+      ai_reasoning_effort[0] = 0;
+      return TRUE;
+    }
+  if (strcmp (effort, "minimal") != 0 && strcmp (effort, "low") != 0
+      && strcmp (effort, "medium") != 0 && strcmp (effort, "high") != 0)
+    {
+      ai_set_error ("Invalid AI reasoning effort");
+      return FALSE;
+    }
+  strcpy (ai_reasoning_effort, effort);
   return TRUE;
 }
 
@@ -493,6 +515,11 @@ ai_build_request (const char *prompt, const char *model, int num_predict,
                                     model != NULL ? model
                                                   : AI_DEFAULT_MODEL)
             == FALSE
+          || (ai_reasoning_effort[0] != 0
+              && (ai_append (request, length, &size, ",\"reasoning_effort\":",
+                             sizeof (",\"reasoning_effort\":") - 1) == FALSE
+                  || ai_append_json_string (request, length, &size,
+                                            ai_reasoning_effort) == FALSE))
           || ai_append (request, length, &size,
                         ",\"messages\":[{\"role\":\"system\",\"content\":",
                         sizeof (",\"messages\":[{\"role\":\"system\",\"content\":")

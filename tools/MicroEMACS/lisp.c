@@ -681,6 +681,23 @@ lisp_ai_last_error (int argc, const char *const *argv,
 }
 
 static int
+lisp_ai_set_reasoning_effort (int argc, const char *const *argv,
+                              char *result, size_t result_size)
+{
+  (void) result;
+  (void) result_size;
+  if (argc != 1)
+    return FALSE;
+  if (ai_set_reasoning_effort (argv[0]) != TRUE)
+    {
+      eprintf ("[AI: %s]", ai_last_error ());
+      lisp_message_displayed = TRUE;
+      return TINY_LISP_HOST_NIL;
+    }
+  return TRUE;
+}
+
+static int
 lisp_ai_complete (int argc, const char *const *argv,
                   char *result, size_t result_size)
 {
@@ -740,6 +757,7 @@ lisp_register_hosts (void)
     { "getenv", lisp_getenv },
     { "switch-to-buffer", lisp_switch_buffer },
     { "ai-set-endpoint", lisp_ai_set_endpoint },
+    { "ai-set-reasoning-effort", lisp_ai_set_reasoning_effort },
     { "ai-complete", lisp_ai_complete },
     { "ai-last-error", lisp_ai_last_error },
 #endif
