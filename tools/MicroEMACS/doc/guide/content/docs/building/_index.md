@@ -64,18 +64,22 @@ the editor. Run it from `tools/MicroEMACS`:
     ./build.sh -b test     # Build the test targets
     ./build.sh -d          # Build a debug executable
     ./build.sh -r          # Build and strip a local release
-    ./build.sh -m          # Build me without color and Lisp
+    ./build.sh -m          # Build me without color, Lisp, and AI
+    ./build.sh -a          # Build me with AI support; enabled by default
     ./build.sh -p          # Build a static executable in Docker
     ./build.sh -s          # Package the MicroEMACS source tree
     ./build.sh -w          # Clean and build me.exe with MinGW in Docker
     ./build.sh -i          # Install the Linux executable in /usr/local/bin
     ./build.sh -c          # Remove generated build files
 
-The default builds enable color support with `-DCOLOR` and Lisp extensions
-with `-DLISP`. To use termcap
+The default builds enable color support with `-DCOLOR`, Lisp extensions with
+`-DLISP`, and AI completion with `-DAI`. To use termcap
 instead of ncursesw, pass `TERMCAP=yes` to make:
 
     make MF=Make.Linux TERMCAP=yes clean all
+
+AI completion requires Lisp support and links the platform socket library.
+Disable it with `AI=no`; this is required when `LISP=no` is used.
 
 The release wrapper selects a static build automatically on Alpine and
 Void Linux. The publish wrapper builds a stripped static executable in

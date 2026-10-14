@@ -1,14 +1,16 @@
 # AI Connection
 
-Status: implemented as an optional Lisp extension.
+Status: implemented as a default Lisp extension.
 
-The AI connection is disabled by default so the normal static Linux build
-stays below 400 KB. It is compiled only when both Lisp and AI are enabled:
+The AI connection is enabled by default. It is compiled only when both Lisp
+and AI are enabled:
 
 ```sh
 ./build.sh -a
-./build.sh -w AI=yes
+./build.sh -w
 ```
+
+Use `AI=no` for a build without AI; this is required when `LISP=no` is used.
 
 The client defaults to a local Ollama service at `127.0.0.1:11434`. It uses
 the Ollama `/api/generate` endpoint with streaming disabled. Linux uses POSIX

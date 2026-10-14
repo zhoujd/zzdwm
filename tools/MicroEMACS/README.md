@@ -13,7 +13,7 @@ and Windows while keeping the executable small and fast.
 * Syntax highlighting for C, C++, Bash, Python, Markdown, JSON, YAML,
   TOML, CMake, Makefile, Dockerfile, Lisp, Emacs Lisp, Scheme, and SQL.
 * Tiny Lisp extensions, editor command bridges, Lisp startup configuration,
-  configurable mode-line colors, and optional AI assistance.
+  configurable mode-line colors, and built-in AI assistance.
 * Tags, cscope, grep, GCC error navigation, and ispell integration.
 * Linux terminal support through ncursesw or termcap.
 * Native Windows console support built with MinGW-w64.
@@ -52,16 +52,16 @@ Lisp file.
 
 ## Building
 
-The default Linux and Windows builds enable color and Lisp support with
-`-DCOLOR` and `-DLISP`. The recommended build commands are:
+The default Linux and Windows builds enable color, Lisp, and AI support with
+`-DCOLOR`, `-DLISP`, and `-DAI`. The recommended build commands are:
 
 ```sh
 ./build.sh -b        # Build for the host system
 ./build.sh -b test   # Build the test targets
 ./build.sh -d        # Build with debug symbols
 ./build.sh -r        # Build and strip a local release
-./build.sh -m        # Build without color or Lisp
-./build.sh -a        # Build with optional AI support
+./build.sh -m        # Build without color, Lisp, or AI
+./build.sh -a        # Build with AI support; enabled by default
 ./build.sh -p        # Build a stripped static Linux executable
 ./build.sh -w        # Build me.exe with MinGW in Docker
 ./build.sh -D        # Regenerate the PDF manual
@@ -80,15 +80,16 @@ make MF=Make.Mingw CC=x86_64-w64-mingw32-gcc \
 Individual features can be selected when invoking the platform makefile:
 
 ```sh
-make -f Make.Linux COLOR=no LISP=no clean me
-make -f Make.Mingw COLOR=yes LISP=no clean me.exe
+make -f Make.Linux COLOR=no LISP=no AI=no clean me
+make -f Make.Mingw COLOR=yes LISP=no AI=no clean me.exe
 ./build.sh -a
 ```
 
-`AI=yes` requires `LISP=yes`; the normal and minimal builds remain unchanged.
-The AI client defaults to local Ollama and can be configured from Lisp for
-OpenAI-compatible HTTP services. The supplied examples write gptel-style
-Markdown transcripts with assistant commentary to an `*AI*` buffer.
+`AI=yes` requires `LISP=yes`, and `AI=no` disables the AI client. The AI client
+defaults to local Ollama and can be configured from Lisp for OpenAI-compatible
+HTTP services. The supplied examples write gptel-style Markdown transcripts
+with assistant commentary to an `*AI*` buffer. The default stripped static
+Linux build is about 427 KiB.
 
 The Windows build uses Docker and the `zhoujd/mingw:base` image by
 default. Build the required tool images from the repository root with:

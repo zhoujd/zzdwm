@@ -14,9 +14,9 @@
               (progn
                 (switch-to-buffer "*AI*")
                 (execute-command "goto-eob")
-            (insert-string "\n### You\n\n")
-            (insert-string prompt)
-            (insert-string "\n\n### Assistant\n\n")
+                (insert-string "\n### You\n\n")
+                (insert-string prompt)
+                (insert-string "\n\n### Assistant\n\n")
                 (insert-string completion)
                 (insert-string "\n"))
             (message "AI completion failed: %s" (ai-last-error)))))

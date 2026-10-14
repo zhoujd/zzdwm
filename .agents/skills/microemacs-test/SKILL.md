@@ -48,7 +48,7 @@ Use interactive checks only when the user asks for manual testing:
 
 ### 3. Validate Linux minimal me
 
-From `tools/MicroEMACS`, build the minimal editor without color and Lisp:
+From `tools/MicroEMACS`, build the minimal editor without color, Lisp, and AI:
 
 ```sh
 ./build.sh -m
@@ -66,7 +66,7 @@ For a stripped static minimal build:
 
 ```sh
 make -f Make.Linux clean
-make -f Make.Linux STATIC=yes COLOR=no LISP=no me strip
+make -f Make.Linux STATIC=yes COLOR=no LISP=no AI=no me strip
 file ./me
 ./me --version
 ```
@@ -101,10 +101,10 @@ The GUI mode requires a working host `DISPLAY`. Add editor arguments after `gui`
 
 Use `./docker/run.sh wine shell` to inspect the Wine environment.
 
-For a minimal Windows build without color and Lisp:
+For a minimal Windows build without color, Lisp, and AI:
 
 ```sh
-./build.sh -w COLOR=no LISP=no
+./build.sh -w COLOR=no LISP=no AI=no
 ```
 
 Then run the same headless Wine smoke test from the repository root.

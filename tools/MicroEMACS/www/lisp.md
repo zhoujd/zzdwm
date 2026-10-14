@@ -39,7 +39,7 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (eobp)
     (define-lisp-command "format-log-line" #'format-log-line)
 
-AI-enabled builds add these forms:
+Builds with AI enabled add these forms:
 
     (switch-to-buffer "*AI*")
     (ai-complete "current line")
@@ -66,11 +66,11 @@ first two arguments are the foreground and background 256-color indexes; the
 last two are the fallback colors for 8/16-color terminals and the Windows
 console. All color indexes must be from 0 through 255.
 
-`ai-complete` is available in optional AI-enabled builds. It sends a prompt
-to the configured AI service with a built-in instruction for concise Markdown
-assistant commentary, returns the generated text as a string, and returns
-`nil` after displaying an error. The default service is local Ollama. The
-optional second argument
+`ai-complete` is available in AI-enabled builds, including the default Linux
+and Windows builds. It sends a prompt to the configured AI service with a
+built-in instruction for concise Markdown assistant commentary, returns the
+generated text as a string, and returns `nil` after displaying an error. The
+default service is local Ollama. The optional second argument
 selects the model and the optional positive third argument sets the prediction
 limit:
 
@@ -163,4 +163,4 @@ The `examples/ai-assist-ollama.l` and `examples/ai-assist-gpustack.l` files
 define `ai-ask-line` on **M-A**. The command sends the current line to the
 configured AI service and appends a Markdown transcript with `### You` and
 `### Assistant` headings to the `*AI*` buffer. They require an AI-enabled
-build.
+build; the normal Linux and Windows builds include AI.

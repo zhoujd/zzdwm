@@ -2649,7 +2649,7 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (eobp)
     (define-lisp-command "format-log-line" #'format-log-line)
 
-AI-enabled builds add these forms:
+Builds with AI enabled add these forms:
 
     (switch-to-buffer "*AI*")
     (ai-complete "current line")
@@ -2676,10 +2676,11 @@ first two arguments are the foreground and background 256-color indexes; the
 last two are the fallback colors for 8/16-color terminals and the Windows
 console. All color indexes must be from 0 through 255.
 
-`ai-complete` is available in optional AI-enabled builds. It sends a prompt to
-the configured AI service with a built-in assistant instruction, returns the
-generated Markdown text as a string, and returns `nil` after displaying an
-error. The default service is local Ollama. The optional second argument
+`ai-complete` is available in AI-enabled builds, including the default Linux
+and Windows builds. It sends a prompt to the configured AI service with a
+built-in assistant instruction, returns the generated Markdown text as a
+string, and returns `nil` after displaying an error. The default service is
+local Ollama. The optional second argument
 selects the model and the optional positive third argument sets the prediction
 limit:
 
@@ -2759,7 +2760,7 @@ The `examples/ai-assist-ollama.l` and `examples/ai-assist-gpustack.l` files
 define `ai-ask-line` on **M-A**. The command sends the current line to the
 configured AI service and appends a Markdown transcript with `### You` and
 `### Assistant` headings to the `*AI*` buffer. They require an AI-enabled
-build.
+build; the default Linux and Windows builds include AI.
 
 # Display Features
 
@@ -2980,25 +2981,24 @@ editor. Run it from `tools/MicroEMACS`:
     ./build.sh -b test     # Build the test targets
     ./build.sh -d          # Build a debug executable
     ./build.sh -r          # Build and strip a local release
-    ./build.sh -m          # Build me without color and Lisp
-    ./build.sh -a          # Build me with AI support
+    ./build.sh -m          # Build me without color, Lisp, and AI
+    ./build.sh -a          # Build me with AI support; enabled by default
     ./build.sh -p          # Build a static executable in Docker
     ./build.sh -s          # Package the MicroEMACS source tree
     ./build.sh -w          # Clean and build me.exe with MinGW in Docker
     ./build.sh -i          # Install the Linux executable in /usr/local/bin
     ./build.sh -c          # Remove generated build files
 
-The default builds enable color support with `-DCOLOR` and Lisp extensions
-with `-DLISP`. To use
+The default builds enable color support with `-DCOLOR`, Lisp extensions with
+`-DLISP`, and AI completion with `-DAI`. To use
 termcap\index{termcap} instead of ncursesw\index{ncursesw}, pass
 `TERMCAP=yes` to make:
 
     make MF=Make.Linux TERMCAP=yes clean all
 
-Optional AI completion is disabled by default. Enable it with `AI=yes`; this
-requires Lisp support and links the platform socket library. The default
-endpoint is local Ollama, and Lisp can configure OpenAI-compatible HTTP
-services:
+AI completion is enabled by default. It requires Lisp support and links the
+platform socket library. Disable it with `AI=no`. The default endpoint is
+local Ollama, and Lisp can configure OpenAI-compatible HTTP services:
 
     ./build.sh -a
 

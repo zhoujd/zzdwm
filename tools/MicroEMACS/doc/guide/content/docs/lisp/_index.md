@@ -43,6 +43,11 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (eobp)
     (define-lisp-command "format-log-line" #'format-log-line)
 
+Builds with AI enabled also add:
+
+    (switch-to-buffer "*AI*")
+    (ai-complete "current line")
+
 `define-key` binds a key to a MicroEMACS command. Key names support the
 **C-X**, **C-** and **M-** prefixes followed by one ASCII character.
 `set-variable` sets **tab-width** (or **tab-size**) or **fill-column** to a
@@ -64,6 +69,13 @@ text.
 first two arguments are the foreground and background 256-color indexes; the
 last two are the fallback colors for 8/16-color terminals and the Windows
 console. All color indexes must be from 0 through 255.
+
+`ai-complete` sends a prompt to the configured AI service, returns the
+generated Markdown text as a string, and returns `nil` after displaying an
+error. The optional arguments select the model and positive prediction limit.
+`ai-set-endpoint` configures an HTTP endpoint and optional Bearer API key.
+The default endpoint is local Ollama. AI is enabled in the default builds and
+can be disabled with `AI=no`.
 
 `get-char` returns the UTF-8 character under dot as a string, or `nil` at the
 end of a line. `get-line` returns the current line as a string without the

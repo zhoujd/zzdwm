@@ -13,7 +13,7 @@ INC = -I$(srcdir) -I$(SYS) -I$(TTY)
 
 COLOR ?= yes
 LISP ?= yes
-AI ?= no
+AI ?= yes
 COLOR_FLAG := $(if $(filter yes,$(COLOR)),-DCOLOR,)
 LISP_FLAG := $(if $(filter yes,$(LISP)),-DLISP,)
 AI_FLAG :=

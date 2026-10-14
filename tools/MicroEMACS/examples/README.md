@@ -68,3 +68,12 @@ Use it directly for interactive testing:
 Move dot to the end of the `if (x) {` line and press **Enter**. The new line is
 indented by eight spaces. Copy the file to `.mel` or `me.l` to use it as your
 normal Lisp startup configuration.
+
+## AI assistance
+
+`ai-assist-ollama.l` uses the default local Ollama endpoint.
+`ai-assist-gpustack.l` uses an OpenAI-compatible GPUStack endpoint and reads
+`GPUSTACK_API_KEY` from the environment. Both define `ai-ask-line` on **M-A**,
+send the current line to the configured model, and append a Markdown transcript
+to the `*AI*` buffer. AI is enabled in the default builds; use `AI=no` to
+build without it.
