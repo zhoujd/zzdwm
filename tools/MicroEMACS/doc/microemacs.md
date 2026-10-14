@@ -306,7 +306,7 @@ Using `ALT` and `CTRL` together is also not supported.
 
 On FlexOS, the `ALT` key works with both alpha and non-alpha
 characters, and simultaneously with the `CTRL` key.
-Thus, the command **M-C-V** (display-version) can be executed by
+Thus, the command **M-C-V** (scroll-next-down) can be executed by
 holding down `ALT` and `CTRL`, while pressing
 `V` (not an easy task, in this writer's opinion).
 
@@ -329,7 +329,7 @@ or one character at a time; when shifted they move by pages or word.
 When preceded by the F6 key (BLUE on Z-19), the arrow keys
 move to the beginning
 or end of the current line or buffer.
-The 5 key is the same as **C-S** (forw-search), and shift-5 is
+The 5 key is the same as **C-S** (forw-i-search), and shift-5 is
 search-again.  See the [**Wall Chart**](#wall-chart) section of this manual
 for further key bindings for the Z-19/29.
 
@@ -365,8 +365,8 @@ The `PF1` key is the same as **M-X**
 resides on DEC products, so
 it is a good choice for the key that asks for extended commands).
 The `PF2` key is the same as **C-Q** (quote character).
-The `PF3` key is the same as **C-S** (search forward).
-The `PF4` key is the same as **C-R** (search reverse). 
+The `PF3` key is the same as **C-S** (incremental search forward).
+The `PF4` key is the same as **C-R** (incremental search reverse).
 These assignments have not been proven optimal, so they may get changed
 in the future.
 
@@ -389,7 +389,7 @@ implies. `Next Screen` is the same as **C-V**.
 `Remove` is the same as
 **C-W** (kill region). `Insert here`
 is the same as **C-Y** (yank from killbuffer).
-`Find` is the same as **C-S** (search forward).
+`Find` is the same as **C-S** (incremental search forward).
 
 The `F6`, `F7`, `F8`,
 `F9`, `F10`, and `F14` keys are unused.
@@ -465,6 +465,8 @@ using the following characters:
 
 * `Control-K`: delete from the cursor to the end of the line.
 
+* `Control-Y`: insert the first line of the kill buffer at the cursor.
+
 * `Control-Q`: enter the next character literally into the line (useful for entering control characters).
 
 * `Control-U`: delete the entire line.
@@ -495,6 +497,11 @@ supplied, and will use a default argument if no user argument is present.
 Usually, the default argument is `1`.
 
 A **C-U** preceding a command always introduces an argument.
+
+As an alternative, **M-0** through **M-9** start a decimal argument, and
+**M--** starts a negative decimal argument. Additional digits are appended
+until the next command key is entered. For example, **M-3 M-C-F** moves
+forward three characters, and **M-- 2 C-N** moves back two lines.
 
 If a numeric argument is just a string of **C-U** characters, then the
 value of the argument is
@@ -724,9 +731,18 @@ C-X C-C
     confirmation. The value of the argument is not important.
     On PCs, this function is also bound to `F4`.
 
-C-C
+M-Z
 
-:   **spawn-cli**\index{C-C}\index{spawn-cli}
+:   **quick-quit**\index{M-Z}\index{quick-quit}
+
+    Save every changed buffer that has an associated file, then quit.
+    If a changed buffer has no associated file, MicroEMACS still asks for
+    confirmation before quitting. An argument is passed to each save and to
+    the final quit.
+
+C-X C
+
+:   **spawn-cli**\index{C-X C}\index{spawn-cli}
 
     This command suspends the execution of MicroEMACS, and runs
     a command interpreter\index{Shell}\index{Command interpreter}
@@ -748,15 +764,21 @@ C-C
 
     * On all other systems enter the **exit** command.
 
-C-X C
+C-X !
 
-:   **jeff-exit**\index{C-X C}\index{jeff-exit}
+:   **shell-command**\index{C-X !}\index{shell-command}
+
+    Prompt for a shell command, run it in a subjob, and wait for a keypress
+    at `(End)`. MicroEMACS then repaints the screen.
+
+[unbound]
+
+:   **jeff-exit**\index{jeff-exit}
 
     This is a slightly more elaborate quit command.
-    If the current buffer has been changed, **C-X C** saves the contents of
-    the buffer in the associated file (it gets an error if there is no
-    associated file). If the current buffer has not been changed, **C-X C**
-    acts like **C-C**.
+    If the current buffer has been changed and is not the `main` buffer, it
+    saves the contents of the buffer in the associated file. Otherwise it
+    acts like **spawn-cli**.
 
 # Moving Around
 
@@ -782,12 +804,26 @@ C-@,C-space,M-space
     By repeatedly using this command with an argument, you can cycle through
     the entire ring of marks, returning to those marked locations in sequence.
 
+[unbound]
+
+:   **clear-mark**\index{clear-mark}
+
+    Clear the mark for the current window. This is useful when you no longer
+    want region commands to operate on the previous dot-and-mark region.
+
 C-X C-X
 
 :   **swap-dot-and-mark**\index{C-X C-X}\index{swap-dot-and-mark}
 
     Exchange the positions of the dot\index{Dot} and the mark\index{Mark}.
     This is useful for switching back and forth between two points in a file.
+
+C-X H
+
+:   **mark-all**\index{C-X H}\index{mark-all}
+
+    Put dot at the beginning of the buffer and set the mark at the end of the
+    buffer, selecting the entire buffer as the region.
 
 C-A
 
@@ -921,6 +957,8 @@ C-X =
 
     * The number of characters in the buffer\index{Buffer}.
 
+    * Whether the current buffer uses **LF** or **CRLF** line endings.
+
 # Inserting
 
 \index{Inserting}
@@ -945,6 +983,14 @@ Self-inserting keys are all bound to the
 function **ins-self**\index{ins-self}.  As with
 any key, these keys can be rebound to other functions, but this is not
 always advisable.
+
+C-C
+
+:   **ins-space**\index{C-C}\index{ins-space}
+
+    Insert spaces at dot. The argument specifies the number of spaces.
+    Dot remains at the first inserted space, which makes this command useful
+    for leaving room for later text.
 
 Word wrapping\index{Word wrap} can be performed by binding a key
 to the **ins-self-with-wrap**\index{ins-self-with-wrap} function.
@@ -1074,6 +1120,37 @@ M-I
     If you pass a non-zero argument to this command,
     MicroEMACS will revert back to the default behavior,
     which is to preserve tabs.
+
+M-C-T
+
+:   **trim-line**\index{M-C-T}\index{trim-line}
+
+    Remove trailing spaces and tabs. With no argument, trim each line in the
+    current region; with an argument, trim that many lines.
+
+C-X C-D
+
+:   **detab-line**\index{C-X C-D}\index{detab-line}
+
+    Convert tabs to spaces using the current tab size. With no
+    argument, operate on the current region; with an argument, operate on
+    that many lines.
+
+C-X C-E
+
+:   **entab-line**\index{C-X C-E}\index{entab-line}
+
+    Convert runs of spaces to tabs where they reach a tab stop. With no
+    argument, operate on the current region; with an argument, operate on
+    that many lines.
+
+M-+
+
+:   **indent-region**\index{M-+}\index{indent-region}\index{Region}
+
+    Shift each line in the current region by the argument. Positive arguments
+    add indentation, and negative arguments remove indentation. Existing
+    leading white space is replaced with the new indentation.
 
 [unbound]
 
@@ -1256,6 +1333,13 @@ M-U
     case. If an argument is supplied, it must be positive, and it specifies the
     number of words over which to move.
 
+M-C-C
+
+:   **count-words**\index{M-C-C}\index{count-words}
+
+    Count the words, characters, and lines in the current region, and report
+    the results on the echo line.
+
 # Paragraphs
 
 \index{Paragraphs}
@@ -1414,9 +1498,9 @@ searches using a subset of POSIX regular expressions:
 
 * `+` (one or more occurrences)
 
-C-S, M-S
+C-X S, M-S
 
-:   **forw-search**\index{C-S}\index{M-S}\index{forw-search}
+:   **forw-search**\index{C-X S}\index{M-S}\index{forw-search}
 
     Search forward, from the current location, toward the end of
     the buffer. If found, dot is positioned after the matched text. If the
@@ -1432,9 +1516,9 @@ C-S, M-S
     \index{Zenith Z-29} keyboard
     by pressing the `F1` key.
 
-C-R
+C-X R
 
-:   **back-search**\index{C-R}\index{back-search}
+:   **back-search**\index{C-X R}\index{back-search}
 
     Search reverse, from the current location, toward the front of
     the buffer. If found, dot is positioned at the first character of the
@@ -1486,9 +1570,9 @@ Pad-1,Shift-5
     `5` key.
     On PCs, this function is also bound to `F9`.
 
-C-X S
+C-S
 
-:   **forw-i-search**\index{C-X S}\index{forw-i-search}\index{Incremental search}
+:   **forw-i-search**\index{C-S}\index{forw-i-search}\index{Incremental search}
 
     Enters incremental search mode, with
     the initial search direction being forward.  In incremental search mode
@@ -1510,6 +1594,8 @@ C-X S
 
     * **C-Q** (or **C-^**) quotes the next character (allows searching for C-N, etc.).
 
+    * **C-W** appends the rest of the word after dot to the search pattern.
+
     * **ESC** exits from incremental search mode.
 
     * **C-G** restores dot to original location before incremental search mode
@@ -1523,9 +1609,9 @@ C-X S
     * All other control characters exit from incremental search mode and
     are interpreted as normal commands.
 
-C-X R
+C-R
 
-:   **back-i-search**\index{C-X R}\index{back-i-search}
+:   **back-i-search**\index{C-R}\index{back-i-search}
 
     Enters incremental search mode, with the initial search direction
     being reverse.
@@ -1558,6 +1644,15 @@ M-Q,M-%
     match the old string when it performs a replacement.
     You can defeat this "feature"
     if you prefix this command with an argument (the argument value is ignored).
+
+C-X %
+
+:   **replace-region**\index{C-X %}\index{replace-region}\index{Region}
+
+    Prompt for a search string and a replacement string, then query-replace
+    only within the current region. At each match, answer **y** or **space**
+    to replace it, **n** to skip it, **!** to replace all remaining matches,
+    or **C-G** to stop.
 
 M-R
 
@@ -1618,9 +1713,9 @@ C-X I
 
     * **r** prompts for a string to replace the word.
 
-M-\$
+M-\#
 
-:   **spell-word**\index{M-\$}\index{spell-word}
+:   **spell-word**\index{M-\#}\index{spell-word}
 
     Similar to **spell-region**, except that it checks only the word under
     the cursor.
@@ -1631,7 +1726,15 @@ M-\$
 
 C-X C-F
 
-:   **set-file-name**
+:   **find-file**\index{C-X C-F}\index{find-file}\index{File, finding}
+
+    Prompt for a file name, then select that file for editing. If a buffer is
+    already associated with the file, switch to that buffer; otherwise create
+    a buffer, read the file into it, and switch to the buffer.
+
+M-@
+
+:   **set-file-name**\index{M-@}\index{set-file-name}
 
     This command prompts in the echo line for a file name\index{File name},
     which becomes the new associated file name for the current buffer\index{Buffer}.
@@ -1708,6 +1811,50 @@ C-X C-W
     then it writes the contents of the current buffer to that file. The
     "changed" flag for the current buffer is reset, and the supplied file
     name becomes the associated file name for the current buffer.
+
+[unbound]
+
+:   **revert-buffer**\index{revert-buffer}\index{Buffer, reverting}
+
+    Reread the file associated with the current buffer, replacing the buffer
+    contents and clearing the undo history. Unless the command is forced with
+    an argument, MicroEMACS asks for confirmation when the buffer has changed.
+
+M-\$
+
+:   **set-newline**\index{M-\$}\index{set-newline}\index{Line endings}
+
+    Toggle whether the current buffer uses **LF** or **CRLF** line endings.
+    The current setting is shown by **C-X =** and used when the buffer is saved.
+
+C-X @
+
+:   **pipe-command**\index{C-X @}\index{pipe-command}\index{Shell}
+
+    Prompt for a shell command, run it with standard output and standard error
+    redirected to a temporary file, and display the output in the `*pipe*` buffer.
+
+C-X \#
+
+:   **filter-buffer**\index{C-X \#}\index{filter-buffer}\index{Shell}
+
+    Prompt for an external filter command. Write the current buffer to a
+    temporary file, run the filter on that file, and display its output in
+    the `*filter*` buffer.
+
+C-X \$
+
+:   **change-dir**\index{C-X \$}\index{change-dir}\index{Directory}
+
+    Change MicroEMACS's current working directory. Supplying an empty path
+    displays the current directory.
+
+C-X D
+
+:   **dired**\index{C-X D}\index{dired}\index{Directory}
+
+    Prompt for a directory, run a long directory listing, and display it in
+    the `*dired*` buffer.
 
 # Keyboard Macros
 
@@ -1796,17 +1943,31 @@ text to be lost.
 
 C-X C-B
 
-:   **display-buffers**\index{C-X C-B}\index{display-buffers}\index{Buffer list}
+:   **buffer-menu**\index{C-X C-B}\index{buffer-menu}\index{Buffer list}
 
-    Create a pop-up window\index{Window} on the screen, and display it in
-    the name, size (in characters), associated file name, and changed flag
-    of all buffers. This command works by creating a special buffer which
-    contains the text of the display, and then selecting it in a window. You
-    can switch into this window if you like. You can even edit the text.
-    MicroEMACS makes no attempt to keep a buffer list which is on the screen
-    updated as other buffers are edited; however, another **C-X C-B** command
-    will cause the display to be updated in place.
-    On PCs, this function is also bound to `F6`.
+    Open a full-screen buffer menu. Move to an entry with **n**, **p**, the
+    arrow keys, or **space** and **backspace**. The menu keys are:
+
+    * **1** or **Return** selects the buffer in the current window.
+
+    * **2** selects the buffer in a split window below the original window.
+
+    * **s** saves the buffer on the selected line.
+
+    * **v** toggles the buffer's read-only flag.
+
+    * **k** or **d** kills the buffer on the selected line.
+
+    * **q**, **Q**, **x**, or **X** closes the menu and returns to the
+      original buffer.
+
+[unbound]
+
+:   **display-buffers**\index{display-buffers}\index{Buffer list}
+
+    Create a pop-up window\index{Window} containing the name, size, associated
+    file name, and changed flag of every buffer. Unlike **buffer-menu**, this
+    display is not interactive. On PCs, this function is also bound to `F6`.
 
 C-X B
 
@@ -1858,6 +2019,13 @@ C-X C-Q
     if the buffer is currently read-only, it is made read-write;
     otherwise it is made read-only.  This can be useful to counteract
     the effect of [starting MicroEMACS](#starting) with the `-r` option.
+
+M-~
+
+:   **umark-buffer**\index{M-~}\index{umark-buffer}
+
+    Clear the changed flag for the current buffer. MicroEMACS will no longer
+    consider the buffer modified, so use this command carefully.
 
 # Window Management
 
@@ -1919,6 +2087,14 @@ C-X 1
     to fill the vacated screen space. Any argument is ignored.
     On PCs, this command is also bound to `F10`.
 
+C-X 0
+
+:   **zap-window**\index{C-X 0}\index{zap-window}
+
+    Remove the current window and give its space to an adjacent window. If
+    there is only one window, report an error instead. The current buffer is
+    not killed.
+
 C-X N, C-X O
 
 :   **forw-window**\index{C-X N}\index{C-X O}\index{forw-window}
@@ -1972,6 +2148,20 @@ C-X C-Z
     given to the window immediately above the current window. You cannot shrink
     a window out of existence.
 
+M-C-V
+
+:   **scroll-next-down**\index{M-C-V}\index{scroll-next-down}
+
+    Scroll the next window forward one page, or by the argument number of
+    lines, while leaving dot in the current window.
+
+M-C-Z
+
+:   **scroll-next-up**\index{M-C-Z}\index{scroll-next-up}
+
+    Scroll the next window backward one page, or by the argument number of
+    lines, while leaving dot in the current window.
+
 M-!
 
 :   **reposition-window**\index{M-!}\index{reposition-window}
@@ -2023,9 +2213,9 @@ may use it in the future.
     * **C-C**: quit, erase the portion of the message already read, but leave
     the remainder of the message unchanged.
 
-M-C-V
+C-X V
 
-:   **display-version**\index{M-C-V}\index{display-version}\index{Version}
+:   **display-version**\index{C-X V}\index{display-version}\index{Version}
 
     Copy the version strings into the message buffer, then execute
     a **display-message** command (see above).  Use this command to
@@ -2261,7 +2451,7 @@ name.
 
     A quoted string must always follow a command that normally
     prompt the user to enter a response string (for example, the search command
-    **C-S**).  The
+    **C-X S**).  The
     last character in the response string must be a carriage return
     (written as \\r).
 
@@ -2275,7 +2465,7 @@ name.
 
     [M-C-V]
 
-    :   means "ESC Control-F"
+    :   means "ESC Control-V"
 
     [M-L]
 
@@ -2402,9 +2592,9 @@ to evaluate a Lisp file explicitly.
 You can display messages on the echo line\index{Echo line} during profile
 processing (or at any other time) with the following command.
 
-**C-X C-E**
+[unbound]
 
-:   **echo**\index{C-X C-E}\index{echo}
+:   **echo**\index{echo}
 
     This command prompts you to enter a line of text.
     MicroEMACS then displays the text on the echo line.
@@ -2564,6 +2754,14 @@ Start MicroEMACS with `-C` to disable color for a session:
 The `set-color`\index{set-color} extended command toggles color while the
 editor is running. It is not bound to a key. Provide a numeric argument of
 zero to turn color off, or a nonzero numeric argument to turn it on.
+
+[unbound]
+
+:   **display-visable**\index{display-visable}
+
+    Toggle a mode-line indicator that reports how much of the buffer is
+    visible. The indicator shows **all**, **top**, **bot**, **emp**, or a
+    percentage through the buffer.
 
 The current implementation preserves double-width CJK characters on the
 Windows console, including lines that contain syntax highlighting.
@@ -2822,6 +3020,10 @@ C-O
 
 :   ins-nl-and-backup
 
+C-C
+
+:   ins-space
+
 C-T
 
 :   twiddle
@@ -2833,6 +3035,10 @@ M-L
 M-U
 
 :   upper-word
+
+M-C-C
+
+:   count-words
 
 M-C
 
@@ -2885,6 +3091,18 @@ M-Tab
 M-I
 
 :   set-save-tabs
+
+M-C-T
+
+:   trim-line
+
+C-X C-D
+
+:   detab-line
+
+C-X C-E
+
+:   entab-line
 
 *Little Moves*
 
@@ -2973,7 +3191,11 @@ C-@,C-space
 
 M-.
 
-:   set-mark
+:   find-tag
+
+C-X H
+
+:   mark-all
 
 C-X C-X
 
@@ -2995,11 +3217,15 @@ C-W
 
 :   kill-region
 
+M-+
+
+:   indent-region
+
 *Search and Replace*
 
 C-S
 
-:   forw-search
+:   forw-i-search
 
 M-S
 
@@ -3007,7 +3233,7 @@ M-S
 
 C-R
 
-:   back-search
+:   back-i-search
 
 M-C-F
 
@@ -3031,11 +3257,11 @@ M-R
 
 C-X S
 
-:   forw-i-search
+:   forw-search
 
 C-X R
 
-:   back-i-search
+:   back-search
 
 M-C-S
 
@@ -3052,6 +3278,14 @@ M-/
 M-?
 
 :   reg-query-replace
+
+C-X %
+
+:   replace-region
+
+M-\#
+
+:   spell-word
 
 *File and System Operations*
 
@@ -3081,7 +3315,15 @@ C-X C-S
 
 C-X C-F
 
+:   find-file
+
+M-@
+
 :   set-file-name
+
+M-\$
+
+:   set-newline
 
 C-X B
 
@@ -3090,6 +3332,10 @@ C-X B
 C-X K
 
 :   kill-buffer
+
+M-~
+
+:   umark-buffer
 
 C-L
 
@@ -3129,11 +3375,35 @@ C-X C-C
 
 C-X C
 
-:   jeff-exit
+:   spawn-cli
+
+M-Z
+
+:   quick-quit
+
+C-X !
+
+:   shell-command
+
+C-X @
+
+:   pipe-command
+
+C-X \#
+
+:   filter-buffer
+
+C-X \$
+
+:   change-dir
+
+C-X D
+
+:   dired
 
 C-X I
 
-:   spell-check
+:   spell-region
 
 *Windows*
 
@@ -3144,6 +3414,10 @@ C-X 1
 C-X 2
 
 :   split-window
+
+C-X 0
+
+:   zap-window
 
 C-X +
 
@@ -3181,11 +3455,15 @@ C-X C-N
 
 :   down-window
 
-M-C-R
-
-:   display-message
-
 M-C-V
+
+:   scroll-next-down
+
+M-C-Z
+
+:   scroll-next-up
+
+C-X V
 
 :   display-version
 
@@ -3195,7 +3473,7 @@ C-X =
 
 C-X C-B
 
-:   display-buffers
+:   buffer-menu
 
 C-X C-Q
 
@@ -3218,10 +3496,6 @@ C-X E
 C-X F
 
 :   read-profile
-
-C-X C-E
-
-:   echo
 
 *Tags and Errors*
 
