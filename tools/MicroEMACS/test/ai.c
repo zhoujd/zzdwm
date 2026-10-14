@@ -86,6 +86,20 @@ main (void)
                              output, sizeof (output)) == TRUE);
   assert (strcmp (output, "A\xc3\xa9\n\xf0\x9f\x98\x80") == 0);
 
+  assert (ai_parse_response ("HTTP/1.1 200 OK\r\n\r\n"
+                             "{\"response\":\"\"}",
+                             sizeof ("HTTP/1.1 200 OK\r\n\r\n"
+                                     "{\"response\":\"\"}") - 1,
+                             output, sizeof (output)) == FALSE);
+  assert (strcmp (ai_last_error (), "AI response content is empty") == 0);
+
+  assert (ai_parse_response ("HTTP/1.1 200 OK\r\n\r\n"
+                             "{\"response\":\" \\n\\t \"}",
+                             sizeof ("HTTP/1.1 200 OK\r\n\r\n"
+                                     "{\"response\":\" \\n\\t \"}") - 1,
+                             output, sizeof (output)) == FALSE);
+  assert (strcmp (ai_last_error (), "AI response content is empty") == 0);
+
   assert (ai_parse_response ("HTTP/1.0 500 Internal Server Error\r\n\r\n{}",
                              sizeof ("HTTP/1.0 500 Internal Server Error\r\n\r\n{}")
                              - 1, output, sizeof (output)) == FALSE);
@@ -112,6 +126,17 @@ main (void)
                                      "\"content\":\"chat ok\"}}]}")
                              - 1, output, sizeof (output)) == TRUE);
   assert (strcmp (output, "chat ok") == 0);
+
+  assert (ai_parse_response ("HTTP/1.1 200 OK\r\n\r\n"
+                             "{\"choices\":[{\"index\":0,"
+                             "\"message\":{\"role\":\"assistant\","
+                             "\"content\":\"\"}}]}",
+                             sizeof ("HTTP/1.1 200 OK\r\n\r\n"
+                                     "{\"choices\":[{\"index\":0,"
+                                     "\"message\":{\"role\":\"assistant\","
+                                     "\"content\":\"\"}}]}") - 1,
+                             output, sizeof (output)) == FALSE);
+  assert (strcmp (ai_last_error (), "AI response content is empty") == 0);
 
   {
     static const char prefix[] = "HTTP/1.0 200 OK\r\n\r\n{\"response\":\"";

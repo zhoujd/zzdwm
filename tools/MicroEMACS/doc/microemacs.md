@@ -2691,6 +2691,7 @@ limit:
 On failure, `ai-complete` returns `nil` after displaying the underlying error.
 The `ai-last-error` form returns that error text as a string for scripts that
 need to format it themselves.
+An empty or whitespace-only successful response is treated as a failure.
 
 `ai-set-endpoint` configures an HTTP endpoint and optionally sets a Bearer API
 key. An endpoint ending in `/v1/chat/completions` uses the OpenAI-compatible

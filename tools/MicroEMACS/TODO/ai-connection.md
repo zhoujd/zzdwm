@@ -28,6 +28,7 @@ The first form uses `qwen2.5-coder:1.5b` and a 128-token prediction limit.
 The second form selects a model. The third form also sets the positive
 prediction limit. The return value is the generated text as a string. On
 failure, the echo line shows the last AI error and the form returns `nil`.
+Empty or whitespace-only successful responses are treated as failures.
 Requests include a built-in system instruction that asks the model for concise
 Markdown assistant commentary, including explanations and useful code rather
 than code-only output.

@@ -1058,6 +1058,17 @@ ai_decode_chunked (const char *body, size_t length,
 }
 
 static int
+ai_response_has_content (const char *response)
+{
+  size_t index;
+
+  for (index = 0; response[index] != 0; index++)
+    if (isspace ((unsigned char) response[index]) == 0)
+      return TRUE;
+  return FALSE;
+}
+
+static int
 ai_parse_response (const char *response, size_t length,
                    char *output, size_t output_size)
 {
@@ -1105,6 +1116,11 @@ ai_parse_response (const char *response, size_t length,
                                 output, output_size);
   if (result == FALSE)
     ai_set_error ("AI response field is missing");
+  else if (ai_response_has_content (output) == FALSE)
+    {
+      ai_set_error ("AI response content is empty");
+      result = FALSE;
+    }
   free (decoded);
   return result;
 }
