@@ -77,3 +77,6 @@ normal Lisp startup configuration.
 send the current line to the configured model, and append a Markdown transcript
 to the `*AI*` buffer. AI is enabled in the default builds; use `AI=no` to
 build without it.
+Anthropic Claude is not supported directly; use an OpenAI-compatible HTTP proxy
+such as LiteLLM and point `ai-set-endpoint` at the proxy's
+`/v1/chat/completions` URL.

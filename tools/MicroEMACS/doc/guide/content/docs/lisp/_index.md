@@ -76,6 +76,9 @@ error. The optional arguments select the model and positive prediction limit.
 `ai-set-endpoint` configures an HTTP endpoint and optional Bearer API key.
 The default endpoint is local Ollama. AI is enabled in the default builds and
 can be disabled with `AI=no`.
+Anthropic Claude is not supported directly because its official API requires
+HTTPS and a different wire format; use an OpenAI-compatible HTTP proxy such as
+LiteLLM when Claude access is needed.
 
 `get-char` returns the UTF-8 character under dot as a string, or `nil` at the
 end of a line. `get-line` returns the current line as a string without the

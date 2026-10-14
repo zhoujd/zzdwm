@@ -95,6 +95,16 @@ socket client. Keep API keys in a local startup file that is not committed:
                  (getenv "GPUSTACK_API_KEY"))
 ```
 
+Anthropic Claude is not supported directly because the official Messages API
+requires HTTPS and uses different request and response formats. Claude Code and
+`claude.ai` URLs are not chat-completion endpoints. Use an OpenAI-compatible
+HTTP proxy, such as LiteLLM, when Claude access is needed:
+
+```lisp
+(ai-set-endpoint "http://127.0.0.1:4000/v1/chat/completions"
+                 (getenv "LITELLM_API_KEY"))
+```
+
 `get-char` returns the UTF-8 character under dot as a string, or `nil` at the
 end of a line. `get-line` returns the current line as a string without the
 newline; with a numeric argument, it returns a line relative to dot and

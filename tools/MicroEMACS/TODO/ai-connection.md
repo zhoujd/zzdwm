@@ -52,6 +52,17 @@ HTTPS endpoints are not supported by the compact socket client. Keep API keys
 in an environment variable or a local startup file that is not committed to
 source control.
 
+Anthropic Claude is not supported directly. The official Claude Messages API
+uses HTTPS, different authentication headers, and a different response format.
+Claude Code and `claude.ai` URLs are not chat-completion API endpoints. Use an
+OpenAI-compatible HTTP proxy such as LiteLLM when Claude access is needed:
+
+```lisp
+(ai-set-endpoint "http://127.0.0.1:4000/v1/chat/completions"
+                 (getenv "LITELLM_API_KEY"))
+(ai-complete "prompt" "claude-model-name" 1024)
+```
+
 The client uses a 30-second connect/read timeout. A GPUStack service can wait
 up to 120 seconds for a provider slot; in that case MicroEMACS reports a
 receive timeout before GPUStack returns its `503 ServiceUnavailable` response.
