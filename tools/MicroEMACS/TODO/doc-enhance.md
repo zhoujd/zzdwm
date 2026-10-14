@@ -2,7 +2,7 @@
 
 ---
 
-## Update microemacs.pdf on this version
+## Update microemacs.pdf on this version [DONE]
 
 ### In 2.6 Command Arguments, M-0/9/- supported
 ### In 4 Quitting, spawn-cli changed to "C-X C"
