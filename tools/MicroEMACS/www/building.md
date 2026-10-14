@@ -64,6 +64,7 @@ the editor. Run it from `tools/MicroEMACS`:
     ./build.sh -d          # Build a debug executable
     ./build.sh -r          # Build and strip a local release
     ./build.sh -m          # Build me without color and Lisp
+    ./build.sh -a          # Build me with AI support
     ./build.sh -p          # Build a static executable in Docker
     ./build.sh -s          # Package the MicroEMACS source tree
     ./build.sh -w          # Clean and build me.exe with MinGW in Docker
@@ -75,6 +76,13 @@ with `-DLISP`. To use termcap
 instead of ncursesw, pass `TERMCAP=yes` to make:
 
     make MF=Make.Linux TERMCAP=yes clean all
+
+Optional AI completion is disabled by default. Enable it with `AI=yes`; this
+requires Lisp support and links the platform socket library. The default
+endpoint is local Ollama, and Lisp can configure OpenAI-compatible HTTP
+services:
+
+    ./build.sh -a
 
 The release wrapper selects a static build automatically on Alpine and
 Void Linux. The publish wrapper builds a stripped static executable in

@@ -13,6 +13,7 @@ usage() {
 Usage: $app {option}
 Option:
 build|-b        build {test|-t|all|-a}
+ai|-a           build me with AI support
 windows|-w      build Windows me.exe
 docs|-D         update PDF documentation
 clean|-c        clean {test|-t|all|-a}
@@ -157,6 +158,12 @@ minimal() {
     echo "Build minimal done"
 }
 
+ai() {
+    make clean || exit 1
+    make -f Make.Linux AI=yes me || exit 1
+    echo "Build AI done"
+}
+
 publish() {
     CMD=${1:-}
     if [ -n "$INSIDE_DOCKER" ]; then
@@ -265,6 +272,9 @@ case $1 in
         ;;
     minimal|-m )
         minimal
+        ;;
+    ai|-a )
+        ai
         ;;
     publish|-p )
         shift

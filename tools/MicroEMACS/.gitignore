@@ -25,3 +25,4 @@ syntax-test
 display-test
 cscope-test
 lisp-test
+ai-test

@@ -17,14 +17,24 @@ INC = -I$(srcdir) -I$(SYS) -I$(TTY)
 
 COLOR ?= yes
 LISP ?= yes
+AI ?= no
 COLOR_FLAG := $(if $(filter yes,$(COLOR)),-DCOLOR,)
 LISP_FLAG := $(if $(filter yes,$(LISP)),-DLISP,)
+AI_FLAG :=
+AI_OBJ :=
+ifeq ($(AI), yes)
+ifeq ($(LISP), no)
+$(error AI=yes requires LISP=yes)
+endif
+AI_FLAG := -DAI
+AI_OBJ := ai.o
+endif
 
 # Compilers, linkers, and their flags.
 
 CC = gcc
 CFLAGS = -std=c99 -D_GNU_SOURCE -DLINUX -DBACKUP \
-         $(COLOR_FLAG) $(LISP_FLAG) $(INC) \
+         $(COLOR_FLAG) $(LISP_FLAG) $(AI_FLAG) $(INC) \
          -Wall -Wextra -pedantic \
          -Wno-unused-parameter \
          -Wno-implicit-fallthrough
@@ -68,6 +78,7 @@ OBJ := \
 	kbd.o \
 	line.o \
 	$(LISP_OBJ) \
+	$(AI_OBJ) \
 	main.o \
 	paragraph.o \
 	random.o \

@@ -229,6 +229,24 @@ lisp_eobp (int argc, const char *const *argv,
            ? TRUE : TINY_LISP_HOST_NIL;
 }
 
+#ifdef AI
+static int
+lisp_switch_buffer (int argc, const char *const *argv,
+                    char *result, size_t result_size)
+{
+  BUFFER *buffer;
+
+  (void) result;
+  (void) result_size;
+  if (argc != 1 || curwp == NULL || argv[0][0] == 0
+      || strlen (argv[0]) >= NBUFN)
+    return FALSE;
+  if ((buffer = bfind (argv[0], TRUE)) == NULL)
+    return FALSE;
+  return swbuffer (buffer);
+}
+#endif
+
 static int
 lisp_get_char (int argc, const char *const *argv,
                char *result, size_t result_size)
@@ -573,6 +591,25 @@ lisp_debug_message (int argc, const char *const *argv,
   return TRUE;
 }
 
+#ifdef AI
+static int
+lisp_getenv (int argc, const char *const *argv,
+             char *result, size_t result_size)
+{
+  const char *value;
+
+  if (argc != 1 || argv[0][0] == 0)
+    return FALSE;
+  value = getenv (argv[0]);
+  if (value == NULL)
+    return TINY_LISP_HOST_NIL;
+  if (snprintf (result, result_size, "%s", value)
+      >= (int) result_size)
+    return FALSE;
+  return TINY_LISP_HOST_STRING;
+}
+#endif
+
 static int
 lisp_set_variable (int argc, const char *const *argv,
                    char *result, size_t result_size)
@@ -611,6 +648,66 @@ lisp_set_variable (int argc, const char *const *argv,
   return FALSE;
 }
 
+#ifdef AI
+static int
+lisp_ai_set_endpoint (int argc, const char *const *argv,
+                      char *result, size_t result_size)
+{
+  (void) result;
+  (void) result_size;
+  if (argc < 1 || argc > 2 || argv[0][0] == 0
+      || (argc == 2 && argv[1][0] == 0))
+    return FALSE;
+  if (ai_configure (argv[0], argc == 2 ? argv[1] : NULL) != TRUE)
+    {
+      eprintf ("[AI: %s]", ai_last_error ());
+      lisp_message_displayed = TRUE;
+      return TINY_LISP_HOST_NIL;
+    }
+  return TRUE;
+}
+
+static int
+lisp_ai_last_error (int argc, const char *const *argv,
+                    char *result, size_t result_size)
+{
+  (void) argv;
+  if (argc != 0)
+    return FALSE;
+  if (snprintf (result, result_size, "%s", ai_last_error ())
+      >= (int) result_size)
+    return FALSE;
+  return TINY_LISP_HOST_STRING;
+}
+
+static int
+lisp_ai_complete (int argc, const char *const *argv,
+                  char *result, size_t result_size)
+{
+  const char *model = NULL;
+  int num_predict = 0;
+
+  if (argc < 1 || argc > 3 || argv[0][0] == 0)
+    return FALSE;
+  if (argc >= 2 && argv[1][0] == 0)
+    return FALSE;
+  if (argc == 3
+      && (lisp_integer (argv[2], &num_predict) == FALSE
+          || num_predict <= 0))
+    return FALSE;
+  if (argc >= 2)
+    model = argv[1];
+  if (ai_complete (argv[0], model, num_predict,
+                   result, result_size) != TRUE)
+    {
+      eprintf ("[AI: %s]", ai_last_error ());
+      lisp_message_displayed = TRUE;
+      return TINY_LISP_HOST_NIL;
+    }
+  return TINY_LISP_HOST_STRING;
+}
+#endif
+
 static int
 lisp_register_hosts (void)
 {
@@ -639,6 +736,13 @@ lisp_register_hosts (void)
     { "forward-line", lisp_forward_line },
     { "eobp", lisp_eobp },
     { "define-lisp-command", lisp_define_command },
+#ifdef AI
+    { "getenv", lisp_getenv },
+    { "switch-to-buffer", lisp_switch_buffer },
+    { "ai-set-endpoint", lisp_ai_set_endpoint },
+    { "ai-complete", lisp_ai_complete },
+    { "ai-last-error", lisp_ai_last_error },
+#endif
 #ifdef COLOR
     { "set-modeline-color", lisp_set_modeline_color },
     { "set-syntax", lisp_set_syntax }

@@ -39,6 +39,11 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (eobp)
     (define-lisp-command "format-log-line" #'format-log-line)
 
+AI-enabled builds add these forms:
+
+    (switch-to-buffer "*AI*")
+    (ai-complete "current line")
+
 `define-key` binds a key to a MicroEMACS command. Key names support the
 **C-X**, **C-** and **M-** prefixes followed by one ASCII character.
 `set-variable` sets **tab-width** (or **tab-size**) or **fill-column** to a
@@ -61,16 +66,46 @@ first two arguments are the foreground and background 256-color indexes; the
 last two are the fallback colors for 8/16-color terminals and the Windows
 console. All color indexes must be from 0 through 255.
 
+`ai-complete` is available in optional AI-enabled builds. It sends a prompt
+to the configured AI service with a built-in instruction for concise Markdown
+assistant commentary, returns the generated text as a string, and returns
+`nil` after displaying an error. The default service is local Ollama. The
+optional second argument
+selects the model and the optional positive third argument sets the prediction
+limit:
+
+```lisp
+(ai-complete "prompt")
+(ai-complete "prompt" "qwen2.5-coder:1.5b" 64)
+```
+
+On failure, `ai-complete` returns `nil` after displaying the underlying error.
+The `ai-last-error` form returns that error text as a string for scripts that
+need to format it themselves.
+
+`ai-set-endpoint` configures an HTTP endpoint and optionally sets a Bearer API
+key. An endpoint ending in `/v1/chat/completions` uses the OpenAI-compatible
+chat request and response formats. HTTPS is not supported by the compact
+socket client. Keep API keys in a local startup file that is not committed:
+
+```lisp
+(ai-set-endpoint "http://127.0.0.1:11434/api/generate")
+(ai-set-endpoint "http://your-gpustack-host:8090/v1/chat/completions"
+                 (getenv "GPUSTACK_API_KEY"))
+```
+
 `get-char` returns the UTF-8 character under dot as a string, or `nil` at the
 end of a line. `get-line` returns the current line as a string without the
 newline; with a numeric argument, it returns a line relative to dot and
-returns `nil` outside the buffer. `count-char` returns the number of
+returns `nil` outside the buffer. In AI-enabled builds, `getenv` returns an
+environment variable as a string, or `nil` when it is not set. `count-char` returns the number of
 occurrences of a one-character string in another string. `insert-string`
 inserts a string at dot, while `insert-char` inserts one character given as a
 Unicode code point or a one-character string. `goto-bol`, `goto-eol`, and
 `forward-line` move dot without replaying keys. `save-buffer` and `kill-emacs`
 perform those editor actions directly. `eobp` returns `t` when dot is at the
-end of the buffer and `nil` otherwise.
+end of the buffer and `nil` otherwise. In AI-enabled builds,
+`switch-to-buffer` finds or creates a named buffer and makes it current.
 
 `define-lisp-command` registers a Lisp function as a named MicroEMACS
 command. Use `#'name` to pass a function reference. For compatibility, a
@@ -122,3 +157,9 @@ with relative `get-line` forms, and binds **Enter** to `smart-indent`:
 ```sh
 me -l examples/smart-indent.l examples/smart-indent-input.c
 ```
+
+The `examples/ai-assist-ollama.l` and `examples/ai-assist-gpustack.l` files
+define `ai-ask-line` on **M-A**. The command sends the current line to the
+configured AI service and appends a Markdown transcript with `### You` and
+`### Assistant` headings to the `*AI*` buffer. They require an AI-enabled
+build.

@@ -1,7 +1,8 @@
 ## Test Makefile
 
 ROOT = ..
-TARGET = utf8 regtest tcap reftag syntax-test display-test cscope-test lisp-test
+TARGET = utf8 regtest tcap reftag syntax-test display-test cscope-test \
+	lisp-test ai-test
 CFLAGS := -Os
 
 ifeq ($(INSIDE_DOCKER), yes)
@@ -49,9 +50,14 @@ lisp-test: lisp.c $(ROOT)/lisp.c $(ROOT)/tinylisp.c $(ROOT)/tinylisp.h \
 		$(ROOT)/utf8.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections \
 		-fno-asynchronous-unwind-tables $(LDFLAGS) -Wl,--gc-sections \
-		-o $@ -DCOLOR -DLISP -I$(ROOT) -I$(ROOT)/sys/unix \
+		-o $@ -DCOLOR -DLISP -DAI -I$(ROOT) -I$(ROOT)/sys/unix \
 		-I$(ROOT)/tty/ncurses \
 		$< $(ROOT)/tinylisp.c $(ROOT)/utf8.c
+
+ai-test: ai.c $(ROOT)/ai.c $(ROOT)/def.h
+	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections \
+		$(LDFLAGS) -Wl,--gc-sections -o $@ -DLISP -DAI \
+		-I$(ROOT) -I$(ROOT)/sys/unix -I$(ROOT)/tty/ncurses $<
 
 clean:
 	rm -f $(TARGET) *.[o]

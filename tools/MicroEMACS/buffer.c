@@ -592,6 +592,11 @@ bcreate (const char *bname)
   strcpy (bp->b_bname, bname);
   bp->b_undo = NULL;
   bp->b_mode = NULL;
+#ifdef COLOR
+  bp->b_syntax = NULL;
+  bp->b_syntax_explicit = FALSE;
+#endif
+  bp->b_active = FALSE;
   bp->b_crlf = dosmode ? TRUE : FALSE;
   return (bp);
 }

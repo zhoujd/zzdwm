@@ -29,12 +29,14 @@ static int goto_eol_called;
 static int forward_line_flag;
 static int forward_line_count;
 static int forward_line_status = TRUE;
+static BUFFER switch_buffer;
+static char switched_buffer_name[NBUFN];
 static int save_buffer_called;
 static int kill_emacs_called;
 static int undo_start_count;
 static int undo_end_count;
 static int newline_count;
-static char inserted_text[256];
+static char inserted_text[TINY_LISP_HOST_RESULT_SIZE];
 static const char *defined_macro_name;
 static int defined_macro_count;
 static int defined_macro_called;
@@ -42,11 +44,20 @@ static int defined_macro_count_argument;
 static int command_macro[NKBDM] = { KCTLX | ')' };
 static SYMBOL command_symbol = { NULL, 0, "buffer-menu", NULL, NULL };
 static SYMBOL macro_symbol = { NULL, 0, "test-macro", NULL, command_macro };
+static SYMBOL ai_command_symbol = { NULL, 0, "ai-ask-line", NULL, NULL };
+static int ai_command_defined;
 static BUFFER syntax_buffer;
 static char syntax_filetype[32];
 static BUFFER *syntax_mode_buffer;
 static int tt_mode_color_called;
 static int updatemode_called;
+static const char *ai_prompt;
+static const char *ai_model;
+static int ai_num_predict;
+static int ai_status = TRUE;
+static char ai_endpoint[256];
+static char ai_api_key[256];
+static int ai_configure_status = TRUE;
 static EWINDOW eobp_window;
 static BUFFER eobp_buffer;
 static LINE eobp_line;
@@ -105,6 +116,9 @@ updatemode (void)
 SYMBOL *
 symlookup (const char *name)
 {
+  if (ai_command_defined
+      && strcmp (name, ai_command_symbol.s_name) == 0)
+    return &ai_command_symbol;
   if (strcmp (name, command_symbol.s_name) == 0)
     return &command_symbol;
   return NULL;
@@ -153,6 +167,24 @@ forwline (int flag, int count, int key)
   forward_line_flag = flag;
   forward_line_count = count;
   return forward_line_status;
+}
+
+BUFFER *
+bfind (const char *name, int create)
+{
+  (void) create;
+  if (name == NULL || strcmp (name, "*AI*") != 0)
+    return NULL;
+  return &switch_buffer;
+}
+
+int
+swbuffer (BUFFER *buffer)
+{
+  if (buffer != &switch_buffer)
+    return FALSE;
+  snprintf (switched_buffer_name, sizeof (switched_buffer_name), "*AI*");
+  return TRUE;
 }
 
 int
@@ -239,6 +271,11 @@ symdefmacro (const char *name, const int *macro, size_t count)
     return FALSE;
   if (strcmp (name, "buffer-menu") == 0)
     return FALSE;
+  if (strcmp (name, ai_command_symbol.s_name) == 0)
+    {
+      ai_command_defined = TRUE;
+      ai_command_symbol.s_macro = command_macro;
+    }
   defined_macro_name = name;
   defined_macro_count = (int) count;
   memcpy (command_macro, macro, count * sizeof (*macro));
@@ -271,6 +308,41 @@ void
 syntax_mode_changed (BUFFER *bp)
 {
   syntax_mode_buffer = bp;
+}
+
+int
+ai_complete (const char *prompt, const char *model, int num_predict,
+             char *output, size_t output_size)
+{
+  size_t index;
+
+  ai_prompt = prompt;
+  ai_model = model;
+  ai_num_predict = num_predict;
+  if (ai_status != TRUE)
+    return FALSE;
+  for (index = 0; index + 1 < output_size; index++)
+    output[index] = 'x';
+  if (index + 1 != output_size)
+    return FALSE;
+  output[index] = 0;
+  return TRUE;
+}
+
+const char *
+ai_last_error (void)
+{
+  return "mock error";
+}
+
+int
+ai_configure (const char *endpoint, const char *api_key)
+{
+  snprintf (ai_endpoint, sizeof (ai_endpoint), "%s",
+            endpoint != NULL ? endpoint : "");
+  snprintf (ai_api_key, sizeof (ai_api_key), "%s",
+            api_key != NULL ? api_key : "");
+  return ai_configure_status;
 }
 
 static int
@@ -311,6 +383,50 @@ set_primitive_line (const char *text)
   primitive_window.w_dot.o = 0;
   curbp = &primitive_buffer;
   curwp = &primitive_window;
+}
+
+static int
+evaluate_example_file (const char *filename, char *result, size_t result_size)
+{
+  char path[256];
+  char *source;
+  FILE *file;
+  long length;
+  int status;
+
+  if (snprintf (path, sizeof (path), "%s", filename)
+      >= (int) sizeof (path))
+    return FALSE;
+  file = fopen (path, "rb");
+  if (file == NULL)
+    {
+      if (snprintf (path, sizeof (path), "../%s", filename)
+          >= (int) sizeof (path))
+        return FALSE;
+      file = fopen (path, "rb");
+    }
+  if (file == NULL
+      || fseek (file, 0, SEEK_END) != 0
+      || (length = ftell (file)) < 0)
+    {
+      if (file != NULL)
+        fclose (file);
+      return FALSE;
+    }
+  rewind (file);
+  source = malloc ((size_t) length + 1);
+  if (source == NULL
+      || fread (source, 1, (size_t) length, file) != (size_t) length)
+    {
+      free (source);
+      fclose (file);
+      return FALSE;
+    }
+  source[length] = 0;
+  fclose (file);
+  status = tiny_lisp_eval_source (source, result, result_size);
+  free (source);
+  return status;
 }
 
 int
@@ -446,6 +562,19 @@ main (void)
   primitive_window.w_dot.o = wllength (primitive_line);
   assert (evaluate ("(get-char)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: nil]") == 0);
+  switched_buffer_name[0] = 0;
+  assert (evaluate ("(switch-to-buffer \"*AI*\")") == TRUE);
+  assert (strcmp (switched_buffer_name, "*AI*") == 0);
+  assert (evaluate ("(switch-to-buffer)") == FALSE);
+  assert (evaluate ("(switch-to-buffer \"\")") == FALSE);
+  assert (setenv ("MICROEMACS_LISP_TEST_VALUE", "secret", 1) == 0);
+  assert (evaluate ("(getenv \"MICROEMACS_LISP_TEST_VALUE\")") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: \"secret\"]") == 0);
+  assert (unsetenv ("MICROEMACS_LISP_TEST_VALUE") == 0);
+  assert (evaluate ("(getenv \"MICROEMACS_LISP_TEST_VALUE\")") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: nil]") == 0);
+  assert (evaluate ("(getenv)") == FALSE);
+  assert (evaluate ("(getenv \"\")") == FALSE);
 
   inserted_text[0] = 0;
   undo_start_count = 0;
@@ -677,6 +806,64 @@ main (void)
     assert (lispevalfile (FALSE, 1, 0) == TRUE);
     assert (lisp_message[0] == 0);
     assert (remove ("runtime-suppressed-debug.l") == 0);
+  }
+
+  ai_prompt = NULL;
+  ai_model = NULL;
+  ai_num_predict = 0;
+  assert (evaluate ("(ai-complete \"prompt\" \"model\" 3)") == TRUE);
+  assert (strcmp (ai_prompt, "prompt") == 0);
+  assert (strcmp (ai_model, "model") == 0);
+  assert (ai_num_predict == 3);
+  ai_status = FALSE;
+  assert (evaluate ("(ai-complete \"prompt\")") == TRUE);
+  assert (strcmp (lisp_message, "[AI: mock error]") == 0);
+  assert (evaluate ("(ai-last-error)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: \"mock error\"]") == 0);
+  assert (ai_model == NULL && ai_num_predict == 0);
+  ai_status = TRUE;
+  assert (evaluate ("(ai-complete)") == FALSE);
+  assert (evaluate ("(ai-complete \"x\" \"model\" 0)") == FALSE);
+  inserted_text[0] = 0;
+  undo_start_count = 0;
+  undo_end_count = 0;
+  assert (evaluate ("(insert-string (ai-complete \"long prompt\"))") == TRUE);
+  assert (strlen (inserted_text) == TINY_LISP_HOST_RESULT_SIZE - 1);
+  assert (undo_start_count == 1 && undo_end_count == 1);
+  ai_endpoint[0] = 0;
+  ai_api_key[0] = 0;
+  assert (evaluate ("(ai-set-endpoint \"http://127.0.0.1:11434/api/generate\")")
+          == TRUE);
+  assert (strcmp (ai_endpoint, "http://127.0.0.1:11434/api/generate") == 0);
+  assert (ai_api_key[0] == 0);
+  assert (evaluate ("(ai-set-endpoint \"http://example.test/v1/chat/completions\" "
+                    "\"test-key\")") == TRUE);
+  assert (strcmp (ai_endpoint, "http://example.test/v1/chat/completions") == 0);
+  assert (strcmp (ai_api_key, "test-key") == 0);
+  ai_configure_status = FALSE;
+  assert (evaluate ("(ai-set-endpoint \"bad-endpoint\")") == TRUE);
+  assert (strcmp (lisp_message, "[AI: mock error]") == 0);
+  ai_configure_status = TRUE;
+  assert (evaluate ("(ai-set-endpoint)") == FALSE);
+  assert (evaluate ("(ai-set-endpoint \"http://example.test\" \"\")")
+          == FALSE);
+
+  {
+    char result[LISP_OUTPUT_SIZE];
+
+    ai_command_defined = FALSE;
+    bound_key = 0;
+    bound_symbol = NULL;
+    assert (evaluate_example_file ("examples/ai-assist-ollama.l",
+                                   result, sizeof (result)) == TRUE);
+    assert (bound_key == (KMETA | 'A'));
+    assert (bound_symbol == &ai_command_symbol);
+    bound_key = 0;
+    bound_symbol = NULL;
+    assert (evaluate_example_file ("examples/ai-assist-gpustack.l",
+                                   result, sizeof (result)) == TRUE);
+    assert (bound_key == (KMETA | 'A'));
+    assert (bound_symbol == &ai_command_symbol);
   }
 
   puts ("lisp tests passed");

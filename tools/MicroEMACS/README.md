@@ -13,7 +13,7 @@ and Windows while keeping the executable small and fast.
 * Syntax highlighting for C, C++, Bash, Python, Markdown, JSON, YAML,
   TOML, CMake, Makefile, Dockerfile, Lisp, Emacs Lisp, Scheme, and SQL.
 * Tiny Lisp extensions, editor command bridges, Lisp startup configuration,
-  and configurable mode-line colors.
+  configurable mode-line colors, and optional AI assistance.
 * Tags, cscope, grep, GCC error navigation, and ispell integration.
 * Linux terminal support through ncursesw or termcap.
 * Native Windows console support built with MinGW-w64.
@@ -61,6 +61,7 @@ The default Linux and Windows builds enable color and Lisp support with
 ./build.sh -d        # Build with debug symbols
 ./build.sh -r        # Build and strip a local release
 ./build.sh -m        # Build without color or Lisp
+./build.sh -a        # Build with optional AI support
 ./build.sh -p        # Build a stripped static Linux executable
 ./build.sh -w        # Build me.exe with MinGW in Docker
 ./build.sh -D        # Regenerate the PDF manual
@@ -81,7 +82,13 @@ Individual features can be selected when invoking the platform makefile:
 ```sh
 make -f Make.Linux COLOR=no LISP=no clean me
 make -f Make.Mingw COLOR=yes LISP=no clean me.exe
+./build.sh -a
 ```
+
+`AI=yes` requires `LISP=yes`; the normal and minimal builds remain unchanged.
+The AI client defaults to local Ollama and can be configured from Lisp for
+OpenAI-compatible HTTP services. The supplied examples write gptel-style
+Markdown transcripts with assistant commentary to an `*AI*` buffer.
 
 The Windows build uses Docker and the `zhoujd/mingw:base` image by
 default. Build the required tool images from the repository root with:

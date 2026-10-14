@@ -802,6 +802,17 @@ int lispevalfile (int f, int n, int k); /* Read and evaluate Lisp file. */
 #endif
 
 /*
+ * Defined by "ai.c".
+ */
+#if defined(LISP) && defined(AI)
+int ai_configure (const char *endpoint, const char *api_key);
+                                        /* Configure the AI endpoint.    */
+int ai_complete (const char *prompt, const char *model, int num_predict,
+                 char *output, size_t output_size);
+const char *ai_last_error (void);
+#endif
+
+/*
  * Defined by "file.c".
  */
 int fileread (int f, int n, int k);     /* Get a file, read only        */
