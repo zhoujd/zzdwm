@@ -262,6 +262,14 @@ openpipe (const char *program, const char *args[],
 {
   int in_pipe[2];
   int out_pipe[2];
+  pid_t child_pid;
+  FILE *input;
+  FILE *output;
+
+  if (infile == NULL || outfile == NULL)
+    return FALSE;
+  *infile = NULL;
+  *outfile = NULL;
 
   saw_sigpipe = 0;
   if (pipe (in_pipe) != 0)
@@ -276,45 +284,83 @@ openpipe (const char *program, const char *args[],
 #if TEST
       perror ("creating input pipe");
 #endif
+      close (in_pipe[0]);
+      close (in_pipe[1]);
       return FALSE;
     }
 
-  if (fork () == 0)
+  child_pid = fork ();
+  if (child_pid < 0)
+    {
+#if TEST
+      perror ("creating cscope process");
+#endif
+      close (in_pipe[0]);
+      close (in_pipe[1]);
+      close (out_pipe[0]);
+      close (out_pipe[1]);
+      return FALSE;
+    }
+
+  if (child_pid == 0)
     {
       int devnull;
+      int status;
+
+      status = 0;
 
       /* We're the child.  Redirect standard input to the input pipe, and
        * standard output to the output pipe.
        */
-      dup2 (out_pipe[0], 0);
-      dup2 (in_pipe[1], 1);
+      status |= dup2 (out_pipe[0], 0) < 0;
+      status |= dup2 (in_pipe[1], 1) < 0;
 
       /* Close unneeded pipe handles. */
       close (out_pipe[1]);
       close (in_pipe[0]);
 
+      if (status != 0)
+        _exit (125);
+
       /* Redirect stderr to /dev/null. */
       devnull = open ("/dev/null", O_WRONLY);
-      if (devnull >= 0)
-        dup2 (devnull, 2);
+      if (devnull < 0)
+        _exit (124);
+      status = dup2 (devnull, 2) < 0;
+      close (devnull);
+      if (status != 0)
+        _exit (123);
 
       /* Execute the program. */
       execvp (program, (char **)args);
+      _exit (127);
     }
   else
     {
       /* We're the parent.  Connect the two ends of pipe to line-buffered
        * FILEs.
        */
-      *infile = fdopen (in_pipe[0], "r");
-      *outfile = fdopen (out_pipe[1], "w");
-      if (*infile == NULL || *outfile == NULL)
+      input = fdopen (in_pipe[0], "r");
+      output = fdopen (out_pipe[1], "w");
+      if (input == NULL || output == NULL)
         {
 #if TEST
           perror ("creating FILEs from pipes");
 #endif
+          if (input != NULL)
+            fclose (input);
+          else
+            close (in_pipe[0]);
+          if (output != NULL)
+            fclose (output);
+          else
+            close (out_pipe[1]);
+          close (out_pipe[0]);
+          close (in_pipe[1]);
           return FALSE;
         }
+      *infile = input;
+      *outfile = output;
 
       setvbuf (*infile, (char *)NULL, _IOLBF, 0);
       setvbuf (*outfile, (char *)NULL, _IOLBF, 0);

@@ -5,6 +5,8 @@ samples belong in [`examples`](../examples).
 
 - [`tag-ring.md`](tag-ring.md) — completed implementation notes for the tag
   origin ring and remaining navigation ideas.
+- [`cscope-hardening.md`](cscope-hardening.md) — completed implementation notes
+  for robust cscope response parsing and Unix pipe handling.
 - [`ai-connection.md`](ai-connection.md) — proposal for a local Ollama
   connection exposed to Lisp.
 - [`lisp-extensions.md`](lisp-extensions.md) — completed implementation notes

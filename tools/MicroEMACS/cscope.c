@@ -28,12 +28,11 @@ static FILE *cscope_output;
 /*
  * Ignore the prompt characters from cscope.
  */
-static void
+static int
 ignore_prompt (void)
 {
-  if (fgetc (cscope_input) != '>' || fgetc (cscope_input) != '>' ||
-      fgetc (cscope_input) != ' ')
-    return;
+  return fgetc (cscope_input) == '>' && fgetc (cscope_input) == '>'
+         && fgetc (cscope_input) == ' ';
 }
 
 /*
@@ -45,41 +44,63 @@ ignore_prompt (void)
 static int
 cscope_search (char search_field, const char *search_string)
 {
-  int nlines, result;
+  int nlines;
+  int result;
   char buf[64];
 
   /* Ignore the ">> " prompt, which should be waiting for us already. */
-  ignore_prompt ();
+  if (ignore_prompt () == FALSE)
+    return -1;
 
   /* Issue the command Nsearchstring, where N is the field number.
    */
-  fputc (search_field, cscope_output);
-  fputs (search_string, cscope_output);
-  fputc ('\n', cscope_output);
-  fflush (cscope_output);
+  if (fputc (search_field, cscope_output) == EOF
+      || fputs (search_string, cscope_output) == EOF
+      || fputc ('\n', cscope_output) == EOF
+      || fflush (cscope_output) == EOF)
+    return -1;
 
   /* Read the first line, which is of the format 'cscope: n lines',
      and parse the 'n'. */
   if (fgets (buf, sizeof (buf), cscope_input) == NULL)
-    return 0;
+    return -1;
   result = sscanf (buf, "cscope: %d lines", &nlines);
-  return result == 1 ? nlines : 0;
+  if (result != 1 || nlines < 0)
+    return -1;
+  return nlines;
 }
 
 /*
  * Read the next match from the previously initiated search.
  * Return the file to 'filename', the name of the function containing
  * the string to 'where', and the line number to 'line_number'.
- * FIXME: we should do length-checking on the buffers.
  */
-static void
-next_match (char *filename, char *where, int *line_number)
+static int
+parse_match (const char *line, char *filename, size_t filename_size,
+             char *where, size_t where_size, int *line_number)
+{
+  char format[32];
+
+  if (line == NULL || filename == NULL || where == NULL
+      || line_number == NULL || filename_size < 2 || where_size < 2)
+    return FALSE;
+
+  snprintf (format, sizeof (format), "%%%lus %%%lus %%d",
+            (unsigned long) (filename_size - 1),
+            (unsigned long) (where_size - 1));
+  return sscanf (line, format, filename, where, line_number) == 3;
+}
+
+static int
+next_match (char *filename, size_t filename_size,
+            char *where, size_t where_size, int *line_number)
 {
   char buf[1024];
 
   if (fgets (buf, sizeof (buf), cscope_input) == NULL)
-    return;
-  sscanf (buf, "%s %s %d", filename, where, line_number);
+    return FALSE;
+  return parse_match (buf, filename, filename_size,
+                      where, where_size, line_number);
 }
 
 /*
@@ -139,6 +160,11 @@ prepcscope (char field, const char *string, int delete)
   /* Initiate a search to cscope, get back the number of matches.
    */
   n = cscope_search (field, string);
+  if (n < 0)
+    {
+      eprintf ("cscope search failed");
+      return FALSE;
+    }
 
   /* Add each of the matches to the tag list.
    */
@@ -146,7 +172,12 @@ prepcscope (char field, const char *string, int delete)
     {
       /* Get the result of the next match.
        */
-      next_match (filename, where, &line);
+      if (next_match (filename, sizeof (filename),
+                      where, sizeof (where), &line) == FALSE)
+        {
+          eprintf ("Malformed cscope response");
+          return FALSE;
+        }
 
       /* Create a file entry for this file if not already in the list.
        */

@@ -195,10 +195,7 @@ addtagref (const char *string, tagfile *file, int line, long offset,
     {
       if (file == next->file &&
           line == next->line)
-        {
-          eprintf ("Duplicated tag %s:%d", file->fname, line);
-          return next;
-        }
+        return next;
     }
 
   /* Allocate space for the tag reference and
