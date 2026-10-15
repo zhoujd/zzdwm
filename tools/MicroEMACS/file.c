@@ -117,18 +117,23 @@ getfile (char fname[])
 {
   BUFFER *bp;
   char bname[NBUFN];		/* buffer name to put file */
+  char *expanded_fname;
   int s;
+
+  expanded_fname = fftilde (fname);
+  if (expanded_fname == NULL || expanded_fname[0] == 0)
+    return (FALSE);
 
   for (bp = bheadp; bp != (BUFFER*)0; bp = bp->b_bufp)
     {
-      if (strcmp (bp->b_fname, fname) == 0)
+      if (strcmp (bp->b_fname, expanded_fname) == 0)
         {
           swbuffer (bp);
           eprintf ("[Old buffer]");
           return (TRUE);
         }
     }
-  makename (bname, fname);	/* New buffer name */
+  makename (bname, expanded_fname);	/* New buffer name */
   unqname (bname, NBUFN);
   while ((bp = bfind (bname, FALSE)) != (BUFFER*)0)
     {
@@ -137,7 +142,7 @@ getfile (char fname[])
         return (s);
       if (s == FALSE)
         {			/* CR to clobber it */
-          makename (bname, fname);
+          makename (bname, expanded_fname);
           unqname (bname, NBUFN);
           break;
         }
@@ -157,7 +162,7 @@ getfile (char fname[])
   curbp = bp;			/* Switch to it */
   curwp->w_bufp = bp;
   curbp->b_nwnd++;
-  return (readin (fname));	/* Read it in */
+  return (readin (expanded_fname));	/* Read it in */
 }
 
 /*
@@ -484,9 +489,18 @@ readin (const char *fname)
   register BUFFER *bp;
   register LINE *lp1;
   register LINE *lp2;
+  char internal_fname[NFILEN];
+  char *expanded_fname;
   int s;
 
-  if (ffcheckname ((char*)fname) == FALSE)
+  if (fname == NULL || strlen (fname) >= sizeof (internal_fname))
+    return (FALSE);
+  strcpy (internal_fname, fname);
+  if (ffcheckname (internal_fname) == FALSE)
+    return (FALSE);
+  expanded_fname = fftilde (internal_fname);
+  if (expanded_fname == NULL || expanded_fname[0] == 0
+      || strlen (expanded_fname) >= NFILEN)
     return (FALSE);
   bp = curbp;				/* Cheap.               */
   if ((s = bclear (bp)) != TRUE)	/* Might be old.        */
@@ -497,8 +511,8 @@ readin (const char *fname)
 #else
   bp->b_flag &= ~BFCHG;			/* No change.           */
 #endif
-  strcpy (bp->b_fname, fname);
-  if ((s = ffropen (fname)) == FIOERR)	/* Hard file open.      */
+  strcpy (bp->b_fname, expanded_fname);
+  if ((s = ffropen (expanded_fname)) == FIOERR)	/* Hard file open.      */
     goto out;
   if (s == FIOFNF)
     {				/* File not found.      */

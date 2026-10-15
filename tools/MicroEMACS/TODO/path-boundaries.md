@@ -18,6 +18,11 @@ Dired headers use this internal representation. A path may originate as
 `C:/path/file` or `C:\path\file`, but `fftilde()` normalizes it to
 `/c/path/file` before it reaches a buffer.
 
+Normalization happens before startup buffers are created, before `getfile()`
+compares paths or creates a buffer name, and before `readin()` stores the path
+in `b_fname`. This keeps command-line arguments and later file visits from
+leaking a native Windows form into the buffer.
+
 ## MinGW Boundary Rule
 
 The native form, such as `C:/path/file`, exists only immediately before a
@@ -42,4 +47,3 @@ Keeping one internal representation avoids mixed `C:/...`, `C:\...`, and
 `/c/...` paths in buffers, modelines, Lisp scripts, and Dired. It also makes
 path behavior predictable across Linux and Windows while confining Windows
 conversion to the MinGW system layer.
-

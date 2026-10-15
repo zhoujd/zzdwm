@@ -400,9 +400,13 @@ main (int argc, char *argv[])
           /* Resolve filename and create buffer */
           if (ffcheckname (arg) == TRUE)
             {
+              char *expanded_arg = fftilde (arg);
+
+              if (expanded_arg == NULL || expanded_arg[0] == 0)
+                continue;
               /* File path is valid/resolvable */
-              bufinit (arg);
-              readin (arg);
+              bufinit (expanded_arg);
+              readin (expanded_arg);
               if (gotoflag)		/* goto line specified  */
                 {
                   gotoline (TRUE, line, 0);
