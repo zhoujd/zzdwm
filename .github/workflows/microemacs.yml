@@ -86,12 +86,13 @@ jobs:
         working-directory: tools/MicroEMACS
 
     steps:
+      - name: Install build tools
+        working-directory: .
+        run: apk add --no-cache file gcc git make musl-dev ncurses-dev ncurses-static libbsd-dev libbsd-static
+
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-
-      - name: Install build tools
-        run: apk add --no-cache file gcc git make musl-dev ncurses-dev ncurses-static libbsd-dev libbsd-static
 
       - name: Build source tests
         run: make -C test clean all INSIDE_DOCKER=yes
@@ -153,6 +154,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends mingw-w64 wine64
+          wine_bin="$(command -v wine64 || true)"
+          if [ -z "$wine_bin" ] && [ -x /usr/lib/wine/wine64 ]; then
+            wine_bin=/usr/lib/wine/wine64
+          fi
+          test -n "$wine_bin"
+          echo "WINE_BIN=$wine_bin" >> "$GITHUB_ENV"
 
       - name: Build full Windows editor
         run: |
@@ -160,8 +167,8 @@ jobs:
           make -f Make.Mingw \
             CC=x86_64-w64-mingw32-gcc LD=x86_64-w64-mingw32-gcc me.exe
           file ./me.exe
-          wine64 ./me.exe --version
-          wine64 ./me.exe --help | grep -q '^Usage: me \[OPTION'
+          "$WINE_BIN" ./me.exe --version
+          "$WINE_BIN" ./me.exe --help | grep -q '^Usage: me \[OPTION'
           mkdir -p dist
           cp ./me.exe dist/me-windows.exe
 
@@ -172,8 +179,8 @@ jobs:
             CC=x86_64-w64-mingw32-gcc LD=x86_64-w64-mingw32-gcc \
             COLOR=no LISP=no AI=no MINIMAL=yes me.exe
           file ./me.exe
-          wine64 ./me.exe --version
-          wine64 ./me.exe --help | grep -q '^usage: me \[-234bDmnNqrTuxz\]'
+          "$WINE_BIN" ./me.exe --version
+          "$WINE_BIN" ./me.exe --help | grep -q '^usage: me \[-234bDmnNqrTuxz\]'
           cp ./me.exe dist/me-windows-minimal.exe
 
       - name: Upload Windows binaries
