@@ -17,3 +17,5 @@ samples belong in [`examples`](../examples).
   non-interactive Lisp scripts and shebang support.
 - [`dired-lisp.md`](dired-lisp.md) — completed implementation notes for the
   shell-free, Lisp-driven directory editor.
+- [`smart-find-file.md`](smart-find-file.md) — completed implementation notes
+  for symlink-aware Lisp file opening.

@@ -457,6 +457,22 @@ lisp_join_path (int argc, const char *const *argv,
 }
 
 static int
+lisp_resolve_path (int argc, const char *const *argv,
+                   char *result, size_t result_size)
+{
+  char normalized[NFILEN];
+
+  if (argc != 1 || argv[0][0] == 0
+      || strlen (argv[0]) >= sizeof (normalized))
+    return FALSE;
+  strcpy (normalized, argv[0]);
+  path_normalize (normalized);
+  if (path_canonical_directory (normalized, result, result_size) != TRUE)
+    return TINY_LISP_HOST_NIL;
+  return TINY_LISP_HOST_STRING;
+}
+
+static int
 lisp_set_buffer_readonly (int argc, const char *const *argv,
                           char *result, size_t result_size)
 {
@@ -528,6 +544,53 @@ lisp_read_directory_name (int argc, const char *const *argv,
         strcpy (directory, default_directory);
     }
   if (snprintf (result, result_size, "%s", directory)
+      >= (int) result_size)
+    return FALSE;
+  return TINY_LISP_HOST_STRING;
+}
+
+static int
+lisp_read_file_name (int argc, const char *const *argv,
+                     char *result, size_t result_size)
+{
+  const char *default_filename = "";
+  char filename[NFILEN];
+  char prompt[NFILEN];
+  int *macro_pointer;
+  int status;
+
+  if ((argc != 1 && argc != 2) || argv[0][0] == 0
+      || (argc == 2 && strlen (argv[1]) >= sizeof (filename)))
+    return FALSE;
+  if (argc == 2)
+    {
+      default_filename = argv[1];
+      if (snprintf (prompt, sizeof (prompt), "%s (%s): ",
+                    argv[0], default_filename) >= (int) sizeof (prompt))
+        return FALSE;
+    }
+  else if (snprintf (prompt, sizeof (prompt), "%s: ", argv[0])
+           >= (int) sizeof (prompt))
+    return FALSE;
+
+  if (scriptmode)
+    strcpy (filename, default_filename);
+  else
+    {
+      macro_pointer = kbdmop;
+      if (macro_pointer != NULL)
+        kbdmop = NULL;
+      status = egetfname (prompt, filename, sizeof (filename));
+      if (macro_pointer != NULL)
+        kbdmop = macro_pointer;
+      if (status == ABORT)
+        return TINY_LISP_HOST_NIL;
+      if (status != TRUE)
+        return FALSE;
+    }
+  if (filename[0] == 0)
+    return TINY_LISP_HOST_NIL;
+  if (snprintf (result, result_size, "%s", filename)
       >= (int) result_size)
     return FALSE;
   return TINY_LISP_HOST_STRING;
@@ -1361,7 +1424,7 @@ lisp_register_hosts (void)
     { "execute-command", lisp_execute_command },
     { "editor-cmd", lisp_execute_command },
     { "get-char", lisp_get_char },
-    { "find-file", lisp_find_file },
+    { "me-find-file", lisp_find_file },
     { "insert-char", lisp_insert_char },
     { "get-line", lisp_get_line },
     { "get-region", lisp_get_region },
@@ -1378,7 +1441,9 @@ lisp_register_hosts (void)
     { "string-suffix-p", lisp_string_suffix_p },
     { "string-trim-suffix", lisp_string_trim_suffix },
     { "join-path", lisp_join_path },
+    { "resolve-path", lisp_resolve_path },
     { "read-directory-name", lisp_read_directory_name },
+    { "read-file-name", lisp_read_file_name },
     { "set-buffer-readonly", lisp_set_buffer_readonly },
     { "create-mode", lisp_create_mode },
     { "dired-list", lisp_dired_list },

@@ -26,14 +26,14 @@
   (dired-setup (buffer-file-name)))
 
 (defun dired-find-file ()
-  "Open the file or directory named on the current Dired line."
+  "Open the entry named on the current Dired line at its real target."
   (interactive)
   (let ((target (dired-entry-name)))
     (if target
         (let ((path (join-path (buffer-file-name)
                                (string-trim-suffix target "/"))))
           (if (string-suffix-p target "/")
-              (dired-setup path)
+              (dired-setup (or (resolve-path path) path))
             (find-file path)))
       (message "No file on this line"))))
 

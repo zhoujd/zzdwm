@@ -47,7 +47,9 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (string-suffix-p "directory/" "/")
     (string-trim-suffix "directory/" "/")
     (join-path "directory" "file")
+    (resolve-path "directory/link")
     (read-directory-name "Dired" ".")
+    (read-file-name "Find file" "file.c")
     (set-buffer-readonly t)
     (create-mode "Dired")
     (dired-list "directory")
@@ -104,15 +106,17 @@ console. All color indexes must be from 0 through 255.
 `buffer-file-name` returns the current buffer's file name as a string.
 `string-suffix-p` tests a string suffix, `string-trim-suffix` removes one, and
 `join-path` joins a directory and file name with the correct separator.
+`resolve-path` returns the canonical path for an existing file or directory,
+or nil when the path cannot be resolved.
 `read-directory-name` prompts for a directory with filename completion and
-uses its optional second argument as the default; in `--script` mode it returns
-the default without prompting.
+uses its optional second argument as the default; `read-file-name` does the
+same for files. In `--script` mode both return the default without prompting.
 `set-buffer-readonly` sets or clears the current buffer's read-only flag.
 `dired-list` clears and fills the current buffer with a shell-free GNU
 Emacs-style listing. Directories are grouped first, entries are sorted
 lexically, and the directory path is stored as the buffer file name.
 `dired-entry-name` returns the file-name column from the current Dired line.
-See `examples/dired.l` for a complete buffer-local Dired implementation.
+See `lisp/dired.l` for a complete buffer-local Dired implementation.
 
 `ai-complete` is available in AI-enabled builds, including the default Linux
 and Windows builds. It sends a prompt to the configured AI service with a
@@ -185,7 +189,7 @@ Unicode code point or a one-character string. `goto-bol`, `goto-eol`, and
 `forward-line` move dot without replaying keys. `save-buffer` and `kill-emacs`
 perform those editor actions directly. `eobp` returns `t` when dot is at the
 end of the buffer and `nil` otherwise.
-`find-file` opens a named file in the current logical edit context.
+`me-find-file` opens a named file in the current logical edit context.
 
 `define-lisp-command` registers a Lisp function as a named MicroEMACS
 command. Use `#'name` to pass a function reference. For compatibility, a
@@ -227,12 +231,12 @@ filename that immediately follows it.
 error, and Lisp files may begin with a `#!` shebang line.
 
 `examples/format-code.l` is a headless formatting example. With
-`examples/smart-indent.l` loaded first, it rewrites the indentation of the
+`lisp/smart-indent.l` loaded first, it rewrites the indentation of the
 current buffer:
 
 ```sh
 cp examples/smart-indent-input.c /tmp/format-code.c
-me -l examples/smart-indent.l --script examples/format-code.l /tmp/format-code.c
+me -l lisp/smart-indent.l --script examples/format-code.l /tmp/format-code.c
 ```
 
 At runtime, **C-x F** evaluates files ending in `.l`, `.lisp`, or `.mel`
@@ -256,12 +260,12 @@ The `examples/logline.l` file is the Tiny Lisp equivalent of the
 me -l examples/logline.l filename
 ```
 
-The `examples/smart-indent.l` file is a startup-ready auto-indentation
-example. It counts unmatched braces with `count-char`, scans surrounding lines
+The `lisp/smart-indent.l` file is a reusable auto-indentation library. It
+counts unmatched braces with `count-char`, scans surrounding lines
 with relative `get-line` forms, and binds **Enter** to `smart-indent`:
 
 ```sh
-me -l examples/smart-indent.l examples/smart-indent-input.c
+me -l lisp/smart-indent.l examples/smart-indent-input.c
 ```
 
 The `examples/ai-assist-ollama.l` and `examples/ai-assist-gpustack.l` files

@@ -32,7 +32,7 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (set-syntax "sql")
     (set-modeline-color 15 22 0 2)
     (execute-command "file-save")
-    (find-file "file.c")
+    (me-find-file "file.c")
     (get-char)
     (get-line)
     (get-line -1)
@@ -52,7 +52,9 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (string-suffix-p "directory/" "/")
     (string-trim-suffix "directory/" "/")
     (join-path "directory" "file")
+    (resolve-path "directory/link")
     (read-directory-name "Dired" ".")
+    (read-file-name "Find file" "file.c")
     (set-buffer-readonly t)
     (create-mode "Dired")
     (dired-list "directory")
@@ -108,13 +110,15 @@ console. All color indexes must be from 0 through 255.
 `switch-to-buffer` finds or creates a named buffer and makes it current.
 `buffer-file-name` returns the current buffer's file name as a string.
 `string-suffix-p`, `string-trim-suffix`, and `join-path` provide safe path
-string operations. `read-directory-name` prompts for a directory with filename
-completion and uses its optional second argument as the default; in `--script`
-mode it returns the default without prompting. `set-buffer-readonly` sets or
-clears the read-only flag. `dired-list` clears and fills the current buffer
-with a shell-free GNU Emacs-style listing, and `dired-entry-name` returns the
-file-name column from the current Dired line. See `examples/dired.l` for a
-complete buffer-local Dired implementation.
+string operations. `resolve-path` returns the canonical path for an existing
+file or directory, or nil when the path cannot be resolved.
+`read-directory-name` prompts for a directory with filename completion and
+uses its optional second argument as the default; `read-file-name` does the
+same for files. In `--script` mode both return the default without prompting.
+`set-buffer-readonly` sets or clears the read-only flag. `dired-list` clears
+and fills the current buffer with a shell-free GNU Emacs-style listing, and
+`dired-entry-name` returns the file-name column from the current Dired line.
+See `lisp/dired.l` for a complete buffer-local Dired implementation.
 
 `ai-complete` sends a prompt to the configured AI service, returns the
 generated Markdown text as a string, and returns `nil` after displaying an
@@ -179,11 +183,11 @@ Script mode skips terminal setup, frame rendering, and default startup files.
 Remaining filename arguments are opened in one headless edit context, with the
 last file current. An explicit **-l** file is loaded first, so place it before
 **--script**. The `examples/format-code.l` script uses
-`examples/smart-indent.l` to rewrite the indentation of the current buffer:
+`lisp/smart-indent.l` to rewrite the indentation of the current buffer:
 
 ```sh
 cp examples/smart-indent-input.c /tmp/format-code.c
-me -l examples/smart-indent.l --script examples/format-code.l /tmp/format-code.c
+me -l lisp/smart-indent.l --script examples/format-code.l /tmp/format-code.c
 ```
 
 At runtime, **C-x F** evaluates files ending in `.l`, `.lisp`, or `.mel`
@@ -207,10 +211,10 @@ The `examples/logline.l` file is the Tiny Lisp equivalent of the
 me -l examples/logline.l filename
 ```
 
-The `examples/smart-indent.l` file is a startup-ready auto-indentation
-example. It counts unmatched braces with `count-char`, scans surrounding lines
+The `lisp/smart-indent.l` file is a reusable auto-indentation library. It
+counts unmatched braces with `count-char`, scans surrounding lines
 with relative `get-line` forms, and binds **Enter** to `smart-indent`:
 
 ```sh
-me -l examples/smart-indent.l examples/smart-indent-input.c
+me -l lisp/smart-indent.l examples/smart-indent-input.c
 ```

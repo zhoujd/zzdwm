@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -67,11 +68,14 @@ static SYMBOL dired_refresh_symbol = { NULL, 0, "dired-refresh",
                                        NULL, NULL };
 static SYMBOL dired_find_file_symbol = { NULL, 0, "dired-find-file",
                                          NULL, NULL };
+static SYMBOL smart_find_file_symbol = { NULL, 0, "smart-find-file",
+                                         NULL, NULL };
 static int ai_command_defined;
 static int ai_region_command_defined;
 static int lisp_dired_defined;
 static int dired_refresh_defined;
 static int dired_find_file_defined;
+static int smart_find_file_defined;
 static BUFFER syntax_buffer;
 static char syntax_filetype[32];
 static BUFFER *syntax_mode_buffer;
@@ -170,6 +174,8 @@ symlookup (const char *name)
     return &dired_find_file_symbol;
   if (strcmp (name, command_symbol.s_name) == 0)
     return &command_symbol;
+  if (strcmp (name, smart_find_file_symbol.s_name) == 0)
+    return &smart_find_file_symbol;
   return NULL;
 }
 
@@ -383,6 +389,8 @@ symdefmacro (const char *name, const int *macro, size_t count)
     dired_refresh_defined = TRUE;
   if (strcmp (name, dired_find_file_symbol.s_name) == 0)
     dired_find_file_defined = TRUE;
+  if (strcmp (name, smart_find_file_symbol.s_name) == 0)
+    smart_find_file_defined = TRUE;
   defined_macro_name = name;
   defined_macro_count = (int) count;
   memcpy (command_macro, macro, count * sizeof (*macro));
@@ -735,6 +743,26 @@ main (void)
     assert (tiny_lisp_eval ("(join-path \"C:/dir/\" \"file.c\")",
                             result, sizeof (result)) == 1);
     assert (strcmp (result, "\"C:/dir/file.c\"") == 0);
+    assert (tiny_lisp_eval ("(resolve-path \"/nonexistent-me-path\")",
+                            result, sizeof (result)) == 1);
+    assert (strcmp (result, "nil") == 0);
+    {
+      FILE *file = fopen ("/tmp/microemacs-resolve-target", "wb");
+
+      assert (file != NULL);
+      assert (fclose (file) == 0);
+      assert (remove ("/tmp/microemacs-resolve-link") == 0
+              || errno == ENOENT);
+      assert (symlink ("/tmp/microemacs-resolve-target",
+                       "/tmp/microemacs-resolve-link") == 0);
+      assert (tiny_lisp_eval ("(resolve-path \"/tmp/microemacs-resolve-link\")",
+                              result, sizeof (result)) == 1);
+      assert (strcmp (result, "\"/tmp/microemacs-resolve-target\"") == 0);
+      assert (remove ("/tmp/microemacs-resolve-link") == 0);
+      assert (remove ("/tmp/microemacs-resolve-target") == 0);
+    }
+    assert (evaluate ("(resolve-path \"\")") == FALSE);
+    assert (evaluate ("(resolve-path \"one\" \"two\")") == FALSE);
     scriptmode = TRUE;
     assert (tiny_lisp_eval ("(read-directory-name \"Dired\" \"default\")",
                             result, sizeof (result)) == 1);
@@ -748,6 +776,17 @@ main (void)
     assert (tiny_lisp_eval ("(read-directory-name \"Dired\" \".\")",
                             result, sizeof (result)) == 1);
     assert (strcmp (result, "\".\"") == 0);
+    scriptmode = TRUE;
+    assert (tiny_lisp_eval ("(read-file-name \"Find file\" \"default.c\")",
+                            result, sizeof (result)) == 1);
+    assert (strcmp (result, "\"default.c\"") == 0);
+    scriptmode = FALSE;
+    assert (tiny_lisp_eval ("(read-file-name \"Find file\")",
+                            result, sizeof (result)) == 1);
+    assert (strcmp (result, "nil") == 0);
+    assert (evaluate ("(read-file-name)") == FALSE);
+    assert (evaluate ("(read-file-name \"one\" \"two\" \"three\")")
+            == FALSE);
     assert (evaluate ("(string-suffix-p \"directory/\" \"/\")") == TRUE);
     assert (lisp_message[0] == 0);
     assert (evaluate ("(string-suffix-p \"file.c\" \"/\")") == TRUE);
@@ -858,12 +897,12 @@ main (void)
   assert (evaluate ("#'format-log-line") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: format-log-line]") == 0);
   assert (evaluate ("(eq #'format-log-line 'format-log-line)") == TRUE);
-  assert (evaluate ("(find-file \"src/main.c\")") == TRUE);
+  assert (evaluate ("(me-find-file \"src/main.c\")") == TRUE);
   assert (strcmp (visited_file, "src/main.c") == 0);
   visit_file_status = FALSE;
-  assert (evaluate ("(find-file \"missing.c\")") == FALSE);
+  assert (evaluate ("(me-find-file \"missing.c\")") == FALSE);
   visit_file_status = TRUE;
-  assert (evaluate ("(find-file)") == FALSE);
+  assert (evaluate ("(me-find-file)") == FALSE);
   {
     char result[LISP_OUTPUT_SIZE];
 
@@ -1256,12 +1295,24 @@ main (void)
     dired_find_file_defined = FALSE;
     bound_key = 0;
     bound_symbol = NULL;
-    assert (evaluate_example_file ("examples/dired.l",
+    assert (evaluate_example_file ("lisp/dired.l",
                                    result, sizeof (result)) == TRUE);
     assert (lisp_dired_defined && dired_refresh_defined
             && dired_find_file_defined);
     assert (bound_key == (KCTLX | 'D'));
     assert (bound_symbol == &lisp_dired_symbol);
+
+    smart_find_file_defined = FALSE;
+    bound_key = 0;
+    bound_symbol = NULL;
+    assert (evaluate_example_file ("lisp/smart-find-file.l",
+                                   result, sizeof (result)) == TRUE);
+    assert (smart_find_file_defined);
+    assert (bound_key == (KCTLX | KCTRL | 'F'));
+    assert (bound_symbol == &smart_find_file_symbol);
+
+    assert (evaluate ("(find-file \"/nonexistent-smart-file.c\")") == TRUE);
+    assert (strcmp (visited_file, "/nonexistent-smart-file.c") == 0);
   }
 
   puts ("lisp tests passed");
