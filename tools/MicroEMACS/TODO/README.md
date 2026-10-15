@@ -9,3 +9,5 @@ samples belong in [`examples`](../examples).
   connection exposed to Lisp.
 - [`lisp-extensions.md`](lisp-extensions.md) — completed implementation notes
   for Lisp runtime loading, editor bridges, messaging, and floating point.
+- [`script-mode.md`](script-mode.md) — completed implementation notes for
+  non-interactive Lisp scripts and shebang support.

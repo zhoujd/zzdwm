@@ -52,6 +52,39 @@ The expected result is the same as the Lisp example.
 `save-buffer` and `kill-emacs`. It is useful when a startup configuration may
 not have registered those Lisp bridge commands.
 
+## Headless Lisp script
+
+`script.l` is an executable-style example with a `#!` shebang. Linux uses
+`env -S` so `--script` is passed as an option to the local `./me` binary:
+
+```sh
+./me --script examples/script.l
+```
+
+After making it executable, it can also run directly:
+
+```sh
+chmod +x examples/script.l
+./examples/script.l
+```
+
+Expected result:
+
+```text
+Hello from MicroEMACS
+2 + 3 = 5
+```
+
+`format-code.l` is a non-interactive formatting example. It removes the
+existing indentation and rewrites each line using the brace depth calculated
+by `smart-indent.l`:
+
+```sh
+cp examples/smart-indent-input.c /tmp/format-code.c
+./me -l examples/smart-indent.l --script examples/format-code.l /tmp/format-code.c
+cat /tmp/format-code.c
+```
+
 ## Lisp-driven auto-indentation
 
 `smart-indent.l` is a startup-ready Lisp configuration. It defines the

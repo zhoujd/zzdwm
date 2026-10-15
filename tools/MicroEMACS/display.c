@@ -256,6 +256,9 @@ vtinit (void)
 void
 vttidy (void)
 {
+  if (scriptmode)
+    return;
+
   ttcolor (CTEXT);
   ttnowindow ();		/* No scroll window.    */
   ttmove (nrow - 1, 0);		/* Echo line.           */
@@ -689,6 +692,9 @@ update (void)
   int syntax_state;
   int next_syntax_state;
 #endif
+
+  if (scriptmode)
+    return;
 
   if (curmsgf != FALSE || newmsgf != FALSE)
     {

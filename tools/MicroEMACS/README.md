@@ -41,6 +41,7 @@ Useful startup options include:
 ./me -n file.c       # Show line numbers
 ./me -2 file.c       # Use a two-page display
 ./me -l startup.l    # Load a Lisp startup file
+./me --script script.l  # Run a Lisp script without a terminal
 ./me -q file.c       # Skip default startup files
 ```
 
@@ -51,6 +52,15 @@ default Lisp startup file; explicit `-p` and `-l` files are still loaded.
 At runtime, `C-x F` evaluates `.l`, `.lisp`, and `.mel` files as Lisp;
 other files are read as profiles. `M-X read-lisp` always evaluates a
 Lisp file.
+
+Use `--script` for non-interactive Lisp automation. MicroEMACS skips terminal
+setup and default startup files, opens any remaining filename arguments in one
+headless edit context with the last file current, evaluates the script, and
+exits with the script status.
+Explicit `-l` files are loaded first. Lisp scripts may start with a `#!`
+shebang line; see `examples/script.l`.
+When combining both options, place `-l` before `--script`, because
+`--script` consumes the filename that immediately follows it.
 
 ## Building
 
@@ -130,6 +140,7 @@ build `me.exe` and run the Wine smoke test from the repository root:
 * [`examples/logline.pro`](examples/logline.pro) — runnable profile and keyboard macro example.
 * [`examples/logline.l`](examples/logline.l) — equivalent Tiny Lisp editing example.
 * [`examples/smart-indent.l`](examples/smart-indent.l) — startup-ready Lisp auto-indentation example.
+* [`examples/format-code.l`](examples/format-code.l) — headless Lisp code-formatting example.
 * [`ChangeLog`](ChangeLog) — historical release notes.
 
 Rebuild the PDF with the docs tool image:

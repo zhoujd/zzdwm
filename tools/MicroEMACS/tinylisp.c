@@ -563,6 +563,10 @@ Object *readExpr(Stream *stream, GC_PARAM);
 int readNext(Stream *stream) {
   for (;;) {
     int ch = streamGetc(stream);
+    if (ch == '#' && streamPeek(stream) == '!') {
+      while ((ch = streamGetc(stream)) != EOF && ch != '\n');
+      continue;
+    }
     if (ch == ';')
       while ((ch = streamGetc(stream)) != EOF && ch != '\n');
     if (isspace(ch))

@@ -83,8 +83,10 @@
 #endif
 #ifdef LISP
 #define OPT_LISP " [-l lisp]"
+#define OPT_SCRIPT " [--script lisp]"
 #else
 #define OPT_LISP ""
+#define OPT_SCRIPT ""
 #endif
 
 int thisflag;                      /* Flags, this command          */
@@ -106,6 +108,7 @@ char *cscope_path = "cscope";      /* Name of cscope program       */
 int noupdatecscope;                /* True if -u option specified  */
 int mouse;                         /* True if -m option specified  */
 int rflag;                         /* True if -r option specified  */
+int scriptmode;                    /* True if running a Lisp script */
 int xflag;                         /* True if -x option specified  */
 int zflag;                         /* True if -z option specified  */
 int casefold = TRUE;               /* True if searches fold case   */
@@ -132,6 +135,9 @@ static int nbuf;                   /* number of buffers            */
  */
 static void bufinit (const char *fname);
 static int execute (int c, int f, int n);
+#ifdef LISP
+static int parsescript (int *argcp, char *argv[], char **scriptname);
+#endif
 static void usage (void);
 
 /*
@@ -142,9 +148,39 @@ usage (void)
 {
   fprintf (stderr,
            "usage: me [-234" OPT_BACKUP OPT_COLOR "DmnNqrTuxz] [-c path] [-d path] [-g line]"
-           OPT_LISP " [-p profile] [-s string] [-t size]\n"
+           OPT_LISP OPT_SCRIPT " [-p profile] [-s string] [-t size]\n"
            "          [+[line]] [file[:line[:column]] ...] [file://path[:line[:column]] ...]\n");
 }
+
+#ifdef LISP
+/*
+ * Remove the --script option and its argument from the command line.  The
+ * option is handled before normal option parsing so the script name is not
+ * opened as an edit buffer.  Return FALSE if the option is malformed.
+ */
+static int
+parsescript (int *argcp, char *argv[], char **scriptname)
+{
+  int argc = *argcp;
+  int index;
+
+  *scriptname = NULL;
+  for (index = 1; index < argc; index++)
+    {
+      if (strcmp (argv[index], "--script") != 0)
+        continue;
+      if (*scriptname != NULL || index + 1 >= argc)
+        return FALSE;
+      *scriptname = argv[index + 1];
+      memmove (&argv[index], &argv[index + 2],
+               (size_t) (argc - index - 1) * sizeof (argv[0]));
+      argc -= 2;
+      index--;
+    }
+  *argcp = argc;
+  return TRUE;
+}
+#endif
 
 /*
  * Main program.
@@ -160,11 +196,22 @@ main (int argc, char *argv[])
   char *proptr;
 #ifdef LISP
   char *lispptr;
+  char *scriptname;
+  int scriptstatus;
 #endif
   int line = 0;
   int gotoflag = FALSE;
   int skipstartup = FALSE;
   int basec;		/* c stripped of meta character */
+
+#ifdef LISP
+  if (parsescript (&argc, argv, &scriptname) != TRUE)
+    {
+      usage ();
+      exit (EXIT_FAILURE);
+    }
+  scriptmode = scriptname != NULL;
+#endif
 
   if (argc == 2)
     {
@@ -302,7 +349,13 @@ main (int argc, char *argv[])
 
   if (targetdir) /* Target work directory */
     ffchdir (targetdir);
-  vtinit ();			/* Virtual terminal.    */
+  if (scriptmode)
+    {
+      nrow = 24;		/* Headless edit context. */
+      ncol = 80;
+    }
+  else
+    vtinit ();			/* Virtual terminal.    */
   if ((blistp = bcreate ("*blist*")) == NULL)	/* Special list buffer. */
     abort ();
   keymapinit ();		/* Symbols, bindings.   */
@@ -393,7 +446,9 @@ main (int argc, char *argv[])
 
   lastflag = 0;			/* Fake last flags.     */
 
-  if (skipstartup && proptr == NULLPTR)
+  if (scriptmode)
+    inprof = enoecho = FALSE;
+  else if (skipstartup && proptr == NULLPTR)
     inprof = enoecho = FALSE;
   else
     {
@@ -406,6 +461,15 @@ main (int argc, char *argv[])
     }
 
 #ifdef LISP
+  if (scriptmode)
+    {
+      scriptstatus = TRUE;
+      if (lispptr != NULLPTR)
+        scriptstatus = lispstartup (lispptr);
+      if (scriptstatus == TRUE)
+        scriptstatus = lisprun (scriptname);
+      exit (scriptstatus == TRUE ? EXIT_SUCCESS : EXIT_FAILURE);
+    }
   if (!skipstartup || lispptr != NULLPTR)
     lispstartup (lispptr);
 #endif
@@ -620,6 +684,12 @@ bufinit (const char *fname)
       eprintf ("Out of memory: cannot create buffer");
       if (wheadp != NULL)
         curwp = wheadp;
+      return;
+    }
+  if (scriptmode && nbuf > 0)
+    {				/* Reuse headless window. */
+      ++nbuf;
+      swbuffer (bp);
       return;
     }
   curbp = bp;			/* Current buffer       */

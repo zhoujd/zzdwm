@@ -925,8 +925,24 @@ eprintf (const char *fp, ...)
 {
   va_list ap;
   char oldecho;
+  FILE *output;
 
   va_start (ap, fp);
+
+  if (scriptmode)
+    {
+      if (enoecho && *fp == '[')
+        {
+          va_end (ap);
+          return;
+        }
+      output = *fp == '[' ? stderr : stdout;
+      vfprintf (output, fp, ap);
+      putc ('\n', output);
+      fflush (output);
+      va_end (ap);
+      return;
+    }
 
   if (enoecho && *fp == '[')
     {				/* echo disabled, and   */

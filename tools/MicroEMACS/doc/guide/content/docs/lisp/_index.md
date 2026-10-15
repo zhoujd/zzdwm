@@ -29,6 +29,7 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (set-syntax "sql")
     (set-modeline-color 15 22 0 2)
     (execute-command "file-save")
+    (find-file "file.c")
     (get-char)
     (get-line)
     (get-line -1)
@@ -122,6 +123,23 @@ Use the **-l** option to load a specific Lisp file instead:
 
 ```sh
 me -l startup.lisp file.c
+```
+
+Use **--script** to run a Lisp file without a terminal:
+
+```sh
+me --script script.l file.c
+```
+
+Script mode skips terminal setup, frame rendering, and default startup files.
+Remaining filename arguments are opened in one headless edit context, with the
+last file current. An explicit **-l** file is loaded first, so place it before
+**--script**. The `examples/format-code.l` script uses
+`examples/smart-indent.l` to rewrite the indentation of the current buffer:
+
+```sh
+cp examples/smart-indent-input.c /tmp/format-code.c
+me -l examples/smart-indent.l --script examples/format-code.l /tmp/format-code.c
 ```
 
 At runtime, **C-x F** evaluates files ending in `.l`, `.lisp`, or `.mel`

@@ -548,6 +548,7 @@ extern uchar pat[];
 extern SYMBOL *symbol[];
 extern int inprof;
 extern int bflag;
+extern int scriptmode;
 extern int rflag;
 extern int noupdatecscope;
 extern char *cscope_path;

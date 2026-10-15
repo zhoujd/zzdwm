@@ -28,6 +28,8 @@ static int command_flag;
 static int command_count;
 static int goto_bol_called;
 static int goto_eol_called;
+static char visited_file[NFILEN];
+static int visit_file_status = TRUE;
 static int forward_line_flag;
 static int forward_line_count;
 static int forward_line_status = TRUE;
@@ -174,6 +176,13 @@ gotoeol (int flag, int count, int key)
   (void) key;
   goto_eol_called++;
   return TRUE;
+}
+
+int
+visit_file (char *filename)
+{
+  snprintf (visited_file, sizeof (visited_file), "%s", filename);
+  return visit_file_status;
 }
 
 int
@@ -667,6 +676,19 @@ main (void)
   assert (evaluate ("#'format-log-line") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: format-log-line]") == 0);
   assert (evaluate ("(eq #'format-log-line 'format-log-line)") == TRUE);
+  assert (evaluate ("(find-file \"src/main.c\")") == TRUE);
+  assert (strcmp (visited_file, "src/main.c") == 0);
+  visit_file_status = FALSE;
+  assert (evaluate ("(find-file \"missing.c\")") == FALSE);
+  visit_file_status = TRUE;
+  assert (evaluate ("(find-file)") == FALSE);
+  {
+    char result[LISP_OUTPUT_SIZE];
+
+    assert (tiny_lisp_eval ("#!/usr/bin/env me --script\n(+ 1 2)",
+                            result, sizeof (result)) == 1);
+    assert (strcmp (result, "3") == 0);
+  }
 
   assert (evaluate ("(define-lisp-command \"format-log-line\" "
                    "#'format-log-line)") == TRUE);

@@ -340,6 +340,22 @@ lisp_switch_buffer (int argc, const char *const *argv,
 #endif
 
 static int
+lisp_find_file (int argc, const char *const *argv,
+                char *result, size_t result_size)
+{
+  char filename[NFILEN];
+
+  (void) result;
+  (void) result_size;
+  if (argc != 1 || argv[0][0] == 0
+      || strlen (argv[0]) >= sizeof (filename))
+    return FALSE;
+  strcpy (filename, argv[0]);
+  adjustcase (filename);
+  return visit_file (filename);
+}
+
+static int
 lisp_get_char (int argc, const char *const *argv,
                char *result, size_t result_size)
 {
@@ -913,6 +929,7 @@ lisp_register_hosts (void)
     { "execute-command", lisp_execute_command },
     { "editor-cmd", lisp_execute_command },
     { "get-char", lisp_get_char },
+    { "find-file", lisp_find_file },
     { "insert-char", lisp_insert_char },
     { "get-line", lisp_get_line },
     { "get-region", lisp_get_region },

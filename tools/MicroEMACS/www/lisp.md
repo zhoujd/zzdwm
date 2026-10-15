@@ -139,6 +139,7 @@ Unicode code point or a one-character string. `goto-bol`, `goto-eol`, and
 perform those editor actions directly. `eobp` returns `t` when dot is at the
 end of the buffer and `nil` otherwise. In AI-enabled builds,
 `switch-to-buffer` finds or creates a named buffer and makes it current.
+`find-file` opens a named file in the current logical edit context.
 
 `define-lisp-command` registers a Lisp function as a named MicroEMACS
 command. Use `#'name` to pass a function reference. For compatibility, a
@@ -162,6 +163,30 @@ Use the **-l** option to load a specific Lisp file instead:
 
 ```sh
 me -l startup.lisp file.c
+```
+
+Use **--script** to run a Lisp file without a terminal:
+
+```sh
+me --script script.l file.c
+```
+
+Script mode skips terminal setup, frame rendering, and default startup files.
+Remaining filename arguments are opened in one headless edit context with the
+last file current, an explicit **-l** file is loaded first, and the process
+exits with the script status.
+Place **-l** before **--script**, because the script option consumes the
+filename that immediately follows it.
+`message` output goes to standard output, bracketed diagnostics go to standard
+error, and Lisp files may begin with a `#!` shebang line.
+
+`examples/format-code.l` is a headless formatting example. With
+`examples/smart-indent.l` loaded first, it rewrites the indentation of the
+current buffer:
+
+```sh
+cp examples/smart-indent-input.c /tmp/format-code.c
+me -l examples/smart-indent.l --script examples/format-code.l /tmp/format-code.c
 ```
 
 At runtime, **C-x F** evaluates files ending in `.l`, `.lisp`, or `.mel`
