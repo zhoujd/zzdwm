@@ -14,7 +14,7 @@ all:
 	$(MAKE) -f $(MF) $(TARGET)
 
 min:
-	$(MAKE) -f $(MF) COLOR=no LISP=no AI=no $(TARGET)
+	$(MAKE) -f $(MF) COLOR=no LISP=no AI=no MINIMAL=yes $(TARGET)
 
 clean: TARGET=clean
 clean: all

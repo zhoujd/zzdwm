@@ -18,8 +18,10 @@ INC = -I$(srcdir) -I$(SYS) -I$(TTY)
 COLOR ?= yes
 LISP ?= yes
 AI ?= yes
+MINIMAL ?= no
 COLOR_FLAG := $(if $(filter yes,$(COLOR)),-DCOLOR,)
 LISP_FLAG := $(if $(filter yes,$(LISP)),-DLISP,)
+MINIMAL_FLAG := $(if $(filter yes,$(MINIMAL)),-DMINIMAL,)
 AI_FLAG :=
 AI_OBJ :=
 ifeq ($(AI), yes)
@@ -34,7 +36,7 @@ endif
 
 CC = gcc
 CFLAGS = -std=c99 -D_GNU_SOURCE -DLINUX -DBACKUP \
-         $(COLOR_FLAG) $(LISP_FLAG) $(AI_FLAG) $(INC) \
+         $(COLOR_FLAG) $(LISP_FLAG) $(MINIMAL_FLAG) $(AI_FLAG) $(INC) \
          -Wall -Wextra -pedantic \
          -Wno-unused-parameter \
          -Wno-implicit-fallthrough
@@ -75,6 +77,7 @@ OBJ := \
 	echo.o \
 	extend.o \
 	file.o \
+	help.o \
 	kbd.o \
 	line.o \
 	$(LISP_OBJ) \

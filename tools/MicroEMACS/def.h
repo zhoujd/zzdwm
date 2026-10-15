@@ -939,6 +939,11 @@ int domacro (int *macrop, int n);       /* Execute macro.               */
 int quickexit (int f, int n, int k);    /* Quick style exit.            */
 
 /*
+ * Defined by "help.c".
+ */
+void usage (FILE *stream);              /* Print command-line usage.    */
+
+/*
  * Defined by "paragraph.c"
  */
 int gotobop (int f, int n, int k);      /* Goto beginning of paragraph. */

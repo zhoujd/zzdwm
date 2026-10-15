@@ -667,7 +667,7 @@ meanings:
 MicroEMACS also accepts `--help` and `--version` when either is the only
 command-line argument. `--help` prints a grouped summary of command-line
 options to standard output; unavailable options are omitted in builds that do
-not include their features.
+not include their features. Minimal builds use the compact legacy usage.
 
 -p *profile*
 

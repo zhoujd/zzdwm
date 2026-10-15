@@ -133,7 +133,7 @@ editors and language processors.  It has no effect on VMS or UNIX.
 MicroEMACS also accepts `--help` and `--version` when either is the only
 command-line argument. `--help` prints a grouped summary of command-line
 options to standard output; unavailable options are omitted in builds that do
-not include their features.
+not include their features. Minimal builds use the compact legacy usage.
 
 The optional filenames *filename1*, *filename2*, etc., are the names
 of the files you want to edit.  MicroEMACS

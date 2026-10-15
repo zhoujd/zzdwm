@@ -37,7 +37,7 @@ From this directory, build and run the editor:
 Useful startup options include:
 
 ```sh
-./me --help         # Show grouped command-line options
+./me --help         # Show command-line options
 ./me file.c:123:4    # Open a file at line 123, column 4
 ./me -C file.c       # Disable color for this session
 ./me -n file.c       # Show line numbers
@@ -79,7 +79,7 @@ The default Linux and Windows builds enable color, Lisp, and AI support with
 ./build.sh -b test   # Build the test targets
 ./build.sh -d        # Build with debug symbols
 ./build.sh -r        # Build and strip a local release
-./build.sh -m        # Build without color, Lisp, or AI
+./build.sh -m        # Build without color, Lisp, or AI; compact help
 ./build.sh -a        # Build with AI support; enabled by default
 ./build.sh -p        # Build a stripped static Linux executable
 ./build.sh -w        # Build me.exe with MinGW in Docker
