@@ -70,6 +70,8 @@
  */
 #include "def.h"
 
+#include <unistd.h>
+
 int thisflag;                      /* Flags, this command          */
 int lastflag;                      /* Flags, last command          */
 int curgoal;                       /* Goal column                  */
@@ -170,6 +172,7 @@ main (int argc, char *argv[])
   int line = 0;
   int gotoflag = FALSE;
   int skipstartup = FALSE;
+  int noninteractive = FALSE;
   int basec;		/* c stripped of meta character */
 
 #ifdef LISP
@@ -180,6 +183,7 @@ main (int argc, char *argv[])
     }
   scriptmode = scriptname != NULL;
 #endif
+  noninteractive = !scriptmode && !isatty (STDIN_FILENO);
 
   if (argc == 2)
     {
@@ -247,11 +251,13 @@ main (int argc, char *argv[])
 #ifdef LISP
             case 'l':
               n++;
-              if (n < argc)
+              if (n < argc && lispptr == NULLPTR)
                 {
                   lispptr = argv[n];
                   adjustcase (lispptr);
                 }
+              else if (n < argc)
+                noninteractive = FALSE;
               break;
 #endif
             case 'm':
@@ -265,11 +271,13 @@ main (int argc, char *argv[])
               break;
             case 'p':
               n++;
-              if (n < argc)
+              if (n < argc && proptr == NULLPTR)
                 {
                   proptr = argv[n];
                   adjustcase (proptr);
                 }
+              else if (n < argc)
+                noninteractive = FALSE;
               break;
             case 'q':
               skipstartup = TRUE;
@@ -324,6 +332,13 @@ main (int argc, char *argv[])
     }
   else
     vtinit ();			/* Virtual terminal.    */
+  if (noninteractive)
+    {
+      fprintf (stderr,
+               "me: -l expects one Lisp startup file and opens FILE arguments\n");
+      ttclose ();
+      return EXIT_FAILURE;
+    }
   if ((blistp = bcreate ("*blist*")) == NULL)	/* Special list buffer. */
     abort ();
   keymapinit ();		/* Symbols, bindings.   */
