@@ -141,7 +141,7 @@ void
 usage (void)
 {
   fprintf (stderr,
-           "usage: me [-234" OPT_BACKUP OPT_COLOR "DmnNrTuxz] [-c path] [-d path] [-g line]"
+           "usage: me [-234" OPT_BACKUP OPT_COLOR "DmnNqrTuxz] [-c path] [-d path] [-g line]"
            OPT_LISP " [-p profile] [-s string] [-t size]\n"
            "          [+[line]] [file[:line[:column]] ...] [file://path[:line[:column]] ...]\n");
 }
@@ -163,6 +163,7 @@ main (int argc, char *argv[])
 #endif
   int line = 0;
   int gotoflag = FALSE;
+  int skipstartup = FALSE;
   int basec;		/* c stripped of meta character */
 
   if (argc == 2)
@@ -254,6 +255,9 @@ main (int argc, char *argv[])
                   proptr = argv[n];
                   adjustcase (proptr);
                 }
+              break;
+            case 'q':
+              skipstartup = TRUE;
               break;
             case 'r':
               rflag = TRUE;
@@ -389,15 +393,21 @@ main (int argc, char *argv[])
 
   lastflag = 0;			/* Fake last flags.     */
 
-  inprof = enoecho = (ffpopen (proptr) == FIOSUC);
-  /* open default profile */
-  if (!inprof && proptr != NULLPTR)	/* -p option failed?    */
-    eprintf ("Unable to open profile %s", proptr);
+  if (skipstartup && proptr == NULLPTR)
+    inprof = enoecho = FALSE;
   else
-    eprintf ("");
+    {
+      inprof = enoecho = (ffpopen (proptr) == FIOSUC);
+      /* open default profile */
+      if (!inprof && proptr != NULLPTR)	/* -p option failed?    */
+        eprintf ("Unable to open profile %s", proptr);
+      else
+        eprintf ("");
+    }
 
 #ifdef LISP
-  lispstartup (lispptr);
+  if (!skipstartup || lispptr != NULLPTR)
+    lispstartup (lispptr);
 #endif
   update ();
 

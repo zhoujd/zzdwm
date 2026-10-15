@@ -542,7 +542,7 @@ and mark do not matter.
 Start editing by typing the command
 
 \begin{Verbatim}[commandchars=\\\{\}]
-me [-234bCDmnNrTuxz] [-c \emph{path}] [-d \emph{path}] [-g \emph{line}]
+me [-234bCDmnNqrTuxz] [-c \emph{path}] [-d \emph{path}] [-g \emph{line}]
    [-l \emph{lisp}] [-p \emph{profile}] [-s \emph{string}] [-t \emph{size}] [+\emph{line}]
    \emph{file}[:\emph{line}[:\emph{column}]] ...
 \end{Verbatim}
@@ -672,6 +672,11 @@ command-line argument.
     *profile* \index{profile} at startup,
     instead of the default profile.  See the [**Profiles**](#profiles) section for
     more information about profiles.
+
+-q
+
+:   Skips the default startup profile and the default Lisp startup file.
+    Explicit **-p**\index{-p} and **-l**\index{-l} files are still loaded.
 
 -r
 
@@ -2394,6 +2399,8 @@ section for details.
 You can use the **-p profile** option when you invoke MicroEMACS to specify
 the name of the startup profile.  If you don't use this option, MicroEMACS
 will use a default profile name.
+Use the **-q** option to skip the default profile and the default Lisp
+startup file; explicitly selected **-p** and **-l** files are still loaded.
 The name of the default profile is `.mepro` on UNIX-like systems and
 `me.pro` on Windows.  MicroEMACS will look for this profile in the
 current directory.  If the profile is not found, MicroEMACS will
@@ -2763,7 +2770,9 @@ line and before commands from the startup profile are executed. The default
 name is `.mel` on UNIX-like systems and `me.l` on Windows. MicroEMACS looks
 for it in the current directory, then in the user's home directory.
 If no default file is found, startup continues normally. Use the **-l**
-option to load a specific Lisp file instead.
+option to load a specific Lisp file instead. Use the **-q** option to skip
+the default Lisp startup file and the default profile; explicit **-l** and
+**-p** files are still loaded.
 
 At runtime, **C-x F** evaluates files ending in `.l`, `.lisp`, or `.mel`
 as Lisp source; other files are read as profiles.  The explicit

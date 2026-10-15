@@ -75,6 +75,11 @@ Tells MicroEMACS to read the specified
 instead of the default profile.  See the [Profiles](profiles.md) section for
 more information about profiles.
 
+**-q**
+
+Skips the default startup profile and the default Lisp startup file.
+Explicit **-p** and **-l** files are still loaded.
+
 **-r**
 
 Tells MicroEMACS to mark all buffers as read-only by default.  This

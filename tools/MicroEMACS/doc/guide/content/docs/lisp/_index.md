@@ -115,6 +115,8 @@ line and before commands from the startup profile are executed. The default
 name is `.mel` on UNIX-like systems and `me.l` on Windows. MicroEMACS looks
 for it in the current directory, then in the user's home directory.
 If no default file is found, startup continues normally.
+Use the **-q** option to skip the default Lisp startup file and the default
+profile; explicit **-l** and **-p** files are still loaded.
 
 Use the **-l** option to load a specific Lisp file instead:
 

@@ -25,6 +25,8 @@ file, if one is present. See [Lisp Extensions](../lisp/) for details.
 You can use the **-p profile** option when you invoke MicroEMACS to specify
 the name of the startup profile.  If you don't use this option, MicroEMACS
 will use a default profile name.
+Use the **-q** option to skip the default profile and the default Lisp
+startup file; explicitly selected **-p** and **-l** files are still loaded.
 The name of the default profile is `.mepro` on UNIX-like systems and
 `me.pro` on Windows.  MicroEMACS will look for this profile in the
 current directory.  If the profile is not found, MicroEMACS will
