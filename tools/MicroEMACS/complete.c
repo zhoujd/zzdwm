@@ -27,7 +27,7 @@
 #define MAX_MATCHES 256
 
 /* Forward declarations */
-static void outstring (char *s);
+static void outstring (const char *s);
 static int is_regular_file (const char *path);
 static int collect_matches (const char *prefix,
                             char matches[][TMPBUF_SIZE],
@@ -657,8 +657,8 @@ getfilename (char *prompt, char *buf, int nbuf)
 /*
  * Output a string of characters to terminal
  */
-void
-outstring (char *s)
+static void
+outstring (const char *s)
 {
   while (*s)
     ttputc (*s++);
