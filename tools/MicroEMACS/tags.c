@@ -243,7 +243,6 @@ addtagref (const char *string, tagfile *file, int line, long offset,
   return newref;
 }
 
-
 /*
  * Read a tag file, parse into our internal format,
  * store in taglist.  Return false if error,
@@ -376,7 +375,6 @@ readtagfile (char *fname)
   havetags = s != FIOERR;	/* False if error.      */
   return havetags;
 }
-
 
 /*
  * Read the tags file if the tag list is empty.
