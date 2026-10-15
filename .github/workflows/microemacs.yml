@@ -1,0 +1,216 @@
+name: MicroEMACS CI
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - ".github/workflows/microemacs.yml"
+      - "tools/MicroEMACS/**"
+      - "docker/dockerfiles/tool/**"
+  pull_request:
+    branches: [master]
+    paths:
+      - ".github/workflows/microemacs.yml"
+      - "tools/MicroEMACS/**"
+      - "docker/dockerfiles/tool/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: tools/MicroEMACS
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cscope libncurses-dev
+
+      - name: Build source tests
+        run: make -C test clean all
+
+      - name: Run source tests
+        run: |
+          set -e
+          for test in syntax-test display-test lisp-test path-test tag-test cscope-test ai-test; do
+            "./test/$test"
+          done
+
+      - name: Build full editor
+        run: |
+          make clean
+          make
+
+      - name: Smoke-test full editor
+        run: |
+          ./me --version
+          ./me --help | grep -q '^Usage: me \[OPTION'
+          ./me --script examples/script.l
+
+      - name: Build source package
+        run: |
+          ./build.sh -s
+          tar -tzf microemacs-*.tar.gz | grep -q '/main.c$'
+
+      - name: Upload source package
+        uses: actions/upload-artifact@v4
+        with:
+          name: microemacs-source-package
+          path: tools/MicroEMACS/microemacs-*.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+  linux-static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: ghcr.io/linuxcontainers/alpine:3.20
+    defaults:
+      run:
+        shell: sh
+        working-directory: tools/MicroEMACS
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install build tools
+        run: apk add --no-cache file gcc git make musl-dev ncurses-dev ncurses-static libbsd-dev libbsd-static
+
+      - name: Build source tests
+        run: make -C test clean all INSIDE_DOCKER=yes
+
+      - name: Run source tests
+        run: |
+          set -e
+          for test in syntax-test display-test lisp-test path-test tag-test cscope-test ai-test; do
+            "./test/$test"
+          done
+
+      - name: Build full static editor
+        run: |
+          make -f Make.Linux clean
+          make -f Make.Linux STATIC=yes strip
+          file ./me | grep -q 'statically linked'
+          ./me --version
+          ./me --help | grep -q '^Usage: me \[OPTION'
+          mkdir -p dist
+          cp ./me dist/me-linux-static
+
+      - name: Build minimal static editor
+        run: |
+          make -f Make.Linux clean
+          make -f Make.Linux COLOR=no LISP=no AI=no MINIMAL=yes STATIC=yes strip
+          file ./me | grep -q 'statically linked'
+          ./me --version
+          ./me --help | grep -q '^usage: me \[-234bDmnNqrTuxz\]'
+          if grep -a -q 'eval-lisp' ./me; then
+            echo 'minimal build unexpectedly contains eval-lisp' >&2
+            exit 1
+          fi
+          cp ./me dist/me-linux-minimal
+
+      - name: Upload Linux binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: microemacs-linux-binaries
+          path: tools/MicroEMACS/dist/*
+          if-no-files-found: error
+          retention-days: 7
+
+  windows:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: tools/MicroEMACS
+    env:
+      WINEDEBUG: -all
+      WINEDLLOVERRIDES: mscoree,mshtml=
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends mingw-w64 wine64
+
+      - name: Build full Windows editor
+        run: |
+          make -f Make.Mingw clean
+          make -f Make.Mingw \
+            CC=x86_64-w64-mingw32-gcc LD=x86_64-w64-mingw32-gcc me.exe
+          file ./me.exe
+          wine64 ./me.exe --version
+          wine64 ./me.exe --help | grep -q '^Usage: me \[OPTION'
+          mkdir -p dist
+          cp ./me.exe dist/me-windows.exe
+
+      - name: Build minimal Windows editor
+        run: |
+          make -f Make.Mingw clean
+          make -f Make.Mingw \
+            CC=x86_64-w64-mingw32-gcc LD=x86_64-w64-mingw32-gcc \
+            COLOR=no LISP=no AI=no MINIMAL=yes me.exe
+          file ./me.exe
+          wine64 ./me.exe --version
+          wine64 ./me.exe --help | grep -q '^usage: me \[-234bDmnNqrTuxz\]'
+          cp ./me.exe dist/me-windows-minimal.exe
+
+      - name: Upload Windows binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: microemacs-windows-binaries
+          path: tools/MicroEMACS/dist/*
+          if-no-files-found: error
+          retention-days: 7
+
+  documentation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: tools/MicroEMACS
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install documentation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            lmodern make pandoc texlive-fonts-recommended texlive-latex-extra
+
+      - name: Build PDF manual
+        run: |
+          make -C doc clean microemacs.pdf
+          test -s doc/microemacs.pdf
+
+      - name: Upload PDF manual
+        uses: actions/upload-artifact@v4
+        with:
+          name: microemacs-pdf-manual
+          path: tools/MicroEMACS/doc/microemacs.pdf
+          if-no-files-found: error
+          retention-days: 7
