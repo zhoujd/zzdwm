@@ -37,18 +37,24 @@ main (void)
     assert (path_home () == NULL);
 
     assert (setenv ("HOME", "/c/Users/Home", 1) == 0);
-    assert (strcmp (path_home (), "C:/Users/Home") == 0);
+    assert (strcmp (path_home (), "/c/Users/Home") == 0);
     assert (unsetenv ("HOME") == 0);
 
     assert (setenv ("USERPROFILE", "C:\\Users\\Profile", 1) == 0);
-    assert (strcmp (path_home (), "C:/Users/Profile") == 0);
+    assert (strcmp (path_home (), "/c/Users/Profile") == 0);
     assert (unsetenv ("USERPROFILE") == 0);
 
     assert (setenv ("HOMEDRIVE", "C:", 1) == 0);
     assert (setenv ("HOMEPATH", "\\Users\\Fallback", 1) == 0);
-    assert (strcmp (path_home (), "C:/Users/Fallback") == 0);
+    assert (strcmp (path_home (), "/c/Users/Fallback") == 0);
     assert (unsetenv ("HOMEDRIVE") == 0);
     assert (unsetenv ("HOMEPATH") == 0);
+
+    path_to_native ("/c/Windows/System32", path, sizeof (path));
+    assert (strcmp (path, "C:/Windows/System32") == 0);
+
+  path_to_native ("/c", path, sizeof (path));
+  assert (strcmp (path, "C:/") == 0);
 
     if (home != NULL)
       assert (setenv ("HOME", home, 1) == 0);

@@ -59,7 +59,7 @@ static void putbytes (const char *s, int len);
 
 /*
  * Expand a filename that has a leading ~ or ~username.
- * Also automatically translates POSIX drive paths (/c/dir) to Win32 format (C:/dir).
+ * Return the editor's internal POSIX path representation.
  */
 char *
 fftilde (char *arg)
@@ -71,7 +71,7 @@ fftilde (char *arg)
   if (arg == NULL)
     return NULL;
 
-  path_to_native (arg, expanded, sizeof (expanded));
+  path_to_posix (arg, expanded, sizeof (expanded));
 
   /* SECOND STEP: Original Tilde (~/) Expansion Logic */
   if (expanded[0] != '~')
@@ -120,11 +120,13 @@ ffisdir (
      int cpos)			/* number of characters in name to check */
 {
   struct stat stbuf;
+  char native[NFILEN];
   int c, ret;
 
   c = name[cpos];		/* save following char  */
   name[cpos] = '\0';		/* null-terminate it    */
-  ret = stat (fftilde (name), &stbuf);	/* get file information */
+  path_to_native (fftilde (name), native, sizeof (native));
+  ret = stat (native, &stbuf);		/* get file information */
   name[cpos] = c;		/* restore terminator   */
   if (ret != 0)			/* file doesn't exist?  */
     return FALSE;		/* must not be a dir    */
@@ -379,8 +381,12 @@ int
 fbackupfile (const char *fname)
 {
   char nname[NFILEN];		/* new name                     */
+  char native_fname[NFILEN];	/* native original path         */
+  char native_nname[NFILEN];	/* native backup path           */
+  char backup[NFILEN];		/* internal backup directory    */
   register char *p;
   const char *bname;		/* XBACKUP directory name       */
+  int length;
 
   /* If there is a XBACKUP environment variable defined, use it
    * as a prefix to the original filename.  Otherwise just
@@ -388,18 +394,26 @@ fbackupfile (const char *fname)
    */
   if ((bname = getenv ("XBACKUP")) == NULL)
     {
-      strcpy (nname, fname);
+      length = snprintf (nname, sizeof (nname), "%s", fname);
+      if (length < 0 || length >= (int) sizeof (nname))
+        return FALSE;
       for (p = nname; *p && *p != '.'; p++)
         ;			/* search for extension */
+      if (strlen (nname) + 4 >= sizeof (nname))
+        return FALSE;
       strcpy (p, ".BAK");	/* use .BAK extension   */
     }
   else
     {
-      if (path_join (bname, fname, nname, sizeof (nname)) != TRUE)
+      path_to_posix (bname, backup, sizeof (backup));
+      if (backup[0] == 0
+          || path_join (backup, fname, nname, sizeof (nname)) != TRUE)
         return FALSE;
     }
-  unlink (nname);		/* delete old backup    */
-  return (rename (fname, nname) == 0);
+  path_to_native (fname, native_fname, sizeof (native_fname));
+  path_to_native (nname, native_nname, sizeof (native_nname));
+  unlink (native_nname);	/* delete old backup    */
+  return (rename (native_fname, native_nname) == 0);
 }
 
 #endif
@@ -441,6 +455,7 @@ int
 ffpopen (char *fn)
 {
   static char newname[NFILEN];
+  char native[NFILEN];
   const char *home;
 
   if (fn == NULL)
@@ -451,14 +466,15 @@ ffpopen (char *fn)
       if (home == NULL || path_join (home, "me.pro",
                                      newname, sizeof (newname)) != TRUE)
         return (FIOFNF);
-      fn = newname;
     }
   else
     {
-      path_to_native (fn, newname, sizeof (newname));
-      fn = newname;
+      if (snprintf (newname, sizeof (newname), "%s", fn)
+          >= (int) sizeof (newname))
+        return (FIOFNF);
     }
-  if ((pfp = open (fn, O_RDONLY)) < 0)
+  path_to_native (newname, native, sizeof (native));
+  if ((pfp = open (native, O_RDONLY)) < 0)
     return (FIOFNF);
   return (FIOSUC);
 }
@@ -585,12 +601,14 @@ int
 ffchdir (char *path)
 {
   char *dname;
+  char native[NFILEN];
 
   /* Perform path conversion and tilde expansion via central engine */
   dname = fftilde (path);
+  path_to_native (dname, native, sizeof (native));
 
   /* Invoke native Win32 API to change current drive and path simultaneously */
-  if (!SetCurrentDirectoryA (dname))
+  if (!SetCurrentDirectoryA (native))
     {
       return FALSE;
     }

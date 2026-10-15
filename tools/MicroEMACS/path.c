@@ -61,6 +61,7 @@ path_home (void)
 {
 #ifdef MINGW
   static char windows_home[NLINE * 2];
+  char native_home[NLINE * 2];
   const char *home;
   const char *drive;
   const char *path;
@@ -71,7 +72,7 @@ path_home (void)
     home = getenv ("USERPROFILE");
   if (home != NULL)
     {
-      path_to_native (home, windows_home, sizeof (windows_home));
+      path_to_posix (home, windows_home, sizeof (windows_home));
       if (windows_home[0] == 0)
         return NULL;
       return windows_home;
@@ -81,10 +82,10 @@ path_home (void)
   path = getenv ("HOMEPATH");
   if (drive == NULL || path == NULL)
     return NULL;
-  length = snprintf (windows_home, sizeof (windows_home), "%s%s", drive, path);
-  if (length < 0 || (size_t) length >= sizeof (windows_home))
+  length = snprintf (native_home, sizeof (native_home), "%s%s", drive, path);
+  if (length < 0 || (size_t) length >= sizeof (native_home))
     return NULL;
-  path_normalize (windows_home);
+  path_to_posix (native_home, windows_home, sizeof (windows_home));
   return windows_home;
 #else
   return getenv ("HOME");
@@ -200,8 +201,12 @@ path_to_native (const char *path, char *result, size_t result_size)
   if (path[0] == '/' && isalpha ((unsigned char) path[1])
       && (path[2] == '/' || path[2] == 0))
     {
-      length = snprintf (result, result_size, "%c:/%s",
-                         toupper ((unsigned char) path[1]), path + 3);
+      if (path[2] == '/')
+        length = snprintf (result, result_size, "%c:%s",
+                           toupper ((unsigned char) path[1]), path + 2);
+      else
+        length = snprintf (result, result_size, "%c:/%s",
+                           toupper ((unsigned char) path[1]), path + 2);
       if (length < 0 || (size_t) length >= result_size)
         {
           result[0] = 0;
@@ -282,30 +287,39 @@ path_canonical_directory (const char *directory,
     return FALSE;
 
 #ifdef MINGW
+  char *canonical;
   char *native;
   int status;
 
+  canonical = malloc (result_size);
   native = malloc (result_size);
-  if (native == NULL)
-    return FALSE;
-  path_to_native (directory, native, result_size);
-  if (native[0] == 0)
+  if (canonical == NULL || native == NULL)
     {
+      free (canonical);
       free (native);
       return FALSE;
     }
-  status = _fullpath (result, native, result_size) != NULL;
+  path_to_native (directory, native, result_size);
+  if (native[0] == 0)
+    {
+      free (canonical);
+      free (native);
+      return FALSE;
+    }
+  status = _fullpath (canonical, native, result_size) != NULL;
   free (native);
   if (status == FALSE)
-    return FALSE;
-  path_normalize (result);
-  return TRUE;
+    {
+      free (canonical);
+      return FALSE;
+    }
+  path_to_posix (canonical, result, result_size);
+  free (canonical);
+  return result[0] != 0;
 #else
   char *canonical;
   int length;
 
-  if (directory == NULL || result == NULL || result_size == 0)
-    return FALSE;
   canonical = realpath (directory, NULL);
   if (canonical == NULL)
     return FALSE;

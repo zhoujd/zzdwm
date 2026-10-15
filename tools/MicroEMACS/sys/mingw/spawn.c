@@ -256,6 +256,7 @@ changedir (int f, int n, int k)
 {
   register int s;
   static char line[NLINE];
+  char native[NLINE];
   static char tmp_path[NLINE];
   char *dname;
 
@@ -285,11 +286,12 @@ changedir (int f, int n, int k)
     }
   /* Expand ~ or ~username */
   dname = fftilde (line);
+  path_to_native (dname, native, sizeof (native));
   /*
    * On Windows, SetCurrentDirectoryA changes both the current drive
    * AND directory simultaneously, supporting both '/' and '\'.
    */
-  if (!SetCurrentDirectoryA (dname))
+  if (!SetCurrentDirectoryA (native))
     {
       eprintf ("Failed to chdir: %s", dname);
       eerase ();

@@ -634,6 +634,7 @@ lisp_dired_resolve_directory (const char *directory, char *result,
                               size_t result_size)
 {
   char current[NFILEN];
+  char posix_current[NFILEN];
   char normalized[NFILEN];
   int length;
 
@@ -658,11 +659,11 @@ lisp_dired_resolve_directory (const char *directory, char *result,
         return FALSE;
       return TRUE;
     }
-  path_normalize (current);
+  path_to_posix (current, posix_current, sizeof (posix_current));
   if (normalized[0] == 0 || strcmp (normalized, ".") == 0)
-    length = snprintf (result, result_size, "%s", current);
+    length = snprintf (result, result_size, "%s", posix_current);
   else
-    return path_join (current, normalized, result, result_size);
+    return path_join (posix_current, normalized, result, result_size);
   if (length < 0 || (size_t) length >= result_size)
     return FALSE;
   return TRUE;
@@ -684,6 +685,7 @@ lisp_dired_list (int argc, const char *const *argv,
   char expanded[NFILEN];
   char directory[NFILEN];
   char resolved[NFILEN];
+  char native_directory[NFILEN];
   char **names = NULL;
   size_t count = 0;
   size_t capacity = 0;
@@ -710,7 +712,8 @@ lisp_dired_list (int argc, const char *const *argv,
     return FALSE;
   strcpy (directory, resolved);
 
-  stream = opendir (directory);
+  path_to_native (directory, native_directory, sizeof (native_directory));
+  stream = opendir (native_directory);
   if (stream == NULL)
     {
       eprintf ("[Dired: cannot open %s]", directory);
@@ -760,6 +763,7 @@ lisp_dired_list (int argc, const char *const *argv,
   for (pass = 0; pass < 2; pass++)
     {
       char entry_path[NFILEN];
+      char native_entry_path[NFILEN];
       char display[NFILEN + LISP_DIRED_ENTRY_COLUMN + 2];
       struct stat information = { 0 };
       char mode[11];
@@ -775,7 +779,9 @@ lisp_dired_list (int argc, const char *const *argv,
           if (path_join (directory, names[index],
                          entry_path, sizeof (entry_path)) != TRUE)
             goto done;
-          if (stat (entry_path, &information) == 0)
+          path_to_native (entry_path, native_entry_path,
+                          sizeof (native_entry_path));
+          if (stat (native_entry_path, &information) == 0)
             {
               is_directory = S_ISDIR (information.st_mode) != 0;
               lisp_dired_mode_string (information.st_mode, mode,
@@ -1561,6 +1567,7 @@ static int
 lisp_open_file (const char *filename, FILE **file)
 {
   char expanded[NFILEN];
+  char native[NFILEN];
 
   if (filename == NULL)
     {
@@ -1579,7 +1586,8 @@ lisp_open_file (const char *filename, FILE **file)
     }
 
   filename = fftilde (expanded);
-  *file = fopen (filename, "rb");
+  path_to_native (filename, native, sizeof (native));
+  *file = fopen (native, "rb");
   return *file != NULL;
 }
 
