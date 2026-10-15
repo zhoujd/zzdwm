@@ -49,6 +49,9 @@ A buffer may have a file associated with it.
 Usually this is the last file read into or written from the
 buffer. If a file is associated with the buffer, the name of the
 file is displayed in the mode line, prefixed by `File:`.
+The file name is shown exactly as it is stored with the buffer; it is not
+normalized, converted to a relative path, or made relative to the current
+working directory.
 On operating systems in which file names are case insensitive
 (for example, VMS) the file name will always be in lower case.
 

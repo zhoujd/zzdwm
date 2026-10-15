@@ -114,9 +114,11 @@ same for files. In `--script` mode both return the default without prompting.
 `set-buffer-readonly` sets or clears the current buffer's read-only flag.
 `dired-list` clears and fills the current buffer with a shell-free GNU
 Emacs-style listing. Directories are grouped first, entries are sorted
-lexically, and the directory path is stored as the buffer file name.
+lexically, and the canonical directory path is stored as the buffer file name.
 `dired-entry-name` returns the file-name column from the current Dired line.
-See `lisp/dired.l` for a complete buffer-local Dired implementation.
+See `lisp/dired.l` for a self-contained buffer-local Dired implementation; it
+opens resolved file entries with the built-in `me-find-file` and does not
+require `smart-find-file.l`.
 
 `ai-complete` is available in AI-enabled builds, including the default Linux
 and Windows builds. It sends a prompt to the configured AI service with a

@@ -181,7 +181,7 @@ It contains information about what is being displayed in the
 window. Mode lines separate windows from each other and from the
 echo line.
 
-Three important bits of information are displayed in the mode line.
+Four important bits of information are displayed in the mode line.
 These are the buffer *mode* \index{Mode} (if any) in parentheses,
 the *buffer name* \index{Buffer name},
 the *file name* \index{File name},
@@ -196,6 +196,9 @@ A buffer may have a file\index{File} associated with it.
 Usually this is the last file read into or written from the
 buffer. If a file is associated with the buffer, the name of the
 file is displayed in the mode line, prefixed by `File:`.
+The file name is shown exactly as it is stored with the buffer; it is not
+normalized, converted to a relative path, or made relative to the current
+working directory.
 On operating systems in which file names are case insensitive
 (for example, VMS) the file name will always be in lower case.
 
@@ -2661,6 +2664,7 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (set-syntax "sql")
     (set-modeline-color 15 22 0 2)
     (execute-command "file-save")
+    (me-find-file "file.c")
     (get-char)
     (get-line)
     (get-line -1)
@@ -2745,9 +2749,11 @@ same for files. In `--script` mode both return the default without prompting.
 `set-buffer-readonly` sets or clears the current buffer's read-only flag.
 `dired-list` clears and fills the current buffer with a shell-free GNU
 Emacs-style listing. Directories are grouped first, entries are sorted
-lexically, and the directory path is stored as the buffer file name.
+lexically, and the canonical directory path is stored as the buffer file name.
 `dired-entry-name` returns the file-name column from the current Dired line.
-See `lisp/dired.l` for a complete buffer-local Dired implementation.
+See `lisp/dired.l` for a self-contained buffer-local Dired implementation; it
+does not require `smart-find-file.l` because it opens files with
+`me-find-file` after resolving them.
 
 `ai-complete` is available in AI-enabled builds, including the default Linux
 and Windows builds. It sends a prompt to the configured AI service with a

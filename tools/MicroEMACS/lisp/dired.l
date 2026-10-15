@@ -34,7 +34,8 @@
                                (string-trim-suffix target "/"))))
           (if (string-suffix-p target "/")
               (dired-setup (or (resolve-path path) path))
-            (find-file path)))
+            (let ((resolved (resolve-path path)))
+              (me-find-file (or resolved path)))))
       (message "No file on this line"))))
 
 (define-lisp-command "lisp-dired" #'lisp-dired)

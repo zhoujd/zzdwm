@@ -148,8 +148,9 @@ directory and buffer primitives, creates a read-only `Dired` mode, and rebinds
 Press **C-X D**, choose a directory (an empty reply uses the current
 directory), and MicroEMACS displays a GNU Emacs-style listing with mode, link
 count, size, timestamp, and name columns. **Enter** opens a file or navigates
-into a directory; **g** or **r** refreshes the listing. The native `dired`
-command remains available with **M-X dired**.
+into a directory. File entries are resolved before being opened with the
+built-in `me-find-file`; **g** or **r** refreshes the listing. The native
+`dired` command remains available with **M-X dired**.
 
 ## AI assistance
 

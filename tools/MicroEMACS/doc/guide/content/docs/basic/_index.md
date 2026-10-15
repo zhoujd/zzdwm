@@ -40,7 +40,7 @@ It contains information about what is being displayed in the
 window. Mode lines separate windows from each other and from the
 echo line.
 
-Three important bits of information are displayed in the mode line.
+Four important bits of information are displayed in the mode line.
 These are the buffer *mode*  (if any) in parentheses,
 the *buffer name* ,
 the *file name* ,
@@ -55,6 +55,9 @@ A buffer may have a file associated with it.
 Usually this is the last file read into or written from the
 buffer. If a file is associated with the buffer, the name of the
 file is displayed in the mode line, prefixed by `File:`.
+The file name is shown exactly as it is stored with the buffer; it is not
+normalized, converted to a relative path, or made relative to the current
+working directory.
 On operating systems in which file names are case insensitive
 (for example, VMS) the file name will always be in lower case.
 
@@ -386,4 +389,3 @@ Some commands act on a block of text called the *region*.
 The region is
 all of the characters between dot and mark. The relative positions of dot
 and mark do not matter.
-

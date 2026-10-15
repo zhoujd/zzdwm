@@ -1302,6 +1302,25 @@ main (void)
     assert (bound_key == (KCTLX | 'D'));
     assert (bound_symbol == &lisp_dired_symbol);
 
+    {
+      FILE *file = fopen ("/tmp/microemacs-dired-open.txt", "wb");
+      char entry[128];
+
+      assert (file != NULL);
+      assert (fclose (file) == 0);
+      strcpy (primitive_buffer.b_fname, "/tmp");
+      snprintf (entry, sizeof (entry),
+                "%-10s %3llu %8lld %16s  %s",
+                "-rw-r--r--", 1ULL, 0LL,
+                "2026-10-15 10:00", "microemacs-dired-open.txt");
+      set_primitive_line (entry);
+      assert (tiny_lisp_eval ("(dired-find-file)",
+                              result, sizeof (result)) == 1);
+      assert (strcmp (visited_file,
+                      "/tmp/microemacs-dired-open.txt") == 0);
+      assert (remove ("/tmp/microemacs-dired-open.txt") == 0);
+    }
+
     smart_find_file_defined = FALSE;
     bound_key = 0;
     bound_symbol = NULL;

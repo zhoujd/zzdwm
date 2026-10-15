@@ -19,8 +19,9 @@ command remains available as **M-X dired**; loading the Lisp example rebinds
   without prompting.
 - `create-mode` installs a buffer-local `Dired` mode. `define-mode-key` binds
   **Enter**, **g**, and **r** only in that buffer.
-- **Enter** opens a file with `find-file` or reloads Dired for a directory.
-  **g** and **r** refresh the listing.
+- **Enter** resolves the selected entry and opens files with the built-in
+  `me-find-file`; directory entries reload Dired. **g** and **r** refresh the
+  listing.
 - The Dired buffer is read-only and records its directory in the buffer file
   name for refresh and path construction.
 
@@ -39,6 +40,8 @@ The implementation uses these host forms:
 (string-trim-suffix "directory/" "/")
 (join-path "directory" "file")
 (read-directory-name "Dired" ".")
+(resolve-path "directory/link")
+(me-find-file "file.c")
 (dired-entry-name)
 ```
 

@@ -118,7 +118,9 @@ same for files. In `--script` mode both return the default without prompting.
 `set-buffer-readonly` sets or clears the read-only flag. `dired-list` clears
 and fills the current buffer with a shell-free GNU Emacs-style listing, and
 `dired-entry-name` returns the file-name column from the current Dired line.
-See `lisp/dired.l` for a complete buffer-local Dired implementation.
+See `lisp/dired.l` for a self-contained buffer-local Dired implementation; it
+opens resolved file entries with the built-in `me-find-file` and does not
+require `smart-find-file.l`.
 
 `ai-complete` sends a prompt to the configured AI service, returns the
 generated Markdown text as a string, and returns `nil` after displaying an
