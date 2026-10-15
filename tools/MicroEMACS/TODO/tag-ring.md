@@ -5,6 +5,9 @@
 MicroEMACS now keeps a ring of the sixteen most recent locations from which
 tag, cscope, or grep navigation started.
 
+* `M-.` prompts for a tag and jumps to the first match.
+* `C-u M-.` jumps to the next match for that tag.
+* `M-- M-.` jumps to the previous match for that tag.
 * `M-*` runs `pop-tag-mark` and returns to the most recent origin.
 * Repeated `M-*` commands retrace earlier origins; oldest entries beyond the
   ring limit are discarded.

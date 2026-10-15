@@ -92,8 +92,11 @@ gotoline (int flag, int line, int key)
 {
   (void) flag;
   (void) key;
-  assert (line == 2);
-  curwp->w_dot.p = lforw (firstline (curbp));
+  assert (line == 1 || line == 2);
+  if (line == 1)
+    curwp->w_dot.p = firstline (curbp);
+  else
+    curwp->w_dot.p = lforw (firstline (curbp));
   curwp->w_dot.o = 0;
   return TRUE;
 }
@@ -155,15 +158,36 @@ main (void)
 
   file = findtagfile ("target.c");
   assert (file != NULL);
+  assert (addtagref ("alpha", file, 1, 0, TRUE) != NULL);
   assert (addtagref ("alpha", file, 2, 0, TRUE) != NULL);
   havetags = TRUE;
 
   assert (findtag (FALSE, 1, 0) == TRUE);
   assert (curbp == &target_buffer);
-  assert (curwp->w_dot.p == target_second);
+  assert (curwp->w_dot.p == target_first);
   assert (tagorigincount == 1);
 
+  assert (findtag (TRUE, 1, 0) == TRUE);
+  assert (curbp == &target_buffer);
+  assert (curwp->w_dot.p == target_second);
+  assert (tagorigincount == 2);
+
+  assert (findtag (TRUE, -1, 0) == TRUE);
+  assert (curbp == &target_buffer);
+  assert (curwp->w_dot.p == target_first);
+  assert (tagorigincount == 3);
+
   origin_second->l_used = 1;
+  assert (poptagmark (FALSE, 1, 0) == TRUE);
+  assert (curbp == &target_buffer);
+  assert (curwp->w_dot.p == target_second);
+  assert (tagorigincount == 2);
+
+  assert (poptagmark (FALSE, 1, 0) == TRUE);
+  assert (curbp == &target_buffer);
+  assert (curwp->w_dot.p == target_first);
+  assert (tagorigincount == 1);
+
   assert (poptagmark (FALSE, 1, 0) == TRUE);
   assert (curbp == &origin_buffer);
   assert (curwp->w_dot.p == origin_second);

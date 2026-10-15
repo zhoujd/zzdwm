@@ -31,8 +31,9 @@ function is bound to `F12`.
 This command prompts for an identifier, then reads the `TAGS` file (generated
 by `ctags`) to find an occurrence of the identifier.  If no argument is present,
 the command finds the first occurrence; if an argument is present, the command
-finds the next occurence.  The command then visits the corresponding
-file and places the dot at the line containing the identifier.
+finds the next occurence.  Use `C-u M-.` to find the next match and `M-- M-.`
+to find the previous match.  The command then visits the corresponding file
+and places the dot at the line containing the identifier.
 
 **M-*** (**pop-tag-mark**)
 
