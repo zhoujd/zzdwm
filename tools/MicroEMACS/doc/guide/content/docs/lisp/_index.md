@@ -112,8 +112,8 @@ runs `format-log-line` once and `M-3 M-L` runs it three times.
 
 MicroEMACS loads a Lisp startup file after the files named on the command
 line and before commands from the startup profile are executed. The default
-name is `.mel` on UNIX-like systems and `me.l` on Windows. MicroEMACS looks
-for it in the current directory, then in the user's home directory.
+name is `.mel` on Linux and Windows. MicroEMACS looks for it in the current
+directory, then in the user's home directory.
 If no default file is found, startup continues normally.
 Use the **-q** option to skip the default Lisp startup file and the default
 profile; explicit **-l** and **-p** files are still loaded.

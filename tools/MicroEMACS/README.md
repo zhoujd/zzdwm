@@ -44,11 +44,10 @@ Useful startup options include:
 ./me -q file.c       # Skip default startup files
 ```
 
-On Linux, MicroEMACS also loads `./.mel` or `~/.mel` automatically when
-Lisp support is enabled. Windows uses `me.l`. Lisp configuration can
-define keys, set variables, and select syntax definitions. Use `-q` to skip
-the default profile and default Lisp startup file; explicit `-p` and `-l`
-files are still loaded.
+MicroEMACS loads `./.mel` or `~/.mel` automatically on Linux and Windows when
+Lisp support is enabled. Lisp configuration can define keys, set variables,
+and select syntax definitions. Use `-q` to skip the default profile and
+default Lisp startup file; explicit `-p` and `-l` files are still loaded.
 At runtime, `C-x F` evaluates `.l`, `.lisp`, and `.mel` files as Lisp;
 other files are read as profiles. `M-X read-lisp` always evaluates a
 Lisp file.

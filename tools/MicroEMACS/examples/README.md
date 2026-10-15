@@ -66,8 +66,8 @@ Use it directly for interactive testing:
 ```
 
 Move dot to the end of the `if (x) {` line and press **Enter**. The new line is
-indented by eight spaces. Copy the file to `.mel` or `me.l` to use it as your
-normal Lisp startup configuration.
+indented by eight spaces. Copy the file to `.mel` to use it as your normal
+Lisp startup configuration.
 
 ## AI assistance
 

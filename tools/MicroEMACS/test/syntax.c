@@ -151,6 +151,7 @@ main (void)
   assert (syntax_for_name (".c") == c_syntax);
   assert (syntax_for_name (".profile") == bash);
   assert (syntax_for_name (".emacs") == elisp);
+  assert (syntax_for_name (".mel") == lisp);
   assert (syntax_for_name ("test.ss") == scheme);
   assert (syntax_for_name ("CMakeLists.txt") == cmake);
   assert (syntax_for_name ("Makefile") == makefile);
