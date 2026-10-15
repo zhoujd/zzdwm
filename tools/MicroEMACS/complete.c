@@ -5,7 +5,6 @@
 #include "def.h"
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <ctype.h>
@@ -82,25 +81,10 @@ collect_matches (const char *prefix,
   /* Handle ~ expansion using $HOME */
   if (expanded_prefix[0] == '~')
     {
-      const char *home = getenv ("HOME");
+      const char *home = path_home ();
 
-#if defined (_WIN32) || defined (__MINGW32__)
-      if (home == NULL)
-        home = getenv ("USERPROFILE");
-      if (home == NULL)
-        {
-          static char win_home[TMPBUF_SIZE];
-          const char *drive = getenv ("HOMEDRIVE");
-          const char *path = getenv ("HOMEPATH");
-          if (drive != NULL && path != NULL)
-            {
-              snprintf (win_home, TMPBUF_SIZE, "%s%s", drive, path);
-              home = win_home;
-            }
-        }
-#endif
-
-      if (home != NULL && (expanded_prefix[1] == '/' || expanded_prefix[1] == '\0'))
+      if (home != NULL
+          && (expanded_prefix[1] == '/' || expanded_prefix[1] == '\0'))
         {
           char temp[TMPBUF_SIZE];
           size_t home_len = strlen (home);

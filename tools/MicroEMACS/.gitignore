@@ -27,4 +27,5 @@ cscope-test
 lisp-test
 ai-test
 path-test
+path-mingw-test
 tag-test

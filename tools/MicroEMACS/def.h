@@ -853,6 +853,7 @@ int path_is_separator (char character); /* Path separator character?   */
 int path_is_absolute (const char *path); /* Absolute path?             */
 int path_has_separator (const char *path);
                                         /* Contains path separator?    */
+const char *path_home (void);           /* Home directory path.         */
 void path_normalize (char *path);       /* Normalize path in place.    */
 void path_to_native (const char *path, char *result, size_t result_size);
                                         /* Path for native file I/O.   */

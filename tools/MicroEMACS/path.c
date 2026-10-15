@@ -56,6 +56,41 @@ path_has_separator (const char *path)
   return FALSE;
 }
 
+const char *
+path_home (void)
+{
+#ifdef MINGW
+  static char windows_home[NLINE * 2];
+  const char *home;
+  const char *drive;
+  const char *path;
+  int length;
+
+  home = getenv ("HOME");
+  if (home == NULL)
+    home = getenv ("USERPROFILE");
+  if (home != NULL)
+    {
+      path_to_native (home, windows_home, sizeof (windows_home));
+      if (windows_home[0] == 0)
+        return NULL;
+      return windows_home;
+    }
+
+  drive = getenv ("HOMEDRIVE");
+  path = getenv ("HOMEPATH");
+  if (drive == NULL || path == NULL)
+    return NULL;
+  length = snprintf (windows_home, sizeof (windows_home), "%s%s", drive, path);
+  if (length < 0 || (size_t) length >= sizeof (windows_home))
+    return NULL;
+  path_normalize (windows_home);
+  return windows_home;
+#else
+  return getenv ("HOME");
+#endif
+}
+
 static int
 path_root_length (const char *path)
 {

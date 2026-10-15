@@ -80,22 +80,7 @@ fftilde (char *arg)
   /* Current user (~/path or ~) */
   if (expanded[1] == '\0' || path_is_separator (expanded[1]))
     {
-      home = getenv ("HOME");
-      if (home == NULL)
-        home = getenv ("USERPROFILE");
-      if (home == NULL)
-        {
-          static char win_home[NLINE];
-          const char *drive = getenv ("HOMEDRIVE");
-          const char *path = getenv ("HOMEPATH");
-          if (drive != NULL && path != NULL)
-            {
-              snprintf (win_home, sizeof (win_home), "%s%s", drive, path);
-              path_normalize (win_home);
-              home = win_home;
-            }
-        }
-
+      home = path_home ();
       if (home == NULL)
         {
           expanded[0] = 0;
@@ -462,9 +447,7 @@ ffpopen (char *fn)
     {
       if ((pfp = open ("me.pro", O_RDONLY)) >= 0)
         return (FIOSUC);
-      home = getenv ("HOME");
-      if (home == NULL)
-        home = getenv ("USERPROFILE");
+      home = path_home ();
       if (home == NULL || path_join (home, "me.pro",
                                      newname, sizeof (newname)) != TRUE)
         return (FIOFNF);

@@ -2,7 +2,7 @@
 
 ROOT = ..
 TARGET = utf8 regtest tcap reftag tag-test syntax-test display-test \
-	cscope-test lisp-test ai-test path-test
+	cscope-test lisp-test ai-test path-test path-mingw-test
 CFLAGS := -Os
 
 ifeq ($(INSIDE_DOCKER), yes)
@@ -67,6 +67,11 @@ ai-test: ai.c $(ROOT)/ai.c $(ROOT)/def.h
 path-test: path.c $(ROOT)/path.c $(ROOT)/def.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ -I$(ROOT) \
 		-I$(ROOT)/sys/unix -I$(ROOT)/tty/ncurses $<
+
+path-mingw-test: path.c $(ROOT)/path.c $(ROOT)/def.h
+	$(CC) $(CFLAGS) -D_GNU_SOURCE -DMINGW -ffunction-sections \
+		-fdata-sections $(LDFLAGS) -Wl,--gc-sections -o $@ \
+		-I$(ROOT) -I$(ROOT)/sys/mingw -I$(ROOT)/tty/mingw $<
 
 clean:
 	rm -f $(TARGET) *.[o]
