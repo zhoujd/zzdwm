@@ -131,7 +131,9 @@ or profiles.  This option is provided for compatibility with older
 editors and language processors.  It has no effect on VMS or UNIX.
 
 MicroEMACS also accepts `--help` and `--version` when either is the only
-command-line argument.
+command-line argument. `--help` prints a grouped summary of command-line
+options to standard output; unavailable options are omitted in builds that do
+not include their features.
 
 The optional filenames *filename1*, *filename2*, etc., are the names
 of the files you want to edit.  MicroEMACS

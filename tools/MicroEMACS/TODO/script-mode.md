@@ -1,6 +1,8 @@
 # Script Mode
 
-### Implemented Headless Automation Pipeline: Script Mode (`--script`)
+---
+
+## Implemented Headless Automation Pipeline: Script Mode (`--script`)
 MicroEMACS provides a native standalone script execution interface for Lisp automation.
 
 * **Non-Interactive Execution:** Passing `--script <file>` skips terminal
@@ -35,3 +37,15 @@ $ ./examples/script.l
 Hello from MicroEMACS
 2 + 3 = 5
 ```
+
+---
+
+## Implemented Self-Documenting CLI: GNU Emacs-Style Help (`--help`)
+The command-line help interface is grouped by operation as the argument list grows.
+
+* **Domain Grouping:** Options are organized into Initialization, Automation,
+  Display, File Handling, and Tools sections.
+* **Feature Awareness:** Lisp and color options appear only in builds that
+  include those features.
+* **Stream Behavior:** Successful `--help` output goes to standard output;
+  parser errors continue to use standard error.

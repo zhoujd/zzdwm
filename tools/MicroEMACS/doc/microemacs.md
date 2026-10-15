@@ -543,7 +543,8 @@ Start editing by typing the command
 
 \begin{Verbatim}[commandchars=\\\{\}]
 me [-234bCDmnNqrTuxz] [-c \emph{path}] [-d \emph{path}] [-g \emph{line}]
-   [-l \emph{lisp}] [-p \emph{profile}] [-s \emph{string}] [-t \emph{size}] [+\emph{line}]
+   [-l \emph{lisp}] [--script \emph{lisp}] [-p \emph{profile}]
+   [-s \emph{string}] [-t \emph{size}] [+\emph{line}]
    \emph{file}[:\emph{line}[:\emph{column}]] ...
 \end{Verbatim}
 
@@ -664,7 +665,9 @@ meanings:
     editors and language processors.  It has no effect on VMS or UNIX.
 
 MicroEMACS also accepts `--help` and `--version` when either is the only
-command-line argument.
+command-line argument. `--help` prints a grouped summary of command-line
+options to standard output; unavailable options are omitted in builds that do
+not include their features.
 
 -p *profile*
 

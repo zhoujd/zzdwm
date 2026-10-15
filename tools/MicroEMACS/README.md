@@ -36,6 +36,7 @@ From this directory, build and run the editor:
 Useful startup options include:
 
 ```sh
+./me --help         # Show grouped command-line options
 ./me file.c:123:4    # Open a file at line 123, column 4
 ./me -C file.c       # Disable color for this session
 ./me -n file.c       # Show line numbers
