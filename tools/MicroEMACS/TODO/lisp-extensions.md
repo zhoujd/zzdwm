@@ -67,7 +67,7 @@ only compact generic primitives.
 - `insert-string` inserts a newline and accepts a repeat count, so indentation
   uses direct buffer primitives instead of replaying editor commands.
 
-The runnable startup example is `examples/smart-indent.l`, with the test
+The runnable library is `lisp/smart-indent.l`, with the test
 fixture `examples/smart-indent-input.c`. It defines `smart-indent`, registers
 it as a MicroEMACS command, and binds **Enter** (`C-m`).
 

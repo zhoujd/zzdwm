@@ -110,17 +110,17 @@ rm ~/.mel.d/demo.l
 
 `format-code.l` is a non-interactive formatting example. It removes the
 existing indentation and rewrites each line using the brace depth calculated
-by `smart-indent.l`:
+by `lisp/smart-indent.l`:
 
 ```sh
 cp examples/smart-indent-input.c /tmp/format-code.c
-./me -l examples/smart-indent.l --script examples/format-code.l /tmp/format-code.c
+./me -l lisp/smart-indent.l --script examples/format-code.l /tmp/format-code.c
 cat /tmp/format-code.c
 ```
 
 ## Lisp-driven auto-indentation
 
-`smart-indent.l` is a startup-ready Lisp configuration. It defines the
+`lisp/smart-indent.l` is a reusable Lisp library. It defines the
 `smart-indent` command, counts unmatched braces on preceding lines with the
 built-in `count-char` primitive, and binds **Enter** (`C-m`) to contextual
 indentation.
@@ -128,7 +128,7 @@ indentation.
 Use it directly for interactive testing:
 
 ```sh
-./me -l examples/smart-indent.l examples/smart-indent-input.c
+./me -l lisp/smart-indent.l examples/smart-indent-input.c
 ```
 
 Move dot to the end of the `if (x) {` line and press **Enter**. The new line is
@@ -137,12 +137,12 @@ Lisp startup configuration.
 
 ## Lisp Dired
 
-`dired.l` defines a shell-free directory editor. It uses MicroEMACS directory
-and buffer primitives, creates a read-only `Dired` mode, and rebinds
+`lisp/dired.l` defines a shell-free directory editor. It uses MicroEMACS
+directory and buffer primitives, creates a read-only `Dired` mode, and rebinds
 **C-X D** to `lisp-dired`:
 
 ```sh
-./me -l examples/dired.l
+./me -l lisp/dired.l
 ```
 
 Press **C-X D**, choose a directory (an empty reply uses the current

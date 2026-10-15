@@ -2,7 +2,7 @@
 
 ## Status
 
-Implemented by [`examples/dired.l`](../examples/dired.l). The native `dired`
+Implemented by [`lisp/dired.l`](../lisp/dired.l). The native `dired`
 command remains available as **M-X dired**; loading the Lisp example rebinds
 **C-X D** to `lisp-dired`.
 

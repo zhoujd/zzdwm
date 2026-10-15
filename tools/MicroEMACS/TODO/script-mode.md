@@ -24,7 +24,7 @@ buffer, so pass the editable file after the script:
 
 ```bash
 $ cp examples/smart-indent-input.c /tmp/microemacs-script-input.c
-$ ./me -l examples/smart-indent.l --script examples/format-code.l \
+$ ./me -l lisp/smart-indent.l --script examples/format-code.l \
     /tmp/microemacs-script-input.c
 Formatted current buffer
 ```

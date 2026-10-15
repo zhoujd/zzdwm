@@ -59,6 +59,7 @@ Lisp scripts can load code dynamically with `(load "library.l")`. The
 `(require "module")` form loads a logical module once and searches the current
 directory, `~/.mel.d/`, `~/.config/me/lisp/`, and the system `me/lisp` share
 directories. See `examples/modules/main.l` for a runnable example.
+Reusable libraries distributed with this source tree belong in `lisp/`.
 
 Use `--script` for non-interactive Lisp automation. MicroEMACS skips terminal
 setup and default startup files, opens any remaining filename arguments in one
@@ -146,7 +147,7 @@ build `me.exe` and run the Wine smoke test from the repository root:
 * [`doc/guide/content`](doc/guide/content) — source for the Hugo user guide.
 * [`examples/logline.pro`](examples/logline.pro) — runnable profile and keyboard macro example.
 * [`examples/logline.l`](examples/logline.l) — equivalent Tiny Lisp editing example.
-* [`examples/smart-indent.l`](examples/smart-indent.l) — startup-ready Lisp auto-indentation example.
+* [`lisp/smart-indent.l`](lisp/smart-indent.l) — reusable Lisp auto-indentation library.
 * [`examples/format-code.l`](examples/format-code.l) — headless Lisp code-formatting example.
 * [`ChangeLog`](ChangeLog) — historical release notes.
 
