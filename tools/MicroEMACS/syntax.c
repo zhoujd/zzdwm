@@ -233,7 +233,7 @@ static const char *const markdown_extensions[] = {
   ".md", ".markdown", ".mdown", ".mkd"
 };
 static const char *const lisp_extensions[] = {
-  ".lisp", ".lsp", ".l", ".cl"
+  ".lisp", ".lsp", ".l", ".cl", ".mel"
 };
 static const char *const emacs_lisp_extensions[] = {
   ".el", ".emacs"
