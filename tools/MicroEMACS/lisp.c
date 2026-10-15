@@ -582,7 +582,14 @@ lisp_dired_canonical_directory (const char *directory, char *result,
 {
 #ifdef MINGW
   if (_fullpath (result, directory, result_size) != NULL)
-    return TRUE;
+    {
+      size_t index;
+
+      for (index = 0; result[index] != 0; index++)
+        if (result[index] == '\\')
+          result[index] = '/';
+      return TRUE;
+    }
 #else
   char *canonical = realpath (directory, NULL);
   int length;
