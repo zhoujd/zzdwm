@@ -5,11 +5,15 @@
 #include "def.h"
 #include "tinylisp.h"
 #include <ctype.h>
+#include <dirent.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <unistd.h>
 
 #ifdef LISP
 
@@ -17,6 +21,8 @@
 #define LISP_OUTPUT_SIZE      256
 #define LISP_COMMAND_OVERHEAD 13
 #define LISP_CONFIG_FILE      ".mel"
+
+#define LISP_DIRED_ENTRY_COLUMN 42
 
 static int lisp_message_displayed;
 static int lisp_debug_level;
@@ -82,6 +88,24 @@ lisp_bind_key (int argc, const char *const *argv,
   if (key < 0 || (symbol = symlookup (argv[1])) == NULL)
     return FALSE;
   setbinding (key, symbol);
+  return TRUE;
+}
+
+static int
+lisp_bind_mode_key (int argc, const char *const *argv,
+                    char *result, size_t result_size)
+{
+  SYMBOL *symbol;
+  int key;
+
+  (void) result;
+  (void) result_size;
+  if (argc != 2 || curbp == NULL || curbp->b_mode == NULL)
+    return FALSE;
+  key = lisp_key_code (argv[0]);
+  if (key < 0 || (symbol = symlookup (argv[1])) == NULL)
+    return FALSE;
+  setmodebinding (key, symbol);
   return TRUE;
 }
 
@@ -330,7 +354,6 @@ failed:
   return NULL;
 }
 
-#ifdef AI
 static int
 lisp_switch_buffer (int argc, const char *const *argv,
                     char *result, size_t result_size)
@@ -346,7 +369,6 @@ lisp_switch_buffer (int argc, const char *const *argv,
     return FALSE;
   return swbuffer (buffer);
 }
-#endif
 
 static int
 lisp_find_file (int argc, const char *const *argv,
@@ -362,6 +384,438 @@ lisp_find_file (int argc, const char *const *argv,
   strcpy (filename, argv[0]);
   adjustcase (filename);
   return visit_file (filename);
+}
+
+static int
+lisp_buffer_file_name (int argc, const char *const *argv,
+                       char *result, size_t result_size)
+{
+  (void) argv;
+  if (argc != 0 || curbp == NULL || curbp->b_fname[0] == 0)
+    return FALSE;
+  if (snprintf (result, result_size, "%s", curbp->b_fname)
+      >= (int) result_size)
+    return FALSE;
+  return TINY_LISP_HOST_STRING;
+}
+
+static int
+lisp_string_suffix_p (int argc, const char *const *argv,
+                      char *result, size_t result_size)
+{
+  size_t text_length;
+  size_t suffix_length;
+
+  (void) result;
+  (void) result_size;
+  if (argc != 2)
+    return FALSE;
+  text_length = strlen (argv[0]);
+  suffix_length = strlen (argv[1]);
+  if (suffix_length > text_length)
+    return TINY_LISP_HOST_NIL;
+  if (memcmp (argv[0] + text_length - suffix_length, argv[1],
+              suffix_length) != 0)
+    return TINY_LISP_HOST_NIL;
+  return TRUE;
+}
+
+static int
+lisp_string_trim_suffix (int argc, const char *const *argv,
+                         char *result, size_t result_size)
+{
+  size_t text_length;
+  size_t suffix_length;
+  size_t length;
+
+  if (argc != 2)
+    return FALSE;
+  text_length = strlen (argv[0]);
+  suffix_length = strlen (argv[1]);
+  if (suffix_length <= text_length
+      && memcmp (argv[0] + text_length - suffix_length, argv[1],
+                 suffix_length) == 0)
+    length = text_length - suffix_length;
+  else
+    length = text_length;
+  if (length >= result_size)
+    return FALSE;
+  memcpy (result, argv[0], length);
+  result[length] = 0;
+  return TINY_LISP_HOST_STRING;
+}
+
+static int
+lisp_join_path (int argc, const char *const *argv,
+                char *result, size_t result_size)
+{
+  size_t directory_length;
+  const char *separator;
+  int length;
+
+  if (argc != 2 || argv[0][0] == 0 || argv[1][0] == 0)
+    return FALSE;
+  directory_length = strlen (argv[0]);
+  separator = (argv[0][directory_length - 1] == '/'
+               || argv[0][directory_length - 1] == '\\')
+                ? "" : "/";
+  length = snprintf (result, result_size, "%s%s%s",
+                     argv[0], separator, argv[1]);
+  if (length < 0 || (size_t) length >= result_size)
+    return FALSE;
+  return TINY_LISP_HOST_STRING;
+}
+
+static int
+lisp_set_buffer_readonly (int argc, const char *const *argv,
+                          char *result, size_t result_size)
+{
+  int readonly;
+
+  (void) result;
+  (void) result_size;
+  if (argc != 1 || curbp == NULL)
+    return FALSE;
+  readonly = argv[0][0] != 0 && strcmp (argv[0], "nil") != 0;
+  if (readonly != FALSE)
+    curbp->b_flag |= BFRO;
+  else
+    curbp->b_flag &= ~BFRO;
+  updatemode ();
+  return TRUE;
+}
+
+static int
+lisp_create_mode (int argc, const char *const *argv,
+                  char *result, size_t result_size)
+{
+  (void) result;
+  (void) result_size;
+  if (argc != 1 || argv[0][0] == 0 || curbp == NULL)
+    return FALSE;
+  createmode (argv[0]);
+  return curbp->b_mode != NULL;
+}
+
+static int
+lisp_read_directory_name (int argc, const char *const *argv,
+                          char *result, size_t result_size)
+{
+  const char *default_directory = ".";
+  char directory[NFILEN];
+  char prompt[NFILEN];
+  int *macro_pointer;
+  int status;
+
+  if ((argc != 1 && argc != 2) || argv[0][0] == 0
+      || (argc == 2 && (argv[1][0] == 0
+                        || strlen (argv[1]) >= sizeof (directory))))
+    return FALSE;
+  if (argc == 2)
+    {
+      default_directory = argv[1];
+      if (snprintf (prompt, sizeof (prompt), "%s (%s): ",
+                    argv[0], default_directory) >= (int) sizeof (prompt))
+        return FALSE;
+    }
+  else if (snprintf (prompt, sizeof (prompt), "%s: ", argv[0])
+           >= (int) sizeof (prompt))
+    return FALSE;
+
+  if (scriptmode)
+    strcpy (directory, default_directory);
+  else
+    {
+      macro_pointer = kbdmop;
+      if (macro_pointer != NULL)
+        kbdmop = NULL;
+      status = egetdname (prompt, directory, sizeof (directory));
+      if (macro_pointer != NULL)
+        kbdmop = macro_pointer;
+      if (status == ABORT)
+        return TINY_LISP_HOST_NIL;
+      if (status != TRUE || directory[0] == 0)
+        strcpy (directory, default_directory);
+    }
+  if (snprintf (result, result_size, "%s", directory)
+      >= (int) result_size)
+    return FALSE;
+  return TINY_LISP_HOST_STRING;
+}
+
+static void
+lisp_dired_mode_string (unsigned int mode, char *result, size_t result_size)
+{
+  char *position = result;
+
+  if (result_size < 11)
+    return;
+  *position++ = S_ISDIR (mode) != 0 ? 'd' : '-';
+  *position++ = (mode & 0400) != 0 ? 'r' : '-';
+  *position++ = (mode & 0200) != 0 ? 'w' : '-';
+  *position++ = (mode & 0100) != 0 ? 'x' : '-';
+  *position++ = (mode & 0040) != 0 ? 'r' : '-';
+  *position++ = (mode & 0020) != 0 ? 'w' : '-';
+  *position++ = (mode & 0010) != 0 ? 'x' : '-';
+  *position++ = (mode & 0004) != 0 ? 'r' : '-';
+  *position++ = (mode & 0002) != 0 ? 'w' : '-';
+  *position++ = (mode & 0001) != 0 ? 'x' : '-';
+  *position = 0;
+}
+
+static void
+lisp_dired_timestamp (time_t timestamp, char *result, size_t result_size)
+{
+  struct tm *local_time;
+
+  if (result_size < 17)
+    return;
+  local_time = localtime (&timestamp);
+  if (local_time == NULL
+      || strftime (result, result_size, "%Y-%m-%d %H:%M", local_time) == 0)
+    strcpy (result, "-");
+}
+
+static int
+lisp_dired_canonical_directory (const char *directory, char *result,
+                                size_t result_size)
+{
+#ifdef MINGW
+  if (_fullpath (result, directory, result_size) != NULL)
+    return TRUE;
+#else
+  char *canonical = realpath (directory, NULL);
+  int length;
+
+  if (canonical != NULL)
+    {
+      length = snprintf (result, result_size, "%s", canonical);
+      free (canonical);
+      if (length >= 0 && (size_t) length < result_size)
+        return TRUE;
+    }
+#endif
+  return FALSE;
+}
+
+static int
+lisp_dired_resolve_directory (const char *directory, char *result,
+                              size_t result_size)
+{
+  char current[NFILEN];
+  const char *relative = directory;
+  int length;
+
+  if (lisp_dired_canonical_directory (directory, result, result_size))
+    return TRUE;
+  if (directory[0] == '/' || directory[0] == '\\' || directory[0] == '~'
+      || (isalpha ((unsigned char) directory[0]) && directory[1] == ':'))
+    {
+      if (snprintf (result, result_size, "%s", directory)
+          >= (int) result_size)
+        return FALSE;
+      return TRUE;
+    }
+  while (relative[0] == '.' && relative[1] == '/')
+    relative += 2;
+  if (getcwd (current, sizeof (current)) == NULL)
+    {
+      if (snprintf (result, result_size, "%s", directory)
+          >= (int) result_size)
+        return FALSE;
+      return TRUE;
+    }
+  if (relative[0] == 0 || strcmp (relative, ".") == 0)
+    length = snprintf (result, result_size, "%s", current);
+  else
+    length = snprintf (result, result_size, "%s/%s", current, relative);
+  if (length < 0 || (size_t) length >= result_size)
+    return FALSE;
+  return TRUE;
+}
+
+static int
+lisp_dired_compare (const void *left, const void *right)
+{
+  const char *const *left_name = left;
+  const char *const *right_name = right;
+
+  return strcmp (*left_name, *right_name);
+}
+
+static int
+lisp_dired_list (int argc, const char *const *argv,
+                 char *result, size_t result_size)
+{
+  char expanded[NFILEN];
+  char directory[NFILEN];
+  char resolved[NFILEN];
+  char **names = NULL;
+  size_t count = 0;
+  size_t capacity = 0;
+  size_t index;
+  DIR *stream;
+  struct dirent *entry;
+  const char *separator;
+  int pass;
+  int undo_started = FALSE;
+  int status = FALSE;
+
+  (void) result;
+  (void) result_size;
+  if (argc != 1 || argv[0][0] == 0 || curwp == NULL || curbp == NULL
+      || strlen (argv[0]) >= sizeof (expanded))
+    return FALSE;
+  strcpy (expanded, argv[0]);
+  if (snprintf (directory, sizeof (directory), "%s", fftilde (expanded))
+      >= (int) sizeof (directory))
+    return FALSE;
+  if (directory[0] == 0)
+    return FALSE;
+  if (lisp_dired_resolve_directory (directory, resolved, sizeof (resolved))
+      != TRUE)
+    return FALSE;
+  strcpy (directory, resolved);
+  separator = (directory[strlen (directory) - 1] == '/'
+               || directory[strlen (directory) - 1] == '\\')
+                ? "" : "/";
+
+  stream = opendir (directory);
+  if (stream == NULL)
+    {
+      eprintf ("[Dired: cannot open %s]", directory);
+      lisp_message_displayed = TRUE;
+      return FALSE;
+    }
+  while ((entry = readdir (stream)) != NULL)
+    {
+      char **grown;
+
+      if (count == capacity)
+        {
+          if (capacity == 0)
+            capacity = 32;
+          else if (capacity <= SIZE_MAX / 2)
+            capacity *= 2;
+          else
+            goto done;
+          grown = realloc (names, capacity * sizeof (*names));
+          if (grown == NULL)
+            goto done;
+          names = grown;
+        }
+      names[count] = strdup (entry->d_name);
+      if (names[count] == NULL)
+        goto done;
+      count++;
+    }
+  closedir (stream);
+  stream = NULL;
+  qsort (names, count, sizeof (*names), lisp_dired_compare);
+
+  curbp->b_flag &= ~(BFCHG | BFRO);
+  if (bclear (curbp) != TRUE || gotobob (FALSE, 1, KRANDOM) != TRUE)
+    goto done;
+  startsaveundo ();
+  undo_started = TRUE;
+  {
+    char header[NFILEN + 6];
+    int length;
+
+    length = snprintf (header, sizeof (header), "%s:\n", directory);
+    if (length < 0 || (size_t) length >= sizeof (header)
+        || lisp_insert_once (header) == FALSE)
+      goto done;
+  }
+  for (pass = 0; pass < 2; pass++)
+    {
+      char entry_path[NFILEN];
+      char display[NFILEN + LISP_DIRED_ENTRY_COLUMN + 2];
+      struct stat information = { 0 };
+      char mode[11];
+      char timestamp[17];
+      int length;
+      int is_directory;
+
+      for (index = 0; index < count; index++)
+        {
+          if (strchr (names[index], '\n') != NULL
+              || strlen (names[index]) >= NFILEN)
+            continue;
+          length = snprintf (entry_path, sizeof (entry_path),
+                             "%s%s%s", directory, separator, names[index]);
+          if (length < 0 || (size_t) length >= sizeof (entry_path))
+            goto done;
+          if (stat (entry_path, &information) == 0)
+            {
+              is_directory = S_ISDIR (information.st_mode) != 0;
+              lisp_dired_mode_string (information.st_mode, mode,
+                                      sizeof (mode));
+              lisp_dired_timestamp (information.st_mtime, timestamp,
+                                    sizeof (timestamp));
+            }
+          else
+            {
+              is_directory = FALSE;
+              strcpy (mode, "----------");
+              strcpy (timestamp, "-");
+            }
+          if ((pass == 0) != (is_directory != 0))
+            continue;
+          length = snprintf (display, sizeof (display),
+                             "%-10s %3llu %8lld %16s  %s%s\n",
+                             mode,
+                             (unsigned long long) information.st_nlink,
+                             (long long) information.st_size,
+                             timestamp, names[index],
+                             is_directory ? "/" : "");
+          if (length < 0 || (size_t) length >= sizeof (display)
+              || lisp_insert_once (display) == FALSE)
+            goto done;
+        }
+    }
+  if (gotobob (FALSE, 1, KRANDOM) != TRUE)
+    goto done;
+  strcpy (curbp->b_fname, directory);
+  curbp->b_flag &= ~(BFCHG | BFRO);
+  status = TRUE;
+
+done:
+  if (undo_started)
+    endsaveundo ();
+  if (stream != NULL)
+    closedir (stream);
+  for (index = 0; index < count; index++)
+    free (names[index]);
+  free (names);
+  return status;
+}
+
+static int
+lisp_dired_entry_name (int argc, const char *const *argv,
+                       char *result, size_t result_size)
+{
+  LINE *line;
+  const uchar *text;
+  int length;
+
+  (void) argv;
+  if (argc != 0 || curwp == NULL || curbp == NULL)
+    return FALSE;
+  line = curwp->w_dot.p;
+  if (line == curbp->b_linep)
+    return TINY_LISP_HOST_NIL;
+  length = llength (line);
+  text = lgets (line);
+  if (length <= LISP_DIRED_ENTRY_COLUMN
+      || (text[0] != 'd' && text[0] != '-'))
+    return TINY_LISP_HOST_NIL;
+  length -= LISP_DIRED_ENTRY_COLUMN;
+  if ((size_t) length >= result_size)
+    return FALSE;
+  memcpy (result, text + LISP_DIRED_ENTRY_COLUMN, (size_t) length);
+  result[length] = 0;
+  return TINY_LISP_HOST_STRING;
 }
 
 static int
@@ -931,6 +1385,7 @@ lisp_register_hosts (void)
 
   static const LispHost hosts[] = {
     { "define-key", lisp_bind_key },
+    { "define-mode-key", lisp_bind_mode_key },
     { "set-variable", lisp_set_variable },
     { "message", lisp_message_form },
     { "load", lisp_load_file },
@@ -952,9 +1407,18 @@ lisp_register_hosts (void)
     { "forward-line", lisp_forward_line },
     { "eobp", lisp_eobp },
     { "define-lisp-command", lisp_define_command },
+    { "switch-to-buffer", lisp_switch_buffer },
+    { "buffer-file-name", lisp_buffer_file_name },
+    { "string-suffix-p", lisp_string_suffix_p },
+    { "string-trim-suffix", lisp_string_trim_suffix },
+    { "join-path", lisp_join_path },
+    { "read-directory-name", lisp_read_directory_name },
+    { "set-buffer-readonly", lisp_set_buffer_readonly },
+    { "create-mode", lisp_create_mode },
+    { "dired-list", lisp_dired_list },
+    { "dired-entry-name", lisp_dired_entry_name },
 #ifdef AI
     { "getenv", lisp_getenv },
-    { "switch-to-buffer", lisp_switch_buffer },
     { "ai-set-endpoint", lisp_ai_set_endpoint },
     { "ai-set-reasoning-effort", lisp_ai_set_reasoning_effort },
     { "ai-set-timeout", lisp_ai_set_timeout },

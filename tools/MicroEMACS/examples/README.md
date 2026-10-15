@@ -135,6 +135,22 @@ Move dot to the end of the `if (x) {` line and press **Enter**. The new line is
 indented by eight spaces. Copy the file to `.mel` to use it as your normal
 Lisp startup configuration.
 
+## Lisp Dired
+
+`dired.l` defines a shell-free directory editor. It uses MicroEMACS directory
+and buffer primitives, creates a read-only `Dired` mode, and rebinds
+**C-X D** to `lisp-dired`:
+
+```sh
+./me -l examples/dired.l
+```
+
+Press **C-X D**, choose a directory (an empty reply uses the current
+directory), and MicroEMACS displays a GNU Emacs-style listing with mode, link
+count, size, timestamp, and name columns. **Enter** opens a file or navigates
+into a directory; **g** or **r** refreshes the listing. The native `dired`
+command remains available with **M-X dired**.
+
 ## AI assistance
 
 `ai-assist-ollama.l` uses the default local Ollama endpoint.

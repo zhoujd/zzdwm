@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "../lisp.c"
 
@@ -17,11 +18,20 @@ BUFFER *curbp;
 EWINDOW *curwp;
 int *kbdmip;
 int *kbdmop;
+int scriptmode;
 
 static const char *lisp_input;
 static char lisp_message[256];
 static int bound_key;
 static SYMBOL *bound_symbol;
+static int bound_mode_key;
+static SYMBOL *bound_mode_symbol;
+static int mode_created;
+static char mode_name[32];
+static char mode_storage;
+static int bclear_called;
+static BUFFER *bclear_buffer;
+static int gotobob_called;
 static int bound_line_key;
 static int bound_region_key;
 static int command_flag;
@@ -34,6 +44,7 @@ static int forward_line_flag;
 static int forward_line_count;
 static int forward_line_status = TRUE;
 static BUFFER switch_buffer;
+static BUFFER dired_buffer;
 static char switched_buffer_name[NBUFN];
 static int save_buffer_called;
 static int kill_emacs_called;
@@ -51,8 +62,16 @@ static SYMBOL macro_symbol = { NULL, 0, "test-macro", NULL, command_macro };
 static SYMBOL ai_command_symbol = { NULL, 0, "ai-ask-line", NULL, NULL };
 static SYMBOL ai_region_command_symbol = { NULL, 0, "ai-ask-region",
                                            NULL, NULL };
+static SYMBOL lisp_dired_symbol = { NULL, 0, "lisp-dired", NULL, NULL };
+static SYMBOL dired_refresh_symbol = { NULL, 0, "dired-refresh",
+                                       NULL, NULL };
+static SYMBOL dired_find_file_symbol = { NULL, 0, "dired-find-file",
+                                         NULL, NULL };
 static int ai_command_defined;
 static int ai_region_command_defined;
+static int lisp_dired_defined;
+static int dired_refresh_defined;
+static int dired_find_file_defined;
 static BUFFER syntax_buffer;
 static char syntax_filetype[32];
 static BUFFER *syntax_mode_buffer;
@@ -98,6 +117,13 @@ egetfname (const char *prompt, char *buffer, int buffer_size)
   return ereadv (prompt, buffer, buffer_size, EFNEW | EFCR | EFFILE);
 }
 
+int
+egetdname (const char *prompt, char *buffer, int buffer_size)
+{
+  return ereadv (prompt, buffer, buffer_size,
+                 EFNEW | EFCR | EFFILE | EFDIR);
+}
+
 void
 eprintf (const char *format, ...)
 {
@@ -133,6 +159,15 @@ symlookup (const char *name)
   if (ai_region_command_defined
       && strcmp (name, ai_region_command_symbol.s_name) == 0)
     return &ai_region_command_symbol;
+  if (lisp_dired_defined
+      && strcmp (name, lisp_dired_symbol.s_name) == 0)
+    return &lisp_dired_symbol;
+  if (dired_refresh_defined
+      && strcmp (name, dired_refresh_symbol.s_name) == 0)
+    return &dired_refresh_symbol;
+  if (dired_find_file_defined
+      && strcmp (name, dired_find_file_symbol.s_name) == 0)
+    return &dired_find_file_symbol;
   if (strcmp (name, command_symbol.s_name) == 0)
     return &command_symbol;
   return NULL;
@@ -147,6 +182,39 @@ setbinding (int key, SYMBOL *symbol)
     bound_line_key = key;
   if (symbol == &ai_region_command_symbol)
     bound_region_key = key;
+}
+
+void
+setmodebinding (int key, SYMBOL *symbol)
+{
+  bound_mode_key = key;
+  bound_mode_symbol = symbol;
+}
+
+void
+createmode (const char *name)
+{
+  mode_created++;
+  snprintf (mode_name, sizeof (mode_name), "%s", name);
+  curbp->b_mode = (struct MODE *) &mode_storage;
+}
+
+int
+bclear (BUFFER *buffer)
+{
+  bclear_called++;
+  bclear_buffer = buffer;
+  return TRUE;
+}
+
+int
+gotobob (int flag, int count, int key)
+{
+  (void) flag;
+  (void) count;
+  (void) key;
+  gotobob_called++;
+  return TRUE;
 }
 
 static int
@@ -198,6 +266,8 @@ BUFFER *
 bfind (const char *name, int create)
 {
   (void) create;
+  if (name != NULL && strcmp (name, "*dired*") == 0)
+    return &dired_buffer;
   if (name == NULL || strcmp (name, "*AI*") != 0)
     return NULL;
   return &switch_buffer;
@@ -206,9 +276,10 @@ bfind (const char *name, int create)
 int
 swbuffer (BUFFER *buffer)
 {
-  if (buffer != &switch_buffer)
+  if (buffer != &switch_buffer && buffer != &dired_buffer)
     return FALSE;
-  snprintf (switched_buffer_name, sizeof (switched_buffer_name), "*AI*");
+  snprintf (switched_buffer_name, sizeof (switched_buffer_name),
+            buffer == &dired_buffer ? "*dired*" : "*AI*");
   return TRUE;
 }
 
@@ -306,6 +377,12 @@ symdefmacro (const char *name, const int *macro, size_t count)
       ai_region_command_defined = TRUE;
       ai_region_command_symbol.s_macro = command_macro;
     }
+  if (strcmp (name, lisp_dired_symbol.s_name) == 0)
+    lisp_dired_defined = TRUE;
+  if (strcmp (name, dired_refresh_symbol.s_name) == 0)
+    dired_refresh_defined = TRUE;
+  if (strcmp (name, dired_find_file_symbol.s_name) == 0)
+    dired_find_file_defined = TRUE;
   defined_macro_name = name;
   defined_macro_count = (int) count;
   memcpy (command_macro, macro, count * sizeof (*macro));
@@ -643,6 +720,111 @@ main (void)
   assert (evaluate ("(get-region)") == TRUE);
   assert (strcmp (lisp_message, "No mark in this window") == 0);
   getregion_status = TRUE;
+
+  {
+    char result[LISP_OUTPUT_SIZE];
+    const char *directory = "/tmp/microemacs-dired-test";
+    FILE *file;
+
+    assert (tiny_lisp_eval ("(string-trim-suffix \"directory/\" \"/\")",
+                            result, sizeof (result)) == 1);
+    assert (strcmp (result, "\"directory\"") == 0);
+    assert (tiny_lisp_eval ("(join-path \"/tmp\" \"file.c\")",
+                            result, sizeof (result)) == 1);
+    assert (strcmp (result, "\"/tmp/file.c\"") == 0);
+    assert (tiny_lisp_eval ("(join-path \"C:/dir/\" \"file.c\")",
+                            result, sizeof (result)) == 1);
+    assert (strcmp (result, "\"C:/dir/file.c\"") == 0);
+    scriptmode = TRUE;
+    assert (tiny_lisp_eval ("(read-directory-name \"Dired\" \"default\")",
+                            result, sizeof (result)) == 1);
+    assert (strcmp (result, "\"default\"") == 0);
+    scriptmode = FALSE;
+    lisp_input = "/selected";
+    assert (tiny_lisp_eval ("(read-directory-name \"Dired\" \".\")",
+                            result, sizeof (result)) == 1);
+    assert (strcmp (result, "\"/selected\"") == 0);
+    lisp_input = "";
+    assert (tiny_lisp_eval ("(read-directory-name \"Dired\" \".\")",
+                            result, sizeof (result)) == 1);
+    assert (strcmp (result, "\".\"") == 0);
+    assert (evaluate ("(string-suffix-p \"directory/\" \"/\")") == TRUE);
+    assert (lisp_message[0] == 0);
+    assert (evaluate ("(string-suffix-p \"file.c\" \"/\")") == TRUE);
+    assert (strcmp (lisp_message, "[Lisp: nil]") == 0);
+
+    strcpy (primitive_buffer.b_fname, "/current/file.c");
+    assert (tiny_lisp_eval ("(buffer-file-name)",
+                            result, sizeof (result)) == 1);
+    assert (strcmp (result, "\"/current/file.c\"") == 0);
+
+    assert (evaluate ("(define-mode-key \"C-m\" \"buffer-menu\")")
+            == FALSE);
+    assert (evaluate ("(create-mode \"Dired\")") == TRUE);
+    assert (mode_created == 1 && strcmp (mode_name, "Dired") == 0);
+    assert (evaluate ("(define-mode-key \"C-m\" \"buffer-menu\")")
+            == TRUE);
+    assert (bound_mode_key == (KCTRL | 'M'));
+    assert (bound_mode_symbol == &command_symbol);
+
+    remove ("/tmp/microemacs-dired-test/alpha.txt");
+    rmdir ("/tmp/microemacs-dired-test/sub");
+    rmdir (directory);
+    assert (mkdir (directory, 0755) == 0);
+    file = fopen ("/tmp/microemacs-dired-test/alpha.txt", "wb");
+    assert (file != NULL);
+    assert (fclose (file) == 0);
+    assert (mkdir ("/tmp/microemacs-dired-test/sub", 0755) == 0);
+    inserted_text[0] = 0;
+    bclear_called = 0;
+    bclear_buffer = NULL;
+    gotobob_called = 0;
+    assert (evaluate ("(dired-list \"/tmp/microemacs-dired-test\")")
+            == TRUE);
+    assert (bclear_called == 1 && bclear_buffer == &primitive_buffer);
+    assert (gotobob_called == 2);
+    assert (strcmp (primitive_buffer.b_fname, directory) == 0);
+    assert (strncmp (inserted_text, "/tmp/microemacs-dired-test:\n",
+                     strlen ("/tmp/microemacs-dired-test:\n")) == 0);
+    assert (strstr (inserted_text, " ./\n") != NULL);
+    assert (strstr (inserted_text, " ../\n") != NULL);
+    assert (strstr (inserted_text, " sub/\n") != NULL);
+    assert (strstr (inserted_text, " alpha.txt\n") != NULL);
+    inserted_text[0] = 0;
+    assert (evaluate
+            ("(dired-list \"/tmp/microemacs-dired-test/../microemacs-dired-test\")")
+            == TRUE);
+    assert (strcmp (primitive_buffer.b_fname, directory) == 0);
+    assert (strncmp (inserted_text, "/tmp/microemacs-dired-test:\n",
+                     strlen ("/tmp/microemacs-dired-test:\n")) == 0);
+    assert ((primitive_buffer.b_flag & BFRO) == 0);
+    assert (evaluate ("(set-buffer-readonly t)") == TRUE);
+    assert ((primitive_buffer.b_flag & BFRO) != 0);
+    assert (evaluate ("(set-buffer-readonly nil)") == TRUE);
+    assert ((primitive_buffer.b_flag & BFRO) == 0);
+
+    {
+      char entry[128];
+
+      snprintf (entry, sizeof (entry),
+                "%-10s %3llu %8lld %16s  %s",
+                "drwxr-xr-x", 2ULL, 4096LL,
+                "2026-10-15 10:00", "sub/");
+      set_primitive_line (entry);
+      assert (tiny_lisp_eval ("(dired-entry-name)",
+                              result, sizeof (result)) == 1);
+      assert (strcmp (result, "\"sub/\"") == 0);
+      set_primitive_line ("/tmp/microemacs-dired-test:");
+      assert (tiny_lisp_eval ("(dired-entry-name)",
+                              result, sizeof (result)) == 1);
+      assert (strcmp (result, "nil") == 0);
+    }
+
+    assert (remove ("/tmp/microemacs-dired-test/alpha.txt") == 0);
+    assert (rmdir ("/tmp/microemacs-dired-test/sub") == 0);
+    assert (rmdir (directory) == 0);
+  }
+
   switched_buffer_name[0] = 0;
   assert (evaluate ("(switch-to-buffer \"*AI*\")") == TRUE);
   assert (strcmp (switched_buffer_name, "*AI*") == 0);
@@ -708,6 +890,8 @@ main (void)
 
   colorflag = TRUE;
   curbp = &syntax_buffer;
+  tt_mode_color_called = 0;
+  updatemode_called = 0;
   assert (evaluate ("(set-syntax \"sql\")") == TRUE);
   assert (strcmp (syntax_filetype, "sql") == 0);
   assert (syntax_mode_buffer == &syntax_buffer);
@@ -793,6 +977,14 @@ main (void)
   assert (evaluate_with_prefix ("(prefix-value)", TRUE, 3) == TRUE);
   assert (strcmp (lisp_message, "[Lisp: 3]") == 0);
   assert (evaluate ("(prefix-value 7)") == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: 7]") == 0);
+  assert (evaluate ("(defun plain-interactive (&optional arg)"
+                   " (interactive) (if arg arg 42))") == TRUE);
+  assert (evaluate_with_prefix ("(plain-interactive)", FALSE, 1) == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: 42]") == 0);
+  assert (evaluate_with_prefix ("(plain-interactive)", TRUE, 3) == TRUE);
+  assert (strcmp (lisp_message, "[Lisp: 42]") == 0);
+  assert (evaluate ("(plain-interactive 7)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: 7]") == 0);
   assert (evaluate ("(interactive \"x\")") == FALSE);
   assert (evaluate ("(defun required-nil (x)"
@@ -1058,6 +1250,18 @@ main (void)
     assert (strcmp (ai_api_key, "primary-key") == 0);
     assert (unsetenv ("GPUSTACK_API_KEY") == 0);
     assert (unsetenv ("OPENAI_API_KEY") == 0);
+
+    lisp_dired_defined = FALSE;
+    dired_refresh_defined = FALSE;
+    dired_find_file_defined = FALSE;
+    bound_key = 0;
+    bound_symbol = NULL;
+    assert (evaluate_example_file ("examples/dired.l",
+                                   result, sizeof (result)) == TRUE);
+    assert (lisp_dired_defined && dired_refresh_defined
+            && dired_find_file_defined);
+    assert (bound_key == (KCTLX | 'D'));
+    assert (bound_symbol == &lisp_dired_symbol);
   }
 
   puts ("lisp tests passed");

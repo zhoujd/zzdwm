@@ -18,6 +18,7 @@ recursion, arithmetic, comparisons, list operations, function references,
 These forms also provide access to MicroEMACS state and the current buffer:
 
     (define-key "C-x C-b" "buffer-menu")
+    (define-mode-key "C-m" "my-command")
     (set-variable "tab-width" 8)
     (message "Done: %s" "ok")
     (load "library.l")
@@ -41,14 +42,26 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (forward-line 2)
     (eobp)
     (define-lisp-command "format-log-line" #'format-log-line)
+    (switch-to-buffer "*dired*")
+    (buffer-file-name)
+    (string-suffix-p "directory/" "/")
+    (string-trim-suffix "directory/" "/")
+    (join-path "directory" "file")
+    (read-directory-name "Dired" ".")
+    (set-buffer-readonly t)
+    (create-mode "Dired")
+    (dired-list "directory")
+    (dired-entry-name)
 
 Builds with AI enabled add these forms:
 
-    (switch-to-buffer "*AI*")
+    (getenv "API_KEY")
     (ai-complete "current line")
 
 `define-key` binds a key to a MicroEMACS command. Key names support the
 **C-X**, **C-** and **M-** prefixes followed by one ASCII character.
+`define-mode-key` binds a key in the current buffer's mode map; it fails when
+the buffer has no mode. `create-mode` creates or replaces that mode map.
 `set-variable` sets **tab-width** (or **tab-size**) or **fill-column** to a
 positive integer; a quoted string is also accepted for the value.
 `message` formats text with `%s`, `%S`, `%d`, and `%%`, displays it on the
@@ -86,6 +99,20 @@ text.
 first two arguments are the foreground and background 256-color indexes; the
 last two are the fallback colors for 8/16-color terminals and the Windows
 console. All color indexes must be from 0 through 255.
+
+`switch-to-buffer` finds or creates a named buffer and makes it current.
+`buffer-file-name` returns the current buffer's file name as a string.
+`string-suffix-p` tests a string suffix, `string-trim-suffix` removes one, and
+`join-path` joins a directory and file name with the correct separator.
+`read-directory-name` prompts for a directory with filename completion and
+uses its optional second argument as the default; in `--script` mode it returns
+the default without prompting.
+`set-buffer-readonly` sets or clears the current buffer's read-only flag.
+`dired-list` clears and fills the current buffer with a shell-free GNU
+Emacs-style listing. Directories are grouped first, entries are sorted
+lexically, and the directory path is stored as the buffer file name.
+`dired-entry-name` returns the file-name column from the current Dired line.
+See `examples/dired.l` for a complete buffer-local Dired implementation.
 
 `ai-complete` is available in AI-enabled builds, including the default Linux
 and Windows builds. It sends a prompt to the configured AI service with a
@@ -157,8 +184,7 @@ inserts a string at dot, while `insert-char` inserts one character given as a
 Unicode code point or a one-character string. `goto-bol`, `goto-eol`, and
 `forward-line` move dot without replaying keys. `save-buffer` and `kill-emacs`
 perform those editor actions directly. `eobp` returns `t` when dot is at the
-end of the buffer and `nil` otherwise. In AI-enabled builds,
-`switch-to-buffer` finds or creates a named buffer and makes it current.
+end of the buffer and `nil` otherwise.
 `find-file` opens a named file in the current logical edit context.
 
 `define-lisp-command` registers a Lisp function as a named MicroEMACS

@@ -1286,6 +1286,105 @@ uline (int row, VIDEO *vvp, VIDEO *pvp)
  * this routine. Called by "update" any time
  * there is a dirty window.
  */
+static int
+modeline_path_separator (char character)
+{
+#ifdef MINGW
+  return character == '/' || character == '\\';
+#else
+  return character == '/';
+#endif
+}
+
+static void
+modeline_filename (const char *filename, char *result, size_t result_size)
+{
+  size_t position = 0;
+  size_t output = 0;
+  size_t root = 0;
+  size_t start;
+  size_t length;
+  size_t index;
+  char separator = '/';
+  int absolute = FALSE;
+
+  if (result_size == 0)
+    return;
+  if (result_size == 1)
+    {
+      result[0] = 0;
+      return;
+    }
+  if (result_size < strlen (filename) + 1)
+    {
+      snprintf (result, result_size, "%s", filename);
+      return;
+    }
+#ifdef MINGW
+  if (((filename[0] >= 'A' && filename[0] <= 'Z')
+       || (filename[0] >= 'a' && filename[0] <= 'z'))
+      && filename[1] == ':')
+    {
+      result[0] = filename[0];
+      result[1] = ':';
+      position = 2;
+      output = 2;
+      root = 2;
+    }
+#endif
+  if (modeline_path_separator (filename[position]))
+    {
+      result[output++] = separator;
+      position++;
+      if (modeline_path_separator (filename[position]))
+        {
+          result[output++] = separator;
+          position++;
+        }
+      root = output;
+      absolute = TRUE;
+    }
+  while (filename[position] != 0)
+    {
+      if (modeline_path_separator (filename[position]))
+        {
+          position++;
+          continue;
+        }
+      start = position;
+      while (filename[position] != 0
+             && !modeline_path_separator (filename[position]))
+        position++;
+      length = position - start;
+      if (length == 1 && filename[start] == '.')
+        continue;
+      if (length == 2 && filename[start] == '.' && filename[start + 1] == '.')
+        {
+          if (output > root)
+            {
+              output--;
+              while (output > root && result[output - 1] != separator)
+                output--;
+            }
+          else if (!absolute)
+            {
+              result[output++] = '.';
+              result[output++] = '.';
+              result[output++] = separator;
+            }
+          continue;
+        }
+      for (index = 0; index < length; index++)
+        result[output++] = filename[start + index];
+      result[output++] = separator;
+    }
+  if (output > root && result[output - 1] == separator)
+    output--;
+  if (output == 0)
+    result[output++] = '.';
+  result[output] = 0;
+}
+
 static void
 modeline (EWINDOW *wp)
 {
@@ -1338,9 +1437,12 @@ modeline (EWINDOW *wp)
     }
   if (bp->b_fname[0] != 0)
     {				/* File name.           */
+      char filename[NFILEN];
+
       vtstring (lstr);
       vtstring ("File: ");
-      vtstring (bp->b_fname);
+      modeline_filename (bp->b_fname, filename, sizeof (filename));
+      vtstring (filename);
     }
   if (curmsgf != FALSE		/* Message alert.       */
       && wp->w_wndp == NULL)

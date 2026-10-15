@@ -14,11 +14,7 @@
 
 #define MEMORY_SIZE          131072UL
 #define ERROR_SIZE           256
-#ifdef AI
-#define MAX_HOST_FUNCTIONS   32
-#else
-#define MAX_HOST_FUNCTIONS   24
-#endif
+#define MAX_HOST_FUNCTIONS   48
 #define MAX_HOST_ARGS        8
 #define HOST_ARG_SIZE        32
 
@@ -1157,12 +1153,14 @@ Object *evalCond(Object **args, Object **env, GC_PARAM) {
 Object *evalInteractive(Object **args, Object **env, GC_PARAM) {
   GC_TRACE(gcPrefixSymbol, newSymbol("prefix-arg", GC_ROOTS));
   GC_TRACE(gcPrefix, envLookup(*gcPrefixSymbol, *env));
+  bool prefixArgument = false;
 
   if (*args != nil) {
     Object *spec = (*args)->car;
 
     if (spec->type != TYPE_STRING || strcmp(spec->string, "p") != 0)
       exceptionWithObject(spec, "is not a supported interactive specification");
+    prefixArgument = true;
   }
 
   {
@@ -1175,7 +1173,7 @@ Object *evalInteractive(Object **args, Object **env, GC_PARAM) {
           optional = true;
           continue;
         }
-        if (optional != false && vals->car == nil) {
+        if (prefixArgument != false && optional != false && vals->car == nil) {
           vals->car = *gcPrefix;
           return *gcPrefix;
         }
@@ -1268,7 +1266,7 @@ Object *callHost(Object **function, Object **args, GC_PARAM) {
   hostRoots = previousHostRoots;
 
   if (status == 0)
-    exception("host command failed");
+    exception("host command failed: %s", (*function)->host_name);
   if (status == TINY_LISP_HOST_NIL)
     return nil;
   if (status == TINY_LISP_HOST_STRING) {

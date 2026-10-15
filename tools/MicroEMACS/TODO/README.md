@@ -11,3 +11,5 @@ samples belong in [`examples`](../examples).
   for Lisp runtime loading, editor bridges, messaging, and floating point.
 - [`script-mode.md`](script-mode.md) — completed implementation notes for
   non-interactive Lisp scripts and shebang support.
+- [`dired-lisp.md`](dired-lisp.md) — completed implementation notes for the
+  shell-free, Lisp-driven directory editor.

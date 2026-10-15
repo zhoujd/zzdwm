@@ -41,6 +41,15 @@ expect_cjk_layout (int cjk_color, int following_color)
   assert (row.v_attr[2] == following_color);
 }
 
+static void
+expect_modeline_filename (const char *filename, const char *expected)
+{
+  char result[NFILEN];
+
+  modeline_filename (filename, result, sizeof (result));
+  assert (strcmp (result, expected) == 0);
+}
+
 int
 main (void)
 {
@@ -55,6 +64,21 @@ main (void)
   vtattr = CSTRING;
   vtputs (utf8_text, sizeof (utf8_text));
   expect_cjk_layout (CSTRING, CSTRING);
+
+  expect_modeline_filename (
+      "/data/zach/zzdwm/tools/MicroEMACS/../MicroEMACS/main.c",
+      "/data/zach/zzdwm/tools/MicroEMACS/main.c");
+  expect_modeline_filename ("/data/./zach/a/../b", "/data/zach/b");
+  expect_modeline_filename ("../a/../b", "../b");
+  expect_modeline_filename ("a/../../b", "../b");
+  expect_modeline_filename ("C:\\zznix\\home\\zach\\.mel",
+                            "C:/zznix/home/zach/.mel");
+  expect_modeline_filename ("C:\\tools\\MicroEMACS\\..\\main.c",
+                            "C:/tools/main.c");
+  expect_modeline_filename ("C:\\tools/MicroEMACS\\..\\main.c",
+                            "C:/tools/main.c");
+  expect_modeline_filename ("C:tools/MicroEMACS/../main.c",
+                            "C:tools/main.c");
 
   puts ("display tests passed");
   return 0;
