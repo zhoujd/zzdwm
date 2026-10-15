@@ -13,14 +13,10 @@
 
 #ifdef LISP
 
-#define LISP_EXPRESSION_SIZE 256
-#define LISP_OUTPUT_SIZE     256
+#define LISP_EXPRESSION_SIZE  256
+#define LISP_OUTPUT_SIZE      256
 #define LISP_COMMAND_OVERHEAD 13
-#if defined(MINGW) || defined(DOS)
-#define LISP_CONFIG_FILE     "me.l"
-#else
-#define LISP_CONFIG_FILE     ".mel"
-#endif
+#define LISP_CONFIG_FILE      ".mel"
 
 static int lisp_message_displayed;
 static int lisp_debug_level;
