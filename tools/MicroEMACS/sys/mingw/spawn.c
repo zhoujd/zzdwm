@@ -24,18 +24,13 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <sys/stat.h>
-#include <ctype.h>
 #include <io.h>
 #include <windows.h>
-#include <ctype.h>
 
 /*
  * Global declarations.
  */
 char *cspec = NULL;		/* Command string.      */
-
-/* Forward declarations */
-static const char *convertposix (const char *path, char *out_buf, size_t buf_size);
 
 /*
  * Create a subjob with a copy
@@ -91,50 +86,6 @@ gettempfile (char *path, int size, const char *prefix)
   GetTempPathA (sizeof(temp_dir), temp_dir);
   GetTempFileNameA (temp_dir, "dir", 0, path);
   return TRUE;
-}
-
-/*
- * Translates to POSIX drive paths (/c/dir/file)
- */
-const char *
-convertposix (const char *path, char *out_buf, size_t buf_size)
-{
-  if (!path || !out_buf || buf_size == 0)
-    {
-      return NULL;
-    }
-  size_t i = 0;
-  size_t j = 0;
-  if (path[0] != '\0' && path[1] == ':')
-    {
-      if (j + 3 > buf_size)
-        {
-          out_buf[0] = '\0';
-          return NULL;
-        }
-      out_buf[j++] = '/';
-      out_buf[j++] = (char)tolower((unsigned char)path[0]);
-      i = 2;
-    }
-  while (path[i] != '\0')
-    {
-      if (j + 2 > buf_size)
-        {
-          out_buf[0] = '\0';
-          return NULL;
-        }
-      if (path[i] == '\\')
-        {
-          out_buf[j++] = '/';
-        }
-      else
-        {
-          out_buf[j++] = path[i];
-        }
-      i++;
-    }
-  out_buf[j] = '\0';
-  return out_buf;
 }
 
 /*
@@ -324,7 +275,7 @@ changedir (int f, int n, int k)
           sgarbf = TRUE;
           return FALSE;
         }
-      convertposix (line, tmp_path, NLINE);
+      path_to_posix (line, tmp_path, sizeof (tmp_path));
       eprintf ("CWD: %s", tmp_path);
       return TRUE;
     }
@@ -348,7 +299,7 @@ changedir (int f, int n, int k)
   /* Fetch and print the canonical absolute directory after change */
   if (getcwd (line, sizeof (line)) != NULL)
     {
-      convertposix (line, tmp_path, NLINE);
+      path_to_posix (line, tmp_path, sizeof (tmp_path));
       eprintf ("CWD: %s", tmp_path);
     }
   else

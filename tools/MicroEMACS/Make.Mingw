@@ -84,6 +84,7 @@ OBJ := \
 	version.o \
 	window.o \
 	word.o \
+	path.o \
 	fileio.o \
 	spawn.o \
 	tags.o \

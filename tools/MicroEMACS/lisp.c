@@ -449,19 +449,9 @@ static int
 lisp_join_path (int argc, const char *const *argv,
                 char *result, size_t result_size)
 {
-  size_t directory_length;
-  const char *separator;
-  int length;
-
   if (argc != 2 || argv[0][0] == 0 || argv[1][0] == 0)
     return FALSE;
-  directory_length = strlen (argv[0]);
-  separator = (argv[0][directory_length - 1] == '/'
-               || argv[0][directory_length - 1] == '\\')
-                ? "" : "/";
-  length = snprintf (result, result_size, "%s%s%s",
-                     argv[0], separator, argv[1]);
-  if (length < 0 || (size_t) length >= result_size)
+  if (path_join (argv[0], argv[1], result, result_size) != TRUE)
     return FALSE;
   return TINY_LISP_HOST_STRING;
 }
@@ -577,65 +567,39 @@ lisp_dired_timestamp (time_t timestamp, char *result, size_t result_size)
 }
 
 static int
-lisp_dired_canonical_directory (const char *directory, char *result,
-                                size_t result_size)
-{
-#ifdef MINGW
-  if (_fullpath (result, directory, result_size) != NULL)
-    {
-      size_t index;
-
-      for (index = 0; result[index] != 0; index++)
-        if (result[index] == '\\')
-          result[index] = '/';
-      return TRUE;
-    }
-#else
-  char *canonical = realpath (directory, NULL);
-  int length;
-
-  if (canonical != NULL)
-    {
-      length = snprintf (result, result_size, "%s", canonical);
-      free (canonical);
-      if (length >= 0 && (size_t) length < result_size)
-        return TRUE;
-    }
-#endif
-  return FALSE;
-}
-
-static int
 lisp_dired_resolve_directory (const char *directory, char *result,
                               size_t result_size)
 {
   char current[NFILEN];
-  const char *relative = directory;
+  char normalized[NFILEN];
   int length;
 
-  if (lisp_dired_canonical_directory (directory, result, result_size))
+  if (strlen (directory) >= sizeof (normalized))
+    return FALSE;
+  strcpy (normalized, directory);
+  path_normalize (normalized);
+
+  if (path_canonical_directory (normalized, result, result_size) == TRUE)
     return TRUE;
-  if (directory[0] == '/' || directory[0] == '\\' || directory[0] == '~'
-      || (isalpha ((unsigned char) directory[0]) && directory[1] == ':'))
+  if (normalized[0] == '~' || path_is_absolute (normalized))
     {
-      if (snprintf (result, result_size, "%s", directory)
-          >= (int) result_size)
+      length = snprintf (result, result_size, "%s", normalized);
+      if (length < 0 || (size_t) length >= result_size)
         return FALSE;
       return TRUE;
     }
-  while (relative[0] == '.' && relative[1] == '/')
-    relative += 2;
   if (getcwd (current, sizeof (current)) == NULL)
     {
-      if (snprintf (result, result_size, "%s", directory)
+      if (snprintf (result, result_size, "%s", normalized)
           >= (int) result_size)
         return FALSE;
       return TRUE;
     }
-  if (relative[0] == 0 || strcmp (relative, ".") == 0)
+  path_normalize (current);
+  if (normalized[0] == 0 || strcmp (normalized, ".") == 0)
     length = snprintf (result, result_size, "%s", current);
   else
-    length = snprintf (result, result_size, "%s/%s", current, relative);
+    return path_join (current, normalized, result, result_size);
   if (length < 0 || (size_t) length >= result_size)
     return FALSE;
   return TRUE;
@@ -663,7 +627,6 @@ lisp_dired_list (int argc, const char *const *argv,
   size_t index;
   DIR *stream;
   struct dirent *entry;
-  const char *separator;
   int pass;
   int undo_started = FALSE;
   int status = FALSE;
@@ -683,9 +646,6 @@ lisp_dired_list (int argc, const char *const *argv,
       != TRUE)
     return FALSE;
   strcpy (directory, resolved);
-  separator = (directory[strlen (directory) - 1] == '/'
-               || directory[strlen (directory) - 1] == '\\')
-                ? "" : "/";
 
   stream = opendir (directory);
   if (stream == NULL)
@@ -749,9 +709,8 @@ lisp_dired_list (int argc, const char *const *argv,
           if (strchr (names[index], '\n') != NULL
               || strlen (names[index]) >= NFILEN)
             continue;
-          length = snprintf (entry_path, sizeof (entry_path),
-                             "%s%s%s", directory, separator, names[index]);
-          if (length < 0 || (size_t) length >= sizeof (entry_path))
+          if (path_join (directory, names[index],
+                         entry_path, sizeof (entry_path)) != TRUE)
             goto done;
           if (stat (entry_path, &information) == 0)
             {
@@ -1462,8 +1421,7 @@ static int
 lisp_valid_module_name (const char *name)
 {
   return name != NULL && name[0] != 0
-         && strchr (name, '/') == NULL
-         && strchr (name, '\\') == NULL
+         && path_has_separator (name) == FALSE
          && strchr (name, ':') == NULL;
 }
 
@@ -1591,14 +1549,9 @@ lisp_read_file (const char *filename, char **source)
 static int
 lisp_is_explicit_path (const char *filename)
 {
-  if (filename[0] == '/'
-      || filename[0] == '\\'
-      || filename[0] == '~')
+  if (filename[0] == '~' || path_is_absolute (filename))
     return TRUE;
-  if (isalpha ((unsigned char) filename[0]) && filename[1] == ':')
-    return TRUE;
-  return strchr (filename, '/') != NULL
-         || strchr (filename, '\\') != NULL;
+  return path_has_separator (filename);
 }
 
 static int

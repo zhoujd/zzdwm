@@ -1286,16 +1286,6 @@ uline (int row, VIDEO *vvp, VIDEO *pvp)
  * this routine. Called by "update" any time
  * there is a dirty window.
  */
-static int
-modeline_path_separator (char character)
-{
-#ifdef MINGW
-  return character == '/' || character == '\\';
-#else
-  return character == '/';
-#endif
-}
-
 static void
 modeline_filename (const char *filename, char *result, size_t result_size)
 {
@@ -1332,11 +1322,11 @@ modeline_filename (const char *filename, char *result, size_t result_size)
       root = 2;
     }
 #endif
-  if (modeline_path_separator (filename[position]))
+  if (path_is_separator (filename[position]))
     {
       result[output++] = separator;
       position++;
-      if (modeline_path_separator (filename[position]))
+      if (path_is_separator (filename[position]))
         {
           result[output++] = separator;
           position++;
@@ -1346,14 +1336,14 @@ modeline_filename (const char *filename, char *result, size_t result_size)
     }
   while (filename[position] != 0)
     {
-      if (modeline_path_separator (filename[position]))
+      if (path_is_separator (filename[position]))
         {
           position++;
           continue;
         }
       start = position;
       while (filename[position] != 0
-             && !modeline_path_separator (filename[position]))
+             && !path_is_separator (filename[position]))
         position++;
       length = position - start;
       if (length == 1 && filename[start] == '.')

@@ -56,7 +56,6 @@ static int bufsize;		/* size of line buffer */
  * Forward declarations.
  */
 static void putbytes (const char *s, int len);
-static const char *convertpath (const char *path, char *out_buf, size_t buf_size);
 
 /*
  * Expand a filename that has a leading ~ or ~username.
@@ -66,43 +65,24 @@ char *
 fftilde (char *arg)
 {
   static char expanded[NLINE * 2];
-  static char clean_arg[NLINE];
+  char relative[NLINE];
   const char *home = NULL;
-  const char *converted;
-  char *p;
 
   if (arg == NULL)
-    {
-      return NULL;
-    }
+    return NULL;
 
-  /*
-   * FIRST STEP: Convert POSIX drive paths (/c/dir -> C:/dir).
-   * If convertpath returns the original pointer, we copy it safely to clean_arg.
-   */
-  converted = convertpath (arg, clean_arg, sizeof (clean_arg));
-  if (converted != clean_arg)
-    {
-      strncpy (clean_arg, arg, sizeof (clean_arg) - 1);
-      clean_arg[sizeof (clean_arg) - 1] = '\0';
-    }
+  path_to_native (arg, expanded, sizeof (expanded));
 
   /* SECOND STEP: Original Tilde (~/) Expansion Logic */
-  if (clean_arg[0] != '~')
-    {
-      strncpy (expanded, clean_arg, sizeof (expanded) - 1);
-      expanded[sizeof (expanded) - 1] = '\0';
-      return expanded;
-    }
+  if (expanded[0] != '~')
+    return expanded;
 
   /* Current user (~/path or ~) */
-  if (clean_arg[1] == '\0' || clean_arg[1] == '/' || clean_arg[1] == '\\')
+  if (expanded[1] == '\0' || path_is_separator (expanded[1]))
     {
       home = getenv ("HOME");
       if (home == NULL)
-        {
-          home = getenv ("USERPROFILE");
-        }
+        home = getenv ("USERPROFILE");
       if (home == NULL)
         {
           static char win_home[NLINE];
@@ -111,33 +91,36 @@ fftilde (char *arg)
           if (drive != NULL && path != NULL)
             {
               snprintf (win_home, sizeof (win_home), "%s%s", drive, path);
+              path_normalize (win_home);
               home = win_home;
             }
         }
 
       if (home == NULL)
         {
-          strncpy (expanded, clean_arg, sizeof (expanded) - 1);
-          expanded[sizeof (expanded) - 1] = '\0';
+          expanded[0] = 0;
           return expanded;
         }
-
-      snprintf (expanded, sizeof (expanded), "%s%s", home, clean_arg + 1);
-
-      /* Normalize backslashes to forward slashes for uniform cross-platform paths */
-      for (p = expanded; *p != '\0'; p++)
+      if (expanded[1] == '\0')
         {
-          if (*p == '\\')
-            {
-              *p = '/';
-            }
+          snprintf (expanded, sizeof (expanded), "%s", home);
+          path_normalize (expanded);
         }
-
+      else
+        {
+          if (snprintf (relative, sizeof (relative), "%s", expanded + 2)
+              >= (int) sizeof (relative))
+            {
+              expanded[0] = 0;
+              return expanded;
+            }
+          if (path_join (home, relative,
+                         expanded, sizeof (expanded)) != TRUE)
+            expanded[0] = 0;
+        }
       return expanded;
     }
 
-  strncpy (expanded, clean_arg, sizeof (expanded) - 1);
-  expanded[sizeof (expanded) - 1] = '\0';
   return expanded;
 }
 
@@ -164,29 +147,6 @@ ffisdir (
 }
 
 /*
- * Translates POSIX drive paths (/c/dir/file) to Win32 paths (C:/dir/file)
- * so native fopen(), stat(), and opendir() can open the file.
- */
-static const char *
-convertpath (const char *path, char *out_buf, size_t buf_size)
-{
-  if (path == NULL)
-    return NULL;
-  /* If path matches /c/... or /C/... */
-  if (path[0] == '/' &&
-      ((path[1] >= 'a' && path[1] <= 'z') || (path[1] >= 'A' && path[1] <= 'Z')) &&
-      (path[2] == '/' || path[2] == '\0'))
-    {
-      char drive = path[1];
-      if (drive >= 'a' && drive <= 'z')
-        drive -= 32; /* Uppercase drive letter */
-      snprintf (out_buf, buf_size, "%c:%s", drive, path + 2);
-      return out_buf;
-    }
-  return path; /* Return original path if no conversion needed */
-}
-
-/*
  * Open a file for reading.  Used for text files, not profile files.
  */
 int
@@ -194,8 +154,8 @@ ffropen (const char *fn)
 {
   writing = FALSE;
   char win_fn[1024];
-  const char *real_fn = convertpath (fn, win_fn, sizeof (win_fn));
-  if ((ffp = open (real_fn, O_RDONLY | O_BINARY)) < 0)
+  path_to_native (fn, win_fn, sizeof (win_fn));
+  if ((ffp = open (win_fn, O_RDONLY | O_BINARY)) < 0)
     return (FIOFNF);
   cindex = csize = 0;		/* set up for getbyte() */
   return (FIOSUC);
@@ -210,8 +170,8 @@ int
 ffwopen (const char *fn)
 {
   char win_fn[1024];
-  const char *real_fn = convertpath (fn, win_fn, sizeof (win_fn));
-  if ((ffp = open (real_fn, O_TRUNC | O_WRONLY | O_CREAT | O_BINARY,
+  path_to_native (fn, win_fn, sizeof (win_fn));
+  if ((ffp = open (win_fn, O_TRUNC | O_WRONLY | O_CREAT | O_BINARY,
 	     S_IREAD | S_IWRITE)) < 0)
     {
       eprintf ("Cannot open file for writing");
@@ -435,8 +395,7 @@ fbackupfile (const char *fname)
 {
   char nname[NFILEN];		/* new name                     */
   register char *p;
-  register char *bname;		/* XBACKUP directory name       */
-  register char lastc;		/* last character in XBACKUP    */
+  const char *bname;		/* XBACKUP directory name       */
 
   /* If there is a XBACKUP environment variable defined, use it
    * as a prefix to the original filename.  Otherwise just
@@ -451,11 +410,8 @@ fbackupfile (const char *fname)
     }
   else
     {
-      strcpy (nname, bname);
-      lastc = nname[strlen (nname) - 1];	/* get last character   */
-      if (lastc != '\\' && lastc != '/')
-        strcat (nname, "\\");
-      strcat (nname, fname);
+      if (path_join (bname, fname, nname, sizeof (nname)) != TRUE)
+        return FALSE;
     }
   unlink (nname);		/* delete old backup    */
   return (rename (fname, nname) == 0);
@@ -500,16 +456,23 @@ int
 ffpopen (char *fn)
 {
   static char newname[NFILEN];
+  const char *home;
 
   if (fn == NULL)
     {
       if ((pfp = open ("me.pro", O_RDONLY)) >= 0)
         return (FIOSUC);
-      if ((fn = getenv ("HOME")) != NULL)
-        strcpy (newname, fn);
-      else
-        newname[0] = 0;
-      strcat (newname, "\\me.pro");
+      home = getenv ("HOME");
+      if (home == NULL)
+        home = getenv ("USERPROFILE");
+      if (home == NULL || path_join (home, "me.pro",
+                                     newname, sizeof (newname)) != TRUE)
+        return (FIOFNF);
+      fn = newname;
+    }
+  else
+    {
+      path_to_native (fn, newname, sizeof (newname));
       fn = newname;
     }
   if ((pfp = open (fn, O_RDONLY)) < 0)
@@ -569,6 +532,7 @@ ffsearch (const char *name,	/* filename to search for */
   struct dirent *ff;
   static DIR *dirp;
   static char buf[NFILEN];
+  char native[NFILEN];
   static int pathlen;
   int i, c = 0;
 
@@ -583,7 +547,7 @@ ffsearch (const char *name,	/* filename to search for */
       for (i = cpos; i > 0; --i)
         {			/* find end of path     */
           c = buf[i - 1];
-          if (c == ':' || c == '/' || c == '\\')
+          if (c == ':' || path_is_separator (c))
             break;
         }
       pathlen = i;		/* save length of path  */
@@ -592,7 +556,8 @@ ffsearch (const char *name,	/* filename to search for */
       else
         {
           buf[pathlen - 1] = '\0';	/* temporarily zap slash */
-          dirp = opendir (buf);	/* open directory       */
+          path_to_native (buf, native, sizeof (native));
+          dirp = opendir (native);	/* open directory       */
           buf[pathlen - 1] = c;	/* restore slash */
         }
       if (dirp == NULL)
@@ -621,7 +586,8 @@ int
 ffcheckname (char *filename)
 {
   /* check last character */
-  if (!filename || (filename[strlen (filename) - 1] == '/'))
+  if (!filename
+      || path_is_separator (filename[strlen (filename) - 1]))
     {
       eprintf ("[Bad file name]");
       return (FALSE);

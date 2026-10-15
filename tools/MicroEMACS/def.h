@@ -847,6 +847,25 @@ void unqname (char *name, int maxlen);  /* Unique buffer name.          */
 int writeout (const char *fn);          /* Performs the file writing    */
 
 /*
+ * Defined by "path.c".
+ */
+int path_is_separator (char character); /* Path separator character?   */
+int path_is_absolute (const char *path); /* Absolute path?             */
+int path_has_separator (const char *path);
+                                        /* Contains path separator?    */
+void path_normalize (char *path);       /* Normalize path in place.    */
+void path_to_native (const char *path, char *result, size_t result_size);
+                                        /* Path for native file I/O.   */
+void path_to_posix (const char *path, char *result, size_t result_size);
+                                        /* Drive path in POSIX form.   */
+int path_join (const char *directory, const char *component,
+               char *result, size_t result_size);
+                                        /* Join directory and name.    */
+int path_canonical_directory (const char *directory,
+                              char *result, size_t result_size);
+                                        /* Resolve existing directory. */
+
+/*
  * Defined by "fileio.c".
  */
 int ffropen (const char *fn);           /* Open file for reading.       */

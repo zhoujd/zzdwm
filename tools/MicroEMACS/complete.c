@@ -28,9 +28,6 @@
 
 /* Forward declarations */
 static void outstring (char *s);
-static void sanitize_slashes (char *path);
-static void normalize_path (char *path);
-static void to_native_path (const char *posix_path, char *native_path, size_t max_len);
 static int is_regular_file (const char *path);
 static int collect_matches (const char *prefix,
                             char matches[][TMPBUF_SIZE],
@@ -49,208 +46,13 @@ is_regular_file (const char *path)
   if (path == NULL || *path == '\0')
     return 0;
 
-  to_native_path (path, native, TMPBUF_SIZE);
+  path_to_native (path, native, TMPBUF_SIZE);
   if (stat (native, &st) == 0)
     {
       if (S_ISREG (st.st_mode))
         return 1;
     }
   return 0;
-}
-
-/*
- * Converts backslashes to forward slashes, translates Windows drive
- * letters (e.g. "C:/abc" -> "/c/abc"), and collapses redundant slashes.
- */
-static void
-sanitize_slashes (char *path)
-{
-  char *src;
-  char *dst;
-  char temp[TMPBUF_SIZE];
-
-  if (path == NULL || *path == '\0')
-    return;
-
-  /* First pass: Normalize all backslashes to forward slashes */
-  for (char *p = path; *p; p++)
-    {
-      if (*p == '\\')
-        *p = '/';
-    }
-
-  /* Convert Windows Drive Letter ("C:/" or "C:") to MSYS style ("/c/" or "/c") */
-  if (isalpha ((unsigned char)path[0]) && path[1] == ':')
-    {
-      char drive = (char) tolower ((unsigned char)path[0]);
-      if (path[2] == '/' || path[2] == '\0')
-        {
-          snprintf (temp, TMPBUF_SIZE, "/%c%s", drive, path + 2);
-          strncpy (path, temp, TMPBUF_SIZE - 1);
-          path[TMPBUF_SIZE - 1] = '\0';
-        }
-    }
-
-  src = path;
-  dst = path;
-
-  /* Preserve Windows UNC network path prefix (e.g., "//server/share") */
-  if (src[0] == '/' && src[1] == '/')
-    {
-      *dst++ = '/';
-      *dst++ = '/';
-      src += 2;
-    }
-
-  while (*src)
-    {
-      char c = *src;
-
-      /* Collapse duplicate slashes */
-      if (c == '/' && dst > path && dst[-1] == '/')
-        {
-          src++;
-          continue;
-        }
-
-      *dst++ = c;
-      src++;
-    }
-
-  *dst = '\0';
-}
-
-/*
- * Simplifies path components by resolving '.' and '..' safely
- */
-static void
-normalize_path (char *path)
-{
-  char *src;
-  char *dst;
-  int root_len = 0;
-
-  if (path == NULL || *path == '\0')
-    return;
-
-  /* Calculate and protect root prefix length */
-  if (path[0] == '/' && path[1] == '/')
-    {
-      root_len = 2;
-    }
-  else if (path[0] == '/' && isalpha ((unsigned char)path[1]) &&
-           (path[2] == '/' || path[2] == '\0'))
-    {
-      root_len = (path[2] == '/') ? 3 : 2;
-    }
-  else if (path[0] == '/')
-    {
-      root_len = 1;
-    }
-
-  src = path + root_len;
-  dst = path + root_len;
-
-  while (*src != '\0')
-    {
-      if (*src == '/')
-        {
-          src++;
-          continue;
-        }
-
-      /* Check for '.' component - skip without modifying dst */
-      if (src[0] == '.' && (src[1] == '/' || src[1] == '\0'))
-        {
-          src += (src[1] == '\0') ? 1 : 2;
-          continue;
-        }
-
-      /* Check for '..' component */
-      if (src[0] == '.' && src[1] == '.' && (src[2] == '/' || src[2] == '\0'))
-        {
-          src += (src[2] == '\0') ? 2 : 3;
-
-          /* Rewind dst safely if we have a parent directory to pop */
-          if (dst > path + root_len)
-            {
-              /* Check if the previous component in dst is itself a leading '..' */
-              char *prev = dst - 1;
-              if (prev > path + root_len && *prev == '/')
-                prev--;
-
-              /* Find start of last component in dst */
-              while (prev > path + root_len && prev[-1] != '/')
-                prev--;
-
-              /* If previous component is not '..', pop it */
-              if (strncmp (prev, "..", 2) != 0 || (prev[2] != '/' && prev[2] != '\0'))
-                {
-                  if (dst > path + root_len && dst[-1] == '/')
-                    dst--;
-
-                  while (dst > path + root_len && dst[-1] != '/')
-                    dst--;
-
-                  continue;
-                }
-            }
-
-          /* If at root or preceded only by '..', keep the '..' for relative paths */
-          if (root_len == 0)
-            {
-              if (dst > path && dst[-1] != '/')
-                *dst++ = PATH_SEP;
-              *dst++ = '.';
-              *dst++ = '.';
-            }
-          continue;
-        }
-
-      /* Append directory separator before regular path component */
-      if (dst > path && dst[-1] != '/')
-        *dst++ = PATH_SEP;
-
-      while (*src != '\0' && *src != '/')
-        *dst++ = *src++;
-    }
-
-  /* Preserve trailing slash if original path ended with a separator */
-  if (src > path && src[-1] == '/' && dst > path + root_len && dst[-1] != PATH_SEP)
-    *dst++ = PATH_SEP;
-
-  *dst = '\0';
-
-  /* If normalization reduced a relative path to empty, default to "." */
-  if (path[0] == '\0')
-    strcpy (path, ".");
-}
-
-/*
- * Converts a POSIX MSYS-style path (/c/path) to a Windows native path (C:/path)
- */
-static void
-to_native_path (const char *posix_path, char *native_path, size_t max_len)
-{
-  strncpy (native_path, posix_path, max_len - 1);
-  native_path[max_len - 1] = '\0';
-
-#if defined (_WIN32) || defined (__MINGW32__)
-  if (native_path[0] == '/' && isalpha ((unsigned char)native_path[1]) &&
-      (native_path[2] == '/' || native_path[2] == '\0'))
-    {
-      char drive = native_path[1];
-      char temp[TMPBUF_SIZE];
-
-      if (native_path[2] == '\0')
-        snprintf (temp, TMPBUF_SIZE, "%c:/", drive);
-      else
-        snprintf (temp, TMPBUF_SIZE, "%c:%s", drive, native_path + 2);
-
-      strncpy (native_path, temp, max_len - 1);
-      native_path[max_len - 1] = '\0';
-    }
-#endif
 }
 
 /*
@@ -275,7 +77,7 @@ collect_matches (const char *prefix,
   strncpy (expanded_prefix, prefix, TMPBUF_SIZE - 1);
   expanded_prefix[TMPBUF_SIZE - 1] = '\0';
 
-  sanitize_slashes (expanded_prefix);
+  path_normalize (expanded_prefix);
 
   /* Handle ~ expansion using $HOME */
   if (expanded_prefix[0] == '~')
@@ -312,12 +114,12 @@ collect_matches (const char *prefix,
               strncpy (expanded_prefix, temp, TMPBUF_SIZE - 1);
               expanded_prefix[TMPBUF_SIZE - 1] = '\0';
 
-              sanitize_slashes (expanded_prefix);
+              path_normalize (expanded_prefix);
             }
         }
     }
 
-  normalize_path (expanded_prefix);
+  path_normalize (expanded_prefix);
 
   strcpy (dirpath, ".");
   pattern[0] = '\0';
@@ -342,7 +144,7 @@ collect_matches (const char *prefix,
   else
     strcpy (pattern, expanded_prefix);
 
-  to_native_path (dirpath, native_dirpath, TMPBUF_SIZE);
+  path_to_native (dirpath, native_dirpath, TMPBUF_SIZE);
 
   dir = opendir (native_dirpath);
   if (dir == NULL)
@@ -375,7 +177,7 @@ collect_matches (const char *prefix,
           if (ret < 0 || ret >= TMPBUF_SIZE)
             continue;
 
-          to_native_path (full_check_path, native_full_check, TMPBUF_SIZE);
+          path_to_native (full_check_path, native_full_check, TMPBUF_SIZE);
 
           int is_dir = (stat (native_full_check, &st) == 0 && S_ISDIR (st.st_mode));
 
@@ -717,8 +519,7 @@ getfilename (char *prompt, char *buf, int nbuf)
               strcpy (buf, "../");
             }
 
-          sanitize_slashes (buf);
-          normalize_path (buf);
+          path_normalize (buf);
 
           match_count = 0;
           match_idx = -1;
