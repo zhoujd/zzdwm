@@ -798,6 +798,7 @@ zotbuf (BUFFER *bp)
     strcpy (oldbufn, "");
   killundo (bp);		/* Free undo records	*/
   removemode (bp);
+  removetagbuffer (bp);
   free (bp);			/* Release buffer block */
   bp = NULL;
   return (TRUE);

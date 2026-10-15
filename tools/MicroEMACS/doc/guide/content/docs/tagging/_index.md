@@ -49,3 +49,12 @@ M-.
     finds the next occurence.  The command then visits the corresponding
     file and places the dot at the line containing the identifier.
 
+M-*
+
+:   **pop-tag-mark**
+
+    This command returns to the buffer and location from which the most recent
+    `find-tag`, `find-cscope`, or `find-grep` navigation started. Repeating the
+    command retraces earlier origins; MicroEMACS keeps the sixteen most recent
+    origins. If a line has become shorter since the jump, the saved offset is
+    clamped to the end of that line.

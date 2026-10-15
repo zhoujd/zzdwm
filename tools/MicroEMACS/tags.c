@@ -92,6 +92,17 @@ char tagpat[NPAT];		/* tag pattern to search        */
 
 static int havetags;		/* true if tags file was read	*/
 
+typedef struct TAGORIGIN
+{
+  BUFFER *buffer;		/* Buffer containing the origin */
+  int line;			/* Zero-based origin line       */
+  int offset;			/* Origin character offset      */
+}
+TAGORIGIN;
+
+static TAGORIGIN tagorigins[RINGSIZE];
+static int tagorigincount;
+
 /*
  * Free up the memory associated with the current
  * tag list.
@@ -379,6 +390,115 @@ preptag (const char *string)
     return TRUE;
 }
 
+static int
+taglineno (BUFFER *buffer, LINE *line)
+{
+  LINE *scan;
+  int lineno;
+
+  lineno = 0;
+  for (scan = firstline (buffer); scan != buffer->b_linep;
+       scan = lforw (scan))
+    {
+      if (scan == line)
+        return lineno;
+      ++lineno;
+    }
+  return 0;
+}
+
+static void
+pushtagorigin (TAGORIGIN origin)
+{
+  int index;
+
+  if (origin.buffer == NULL || origin.line < 0 || origin.offset < 0)
+    return;
+  if (tagorigincount == RINGSIZE)
+    {
+      for (index = 0; index < RINGSIZE - 1; index++)
+        tagorigins[index] = tagorigins[index + 1];
+      --tagorigincount;
+    }
+  tagorigins[tagorigincount++] = origin;
+}
+
+static int
+tagbufferexists (BUFFER *buffer)
+{
+  BUFFER *scan;
+
+  ALLBUF (scan)
+    {
+      if (scan == buffer)
+        return TRUE;
+    }
+  return FALSE;
+}
+
+static void
+restoretagorigin (const TAGORIGIN *origin)
+{
+  LINE *line;
+  int lineno;
+  int length;
+
+  line = firstline (curbp);
+  for (lineno = 0; lineno < origin->line
+       && lforw (line) != curbp->b_linep; lineno++)
+    line = lforw (line);
+  curwp->w_dot.p = line;
+  length = wllength (line);
+  curwp->w_dot.o = origin->offset < length ? origin->offset : length;
+  curwp->w_flag |= WFMOVE;
+}
+
+int
+poptagmark (int f, int n, int k)
+{
+  TAGORIGIN origin;
+
+  (void) f;
+  (void) n;
+  (void) k;
+  while (tagorigincount > 0)
+    {
+      origin = tagorigins[tagorigincount - 1];
+      if (tagbufferexists (origin.buffer) == FALSE)
+        {
+          --tagorigincount;
+          continue;
+        }
+      if (swbuffer (origin.buffer) == FALSE)
+        return FALSE;
+      --tagorigincount;
+      restoretagorigin (&origin);
+      return TRUE;
+    }
+  eprintf ("No tag mark");
+  return FALSE;
+}
+
+void
+removetagbuffer (BUFFER *buffer)
+{
+  int index;
+
+  for (index = 0; index < tagorigincount; )
+    {
+      if (tagorigins[index].buffer == buffer)
+        {
+          int move;
+
+          for (move = index; move < tagorigincount - 1; move++)
+            tagorigins[move] = tagorigins[move + 1];
+          --tagorigincount;
+        }
+      else
+        ++index;
+    }
+}
+
 /*
  * Return TRUE if the character at the specified offset and line
  * is a character that is considered to be part of a word.
@@ -459,6 +579,7 @@ searchtag (int f, int n, prepfunc prep, const char * tagtype)
   static tagref *lastref;	/* remember last ref    */
   tagref *r;			/* current tag          */
   tagfile *tf;			/* current file         */
+  TAGORIGIN origin;		/* location before jump */
   int s;
   char tpat[NPAT];		/* temporary pattern    */
 
@@ -532,8 +653,12 @@ searchtag (int f, int n, prepfunc prep, const char * tagtype)
    * to the line containing this tag.
    */
   tf = r->file;
-  if (visit_file (tf->fname) == FALSE)
-    return FALSE;
+  origin.buffer = curbp;
+  origin.line = taglineno (curbp, curwp->w_dot.p);
+  origin.offset = curwp->w_dot.o;
+  if ((s = visit_file (tf->fname)) != TRUE)
+    return s;
+  pushtagorigin (origin);
   if (gotoline (TRUE, r->line, 0) == FALSE)
     return FALSE;
 #if DPRINT

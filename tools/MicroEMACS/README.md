@@ -14,7 +14,8 @@ and Windows while keeping the executable small and fast.
   TOML, CMake, Makefile, Dockerfile, Lisp, Emacs Lisp, Scheme, and SQL.
 * Tiny Lisp extensions, editor command bridges, Lisp startup configuration,
   configurable mode-line colors, and built-in AI assistance.
-* Tags, cscope, grep, GCC error navigation, and ispell integration.
+* Tags, cscope, grep, tag-origin return navigation, GCC error navigation, and
+  ispell integration.
 * Linux terminal support through ncursesw or termcap.
 * Native Windows console support built with MinGW-w64.
 

@@ -1060,6 +1060,8 @@ const char * modename (BUFFER *bp);     /* Return name for current mode */
  */
 int findtag (int f, int n, int k);      /* Search for a tag             */
 int freetags (int f, int n, int k);     /* Free up tag list             */
+int poptagmark (int f, int n, int k);   /* Return to tag origin         */
+void removetagbuffer (BUFFER *buffer);  /* Remove dead tag origins      */
 
 /*
  * Defined by "error.c".

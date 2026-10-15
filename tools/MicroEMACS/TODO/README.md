@@ -3,8 +3,8 @@
 This directory contains feature proposals and implementation notes. Runnable
 samples belong in [`examples`](../examples).
 
-- [`tag-ring.md`](tag-ring.md) — original upstream note for a ring of
-  recently visited tag locations.
+- [`tag-ring.md`](tag-ring.md) — completed implementation notes for the tag
+  origin ring and remaining navigation ideas.
 - [`ai-connection.md`](ai-connection.md) — proposal for a local Ollama
   connection exposed to Lisp.
 - [`lisp-extensions.md`](lisp-extensions.md) — completed implementation notes
