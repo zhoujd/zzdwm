@@ -54,6 +54,11 @@ At runtime, `C-x F` evaluates `.l`, `.lisp`, and `.mel` files as Lisp;
 other files are read as profiles. `M-X read-lisp` always evaluates a
 Lisp file.
 
+Lisp scripts can load code dynamically with `(load "library.l")`. The
+`(require "module")` form loads a logical module once and searches the current
+directory, `~/.mel.d/`, `~/.config/me/lisp/`, and the system `me/lisp` share
+directories. See `examples/modules/main.l` for a runnable example.
+
 Use `--script` for non-interactive Lisp automation. MicroEMACS skips terminal
 setup and default startup files, opens any remaining filename arguments in one
 headless edit context with the last file current, evaluates the script, and

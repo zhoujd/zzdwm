@@ -2640,6 +2640,8 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (define-key "C-x C-b" "buffer-menu")
     (set-variable "tab-width" 8)
     (message "Done: %s" "ok")
+    (load "library.l")
+    (require "smart-indent")
     (set-lisp-debug 2)
     (debug-message 1 "Done: %s" "ok")
     (set-syntax "sql")
@@ -2671,6 +2673,22 @@ Builds with AI enabled add these forms:
 positive integer; a quoted string is also accepted for the value.
 `message` formats text with `%s`, `%S`, `%d`, and `%%`, displays it on the
 echo line, and returns the formatted string.
+`load` evaluates a Lisp file in the persistent global environment and returns
+`t`. A relative name without a directory separator is searched for in the
+current directory, `~/.mel.d/`, `~/.config/me/lisp/`,
+`/usr/local/share/me/lisp/`, and `/usr/share/me/lisp/`.
+`require` accepts a feature name as a string or symbol, loads it once, and
+returns `t` for every successful or already-completed request. It tries
+`feature.l`, `feature.lisp`, and `feature.mel` in the same directories. The
+optional GNU Emacs-style arguments are a filename and `NOERROR`; when
+`NOERROR` is non-nil, a missing module returns `nil` instead of raising a
+Lisp error:
+
+    (require 'smart-indent)
+    (require "smart-indent")
+    (require "smart-indent" "path/smart-indent.l")
+    (require "smart-indent" nil t)
+
 `set-lisp-debug` sets the Lisp debug level; level 0 disables debug output.
 `debug-message` takes a positive message level, a format string, and optional
 arguments. It uses the same conversions as `message`, displays

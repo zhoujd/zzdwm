@@ -49,3 +49,16 @@ The command-line help interface is grouped by operation as the argument list gro
   include those features.
 * **Stream Behavior:** Successful `--help` output goes to standard output;
   parser errors continue to use standard error.
+
+---
+
+## Implemented Modular Architecture Core: System `(load)` & `(require)` Support
+* `(load "file.l")` evaluates a file in the persistent global Lisp environment.
+* `(require "module")` and `(require 'module)` load a logical module once.
+* Lookup searches `./`, `~/.mel.d/`, `~/.config/me/lisp/`,
+  `/usr/local/share/me/lisp/`, and `/usr/share/me/lisp/`, trying `.l`,
+  `.lisp`, and `.mel` suffixes.
+* `require` supports GNU Emacs-style optional `FILENAME` and `NOERROR`
+  arguments.
+* Nested loads are safe across Tiny Lisp garbage collection, and
+  `examples/modules/main.l` provides a runnable example.

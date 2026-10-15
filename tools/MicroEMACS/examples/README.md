@@ -75,6 +75,39 @@ Hello from MicroEMACS
 2 + 3 = 5
 ```
 
+## Lisp Modules
+
+`modules/main.l` demonstrates `require` with an explicit module path:
+
+```sh
+./me --script examples/modules/main.l
+```
+
+Expected result:
+
+```text
+Hello from a Lisp module
+```
+
+`modules/search-main.l` demonstrates logical module lookup without an explicit
+path. It searches the current directory, `~/.mel.d/`, `~/.config/me/lisp/`, and
+the system Lisp directories:
+
+```sh
+mkdir -p ~/.mel.d
+cp examples/modules/demo.l ~/.mel.d/demo.l
+./me --script examples/modules/search-main.l
+```
+
+The expected result is the same. Remove the copied module if it is no longer
+needed:
+
+```sh
+rm ~/.mel.d/demo.l
+```
+
+## Headless code formatting
+
 `format-code.l` is a non-interactive formatting example. It removes the
 existing indentation and rewrites each line using the brace depth calculated
 by `smart-indent.l`:

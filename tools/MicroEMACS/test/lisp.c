@@ -832,6 +832,42 @@ main (void)
   }
 
   {
+    FILE *file = fopen ("nested-load.l", "wb");
+
+    assert (file != NULL);
+    assert (fputs ("(defun nested-build-list (count list)\n"
+                   "  (if (= count 0)\n"
+                   "      list\n"
+                   "    (nested-build-list (- count 1) (cons count list))))\n"
+                   "(nested-build-list 300 nil)\n"
+                   "(setq nested-load-value 42)\n"
+                   "nested-load-value",
+                   file) != EOF);
+    assert (fclose (file) == 0);
+    assert (evaluate ("(load \"nested-load.l\")") == TRUE);
+    assert (evaluate ("nested-load-value") == TRUE);
+    assert (strcmp (lisp_message, "[Lisp: 42]") == 0);
+    assert (remove ("nested-load.l") == 0);
+  }
+
+  {
+    FILE *file = fopen ("require-once.l", "wb");
+
+    assert (file != NULL);
+    assert (fputs ("(setq require-count 1)",
+                   file) != EOF);
+    assert (fclose (file) == 0);
+    assert (evaluate ("(require \"require-once\")") == TRUE);
+    assert (evaluate ("(require 'require-once)") == TRUE);
+    assert (evaluate ("require-count") == TRUE);
+    assert (strcmp (lisp_message, "[Lisp: 1]") == 0);
+    assert (remove ("require-once.l") == 0);
+  }
+
+  assert (evaluate ("(require \"missing-lisp-module\" nil t)") == TRUE);
+  assert (evaluate ("(require \"missing-lisp-module\")") == FALSE);
+
+  {
     FILE *file = fopen (".mel", "wb");
 
     assert (file != NULL);

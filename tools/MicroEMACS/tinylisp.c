@@ -69,8 +69,6 @@ typedef struct Memory {
 
 static Memory *memory = &(Memory){ MEMORY_SIZE, 0, 0, NULL, NULL };
 
-static jmp_buf exceptionEnv;
-
 typedef struct Buffer {
   char *data;
   size_t capacity, length;
@@ -79,6 +77,16 @@ typedef struct Buffer {
 static Buffer outputBuffer;
 static char errorData[ERROR_SIZE];
 static Buffer errorBuffer = { errorData, ERROR_SIZE, 0 };
+
+typedef struct EvalContext {
+  jmp_buf *exception;
+  Buffer previousOutput;
+  jmp_buf *previousException;
+} EvalContext;
+
+#define MAX_EVAL_CONTEXTS 32
+
+static jmp_buf *exceptionEnv = NULL;
 
 typedef struct HostDefinition {
   const char *name;
@@ -90,6 +98,9 @@ static size_t hostDefinitionCount = 0;
 
 static Object *environment = NULL;
 static bool initialized = false;
+static EvalContext evalContexts[MAX_EVAL_CONTEXTS];
+static size_t evalContextCount = 0;
+static Object *hostRoots = NULL;
 
 static void bufferPutc(Buffer *buffer, char value);
 static void bufferPuts(Buffer *buffer, const char *value);
@@ -127,7 +138,7 @@ void exceptionWithObject(Object *object, char *format, ...) {
   }
   va_end(args);
 
-  longjmp(exceptionEnv, 1);
+  longjmp(*exceptionEnv, 1);
 }
 
 static void
@@ -466,63 +477,67 @@ isOptionalParameter (Object *object)
 }
 
 Object *newEnv(Object **func, Object **vals, GC_PARAM) {
-  Object *object = newObject(TYPE_ENV, GC_ROOTS);
+  GC_TRACE(gcObject, newObject(TYPE_ENV, GC_ROOTS));
+  (*gcObject)->parent = nil;
+  (*gcObject)->vars = nil;
+  (*gcObject)->vals = nil;
 
   if ((*func) == nil)
-    object->parent = object->vars = object->vals = nil;
+    return *gcObject;
   else {
     GC_TRACE(gcVars, nil);
     GC_TRACE(gcVals, nil);
     GC_TRACE(gcVar, nil);
     GC_TRACE(gcVal, nil);
-    Object *param = (*func)->params, *val = *vals;
+    GC_TRACE(gcParam, (*func)->params);
+    GC_TRACE(gcArgument, *vals);
     bool optional = false;
     int nArgs = 0;
 
-    while (param != nil && param->type == TYPE_CONS) {
-      *gcVar = param->car;
+    while (*gcParam != nil && (*gcParam)->type == TYPE_CONS) {
+      *gcVar = (*gcParam)->car;
       if (isOptionalParameter (*gcVar) != false) {
         optional = true;
         *gcVal = nil;
       } else {
-        if (val == nil) {
+        if (*gcArgument == nil) {
           if (!optional)
             exceptionWithObject(*func, "expects at least %d arguments", nArgs);
           *gcVal = nil;
         } else {
-          if (val->type != TYPE_CONS)
-            exceptionWithObject(val, "is not a list");
-          *gcVal = val->car;
-          val = val->cdr;
+          if ((*gcArgument)->type != TYPE_CONS)
+            exceptionWithObject(*gcArgument, "is not a list");
+          *gcVal = (*gcArgument)->car;
+          *gcArgument = (*gcArgument)->cdr;
         }
         ++nArgs;
       }
       *gcVars = newCons(gcVar, gcVars, GC_ROOTS);
       *gcVals = newCons(gcVal, gcVals, GC_ROOTS);
-      param = param->cdr;
+      *gcParam = (*gcParam)->cdr;
     }
 
-    if (param != nil) {
-      if (param->type != TYPE_SYMBOL)
-        exceptionWithObject(param, "is not a symbol");
-      if (val != nil && val->type != TYPE_CONS)
-        exceptionWithObject(val, "is not a list");
-      *gcVar = param;
-      *gcVal = val;
+    if (*gcParam != nil) {
+      if ((*gcParam)->type != TYPE_SYMBOL)
+        exceptionWithObject(*gcParam, "is not a symbol");
+      if (*gcArgument != nil && (*gcArgument)->type != TYPE_CONS)
+        exceptionWithObject(*gcArgument, "is not a list");
+      *gcVar = *gcParam;
+      *gcVal = *gcArgument;
       *gcVars = newCons(gcVar, gcVars, GC_ROOTS);
       *gcVals = newCons(gcVal, gcVals, GC_ROOTS);
       ++nArgs;
-      val = nil;
+      *gcArgument = nil;
     }
-    if (val != nil)
+    if (*gcArgument != nil)
       exceptionWithObject(*func, "expects at most %d arguments", nArgs);
 
-    object->parent = (*func)->env;
-    object->vars = reverseList(*gcVars);
-    object->vals = reverseList(*gcVals);
+    (*gcObject)->parent = (*func)->env;
+    (*gcObject)->vars = reverseList(*gcVars);
+    (*gcObject)->vals = reverseList(*gcVals);
   }
 
-  return object;
+  return *gcObject;
 }
 
 // STREAM INPUT ///////////////////////////////////////////////////////////////
@@ -1228,6 +1243,7 @@ Object *callHost(Object **function, Object **args, GC_PARAM) {
   char result[TINY_LISP_HOST_RESULT_SIZE];
   HostFunction eval = (*function)->eval;
   int argc = 0;
+  Object *previousHostRoots = hostRoots;
 
   for (Object *object = *args; object != nil; object = object->cdr, argc++) {
     if (argc == MAX_HOST_ARGS)
@@ -1247,7 +1263,9 @@ Object *callHost(Object **function, Object **args, GC_PARAM) {
   }
 
   result[0] = 0;
+  hostRoots = GC_ROOTS;
   int status = eval(argc, argv, result, sizeof (result));
+  hostRoots = previousHostRoots;
 
   if (status == 0)
     exception("host command failed");
@@ -1486,26 +1504,49 @@ static int
 eval_source(const char *source, char *output, size_t output_size,
             bool single_expression)
 {
-  Object *gcRoots = nil;
+  Object *gcRoots = hostRoots == NULL ? nil : hostRoots;
   Object envRoot = { TYPE_CONS, .car = NULL, .cdr = gcRoots };
   Object **gcEnv = &envRoot.car;
   Stream stream;
+  jmp_buf exceptionTarget;
+  EvalContext *context;
 
   if (source == NULL || output == NULL || output_size == 0)
     return 0;
+
+  if (evalContextCount == MAX_EVAL_CONTEXTS) {
+    Buffer previousOutput = outputBuffer;
+
+    outputBuffer.data = output;
+    outputBuffer.capacity = output_size;
+    outputBuffer.length = 0;
+    output[0] = 0;
+    bufferPuts(&outputBuffer, "error: nested evaluation depth exceeded");
+    outputBuffer = previousOutput;
+    return 0;
+  }
+
+  context = &evalContexts[evalContextCount++];
+  context->exception = &exceptionTarget;
+  context->previousOutput = outputBuffer;
+  context->previousException = exceptionEnv;
 
   outputBuffer.data = output;
   outputBuffer.capacity = output_size;
   outputBuffer.length = 0;
   output[0] = 0;
 
-  if (setjmp(exceptionEnv)) {
+  if (setjmp(exceptionTarget)) {
     if (initialized)
       environment = *gcEnv;
     outputBuffer.length = 0;
     bufferPuts(&outputBuffer, errorBuffer.data);
+    outputBuffer = context->previousOutput;
+    exceptionEnv = context->previousException;
+    --evalContextCount;
     return 0;
   }
+  exceptionEnv = context->exception;
 
   gcRoots = &envRoot;
   if (!initialized) {
@@ -1541,6 +1582,9 @@ eval_source(const char *source, char *output, size_t output_size,
       }
 
   writeObject(*gcObject, true, &outputBuffer);
+  outputBuffer = context->previousOutput;
+  exceptionEnv = context->previousException;
+  --evalContextCount;
   return 1;
 }
 

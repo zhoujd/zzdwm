@@ -20,6 +20,15 @@
 
 static int lisp_message_displayed;
 static int lisp_debug_level;
+static char **lisp_loaded_modules;
+static size_t lisp_loaded_module_count;
+static size_t lisp_loaded_module_capacity;
+
+static int lisp_load_file (int argc, const char *const *argv,
+                           char *result, size_t result_size);
+static int lisp_require (int argc, const char *const *argv,
+                         char *result, size_t result_size);
+static int lispload (const char *filename, int report);
 
 /* Convert a MicroEMACS key name to its internal key code. */
 static int
@@ -924,6 +933,8 @@ lisp_register_hosts (void)
     { "define-key", lisp_bind_key },
     { "set-variable", lisp_set_variable },
     { "message", lisp_message_form },
+    { "load", lisp_load_file },
+    { "require", lisp_require },
     { "set-lisp-debug", lisp_set_debug_level },
     { "debug-message", lisp_debug_message },
     { "execute-command", lisp_execute_command },
@@ -966,6 +977,64 @@ lisp_register_hosts (void)
                                hosts[index].function) != 1)
       return FALSE;
   registered = TRUE;
+  return TRUE;
+}
+
+static int
+lisp_true_argument (const char *argument)
+{
+  return argument != NULL && argument[0] != 0
+         && strcmp (argument, "nil") != 0;
+}
+
+static int
+lisp_valid_module_name (const char *name)
+{
+  return name != NULL && name[0] != 0
+         && strchr (name, '/') == NULL
+         && strchr (name, '\\') == NULL
+         && strchr (name, ':') == NULL;
+}
+
+static int
+lisp_module_loaded (const char *name)
+{
+  size_t index;
+
+  for (index = 0; index < lisp_loaded_module_count; index++)
+    if (strcmp (lisp_loaded_modules[index], name) == 0)
+      return TRUE;
+  return FALSE;
+}
+
+static int
+lisp_mark_module_loaded (const char *name)
+{
+  char **modules;
+  char *copy;
+  size_t length;
+
+  if (lisp_module_loaded (name) == TRUE)
+    return TRUE;
+  if (lisp_loaded_module_count == lisp_loaded_module_capacity)
+    {
+      size_t capacity = lisp_loaded_module_capacity == 0
+                        ? 8 : lisp_loaded_module_capacity * 2;
+
+      modules = realloc (lisp_loaded_modules,
+                         capacity * sizeof (*modules));
+      if (modules == NULL)
+        return FALSE;
+      lisp_loaded_modules = modules;
+      lisp_loaded_module_capacity = capacity;
+    }
+
+  length = strlen (name);
+  copy = malloc (length + 1);
+  if (copy == NULL)
+    return FALSE;
+  memcpy (copy, name, length + 1);
+  lisp_loaded_modules[lisp_loaded_module_count++] = copy;
   return TRUE;
 }
 
@@ -1049,23 +1118,74 @@ lisp_read_file (const char *filename, char **source)
 }
 
 static int
-lispload (const char *filename, int report)
+lisp_is_explicit_path (const char *filename)
+{
+  if (filename[0] == '/'
+      || filename[0] == '\\'
+      || filename[0] == '~')
+    return TRUE;
+  if (isalpha ((unsigned char) filename[0]) && filename[1] == ':')
+    return TRUE;
+  return strchr (filename, '/') != NULL
+         || strchr (filename, '\\') != NULL;
+}
+
+static int
+lisp_read_search_file (const char *filename, char **source,
+                       char *resolved, size_t resolved_size)
+{
+  static const char *const paths[] = {
+    "./",
+    "~/.mel.d/",
+    "~/.config/me/lisp/",
+    "/usr/local/share/me/lisp/",
+    "/usr/share/me/lisp/"
+  };
+  char candidate[NFILEN];
+  size_t index;
+
+  *source = NULL;
+  if (filename == NULL)
+    return lisp_read_file (filename, source);
+
+  if (lisp_is_explicit_path (filename) == TRUE)
+    {
+      if (lisp_read_file (filename, source) != TRUE)
+        return FALSE;
+      if (snprintf (resolved, resolved_size, "%s", filename)
+          >= (int) resolved_size)
+        {
+          free (*source);
+          *source = NULL;
+          return FALSE;
+        }
+      return TRUE;
+    }
+
+  for (index = 0; index < sizeof (paths) / sizeof (paths[0]); index++)
+    {
+      if (snprintf (candidate, sizeof (candidate), "%s%s",
+                    paths[index], filename) >= (int) sizeof (candidate))
+        continue;
+      if (lisp_read_file (candidate, source) != TRUE)
+        continue;
+      if (snprintf (resolved, resolved_size, "%s", candidate)
+          >= (int) resolved_size)
+        {
+          free (*source);
+          *source = NULL;
+          return FALSE;
+        }
+      return TRUE;
+    }
+  return FALSE;
+}
+
+static int
+lisp_evaluate_source (char *source, int report)
 {
   char result[LISP_OUTPUT_SIZE];
-  char *source;
   int status;
-
-  if (lisp_register_hosts () != TRUE)
-    {
-      eprintf ("[Lisp host commands unavailable]");
-      return FALSE;
-    }
-  if (lisp_read_file (filename, &source) != TRUE)
-    {
-      if (filename != NULL)
-        eprintf ("Unable to open Lisp file %s", filename);
-      return filename == NULL;
-    }
 
   lisp_message_displayed = FALSE;
   status = tiny_lisp_eval_source (source, result, sizeof (result));
@@ -1076,6 +1196,115 @@ lispload (const char *filename, int report)
            && (lisp_debug_level > 0 || strcmp (result, "t") != 0))
     eprintf ("[Lisp: %s]", result);
   return status;
+}
+
+static int
+lisp_load_source (const char *filename, int report, int quiet_missing)
+{
+  char resolved[NFILEN];
+  char *source;
+
+  if (lisp_register_hosts () != TRUE)
+    {
+      eprintf ("[Lisp host commands unavailable]");
+      return FALSE;
+    }
+
+  if (filename == NULL)
+    {
+      if (lisp_read_file (NULL, &source) != TRUE)
+        return TRUE;
+      return lisp_evaluate_source (source, report);
+    }
+
+  if (lisp_read_search_file (filename, &source,
+                             resolved, sizeof (resolved)) != TRUE)
+    {
+      if (quiet_missing == FALSE)
+        eprintf ("Unable to open Lisp file %s", filename);
+      return FALSE;
+    }
+  return lisp_evaluate_source (source, report);
+}
+
+static int
+lispload (const char *filename, int report)
+{
+  return lisp_load_source (filename, report, FALSE);
+}
+
+static int
+lisp_load_file (int argc, const char *const *argv,
+                char *result, size_t result_size)
+{
+  (void) result;
+  (void) result_size;
+  if (argc != 1 || argv[0][0] == 0)
+    return FALSE;
+  return lispload (argv[0], FALSE);
+}
+
+static int
+lisp_module_filename (const char *name, const char *suffix,
+                      char *filename, size_t filename_size)
+{
+  return snprintf (filename, filename_size, "%s%s", name, suffix)
+         < (int) filename_size;
+}
+
+static int
+lisp_require (int argc, const char *const *argv,
+              char *result, size_t result_size)
+{
+  static const char *const suffixes[] = { ".l", ".lisp", ".mel" };
+  const char *filename = NULL;
+  char resolved[NFILEN];
+  char module_filename[NFILEN];
+  char *source;
+  int noerror = FALSE;
+  size_t index;
+
+  (void) result;
+  (void) result_size;
+  if (argc < 1 || argc > 3
+      || lisp_valid_module_name (argv[0]) != TRUE)
+    return FALSE;
+  if (argc >= 2 && argv[1][0] != 0 && strcmp (argv[1], "nil") != 0)
+    filename = argv[1];
+  if (argc == 3)
+    noerror = lisp_true_argument (argv[2]);
+  if (lisp_module_loaded (argv[0]) == TRUE)
+    return TRUE;
+  if (lisp_register_hosts () != TRUE)
+    return FALSE;
+
+  if (filename != NULL)
+    {
+      if (lisp_read_search_file (filename, &source,
+                                 resolved, sizeof (resolved)) != TRUE)
+        return noerror ? TINY_LISP_HOST_NIL : FALSE;
+      if (lisp_evaluate_source (source, FALSE) != TRUE)
+        return FALSE;
+      return lisp_mark_module_loaded (argv[0]) == TRUE
+             ? TRUE : FALSE;
+    }
+
+  for (index = 0; index < sizeof (suffixes) / sizeof (suffixes[0]);
+       index++)
+    {
+      if (lisp_module_filename (argv[0], suffixes[index],
+                                module_filename,
+                                sizeof (module_filename)) != TRUE)
+        return FALSE;
+      if (lisp_read_search_file (module_filename, &source,
+                                 resolved, sizeof (resolved)) != TRUE)
+        continue;
+      if (lisp_evaluate_source (source, FALSE) != TRUE)
+        return FALSE;
+      return lisp_mark_module_loaded (argv[0]) == TRUE ? TRUE : FALSE;
+    }
+
+  return noerror ? TINY_LISP_HOST_NIL : FALSE;
 }
 
 int
