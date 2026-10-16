@@ -17,6 +17,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef MICROEMACS_DEF_H
+#define MICROEMACS_DEF_H
+
 /* $Header: /home/bloovis/cvsroot/pe/def.h,v 1.5 2005-11-11 17:30:27 bloovis Exp $
  *
  * Name:        MicroEMACS
@@ -1265,3 +1268,5 @@ void printversion(void);
  * Defined by "complete.c".
  */
 int getfilename (char *prompt, char *buf, int nbuf);
+
+#endif

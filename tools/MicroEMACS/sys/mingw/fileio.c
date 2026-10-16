@@ -555,7 +555,7 @@ ffsearch (const char *name,	/* filename to search for */
       else
         {
           buf[pathlen - 1] = '\0';	/* temporarily zap slash */
-          path_to_native (buf, native, sizeof (native));
+          path_to_native (fftilde (buf), native, sizeof (native));
           dirp = opendir (native);	/* open directory       */
           buf[pathlen - 1] = c;	/* restore slash */
         }
@@ -564,11 +564,14 @@ ffsearch (const char *name,	/* filename to search for */
     }
   while ((ff = readdir (dirp)) != NULL)	/* find next file       */
     {
+      if (strcmp (ff->d_name, ".") == 0
+          || strcmp (ff->d_name, "..") == 0)
+        continue;
       if (pathlen + strlen (ff->d_name) >= sizeof (buf))
         continue;
-      if (flag && !ffisdir (ff->d_name, strlen (ff->d_name)))
-        continue;
       strcpy (&buf[pathlen], ff->d_name);	/* append filename    */
+      if (flag && !ffisdir (buf, cpos + strlen (ff->d_name)))
+        continue;
       strlwr (buf);            /* lower-case it        */
       if (strncmp (buf, name, cpos) == 0)      /* if it matches,       */
         return (buf);		/* return static buffer */

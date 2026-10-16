@@ -520,8 +520,8 @@ lisp_read_directory_name (int argc, const char *const *argv,
   if (argc == 2)
     {
       default_directory = argv[1];
-      if (snprintf (prompt, sizeof (prompt), "%s (%s): ",
-                    argv[0], default_directory) >= (int) sizeof (prompt))
+      if (snprintf (prompt, sizeof (prompt), "%s: ", argv[0])
+          >= (int) sizeof (prompt))
         return FALSE;
     }
   else if (snprintf (prompt, sizeof (prompt), "%s: ", argv[0])

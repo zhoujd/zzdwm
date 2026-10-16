@@ -1,14 +1,74 @@
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef MINGW
+int setenv (const char *name, const char *value, int overwrite);
+int unsetenv (const char *name);
+#endif
+
 #include "../path.c"
+
+#ifdef MINGW
+void eprintf (const char *format, ...);
+int dosmode;
+BUFFER *curbp;
+int zflag;
+
+void
+eprintf (const char *format, ...)
+{
+  (void) format;
+}
+
+int
+setenv (const char *name, const char *value, int overwrite)
+{
+  char *combined;
+  size_t size;
+
+  (void) overwrite;
+  size = strlen (name) + strlen (value) + 2;
+  combined = malloc (size);
+  if (combined == NULL)
+    return -1;
+  snprintf (combined, size, "%s=%s", name, value);
+  putenv (combined);
+  return 0;
+}
+
+int
+unsetenv (const char *name)
+{
+  char *empty;
+  size_t size = strlen (name) + 2;
+
+  empty = malloc (size);
+  if (empty == NULL)
+    return -1;
+  snprintf (empty, size, "%s=", name);
+  putenv (empty);
+  free (empty);
+  return 0;
+}
+#endif
+
+#ifdef MINGW
+#include "../sys/mingw/fileio.c"
+#endif
 
 int
 main (void)
 {
   char path[256];
+
+#ifdef MINGW
+  char name[256] = "/tmp/microemacs-path-test/";
+  char selected[256];
+  char *entry;
+#endif
 
   assert (path_is_separator ('/') == TRUE);
   assert (path_is_absolute ("/tmp") == TRUE);
@@ -65,6 +125,27 @@ main (void)
     if (homepath != NULL)
       assert (setenv ("HOMEPATH", homepath, 1) == 0);
   }
+#endif
+
+#ifdef MINGW
+  assert (mkdir (name) == 0 || errno == EEXIST);
+  snprintf (selected, sizeof (selected), "%sselected", name);
+  assert (mkdir (selected) == 0 || errno == EEXIST);
+
+  assert (setenv ("HOME", name, 1) == 0);
+  entry = ffsearch ("~/", 2, NULL, TRUE);
+  assert (entry != NULL);
+  assert (strncmp (entry, "~/", 2) == 0 && entry[2] != 0);
+  assert (ffsearch ("~/", 2, entry, TRUE) == NULL);
+
+  entry = ffsearch ("./", 2, NULL, TRUE);
+  assert (entry != NULL);
+  assert (strncmp (entry, "./", 2) == 0 && entry[2] != 0);
+  assert (ffsearch ("./", 2, entry, TRUE) == NULL);
+
+  entry = ffsearch (name, strlen (name), NULL, TRUE);
+  assert (entry != NULL);
+  assert (ffsearch (name, strlen (name), entry, TRUE) == NULL);
 #endif
 
   strcpy (path, "/tmp/./microemacs/../me/");

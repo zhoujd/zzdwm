@@ -28,4 +28,5 @@ lisp-test
 ai-test
 path-test
 path-mingw-test
+path-mingw-test.exe
 tag-test
