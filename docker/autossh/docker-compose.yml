@@ -1,0 +1,22 @@
+# Project: autossh
+
+services:
+  autossh-tunnel:
+    build:
+      context: ../dockerfiles/tool
+      dockerfile: autossh.dockerfile
+    container_name: autossh-tunnel
+    image: zhoujd/autossh:latest
+    restart: always
+    environment:
+      - AUTOSSH_M=0
+      - AUTOSSH_GATETIME=0
+      - SSH_MODE=-R
+      - SSH_BIND_ADDRESS=42222
+      - SSH_TARGET_HOST=localhost
+      - SSH_TARGET_PORT=22
+      - SSH_HOST_USER=zach
+      - SSH_HOST_NAME=10.11.60.160
+      - SSH_OPTIONS=-i /root/.ssh/id_rsa -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=no
+    volumes:
+      - ./net_ssh:/root/.ssh:ro

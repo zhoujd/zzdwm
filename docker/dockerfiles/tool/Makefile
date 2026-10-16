@@ -1,6 +1,6 @@
 ### Build in Docker
 
-TARGET: valgrind-base wine-base mingw-base docs-base
+TARGET: valgrind-base wine-base mingw-base docs-base autossh-base
 
 CTN_USER ?= ${USER}
 IMG_NS ?= zhoujd
@@ -19,6 +19,9 @@ Mingw_LATEST_TAG := $(IMG_NS)/mingw:latest
 
 Docs_BASE_TAG := $(IMG_NS)/docs:base
 Docs_LATEST_TAG := $(IMG_NS)/docs:latest
+
+Autossh_BASE_TAG := $(IMG_NS)/autossh:base
+Autossh_LATEST_TAG := $(IMG_NS)/autossh:latest
 
 .PHONY: all
 all: $(TARGET)
@@ -39,11 +42,16 @@ docs-base: docs.dockerfile
 	docker build $(BUILD_ARG) -t $(Docs_BASE_TAG) -f $< .
 	docker tag $(Docs_BASE_TAG) $(Docs_LATEST_TAG)
 
+autossh-base: autossh.dockerfile autossh-entrypoint.sh bin/autossh
+	docker build $(BUILD_ARG) -t $(Autossh_BASE_TAG) -f autossh.dockerfile .
+	docker tag $(Autossh_BASE_TAG) $(Autossh_LATEST_TAG)
+
 .PHONY: clean
 clean:
 	-docker rmi $(Valgrind_BASE_TAG) $(Valgrind_LATEST_TAG) \
 		$(Mingw_BASE_TAG) $(Mingw_LATEST_TAG)
 	-docker rmi $(Docs_BASE_TAG) $(Docs_LATEST_TAG)
+	-docker rmi $(Autossh_BASE_TAG) $(Autossh_LATEST_TAG)
 
 .PHONY: help
 help:
@@ -55,3 +63,4 @@ help:
 	@echo "$$ make wine-base"
 	@echo "$$ make mingw-base"
 	@echo "$$ make docs-base"
+	@echo "$$ make autossh-base"
