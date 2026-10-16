@@ -8,6 +8,7 @@ services:
     container_name: autossh-tunnel
     image: zhoujd/autossh:latest
     restart: always
+    network_mode: host
     user: tunnel
     environment:
       - HOME=/home/tunnel
@@ -17,8 +18,8 @@ services:
       - SSH_BIND_ADDRESS=42222
       - SSH_TARGET_HOST=localhost
       - SSH_TARGET_PORT=22
-      - SSH_HOST_USER=zachary.zhou
-      - SSH_HOST_NAME=10.11.60.160
-      - SSH_OPTIONS=-i /home/tunnel/.ssh/id_rsa -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+      - SSH_HOST_NAME=s160
+      - AUTOSSH_POLL=5
+      - SSH_OPTIONS=-i /home/tunnel/.ssh/id_rsa -o ServerAliveInterval=5 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
     volumes:
       - $HOME/.ssh:/mnt/sshkeys:ro
