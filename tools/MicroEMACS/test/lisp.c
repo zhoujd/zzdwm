@@ -25,6 +25,7 @@ int ncol = 100;
 int ttrow = 29;
 int ttcol = 7;
 int epresf;
+int enoecho;
 
 static const char *lisp_input;
 static int lisp_input_status = TRUE;

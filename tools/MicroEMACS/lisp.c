@@ -377,6 +377,8 @@ lisp_find_file (int argc, const char *const *argv,
                 char *result, size_t result_size)
 {
   char filename[NFILEN];
+  char old_echo;
+  int status;
 
   (void) result;
   (void) result_size;
@@ -385,7 +387,11 @@ lisp_find_file (int argc, const char *const *argv,
     return FALSE;
   strcpy (filename, argv[0]);
   adjustcase (filename);
-  return visit_file (filename);
+  old_echo = enoecho;
+  enoecho = TRUE;
+  status = visit_file (filename);
+  enoecho = old_echo;
+  return status;
 }
 
 static int

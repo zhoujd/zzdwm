@@ -574,7 +574,8 @@ readlines (
 #endif
 
   nline = 0;
-  eprintf ("[Reading...]");
+  if (enoecho == FALSE)
+    eprintf ("[Reading...]");
   do
     {
       s = ffgetline (&line, &nbytes);	/* read next line       */
