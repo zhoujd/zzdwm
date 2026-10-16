@@ -20,8 +20,14 @@ EWINDOW *curwp;
 int *kbdmip;
 int *kbdmop;
 int scriptmode;
+int nrow = 30;
+int ncol = 100;
+int ttrow = 29;
+int ttcol = 7;
+int epresf;
 
 static const char *lisp_input;
+static int lisp_input_status = TRUE;
 static char lisp_message[256];
 static int bound_key;
 static SYMBOL *bound_symbol;
@@ -112,7 +118,7 @@ ereadv (const char *prompt, char *buffer, int buffer_size, int flag, ...)
   if (length >= (size_t) buffer_size)
     return FALSE;
   memcpy (buffer, lisp_input, length + 1);
-  return TRUE;
+  return lisp_input_status;
 }
 
 int
@@ -136,6 +142,30 @@ eprintf (const char *format, ...)
   va_start (args, format);
   vsnprintf (lisp_message, sizeof (lisp_message), format, args);
   va_end (args);
+}
+
+void
+eputs (const char *text)
+{
+  strncat (lisp_message, text,
+           sizeof (lisp_message) - strlen (lisp_message) - 1);
+}
+
+void
+ttmove (int row, int column)
+{
+  (void) row;
+  (void) column;
+}
+
+void
+tteeol (void)
+{
+}
+
+void
+ttflush (void)
+{
 }
 
 void
@@ -510,6 +540,16 @@ evaluate_with_prefix (const char *expression, int flag, int count)
   return lispeval (flag, count, 0);
 }
 
+static int
+evaluate_source (const char *source)
+{
+  char *copy = strdup (source);
+
+  assert (copy != NULL);
+  lisp_message[0] = 0;
+  return lisp_evaluate_source (copy, TRUE);
+}
+
 static void
 set_primitive_line (const char *text)
 {
@@ -784,6 +824,13 @@ main (void)
     assert (tiny_lisp_eval ("(read-file-name \"Find file\")",
                             result, sizeof (result)) == 1);
     assert (strcmp (result, "nil") == 0);
+    lisp_input_status = ABORT;
+    assert (evaluate_source ("(read-directory-name \"Dired\" \".\")")
+            == TRUE);
+    assert (strcmp (lisp_message, "^G") == 0);
+    assert (evaluate_source ("(read-file-name \"Find file\")") == TRUE);
+    assert (strcmp (lisp_message, "^G") == 0);
+    lisp_input_status = TRUE;
     assert (evaluate ("(read-file-name)") == FALSE);
     assert (evaluate ("(read-file-name \"one\" \"two\" \"three\")")
             == FALSE);

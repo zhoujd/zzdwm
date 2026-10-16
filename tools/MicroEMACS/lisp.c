@@ -25,6 +25,7 @@
 #define LISP_DIRED_ENTRY_COLUMN 42
 
 static int lisp_message_displayed;
+static int prompt_aborted;
 static int lisp_debug_level;
 static char **lisp_loaded_modules;
 static size_t lisp_loaded_module_count;
@@ -36,7 +37,8 @@ static int lisp_require (int argc, const char *const *argv,
                          char *result, size_t result_size);
 static int lispload (const char *filename, int report);
 
-/* Convert a MicroEMACS key name to its internal key code. */
+static void show_prompt_abort (void);
+static int prompt_abort_column (void);
 static int
 lisp_key_code (const char *name)
 {
@@ -539,7 +541,10 @@ lisp_read_directory_name (int argc, const char *const *argv,
       if (macro_pointer != NULL)
         kbdmop = macro_pointer;
       if (status == ABORT)
-        return TINY_LISP_HOST_NIL;
+        {
+          prompt_aborted = TRUE;
+          return TINY_LISP_HOST_NIL;
+        }
       if (status != TRUE || directory[0] == 0)
         strcpy (directory, default_directory);
     }
@@ -584,7 +589,10 @@ lisp_read_file_name (int argc, const char *const *argv,
       if (macro_pointer != NULL)
         kbdmop = macro_pointer;
       if (status == ABORT)
-        return TINY_LISP_HOST_NIL;
+        {
+          prompt_aborted = TRUE;
+          return TINY_LISP_HOST_NIL;
+        }
       if (status != TRUE)
         return FALSE;
     }
@@ -1685,14 +1693,33 @@ lisp_evaluate_source (char *source, int report)
   int status;
 
   lisp_message_displayed = FALSE;
+  prompt_aborted = FALSE;
   status = tiny_lisp_eval_source (source, result, sizeof (result));
   free (source);
   if (status != TRUE)
     eprintf ("[Lisp error: %s]", result);
+  else if (prompt_aborted != FALSE)
+    show_prompt_abort ();
   else if (report != FALSE && lisp_message_displayed == FALSE
            && (lisp_debug_level > 0 || strcmp (result, "t") != 0))
     eprintf ("[Lisp: %s]", result);
   return status;
+}
+
+static void
+show_prompt_abort (void)
+{
+  ttmove (ttrow, prompt_abort_column ());
+  eputs ("^G");
+  tteeol ();
+  ttflush ();
+  epresf = TRUE;
+}
+
+static int
+prompt_abort_column (void)
+{
+  return ttcol - 2 >= 0 ? ttcol - 2 : 0;
 }
 
 static int
@@ -1861,9 +1888,12 @@ lispeval (int f, int n, int k)
     return FALSE;
 
   lisp_message_displayed = FALSE;
+  prompt_aborted = FALSE;
   status = tiny_lisp_eval (source, result, sizeof (result));
   if (status != TRUE)
     eprintf ("[Lisp error: %s]", result);
+  else if (prompt_aborted != FALSE)
+    show_prompt_abort ();
   else if (lisp_message_displayed == FALSE
            && (lisp_debug_level > 0 || strcmp (result, "t") != 0))
     eprintf ("[Lisp: %s]", result);
