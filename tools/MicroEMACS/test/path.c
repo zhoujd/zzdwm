@@ -113,8 +113,8 @@ main (void)
     path_to_native ("/c/Windows/System32", path, sizeof (path));
     assert (strcmp (path, "C:/Windows/System32") == 0);
 
-  path_to_native ("/c", path, sizeof (path));
-  assert (strcmp (path, "C:/") == 0);
+    path_to_native ("/c", path, sizeof (path));
+    assert (strcmp (path, "C:/") == 0);
 
     if (home != NULL)
       assert (setenv ("HOME", home, 1) == 0);
