@@ -143,6 +143,7 @@ install_misc() {
     echo "Install me lisp"
     local me=$CORE_ROOT/misc/me
     ln -sfTv $me/.mel ~/.mel
+    ln -sfTv $me/.mel.d ~/.mel.d
     echo "Install terminfo"
     local term=$CORE_ROOT/misc/term
     tis=(
