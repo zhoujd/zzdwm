@@ -18,3 +18,13 @@ The environment matches flagship GNU Emacs user-space layouts by implementing na
 Sample code
 - zzdwm/tools/MicroEMACS/game/snake.l
 - zzdwm/tools/MicroEMACS/game/tetris.l
+
+---
+
+## Gamified Interactive Pedagogy: Embedded Hotkey Tutor Loop
+To simplify muscle-memory acquisition for new software learners, an educational simulation engine operates completely inside user space scripts.
+* **Primitive Traversal Restraints:** Leverages direct text character queries (`get-char`) to build an active rogue-like ASCII map tracking loop. It reinforces core editing navigation keys (`C-f`, `C-b`, `C-n`, `C-p`, `C-a`, `C-e`) as character vector controls.
+* **Decoupled Learning Sandbox:** Proves that complex multi-level workflows can be constructed dynamically over our atomic C bridge array without forcing structural alterations inside our **447 KB static executable**.
+
+Sample code
+- zzdwm/tools/MicroEMACS/game/tutor-game.l
