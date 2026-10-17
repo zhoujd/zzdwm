@@ -96,15 +96,15 @@ it as a MicroEMACS command, and binds **Enter** (`C-m`).
 
 ---
 
-## Enabling provide primitive
+## C-Driven Package Introspection
+
+### Enabling provide primitive
 When a script file (like dired.l) ends with (provide 'dired), the macro
 evaluates, updates the features cache list, and returns. The next file that
 calls (require 'dired) will intercept the token check in user space
 and skip re-parsing, preventing infinite recursion loops.
 
----
-
-## C-Driven Package Introspection: Native `M-x list-features`
+### Native `M-x list-features`
 To optimize memory performance and help software learners inspect loaded states, a direct C host tracking block bypasses standard cell mapping loops.
 * **Direct Pointer Traversal:** The compiled routine reads the active `features` global list directly, walks through its underlying cons cells, and dumps formatting rows out to a dedicated read-only screen scratchpad buffer named `*Features*`.
 * **Zero Overhead Allocation:** Reuses standard buffer generation macros, exposing advanced introspection tools while preserving our stable **447 KB binary constraint**.
