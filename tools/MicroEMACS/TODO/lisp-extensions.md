@@ -93,3 +93,11 @@ it as a MicroEMACS command, and binds **Enter** (`C-m`).
 (define-lisp-command "smart-indent" #'smart-indent)
 (define-key "C-m" "smart-indent")
 ```
+
+---
+
+## To add provide primitive
+When a script file (like dired.l) ends with (provide 'dired), the macro
+evaluates, updates the features cache list, and returns. The next file that
+calls (require 'dired) will intercept the token check in user space
+and skip re-parsing, preventing infinite recursion loops.
