@@ -1,4 +1,4 @@
-# Project: autossh
+# Project: AutoSSH Reverse Tunnel
 
 services:
   autossh-tunnel:
