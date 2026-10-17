@@ -37,14 +37,14 @@ From this directory, build and run the editor:
 Useful startup options include:
 
 ```sh
-./me --help         # Show command-line options
-./me file.c:123:4    # Open a file at line 123, column 4
-./me -C file.c       # Disable color for this session
-./me -n file.c       # Show line numbers
-./me -2 file.c       # Use a two-page display
-./me -l startup.l    # Load a Lisp startup file
+./me --help             # Show command-line options
+./me file.c:123:4       # Open a file at line 123, column 4
+./me -C file.c          # Disable color for this session
+./me -n file.c          # Show line numbers
+./me -2 file.c          # Use a two-page display
+./me -l startup.l       # Load a Lisp startup file
 ./me --script script.l  # Run a Lisp script without a terminal
-./me -q file.c       # Skip default startup files
+./me -q file.c          # Skip default startup files
 ```
 
 MicroEMACS loads `./.mel` or `~/.mel` automatically on Linux and Windows when
