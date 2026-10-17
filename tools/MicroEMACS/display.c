@@ -89,8 +89,8 @@
  * for change the size of a structure that isn't used.
  * A bit of a cheat.
  */
-#define	XCHAR	int
-#define	XSHORT	int
+#define XCHAR  int
+#define XSHORT int
 
 /*
  * A video structure always holds
@@ -111,8 +111,8 @@ typedef struct
 }
 VIDEO;
 
-#define	VFCHG	0x0001		/* Changed.                     */
-#define	VFHBAD	0x0002		/* Hash and cost are bad.       */
+#define VFCHG   0x0001		/* Changed.                     */
+#define VFHBAD  0x0002		/* Hash and cost are bad.       */
 
 /*
  * SCORE structures hold the optimal
