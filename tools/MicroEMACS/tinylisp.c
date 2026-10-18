@@ -1355,6 +1355,7 @@ Object *evalExpr(Object **object, Object **env, GC_PARAM) {
 
 static const char *stdlib = TINY_LISP_SOURCE(
   (setq prefix-arg 1)
+  (setq features nil)
 
   (setq list (lambda args args))
 
@@ -1435,6 +1436,10 @@ static const char *stdlib = TINY_LISP_SOURCE(
                 (cons (cons (quote progn) body)
                       (list (list (quote while) condition . body))))
           nil))
+
+  (defmacro provide (feature)
+    (list (quote setq) (quote features)
+    (list (quote cons) feature (quote features))))
 );
 
 // MAIN ///////////////////////////////////////////////////////////////////////
