@@ -106,5 +106,5 @@ and skip re-parsing, preventing infinite recursion loops.
 
 ### Native `M-x list-features`
 To optimize memory performance and help software learners inspect loaded states, a direct C host tracking block bypasses standard cell mapping loops.
-* **Direct Pointer Traversal:** The compiled routine reads the active `features` global list directly, walks through its underlying cons cells, and dumps formatting rows out to a dedicated read-only screen scratchpad buffer named `*Features*`.
+* **Direct Pointer Traversal:** The compiled routine reads the active `features` global list directly, walks through its underlying cons cells, and dumps formatting rows out to a dedicated read-only screen scratchpad buffer named `*message*`.
 * **Zero Overhead Allocation:** Reuses standard buffer generation macros, exposing advanced introspection tools while preserving our stable **447 KB binary constraint**.
