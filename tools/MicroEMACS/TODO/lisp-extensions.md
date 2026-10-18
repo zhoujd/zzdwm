@@ -101,6 +101,9 @@ it as a MicroEMACS command, and binds **Enter** (`C-m`).
 Looks like already had in `require` feature in lisp.c:1514: lisp_module_loaded.
 The request `provide` and explict `list-feature` becoming unnecessary.
 Let's just marked it here.
+Review: edae30f ME: sample provide feature support
+
+Followings are original ideals for reference.
 
 ### Enabling provide primitive
 When a script file (like dired.l) ends with (provide 'dired), the macro
