@@ -98,9 +98,7 @@ it as a MicroEMACS command, and binds **Enter** (`C-m`).
 
 ## C-Driven Package Introspection
 
-Looks like already had in `require` feature in lisp.c:1514: lisp_module_loaded.
-The request `provide` and explict `list-feature` becoming unnecessary.
-Let's just marked it here.
+Looks like already had part of `require` feature in lisp.c:1514: lisp_module_loaded.
 Review: edae30f ME: sample provide feature support
 
 Followings are original ideals for reference.
