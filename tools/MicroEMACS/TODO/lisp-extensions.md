@@ -98,6 +98,10 @@ it as a MicroEMACS command, and binds **Enter** (`C-m`).
 
 ## C-Driven Package Introspection
 
+Looks like already had in `require` feature in lisp.c:1514: lisp_module_loaded.
+The request `provide` and explict `list-feature` becoming unnecessary.
+Let's just marked it here.
+
 ### Enabling provide primitive
 When a script file (like dired.l) ends with (provide 'dired), the macro
 evaluates, updates the features cache list, and returns. The next file that
