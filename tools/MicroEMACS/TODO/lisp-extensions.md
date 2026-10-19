@@ -115,3 +115,14 @@ inspectable.
 
 Validated with `lisp-test`, the source test build, and standard/minimal Linux
 builds.
+
+---
+
+## Aligned Lisp Feature Columns [DONE]
+
+`M-x list-features` keeps its `Feature` heading but now formats feature names
+with the same 16-column grid used by the autocomplete choice pop-up in
+`addchoice`. Rows wrap to the display width rather than placing every feature
+on its own line.
+
+Validated with `lisp-test`.

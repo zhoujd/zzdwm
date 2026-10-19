@@ -43,7 +43,7 @@ static char mode_name[32];
 static char mode_storage;
 static int bclear_called;
 static BUFFER *bclear_buffer;
-static const char *feature_lines[8];
+static char feature_lines[8][NCOL + 1];
 static int feature_line_count;
 static int gotobob_called;
 static int bound_line_key;
@@ -257,7 +257,9 @@ addline (const char *text)
   if (feature_line_count >= (int) (sizeof (feature_lines)
                                    / sizeof (feature_lines[0])))
     return FALSE;
-  feature_lines[feature_line_count++] = text;
+  snprintf (feature_lines[feature_line_count],
+            sizeof (feature_lines[feature_line_count]), "%s", text);
+  feature_line_count++;
   return TRUE;
 }
 
@@ -1190,14 +1192,16 @@ main (void)
 
     bclear_called = 0;
     bclear_buffer = NULL;
+    ncol = 40;
     assert (lisplistfeatures (FALSE, 1, 0) == TRUE);
+    ncol = 100;
     assert (bclear_called == 1 && bclear_buffer == blistp);
     assert (feature_line_count == 5);
     assert (strcmp (feature_lines[0], "Feature") == 0);
     assert (strcmp (feature_lines[1], "-------") == 0);
-    assert (strcmp (feature_lines[2], "require-once") == 0);
-    assert (strcmp (feature_lines[3], "standalone-feature") == 0);
-    assert (strcmp (feature_lines[4], "provide-and-load") == 0);
+    assert (strcmp (feature_lines[2], "require-once    ") == 0);
+    assert (strcmp (feature_lines[3], "standalone-feature              ") == 0);
+    assert (strcmp (feature_lines[4], "provide-and-load                ") == 0);
   }
 
   assert (evaluate ("(require \"missing-lisp-module\" nil t)") == TRUE);

@@ -458,7 +458,7 @@ addchoice (const
   if (flag & EFAUTO)		/* If command name      */
     pad = 1;			/* Pad only one space   */
   else
-    pad = 16 - ((len1 + len2) & 15);	/* Pad up to 16 spaces  */
+    pad = (int) choice_padding ((size_t) len1, (size_t) len2);
   if (len1 + len2 + pad > ncol)
     {				/* Line too long?       */
       addline (choicebuf);	/* Add it to buffer     */

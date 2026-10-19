@@ -38,6 +38,8 @@ static int lisp_require (int argc, const char *const *argv,
 static int lisp_provide (int argc, const char *const *argv,
                          char *result, size_t result_size);
 static int lispload (const char *filename, int report);
+static int lisp_add_feature (char *line, size_t line_size,
+                             const char *name);
 
 static void show_prompt_abort (void);
 static int prompt_abort_column (void);
@@ -1884,6 +1886,7 @@ int
 lisplistfeatures (int f, int n, int k)
 {
   size_t index;
+  char feature_line[NCOL + CHOICE_COLUMN_WIDTH + 1];
 
   (void) f;
   (void) n;
@@ -1903,11 +1906,42 @@ lisplistfeatures (int f, int n, int k)
       if (addline ("Feature") == FALSE
           || addline ("-------") == FALSE)
         return FALSE;
+      feature_line[0] = '\0';
       for (index = 0; index < lisp_loaded_module_count; index++)
-        if (addline (lisp_loaded_modules[index]) == FALSE)
+        if (lisp_add_feature (feature_line, sizeof (feature_line),
+                              lisp_loaded_modules[index]) == FALSE)
           return FALSE;
+      if (feature_line[0] != '\0' && addline (feature_line) == FALSE)
+        return FALSE;
     }
   return popblist ();
+}
+
+static int
+lisp_add_feature (char *line, size_t line_size, const char *name)
+{
+  size_t used = strlen (line);
+  size_t length = strlen (name);
+  size_t padding;
+  size_t index;
+
+  padding = choice_padding (used, length);
+  if (used != 0 && used + length + padding > (size_t) ncol)
+    {
+      if (addline (line) == FALSE)
+        return FALSE;
+      line[0] = '\0';
+      used = 0;
+      padding = choice_padding (used, length);
+    }
+  if (used + length + padding >= line_size)
+    return FALSE;
+
+  memcpy (line + used, name, length);
+  for (index = 0; index < padding; index++)
+    line[used + length + index] = ' ';
+  line[used + length + padding] = '\0';
+  return TRUE;
 }
 
 int

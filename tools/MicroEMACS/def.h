@@ -151,6 +151,14 @@ typedef unsigned char uchar;
 #define HUGE    1000            /* A rather large number.       */
 #define NSRCH   128             /* Undoable search commands.    */
 #define NXNAME  64              /* Length, extended command.    */
+#define CHOICE_COLUMN_WIDTH 16  /* Pop-up choice column width.  */
+
+static inline size_t
+choice_padding (size_t used, size_t length)
+{
+  return (size_t) CHOICE_COLUMN_WIDTH
+         - ((used + length) & (CHOICE_COLUMN_WIDTH - 1));
+}
 
 /*
  * Universal.
