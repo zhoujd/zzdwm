@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import json
 import subprocess
@@ -5,16 +7,16 @@ import requests
 
 # 1. Your API Configuration (Replace with your Key or read from environment variables)
 API_KEY = os.environ.get("OPENAI_API_KEY", "your_api_key_here")
-API_URL = "https://openai.com"
+API_URL = "http://10.11.70.11:8090/v1"
 
 # 2. Define the host tool: Execute system commands
 def run_terminal_command(command: str) -> str:
     """Executes a terminal command on the host environment and returns the output."""
-    # ⚠️ Security Guardrail: Prohibit dangerous deletion commands
+    # Security Guardrail: Prohibit dangerous deletion commands
     if "rm " in command or "format" in command:
         return "Error: Deletion or formatting commands are prohibited for security reasons."
 
-    print(f"\n[🤖 AI requests to execute command]: {command}")
+    print(f"\n[AI requests to execute command]: {command}")
     # Enable human-in-the-loop confirmation
     confirm = input("Allow execution? (y/n): ")
     if confirm.lower() != 'y':
@@ -82,7 +84,7 @@ def ask_ai_and_run(user_prompt: str):
                 arguments = json.loads(tool_call["function"]["arguments"])
                 cmd = arguments.get("command")
 
-                # 🛠️ Critical Step: Actually run the command on your host environment!
+                # Critical Step: Actually run the command on your host environment!
                 tool_output = run_terminal_command(cmd)
                 print(f"[💻 Host Output]:\n{tool_output}")
 
@@ -96,10 +98,10 @@ def ask_ai_and_run(user_prompt: str):
 
         # Initiate the second request: Let the AI synthesize the host output and respond to the user
         final_response = requests.post(API_URL, headers=headers, json=payload).json()
-        print(f"\n[🤖 AI Final Response]:\n{final_response['choices'][0]['message']['content']}")
+        print(f"\n[AI Final Response]:\n{final_response['choices'][0]['message']['content']}")
     else:
         # The AI did not need any tools and answered directly
-        print(f"\n[🤖 AI Response]:\n{response_message['content']}")
+        print(f"\n[AI Response]:\n{response_message['content']}")
 
 # Run test
 if __name__ == "__main__":
