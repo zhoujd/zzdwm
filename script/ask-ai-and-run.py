@@ -7,7 +7,8 @@ import requests
 
 # 1. Your API Configuration (Replace with your Key or read from environment variables)
 API_KEY = os.environ.get("OPENAI_API_KEY", "your_api_key_here")
-API_URL = "http://10.11.70.11:8090/v1"
+API_URL = os.environ.get("AI_API_URL", "http://10.11.70.11:8090/v1")
+MODEL = os.environ.get("AI_MODEL", "glm-5.3-flash")
 
 # 2. Define the host tool: Execute system commands
 def run_terminal_command(command: str) -> str:
@@ -52,6 +53,7 @@ tools_schema = [
 ]
 
 def ask_ai_and_run(user_prompt: str):
+    max_requests = 5
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {API_KEY}"
@@ -64,44 +66,40 @@ def ask_ai_and_run(user_prompt: str):
     ]
 
     payload = {
-        "model": "gpt-4o",  # Or any other model supporting Tool Calls
+        "model": MODEL,
         "messages": messages,
         "tools": tools_schema,
         "tool_choice": "auto"
     }
 
-    # Initiate the first request
-    response = requests.post(API_URL, headers=headers, json=payload).json()
-    response_message = response['choices'][0]['message']
+    for request_count in range(max_requests):
+        response = requests.post(f"{API_URL}/chat/completions", headers=headers,
+                                 json=payload, timeout=30).json()
+        response_message = response['choices'][0]['message']
 
-    # Check if the AI wants to call a tool
-    if response_message.get("tool_calls"):
-        messages.append(response_message)  # Save the AI's decision to history
+        if not response_message.get("tool_calls"):
+            print(f"\n[AI Response]:\n{response_message['content']}")
+            return
 
+        messages.append(response_message)
         for tool_call in response_message["tool_calls"]:
-            if tool_call["function"]["name"] == "run_terminal_command":
-                # Parse the command the AI wants to run
+            if tool_call["function"]["name"] != "run_terminal_command":
+                tool_output = "Error: Unsupported tool."
+            else:
                 arguments = json.loads(tool_call["function"]["arguments"])
-                cmd = arguments.get("command")
+                tool_output = run_terminal_command(arguments.get("command"))
 
-                # Critical Step: Actually run the command on your host environment!
-                tool_output = run_terminal_command(cmd)
-                print(f"[💻 Host Output]:\n{tool_output}")
+            print(f"[Host Output]:\n{tool_output}")
+            messages.append({
+                "tool_call_id": tool_call["id"],
+                "role": "tool",
+                "name": "run_terminal_command",
+                "content": tool_output
+            })
 
-                # Wrap the host output and send it back to the AI
-                messages.append({
-                    "tool_call_id": tool_call["id"],
-                    "role": "tool",
-                    "name": "run_terminal_command",
-                    "content": tool_output
-                })
+        payload["messages"] = messages
 
-        # Initiate the second request: Let the AI synthesize the host output and respond to the user
-        final_response = requests.post(API_URL, headers=headers, json=payload).json()
-        print(f"\n[AI Final Response]:\n{final_response['choices'][0]['message']['content']}")
-    else:
-        # The AI did not need any tools and answered directly
-        print(f"\n[AI Response]:\n{response_message['content']}")
+    print("\n[AI Response]: Stopped after the maximum number of tool rounds.")
 
 # Run test
 if __name__ == "__main__":
