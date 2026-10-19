@@ -102,6 +102,12 @@ available when color is enabled. `execute-command`, also available as
 `editor-cmd`, runs a MicroEMACS command by name with an optional numeric
 argument; use direct buffer forms when a command would otherwise prompt for
 text.
+`shell-command-to-string` passes one command line to the system shell and
+returns its standard output as a string. It returns `nil` after an error if
+the shell cannot be waited on or the captured output does not fit; a command's
+nonzero exit status does not hide valid output. Use a shell redirection such as
+`2>&1` when error text is also needed. The existing interactive `C-X !` shell
+command is unchanged.
 `set-modeline-color` customizes the mode line when color is enabled. The
 first two arguments are the foreground and background 256-color indexes; the
 last two are the fallback colors for 8/16-color terminals and the Windows

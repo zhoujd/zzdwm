@@ -74,6 +74,70 @@ openpipe (const char *program, const char *args[],
 }
 
 /*
+ * Run a shell command and capture its standard output.
+ */
+int
+shell_capture (const char *command, char *output, int output_size)
+{
+  FILE *pipe;
+  size_t length = 0;
+  size_t count;
+  char system_directory[MAX_PATH];
+  char *original_path;
+  char *augmented_path;
+  size_t augmented_path_size;
+  UINT system_directory_length;
+
+  if (command == NULL || command[0] == 0 || output == NULL
+      || output_size <= 0)
+    return FALSE;
+
+  system_directory_length = GetSystemDirectoryA (system_directory,
+                                                 sizeof (system_directory));
+  if (system_directory_length == 0
+      || system_directory_length >= sizeof (system_directory))
+    return FALSE;
+
+  original_path = getenv ("PATH");
+  augmented_path_size = strlen (system_directory) + 1;
+  if (original_path != NULL)
+    augmented_path_size += strlen (original_path) + 1;
+  augmented_path = malloc (augmented_path_size);
+  if (augmented_path == NULL)
+    return FALSE;
+
+  if (original_path == NULL)
+    snprintf (augmented_path, augmented_path_size, "%s", system_directory);
+  else
+    snprintf (augmented_path, augmented_path_size, "%s;%s",
+              system_directory, original_path);
+
+  SetEnvironmentVariableA ("PATH", augmented_path);
+  free (augmented_path);
+  pipe = _popen (command, "r");
+  SetEnvironmentVariableA ("PATH", original_path);
+  if (pipe == NULL)
+    return FALSE;
+
+  while ((count = fread (output + length, 1,
+                         (size_t) output_size - length, pipe)) > 0)
+    {
+      length += count;
+      if (length >= (size_t) output_size)
+        break;
+    }
+  if (_pclose (pipe) < 0 || length >= (size_t) output_size)
+    {
+      if (length >= (size_t) output_size)
+        length = (size_t) output_size - 1;
+      output[length] = 0;
+      return FALSE;
+    }
+  output[length] = 0;
+  return TRUE;
+}
+
+/*
  * Create temp file path
  * Windows safe temporary file creation
  */

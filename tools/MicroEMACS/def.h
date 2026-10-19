@@ -1061,6 +1061,9 @@ int openpipe (const char *program,      /* Open a two-way pipe.         */
               const char *args[],
               FILE **infile,
               FILE **outfile);
+int shell_capture (const char *command, /* Capture command output.      */
+                   char *output,
+                   int output_size);
 int gettempfile (char *path,            /* Create temp file path.       */
                  int size,
                  const char *prefix);

@@ -379,6 +379,42 @@ openpipe (const char *program, const char *args[],
 }
 
 /*
+ * Run a shell command and capture its standard output.
+ */
+int
+shell_capture (const char *command, char *output, int output_size)
+{
+  FILE *pipe;
+  size_t length = 0;
+  size_t count;
+
+  if (command == NULL || command[0] == 0 || output == NULL
+      || output_size <= 0)
+    return FALSE;
+
+  pipe = popen (command, "r");
+  if (pipe == NULL)
+    return FALSE;
+
+  while ((count = fread (output + length, 1, (size_t) output_size - length,
+                         pipe)) > 0)
+    {
+      length += count;
+      if (length >= (size_t) output_size)
+        break;
+    }
+  if (pclose (pipe) < 0 || length >= (size_t) output_size)
+    {
+      if (length >= (size_t) output_size)
+        length = (size_t) output_size - 1;
+      output[length] = 0;
+      return FALSE;
+    }
+  output[length] = 0;
+  return TRUE;
+}
+
+/*
  * Create temp file path
  */
 int

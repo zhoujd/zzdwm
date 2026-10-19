@@ -33,6 +33,17 @@ the command bridge:
 
 ---
 
+## Captured Shell Commands [DONE]
+
+`shell-command-to-string` runs one command line through the system shell and
+returns its standard output as a Lisp string. It returns `nil` when spawning
+or capturing fails, including when output exceeds the Lisp result limit. A
+command's nonzero exit status does not hide valid output, and scripts can use
+`2>&1` when error text is needed. The primitive does not add automatic AI
+command execution; Lisp scripts and bindings must call it explicitly.
+
+---
+
 ## Enabling (message ...) support to embedded Lisp engine [DONE]
 
 `(message "hello %s" "world")` now formats the message, displays it on the

@@ -131,6 +131,21 @@ lisp_integer (const char *text, int *value)
 }
 
 static int
+lisp_shell_command_to_string (int argc, const char *const *argv,
+                              char *result, size_t result_size)
+{
+  if (argc != 1 || argv[0][0] == 0)
+    return FALSE;
+  if (shell_capture (argv[0], result, (int) result_size) != TRUE)
+    {
+      eprintf ("[Lisp: shell command output failed]");
+      lisp_message_displayed = TRUE;
+      return TINY_LISP_HOST_NIL;
+    }
+  return TINY_LISP_HOST_STRING;
+}
+
+static int
 lisp_execute_command (int argc, const char *const *argv,
                       char *result, size_t result_size)
 {
@@ -1447,6 +1462,7 @@ lisp_register_hosts (void)
     { "set-lisp-debug", lisp_set_debug_level },
     { "debug-message", lisp_debug_message },
     { "execute-command", lisp_execute_command },
+    { "shell-command-to-string", lisp_shell_command_to_string },
     { "editor-cmd", lisp_execute_command },
     { "get-char", lisp_get_char },
     { "me-find-file", lisp_find_file },

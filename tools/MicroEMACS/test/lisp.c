@@ -95,7 +95,7 @@ static BUFFER *syntax_mode_buffer;
 static int tt_mode_color_called;
 static int updatemode_called;
 static const char *ai_prompt;
-static const char *ai_model;
+static char *ai_model;
 static int ai_num_predict;
 static int ai_status = TRUE;
 static char ai_endpoint[256];
@@ -103,6 +103,9 @@ static char ai_api_key[256];
 static char ai_reasoning_effort[32];
 static int ai_timeout;
 static int ai_configure_status = TRUE;
+static char shell_command[NLINE];
+static int shell_status = TRUE;
+static char shell_output[NLINE];
 static int getregion_status = TRUE;
 static REGION test_region;
 static EWINDOW eobp_window;
@@ -487,11 +490,14 @@ ai_complete (const char *prompt, const char *model, int num_predict,
 {
   size_t index;
   char *prompt_copy;
+  char *model_copy;
 
   prompt_copy = strdup (prompt);
+  model_copy = model != NULL ? strdup (model) : NULL;
   free ((void *) ai_prompt);
+  free ((void *) ai_model);
   ai_prompt = prompt_copy;
-  ai_model = model;
+  ai_model = model_copy;
   ai_num_predict = num_predict;
   if (ai_status != TRUE)
     return FALSE;
@@ -507,6 +513,14 @@ const char *
 ai_last_error (void)
 {
   return "mock error";
+}
+
+int
+shell_capture (const char *command, char *output, int output_size)
+{
+  snprintf (shell_command, sizeof (shell_command), "%s", command);
+  snprintf (output, (size_t) output_size, "%s", shell_output);
+  return shell_status;
 }
 
 int
@@ -660,6 +674,29 @@ main (void)
   assert (evaluate ("(set-variable \"tab-width\" \"0\")") == FALSE);
   assert (evaluate ("(set-variable \"tab-width\" \"8junk\")") == FALSE);
   assert (evaluate ("(set-variable \"tab-width\" \"8\" \"extra\")") == FALSE);
+
+  {
+    char result[LISP_OUTPUT_SIZE];
+
+    shell_status = FALSE;
+    shell_output[0] = 0;
+    assert (tiny_lisp_eval ("(shell-command-to-string \"uname -r\")",
+                            result, sizeof (result)) == 1);
+    assert (strcmp (shell_command, "uname -r") == 0);
+    assert (strcmp (result, "nil") == 0);
+    assert (strcmp (lisp_message, "[Lisp: shell command output failed]")
+            == 0);
+    shell_status = TRUE;
+    strcpy (shell_output, "6.1.0\n");
+    assert (tiny_lisp_eval ("(shell-command-to-string \"uname -r\")",
+                            result, sizeof (result)) == 1);
+    assert (strcmp (result, "\"6.1.0\\n\"") == 0);
+    assert (tiny_lisp_eval ("(shell-command-to-string)",
+                            result, sizeof (result)) == 0);
+    assert (tiny_lisp_eval ("(shell-command-to-string \"\" \"extra\")",
+                            result, sizeof (result)) == 0);
+    shell_status = FALSE;
+  }
 
   {
     char result[LISP_OUTPUT_SIZE];
