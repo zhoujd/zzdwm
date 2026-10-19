@@ -7,12 +7,12 @@ import argparse
 import readline
 import requests
 
-# 1. Your API Configuration (Replace with your Key or read from environment variables)
+# API Configuration (Replace with your Key or read from environment variables)
 API_KEY = os.environ.get("OPENAI_API_KEY", "your_api_key_here")
 API_URL = os.environ.get("AI_API_URL", "http://10.11.70.11:8090/v1")
 MODEL = os.environ.get("AI_MODEL", "glm-5.3-flash")
 
-# 2. Define the host tool: Execute system commands
+# Define the host tool: Execute system commands
 def run_terminal_command(command: str, full_access: bool = False) -> str:
     """Executes a terminal command on the host environment and returns the output."""
     # Security Guardrail: Prohibit dangerous deletion commands
@@ -35,7 +35,7 @@ def run_terminal_command(command: str, full_access: bool = False) -> str:
     except Exception as e:
         return f"Execution error: {str(e)}"
 
-# 3. Define the tool schema presented to the AI
+# Define the tool schema presented to the AI
 tools_schema = [
     {
         "type": "function",
