@@ -3,6 +3,7 @@
 import os
 import json
 import subprocess
+import readline
 import requests
 
 # 1. Your API Configuration (Replace with your Key or read from environment variables)
@@ -52,7 +53,7 @@ tools_schema = [
     }
 ]
 
-def ask_ai_and_run(user_prompt: str):
+def ask_ai_and_run(user_prompt: str, messages=None):
     max_requests = 5
     headers = {
         "Content-Type": "application/json",
@@ -60,10 +61,11 @@ def ask_ai_and_run(user_prompt: str):
     }
 
     # Construct data sent to the AI
-    messages = [
-        {"role": "system", "content": "You are a local operations assistant. You can use tools to execute commands on the user's host machine to solve problems."},
-        {"role": "user", "content": user_prompt}
-    ]
+    if messages is None:
+        messages = [
+            {"role": "system", "content": "You are a local operations assistant. You can use tools to execute commands on the user's host machine to solve problems."}
+        ]
+    messages.append({"role": "user", "content": user_prompt})
 
     payload = {
         "model": MODEL,
@@ -79,7 +81,11 @@ def ask_ai_and_run(user_prompt: str):
 
         if not response_message.get("tool_calls"):
             print(f"\n[AI Response]:\n{response_message['content']}")
-            return
+            messages.append({
+                "role": "assistant",
+                "content": response_message["content"]
+            })
+            return messages
 
         messages.append(response_message)
         for tool_call in response_message["tool_calls"]:
@@ -100,8 +106,39 @@ def ask_ai_and_run(user_prompt: str):
         payload["messages"] = messages
 
     print("\n[AI Response]: Stopped after the maximum number of tool rounds.")
+    return messages
+
+
+def interactive_loop():
+    messages = None
+
+    print("Interactive AI assistant (readline enabled). Finish multiline input with an empty line.")
+    print("Type /exit or /quit to leave.")
+    while True:
+        try:
+            first_line = input("\n[You]: ")
+        except (EOFError, KeyboardInterrupt):
+            print()
+            break
+        if first_line.strip() in {"/exit", "/quit"}:
+            break
+
+        lines = [first_line]
+        while True:
+            try:
+                line = input("[...]: ")
+            except (EOFError, KeyboardInterrupt):
+                print()
+                break
+            if line.strip() == "":
+                break
+            lines.append(line)
+
+        user_prompt = "\n".join(lines).strip()
+        if not user_prompt:
+            continue
+        messages = ask_ai_and_run(user_prompt, messages)
 
 # Run test
 if __name__ == "__main__":
-    # Ask a question that requires inspecting your computer's state
-    ask_ai_and_run("Help me check what files are in my current directory and tell me the Python version.")
+    interactive_loop()
