@@ -803,6 +803,8 @@ int lispstartup (const char *fname);    /* Load startup Lisp file.      */
 int lispfile (const char *fname);       /* Is this a Lisp source file?  */
 int lisprun (const char *fname);        /* Load and evaluate Lisp file. */
 int lispevalfile (int f, int n, int k); /* Read and evaluate Lisp file. */
+int lisplistfeatures (int f, int n, int k);
+                                        /* Display loaded Lisp features. */
 #endif
 
 /*

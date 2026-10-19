@@ -42,3 +42,4 @@
 (define-lisp-command "dired-refresh" #'dired-refresh)
 (define-lisp-command "dired-find-file" #'dired-find-file)
 (define-key "C-x d" "lisp-dired")
+(provide 'dired)

@@ -1438,8 +1438,10 @@ static const char *stdlib = TINY_LISP_SOURCE(
           nil))
 
   (defmacro provide (feature)
-    (list (quote setq) (quote features)
-    (list (quote cons) feature (quote features))))
+    (list (quote progn)
+          (list (quote %host-provide) feature)
+          (list (quote setq) (quote features)
+                (list (quote cons) feature (quote features)))))
 );
 
 // MAIN ///////////////////////////////////////////////////////////////////////

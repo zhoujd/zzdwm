@@ -96,19 +96,22 @@ it as a MicroEMACS command, and binds **Enter** (`C-m`).
 
 ---
 
-## C-Driven Package Introspection
+## C-Driven Package Introspection [DONE]
 
-Looks like already had part of `require` feature in lisp.c:1514: lisp_module_loaded.
-Review: edae30f ME: sample provide feature support
+Implemented in the current working tree.
 
-Followings are original ideals for reference.
-
-### Enabling provide primitive
-When a script file (like dired.l) ends with (provide 'dired), the macro
-evaluates, updates the features cache list, and returns. The next file that
-calls (require 'dired) will intercept the token check in user space
-and skip re-parsing, preventing infinite recursion loops.
+### Native `provide` and `require`
+`provide` is a public Lisp macro that expands into a native host bridge named
+`%host-provide` plus an update to the Lisp-visible `features` list. The `%`
+prefix is only a convention marking the host bridge as internal; it is not
+special syntax. The native bridge records the feature in the C module cache,
+so a later `require` skips loading the module again. `dired.l` now provides
+`dired`.
 
 ### Native `M-x list-features`
-To optimize memory performance and help software learners inspect loaded states, a direct
-C host tracking block bypasses standard cell mapping loops.
+`list-features` displays the C module cache in the standard pop-up buffer.
+This avoids walking Lisp cells and makes the loaded feature names directly
+inspectable.
+
+Validated with `lisp-test`, the source test build, and standard/minimal Linux
+builds.

@@ -26,6 +26,10 @@ int ttrow = 29;
 int ttcol = 7;
 int epresf;
 int enoecho;
+EWINDOW *wheadp;
+BUFFER *bheadp;
+static BUFFER feature_buffer;
+BUFFER *blistp = &feature_buffer;
 
 static const char *lisp_input;
 static int lisp_input_status = TRUE;
@@ -39,6 +43,8 @@ static char mode_name[32];
 static char mode_storage;
 static int bclear_called;
 static BUFFER *bclear_buffer;
+static const char *feature_lines[8];
+static int feature_line_count;
 static int gotobob_called;
 static int bound_line_key;
 static int bound_region_key;
@@ -241,6 +247,23 @@ bclear (BUFFER *buffer)
 {
   bclear_called++;
   bclear_buffer = buffer;
+  feature_line_count = 0;
+  return TRUE;
+}
+
+int
+addline (const char *text)
+{
+  if (feature_line_count >= (int) (sizeof (feature_lines)
+                                   / sizeof (feature_lines[0])))
+    return FALSE;
+  feature_lines[feature_line_count++] = text;
+  return TRUE;
+}
+
+int
+popblist (void)
+{
   return TRUE;
 }
 
@@ -623,6 +646,7 @@ int
 main (void)
 {
   command_symbol.s_funcp = test_command;
+  memset (&feature_buffer, 0, sizeof (feature_buffer));
   tabsize = 4;
   assert (evaluate ("(set-variable \"tab-width\" \"8\")") == TRUE);
   assert (tabsize == 8);
@@ -1141,6 +1165,39 @@ main (void)
     assert (evaluate ("require-count") == TRUE);
     assert (strcmp (lisp_message, "[Lisp: 1]") == 0);
     assert (remove ("require-once.l") == 0);
+  }
+
+  {
+    FILE *file = fopen ("provide-and-load.l", "wb");
+
+    assert (file != NULL);
+    assert (fputs ("(setq provide-count 1)\n"
+                   "(provide 'provide-and-load)",
+                   file) != EOF);
+    assert (fclose (file) == 0);
+    assert (evaluate ("(provide 'standalone-feature)") == TRUE);
+    assert (evaluate ("features") == TRUE);
+    assert (strcmp (lisp_message, "[Lisp: (standalone-feature)]") == 0);
+    assert (evaluate ("(require 'standalone-feature)") == TRUE);
+    assert (evaluate ("(provide-and-load-loaded)") == FALSE);
+    assert (evaluate ("(require 'provide-and-load)") == TRUE);
+    assert (evaluate ("provide-count") == TRUE);
+    assert (strcmp (lisp_message, "[Lisp: 1]") == 0);
+    assert (evaluate ("(require 'provide-and-load)") == TRUE);
+    assert (evaluate ("(provide \"./invalid\")") == FALSE);
+    assert (evaluate ("(provide 'valid \"extra\")") == FALSE);
+    assert (remove ("provide-and-load.l") == 0);
+
+    bclear_called = 0;
+    bclear_buffer = NULL;
+    assert (lisplistfeatures (FALSE, 1, 0) == TRUE);
+    assert (bclear_called == 1 && bclear_buffer == blistp);
+    assert (feature_line_count == 5);
+    assert (strcmp (feature_lines[0], "Feature") == 0);
+    assert (strcmp (feature_lines[1], "-------") == 0);
+    assert (strcmp (feature_lines[2], "require-once") == 0);
+    assert (strcmp (feature_lines[3], "standalone-feature") == 0);
+    assert (strcmp (feature_lines[4], "provide-and-load") == 0);
   }
 
   assert (evaluate ("(require \"missing-lisp-module\" nil t)") == TRUE);

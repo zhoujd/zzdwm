@@ -35,6 +35,8 @@ static int lisp_load_file (int argc, const char *const *argv,
                            char *result, size_t result_size);
 static int lisp_require (int argc, const char *const *argv,
                          char *result, size_t result_size);
+static int lisp_provide (int argc, const char *const *argv,
+                         char *result, size_t result_size);
 static int lispload (const char *filename, int report);
 
 static void show_prompt_abort (void);
@@ -1439,6 +1441,7 @@ lisp_register_hosts (void)
     { "message", lisp_message_form },
     { "load", lisp_load_file },
     { "require", lisp_require },
+    { "%host-provide", lisp_provide },
     { "set-lisp-debug", lisp_set_debug_level },
     { "debug-message", lisp_debug_message },
     { "execute-command", lisp_execute_command },
@@ -1783,6 +1786,17 @@ lisp_module_filename (const char *name, const char *suffix,
 }
 
 static int
+lisp_provide (int argc, const char *const *argv,
+              char *result, size_t result_size)
+{
+  (void) result;
+  (void) result_size;
+  if (argc != 1 || lisp_valid_module_name (argv[0]) != TRUE)
+    return FALSE;
+  return lisp_mark_module_loaded (argv[0]);
+}
+
+static int
 lisp_require (int argc, const char *const *argv,
               char *result, size_t result_size)
 {
@@ -1864,6 +1878,36 @@ lispevalfile (int f, int n, int k)
     return status;
   adjustcase (filename);
   return lisprun (filename);
+}
+
+int
+lisplistfeatures (int f, int n, int k)
+{
+  size_t index;
+
+  (void) f;
+  (void) n;
+  (void) k;
+
+  blistp->b_flag &= ~BFCHG;
+  if (bclear (blistp) != TRUE)
+    return FALSE;
+  strcpy (blistp->b_fname, "");
+  if (lisp_loaded_module_count == 0)
+    {
+      if (addline ("No Lisp features loaded") == FALSE)
+        return FALSE;
+    }
+  else
+    {
+      if (addline ("Feature") == FALSE
+          || addline ("-------") == FALSE)
+        return FALSE;
+      for (index = 0; index < lisp_loaded_module_count; index++)
+        if (addline (lisp_loaded_modules[index]) == FALSE)
+          return FALSE;
+    }
+  return popblist ();
 }
 
 int

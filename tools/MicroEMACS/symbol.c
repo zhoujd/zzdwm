@@ -276,6 +276,7 @@ KEY key[] = {
 #ifdef LISP
   {-1,                  lispeval,          "eval-lisp"},
   {-1,                  lispevalfile,      "read-lisp"},
+  {-1,                  lisplistfeatures,  "list-features"},
 #endif
   {-1,                  namemacro,         "name-macro"},
   {-1,                  fillword,          "ins-self-with-wrap"},

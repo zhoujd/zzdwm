@@ -86,6 +86,11 @@ Lisp error:
 (require "smart-indent" nil t)
 ```
 
+`provide` records a feature name in both the editor's native module cache
+and the `features` list. Loaded Lisp modules can end with
+`(provide 'feature)` so later `require` calls do not evaluate them again.
+Use `M-x list-features` to display the native cache in a pop-up buffer.
+
 `set-lisp-debug` sets the Lisp debug level; level 0 disables debug output.
 `debug-message` takes a positive message level, a format string, and optional
 arguments. It uses the same conversions as `message`, displays
