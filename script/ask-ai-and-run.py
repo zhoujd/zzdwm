@@ -3,6 +3,7 @@
 import os
 import json
 import subprocess
+import argparse
 import readline
 import requests
 
@@ -12,17 +13,19 @@ API_URL = os.environ.get("AI_API_URL", "http://10.11.70.11:8090/v1")
 MODEL = os.environ.get("AI_MODEL", "glm-5.3-flash")
 
 # 2. Define the host tool: Execute system commands
-def run_terminal_command(command: str) -> str:
+def run_terminal_command(command: str, full_access: bool = False) -> str:
     """Executes a terminal command on the host environment and returns the output."""
     # Security Guardrail: Prohibit dangerous deletion commands
     if "rm " in command or "format" in command:
         return "Error: Deletion or formatting commands are prohibited for security reasons."
 
     print(f"\n[AI requests to execute command]: {command}")
-    # Enable human-in-the-loop confirmation
-    confirm = input("Allow execution? (y/n): ")
-    if confirm.lower() != 'y':
-        return "Execution refused by the user."
+    if full_access:
+        print("Running without confirmation (--full-access).")
+    else:
+        confirm = input("Allow execution? (y/n): ")
+        if confirm.lower() != 'y':
+            return "Execution refused by the user."
 
     try:
         # Execute the command and capture output
@@ -53,7 +56,7 @@ tools_schema = [
     }
 ]
 
-def ask_ai_and_run(user_prompt: str, messages=None):
+def ask_ai_and_run(user_prompt: str, messages=None, full_access=False):
     max_requests = 5
     headers = {
         "Content-Type": "application/json",
@@ -93,7 +96,8 @@ def ask_ai_and_run(user_prompt: str, messages=None):
                 tool_output = "Error: Unsupported tool."
             else:
                 arguments = json.loads(tool_call["function"]["arguments"])
-                tool_output = run_terminal_command(arguments.get("command"))
+                tool_output = run_terminal_command(arguments.get("command"),
+                                                   full_access)
 
             print(f"[Host Output]:\n{tool_output}")
             messages.append({
@@ -109,11 +113,13 @@ def ask_ai_and_run(user_prompt: str, messages=None):
     return messages
 
 
-def interactive_loop():
+def interactive_loop(full_access):
     messages = None
 
     print("Interactive AI assistant (readline enabled). Finish multiline input with an empty line.")
     print("Type /exit or /quit to leave.")
+    if full_access:
+        print("Full access is enabled: commands will run without confirmation.")
     while True:
         try:
             first_line = input("\n[You]: ")
@@ -137,8 +143,12 @@ def interactive_loop():
         user_prompt = "\n".join(lines).strip()
         if not user_prompt:
             continue
-        messages = ask_ai_and_run(user_prompt, messages)
+        messages = ask_ai_and_run(user_prompt, messages, full_access)
 
 # Run test
 if __name__ == "__main__":
-    interactive_loop()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--full-access", action="store_true",
+                        help="execute AI-requested commands without confirmation")
+    args = parser.parse_args()
+    interactive_loop(args.full_access)
