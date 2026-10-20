@@ -23,7 +23,7 @@ release:
 			-v "$$(git rev-parse --show-toplevel):$$(git rev-parse --show-toplevel)" \
 			-w "$$(pwd)" \
 			"$${MUSL_IMG:-zhoujd/alpine}" \
-			sh -c 'cat /etc/os-release && $(MAKE) release'; \
+			sh -c 'cat /etc/os-release && $(MAKE) -C "$$PWD" all'; \
 	fi
 
 all: $(TARGET)

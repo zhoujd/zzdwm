@@ -1,3 +1,5 @@
 /ai
 __pycache__/
 *.py[cod]
+
+version.h
