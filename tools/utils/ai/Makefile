@@ -1,5 +1,6 @@
 PROGRAM = ai
 TARGET = ai
+DEST ?= /usr/local/bin
 
 CFLAGS ?= -std=c11 -Os -pipe -Wall -Wextra -Werror
 CFLAGS += -D_FORTIFY_SOURCE=2
@@ -29,10 +30,14 @@ all: $(TARGET)
 $(TARGET): $(PROGRAM).c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
 
+install: $(TARGET)
+	mkdir -p $(DEST)
+	install -m 0755 $(TARGET) $(DEST)/$(PROGRAM)
+
 clean:
 	rm -f $(TARGET)
 
 test: $(TARGET)
 	python3 test/test_agent.py
 
-.PHONY: all clean release test
+.PHONY: all clean release test install

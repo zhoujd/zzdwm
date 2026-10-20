@@ -22,6 +22,14 @@ musl-static executable to `tools/utils/ai/ai`. Override the image with
 `MUSL_IMG`. `make -C tools/utils/ai` performs a native static build without
 Docker.
 
+Install the binary into `/usr/local/bin` by default, or another directory with
+`DEST`:
+
+```sh
+make -C tools/utils/ai install
+make -C tools/utils/ai install DEST="$HOME/.local/bin"
+```
+
 ## Run
 
 ```sh
