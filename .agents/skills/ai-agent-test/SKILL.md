@@ -12,8 +12,8 @@ zero-runtime-dependency and human-steering design.
 
 ## Commit Convention
 
-Use the `AI : ` prefix for AI agent commit subjects, for example:
-`AI : add local static AI agent`.
+Use the `AI: ` prefix for AI agent commit subjects, for example:
+`AI: add local static AI agent`.
 
 ## Workflow
 
