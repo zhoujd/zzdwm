@@ -1814,7 +1814,7 @@ int main(int argc, char **argv)
   signal(SIGPIPE, SIG_IGN);
   conversation_reset();
   print_formatted(
-      "ai %s %s %s interactive DevOps agent\n",
+      "ai %s %s %s interactive AI agent\n",
       VERSION,
       BUILD_DATE,
       BUILD_REVISION
