@@ -1,13 +1,13 @@
 ---
 name: ai-agent-test
-description: Build, test, and validate the local zero-dependency static AI DevOps agent under tools/utils/ai. Use for changes to ai.c, the Makefile or build script, agent behavior, static musl artifacts, endpoint integration, or the bundled Python tests.
+description: Build, test, and validate the local zero-dependency static AI DevOps agent under tools/ai. Use for changes to ai.c, the Makefile or build script, agent behavior, static musl artifacts, endpoint integration, or the bundled Python tests.
 ---
 
 # AI Agent Testing
 
 ## Overview
 
-Validate the local `tools/utils/ai/ai` binary while preserving the project's
+Validate the local `tools/ai/ai` binary while preserving the project's
 zero-runtime-dependency and human-steering design.
 
 ## Commit Convention
@@ -17,12 +17,12 @@ Use the `AI: ` prefix for AI agent commit subjects, for example:
 
 ## Workflow
 
-1. Keep implementation and generated output inside `tools/utils/ai` unless the
+1. Keep implementation and generated output inside `tools/ai` unless the
    user explicitly asks for integration elsewhere.
 2. Build the release artifact:
 
    ```sh
-   tools/utils/ai/build.sh -r
+   tools/ai/build.sh -r
    ```
 
    The build prefers local `musl-gcc`, then `MUSL_IMG` or `zhoujd/alpine`.
@@ -30,14 +30,14 @@ Use the `AI: ` prefix for AI agent commit subjects, for example:
 3. Run the complete agent suite:
 
    ```sh
-   make -C tools/utils/ai test
+   make -C tools/ai test
    ```
 
 4. Confirm the binary is static and hardened:
 
    ```sh
-   file tools/utils/ai/ai
-   readelf -lW tools/utils/ai/ai | grep -E 'GNU_STACK|GNU_RELRO'
+   file tools/ai/ai
+   readelf -lW tools/ai/ai | grep -E 'GNU_STACK|GNU_RELRO'
    ```
 
    Expect `statically linked`, a non-executable stack (`RW`, not `RWE`), and
