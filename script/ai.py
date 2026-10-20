@@ -79,7 +79,7 @@ def ask_ai_and_run(user_prompt: str, messages=None, full_access=False):
 
     for request_count in range(max_requests):
         response = requests.post(f"{API_URL}/chat/completions", headers=headers,
-                                 json=payload, timeout=30).json()
+                                 json=payload, timeout=60).json()
         response_message = response['choices'][0]['message']
 
         if not response_message.get("tool_calls"):
