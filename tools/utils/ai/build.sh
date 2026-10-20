@@ -4,7 +4,7 @@ set -eu
 
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
-case "${1:-release}" in
+case "${1:-""}" in
     release|-r )
         make -C "$SCRIPT_DIR" release
         ;;

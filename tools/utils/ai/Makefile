@@ -2,6 +2,8 @@ PROGRAM = ai
 TARGET = ai
 DEST ?= /usr/local/bin
 VERSION_HEADER = version.h
+REPO_ROOT := $(shell git rev-parse --show-toplevel)
+BUILD_DIR := $(REPO_ROOT)/tools/utils/ai
 
 CFLAGS ?= -std=c11 -Os -pipe -Wall -Wextra -Werror
 CFLAGS += -D_FORTIFY_SOURCE=2
@@ -20,8 +22,8 @@ release:
 		docker run --rm -i \
 			-u "$$(id -u):$$(id -g)" \
 			-e INSIDE_DOCKER=1 \
-			-v "$$(git rev-parse --show-toplevel):$$(git rev-parse --show-toplevel)" \
-			-w "$$(pwd)" \
+			-v "$(REPO_ROOT):$(REPO_ROOT)" \
+			-w "$(BUILD_DIR)" \
 			"$${MUSL_IMG:-zhoujd/alpine}" \
 			sh -c 'cat /etc/os-release && $(MAKE) -C "$$PWD" all'; \
 	fi
