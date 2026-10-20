@@ -22,7 +22,7 @@ Use the `AI: ` prefix for AI agent commit subjects, for example:
 2. Build the release artifact:
 
    ```sh
-   tools/utils/ai/build.sh
+   tools/utils/ai/build.sh -r
    ```
 
    The build prefers local `musl-gcc`, then `MUSL_IMG` or `zhoujd/alpine`.
