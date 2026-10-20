@@ -58,3 +58,5 @@ live and a bounded tail is returned to the model.
 
 Commands in the interactive editor are terminated by an empty line. `/new`
 starts a fresh conversation, while `/exit` and `/quit` leave the program.
+
+`ai --version` reports the program version, build date, and short Git commit ID.

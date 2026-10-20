@@ -225,6 +225,12 @@ class AgentTests(unittest.TestCase):
 
 
 class BinaryTests(unittest.TestCase):
+    def test_version_includes_build_metadata(self):
+        version = subprocess.run(
+            [EXECUTABLE, "--version"], text=True, capture_output=True, check=True
+        ).stdout
+        self.assertRegex(version, r"^ai 1\.0 \d{4}-\d{2}-\d{2} git-\S+\n$")
+
     def test_static_nx_and_relro(self):
         executable = subprocess.run(
             ["file", EXECUTABLE], text=True, capture_output=True, check=True

@@ -1,6 +1,7 @@
 PROGRAM = ai
 TARGET = ai
 DEST ?= /usr/local/bin
+VERSION_HEADER = version.h
 
 CFLAGS ?= -std=c11 -Os -pipe -Wall -Wextra -Werror
 CFLAGS += -D_FORTIFY_SOURCE=2
@@ -27,17 +28,22 @@ release:
 
 all: $(TARGET)
 
-$(TARGET): $(PROGRAM).c
+$(TARGET): $(PROGRAM).c $(VERSION_HEADER)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
+
+$(VERSION_HEADER): FORCE
+	@./version.sh $@
 
 install: $(TARGET)
 	mkdir -p $(DEST)
 	install -m 0755 $(TARGET) $(DEST)/$(PROGRAM)
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) $(VERSION_HEADER)
 
 test: $(TARGET)
 	python3 test/test_agent.py
 
-.PHONY: all clean release test install
+.PHONY: all clean release test install FORCE
+
+FORCE:

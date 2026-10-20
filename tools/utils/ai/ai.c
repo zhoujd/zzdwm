@@ -21,6 +21,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "version.h"
+
 #define VERSION "1.0"
 #define DEFAULT_ENDPOINT "http://127.0.0.1:8090/v1/chat/completions"
 #define DEFAULT_MODEL "glm-5.3-flash"
@@ -1779,10 +1781,10 @@ static int parse_arguments(int argc, char **argv)
           exit(0);
         }
       else if (strcmp(argv[index], "--version") == 0)
-        {
-          print_formatted("ai %s\n", VERSION);
+      {
+          print_formatted("ai %s %s %s\n", VERSION, BUILD_DATE, BUILD_REVISION);
           exit(0);
-        }
+      }
       else
         {
           usage(stderr);
@@ -1811,7 +1813,12 @@ int main(int argc, char **argv)
   sigaction(SIGTERM, &action, NULL);
   signal(SIGPIPE, SIG_IGN);
   conversation_reset();
-  print_formatted("ai %s interactive DevOps agent\n", VERSION);
+  print_formatted(
+      "ai %s %s %s interactive DevOps agent\n",
+      VERSION,
+      BUILD_DATE,
+      BUILD_REVISION
+  );
   print_formatted("Endpoint: http://%s:%d%s\n", api_host, api_port, api_path);
   print_formatted("Model: %s; API timeout: %ds; command timeout: %ds\n",
                   model, api_timeout, command_timeout);
