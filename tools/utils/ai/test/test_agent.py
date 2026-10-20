@@ -163,6 +163,18 @@ class AgentTests(unittest.TestCase):
         self.assertIn("Execution skipped", messages[-2]["content"])
         self.assertIn("HUMAN STEERING DURING TOOL EXECUTION", messages[-1]["content"])
 
+    def test_multiline_steer_preserves_newlines(self):
+        result, endpoint = self.run_agent(
+            [tool_response("printf 'not-run\n'"), text_response("changed")],
+            "diagnose\n\ns\nfirst line\nsecond line\n\n\n/exit\n\n",
+        )
+        self.assertNotIn("Command output:\nnot-run", result.stdout)
+        messages = endpoint.requests[1]["messages"]
+        self.assertIn(
+            "HUMAN STEERING DURING TOOL EXECUTION: first line\nsecond line",
+            messages[-1]["content"],
+        )
+
     def test_utf8_output_is_preserved(self):
         result, endpoint = self.run_agent(
             [tool_response("printf '中文 UTF-8\\n'"), text_response("done")],

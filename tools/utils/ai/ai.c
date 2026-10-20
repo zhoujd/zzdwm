@@ -1206,7 +1206,8 @@ static int read_line(const char *prompt, char *buffer, size_t capacity)
   return 0;
 }
 
-static int read_multiline(const char *prompt, char *buffer, size_t capacity)
+static int read_multiline(const char *prompt, const char *continuation_prompt,
+                          char *buffer, size_t capacity)
 {
   char line[MAX_LINE];
   size_t length = 0;
@@ -1214,7 +1215,8 @@ static int read_multiline(const char *prompt, char *buffer, size_t capacity)
   buffer[0] = 0;
   for (;;)
     {
-      if (read_line(length == 0 ? prompt : "[...]: ", line, sizeof(line)) < 0)
+      if (read_line(length == 0 ? prompt : continuation_prompt, line,
+                    sizeof(line)) < 0)
         return -1;
       if (line[0] == 0)
         break;
@@ -1457,7 +1459,9 @@ static int command_decision(ToolCall *call, int *run, char *steer,
         }
       if (choice[0] == 's' && choice[1] == 0)
         {
-          if (read_line("[steer]: ", steer, steer_capacity) < 0
+          print_formatted("Steering ends with an empty line.\n");
+          if (read_multiline("[steer]: ", "[.....]: ", steer,
+                             steer_capacity) < 0
               || steer[0] == 0)
             continue;
           return 0;
@@ -1483,7 +1487,9 @@ static int post_execution_steer(char *steer, size_t capacity)
         return -1;
       if (answer[0] == 's' && answer[1] == 0)
         {
-          if (read_line("[steer]: ", steer, capacity) < 0 || steer[0] == 0)
+          print_formatted("Steering ends with an empty line.\n");
+          if (read_multiline("[steer]: ", "[.....]: ", steer, capacity) < 0
+              || steer[0] == 0)
             continue;
           return 0;
         }
@@ -1829,7 +1835,7 @@ int main(int argc, char **argv)
     print_formatted("Every command is shown for allow/edit/steer/refuse before execution.\n");
   for (;;)
     {
-      if (read_multiline("\n[You]: ", prompt, sizeof(prompt)) < 0)
+      if (read_multiline("\n[You]: ", "[...]: ", prompt, sizeof(prompt)) < 0)
         break;
       if (prompt[0] == 0)
         continue;
