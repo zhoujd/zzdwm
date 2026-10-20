@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI Agent Testing"
+  short_description: "Build and validate the local AI agent"
+  default_prompt: "Use $ai-agent-test to build and validate tools/utils/ai."
