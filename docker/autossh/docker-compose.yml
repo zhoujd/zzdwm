@@ -20,6 +20,12 @@ services:
       - SSH_TARGET_PORT=22
       - SSH_HOST_NAME=s160
       - AUTOSSH_POLL=5
-      - SSH_OPTIONS=-i /home/tunnel/.ssh/id_rsa -o ServerAliveInterval=5 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+      - >-
+        SSH_OPTIONS=-i /home/tunnel/.ssh/id_rsa
+        -o ServerAliveInterval=5
+        -o ServerAliveCountMax=3
+        -o ExitOnForwardFailure=yes
+        -o UserKnownHostsFile=/dev/null
+        -o StrictHostKeyChecking=no
     volumes:
       - $HOME/.ssh:/mnt/sshkeys:ro
