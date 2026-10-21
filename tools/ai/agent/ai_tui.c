@@ -258,31 +258,74 @@ static int measure_input_width(const char *buffer, size_t length)
 
 static void draw_input(const InputBuffer *input)
 {
-  int pane_width = terminal_width - 3;
-  int input_width = measure_input_width(input->text, input->cursor);
-  size_t start = 0;
-  int cursor_column;
+  size_t line_start = 0;
+  size_t cursor_line_start = 0;
+  size_t visible_lines = 0;
+  size_t first_visible_line = 0;
+  size_t logical_line = 0;
+  size_t index;
+  size_t cursor_row = 0;
+  size_t visible_height = (size_t) (BOTTOM_HEIGHT - 2);
 
-  cursor_column = input_width;
-  while (cursor_column > pane_width)
+  for (index = 0; index <= input->length; index++)
     {
-      Rune rune;
-      int rune_length = chartorune(&rune, (char *) input->text + start);
-      int rune_width = wcwidth((wchar_t) rune);
-
-      if (rune_width < 0)
-        rune_width = 1;
-      cursor_column -= rune_width;
-      start += (size_t) (rune_length > 0 ? rune_length : 1);
+      if (index < input->cursor && input->text[index] == '\n')
+        {
+          cursor_line_start = index + 1;
+          cursor_row++;
+        }
     }
+  if (cursor_row >= visible_height)
+    first_visible_line = cursor_row - visible_height + 1;
+  for (index = 0;
+       index < input->length && logical_line < first_visible_line;
+       index++)
+    if (input->text[index] == '\n')
+      {
+        line_start = index + 1;
+        logical_line++;
+      }
   werase(input_window);
   box(input_window, 0, 0);
   mvwprintw(input_window, 0, 2,
              input_mode == INPUT_MULTILINE
-             ? " 3. Prompt (RET submit) "
+             ? " 3. Prompt (C-J newline, RET submit) "
              : " 3. Decision (RET submit) ");
-  mvwaddstr(input_window, 1, 1, input->text + start);
-  wmove(input_window, 1, cursor_column + 1);
+  for (index = line_start; index < input->length && visible_lines < visible_height; )
+    {
+      size_t end = index;
+      int column = 0;
+
+      while (end < input->length && input->text[end] != '\n')
+        {
+          Rune rune;
+          int rune_length = chartorune(&rune, (char *) input->text + end);
+          int rune_width = wcwidth((wchar_t) rune);
+
+          if (rune_width < 0)
+            rune_width = 1;
+          if (column + rune_width <= terminal_width - 3)
+            mvwaddnstr(input_window, (int) visible_lines + 1, column + 1,
+                       input->text + end, (size_t) rune_length);
+          column += rune_width;
+          end += (size_t) (rune_length > 0 ? rune_length : 1);
+        }
+      if (visible_lines + first_visible_line == cursor_row)
+        {
+          int cursor_column = measure_input_width(input->text + cursor_line_start,
+                                                  input->cursor - cursor_line_start);
+
+          if (cursor_column > terminal_width - 3)
+            cursor_column = terminal_width - 3;
+          wmove(input_window, (int) visible_lines + 1, cursor_column + 1);
+        }
+      visible_lines++;
+      if (end < input->length)
+        end++;
+      index = end;
+    }
+  if (input->length == 0)
+    wmove(input_window, 1, 1);
   wrefresh(input_window);
 }
 
@@ -488,6 +531,24 @@ static size_t previous_rune_start(const InputBuffer *input, size_t cursor)
   return last_start;
 }
 
+static size_t input_line_start(const InputBuffer *input, size_t position)
+{
+  size_t start = position;
+
+  while (start > 0 && input->text[start - 1] != '\n')
+    start--;
+  return start;
+}
+
+static size_t input_line_end(const InputBuffer *input, size_t position)
+{
+  size_t end = position;
+
+  while (end < input->length && input->text[end] != '\n')
+    end++;
+  return end;
+}
+
 static void move_cursor_backward(InputBuffer *input)
 {
   if (input->cursor != 0)
@@ -503,6 +564,37 @@ static void move_cursor_forward(InputBuffer *input)
 
       input->cursor += (size_t) (rune_length > 0 ? rune_length : 1);
     }
+}
+
+static void move_cursor_up(InputBuffer *input)
+{
+  size_t start;
+  size_t end;
+  size_t target;
+
+  if (input_line_start(input, input->cursor) == 0)
+    return;
+  end = input_line_start(input, input->cursor) - 1;
+  start = input_line_start(input, end);
+  target = input->cursor - end - 1;
+  if (target > end - start)
+    target = end - start;
+  input->cursor = start + target;
+}
+
+static void move_cursor_down(InputBuffer *input)
+{
+  size_t end = input_line_end(input, input->cursor);
+  size_t next_end;
+  size_t target;
+
+  if (end >= input->length)
+    return;
+  next_end = input_line_end(input, end + 1);
+  target = input->cursor - input_line_start(input, input->cursor);
+  if (target > next_end - end - 1)
+    target = next_end - end - 1;
+  input->cursor = end + 1 + target;
 }
 
 static void insert_input_rune(InputBuffer *input, const unsigned char *bytes,
@@ -615,8 +707,8 @@ int main(void)
   start_agent(agent_path, &agent_stdin, &agent_stdout);
   wtimeout(input_window, 100);
   write_line(PANE_LOGS,
-             "F1 quit; Tab pane; PgUp/PgDn scroll; C-A/E/B/F/D/K/U edit; "
-             "Enter submit; Ctrl+C cancel");
+            "F1 quit; Tab pane; PgUp/PgDn scroll; C-A/E/B/F/D/K/U edit; "
+            "C-J newline; Enter submit; Ctrl+C cancel");
   refresh_content_panes();
   draw_input(&input);
   while (!interrupted && !agent_exited)
@@ -657,13 +749,17 @@ int main(void)
           continue;
         }
       if (key == 1 || key == KEY_HOME)
-        input.cursor = 0;
+        input.cursor = input_line_start(&input, input.cursor);
       else if (key == 5 || key == KEY_END)
-        input.cursor = input.length;
+        input.cursor = input_line_end(&input, input.cursor);
       else if (key == 2 || key == KEY_LEFT)
         move_cursor_backward(&input);
       else if (key == 6 || key == KEY_RIGHT)
         move_cursor_forward(&input);
+      else if (key == 16 || key == KEY_UP)
+        move_cursor_up(&input);
+      else if (key == 14 || key == KEY_DOWN)
+        move_cursor_down(&input);
       else if (key == KEY_BACKSPACE || key == 127 || key == 8)
         delete_input_backward(&input);
       else if (key == 4)
@@ -677,9 +773,11 @@ int main(void)
         }
       else if (key == 11)
         {
-          input.length = input.cursor;
+          input.length = input_line_end(&input, input.cursor);
           input.text[input.length] = 0;
         }
+      else if (key == 10 && input_mode == INPUT_MULTILINE)
+        insert_input_rune(&input, (const unsigned char *) "\n", 1);
       else if (key == '\n' || key == KEY_ENTER || key == 13)
         {
           input.text[input.length] = 0;
