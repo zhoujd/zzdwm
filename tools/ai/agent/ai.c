@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <pthread.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/stat.h>
@@ -869,6 +870,59 @@ static int call_endpoint(const char **response_body, char *response_storage)
   return 0;
 }
 
+typedef struct {
+  int completed;
+  int result;
+  const char *response_body;
+  char *response_storage;
+} EndpointRequest;
+
+static void *run_endpoint_request(void *argument)
+{
+  EndpointRequest *request = argument;
+
+  request->result = call_endpoint(&request->response_body,
+                                  request->response_storage);
+  request->completed = 1;
+  return NULL;
+}
+
+static int call_endpoint_threaded(const char **response_body,
+                                  char *response_storage)
+{
+  EndpointRequest request = {0, 0, NULL, response_storage};
+  pthread_t thread;
+  int create_error;
+  void *thread_result;
+
+  create_error = pthread_create(&thread, NULL, run_endpoint_request, &request);
+  if (create_error != 0)
+    {
+      errno = create_error;
+      print_formatted("error: create AI request thread: %s\n", strerror(errno));
+      return call_endpoint(response_body, response_storage);
+    }
+  for (;;)
+    {
+      if (interrupted)
+        break;
+      if (request.completed)
+        break;
+      sleep(1);
+    }
+  if (!request.completed)
+    {
+      pthread_cancel(thread);
+      pthread_join(thread, &thread_result);
+      print_formatted("\n[request interrupted]\n");
+      return -1;
+    }
+  pthread_join(thread, &thread_result);
+  if (request.result == 0)
+    *response_body = request.response_body;
+  return request.result;
+}
+
 static int read_line(const char *prompt, char *buffer, size_t capacity)
 {
   size_t length;
@@ -1540,7 +1594,7 @@ int main(int argc, char **argv)
           print_formatted("error: prompt cannot fit in the conversation\n");
           continue;
         }
-      if (call_endpoint(&response_start, response) < 0)
+      if (call_endpoint_threaded(&response_start, response) < 0)
         {
           size_t old_count = message_count;
 
@@ -1566,7 +1620,7 @@ int main(int argc, char **argv)
                 result = 0;
                 break;
               }
-            if (call_endpoint(&response_start, response) < 0)
+            if (call_endpoint_threaded(&response_start, response) < 0)
               {
                 size_t old_count = message_count;
 

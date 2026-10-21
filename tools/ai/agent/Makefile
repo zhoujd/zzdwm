@@ -9,6 +9,7 @@ CFLAGS ?= -std=c11 -Os -pipe -Wall -Wextra -Werror
 CFLAGS += -D_FORTIFY_SOURCE=2
 LDFLAGS ?= -static -s
 LDFLAGS += -Wl,-z,relro,-z,now,-z,noexecstack
+LDLIBS += -lpthread
 
 release:
 	@if [ -n "$$INSIDE_DOCKER" ]; then \
@@ -33,7 +34,7 @@ all: $(TARGET)
 CJSON_SOURCE = cJSON.c
 
 $(TARGET): $(PROGRAM).c $(CJSON_SOURCE) $(VERSION_HEADER)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 $(VERSION_HEADER): FORCE
 	@./version.sh $@
