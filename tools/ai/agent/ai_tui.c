@@ -280,8 +280,40 @@ static void write_line(PaneId pane_id, const char *text)
   panes[pane_id].view_offset = 0;
 }
 
+static int is_agent_prompt(const char *line)
+{
+  return strcmp(line, "[You]: ") == 0
+         || strcmp(line, "[...]: ") == 0
+         || strcmp(line, "[steer]: ") == 0
+         || strcmp(line, "[.....]: ") == 0
+         || strcmp(line,
+             "[a]llow, [e]dit, [s]teer without running, [n]o, [q]uit: ") == 0
+         || strcmp(line, "[edited command]: ") == 0
+         || strcmp(line,
+             "[s]teer before next AI request, Enter to continue, q quit: ") == 0;
+}
+
+static const char *agent_prompt_hint(const char *line)
+{
+  if (strcmp(line,
+             "[a]llow, [e]dit, [s]teer without running, [n]o, [q]uit: ") == 0)
+    return "Command decision: a allow, e edit, s steer, n no, q quit";
+  if (strcmp(line, "[edited command]: ") == 0)
+    return "Edited command: enter the replacement command";
+  if (strcmp(line,
+             "[s]teer before next AI request, Enter to continue, q quit: ") == 0)
+    return "Next request: s steer, Enter continue, q quit (after command output)";
+  if (strcmp(line, "[live steering active]: type one line per direction") == 0)
+    return "Live steering: type one line per direction";
+  if (strcmp(line, "Steering ends with an empty line.") == 0)
+    return "Steering: C-J newline, Enter submit";
+  return NULL;
+}
+
 static void display_agent_line(const char *line)
 {
+  const char *hint;
+
   if (strncmp(line, "[AI Response]", 13) == 0)
     output_mode_response = 1;
   else if (strncmp(line, "[You]", 5) == 0
@@ -292,6 +324,14 @@ static void display_agent_line(const char *line)
            || strncmp(line, "[steer]", 7) == 0
            || strncmp(line, "[s]teer", 7) == 0)
     output_mode_response = 0;
+  hint = agent_prompt_hint(line);
+  if (is_agent_prompt(line) || hint != NULL)
+    {
+      if (hint != NULL)
+        write_line(PANE_LOGS, hint);
+      handle_agent_prompt(line);
+      return;
+    }
   write_line(output_mode_response ? PANE_RESPONSE : PANE_LOGS, line);
   handle_agent_prompt(line);
 }
@@ -516,10 +556,6 @@ static void handle_agent_prompt(const char *line)
   else
     return;
   input_mode = multiline ? INPUT_MULTILINE : INPUT_SINGLE_LINE;
-  write_line(PANE_LOGS,
-             multiline
-             ? "End input with an empty line (Enter twice)."
-             : "Send a choice with Enter; empty Enter accepts the default.");
 }
 
 static void read_agent_output(int agent_stdout, int *agent_exited)

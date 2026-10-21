@@ -206,8 +206,6 @@ static void print_formatted(const char *format, ...)
 
 static void live_steering_prompt(void)
 {
-  if (ui_mode)
-    return;
   print_formatted("[live steering active]: type one line per direction\n");
 }
 
@@ -1143,7 +1141,7 @@ static int read_line(const char *prompt, char *buffer, size_t capacity)
   size_t length;
   int character;
 
-  if (prompt != NULL && prompt[0] != 0 && !ui_mode)
+  if (prompt != NULL && prompt[0] != 0)
     print_formatted("%s\n", prompt);
   if (fgets(buffer, (int) capacity, stdin) == NULL)
     return -1;
