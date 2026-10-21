@@ -36,6 +36,7 @@ typedef enum {
 
 typedef enum {
   PANE_LAYOUT_NORMAL,
+  PANE_LAYOUT_EQUAL,
   PANE_LAYOUT_MAX_LOGS,
   PANE_LAYOUT_MAX_RESPONSE
 } PaneLayout;
@@ -78,6 +79,22 @@ static void content_pane_geometry(PaneId pane_id, int *start_y, int *height)
 {
   int content_height = terminal_height - BOTTOM_HEIGHT;
 
+  if (pane_layout == PANE_LAYOUT_EQUAL)
+    {
+      int logs_height = content_height / 2;
+
+      if (pane_id == PANE_LOGS)
+        {
+          *start_y = 0;
+          *height = logs_height;
+        }
+      else
+        {
+          *start_y = logs_height;
+          *height = content_height - logs_height;
+        }
+      return;
+    }
   if (pane_layout == PANE_LAYOUT_MAX_LOGS
       || pane_layout == PANE_LAYOUT_MAX_RESPONSE)
     {
@@ -870,7 +887,8 @@ int main(int argc, char **argv)
   start_agent(agent_path, &agent_stdin, &agent_stdout);
   wtimeout(input_window, 100);
   write_line(PANE_LOGS,
-            "F1 quit; F2/F3 maximize pane 1/2; Tab pane; PgUp/PgDn scroll; "
+            "F1 quit; F2/F3 maximize pane 1/2; F4 split equally; Tab pane; "
+            "PgUp/PgDn scroll; "
             "C-A/E/B/F/D/K/U edit; "
             "C-J newline; Enter submit; Ctrl+C cancel");
   refresh_content_panes();
@@ -899,6 +917,14 @@ int main(int argc, char **argv)
           selected_pane = selected_pane == PANE_LOGS
                           ? PANE_RESPONSE : PANE_LOGS;
           pane_layout = PANE_LAYOUT_NORMAL;
+          redraw_layout();
+          draw_input(&input);
+          continue;
+        }
+      if (key == KEY_F(4))
+        {
+          pane_layout = pane_layout == PANE_LAYOUT_EQUAL
+                        ? PANE_LAYOUT_NORMAL : PANE_LAYOUT_EQUAL;
           redraw_layout();
           draw_input(&input);
           continue;
