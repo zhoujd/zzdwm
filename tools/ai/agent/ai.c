@@ -55,6 +55,7 @@
 #define CAPTURE_SIZE 16384
 #define MODEL_OUTPUT_SIZE 3072
 #define MAX_TIMEOUT 600
+#define MAX_STEERING_LINES 64
 
 typedef struct {
   char json[MESSAGE_SIZE];
@@ -89,10 +90,81 @@ static int command_timeout = 60;
 static int full_access;
 static volatile sig_atomic_t interrupted;
 
+typedef struct {
+  char text[MAX_COMMAND];
+  int complete;
+} SteeringLine;
+
+static SteeringLine steering_input[MAX_STEERING_LINES];
+static size_t steering_read_index;
+static size_t steering_write_index;
+static pthread_mutex_t steering_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+typedef struct {
+  struct termios original_terminal;
+  char line[MAX_COMMAND];
+  size_t line_length;
+  int input_flags;
+  int terminal_configured;
+  int input_open;
+} LiveInput;
+
+static LiveInput live_input;
+
 static void on_signal(int signal_number)
 {
   (void) signal_number;
   interrupted = 1;
+}
+
+static int take_steering(char *buffer, size_t capacity)
+{
+  int available = 0;
+
+  pthread_mutex_lock(&steering_mutex);
+  if (steering_input[steering_read_index].complete)
+    {
+      SteeringLine *line = &steering_input[steering_read_index];
+
+      if (strlen(line->text) < capacity)
+        {
+          strcpy(buffer, line->text);
+          available = 1;
+        }
+      line->complete = 0;
+      steering_read_index =
+        (steering_read_index + 1) % MAX_STEERING_LINES;
+    }
+  pthread_mutex_unlock(&steering_mutex);
+  return available;
+}
+
+static int append_live_steering(char *steer, size_t capacity)
+{
+  char line[MAX_COMMAND];
+  size_t used;
+  int appended = 0;
+
+  if (capacity == 0)
+    return -1;
+  used = strlen(steer);
+  while (take_steering(line, sizeof(line)))
+    {
+      size_t line_length = strlen(line);
+
+      if (line_length == 0)
+        continue;
+      if (used != 0 && used + 1 >= capacity)
+        return -1;
+      if (line_length >= capacity - used - (used != 0 ? 1 : 0))
+        return -1;
+      if (used != 0)
+        steer[used++] = '\n';
+      memcpy(steer + used, line, line_length + 1);
+      used += line_length;
+      appended = 1;
+    }
+  return appended;
 }
 
 static int write_all(int fd, const char *data, size_t length)
@@ -129,6 +201,118 @@ static void print_formatted(const char *format, ...)
     {
       /* Output failures are not recoverable in this compact tool. */
     }
+}
+
+static void live_steering_prompt(void)
+{
+  print_formatted("[live steering active]: type one line per direction\n");
+}
+
+static void queue_live_line(const char *text, size_t length)
+{
+  SteeringLine *slot;
+  int queued = 0;
+
+  pthread_mutex_lock(&steering_mutex);
+  slot = &steering_input[steering_write_index];
+  if (!slot->complete)
+    {
+      memcpy(slot->text, text, length + 1);
+      slot->complete = 1;
+      steering_write_index = (steering_write_index + 1)
+                             % MAX_STEERING_LINES;
+      queued = 1;
+    }
+  pthread_mutex_unlock(&steering_mutex);
+  if (queued)
+    print_formatted("[live steering queued]: %s\n", text);
+  else
+    print_formatted("[live steering dropped]: steering queue is full\n");
+}
+
+static int begin_live_input(void)
+{
+  struct termios terminal;
+  int flags;
+
+  live_input.line_length = 0;
+  live_input.terminal_configured = 0;
+  flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+  live_input.input_open = flags >= 0;
+  if (!live_input.input_open)
+    return 0;
+  live_input.input_flags = flags;
+  if (fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK) < 0)
+    {
+      live_input.input_open = 0;
+      return 0;
+    }
+  if (tcgetattr(STDIN_FILENO, &live_input.original_terminal) != 0)
+    return 0;
+  terminal = live_input.original_terminal;
+  terminal.c_lflag &= ~(ICANON | ECHO);
+  terminal.c_cc[VMIN] = 0;
+  terminal.c_cc[VTIME] = 0;
+  if (tcsetattr(STDIN_FILENO, TCSANOW, &terminal) != 0)
+    return 0;
+  live_input.terminal_configured = 1;
+  return 0;
+}
+
+static void poll_live_input(void)
+{
+  char character;
+
+  if (!live_input.input_open)
+    return;
+  while (read(STDIN_FILENO, &character, 1) == 1)
+    {
+      if (character == '\n' || character == '\r')
+        {
+          if (live_input.line_length != 0)
+            {
+              live_input.line[live_input.line_length] = 0;
+              queue_live_line(live_input.line, live_input.line_length);
+              live_input.line_length = 0;
+            }
+        }
+      else if (live_input.line_length < sizeof(live_input.line) - 1)
+        live_input.line[live_input.line_length++] = character;
+    }
+}
+
+static void end_live_input(void)
+{
+  if (live_input.line_length != 0)
+    {
+      live_input.line[live_input.line_length] = 0;
+      queue_live_line(live_input.line, live_input.line_length);
+      live_input.line_length = 0;
+    }
+  if (live_input.terminal_configured)
+    tcsetattr(STDIN_FILENO, TCSANOW, &live_input.original_terminal);
+  fcntl(STDIN_FILENO, F_SETFL, live_input.input_flags);
+  live_input.terminal_configured = 0;
+  live_input.input_open = 0;
+}
+
+static int steering_available(void)
+{
+  int available;
+
+  pthread_mutex_lock(&steering_mutex);
+  available = steering_input[steering_read_index].complete;
+  pthread_mutex_unlock(&steering_mutex);
+  return available;
+}
+
+static void clear_steering(void)
+{
+  pthread_mutex_lock(&steering_mutex);
+  memset(steering_input, 0, sizeof(steering_input));
+  steering_read_index = 0;
+  steering_write_index = 0;
+  pthread_mutex_unlock(&steering_mutex);
 }
 
 static int buffer_append(Buffer *buffer, const char *data, size_t length)
@@ -871,56 +1055,84 @@ static int call_endpoint(const char **response_body, char *response_storage)
 }
 
 typedef struct {
-  int completed;
   int result;
   const char *response_body;
   char *response_storage;
 } EndpointRequest;
 
+typedef struct {
+  pthread_t worker;
+  pthread_mutex_t mutex;
+  pthread_cond_t completed_cond;
+  int done;
+  EndpointRequest request;
+} EndpointWait;
+
 static void *run_endpoint_request(void *argument)
 {
-  EndpointRequest *request = argument;
+  EndpointWait *wait = argument;
 
-  request->result = call_endpoint(&request->response_body,
-                                  request->response_storage);
-  request->completed = 1;
+  wait->request.result = call_endpoint(&wait->request.response_body,
+                                       wait->request.response_storage);
+  pthread_mutex_lock(&wait->mutex);
+  wait->done = 1;
+  pthread_cond_broadcast(&wait->completed_cond);
+  pthread_mutex_unlock(&wait->mutex);
   return NULL;
 }
 
 static int call_endpoint_threaded(const char **response_body,
                                   char *response_storage)
 {
-  EndpointRequest request = {0, 0, NULL, response_storage};
-  pthread_t thread;
+  EndpointWait wait;
   int create_error;
   void *thread_result;
 
-  create_error = pthread_create(&thread, NULL, run_endpoint_request, &request);
+  memset(&wait, 0, sizeof(wait));
+  wait.request.response_storage = response_storage;
+  pthread_mutex_init(&wait.mutex, NULL);
+  pthread_cond_init(&wait.completed_cond, NULL);
+  create_error = pthread_create(&wait.worker, NULL, run_endpoint_request, &wait);
   if (create_error != 0)
     {
       errno = create_error;
       print_formatted("error: create AI request thread: %s\n", strerror(errno));
+      pthread_cond_destroy(&wait.completed_cond);
+      pthread_mutex_destroy(&wait.mutex);
       return call_endpoint(response_body, response_storage);
     }
+  begin_live_input();
+  live_steering_prompt();
   for (;;)
     {
-      if (interrupted)
+      int worker_done;
+
+      pthread_mutex_lock(&wait.mutex);
+      worker_done = wait.done;
+      pthread_mutex_unlock(&wait.mutex);
+      if (worker_done || interrupted)
         break;
-      if (request.completed)
-        break;
+      poll_live_input();
       sleep(1);
     }
-  if (!request.completed)
+  poll_live_input();
+  end_live_input();
+  if (!wait.done)
     {
-      pthread_cancel(thread);
-      pthread_join(thread, &thread_result);
+      pthread_cancel(wait.worker);
+      pthread_join(wait.worker, &thread_result);
       print_formatted("\n[request interrupted]\n");
+      pthread_cond_destroy(&wait.completed_cond);
+      pthread_mutex_destroy(&wait.mutex);
       return -1;
     }
-  pthread_join(thread, &thread_result);
-  if (request.result == 0)
-    *response_body = request.response_body;
-  return request.result;
+  pthread_join(wait.worker, &thread_result);
+  if (wait.request.result == 0)
+    *response_body = wait.request.response_body;
+  create_error = wait.request.result;
+  pthread_cond_destroy(&wait.completed_cond);
+  pthread_mutex_destroy(&wait.mutex);
+  return create_error;
 }
 
 static int read_line(const char *prompt, char *buffer, size_t capacity)
@@ -1099,6 +1311,8 @@ static int run_command(const char *command, char *output, size_t capacity,
   close(pipe_fds[1]);
   descriptor.fd = pipe_fds[0];
   descriptor.events = POLLIN;
+  begin_live_input();
+  live_steering_prompt();
   for (;;)
     {
       char chunk[2048];
@@ -1114,6 +1328,7 @@ static int run_command(const char *command, char *output, size_t capacity,
             continue;
           break;
         }
+      poll_live_input();
       if (poll_result > 0 && (descriptor.revents & (POLLIN | POLLHUP)))
         {
           received = read(pipe_fds[0], chunk, sizeof(chunk));
@@ -1155,6 +1370,7 @@ static int run_command(const char *command, char *output, size_t capacity,
     }
   while (!have_status && waitpid(child, &status, 0) < 0 && errno == EINTR)
     ;
+  end_live_input();
   close(pipe_fds[0]);
   if (WIFEXITED(status))
     *exit_status = WEXITSTATUS(status);
@@ -1215,6 +1431,8 @@ static int post_execution_steer(char *steer, size_t capacity)
 
   for (;;)
     {
+      if (steering_available())
+        return 0;
       if (read_line("[s]teer before next AI request, Enter to continue, q quit: ",
                     answer, sizeof(answer)) < 0)
         return -1;
@@ -1332,6 +1550,8 @@ static int process_tool_calls(ToolCall *calls, size_t call_count)
             return -1;
         }
     }
+  if (append_live_steering(steer, sizeof(steer)) < 0)
+    return -1;
   if (steer[0] != 0)
     {
       char user_message[MAX_COMMAND + 64];
@@ -1342,6 +1562,26 @@ static int process_tool_calls(ToolCall *calls, size_t call_count)
         return -1;
     }
   return 0;
+}
+
+static int add_pending_request_steering(void)
+{
+  char steering[MAX_COMMAND];
+
+  if (!steering_available())
+    return 0;
+  steering[0] = 0;
+  if (append_live_steering(steering, sizeof(steering)) < 0)
+    return -1;
+  if (steering[0] == 0)
+    return 0;
+  {
+    char user_message[MAX_COMMAND + 64];
+
+    snprintf(user_message, sizeof(user_message),
+             "HUMAN STEERING DURING AI REQUEST: %s", steering);
+    return add_text_message("user", user_message, 0);
+  }
 }
 
 static int parse_tool_call(const cJSON *tool_call, ToolCall *call)
@@ -1566,6 +1806,7 @@ int main(int argc, char **argv)
   print_formatted("Model: %s; API timeout: %ds; command timeout: %ds\n",
                   model, api_timeout, command_timeout);
   print_formatted("Multiline input ends with an empty line. /help shows commands.\n");
+  print_formatted("Live steering: type lines while AI requests or commands run.\n");
   if (full_access)
     print_formatted("Full access: commands run immediately; steering is offered after each one.\n");
   else
@@ -1581,6 +1822,7 @@ int main(int argc, char **argv)
       if (strcmp(prompt, "/new") == 0)
         {
           conversation_reset();
+          clear_steering();
           print_formatted("[context reset]\n");
           continue;
         }
@@ -1606,10 +1848,12 @@ int main(int argc, char **argv)
       {
         int result;
         int round;
+        int pending_round = 0;
 
         result = process_response(response_start);
         if (result < 0)
           return 1;
+        pending_round = result;
         for (round = 1; result == 1; round++)
           {
             if (round == MAX_TOOL_ROUNDS)
@@ -1634,6 +1878,8 @@ int main(int argc, char **argv)
             if (result < 0)
               return 1;
           }
+        if (pending_round == 0 && add_pending_request_steering() < 0)
+          return 1;
       }
     }
   print_formatted("\n[bye]\n");

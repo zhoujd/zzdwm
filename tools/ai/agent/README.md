@@ -18,8 +18,9 @@ make -C tools/utils/ai test
 
 The release build uses local `musl-gcc` when available and otherwise runs the
 same source build in the `zhoujd/alpine` Docker image. Each model request runs
-in a joined worker thread; cancellation is coordinated through one bounded
-polling loop. It writes the stripped,
+in a joined worker thread while the main thread collects live steering;
+cancellation is coordinated through one bounded polling loop. It writes the
+stripped,
 musl-static executable to `tools/utils/ai/ai`. Override the image with
 `MUSL_IMG`. `make -C tools/utils/ai` performs a native static build without
 Docker.
@@ -57,6 +58,12 @@ steering instruction without running it, or `n` to refuse it. With
 appears after every command before the next model request. Commands execute
 through `/bin/sh -c` with the current process privileges. All output is shown
 live and a bounded tail is returned to the model.
+
+While an AI request or command is running, completed input lines are accepted as
+live steering. Lines typed during a request are sent before the next request;
+lines typed during a command are sent with the command result before the next
+request. Live steering cannot alter a request already submitted, but it can
+guide the next turn.
 
 Commands in the interactive editor are terminated by an empty line. `/new`
 starts a fresh conversation, while `/exit` and `/quit` leave the program.

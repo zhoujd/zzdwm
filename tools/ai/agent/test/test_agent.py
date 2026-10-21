@@ -3,6 +3,7 @@ import os
 import socket
 import subprocess
 import threading
+import time
 import unittest
 
 
@@ -11,8 +12,9 @@ EXECUTABLE = os.path.join(ROOT, "ai")
 
 
 class Endpoint:
-    def __init__(self, responses):
+    def __init__(self, responses, delay=0):
         self.responses = list(responses)
+        self.delay = delay
         self.requests = []
         self.raw_requests = []
         self.lock = threading.Lock()
@@ -65,6 +67,7 @@ class Endpoint:
                     response = self.responses.pop(0)
             except (ValueError, IndexError):
                 return
+            time.sleep(self.delay)
             payload = json.dumps(response, separators=(",", ":")).encode()
             client.sendall(
                 b"HTTP/1.1 200 OK\r\n"
@@ -110,9 +113,9 @@ def text_response(content):
 
 class AgentTests(unittest.TestCase):
     def run_agent(
-        self, responses, stdin, full_access=False, command_timeout="2"
+        self, responses, stdin, full_access=False, command_timeout="2", delay=0
     ):
-        endpoint = Endpoint(responses)
+        endpoint = Endpoint(responses, delay)
         self.addCleanup(endpoint.thread.join, timeout=2)
         self.addCleanup(endpoint.close)
         settings = {
@@ -133,6 +136,40 @@ class AgentTests(unittest.TestCase):
             timeout=10,
             check=True,
         ), endpoint
+
+    def run_agent_later(self, responses, live, tail, **kwargs):
+        endpoint = Endpoint(responses, kwargs.pop("delay", 0))
+        self.addCleanup(endpoint.close)
+        settings = {
+            "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+            "AI_TIMEOUT_SECONDS": kwargs.pop("api_timeout", "2"),
+            "AI_COMMAND_TIMEOUT_SECONDS": kwargs.pop(
+                "command_timeout", "2"
+            ),
+            "PATH": os.environ["PATH"],
+        }
+        command = [EXECUTABLE]
+        if kwargs.pop("full_access", False):
+            command.append("--full-access")
+        process = subprocess.Popen(
+            command,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            env=settings,
+        )
+        process.stdin.write("diagnose\n\n")
+        process.stdin.flush()
+        time.sleep(0.5)
+        process.stdin.write(live)
+        process.stdin.flush()
+        time.sleep(kwargs.pop("wait", 3.3))
+        if tail:
+            process.stdin.write(tail)
+            process.stdin.flush()
+        output, _ = process.communicate(timeout=10)
+        return output, endpoint
 
     def test_allow_executes_and_continues(self):
         result, endpoint = self.run_agent(
@@ -195,6 +232,43 @@ class AgentTests(unittest.TestCase):
         self.assertIn(
             "HUMAN STEERING DURING TOOL EXECUTION",
             endpoint.requests[1]["messages"][-1]["content"],
+        )
+
+    def test_live_steering_during_command(self):
+        result, endpoint = self.run_agent_later(
+            [tool_response("sleep 1"), text_response("done")],
+            "stop after this output\n",
+            "\n/exit\n\n",
+            full_access=True,
+            delay=0.5,
+            wait=1.8,
+        )
+        self.assertIn("live steering queued", result)
+        messages = endpoint.requests[1]["messages"]
+        self.assertIn(
+            "HUMAN STEERING DURING TOOL EXECUTION: stop after this output",
+            messages[-1]["content"],
+        )
+
+    def test_live_steering_during_request(self):
+        result, endpoint = self.run_agent_later(
+            [text_response("first"), text_response("done")],
+            "prioritize read-only diagnosis\n",
+            "continue\n\n/exit\n\n",
+            api_timeout="5",
+            delay=3,
+            wait=3.5,
+        )
+        self.assertIn("live steering queued", result)
+        self.assertEqual(len(endpoint.requests), 2)
+        messages = endpoint.requests[1]["messages"]
+        steering = next(
+            message for message in messages
+            if "HUMAN STEERING DURING AI REQUEST" in message.get("content", "")
+        )
+        self.assertIn(
+            "HUMAN STEERING DURING AI REQUEST: prioritize read-only diagnosis",
+            steering["content"],
         )
 
     def test_malformed_tool_arguments_are_reported(self):
