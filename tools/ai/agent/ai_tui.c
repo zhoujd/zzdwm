@@ -17,9 +17,12 @@
 
 #include "utf.h"
 
+#include "version.h"
+
 #define MAX_INPUT 8192
 #define MAX_LINE 4096
 #define MAX_PANE_LINES 2048
+#define VERSION "1.0"
 #define TOP_HEIGHT 7
 #define BOTTOM_HEIGHT 5
 #define MIN_TERMINAL_HEIGHT 18
@@ -60,6 +63,7 @@ static pid_t agent_pid;
 static int output_mode_response;
 static PaneId selected_pane = PANE_LOGS;
 static InputMode input_mode = INPUT_MULTILINE;
+static int full_access;
 
 static void handle_agent_prompt(const char *line);
 
@@ -69,6 +73,43 @@ static void on_signal(int signal_number)
   interrupted = 1;
   if (agent_pid > 0)
     kill(agent_pid, SIGINT);
+}
+
+static void usage(FILE *stream)
+{
+  fprintf(stream,
+    "usage: ai-tui [--full-access] [--help] [--version]\n"
+    "\n"
+    "Environment configures AI_API_URL, AI_MODEL, AI_API_KEY or\n"
+    "OPENAI_API_KEY, AI_TIMEOUT_SECONDS, and\n"
+    "AI_COMMAND_TIMEOUT_SECONDS.\n");
+}
+
+static int parse_arguments(int argc, char **argv)
+{
+  int index;
+
+  for (index = 1; index < argc; index++)
+    {
+      if (strcmp(argv[index], "--full-access") == 0)
+        full_access = 1;
+      else if (strcmp(argv[index], "--help") == 0)
+        {
+          usage(stdout);
+          exit(0);
+        }
+      else if (strcmp(argv[index], "--version") == 0)
+        {
+          printf("ai-tui %s %s %s\n", VERSION, BUILD_DATE, BUILD_REVISION);
+          exit(0);
+        }
+      else
+        {
+          usage(stderr);
+          return -1;
+        }
+    }
+  return 0;
 }
 
 static void destroy_layout(void)
@@ -444,7 +485,10 @@ static void start_agent(const char *agent_path, int *agent_stdin,
       close(input_fds[1]);
       close(output_fds[0]);
       close(output_fds[1]);
-      execl(agent_path, "ai", "--ui", (char *) NULL);
+      if (full_access)
+        execl(agent_path, "ai", "--ui", "--full-access", (char *) NULL);
+      else
+        execl(agent_path, "ai", "--ui", (char *) NULL);
       _exit(127);
     }
   close(input_fds[0]);
@@ -686,7 +730,7 @@ static const char *agent_executable_path(char *buffer, size_t capacity)
   return buffer;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
   char executable_path[4096];
   InputBuffer input = {{0}, 0, 0, {0}, 0};
@@ -697,6 +741,8 @@ int main(void)
   int agent_exited = 0;
   int status;
 
+  if (parse_arguments(argc, argv) < 0)
+    return 2;
   agent_path = agent_executable_path(executable_path, sizeof(executable_path));
   if (agent_path == NULL)
     {
