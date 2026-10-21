@@ -450,7 +450,7 @@ static void submit_input(int agent_stdin, const char *line)
 {
   size_t length = strlen(line);
 
-  if (length == 0)
+  if (length == 0 && input_mode == INPUT_MULTILINE)
     return;
   if (write_all(agent_stdin, line, length) < 0
       || write_all(agent_stdin,
@@ -460,8 +460,11 @@ static void submit_input(int agent_stdin, const char *line)
       write_line(PANE_LOGS, "[error]: unable to send prompt to agent");
       return;
     }
-  write_line(PANE_LOGS, "[You]:");
-  write_multiline(PANE_LOGS, line);
+  if (length != 0)
+    {
+      write_line(PANE_LOGS, "[You]:");
+      write_multiline(PANE_LOGS, line);
+    }
 }
 
 static void scroll_pane(PaneId pane_id, int amount)
