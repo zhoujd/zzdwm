@@ -23,6 +23,8 @@
 
 #include "version.h"
 
+#include "cJSON.h"
+
 #define VERSION "1.0"
 #define DEFAULT_ENDPOINT "http://127.0.0.1:8090/v1/chat/completions"
 #define DEFAULT_MODEL "glm-5.3-flash"
@@ -64,11 +66,6 @@ typedef struct {
   size_t capacity;
   size_t length;
 } Buffer;
-
-typedef struct {
-  const char *cursor;
-  const char *end;
-} JsonParser;
 
 typedef struct {
   char id[MAX_ID];
@@ -160,42 +157,6 @@ static int buffer_append_formatted(Buffer *buffer, const char *format, ...)
   if (length < 0)
     return -1;
   return buffer_append(buffer, text, (size_t) length);
-}
-
-static int append_json_unicode(Buffer *buffer, unsigned int codepoint)
-{
-  char utf8[4];
-  size_t length;
-
-  if (codepoint == 0)
-    return -1;
-  if (codepoint < 0x80)
-    {
-      utf8[0] = (char) codepoint;
-      length = 1;
-    }
-  else if (codepoint < 0x800)
-    {
-      utf8[0] = (char) (0xc0 | (codepoint >> 6));
-      utf8[1] = (char) (0x80 | (codepoint & 0x3f));
-      length = 2;
-    }
-  else if (codepoint < 0x10000)
-    {
-      utf8[0] = (char) (0xe0 | (codepoint >> 12));
-      utf8[1] = (char) (0x80 | ((codepoint >> 6) & 0x3f));
-      utf8[2] = (char) (0x80 | (codepoint & 0x3f));
-      length = 3;
-    }
-  else
-    {
-      utf8[0] = (char) (0xf0 | (codepoint >> 18));
-      utf8[1] = (char) (0x80 | ((codepoint >> 12) & 0x3f));
-      utf8[2] = (char) (0x80 | ((codepoint >> 6) & 0x3f));
-      utf8[3] = (char) (0x80 | (codepoint & 0x3f));
-      length = 4;
-    }
-  return buffer_append(buffer, utf8, length);
 }
 
 static int append_json_string_body(Buffer *buffer, const char *data,
@@ -525,294 +486,17 @@ static int configure_environment(void)
   return 0;
 }
 
-static void json_skip_whitespace(JsonParser *parser)
+static int copy_json_string(const cJSON *item, char *output,
+                            size_t capacity)
 {
-  while (parser->cursor < parser->end
-         && (*parser->cursor == ' ' || *parser->cursor == '\t'
-             || *parser->cursor == '\r' || *parser->cursor == '\n'))
-    parser->cursor++;
-}
+  const char *value;
 
-static int hex_digit(char character)
-{
-  if (character >= '0' && character <= '9')
-    return character - '0';
-  if (character >= 'a' && character <= 'f')
-    return character - 'a' + 10;
-  if (character >= 'A' && character <= 'F')
-    return character - 'A' + 10;
-  return -1;
-}
-
-static int parse_json_escape(JsonParser *parser, Buffer *output)
-{
-  unsigned int codepoint;
-  int index;
-  int digit;
-
-  if (parser->cursor == parser->end || *parser->cursor != 'u')
-    {
-      static const char valid[] = "\"\\/bfnrt";
-      char character = parser->cursor != parser->end ? *parser->cursor : 0;
-
-      if (character == 0 || strchr(valid, character) == NULL)
-        return -1;
-      switch (character)
-        {
-        case 'b': character = '\b'; break;
-        case 'f': character = '\f'; break;
-        case 'n': character = '\n'; break;
-        case 'r': character = '\r'; break;
-        case 't': character = '\t'; break;
-        default: break;
-        }
-      if (buffer_append(output, &character, 1) < 0)
-        return -1;
-      parser->cursor++;
-      return 0;
-    }
-  parser->cursor++;
-  codepoint = 0;
-  for (index = 0; index < 4; index++)
-    {
-      if (parser->cursor == parser->end)
-        return -1;
-      digit = hex_digit(*parser->cursor++);
-      if (digit < 0)
-        return -1;
-      codepoint = (codepoint << 4) | (unsigned int) digit;
-    }
-  if (codepoint >= 0xd800 && codepoint <= 0xdbff)
-    {
-      unsigned int low = 0;
-
-      if (parser->end - parser->cursor < 6 || parser->cursor[0] != '\\'
-          || parser->cursor[1] != 'u')
-        return -1;
-      parser->cursor += 2;
-      for (index = 0; index < 4; index++)
-        {
-          if (parser->cursor == parser->end)
-            return -1;
-          digit = hex_digit(*parser->cursor++);
-          if (digit < 0)
-            return -1;
-          low = (low << 4) | (unsigned int) digit;
-        }
-      if (low < 0xdc00 || low > 0xdfff)
-        return -1;
-      codepoint = 0x10000 + ((codepoint - 0xd800) << 10) + (low - 0xdc00);
-    }
-  else if (codepoint >= 0xdc00 && codepoint <= 0xdfff)
+  if (!cJSON_IsString(item) || capacity == 0)
     return -1;
-  return append_json_unicode(output, codepoint);
-}
-
-static int parse_json_string(JsonParser *parser, Buffer *output)
-{
-  if (parser->cursor == parser->end || *parser->cursor != '"')
+  value = cJSON_GetStringValue(item);
+  if (strlen(value) >= capacity)
     return -1;
-  parser->cursor++;
-  while (parser->cursor < parser->end)
-    {
-      char character = *parser->cursor++;
-
-      if (character == '"')
-        return 0;
-      if (character == 0 || (unsigned char) character < 0x20)
-        return -1;
-      if (character == '\\')
-        {
-          if (parse_json_escape(parser, output) < 0)
-            return -1;
-        }
-      else if (buffer_append(output, &character, 1) < 0)
-        return -1;
-    }
-  return -1;
-}
-
-static int skip_json_string(JsonParser *parser)
-{
-  if (parser->cursor == parser->end || *parser->cursor != '"')
-    return -1;
-  parser->cursor++;
-  while (parser->cursor < parser->end)
-    {
-      char character = *parser->cursor++;
-
-      if (character == '"')
-        return 0;
-      if (character == 0 || (unsigned char) character < 0x20)
-        return -1;
-      if (character == '\\')
-        {
-          if (parser->cursor == parser->end)
-            return -1;
-          parser->cursor++;
-        }
-    }
-  return -1;
-}
-
-static int skip_json_value(JsonParser *parser, int depth)
-{
-  if (depth > 32 || parser->cursor == parser->end)
-    return -1;
-  json_skip_whitespace(parser);
-  switch (*parser->cursor)
-    {
-    case '{':
-    case '[':
-      {
-        char open = *parser->cursor++;
-        char close = open == '{' ? '}' : ']';
-
-        json_skip_whitespace(parser);
-        if (parser->cursor != parser->end && *parser->cursor == close)
-          {
-            parser->cursor++;
-            return 0;
-          }
-        while (parser->cursor < parser->end)
-          {
-            json_skip_whitespace(parser);
-            if (open == '{')
-              {
-                if (skip_json_string(parser) < 0)
-                  return -1;
-                json_skip_whitespace(parser);
-                if (parser->cursor == parser->end || *parser->cursor != ':')
-                  return -1;
-                parser->cursor++;
-              }
-            if (skip_json_value(parser, depth + 1) < 0)
-              return -1;
-            json_skip_whitespace(parser);
-            if (parser->cursor != parser->end && *parser->cursor == close)
-              {
-                parser->cursor++;
-                return 0;
-              }
-            if (parser->cursor == parser->end || *parser->cursor != ',')
-              return -1;
-            parser->cursor++;
-          }
-        return -1;
-      }
-    case '"':
-      return skip_json_string(parser);
-    case 't':
-      if (parser->end - parser->cursor < 4
-          || memcmp(parser->cursor, "true", 4) != 0)
-        return -1;
-      parser->cursor += 4;
-      return 0;
-    case 'f':
-      if (parser->end - parser->cursor < 5
-          || memcmp(parser->cursor, "false", 5) != 0)
-        return -1;
-      parser->cursor += 5;
-      return 0;
-    case 'n':
-      if (parser->end - parser->cursor < 4
-          || memcmp(parser->cursor, "null", 4) != 0)
-        return -1;
-      parser->cursor += 4;
-      return 0;
-    default:
-      {
-        const char *start = parser->cursor;
-        int digits = 0;
-
-        if (parser->cursor != parser->end && *parser->cursor == '-')
-          parser->cursor++;
-        while (parser->cursor < parser->end
-               && ((*parser->cursor >= '0' && *parser->cursor <= '9')
-                   || *parser->cursor == '.' || *parser->cursor == 'e'
-                   || *parser->cursor == 'E' || *parser->cursor == '+'
-                   || *parser->cursor == '-'))
-          {
-            if (*parser->cursor >= '0' && *parser->cursor <= '9')
-              digits++;
-            parser->cursor++;
-          }
-        if (digits == 0 || parser->cursor == start)
-          return -1;
-        return 0;
-      }
-    }
-  return -1;
-}
-
-static const char *json_member(const char *object, const char *end,
-                               const char *wanted)
-{
-  JsonParser parser = {object, end};
-  char key[256];
-  Buffer output = {key, sizeof(key) - 1, 0};
-
-  json_skip_whitespace(&parser);
-  if (parser.cursor == parser.end || *parser.cursor != '{')
-    return NULL;
-  parser.cursor++;
-      json_skip_whitespace(&parser);
-      if (parser.cursor != parser.end && *parser.cursor == '}')
-        return parser.cursor - 1;
-  while (parser.cursor < parser.end)
-    {
-      const char *value;
-
-      output.length = 0;
-      if (parse_json_string(&parser, &output) < 0)
-        return NULL;
-      key[output.length] = 0;
-      json_skip_whitespace(&parser);
-      if (parser.cursor == parser.end || *parser.cursor != ':')
-        return NULL;
-      parser.cursor++;
-      json_skip_whitespace(&parser);
-      value = parser.cursor;
-      if (strcmp(key, wanted) == 0)
-        return value;
-      parser.cursor = value;
-      if (skip_json_value(&parser, 1) < 0)
-        return NULL;
-      json_skip_whitespace(&parser);
-      if (parser.cursor != parser.end && *parser.cursor == '}')
-        return NULL;
-      if (parser.cursor == parser.end || *parser.cursor != ',')
-        return NULL;
-      parser.cursor++;
-    }
-  return NULL;
-}
-
-static int json_string_value(const char *value, const char *end,
-                             char *output, size_t capacity)
-{
-  JsonParser parser = {value, end};
-  Buffer buffer = {output, capacity - 1, 0};
-
-  if (capacity == 0 || parse_json_string(&parser, &buffer) < 0)
-    return -1;
-  output[buffer.length] = 0;
-  return 0;
-}
-
-static int json_array_first(const char *array, const char *end,
-                            const char **element)
-{
-  JsonParser parser = {array, end};
-
-  json_skip_whitespace(&parser);
-  if (parser.cursor == parser.end || *parser.cursor != '[')
-    return -1;
-  parser.cursor++;
-  json_skip_whitespace(&parser);
-  if (parser.cursor != parser.end && *parser.cursor == ']')
-    return -1;
-  *element = parser.cursor;
+  strcpy(output, value);
   return 0;
 }
 
@@ -1118,8 +802,7 @@ static int build_request(char *request, size_t capacity, size_t *length)
   return 0;
 }
 
-static int call_endpoint(const char **response_start, const char **response_end,
-                         char *response_storage)
+static int call_endpoint(const char **response_body, char *response_storage)
 {
   static char request[MAX_REQUEST];
   size_t request_length;
@@ -1181,8 +864,8 @@ static int call_endpoint(const char **response_start, const char **response_end,
                         strerror(receive_error));
       return -1;
     }
-  *response_start = body;
-  *response_end = body + response_length;
+  (void) response_length;
+  *response_body = body;
   return 0;
 }
 
@@ -1607,151 +1290,152 @@ static int process_tool_calls(ToolCall *calls, size_t call_count)
   return 0;
 }
 
-static int parse_tool_call(const char *object, const char *end, ToolCall *call)
+static int parse_tool_call(const cJSON *tool_call, ToolCall *call)
 {
-  const char *value;
-  const char *function;
-  const char *arguments;
+  const cJSON *function;
+  const cJSON *id;
+  const cJSON *name;
+  const cJSON *arguments;
+  cJSON *argument_object;
+  const cJSON *command;
 
   memset(call, 0, sizeof(*call));
   strcpy(call->id, "tool-0");
   strcpy(call->name, "unknown");
   call->valid = 0;
-  value = json_member(object, end, "id");
-  if (value != NULL && json_string_value(value, end, call->id,
-                                         sizeof(call->id)) < 0)
+  if (!cJSON_IsObject(tool_call))
     return -1;
-  function = json_member(object, end, "function");
-  if (function == NULL)
+
+  id = cJSON_GetObjectItemCaseSensitive(tool_call, "id");
+  if (id != NULL && copy_json_string(id, call->id, sizeof(call->id)) < 0)
     return -1;
-  value = json_member(function, end, "name");
-  if (value == NULL || json_string_value(value, end, call->name,
-                                         sizeof(call->name)) < 0)
+  function = cJSON_GetObjectItemCaseSensitive(tool_call, "function");
+  if (!cJSON_IsObject(function))
+    return -1;
+
+  name = cJSON_GetObjectItemCaseSensitive(function, "name");
+  if (copy_json_string(name, call->name, sizeof(call->name)) < 0)
     return -1;
   call->supported = strcmp(call->name, "run_terminal_command") == 0;
-  arguments = json_member(function, end, "arguments");
-  if (arguments == NULL)
-    return -1;
-  {
-    char arguments_json[MAX_COMMAND];
-    size_t arguments_length;
-    const char *command;
-    const char *arguments_end;
 
-    if (json_string_value(arguments, end, arguments_json,
-                          sizeof(arguments_json)) < 0)
+  arguments = cJSON_GetObjectItemCaseSensitive(function, "arguments");
+  if (!cJSON_IsString(arguments))
+    return -1;
+  argument_object = cJSON_Parse(cJSON_GetStringValue(arguments));
+  if (argument_object == NULL)
+    return -1;
+
+  command = cJSON_GetObjectItemCaseSensitive(argument_object, "command");
+  if (copy_json_string(command, call->command, sizeof(call->command)) < 0)
+    {
+      cJSON_Delete(argument_object);
       return -1;
-    arguments_length = strlen(arguments_json);
-    arguments_end = arguments_json + arguments_length;
-    command = json_member(arguments_json,
-                          arguments_end, "command");
-    if (command == NULL
-        || json_string_value(command, arguments_end, call->command,
-                             sizeof(call->command)) < 0)
-      return -1;
-  }
+    }
+  cJSON_Delete(argument_object);
   call->valid = call->command[0] != 0;
   return 0;
 }
 
-static int process_response(const char *start, const char *end)
+static int process_response(const char *body)
 {
-  const char *choices;
-  const char *choice;
-  const char *message;
-  const char *content_value;
-  const char *tool_calls;
+  cJSON *response;
+  cJSON *error;
+  cJSON *choices;
+  cJSON *choice;
+  cJSON *message;
+  cJSON *content_item;
+  cJSON *tool_calls;
   char content[MAX_LINE];
   ToolCall calls[MAX_TOOL_CALLS];
   size_t call_count = 0;
-  JsonParser parser;
-  const char *error;
 
-  error = json_member(start, end, "error");
+  response = cJSON_Parse(body);
+  if (response == NULL)
+    {
+      print_formatted("error: AI response is malformed\n");
+      return -1;
+    }
+
+  error = cJSON_GetObjectItemCaseSensitive(response, "error");
   if (error != NULL)
     {
-      const char *message_value = json_member(error, end, "message");
+      cJSON *message_value = cJSON_GetObjectItemCaseSensitive(error,
+                                                             "message");
 
-      if (message_value == NULL
-          || json_string_value(message_value, end, content,
-                               sizeof(content)) < 0)
+      if (copy_json_string(message_value, content, sizeof(content)) < 0)
         print_formatted("error: AI endpoint returned an error response\n");
       else
         print_formatted("error: AI endpoint: %s\n", content);
+      cJSON_Delete(response);
       return -1;
     }
-  choices = json_member(start, end, "choices");
-  if (choices == NULL || json_array_first(choices, end, &choice) < 0)
+
+  choices = cJSON_GetObjectItemCaseSensitive(response, "choices");
+  if (!cJSON_IsArray(choices) || cJSON_GetArraySize(choices) < 1)
     {
       print_formatted("error: AI response has no choice\n");
+      cJSON_Delete(response);
       return -1;
     }
-  message = json_member(choice, end, "message");
-  if (message == NULL)
+
+  choice = cJSON_GetArrayItem(choices, 0);
+  message = cJSON_GetObjectItemCaseSensitive(choice, "message");
+  if (!cJSON_IsObject(message))
     {
       print_formatted("error: AI response has no message\n");
+      cJSON_Delete(response);
       return -1;
     }
+
   content[0] = 0;
-  content_value = json_member(message, end, "content");
-  if (content_value != NULL && *content_value == '"'
-      && json_string_value(content_value, end, content,
-                           sizeof(content)) < 0)
+  content_item = cJSON_GetObjectItemCaseSensitive(message, "content");
+  if (content_item != NULL && !cJSON_IsNull(content_item)
+      && copy_json_string(content_item, content, sizeof(content)) < 0)
     {
       print_formatted("error: assistant content is too long or malformed\n");
+      cJSON_Delete(response);
       return -1;
     }
-  tool_calls = json_member(message, end, "tool_calls");
-  if (tool_calls != NULL)
+
+  tool_calls = cJSON_GetObjectItemCaseSensitive(message, "tool_calls");
+  if (tool_calls != NULL && !cJSON_IsNull(tool_calls)
+      && !cJSON_IsArray(tool_calls))
     {
-      parser.cursor = tool_calls;
-      parser.end = end;
-      json_skip_whitespace(&parser);
-      if (parser.cursor != parser.end && *parser.cursor == '[')
-        {
-          parser.cursor++;
-          json_skip_whitespace(&parser);
-          while (parser.cursor < parser.end)
-            {
-              if (*parser.cursor == ']')
-                break;
-              if (call_count == MAX_TOOL_CALLS)
-                {
-                  print_formatted("error: too many tool calls in one response\n");
-                  return -1;
-                }
-              if (parse_tool_call(parser.cursor, end, &calls[call_count]) < 0)
-                {
-                  strcpy(calls[call_count].id, "tool-0");
-                  strcpy(calls[call_count].name, "run_terminal_command");
-                  calls[call_count].command[0] = 0;
-                  calls[call_count].supported = 1;
-                  calls[call_count].valid = 0;
-                }
-              call_count++;
-              if (skip_json_value(&parser, 1) < 0)
-                {
-                  print_formatted("error: malformed tool_calls array\n");
-                  return -1;
-                }
-              json_skip_whitespace(&parser);
-              if (parser.cursor != parser.end && *parser.cursor == ',')
-                {
-                  parser.cursor++;
-                  json_skip_whitespace(&parser);
-                }
-              else if (parser.cursor == parser.end || *parser.cursor != ']')
-                return -1;
-            }
-        }
-      if (parser.cursor != parser.end && *parser.cursor != ']')
-        return -1;
+      print_formatted("error: AI response is malformed\n");
+      cJSON_Delete(response);
+      return -1;
     }
+  if (cJSON_IsArray(tool_calls))
+    {
+      cJSON *item;
+
+      cJSON_ArrayForEach(item, tool_calls)
+        {
+          if (call_count == MAX_TOOL_CALLS)
+            {
+              print_formatted("error: too many tool calls in one response\n");
+              cJSON_Delete(response);
+              return -1;
+            }
+          if (parse_tool_call(item, &calls[call_count]) < 0)
+            {
+              strcpy(calls[call_count].id, "tool-0");
+              strcpy(calls[call_count].name, "run_terminal_command");
+              calls[call_count].command[0] = 0;
+              calls[call_count].supported = 1;
+              calls[call_count].valid = 0;
+            }
+          call_count++;
+        }
+    }
+
   if (add_assistant_response(content, calls, call_count) < 0)
     {
       print_formatted("error: assistant response exceeds conversation limit\n");
+      cJSON_Delete(response);
       return -1;
     }
+  cJSON_Delete(response);
   if (call_count == 0)
     {
       print_formatted("\n[AI Response]:\n%s\n",
@@ -1805,7 +1489,6 @@ int main(int argc, char **argv)
   static char response[MAX_RESPONSE];
   static char prompt[MAX_COMMAND];
   const char *response_start = NULL;
-  const char *response_end = NULL;
   struct sigaction action;
 
   if (parse_arguments(argc, argv) < 0)
@@ -1857,7 +1540,7 @@ int main(int argc, char **argv)
           print_formatted("error: prompt cannot fit in the conversation\n");
           continue;
         }
-      if (call_endpoint(&response_start, &response_end, response) < 0)
+      if (call_endpoint(&response_start, response) < 0)
         {
           size_t old_count = message_count;
 
@@ -1870,7 +1553,7 @@ int main(int argc, char **argv)
         int result;
         int round;
 
-        result = process_response(response_start, response_end);
+        result = process_response(response_start);
         if (result < 0)
           return 1;
         for (round = 1; result == 1; round++)
@@ -1883,7 +1566,7 @@ int main(int argc, char **argv)
                 result = 0;
                 break;
               }
-            if (call_endpoint(&response_start, &response_end, response) < 0)
+            if (call_endpoint(&response_start, response) < 0)
               {
                 size_t old_count = message_count;
 
@@ -1893,7 +1576,7 @@ int main(int argc, char **argv)
                 round--;
                 continue;
               }
-            result = process_response(response_start, response_end);
+            result = process_response(response_start);
             if (result < 0)
               return 1;
           }

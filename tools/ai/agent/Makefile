@@ -30,8 +30,10 @@ release:
 
 all: $(TARGET)
 
-$(TARGET): $(PROGRAM).c $(VERSION_HEADER)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
+CJSON_SOURCE = cJSON.c
+
+$(TARGET): $(PROGRAM).c $(CJSON_SOURCE) $(VERSION_HEADER)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 $(VERSION_HEADER): FORCE
 	@./version.sh $@
