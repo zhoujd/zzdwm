@@ -223,6 +223,19 @@ static void write_line(PaneId pane_id, const char *text)
 
 static void display_agent_line(const char *line)
 {
+  int prompt_only;
+
+  prompt_only = strcmp(line, "[You]: ") == 0
+                || strcmp(line, "[...]: ") == 0
+                || strcmp(line, "[steer]: ") == 0
+                || strcmp(line, "[.....]: ") == 0
+                || strcmp(line,
+                    "[a]llow, [e]dit, [s]teer without running, "
+                    "[n]o, [q]uit: ") == 0
+                || strcmp(line, "[edited command]: ") == 0
+                || strcmp(line,
+                    "[s]teer before next AI request, Enter to continue, "
+                    "q quit: ") == 0;
   if (strncmp(line, "[AI Response]", 13) == 0)
     output_mode_response = 1;
   else if (strncmp(line, "[You]", 5) == 0
@@ -233,7 +246,8 @@ static void display_agent_line(const char *line)
            || strncmp(line, "[steer]", 7) == 0
            || strncmp(line, "[s]teer", 7) == 0)
     output_mode_response = 0;
-  write_line(output_mode_response ? PANE_RESPONSE : PANE_LOGS, line);
+  if (!prompt_only)
+    write_line(output_mode_response ? PANE_RESPONSE : PANE_LOGS, line);
   handle_agent_prompt(line);
 }
 
@@ -439,7 +453,6 @@ static void handle_agent_prompt(const char *line)
   int multiline;
 
   if (strcmp(line, "[You]: ") == 0
-      || strcmp(line, "[...]: ") == 0
       || strcmp(line, "[steer]: ") == 0
       || strcmp(line, "[.....]: ") == 0)
     multiline = 1;
