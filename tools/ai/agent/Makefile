@@ -3,7 +3,7 @@ TARGET = ai
 DEST ?= /usr/local/bin
 VERSION_HEADER = version.h
 REPO_ROOT := $(shell git rev-parse --show-toplevel)
-BUILD_DIR := $(REPO_ROOT)/tools/utils/ai
+BUILD_DIR := $(REPO_ROOT)/tools/ai/agent
 
 CFLAGS ?= -std=c11 -Os -pipe -Wall -Wextra -Werror
 CFLAGS += -D_FORTIFY_SOURCE=2
