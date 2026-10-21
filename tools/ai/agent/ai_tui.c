@@ -97,6 +97,8 @@ static void create_pane(PaneId pane_id, int height, int start_y,
 
   pane->border = newwin(height, terminal_width, start_y, 0);
   pane->pad = newpad(MAX_PANE_LINES, terminal_width - 2);
+  leaveok(pane->border, TRUE);
+  leaveok(pane->pad, TRUE);
   pane->line_count = 0;
   pane->view_offset = 0;
   scrollok(pane->pad, TRUE);
@@ -133,6 +135,8 @@ static void refresh_content_panes(void)
 
   render_pane(PANE_LOGS, 0, TOP_HEIGHT);
   render_pane(PANE_RESPONSE, TOP_HEIGHT, response_height);
+  touchwin(input_window);
+  wrefresh(input_window);
 }
 
 static void redraw_layout(void)
@@ -149,6 +153,7 @@ static void redraw_layout(void)
               "2. AI Response");
   input_window = newwin(BOTTOM_HEIGHT, terminal_width,
                         TOP_HEIGHT + response_height, 0);
+  leaveok(input_window, FALSE);
   scrollok(input_window, TRUE);
   idlok(input_window, TRUE);
   wsetscrreg(input_window, 0, BOTTOM_HEIGHT - 1);
@@ -158,6 +163,8 @@ static void redraw_layout(void)
              ? " 3. Prompt (RET submit) "
              : " 3. Decision (RET submit) ");
   keypad(input_window, TRUE);
+  wmove(input_window, 1, 1);
+  touchwin(input_window);
   wrefresh(input_window);
 }
 
@@ -329,7 +336,8 @@ static void scroll_pane(PaneId pane_id, int amount)
     render_pane(PANE_RESPONSE, TOP_HEIGHT, response_height);
   mvwprintw(panes[pane_id].border, 0, terminal_width - 12, " %5d ",
             pane->view_offset);
-  wrefresh(panes[pane_id].border);
+  wnoutrefresh(panes[pane_id].border);
+  wrefresh(input_window);
 }
 
 static void start_agent(const char *agent_path, int *agent_stdin,
@@ -610,6 +618,7 @@ int main(void)
              "F1 quit; Tab pane; PgUp/PgDn scroll; C-A/E/B/F/D/K/U edit; "
              "Enter submit; Ctrl+C cancel");
   refresh_content_panes();
+  draw_input(&input);
   while (!interrupted && !agent_exited)
     {
       int key = wgetch(input_window);
