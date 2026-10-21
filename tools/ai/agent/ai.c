@@ -1143,8 +1143,8 @@ static int read_line(const char *prompt, char *buffer, size_t capacity)
   size_t length;
   int character;
 
-  if (prompt != NULL && prompt[0] != 0)
-    print_formatted("%s", prompt);
+  if (prompt != NULL && prompt[0] != 0 && !ui_mode)
+    print_formatted("%s\n", prompt);
   if (fgets(buffer, (int) capacity, stdin) == NULL)
     return -1;
   length = strlen(buffer);

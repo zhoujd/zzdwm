@@ -212,6 +212,24 @@ static void write_wrapped_line(PaneId pane_id, const char *text)
   append_pane_line(pane_id, text + rune_start, strlen(text + rune_start));
 }
 
+static void write_multiline(PaneId pane_id, const char *text)
+{
+  size_t start = 0;
+  size_t index;
+
+  for (index = 0; ; index++)
+    {
+      if (text[index] == '\n' || text[index] == 0)
+        {
+          append_pane_line(pane_id, text + start, index - start);
+          if (text[index] == 0)
+            break;
+          start = index + 1;
+        }
+    }
+  panes[pane_id].view_offset = 0;
+}
+
 static void write_line(PaneId pane_id, const char *text)
 {
   if (text[0] == 0)
@@ -223,19 +241,6 @@ static void write_line(PaneId pane_id, const char *text)
 
 static void display_agent_line(const char *line)
 {
-  int prompt_only;
-
-  prompt_only = strcmp(line, "[You]: ") == 0
-                || strcmp(line, "[...]: ") == 0
-                || strcmp(line, "[steer]: ") == 0
-                || strcmp(line, "[.....]: ") == 0
-                || strcmp(line,
-                    "[a]llow, [e]dit, [s]teer without running, "
-                    "[n]o, [q]uit: ") == 0
-                || strcmp(line, "[edited command]: ") == 0
-                || strcmp(line,
-                    "[s]teer before next AI request, Enter to continue, "
-                    "q quit: ") == 0;
   if (strncmp(line, "[AI Response]", 13) == 0)
     output_mode_response = 1;
   else if (strncmp(line, "[You]", 5) == 0
@@ -246,8 +251,7 @@ static void display_agent_line(const char *line)
            || strncmp(line, "[steer]", 7) == 0
            || strncmp(line, "[s]teer", 7) == 0)
     output_mode_response = 0;
-  if (!prompt_only)
-    write_line(output_mode_response ? PANE_RESPONSE : PANE_LOGS, line);
+  write_line(output_mode_response ? PANE_RESPONSE : PANE_LOGS, line);
   handle_agent_prompt(line);
 }
 
@@ -374,7 +378,7 @@ static void submit_input(int agent_stdin, const char *line)
       return;
     }
   write_line(PANE_LOGS, "[You]:");
-  write_line(PANE_LOGS, line);
+  write_multiline(PANE_LOGS, line);
 }
 
 static void scroll_pane(PaneId pane_id, int amount)
@@ -453,6 +457,7 @@ static void handle_agent_prompt(const char *line)
   int multiline;
 
   if (strcmp(line, "[You]: ") == 0
+      || strcmp(line, "[...]: ") == 0
       || strcmp(line, "[steer]: ") == 0
       || strcmp(line, "[.....]: ") == 0)
     multiline = 1;
