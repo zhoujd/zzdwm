@@ -35,6 +35,12 @@ typedef enum {
 } PaneId;
 
 typedef enum {
+  PANE_LAYOUT_NORMAL,
+  PANE_LAYOUT_MAX_LOGS,
+  PANE_LAYOUT_MAX_RESPONSE
+} PaneLayout;
+
+typedef enum {
   INPUT_MULTILINE,
   INPUT_SINGLE_LINE
 } InputMode;
@@ -62,10 +68,37 @@ static volatile sig_atomic_t interrupted;
 static pid_t agent_pid;
 static int output_mode_response;
 static PaneId selected_pane = PANE_LOGS;
+static PaneLayout pane_layout = PANE_LAYOUT_NORMAL;
 static InputMode input_mode = INPUT_MULTILINE;
 static int full_access;
 
 static void handle_agent_prompt(const char *line);
+
+static void content_pane_geometry(PaneId pane_id, int *start_y, int *height)
+{
+  int content_height = terminal_height - BOTTOM_HEIGHT;
+
+  if (pane_layout == PANE_LAYOUT_MAX_LOGS
+      || pane_layout == PANE_LAYOUT_MAX_RESPONSE)
+    {
+      int maximize_logs = pane_layout == PANE_LAYOUT_MAX_LOGS;
+
+      *start_y = 0;
+      *height = pane_id == (maximize_logs ? PANE_LOGS : PANE_RESPONSE)
+                ? content_height : 0;
+      return;
+    }
+  if (pane_id == PANE_LOGS)
+    {
+      *start_y = 0;
+      *height = TOP_HEIGHT;
+    }
+  else
+    {
+      *start_y = TOP_HEIGHT;
+      *height = content_height - TOP_HEIGHT;
+    }
+}
 
 static void on_signal(int signal_number)
 {
@@ -120,14 +153,23 @@ static void destroy_layout(void)
     {
       if (panes[index].border != NULL)
         delwin(panes[index].border);
-      if (panes[index].pad != NULL)
-        delwin(panes[index].pad);
       panes[index].border = NULL;
-      panes[index].pad = NULL;
     }
   if (input_window != NULL)
     delwin(input_window);
   input_window = NULL;
+}
+
+static void destroy_panes(void)
+{
+  size_t index;
+
+  for (index = 0; index < PANE_COUNT; index++)
+    {
+      if (panes[index].pad != NULL)
+        delwin(panes[index].pad);
+      panes[index].pad = NULL;
+    }
 }
 
 static void create_pane(PaneId pane_id, int height, int start_y,
@@ -136,15 +178,20 @@ static void create_pane(PaneId pane_id, int height, int start_y,
   Pane *pane = &panes[pane_id];
   const char *marker = pane_id == selected_pane ? " [*]" : "";
 
+  if (height <= 0)
+    return;
   pane->border = newwin(height, terminal_width, start_y, 0);
-  pane->pad = newpad(MAX_PANE_LINES, terminal_width - 2);
+  if (pane->pad == NULL)
+    {
+      pane->pad = newpad(MAX_PANE_LINES, terminal_width - 2);
+      pane->line_count = 0;
+      pane->view_offset = 0;
+      scrollok(pane->pad, TRUE);
+      idlok(pane->pad, TRUE);
+      wsetscrreg(pane->pad, 0, MAX_PANE_LINES - 1);
+    }
   leaveok(pane->border, TRUE);
   leaveok(pane->pad, TRUE);
-  pane->line_count = 0;
-  pane->view_offset = 0;
-  scrollok(pane->pad, TRUE);
-  idlok(pane->pad, TRUE);
-  wsetscrreg(pane->pad, 0, MAX_PANE_LINES - 1);
   box(pane->border, 0, 0);
   mvwprintw(pane->border, 0, 2, " %s%s ", title, marker);
   wnoutrefresh(pane->border);
@@ -172,28 +219,37 @@ static void render_pane(PaneId pane_id, int start_y, int height)
 
 static void refresh_content_panes(void)
 {
-  int response_height = terminal_height - TOP_HEIGHT - BOTTOM_HEIGHT;
+  int logs_y;
+  int logs_height;
+  int response_y;
+  int response_height;
 
-  render_pane(PANE_LOGS, 0, TOP_HEIGHT);
-  render_pane(PANE_RESPONSE, TOP_HEIGHT, response_height);
+  content_pane_geometry(PANE_LOGS, &logs_y, &logs_height);
+  content_pane_geometry(PANE_RESPONSE, &response_y, &response_height);
+  render_pane(PANE_LOGS, logs_y, logs_height);
+  render_pane(PANE_RESPONSE, response_y, response_height);
   touchwin(input_window);
   wrefresh(input_window);
 }
 
 static void redraw_layout(void)
 {
+  int logs_y;
+  int logs_height;
+  int response_y;
   int response_height;
 
   clear();
   refresh();
   destroy_layout();
-  response_height = terminal_height - TOP_HEIGHT - BOTTOM_HEIGHT;
-  create_pane(PANE_LOGS, TOP_HEIGHT, 0,
+  content_pane_geometry(PANE_LOGS, &logs_y, &logs_height);
+  content_pane_geometry(PANE_RESPONSE, &response_y, &response_height);
+  create_pane(PANE_LOGS, logs_height, logs_y,
               "1. Agent Thoughts & System Status");
-  create_pane(PANE_RESPONSE, response_height, TOP_HEIGHT,
+  create_pane(PANE_RESPONSE, response_height, response_y,
               "2. AI Response");
   input_window = newwin(BOTTOM_HEIGHT, terminal_width,
-                        TOP_HEIGHT + response_height, 0);
+                        terminal_height - BOTTOM_HEIGHT, 0);
   leaveok(input_window, FALSE);
   scrollok(input_window, TRUE);
   idlok(input_window, TRUE);
@@ -470,17 +526,19 @@ static void submit_input(int agent_stdin, const char *line)
 static void scroll_pane(PaneId pane_id, int amount)
 {
   Pane *pane = &panes[pane_id];
-  int response_height = terminal_height - TOP_HEIGHT - BOTTOM_HEIGHT;
+  int start_y;
+  int height;
+
+  if (pane->border == NULL || pane->pad == NULL)
+    return;
 
   pane->view_offset += amount;
   if (pane->view_offset < 0)
     pane->view_offset = 0;
   if (pane->view_offset > pane->line_count)
     pane->view_offset = pane->line_count;
-  if (pane_id == PANE_LOGS)
-    render_pane(PANE_LOGS, 0, TOP_HEIGHT);
-  else
-    render_pane(PANE_RESPONSE, TOP_HEIGHT, response_height);
+  content_pane_geometry(pane_id, &start_y, &height);
+  render_pane(pane_id, start_y, height);
   mvwprintw(panes[pane_id].border, 0, terminal_width - 12, " %5d ",
             pane->view_offset);
   wnoutrefresh(panes[pane_id].border);
@@ -812,7 +870,8 @@ int main(int argc, char **argv)
   start_agent(agent_path, &agent_stdin, &agent_stdout);
   wtimeout(input_window, 100);
   write_line(PANE_LOGS,
-            "F1 quit; Tab pane; PgUp/PgDn scroll; C-A/E/B/F/D/K/U edit; "
+            "F1 quit; F2/F3 maximize pane 1/2; Tab pane; PgUp/PgDn scroll; "
+            "C-A/E/B/F/D/K/U edit; "
             "C-J newline; Enter submit; Ctrl+C cancel");
   refresh_content_panes();
   draw_input(&input);
@@ -839,6 +898,25 @@ int main(int argc, char **argv)
         {
           selected_pane = selected_pane == PANE_LOGS
                           ? PANE_RESPONSE : PANE_LOGS;
+          pane_layout = PANE_LAYOUT_NORMAL;
+          redraw_layout();
+          draw_input(&input);
+          continue;
+        }
+      if (key == KEY_F(2))
+        {
+          selected_pane = PANE_LOGS;
+          pane_layout = pane_layout == PANE_LAYOUT_MAX_LOGS
+                        ? PANE_LAYOUT_NORMAL : PANE_LAYOUT_MAX_LOGS;
+          redraw_layout();
+          draw_input(&input);
+          continue;
+        }
+      if (key == KEY_F(3))
+        {
+          selected_pane = PANE_RESPONSE;
+          pane_layout = pane_layout == PANE_LAYOUT_MAX_RESPONSE
+                        ? PANE_LAYOUT_NORMAL : PANE_LAYOUT_MAX_RESPONSE;
           redraw_layout();
           draw_input(&input);
           continue;
@@ -919,6 +997,7 @@ int main(int argc, char **argv)
   if (agent_stdout >= 0)
     close(agent_stdout);
   destroy_layout();
+  destroy_panes();
   endwin();
   return 0;
 }
