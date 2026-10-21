@@ -293,9 +293,6 @@ static void draw_input(const InputBuffer *input)
           cursor_row++;
         }
     }
-  if (input->cursor == input->length
-      && input->length > 0 && input->text[input->length - 1] == '\n')
-    cursor_row++;
   if (cursor_row >= visible_height)
     first_visible_line = cursor_row - visible_height + 1;
   for (index = 0;
