@@ -293,6 +293,9 @@ static void draw_input(const InputBuffer *input)
           cursor_row++;
         }
     }
+  if (input->cursor == input->length
+      && input->length > 0 && input->text[input->length - 1] == '\n')
+    cursor_row++;
   if (cursor_row >= visible_height)
     first_visible_line = cursor_row - visible_height + 1;
   for (index = 0;
@@ -309,7 +312,9 @@ static void draw_input(const InputBuffer *input)
              input_mode == INPUT_MULTILINE
              ? " 3. Prompt (C-J newline, RET submit) "
              : " 3. Decision (RET submit) ");
-  for (index = line_start; index < input->length && visible_lines < visible_height; )
+  for (index = line_start;
+       index <= input->length && visible_lines < visible_height;
+       )
     {
       size_t end = index;
       int column = 0;
