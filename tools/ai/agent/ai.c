@@ -231,6 +231,18 @@ static void queue_live_line(const char *text, size_t length)
     print_formatted("[live steering dropped]: steering queue is full\n");
 }
 
+static void erase_live_input(size_t length)
+{
+  if (length == 0 || length > live_input.line_length)
+    return;
+  live_input.line_length -= length;
+  live_input.line[live_input.line_length] = 0;
+  if (length == 1)
+    print_formatted("\b \b");
+  else
+    print_formatted("\r\33[K%s", live_input.line);
+}
+
 static int begin_live_input(void)
 {
   struct termios terminal;
@@ -276,6 +288,20 @@ static void poll_live_input(void)
               queue_live_line(live_input.line, live_input.line_length);
               live_input.line_length = 0;
             }
+        }
+      else if (character == 127 || character == 8)
+        erase_live_input(1);
+      else if (character == 4)
+        erase_live_input(live_input.line_length);
+      else if (character == 21)
+        {
+          size_t start = live_input.line_length;
+
+          while (start != 0 && live_input.line[start - 1] == ' ')
+            start--;
+          while (start != 0 && live_input.line[start - 1] != ' ')
+            start--;
+          erase_live_input(live_input.line_length - start);
         }
       else if (live_input.line_length < sizeof(live_input.line) - 1)
         live_input.line[live_input.line_length++] = character;
