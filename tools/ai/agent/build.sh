@@ -9,7 +9,7 @@ case "${1:-""}" in
         make -C "$SCRIPT_DIR" release
         ;;
     build|-b )
-        make -C "$SCRIPT_DIR"
+        make -C "$SCRIPT_DIR" ai ai-tui
         ;;
     clean|-c )
         make -C "$SCRIPT_DIR" clean
