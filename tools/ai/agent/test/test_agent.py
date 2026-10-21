@@ -250,6 +250,23 @@ class AgentTests(unittest.TestCase):
             messages[-1]["content"],
         )
 
+    def test_live_steering_editing_uses_backspace(self):
+        output, endpoint = self.run_agent_later(
+            [tool_response("sleep 1"), text_response("done")],
+            "stop after output" + "\x7f" + "t",
+            "\n/exit\n\n",
+            full_access=True,
+            delay=0.5,
+            wait=1.8,
+        )
+        self.assertNotIn("^?", output)
+        self.assertNotIn("outpu\x7f", output)
+        messages = endpoint.requests[1]["messages"]
+        self.assertIn(
+            "HUMAN STEERING DURING TOOL EXECUTION: stop after output",
+            messages[-1]["content"],
+        )
+
     def test_live_steering_during_request(self):
         result, endpoint = self.run_agent_later(
             [text_response("first"), text_response("done")],

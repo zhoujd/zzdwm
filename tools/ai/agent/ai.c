@@ -206,7 +206,12 @@ static void print_formatted(const char *format, ...)
 
 static void live_steering_prompt(void)
 {
-  print_formatted("[live steering active]: type one line per direction\n");
+  if (!live_input.terminal_configured)
+    print_formatted("[live steering active]: type one line per direction\n");
+  else
+    print_formatted(
+      "[live steering active]: Enter queue; BS delete; C-U word; C-D line\n"
+      "\33[K");
 }
 
 static void queue_live_line(const char *text, size_t length)
@@ -233,14 +238,13 @@ static void queue_live_line(const char *text, size_t length)
 
 static void erase_live_input(size_t length)
 {
+  if (live_input.terminal_configured)
+    print_formatted("\r\33[K%s", live_input.line);
   if (length == 0 || length > live_input.line_length)
     return;
   live_input.line_length -= length;
   live_input.line[live_input.line_length] = 0;
-  if (length == 1)
-    print_formatted("\b \b");
-  else
-    print_formatted("\r\33[K%s", live_input.line);
+  print_formatted("\r\33[K%s", live_input.line);
 }
 
 static int begin_live_input(void)
@@ -303,6 +307,10 @@ static void poll_live_input(void)
             start--;
           erase_live_input(live_input.line_length - start);
         }
+      else if (live_input.terminal_configured && character == 2)
+        ;
+      else if (live_input.terminal_configured && character == 6)
+        ;
       else if (live_input.line_length < sizeof(live_input.line) - 1)
         live_input.line[live_input.line_length++] = character;
     }
