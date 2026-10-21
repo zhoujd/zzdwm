@@ -69,7 +69,7 @@ static volatile sig_atomic_t interrupted;
 static pid_t agent_pid;
 static int output_mode_response;
 static PaneId selected_pane = PANE_LOGS;
-static PaneLayout pane_layout = PANE_LAYOUT_NORMAL;
+static PaneLayout pane_layout = PANE_LAYOUT_EQUAL;
 static InputMode input_mode = INPUT_MULTILINE;
 static int full_access;
 
@@ -887,8 +887,7 @@ int main(int argc, char **argv)
   start_agent(agent_path, &agent_stdin, &agent_stdout);
   wtimeout(input_window, 100);
   write_line(PANE_LOGS,
-            "F1 quit; F2/F3 maximize pane 1/2; F4 split equally; Tab pane; "
-            "PgUp/PgDn scroll; "
+            "F1 quit; F2/F3 maximize pane 1/2; Tab pane; PgUp/PgDn scroll; "
             "C-A/E/B/F/D/K/U edit; "
             "C-J newline; Enter submit; Ctrl+C cancel");
   refresh_content_panes();
@@ -916,15 +915,7 @@ int main(int argc, char **argv)
         {
           selected_pane = selected_pane == PANE_LOGS
                           ? PANE_RESPONSE : PANE_LOGS;
-          pane_layout = PANE_LAYOUT_NORMAL;
-          redraw_layout();
-          draw_input(&input);
-          continue;
-        }
-      if (key == KEY_F(4))
-        {
-          pane_layout = pane_layout == PANE_LAYOUT_EQUAL
-                        ? PANE_LAYOUT_NORMAL : PANE_LAYOUT_EQUAL;
+          pane_layout = PANE_LAYOUT_EQUAL;
           redraw_layout();
           draw_input(&input);
           continue;
@@ -933,7 +924,7 @@ int main(int argc, char **argv)
         {
           selected_pane = PANE_LOGS;
           pane_layout = pane_layout == PANE_LAYOUT_MAX_LOGS
-                        ? PANE_LAYOUT_NORMAL : PANE_LAYOUT_MAX_LOGS;
+                        ? PANE_LAYOUT_EQUAL : PANE_LAYOUT_MAX_LOGS;
           redraw_layout();
           draw_input(&input);
           continue;
@@ -942,7 +933,7 @@ int main(int argc, char **argv)
         {
           selected_pane = PANE_RESPONSE;
           pane_layout = pane_layout == PANE_LAYOUT_MAX_RESPONSE
-                        ? PANE_LAYOUT_NORMAL : PANE_LAYOUT_MAX_RESPONSE;
+                        ? PANE_LAYOUT_EQUAL : PANE_LAYOUT_MAX_RESPONSE;
           redraw_layout();
           draw_input(&input);
           continue;

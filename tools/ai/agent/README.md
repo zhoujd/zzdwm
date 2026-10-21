@@ -20,9 +20,9 @@ Run `tools/ai/agent/ai-tui`. It launches the adjacent dependency-free `ai`
 executable in `--ui` mode and renders three scrollable panes: agent status,
 AI response, and keyboard input.
 
-Press `F2` or `F3` to maximize pane 1 or pane 2 across both content areas;
-press the same key again to restore the normal split. Press `F4` to split the
-content areas equally; press it again to restore the normal split.
+Panes 1 and 2 use equal heights by default. Press `F2` or `F3` to maximize
+pane 1 or pane 2 across both content areas; press the same key again to
+restore the equal split.
 
 Run the integration and binary checks with:
 
