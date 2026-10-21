@@ -153,7 +153,10 @@ static void redraw_layout(void)
   idlok(input_window, TRUE);
   wsetscrreg(input_window, 0, BOTTOM_HEIGHT - 1);
   box(input_window, 0, 0);
-  mvwprintw(input_window, 0, 2, " 3. Prompt ");
+  mvwprintw(input_window, 0, 2,
+             input_mode == INPUT_MULTILINE
+             ? " 3. Prompt (RET submit) "
+             : " 3. Decision (RET submit) ");
   keypad(input_window, TRUE);
   wrefresh(input_window);
 }
@@ -251,8 +254,10 @@ static void draw_input(const InputBuffer *input)
   int pane_width = terminal_width - 3;
   int input_width = measure_input_width(input->text, input->cursor);
   size_t start = 0;
+  int cursor_column;
 
-  while (input_width > pane_width)
+  cursor_column = input_width;
+  while (cursor_column > pane_width)
     {
       Rune rune;
       int rune_length = chartorune(&rune, (char *) input->text + start);
@@ -260,7 +265,7 @@ static void draw_input(const InputBuffer *input)
 
       if (rune_width < 0)
         rune_width = 1;
-      input_width -= rune_width;
+      cursor_column -= rune_width;
       start += (size_t) (rune_length > 0 ? rune_length : 1);
     }
   werase(input_window);
@@ -270,7 +275,7 @@ static void draw_input(const InputBuffer *input)
              ? " 3. Prompt (RET submit) "
              : " 3. Decision (RET submit) ");
   mvwaddstr(input_window, 1, 1, input->text + start);
-  wmove(input_window, 1, input_width + 1);
+  wmove(input_window, 1, cursor_column + 1);
   wrefresh(input_window);
 }
 
@@ -506,6 +511,7 @@ static void insert_input_rune(InputBuffer *input, const unsigned char *bytes,
   memcpy(input->text + input->cursor, bytes, length);
   input->cursor += length;
   input->length += length;
+  input->text[input->length] = 0;
 }
 
 static void delete_input_backward(InputBuffer *input)
@@ -524,6 +530,7 @@ static void delete_input_backward(InputBuffer *input)
           input->length - input->cursor);
   input->length -= input->cursor - start;
   input->cursor = start;
+  input->text[input->length] = 0;
 }
 
 static void delete_input_forward(InputBuffer *input)
@@ -541,6 +548,7 @@ static void delete_input_forward(InputBuffer *input)
   memmove(input->text + next, input->text + end, input->length - end);
   input->length -= end - next;
   input->cursor = next;
+  input->text[input->length] = 0;
 }
 
 static const char *agent_executable_path(char *buffer, size_t capacity)
@@ -582,8 +590,10 @@ int main(void)
   sigaction(SIGTERM, &action, NULL);
   setlocale(LC_ALL, "");
   initscr();
+  nonl();
   cbreak();
   noecho();
+  raw();
   getmaxyx(stdscr, terminal_height, terminal_width);
   if (terminal_height < MIN_TERMINAL_HEIGHT
       || terminal_width < MIN_TERMINAL_WIDTH)
@@ -656,7 +666,10 @@ int main(void)
           input.pending_length = 0;
         }
       else if (key == 11)
-        input.length = input.cursor;
+        {
+          input.length = input.cursor;
+          input.text[input.length] = 0;
+        }
       else if (key == '\n' || key == KEY_ENTER || key == 13)
         {
           input.text[input.length] = 0;
@@ -667,6 +680,13 @@ int main(void)
         }
       else if (key >= 32 && key != 127)
         {
+          if (input.pending_length >= sizeof(input.pending))
+            {
+              beep();
+              input.pending_length = 0;
+              draw_input(&input);
+              continue;
+            }
           input.pending[input.pending_length++] = (unsigned char) key;
           if (fullrune((char *) input.pending, (int) input.pending_length))
             {
