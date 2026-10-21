@@ -7,7 +7,7 @@ tool to the model, and keeps a human at every tool boundary.
 ## Build
 
 ```sh
-tools/utils/ai/build.sh
+tools/ai/agent/build.sh
 ```
 
 Build the agent and optional ncurses TUI with:
@@ -27,7 +27,7 @@ restore the equal split.
 Run the integration and binary checks with:
 
 ```sh
-make -C tools/utils/ai test
+make -C tools/ai/agent test
 ```
 
 The release build uses local `musl-gcc` when available and otherwise runs the
@@ -36,7 +36,7 @@ linked `ai` and `ai-tui` executables. Each model request runs
 in a joined worker thread while the main thread collects live steering;
 cancellation is coordinated through one bounded polling loop. It writes the
 stripped,
-musl-static `ai` executable to `tools/utils/ai/ai`. Override the image with
+musl-static `ai` executable to `tools/ai/agent/ai`. Override the image with
 `MUSL_IMG`. `make -C tools/ai/agent` performs a native static build without
 Docker.
 
@@ -44,14 +44,14 @@ Install the binary into `/usr/local/bin` by default, or another directory with
 `DEST`:
 
 ```sh
-make -C tools/utils/ai install
-make -C tools/utils/ai install DEST="$HOME/.local/bin"
+make -C tools/ai/agent install
+make -C tools/ai/agent install DEST="$HOME/.local/bin"
 ```
 
 ## Run
 
 ```sh
-tools/utils/ai/ai
+tools/ai/agent/ai
 ```
 
 Configuration is read from the environment:
