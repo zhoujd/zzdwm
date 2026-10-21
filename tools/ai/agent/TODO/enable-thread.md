@@ -1,7 +1,13 @@
-# How to Structurally Split Your C Agent
+# Enable Threading
 
-To make your architecture clean and safe, organize your threads into distinct 
-roles using standard POSIX threads (pthread):
+Threading is not enabled. The current design deliberately keeps the agent on
+one thread: the conversation, command execution, signal handling, and human
+steering boundaries are serialized and therefore easier to audit. Blocking
+network and command waits already use bounded polling and remain interruptible
+with SIGINT/SIGTERM.
+
+If this becomes necessary, split responsibilities into distinct roles using
+standard POSIX threads (pthread):
 
  ┌─────────────────────────────────────────────────────────┐
  │                       MAIN THREAD                       │
@@ -24,3 +30,11 @@ roles using standard POSIX threads (pthread):
  │                   SYSTEM TOOL EXECUTION                 │
  │  • Executes child action via popen() / fork()           │
  └─────────────────────────────────────────────────────────┘
+
+Requirements:
+- Own the conversation state in one thread; never share mutable cJSON trees.
+- Keep cJSON objects in one thread's local scope.
+- Pass immutable strings or serialized JSON between threads, not shared trees.
+- Route signals and cancellation through one coordination point.
+- Preserve command approval and post-command steering exactly once per tool.
+- Join every thread before shutdown; do not detach background work.
