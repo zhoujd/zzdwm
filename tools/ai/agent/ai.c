@@ -251,7 +251,7 @@ static int begin_live_input(void)
   if (tcgetattr(STDIN_FILENO, &live_input.original_terminal) != 0)
     return 0;
   terminal = live_input.original_terminal;
-  terminal.c_lflag &= ~(ICANON | ECHO);
+  terminal.c_lflag &= ~ICANON;
   terminal.c_cc[VMIN] = 0;
   terminal.c_cc[VTIME] = 0;
   if (tcsetattr(STDIN_FILENO, TCSANOW, &terminal) != 0)
