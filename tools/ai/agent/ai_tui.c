@@ -43,6 +43,14 @@ typedef struct {
   int view_offset;
 } Pane;
 
+typedef struct {
+  char text[MAX_INPUT];
+  size_t length;
+  size_t cursor;
+  unsigned char pending[UTFmax];
+  size_t pending_length;
+} InputBuffer;
+
 static Pane panes[PANE_COUNT];
 static WINDOW *input_window;
 static int terminal_height;
@@ -145,7 +153,7 @@ static void redraw_layout(void)
   idlok(input_window, TRUE);
   wsetscrreg(input_window, 0, BOTTOM_HEIGHT - 1);
   box(input_window, 0, 0);
-  mvwprintw(input_window, 0, 2, " 3. Keyboard Input ");
+  mvwprintw(input_window, 0, 2, " 3. Prompt ");
   keypad(input_window, TRUE);
   wrefresh(input_window);
 }
@@ -238,16 +246,16 @@ static int measure_input_width(const char *buffer, size_t length)
   return width;
 }
 
-static void draw_input(const char *buffer, size_t length)
+static void draw_input(const InputBuffer *input)
 {
   int pane_width = terminal_width - 3;
-  int input_width = measure_input_width(buffer, length);
+  int input_width = measure_input_width(input->text, input->cursor);
   size_t start = 0;
 
   while (input_width > pane_width)
     {
       Rune rune;
-      int rune_length = chartorune(&rune, (char *) buffer + start);
+      int rune_length = chartorune(&rune, (char *) input->text + start);
       int rune_width = wcwidth((wchar_t) rune);
 
       if (rune_width < 0)
@@ -257,8 +265,11 @@ static void draw_input(const char *buffer, size_t length)
     }
   werase(input_window);
   box(input_window, 0, 0);
-  mvwprintw(input_window, 0, 2, " 3. Keyboard Input ");
-  mvwaddstr(input_window, 1, 1, buffer + start);
+  mvwprintw(input_window, 0, 2,
+             input_mode == INPUT_MULTILINE
+             ? " 3. Prompt (RET submit) "
+             : " 3. Decision (RET submit) ");
+  mvwaddstr(input_window, 1, 1, input->text + start);
   wmove(input_window, 1, input_width + 1);
   wrefresh(input_window);
 }
@@ -448,20 +459,88 @@ static void read_agent_output(int agent_stdout, int *agent_exited)
   refresh_content_panes();
 }
 
-static void remove_last_input_rune(char *buffer, size_t *length)
+static size_t previous_rune_start(const InputBuffer *input, size_t cursor)
 {
   size_t index = 0;
   size_t last_start = 0;
 
-  while (index < *length)
+  while (index < cursor)
     {
       Rune rune;
-      int rune_length = chartorune(&rune, buffer + index);
+      int rune_length = chartorune(&rune, (char *) input->text + index);
 
       last_start = index;
       index += (size_t) (rune_length > 0 ? rune_length : 1);
     }
-  *length = last_start;
+  return last_start;
+}
+
+static void move_cursor_backward(InputBuffer *input)
+{
+  if (input->cursor != 0)
+    input->cursor = previous_rune_start(input, input->cursor);
+}
+
+static void move_cursor_forward(InputBuffer *input)
+{
+  if (input->cursor < input->length)
+    {
+      Rune rune;
+      int rune_length = chartorune(&rune, input->text + input->cursor);
+
+      input->cursor += (size_t) (rune_length > 0 ? rune_length : 1);
+    }
+}
+
+static void insert_input_rune(InputBuffer *input, const unsigned char *bytes,
+                              size_t length)
+{
+  if (input->length + length >= sizeof(input->text))
+    {
+      beep();
+      return;
+    }
+  memmove(input->text + input->cursor + length,
+          input->text + input->cursor,
+          input->length - input->cursor);
+  memcpy(input->text + input->cursor, bytes, length);
+  input->cursor += length;
+  input->length += length;
+}
+
+static void delete_input_backward(InputBuffer *input)
+{
+  size_t start;
+
+  if (input->pending_length != 0)
+    {
+      input->pending_length = 0;
+      return;
+    }
+  if (input->cursor == 0)
+    return;
+  start = previous_rune_start(input, input->cursor);
+  memmove(input->text + start, input->text + input->cursor,
+          input->length - input->cursor);
+  input->length -= input->cursor - start;
+  input->cursor = start;
+}
+
+static void delete_input_forward(InputBuffer *input)
+{
+  size_t next;
+  size_t end;
+  InputBuffer temporary;
+
+  if (input->cursor >= input->length)
+    return;
+  next = input->cursor;
+  temporary = *input;
+  move_cursor_forward(&temporary);
+  end = temporary.cursor;
+  memmove(input->text + next, input->text + end, input->length - end);
+  input->length -= end - next;
+  input->cursor = next;
 }
 
 static const char *agent_executable_path(char *buffer, size_t capacity)
@@ -482,10 +561,7 @@ static const char *agent_executable_path(char *buffer, size_t capacity)
 int main(void)
 {
   char executable_path[4096];
-  char input_buffer[MAX_INPUT];
-  unsigned char input_pending[UTFmax];
-  size_t input_length = 0;
-  size_t pending_length = 0;
+  InputBuffer input = {{0}, 0, 0, {0}, 0};
   struct sigaction action;
   const char *agent_path;
   int agent_stdin = -1;
@@ -521,7 +597,8 @@ int main(void)
   start_agent(agent_path, &agent_stdin, &agent_stdout);
   wtimeout(input_window, 100);
   write_line(PANE_LOGS,
-             "F1 quit; Tab select pane; PgUp/PgDn scroll; Ctrl+C cancel");
+             "F1 quit; Tab pane; PgUp/PgDn scroll; C-A/E/B/F/D/K/U edit; "
+             "Enter submit; Ctrl+C cancel");
   refresh_content_panes();
   while (!interrupted && !agent_exited)
     {
@@ -539,7 +616,7 @@ int main(void)
               || terminal_width < MIN_TERMINAL_WIDTH)
             break;
           redraw_layout();
-          draw_input(input_buffer, input_length);
+          draw_input(&input);
           continue;
         }
       if (key == '\t')
@@ -547,7 +624,7 @@ int main(void)
           selected_pane = selected_pane == PANE_LOGS
                           ? PANE_RESPONSE : PANE_LOGS;
           redraw_layout();
-          draw_input(input_buffer, input_length);
+          draw_input(&input);
           continue;
         }
       if (key == KEY_PPAGE)
@@ -560,34 +637,44 @@ int main(void)
           scroll_pane(selected_pane, -3);
           continue;
         }
-      if ((key == KEY_BACKSPACE || key == 127 || key == 8)
-          && (input_length > 0 || pending_length > 0))
+      if (key == 1 || key == KEY_HOME)
+        input.cursor = 0;
+      else if (key == 5 || key == KEY_END)
+        input.cursor = input.length;
+      else if (key == 2 || key == KEY_LEFT)
+        move_cursor_backward(&input);
+      else if (key == 6 || key == KEY_RIGHT)
+        move_cursor_forward(&input);
+      else if (key == KEY_BACKSPACE || key == 127 || key == 8)
+        delete_input_backward(&input);
+      else if (key == 4)
+        delete_input_forward(&input);
+      else if (key == 21)
         {
-          if (pending_length != 0)
-            pending_length = 0;
-          else
-            remove_last_input_rune(input_buffer, &input_length);
+          input.length = 0;
+          input.cursor = 0;
+          input.pending_length = 0;
         }
-      else if (key == '\n' || key == KEY_ENTER)
+      else if (key == 11)
+        input.length = input.cursor;
+      else if (key == '\n' || key == KEY_ENTER || key == 13)
         {
-          input_buffer[input_length] = 0;
-          submit_input(agent_stdin, input_buffer);
-          input_length = 0;
-          pending_length = 0;
+          input.text[input.length] = 0;
+          submit_input(agent_stdin, input.text);
+          input.length = 0;
+          input.cursor = 0;
+          input.pending_length = 0;
         }
-      else if (key >= 32 && key != 127
-               && input_length + pending_length < sizeof(input_buffer) - 1
-               && pending_length < sizeof(input_pending))
+      else if (key >= 32 && key != 127)
         {
-          input_pending[pending_length++] = (unsigned char) key;
-          if (fullrune((char *) input_pending, (int) pending_length))
+          input.pending[input.pending_length++] = (unsigned char) key;
+          if (fullrune((char *) input.pending, (int) input.pending_length))
             {
-              memcpy(input_buffer + input_length, input_pending, pending_length);
-              input_length += pending_length;
-              pending_length = 0;
+              insert_input_rune(&input, input.pending, input.pending_length);
+              input.pending_length = 0;
             }
         }
-      draw_input(input_buffer, input_length);
+      draw_input(&input);
     }
   if (agent_pid > 0)
     {
