@@ -12,6 +12,10 @@ CFLAGS += -D_FORTIFY_SOURCE=2
 LDFLAGS ?= -static -s
 LDFLAGS += -Wl,-z,relro,-z,now,-z,noexecstack
 LDLIBS += -lpthread
+TUI_CFLAGS += $(shell pkg-config --cflags ncursesw)
+TUI_LDFLAGS ?= -static -s
+TUI_LDFLAGS += -Wl,-z,relro,-z,now,-z,noexecstack
+TUI_LDLIBS ?= $(shell pkg-config --libs ncursesw)
 
 release:
 	@if [ -n "$$INSIDE_DOCKER" ]; then \
@@ -31,7 +35,7 @@ release:
 			sh -c 'cat /etc/os-release && $(MAKE) -C "$$PWD" all'; \
 	fi
 
-all: $(TARGET)
+all: $(TARGET) $(TUI_TARGET)
 
 CJSON_SOURCE = cJSON.c
 UTF_SOURCE = rune.c
@@ -40,7 +44,7 @@ $(TARGET): $(PROGRAM).c $(CJSON_SOURCE) $(VERSION_HEADER)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 $(TUI_TARGET): $(TUI_SOURCE) $(UTF_SOURCE) $(VERSION_HEADER)
-	$(CC) $(CFLAGS) -o $@ $^ $(shell pkg-config --libs ncursesw)
+	$(CC) $(CFLAGS) $(TUI_CFLAGS) $(TUI_LDFLAGS) -o $@ $^ $(TUI_LDLIBS)
 
 $(VERSION_HEADER): FORCE
 	@./version.sh $@

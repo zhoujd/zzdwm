@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include <wchar.h>
 
-#include <ncursesw/ncurses.h>
+#include <ncurses.h>
 
 #include "utf.h"
 

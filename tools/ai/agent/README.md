@@ -27,12 +27,13 @@ make -C tools/utils/ai test
 ```
 
 The release build uses local `musl-gcc` when available and otherwise runs the
-same source build in the `zhoujd/alpine` Docker image. Each model request runs
+same source build in the `zhoujd/alpine` Docker image. It builds statically
+linked `ai` and `ai-tui` executables. Each model request runs
 in a joined worker thread while the main thread collects live steering;
 cancellation is coordinated through one bounded polling loop. It writes the
 stripped,
-musl-static executable to `tools/utils/ai/ai`. Override the image with
-`MUSL_IMG`. `make -C tools/utils/ai` performs a native static build without
+musl-static `ai` executable to `tools/utils/ai/ai`. Override the image with
+`MUSL_IMG`. `make -C tools/ai/agent` performs a native static build without
 Docker.
 
 Install the binary into `/usr/local/bin` by default, or another directory with
