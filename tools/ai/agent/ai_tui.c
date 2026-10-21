@@ -664,6 +664,7 @@ int main(void)
           input.length = 0;
           input.cursor = 0;
           input.pending_length = 0;
+          input.text[input.length] = 0;
         }
       else if (key == 11)
         {
