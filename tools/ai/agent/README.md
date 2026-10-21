@@ -10,6 +10,16 @@ tool to the model, and keeps a human at every tool boundary.
 tools/utils/ai/build.sh
 ```
 
+Build the agent and optional ncurses TUI with:
+
+```sh
+make -C tools/ai/agent ai ai-tui
+```
+
+Run `tools/ai/agent/ai-tui`. It launches the adjacent dependency-free `ai`
+executable in `--ui` mode and renders three scrollable panes: agent status,
+AI response, and keyboard input.
+
 Run the integration and binary checks with:
 
 ```sh

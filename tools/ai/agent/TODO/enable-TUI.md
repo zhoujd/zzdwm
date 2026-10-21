@@ -21,10 +21,18 @@
 | Prompt > Help me fix the C code error listed above          |
 +-------------------------------------------------------------+
 
-Requirment:
+Requirements:
 
-- Perfer to ncurses library
-- UTF-8 Support
-- Scroll support
+- Use `ncursesw` so locale-aware UTF-8 rendering works.
+- Keep the dependency-free static `ai` CLI as the default build.
+- Build a separate `ai-tui` front-end that communicates with `ai --ui`. [DONE]
+- Render three independently scrollable panes:
+  - Agent Thoughts & System Status
+  - AI Response
+  - Keyboard Input / User Prompt
+- Support automatic tail-following and PageUp/PageDown history in panes 1--2.
+- Route keyboard input to normal prompts, tool decisions, and live steering.
+- Keep Ctrl+C cancellation and the existing allow/edit/steer/refuse/quit modes.
+- Preserve CLI behavior and the non-interactive Python integration tests.
 
 Refer to: tools/learn/ai/agent_tui.c

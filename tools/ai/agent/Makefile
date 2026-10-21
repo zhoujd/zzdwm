@@ -1,5 +1,7 @@
 PROGRAM = ai
 TARGET = ai
+TUI_SOURCE = ai_tui.c
+TUI_TARGET = ai-tui
 DEST ?= /usr/local/bin
 VERSION_HEADER = version.h
 REPO_ROOT := $(shell git rev-parse --show-toplevel)
@@ -32,9 +34,13 @@ release:
 all: $(TARGET)
 
 CJSON_SOURCE = cJSON.c
+UTF_SOURCE = rune.c
 
 $(TARGET): $(PROGRAM).c $(CJSON_SOURCE) $(VERSION_HEADER)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+$(TUI_TARGET): $(TUI_SOURCE) $(UTF_SOURCE) $(VERSION_HEADER)
+	$(CC) $(CFLAGS) -o $@ $^ $(shell pkg-config --libs ncursesw)
 
 $(VERSION_HEADER): FORCE
 	@./version.sh $@
@@ -44,7 +50,7 @@ install: $(TARGET)
 	install -m 0755 $(TARGET) $(DEST)/$(PROGRAM)
 
 clean:
-	rm -f $(TARGET) $(VERSION_HEADER)
+	rm -f $(TARGET) $(TUI_TARGET) $(VERSION_HEADER)
 
 test: $(TARGET)
 	python3 test/test_agent.py

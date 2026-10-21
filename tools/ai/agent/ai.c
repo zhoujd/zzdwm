@@ -89,6 +89,7 @@ static int api_timeout = 60;
 static int command_timeout = 60;
 static int full_access;
 static volatile sig_atomic_t interrupted;
+static int ui_mode;
 
 typedef struct {
   char text[MAX_COMMAND];
@@ -205,6 +206,8 @@ static void print_formatted(const char *format, ...)
 
 static void live_steering_prompt(void)
 {
+  if (ui_mode)
+    return;
   print_formatted("[live steering active]: type one line per direction\n");
 }
 
@@ -1744,7 +1747,7 @@ static int process_response(const char *body)
 static void usage(FILE *stream)
 {
   fprintf(stream,
-    "usage: ai [--full-access] [--help] [--version]\n"
+    "usage: ai [--full-access] [--ui] [--help] [--version]\n"
     "\n"
     "Environment configures AI_API_URL, AI_MODEL, AI_API_KEY or\n"
     "OPENAI_API_KEY, AI_TIMEOUT_SECONDS, and\n"
@@ -1759,6 +1762,8 @@ static int parse_arguments(int argc, char **argv)
     {
       if (strcmp(argv[index], "--full-access") == 0)
         full_access = 1;
+      else if (strcmp(argv[index], "--ui") == 0)
+        ui_mode = 1;
       else if (strcmp(argv[index], "--help") == 0)
         {
           usage(stdout);
