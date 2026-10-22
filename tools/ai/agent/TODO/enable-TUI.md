@@ -1,4 +1,4 @@
-# AI Agent TUI
+# AI Agent TUI [DONE]
 
 - "Agent Thoughts & System Status" (or simply "Agent Logs"):
    Fits the standard wording used in modern AI frameworks (like LangChain/LangGraph) when displaying Agent traces.
