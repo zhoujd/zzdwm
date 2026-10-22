@@ -908,6 +908,9 @@ main (void)
                             result, sizeof (result)) == 1);
     assert (strcmp (result, "\"/current/file.c\"") == 0);
 
+    assert (lisp_key_code ("h") == 'h');
+    assert (lisp_key_code ("H") == 'H');
+    assert (lisp_key_code ("C-h") == (KCTRL | 'H'));
     assert (evaluate ("(define-mode-key \"C-m\" \"buffer-menu\")")
             == FALSE);
     assert (evaluate ("(create-mode \"Dired\")") == TRUE);
@@ -916,6 +919,9 @@ main (void)
             == TRUE);
     assert (bound_mode_key == (KCTRL | 'M'));
     assert (bound_mode_symbol == &command_symbol);
+    assert (evaluate ("(define-mode-key \"h\" \"buffer-menu\")")
+            == TRUE);
+    assert (bound_mode_key == 'h');
 
     remove ("/tmp/microemacs-dired-test/alpha.txt");
     rmdir ("/tmp/microemacs-dired-test/sub");

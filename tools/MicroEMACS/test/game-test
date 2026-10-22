@@ -1,0 +1,119 @@
+#!/bin/sh
+set -eu
+
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+EDITOR=${ME:-"$ROOT/me"}
+GAME=${GAME:-"$ROOT/game/snake.l"}
+SCRIPT=${TMPDIR:-/tmp}/microemacs-snake-game-test.$$
+trap 'rm -f "$SCRIPT"' EXIT HUP INT TERM
+
+cat >"$SCRIPT" <<'EOF'
+(snake)
+(unless (equal snake-alive t)
+  (progn
+    (message "assertion failed: snake did not start")
+    (kill-emacs)))
+(unless (equal (snake-find-tile 0 0) "#")
+  (progn
+    (message "assertion failed: board boundary")
+    (kill-emacs)))
+(unless (equal (snake-find-tile (snake-coordinate-row snake-food)
+                                (snake-coordinate-column snake-food))
+               "x")
+  (progn
+    (message "assertion failed: food placement")
+    (kill-emacs)))
+(unless (equal (snake-find-tile 5 10) "O")
+  (progn
+    (message "assertion failed: initial body")
+    (kill-emacs)))
+(unless (and (equal (snake-find-tile 5 9) "O")
+             (equal (snake-find-tile 5 8) "O"))
+  (progn
+    (message "assertion failed: initial body segments")
+    (kill-emacs)))
+(setq snake-food (snake-coordinate 5 11))
+(snake-place-food)
+(snake-step)
+(unless (and (equal (snake-coordinate-row (car snake-body)) 5)
+             (equal (snake-coordinate-column (car snake-body)) 11)
+             (equal (snake-find-tile 5 11) "O")
+             (equal (snake-find-tile 5 10) "O")
+             (equal (snake-find-tile 5 9) "O")
+             (equal (snake-find-tile 5 8) "O"))
+  (progn
+    (message "assertion failed: body growth and rendering")
+    (kill-emacs)))
+;; Regression for coordinates whose cdr is an integer-valued atom:
+;; food comparison must work after upward movement, not only leftward.
+(snake)
+(setq snake-body (list (snake-coordinate 2 1)
+                       (snake-coordinate 1 1))
+      snake-direction "up"
+      snake-pending-direction "right"
+      snake-food (snake-coordinate 2 2)
+      snake-score 0)
+(snake-draw-board)
+(snake-draw-body snake-body)
+(snake-place-food)
+(snake-step)
+(unless (and (equal snake-score 1)
+             (equal (snake-coordinate-row (car snake-body)) 2)
+             (equal (snake-coordinate-column (car snake-body)) 2)
+             (equal (snake-find-tile 2 2) "O"))
+  (progn
+    (message "assertion failed: directional food consumption")
+    (kill-emacs)))
+(snake)
+(snake-setup-keys)
+(execute-command "snake-down")
+(unless (equal snake-pending-direction "down")
+  (progn
+    (message "assertion failed: mode command binding")
+    (kill-emacs)))
+(execute-command "snake-step")
+(unless (equal (snake-coordinate-row (car snake-body)) 6)
+  (progn
+    (message "assertion failed: mode command execution")
+    (kill-emacs)))
+(snake)
+(snake-left)
+(unless (equal snake-pending-direction "right")
+  (progn
+    (message "assertion failed: reverse prevention")
+    (kill-emacs)))
+(snake-down)
+(unless (equal snake-pending-direction "down")
+  (progn
+    (message "assertion failed: down turn")
+    (kill-emacs)))
+(snake-up)
+(unless (equal snake-pending-direction "up")
+  (progn
+    (message "assertion failed: up turn")
+    (kill-emacs)))
+(snake-step)
+(unless (and (equal (snake-coordinate-row (car snake-body)) 4)
+             (equal (snake-coordinate-column (car snake-body)) 10)
+             (equal (snake-find-tile 4 10) "O")
+             (equal (snake-find-tile 6 10) " "))
+  (progn
+    (message "assertion failed: movement and tail update")
+    (kill-emacs)))
+(snake-right)
+(snake-step)
+(unless (and (equal (snake-coordinate-row (car snake-body)) 4)
+             (equal (snake-coordinate-column (car snake-body)) 11))
+  (progn
+    (message "assertion failed: right turn movement")
+    (kill-emacs)))
+(dotimes (step 9)
+  (snake-step))
+(unless (and (equal snake-alive nil) (equal snake-score 0))
+  (progn
+    (message "assertion failed: wall collision")
+    (kill-emacs)))
+(message "snake game tests passed")
+EOF
+
+exec "$EDITOR" -l "$GAME" --script "$SCRIPT" /dev/null

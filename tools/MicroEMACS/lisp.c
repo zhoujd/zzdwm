@@ -72,7 +72,8 @@ lisp_key_code (const char *name)
     }
   if (name[0] == 0 || name[1] != 0)
     return -1;
-  if (name[0] >= 'a' && name[0] <= 'z')
+  if ((key & (KCTRL | KMETA | KCTLX)) != 0
+      && name[0] >= 'a' && name[0] <= 'z')
     key |= name[0] - 'a' + 'A';
   else
     key |= name[0];

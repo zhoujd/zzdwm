@@ -19,5 +19,7 @@ samples belong in [`examples`](../examples).
   shell-free, Lisp-driven directory editor.
 - [`smart-find-file.md`](smart-find-file.md) — completed implementation notes
   for symlink-aware Lisp file opening.
+- [`game-simulation.md`](game-simulation.md) — implementation notes for
+  script-space game simulations.
 - [`path-boundaries.md`](path-boundaries.md) — completed design notes for the
   internal POSIX path format and MinGW conversion boundaries.
