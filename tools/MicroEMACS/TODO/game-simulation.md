@@ -12,7 +12,7 @@ To demonstrate runtime capability to new software learners, the engine runs turn
 ## Structural Interface Emulation: Classic Arcade Subsystems
 The environment matches flagship GNU Emacs user-space layouts by implementing native, real-time gaming simulations completely in Lisp text scripts.
 * **`M-x snake`:** Tracks vector coordinates and character impacts using `get-char`, with explicit turn and step commands. Turn with `h/j/k/l`; advance with `n` or Space after loading `M-x snake-setup-keys`.
-* **`M-x tetris`:** Interacts with buffer lines cleanly, utilizing cursor coordination primitives to manage structural bounding boxes, grid drawing updates, and frame updates.
+* **`M-x tetris`:** Tracks occupied cells and active pieces in Lisp, with explicit move, lower, rotate, and drop commands. Control with `h/j/k/l/n` after loading `M-x tetris-setup-keys`.
 * **Zero Payload Expansion:** Proves that deep, responsive visual event handlers execute flawlessly inside our interpreted script memory without altering our optimized **447 KB static binary ceiling**.
 
 Sample code
@@ -27,4 +27,4 @@ To simplify muscle-memory acquisition for new software learners, an educational 
 * **Decoupled Learning Sandbox:** Proves that complex multi-level workflows can be constructed dynamically over our atomic C bridge array without forcing structural alterations inside our **447 KB static executable**.
 
 Sample code
-- zzdwm/tools/MicroEMACS/game/tutor-game.l
+- zzdwm/tools/MicroEMACS/game/tutor.l

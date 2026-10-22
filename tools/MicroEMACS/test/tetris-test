@@ -1,0 +1,91 @@
+#!/bin/sh
+set -eu
+
+ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+EDITOR=${ME:-"$ROOT/me"}
+GAME=${GAME:-"$ROOT/game/tetris.l"}
+SCRIPT=${TMPDIR:-/tmp}/microemacs-tetris-test.$$
+trap 'rm -f "$SCRIPT"' EXIT HUP INT TERM
+
+cat >"$SCRIPT" <<'EOF'
+(tetris)
+(unless (and (equal tetris-game-over nil)
+             (equal (tetris-find-tile 1 4) "O"))
+  (progn
+    (message "assertion failed: game initialization")
+    (kill-emacs)))
+(tetris-right)
+(unless (equal (tetris-coordinate-column (tetris-piece-at 0)) 5)
+  (progn
+    (message "assertion failed: right movement")
+    (kill-emacs)))
+(tetris-left)
+(tetris-left)
+(unless (equal (tetris-coordinate-column (tetris-piece-at 0)) 3)
+  (progn
+    (message "assertion failed: left movement")
+    (kill-emacs)))
+(tetris-rotate)
+(unless (equal (tetris-coordinate-column (tetris-piece-at 0)) 3)
+  (progn
+    (message "assertion failed: rotation anchor")
+    (kill-emacs)))
+(tetris-drop)
+(unless (and (equal tetris-game-over nil)
+             (equal (tetris-find-tile 15 3) "#"))
+  (progn
+    (message "assertion failed: piece lock and spawn")
+    (kill-emacs)))
+(setq tetris-piece (list (tetris-coordinate 15 1)
+                         (tetris-coordinate 15 2)
+                         (tetris-coordinate 15 3)
+                         (tetris-coordinate 15 4)))
+(tetris-erase-piece)
+(tetris-write-tile 15 1 "#")
+(tetris-write-tile 15 2 "#")
+(tetris-write-tile 15 3 "#")
+(tetris-write-tile 15 4 "#")
+(tetris-write-tile 15 5 "#")
+(tetris-write-tile 15 6 "#")
+(tetris-write-tile 15 7 "#")
+(tetris-write-tile 15 8 "#")
+(tetris-write-tile 15 9 "#")
+(tetris-write-tile 15 10 "#")
+(tetris-lock-piece)
+(unless (and (equal tetris-lines 1)
+             (equal tetris-score 1)
+             (equal (tetris-find-tile 15 1) " "))
+  (progn
+    (message "assertion failed: full row clearing")
+    (kill-emacs)))
+(tetris)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(tetris-drop)
+(unless (and (equal tetris-game-over t)
+             (equal (tetris-find-tile 15 4) "#")
+             (equal (tetris-find-tile 15 8) " "))
+  (progn
+    (message "assertion failed: repeated drops and board bounds")
+    (kill-emacs)))
+(message "tetris game tests passed")
+EOF
+
+exec "$EDITOR" -l "$GAME" --script "$SCRIPT" /dev/null
