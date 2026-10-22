@@ -23,3 +23,5 @@ samples belong in [`examples`](../examples).
   script-space game simulations.
 - [`path-boundaries.md`](path-boundaries.md) — completed design notes for the
   internal POSIX path format and MinGW conversion boundaries.
+- [`file-handling.md`](file-handling.md) — closed proposal favoring shell
+  filters such as `xxd` over native binary Hexl support.
