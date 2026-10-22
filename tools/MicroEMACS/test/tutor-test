@@ -1,0 +1,35 @@
+#!/bin/sh
+set -eu
+
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+EDITOR=${ME:-"$ROOT/me"}
+GAME=${GAME:-"$ROOT/game/tutor.l"}
+SCRIPT=${TMPDIR:-/tmp}/microemacs-tutor-test.$$
+trap 'rm -f "$SCRIPT"' EXIT HUP INT TERM
+
+cat >"$SCRIPT" <<'EOF'
+(tutor)
+(unless (equal (get-char) "@")
+    (progn
+      (message "assertion failed: tutor start position")
+      (kill-emacs)))
+(forward-line 1)
+(message "text=%S" (get-line))
+(goto-bol)
+(execute-command "forw-char" 10)
+(message "char=%S" (get-char))
+(unless (tutor-on-bug-p)
+    (progn
+      (message "assertion failed: bug position")
+      (kill-emacs)))
+(tutor-bug-fix)
+(unless (equal (get-char) " ")
+    (progn
+      (message "assertion failed: bug fix")
+      (kill-emacs)))
+(tutor)
+(tutor-setup-keys)
+(message "tutor game tests passed")
+EOF
+
+exec "$EDITOR" -l "$GAME" --script "$SCRIPT" /dev/null
