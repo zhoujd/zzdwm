@@ -46,8 +46,8 @@ tools/ai/agent/build.sh publish
 Override the image with `MUSL_IMG`. `build.sh` also accepts `build`, `release`,
 and `clean`.
 
-Install the binary into `/usr/local/bin` by default, or another directory with
-`DEST`:
+Install `ai` into `/usr/local/bin` by default, or another directory with
+`DEST`; a built `ai-tui` is installed alongside it:
 
 ```sh
 make -C tools/ai/agent install
