@@ -89,4 +89,11 @@ guide the next turn.
 Commands in the interactive editor are terminated by an empty line. `/new`
 starts a fresh conversation, while `/exit` and `/quit` leave the program.
 
+At startup the agent reads the frontmatter of `.agents/skills/*/SKILL.md`
+and adds one system message listing each skill's name and description. When
+a task matches a skill, the model reads the full `SKILL.md` with a read-only
+command, so skill-guided actions still pass the human approval boundary.
+`/skills` lists the skills and `/skill <name>` loads one body into the
+context.
+
 `ai --version` reports the program version, build date, and short Git commit ID.
