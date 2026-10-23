@@ -28,15 +28,23 @@ Run the integration and binary checks with:
 make -C tools/ai/agent test
 ```
 
-The release build uses local `musl-gcc` when available and otherwise runs the
-same source build in the `zhoujd/alpine` Docker image. It builds statically
-linked `ai` and `ai-tui` executables. Each model request runs
-in a joined worker thread while the main thread collects live steering;
-cancellation is coordinated through one bounded polling loop. It writes the
-stripped,
-musl-static `ai` executable to `tools/ai/agent/ai`. Override the image with
-`MUSL_IMG`. `make -C tools/ai/agent` performs a native static build without
-Docker.
+The release build uses local toolchains: `musl-gcc` builds both executables
+when it can compile `ncurses.h`; because it compiles with `-nostdinc`, it
+usually cannot see the host ncurses headers, so it builds `ai` while the
+native compiler builds `ai-tui`. Without any local ncursesw the release
+builds `ai` only and prints a note. Each model request runs in a joined
+worker thread while the main thread collects live steering; cancellation is
+coordinated through one bounded polling loop.
+
+Publish stripped, statically linked `ai` and `ai-tui` executables built in
+the `zhoujd/alpine` Docker image with:
+
+```sh
+tools/ai/agent/build.sh publish
+```
+
+Override the image with `MUSL_IMG`. `build.sh` also accepts `build`, `release`,
+and `clean`.
 
 Install the binary into `/usr/local/bin` by default, or another directory with
 `DEST`:

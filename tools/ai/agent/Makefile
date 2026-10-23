@@ -17,22 +17,32 @@ TUI_LDFLAGS ?= -static -s
 TUI_LDFLAGS += -Wl,-z,relro,-z,now,-z,noexecstack
 TUI_LDLIBS ?= $(shell pkg-config --libs ncursesw)
 
+# musl-gcc compiles with -nostdinc, so it cannot use the host glibc
+# ncurses headers; probe each toolchain instead of assuming it works.
+# The \# escape keeps make from treating the include as a comment.
+NCURSES_PROBE = printf '%s\n' '\#include <ncurses.h>' 'int main(void) { return 0; }' | $(1) -x c -o /dev/null - >/dev/null 2>&1
+
 release:
 	@if [ -n "$$INSIDE_DOCKER" ]; then \
 		$(MAKE) clean; \
 		$(MAKE) all; \
-	elif command -v musl-gcc >/dev/null 2>&1; then \
+	elif command -v musl-gcc >/dev/null 2>&1 \
+		&& $(call NCURSES_PROBE,musl-gcc); then \
 		$(MAKE) clean; \
 		$(MAKE) CC=musl-gcc all; \
+	elif $(call NCURSES_PROBE,$(CC)); then \
+		$(MAKE) clean; \
+		if command -v musl-gcc >/dev/null 2>&1; then \
+			echo "Building ai with musl-gcc; ai-tui with $(CC) because musl-gcc lacks ncursesw"; \
+			$(MAKE) CC=musl-gcc $(TARGET); \
+		else \
+			$(MAKE) $(TARGET); \
+		fi; \
+		$(MAKE) $(TUI_TARGET); \
 	else \
-		echo "Building with Docker musl image $${MUSL_IMG:-zhoujd/alpine}"; \
-		docker run --rm -i \
-			-u "$$(id -u):$$(id -g)" \
-			-e INSIDE_DOCKER=1 \
-			-v "$(REPO_ROOT):$(REPO_ROOT)" \
-			-w "$(BUILD_DIR)" \
-			"$${MUSL_IMG:-zhoujd/alpine}" \
-			sh -c 'cat /etc/os-release && $(MAKE) -C "$$PWD" all'; \
+		$(MAKE) clean; \
+		$(MAKE) $(TARGET); \
+		echo "note: no toolchain can compile ncurses.h; skipped $(TUI_TARGET)"; \
 	fi
 
 all: $(TARGET) $(TUI_TARGET)
