@@ -17,12 +17,10 @@ make -C tools/ai/agent ai ai-tui
 ```
 
 Run `tools/ai/agent/ai-tui`. It launches the adjacent dependency-free `ai`
-executable in `--ui` mode and renders three scrollable panes: agent status,
-AI response, and keyboard input.
+executable in `--ui` mode and renders two windows, like the Claude Code CLI:
+a scrolling conversation transcript and a keyboard input box.
 
-Panes 1 and 2 use equal heights by default. Press `F2` or `F3` to maximize
-pane 1 or pane 2 across both content areas; press the same key again to
-restore the equal split.
+Press `PageUp`/`PageDown` to scroll the conversation history.
 
 Run the integration and binary checks with:
 
