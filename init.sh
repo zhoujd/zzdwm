@@ -115,6 +115,7 @@ install_bin() {
         $CORE_ROOT/bin/abduco
         $CORE_ROOT/bin/tlock
         $CORE_ROOT/libexec/ai/ai
+        $CORE_ROOT/libexec/ai/ai-tui
         $CORE_ROOT/libexec/dvtm/dvtm
         $CORE_ROOT/libexec/dvtm/dvtm-editor
         $CORE_ROOT/libexec/dvtm/dvtm-pager
