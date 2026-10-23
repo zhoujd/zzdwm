@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -56,6 +57,11 @@
 #define MODEL_OUTPUT_SIZE 3072
 #define MAX_TIMEOUT 600
 #define MAX_STEERING_LINES 64
+#define MAX_SKILLS 16
+#define MAX_SKILL_NAME 64
+#define MAX_SKILL_DESC 512
+#define MAX_SKILL_BODY 4096
+#define SKILLS_DIR ".agents/skills"
 
 typedef struct {
   char json[MESSAGE_SIZE];
@@ -77,6 +83,12 @@ typedef struct {
   int valid;
 } ToolCall;
 
+typedef struct {
+  char name[MAX_SKILL_NAME];
+  char description[MAX_SKILL_DESC];
+  char directory[MAX_SKILL_NAME];
+} Skill;
+
 static Message messages[MAX_MESSAGES];
 static size_t message_count;
 static char endpoint[MAX_ENDPOINT] = DEFAULT_ENDPOINT;
@@ -90,6 +102,8 @@ static int command_timeout = 60;
 static int full_access;
 static volatile sig_atomic_t interrupted;
 static int ui_mode;
+static Skill skills[MAX_SKILLS];
+static int skill_count;
 
 typedef struct {
   char text[MAX_COMMAND];
@@ -479,10 +493,202 @@ static int add_text_message(const char *role, const char *content, int system)
   return add_message(json, buffer.length, system);
 }
 
+static void trim_spaces(char *text)
+{
+  size_t length = strlen(text);
+  size_t start = 0;
+
+  while (start < length && (text[start] == ' ' || text[start] == '\t'))
+    start++;
+  while (length > start && (text[length - 1] == ' '
+                            || text[length - 1] == '\t'
+                            || text[length - 1] == '\r'
+                            || text[length - 1] == '\n'))
+    length--;
+  memmove(text, text + start, length - start);
+  text[length - start] = 0;
+}
+
+static void strip_quotes(char *text)
+{
+  size_t length = strlen(text);
+
+  if (length < 2)
+    return;
+  if ((text[0] == '"' && text[length - 1] == '"')
+      || (text[0] == '\'' && text[length - 1] == '\''))
+    {
+      memmove(text, text + 1, length - 2);
+      text[length - 2] = 0;
+    }
+}
+
+static void copy_skill_field(char *destination, size_t capacity, char *value)
+{
+  trim_spaces(value);
+  strip_quotes(value);
+  snprintf(destination, capacity, "%s", value);
+}
+
+static int read_skill(const char *directory)
+{
+  char path[MAX_PATH];
+  char line[1024];
+  Skill *skill;
+  FILE *file;
+  int frontmatter = 0;
+
+  snprintf(path, sizeof(path), "%s/%s/SKILL.md", SKILLS_DIR, directory);
+  file = fopen(path, "r");
+  if (file == NULL)
+    return -1;
+  skill = &skills[skill_count];
+  memset(skill, 0, sizeof(*skill));
+  strncpy(skill->name, directory, sizeof(skill->name) - 1);
+  strncpy(skill->directory, directory, sizeof(skill->directory) - 1);
+  while (fgets(line, sizeof(line), file) != NULL)
+    {
+      trim_spaces(line);
+      if (strcmp(line, "---") == 0)
+        {
+          if (frontmatter)
+            break;
+          frontmatter = 1;
+          continue;
+        }
+      if (!frontmatter)
+        continue;
+      if (strncmp(line, "name:", 5) == 0)
+        copy_skill_field(skill->name, sizeof(skill->name), line + 5);
+      else if (strncmp(line, "description:", 12) == 0)
+        copy_skill_field(skill->description, sizeof(skill->description),
+                         line + 12);
+    }
+  fclose(file);
+  return 0;
+}
+
+static void load_skills(void)
+{
+  DIR *directory = opendir(SKILLS_DIR);
+  struct dirent *entry;
+  int index;
+
+  if (directory == NULL)
+    return;
+  while (skill_count < MAX_SKILLS
+         && (entry = readdir(directory)) != NULL)
+    {
+      if (entry->d_name[0] == '.')
+        continue;
+      if (strlen(entry->d_name) >= MAX_SKILL_NAME)
+        continue;
+      if (read_skill(entry->d_name) == 0)
+        skill_count++;
+    }
+  closedir(directory);
+  for (index = 1; index < skill_count; index++)
+    {
+      Skill key = skills[index];
+      int sorted;
+
+      for (sorted = index - 1;
+           sorted >= 0 && strcmp(skills[sorted].name, key.name) > 0;
+           sorted--)
+        skills[sorted + 1] = skills[sorted];
+      skills[sorted + 1] = key;
+    }
+}
+
+static Skill *find_skill(const char *name)
+{
+  int index;
+
+  for (index = 0; index < skill_count; index++)
+    if (strcmp(skills[index].name, name) == 0
+        || strcmp(skills[index].directory, name) == 0)
+      return &skills[index];
+  return NULL;
+}
+
+static int add_skills_message(void)
+{
+  char content[MESSAGE_SIZE];
+  Buffer buffer = {content, sizeof(content), 0};
+  int index;
+
+  if (skill_count == 0)
+    return 0;
+  if (buffer_append_string(&buffer,
+                           "Skills available under " SKILLS_DIR
+                           "/<skill>/SKILL.md:\n") < 0)
+    return -1;
+  for (index = 0; index < skill_count; index++)
+    {
+      if (strcmp(skills[index].name, skills[index].directory) == 0)
+        {
+          if (buffer_append_formatted(&buffer, "- %s: %s\n",
+                                      skills[index].name,
+                                      skills[index].description) < 0)
+            return -1;
+        }
+      else if (buffer_append_formatted(&buffer, "- %s (%s): %s\n",
+                                       skills[index].name,
+                                       skills[index].directory,
+                                       skills[index].description) < 0)
+        return -1;
+    }
+  if (buffer_append_string(&buffer,
+                           "When a task matches a skill, read its SKILL.md "
+                           "with a read-only command and follow its "
+                           "instructions before acting.") < 0)
+    return -1;
+  if (buffer.length >= sizeof(content))
+    return -1;
+  content[buffer.length] = 0;
+  return add_text_message("system", content, 1);
+}
+
+static void handle_skill_command(char *name)
+{
+  char path[MAX_PATH];
+  char body[MAX_SKILL_BODY + 16];
+  Skill *skill;
+  FILE *file;
+  size_t length;
+
+  trim_spaces(name);
+  skill = find_skill(name);
+  if (skill == NULL)
+    {
+      print_formatted("error: unknown skill; /skills lists them\n");
+      return;
+    }
+  snprintf(path, sizeof(path), "%s/%s/SKILL.md", SKILLS_DIR, skill->directory);
+  file = fopen(path, "r");
+  if (file == NULL)
+    {
+      print_formatted("error: cannot open %s\n", path);
+      return;
+    }
+  length = fread(body, 1, MAX_SKILL_BODY, file);
+  fclose(file);
+  body[length] = 0;
+  if (length == MAX_SKILL_BODY)
+    snprintf(body + length, sizeof(body) - length, "...[truncated]");
+  if (add_text_message("system", body, 1) < 0)
+    {
+      print_formatted("error: skill cannot fit in the conversation\n");
+      return;
+    }
+  print_formatted("[skill] %s added to the context\n", skill->name);
+}
+
 static void conversation_reset(void)
 {
   message_count = 0;
-  if (add_text_message("system", SYSTEM_PROMPT, 1) < 0)
+  if (add_text_message("system", SYSTEM_PROMPT, 1) < 0
+      || add_skills_message() < 0)
     {
       print_formatted("error: unable to initialize conversation\n");
       exit(1);
@@ -1832,6 +2038,7 @@ int main(int argc, char **argv)
   sigaction(SIGINT, &action, NULL);
   sigaction(SIGTERM, &action, NULL);
   signal(SIGPIPE, SIG_IGN);
+  load_skills();
   conversation_reset();
   print_formatted(
       "ai %s %s %s interactive AI agent\n",
@@ -1842,6 +2049,23 @@ int main(int argc, char **argv)
   print_formatted("Endpoint: http://%s:%d%s\n", api_host, api_port, api_path);
   print_formatted("Model: %s; API timeout: %ds; command timeout: %ds\n",
                   model, api_timeout, command_timeout);
+  if (skill_count > 0)
+    {
+      char listing[MAX_SKILLS * (MAX_SKILL_NAME + 2) + 16];
+      Buffer buffer = {listing, sizeof(listing), 0};
+      int index;
+
+      for (index = 0; index < skill_count; index++)
+        if (buffer_append_formatted(&buffer, "%s%s",
+                                    index == 0 ? "" : ", ",
+                                    skills[index].name) < 0)
+          break;
+      if (buffer.length < sizeof(listing))
+        listing[buffer.length] = 0;
+      else
+        listing[sizeof(listing) - 1] = 0;
+      print_formatted("Skills: %s\n", listing);
+    }
   print_formatted("Multiline input ends with an empty line. /help shows commands.\n");
   print_formatted("Live steering: type lines while AI requests or commands run.\n");
   if (full_access)
@@ -1863,9 +2087,29 @@ int main(int argc, char **argv)
           print_formatted("[context reset]\n");
           continue;
         }
+      if (strcmp(prompt, "/skills") == 0)
+        {
+          int index;
+
+          if (skill_count == 0)
+            print_formatted("No skills found under " SKILLS_DIR ".\n");
+          for (index = 0; index < skill_count; index++)
+            print_formatted("%s: %s\n", skills[index].name,
+                            skills[index].description);
+          continue;
+        }
+      if (strncmp(prompt, "/skill", 6) == 0)
+        {
+          if (prompt[6] == ' ')
+            handle_skill_command(prompt + 7);
+          else
+            print_formatted("usage: /skill <name>; /skills lists them\n");
+          continue;
+        }
       if (strcmp(prompt, "/help") == 0)
         {
-          print_formatted("/new reset context; /exit or /quit exit\n");
+          print_formatted("/new reset context; /skills list skills; "
+                          "/skill <name> load a skill; /exit or /quit exit\n");
           continue;
         }
       if (add_text_message("user", prompt, 0) < 0)

@@ -2,6 +2,7 @@ import json
 import os
 import socket
 import subprocess
+import tempfile
 import threading
 import time
 import unittest
@@ -113,7 +114,8 @@ def text_response(content):
 
 class AgentTests(unittest.TestCase):
     def run_agent(
-        self, responses, stdin, full_access=False, command_timeout="2", delay=0
+        self, responses, stdin, full_access=False, command_timeout="2",
+        delay=0, cwd=None
     ):
         endpoint = Endpoint(responses, delay)
         self.addCleanup(endpoint.thread.join, timeout=2)
@@ -133,6 +135,7 @@ class AgentTests(unittest.TestCase):
             text=True,
             capture_output=True,
             env=settings,
+            cwd=cwd,
             timeout=10,
             check=True,
         ), endpoint
@@ -273,7 +276,7 @@ class AgentTests(unittest.TestCase):
             "prioritize read-only diagnosis\n",
             "continue\n\n/exit\n\n",
             api_timeout="5",
-            delay=3,
+            delay=2,
             wait=3.5,
         )
         self.assertIn("live steering queued", result)
@@ -325,6 +328,50 @@ class AgentTests(unittest.TestCase):
             command_timeout="1",
         )
         self.assertIn("command timed out after 1 seconds", result.stdout)
+
+    def write_dummy_skill(self, workspace):
+        skill_dir = os.path.join(workspace, ".agents", "skills", "dummy")
+        os.makedirs(skill_dir)
+        with open(os.path.join(skill_dir, "SKILL.md"), "w") as handle:
+            handle.write(
+                "---\n"
+                "name: dummy\n"
+                "description: Pretend deployment helper\n"
+                "---\n"
+                "Follow the dummy plan.\n"
+            )
+
+    def system_content(self, endpoint):
+        return "".join(
+            message.get("content", "")
+            for message in endpoint.requests[0]["messages"]
+            if message["role"] == "system"
+        )
+
+    def test_skills_listing_reaches_model(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            self.write_dummy_skill(workspace)
+            result, endpoint = self.run_agent(
+                [text_response("done")],
+                "hello\n\n/exit\n\n",
+                cwd=workspace,
+            )
+        self.assertIn("Skills: dummy", result.stdout)
+        system = self.system_content(endpoint)
+        self.assertIn("dummy: Pretend deployment helper", system)
+        self.assertIn("SKILL.md", system)
+
+    def test_skill_command_injects_body(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            self.write_dummy_skill(workspace)
+            result, endpoint = self.run_agent(
+                [text_response("done")],
+                "/skill dummy\n\nhello\n\n/exit\n\n",
+                cwd=workspace,
+            )
+        self.assertIn("[skill] dummy added to the context", result.stdout)
+        system = self.system_content(endpoint)
+        self.assertIn("Follow the dummy plan.", system)
 
 
 class BinaryTests(unittest.TestCase):
