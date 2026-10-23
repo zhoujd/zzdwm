@@ -25,7 +25,8 @@ Use the `AI: ` prefix for AI agent commit subjects, for example:
    tools/ai/agent/build.sh -r
    ```
 
-   The build prefers local `musl-gcc`, then `MUSL_IMG` or `zhoujd/alpine`.
+   The release builds with local toolchains; `build.sh -p` publishes via
+   `MUSL_IMG` or `zhoujd/alpine`.
 
 3. Run the complete agent suite:
 
