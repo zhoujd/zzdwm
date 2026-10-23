@@ -62,6 +62,11 @@ $(VERSION_HEADER): FORCE
 install: $(TARGET)
 	mkdir -p $(DEST)
 	install -m 0755 $(TARGET) $(DEST)/$(PROGRAM)
+	if [ -x $(TUI_TARGET) ]; then \
+		install -m 0755 $(TUI_TARGET) $(DEST)/$(TUI_TARGET); \
+	else \
+		echo "note: $(TUI_TARGET) is not built; skipped"; \
+	fi
 
 clean:
 	rm -f $(TARGET) $(TUI_TARGET) $(VERSION_HEADER)
