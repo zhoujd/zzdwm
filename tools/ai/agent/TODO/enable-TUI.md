@@ -19,7 +19,7 @@ Requirements:
 
 - Use `ncursesw` so locale-aware UTF-8 rendering works.
 - Keep the dependency-free static `ai` CLI as the default build.
-- Build a separate `ai-tui` front-end that communicates with `ai --ui`. [DONE]
+- Build a separate `ai-tui` front-end that communicates with `ai --ui`.
 - Render two windows:
   - Conversation (thoughts, status, and AI responses in one transcript)
   - Keyboard Input / User Prompt
@@ -29,4 +29,4 @@ Requirements:
 - Keep Ctrl+C cancellation and the existing allow/edit/steer/refuse/quit modes.
 - Preserve CLI behavior and the non-interactive Python integration tests.
 
-Refer to: tools/learn/ai/agent_tui.c
+Origin refer to: tools/learn/ai/agent_tui.c
