@@ -12,11 +12,13 @@ mkdir -p "${ROOTFS_DIR}" "${OUTPUT_DIR}"
 
 echo "=== Pulling Alpine Linux Base Archetype ==="
 DL_DIR="build"
-FS_URL="https://dl-cdn.alpinelinux.org/alpine/v3.24/releases/x86_64/alpine-minirootfs-3.24.3-x86_64.tar.gz"
-if [ ! -f "${DL_DIR}/alpine-minirootfs-3.24.3-x86_64.tar.gz" ]; then
+FS_VER="v3.24"
+FS_PKG="alpine-minirootfs-3.24.3-x86_64.tar.gz"
+FS_URL="https://dl-cdn.alpinelinux.org/alpine/${FS_VER}/releases/x86_64/${FS_PKG}"
+if [ ! -f "${DL_DIR}/${FS_PKG}" ]; then
     wget -P ${DL_DIR} ${FS_URL}
 fi
-tar -xzf ${DL_DIR}/alpine-minirootfs-3.24.3-x86_64.tar.gz -C "${ROOTFS_DIR}"
+tar -xzf ${DL_DIR}/${FS_PKG} -C "${ROOTFS_DIR}"
 
 echo "=== Layering Custom Git Configurations and Binaries ==="
 # Safely copy files tracked inside your repository over the rootfs tree
