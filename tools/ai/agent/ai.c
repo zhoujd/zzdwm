@@ -2021,7 +2021,7 @@ static int parse_arguments(int argc, char **argv)
   return 0;
 }
 
-int main(int argc, char **argv)
+int ai_main(int argc, char **argv)
 {
   static char response[MAX_RESPONSE];
   static char prompt[MAX_COMMAND];

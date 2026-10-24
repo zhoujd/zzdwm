@@ -19,7 +19,7 @@ EOF
 }
 
 build() {
-    make -C "$SCRIPT_DIR" ai ai-tui
+    make -C "$SCRIPT_DIR" ai
     echo "Build done"
 }
 

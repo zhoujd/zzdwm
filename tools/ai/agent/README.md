@@ -13,10 +13,10 @@ tools/ai/agent/build.sh
 Build the agent and optional ncurses TUI with:
 
 ```sh
-make -C tools/ai/agent ai ai-tui
+make -C tools/ai/agent ai
 ```
 
-Run `tools/ai/agent/ai-tui`. It launches the adjacent dependency-free `ai`
+Run `tools/ai/agent/ai tui`. It launches the adjacent dependency-free `ai`
 executable in `--ui` mode and renders two windows, like the Claude Code CLI:
 a scrolling conversation transcript and a keyboard input box.
 
@@ -30,13 +30,12 @@ make -C tools/ai/agent test
 
 The release build uses local toolchains: `musl-gcc` builds both executables
 when it can compile `ncurses.h`; because it compiles with `-nostdinc`, it
-usually cannot see the host ncurses headers, so it builds `ai` while the
-native compiler builds `ai-tui`. Without any local ncursesw the release
-builds `ai` only and prints a note. Each model request runs in a joined
-worker thread while the main thread collects live steering; cancellation is
-coordinated through one bounded polling loop.
+usually cannot see the host ncurses headers, so it builds `ai`. Without any
+local ncursesw the release builds `ai` only and prints a note. Each model
+request runs in a joined worker thread while the main thread collects live
+steering; cancellation is coordinated through one bounded polling loop.
 
-Publish stripped, statically linked `ai` and `ai-tui` executables built in
+Publish stripped, statically linked `ai` executables built in
 the `zhoujd/alpine` Docker image with:
 
 ```sh
@@ -47,7 +46,7 @@ Override the image with `MUSL_IMG`. `build.sh` also accepts `build`, `release`,
 and `clean`.
 
 Install `ai` into `/usr/local/bin` by default, or another directory with
-`DEST`; a built `ai-tui` is installed alongside it:
+`DEST`:
 
 ```sh
 make -C tools/ai/agent install

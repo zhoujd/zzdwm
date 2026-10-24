@@ -1,21 +1,16 @@
 PROGRAM = ai
 TARGET = ai
-TUI_SOURCE = ai_tui.c
-TUI_TARGET = ai-tui
 DEST ?= /usr/local/bin
 VERSION_HEADER = version.h
 REPO_ROOT := $(shell git rev-parse --show-toplevel)
 BUILD_DIR := $(REPO_ROOT)/tools/ai/agent
-
 CFLAGS ?= -std=c11 -Os -pipe -Wall -Wextra -Werror
 CFLAGS += -D_FORTIFY_SOURCE=2
 LDFLAGS ?= -static -s
 LDFLAGS += -Wl,-z,relro,-z,now,-z,noexecstack
 LDLIBS += -lpthread
-TUI_CFLAGS += $(shell pkg-config --cflags ncursesw)
-TUI_LDFLAGS ?= -static -s
-TUI_LDFLAGS += -Wl,-z,relro,-z,now,-z,noexecstack
-TUI_LDLIBS ?= $(shell pkg-config --libs ncursesw)
+CFLAGS += $(shell pkg-config --cflags ncursesw)
+LDLIBS += $(shell pkg-config --libs ncursesw)
 
 # musl-gcc compiles with -nostdinc, so it cannot use the host glibc
 # ncurses headers; probe each toolchain instead of assuming it works.
@@ -38,23 +33,20 @@ release:
 		else \
 			$(MAKE) $(TARGET); \
 		fi; \
-		$(MAKE) $(TUI_TARGET); \
 	else \
 		$(MAKE) clean; \
 		$(MAKE) $(TARGET); \
-		echo "note: no toolchain can compile ncurses.h; skipped $(TUI_TARGET)"; \
 	fi
 
-all: $(TARGET) $(TUI_TARGET)
+all: $(TARGET)
 
+MAIN_SOURCE = main.c
+TUI_SOURCE = tui.c
 CJSON_SOURCE = cJSON.c
 UTF_SOURCE = rune.c
 
-$(TARGET): $(PROGRAM).c $(CJSON_SOURCE) $(VERSION_HEADER)
+$(TARGET): $(PROGRAM).c $(MAIN_SOURCE) $(TUI_SOURCE) $(CJSON_SOURCE) $(UTF_SOURCE) $(VERSION_HEADER)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-
-$(TUI_TARGET): $(TUI_SOURCE) $(UTF_SOURCE) $(VERSION_HEADER)
-	$(CC) $(CFLAGS) $(TUI_CFLAGS) $(TUI_LDFLAGS) -o $@ $^ $(TUI_LDLIBS)
 
 $(VERSION_HEADER): FORCE
 	@./version.sh $@
@@ -62,14 +54,9 @@ $(VERSION_HEADER): FORCE
 install: $(TARGET)
 	mkdir -p $(DEST)
 	install -m 0755 $(TARGET) $(DEST)/$(PROGRAM)
-	if [ -x $(TUI_TARGET) ]; then \
-		install -m 0755 $(TUI_TARGET) $(DEST)/$(TUI_TARGET); \
-	else \
-		echo "note: $(TUI_TARGET) is not built; skipped"; \
-	fi
 
 clean:
-	rm -f $(TARGET) $(TUI_TARGET) $(VERSION_HEADER)
+	rm -f $(TARGET) $(VERSION_HEADER)
 
 test: $(TARGET)
 	python3 test/test_agent.py
