@@ -1,0 +1,4 @@
+# .codex/config.toml (Project-Specific Config)
+
+[features]
+codex_git_commit = false
