@@ -11,8 +11,12 @@ sudo rm -rf "${ROOTFS_DIR}" "${OUTPUT_DIR}"
 mkdir -p "${ROOTFS_DIR}" "${OUTPUT_DIR}"
 
 echo "=== Pulling Alpine Linux Base Archetype ==="
-# Using a lightweight Alpine base as a structural example
-wget -qO- https://alpinelinux.org | tar -xzf - -C "${ROOTFS_DIR}"
+DL_DIR="build"
+FS_URL="https://dl-cdn.alpinelinux.org/alpine/v3.24/releases/x86_64/alpine-minirootfs-3.24.3-x86_64.tar.gz"
+if [ ! -f "${DL_DIR}/alpine-minirootfs-3.24.3-x86_64.tar.gz" ]; then
+    wget -P ${DL_DIR} ${FS_URL}
+fi
+tar -xzf ${DL_DIR}/alpine-minirootfs-3.24.3-x86_64.tar.gz -C "${ROOTFS_DIR}"
 
 echo "=== Layering Custom Git Configurations and Binaries ==="
 # Safely copy files tracked inside your repository over the rootfs tree
