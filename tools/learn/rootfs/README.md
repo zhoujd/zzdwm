@@ -113,7 +113,7 @@ into your target virtualization or container standard: 
 ### Docker Container Engine
 
 ```bash
-cat output/rootfs.tar.gz | docker import - custom-ai-agent:latest
+cat output/rootfs.tar.gz | docker import - zhoujd/ai-agent:latest
 docker run -it --rm custom-ai-agent:latest ai
 ```
 
