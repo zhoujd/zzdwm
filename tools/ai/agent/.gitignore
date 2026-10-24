@@ -4,4 +4,4 @@ __pycache__/
 
 version.h
 ai-tui
-rune.o
+*.o
