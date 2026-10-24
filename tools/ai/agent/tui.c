@@ -734,7 +734,7 @@ static const char *agent_executable_path(char *buffer, size_t capacity)
   return buffer;
 }
 
-int main(int argc, char **argv)
+int tui_main(int argc, char **argv)
 {
   char executable_path[4096];
   InputBuffer input = {{0}, 0, 0, {0}, 0};
