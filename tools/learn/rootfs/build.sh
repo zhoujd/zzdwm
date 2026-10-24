@@ -20,6 +20,13 @@ if [ ! -f "${DL_DIR}/${FS_PKG}" ]; then
 fi
 tar -xzf ${DL_DIR}/${FS_PKG} -C "${ROOTFS_DIR}"
 
+echo "=== Injecting Native Resolution Patches (Chroot) ==="
+# Mount host DNS definitions so the chroot can access the internet to fetch packages
+sudo cp /etc/resolv.conf "${ROOTFS_DIR}/etc/resolv.conf"
+# Step into the rootfs and install the terminal definitions required by the TUI
+sudo chroot "${ROOTFS_DIR}" apk update
+sudo chroot "${ROOTFS_DIR}" apk add ncurses-terminfo-base
+
 echo "=== Layering Custom Git Configurations and Binaries ==="
 # Safely copy files tracked inside your repository over the rootfs tree
 if [ -d "overlay" ]; then
