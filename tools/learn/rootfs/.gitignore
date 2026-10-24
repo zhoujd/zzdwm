@@ -1,0 +1,5 @@
+# .gitignore
+build/
+output/
+*.tar.gz
+*.log
