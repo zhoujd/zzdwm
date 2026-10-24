@@ -27,19 +27,19 @@ Autossh_LATEST_TAG := $(IMG_NS)/autossh:latest
 all: $(TARGET)
 
 valgrind-base: valgrind.dockerfile
-	docker build $(BUILD_ARG) -t $(Valgrind_BASE_TAG) -f $< .
+	docker build $(BUILD_ARG) -t $(Valgrind_BASE_TAG) -f valgrind.dockerfile .
 	docker tag $(Valgrind_BASE_TAG) $(Valgrind_LATEST_TAG)
 
 wine-base: wine.dockerfile
-	docker build $(BUILD_ARG) -t $(Wine_BASE_TAG) -f $< .
+	docker build $(BUILD_ARG) -t $(Wine_BASE_TAG) -f wine.dockerfile .
 	docker tag $(Wine_BASE_TAG) $(Wine_LATEST_TAG)
 
 mingw-base: mingw.dockerfile
-	docker build $(BUILD_ARG) -t $(Mingw_BASE_TAG) -f $< .
+	docker build $(BUILD_ARG) -t $(Mingw_BASE_TAG) -f mingw.dockerfile .
 	docker tag $(Mingw_BASE_TAG) $(Mingw_LATEST_TAG)
 
 docs-base: docs.dockerfile
-	docker build $(BUILD_ARG) -t $(Docs_BASE_TAG) -f $< .
+	docker build $(BUILD_ARG) -t $(Docs_BASE_TAG) -f docs.dockerfile .
 	docker tag $(Docs_BASE_TAG) $(Docs_LATEST_TAG)
 
 autossh-base: autossh.dockerfile autossh-entrypoint.sh bin/autossh
@@ -48,8 +48,8 @@ autossh-base: autossh.dockerfile autossh-entrypoint.sh bin/autossh
 
 .PHONY: clean
 clean:
-	-docker rmi $(Valgrind_BASE_TAG) $(Valgrind_LATEST_TAG) \
-		$(Mingw_BASE_TAG) $(Mingw_LATEST_TAG)
+	-docker rmi $(Valgrind_BASE_TAG) $(Valgrind_LATEST_TAG)
+	-docker rmi $(Mingw_BASE_TAG) $(Mingw_LATEST_TAG)
 	-docker rmi $(Docs_BASE_TAG) $(Docs_LATEST_TAG)
 	-docker rmi $(Autossh_BASE_TAG) $(Autossh_LATEST_TAG)
 
