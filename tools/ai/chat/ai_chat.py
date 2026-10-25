@@ -33,7 +33,7 @@ def run_gemini_chat():
         
         # 3. Open a session container to automatically track conversation context
         # Using the standard multi-purpose developer flash model
-        chat = client.chats.create(model="gemini-2.5-flash")
+        chat = client.chats.create(model="gemini-3.8-flash")
         
         print("=== Gemini Interactive Chat Session Established ===")
         print("Type your message and press Enter. Enter '/exit' or '/quit' to close.")
