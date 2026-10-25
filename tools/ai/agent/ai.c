@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <sys/socket.h>
 #include <pthread.h>
 #include <netinet/in.h>
@@ -103,7 +104,7 @@ static char api_key[MAX_KEY];
 static char model[MAX_MODEL] = DEFAULT_MODEL;
 static int api_timeout = 60;
 static int command_timeout = 60;
-static int full_access;
+static bool full_access = false; // Always default to secure mode
 static volatile sig_atomic_t interrupted;
 static int ui_mode;
 static Skill skills[MAX_SKILLS];
@@ -2050,6 +2051,12 @@ ai_main (int argc, char **argv)
           print_formatted ("[context reset]\n");
           continue;
         }
+      if (strcmp (prompt, "/force") == 0)
+        {
+          full_access = !full_access;
+          print_formatted ("[force mode is now %s]\n", full_access ? "ON" : "OFF");
+          continue;
+        }
       if (strcmp (prompt, "/skills") == 0)
         {
           int index;
@@ -2070,7 +2077,7 @@ ai_main (int argc, char **argv)
         }
       if (strcmp (prompt, "/help") == 0)
         {
-          print_formatted ("/new reset context; /skills list skills; "
+          print_formatted ("/new reset context; /force no need allow; /skills list skills; "
                            "/skill <name> load a skill; /exit or /quit exit\n");
           continue;
         }
