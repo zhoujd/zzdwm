@@ -20,13 +20,11 @@ import argparse
 import readline
 import requests
 
+# Safely read integer from an environment variable
 def get_env_int(key: str, default: int) -> int:
-    value = os.environ.get(key)
-    if value is None:
-        return default
     try:
-        return int(value)
-    except ValueError:
+        return int(os.environ.get(key, default))
+    except (TypeError, ValueError):
         return default
 
 # API Configuration (Replace with your Key or read from environment variables)
@@ -137,7 +135,6 @@ def ask_ai_and_run(user_prompt: str, messages=None, full_access=False):
     print("\n[AI Response]: Stopped after the maximum number of tool rounds.")
     return messages
 
-
 def interactive_loop(full_access):
     messages = None
     abort = False
@@ -177,13 +174,9 @@ def interactive_loop(full_access):
             continue
         messages = ask_ai_and_run(user_prompt, messages, full_access)
 
-# Run test
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--full-access", action="store_true",
                         help="execute AI-requested commands without confirmation")
     args = parser.parse_args()
-    try:
-        interactive_loop(args.full_access)
-    except KeyboardInterrupt:
-        print("[bye]\n")
+    interactive_loop(args.full_access)
