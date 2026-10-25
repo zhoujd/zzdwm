@@ -8,6 +8,8 @@ $ pip3 install requests
 export OPENAI_API_KEY="your_actual_api_key_here"
 export AI_API_URL="your_api_url_here"
 export AI_MODEL="your_model_here"
+export AI_TIMEOUT_SECONDS=60
+export AI_COMMAND_TIMEOUT_SECONDS=60
 python3 ai.py
 '''
 
@@ -18,10 +20,21 @@ import argparse
 import readline
 import requests
 
+def get_env_int(key: str, default: int) -> int:
+    value = os.environ.get(key)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
 # API Configuration (Replace with your Key or read from environment variables)
 API_KEY = os.environ.get("OPENAI_API_KEY", "your_api_key_here")
 API_URL = os.environ.get("AI_API_URL", "http://10.11.70.11:8090/v1")
-MODEL = os.environ.get("AI_MODEL", "glm-5.3-flash")
+AI_MODEL = os.environ.get("AI_MODEL", "glm-5.3-flash")
+AI_TIMEOUT_SECONDS = get_env_int("AI_TIMEOUT_SECONDS", 60)
+AI_COMMAND_TIMEOUT_SECONDS = get_env_int("AI_COMMAND_TIMEOUT_SECONDS", 60)
 
 # Define the host tool: Execute system commands
 def run_terminal_command(command: str, full_access: bool = False) -> str:
@@ -40,7 +53,8 @@ def run_terminal_command(command: str, full_access: bool = False) -> str:
 
     try:
         # Execute the command and capture output
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=15)
+        result = subprocess.run(command, shell=True, capture_output=True, text=True,
+                                timeout=AI_COMMAND_TIMEOUT_SECONDS)
         output = result.stdout + result.stderr
         return output if output.strip() else "Command executed successfully with no output."
     except Exception as e:
@@ -82,7 +96,7 @@ def ask_ai_and_run(user_prompt: str, messages=None, full_access=False):
     messages.append({"role": "user", "content": user_prompt})
 
     payload = {
-        "model": MODEL,
+        "model": AI_MODEL,
         "messages": messages,
         "tools": tools_schema,
         "tool_choice": "auto"
@@ -90,7 +104,7 @@ def ask_ai_and_run(user_prompt: str, messages=None, full_access=False):
 
     for request_count in range(max_requests):
         response = requests.post(f"{API_URL}/chat/completions", headers=headers,
-                                 json=payload, timeout=60).json()
+                                 json=payload, timeout=AI_TIMEOUT_SECONDS).json()
         response_message = response['choices'][0]['message']
 
         if not response_message.get("tool_calls"):
@@ -128,7 +142,10 @@ def interactive_loop(full_access):
     messages = None
     abort = False
 
-    print("Interactive AI assistant (readline enabled). Finish multiline input with an empty line.")
+    print("Interactive AI assistant. Finish multiline input with an empty line.")
+    print(f"Endpoint: {API_URL}")
+    print(f"Model: {AI_MODEL}; API timeout: {AI_TIMEOUT_SECONDS}s; "
+          f"command timeout: {AI_COMMAND_TIMEOUT_SECONDS}s")
     print("Type /exit or /quit to leave.")
     if full_access:
         print("Full access is enabled: commands will run without confirmation.")
