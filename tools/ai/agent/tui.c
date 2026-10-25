@@ -76,8 +76,7 @@ usage (FILE *stream)
   fprintf (stream, "usage: ai-tui [--full-access] [--help] [--version]\n"
                    "\n"
                    "Environment configures AI_API_URL, AI_MODEL, AI_API_KEY or\n"
-                   "OPENAI_API_KEY, AI_TIMEOUT_SECONDS, and\n"
-                   "AI_COMMAND_TIMEOUT_SECONDS.\n");
+                   "OPENAI_API_KEY, AI_TIMEOUT_SECONDS and AI_COMMAND_TIMEOUT_SECONDS.\n");
 }
 
 static int
