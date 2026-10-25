@@ -3,6 +3,8 @@
 ---
 Language: Cpp
 BasedOnStyle: GNU
+IndentPPDirectives: None
+IndentExternBlock: NoIndent
 ColumnLimit: 120
 IndentWidth: 2
 TabWidth: 4
