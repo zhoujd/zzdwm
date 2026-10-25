@@ -6,7 +6,7 @@ $ pip install google-genai python-dotenv
 
 ## Run Chatbot
 export GEMINI_API_KEY="your_actual_api_key_here"
-python3 ai_chat.py
+python3 gemini.py
 '''
 
 import os
