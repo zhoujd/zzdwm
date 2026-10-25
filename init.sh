@@ -233,17 +233,20 @@ all() {
 usage() {
     app=$(basename $0)
     cat <<EOF
-Usage: $app {option}
-Option:
-dep           install depend package (ubuntu/debian/void-linux)
-dm            install xsession (default DEST=/usr/local)
-bin           install bin (default DEST=/usr/local)
-tool          install tool (default DEST=/usr/local)
-misc          install misc
-install|-i    install all
-build|-b      build all
-clean|-c      clean all
-all|-a        init all
+Usage: init.sh <option>
+
+Build:
+  build | -b   Build binaries
+  clean | -c   Clean build artifacts
+  all   | -a   Init and build everything
+
+Install (Default DEST=/usr/local):
+  dep          Install system dependencies (Ubuntu/Debian/Void)
+  bin          Install binaries
+  tool         Install internal tools
+  dm           Install XSession desktop assets
+  misc         Install miscellaneous configs
+  install | -i Install all components
 EOF
 }
 
