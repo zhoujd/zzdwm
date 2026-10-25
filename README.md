@@ -3,11 +3,11 @@ zzdwm
 
 ## URLs
 
-```sh
-## https://dwm.suckless.org/
-## https://dl.suckless.org/dwm/
-## https://git.suckless.org/dwm/
-## https://git.suckless.org/dwm/files.html
+```txt
+- https://dwm.suckless.org/
+- https://dl.suckless.org/dwm/
+- https://git.suckless.org/dwm/
+- https://git.suckless.org/dwm/files.html
 ```
 
 ## Build dependence
