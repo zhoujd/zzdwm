@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
 
+'''
+## Install Dependencies
+$ pip3 install requests
+
+## Run AI
+export OPENAI_API_KEY="your_actual_api_key_here"
+export AI_API_URL="your_api_url_here"
+export AI_MODEL="your_model_here"
+python3 ai.py
+'''
+
 import os
 import json
 import subprocess
@@ -115,6 +126,7 @@ def ask_ai_and_run(user_prompt: str, messages=None, full_access=False):
 
 def interactive_loop(full_access):
     messages = None
+    abort = False
 
     print("Interactive AI assistant (readline enabled). Finish multiline input with an empty line.")
     print("Type /exit or /quit to leave.")
@@ -122,7 +134,7 @@ def interactive_loop(full_access):
         print("Full access is enabled: commands will run without confirmation.")
     while True:
         try:
-            first_line = input("\n[You]: ")
+            first_line = input("\n[You]:\n")
         except (EOFError, KeyboardInterrupt):
             print()
             break
@@ -132,13 +144,16 @@ def interactive_loop(full_access):
         lines = [first_line]
         while True:
             try:
-                line = input("[...]: ")
+                line = input("[...]:\n")
             except (EOFError, KeyboardInterrupt):
-                print()
+                abort = True
                 break
             if line.strip() == "":
                 break
             lines.append(line)
+        if abort:
+            print()
+            break;
 
         user_prompt = "\n".join(lines).strip()
         if not user_prompt:
@@ -151,4 +166,7 @@ if __name__ == "__main__":
     parser.add_argument("--full-access", action="store_true",
                         help="execute AI-requested commands without confirmation")
     args = parser.parse_args()
-    interactive_loop(args.full_access)
+    try:
+        interactive_loop(args.full_access)
+    except KeyboardInterrupt:
+        print("[bye]\n")
