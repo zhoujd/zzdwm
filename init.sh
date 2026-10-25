@@ -59,7 +59,7 @@ install_dm() {
     sudo mkdir -p $target
     sudo cp -fv $dm/{dwm,cwm}.desktop $target
     echo "Init dm"
-    local bin=/usr/local/bin
+    local bin=${DEST:-/usr/local}/bin
     local libexec=$CORE_ROOT/libexec
     local apps=(
         $libexec/dm/nextwin
@@ -95,7 +95,7 @@ install_dm() {
 }
 
 install_bin() {
-    local bin=/usr/local/bin
+    local bin=${DEST:-/usr/local}/bin
     local apps=(
         $CORE_ROOT/bin/me
         $CORE_ROOT/bin/sc
@@ -168,7 +168,7 @@ install_misc() {
 }
 
 install_tool() {
-    local bin=/usr/local/bin
+    local bin=${DEST:-/usr/local}/bin
     local apps=(
         $CORE_ROOT/libexec/emacs/ec
         $CORE_ROOT/libexec/utils/upx
@@ -235,11 +235,11 @@ usage() {
     cat <<EOF
 Usage: $app {option}
 Option:
-dep           install depend package
-dm            install xsession
-bin           install bin
+dep           install depend package (ubuntu/debian/void-linux)
+dm            install xsession (default DEST=/usr/local)
+bin           install bin (default DEST=/usr/local)
+tool          install tool (default DEST=/usr/local)
 misc          install misc
-tool          install tool
 install|-i    install all
 build|-b      build all
 clean|-c      clean all
