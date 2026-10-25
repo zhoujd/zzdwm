@@ -1,18 +1,39 @@
 #!/bin/bash
 
-if [ -f output/rootfs.tar.gz ]; then
-    cat output/rootfs.tar.gz | docker import - custom-ai-agent:latest 2>&1 >/dev/null
-    docker image prune --force 2>&1 >/dev/null
-fi
+SCRIPT_ROOT=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+
+FS=output/rootfs.tar.gz
+
+load() {
+    if [ -f ${FS} ]; then
+        cat ${FS} | docker import - custom-ai-agent:latest
+        docker image prune --force 2>&1 >/dev/null
+    fi
+    echo "Run load image done"
+}
+
+shell() {
+    docker run -it --rm custom-ai-agent:latest sh
+}
+
+ai() {
+    docker run -it --rm custom-ai-agent:latest ai tui
+}
 
 case $1 in
+    load|-l )
+        shift
+        load "$@"
+        ;;
     shell|-s )
-        docker run -it --rm custom-ai-agent:latest sh
+        shift
+        shell "$@"
         ;;
     ai|-a )
-        docker run -it --rm custom-ai-agent:latest ai tui
+        shift
+        ai "$@"
         ;;
     * )
-        echo "Usage $(basename $0) {shell|-s|ai|-a}"
+        echo "Usage $(basename $0) {load|-l|shell|-s|ai|-a}"
         ;;
 esac
