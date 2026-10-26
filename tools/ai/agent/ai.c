@@ -2015,7 +2015,7 @@ parse_arguments (int argc, char **argv)
 int
 ai_main (int argc, char **argv)
 {
-  static char response[MAX_RESPONSE];
+  static char response_storage[MAX_RESPONSE];
   static char prompt[MAX_COMMAND];
   const char *response_start = NULL;
   struct sigaction action;
@@ -2107,7 +2107,8 @@ ai_main (int argc, char **argv)
           print_formatted ("error: prompt cannot fit in the conversation\n");
           continue;
         }
-      if (call_endpoint_threaded (&response_start, response) < 0)
+      response_start = NULL;
+      if (call_endpoint_threaded (&response_start, response_storage) < 0)
         {
           size_t old_count = message_count;
 
@@ -2133,7 +2134,8 @@ ai_main (int argc, char **argv)
                 result = 0;
                 break;
               }
-            if (call_endpoint_threaded (&response_start, response) < 0)
+            response_start = NULL;
+            if (call_endpoint_threaded (&response_start, response_storage) < 0)
               {
                 size_t old_count = message_count;
 

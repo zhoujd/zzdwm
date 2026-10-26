@@ -69,6 +69,9 @@ class Endpoint:
             except (ValueError, IndexError):
                 return
             time.sleep(self.delay)
+            if isinstance(response, bytes):
+                client.sendall(response)
+                return
             payload = json.dumps(response, separators=(",", ":")).encode()
             client.sendall(
                 b"HTTP/1.1 200 OK\r\n"
@@ -368,6 +371,19 @@ class AgentTests(unittest.TestCase):
             command_timeout="1",
         )
         self.assertIn("command timed out after 1 seconds", result.stdout)
+
+    def test_endpoint_http_error_keeps_agent_alive(self):
+        result, endpoint = self.run_agent(
+            [
+                b"HTTP/1.1 400 Bad Request\r\n"
+                b"Content-Length: 0\r\n"
+                b"Connection: close\r\n\r\n"
+            ],
+            "first\n\nsecond\n\n/exit\n\n",
+        )
+        self.assertIn("AI endpoint returned HTTP 400", result.stdout)
+        self.assertIn("[bye]", result.stdout)
+        self.assertGreaterEqual(len(endpoint.requests), 1)
 
     def test_tool_round_limit_is_configurable(self):
         result, _ = self.run_agent(
