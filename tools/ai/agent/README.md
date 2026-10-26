@@ -65,8 +65,8 @@ Configuration is read from the environment:
   `http://127.0.0.1:8090/v1/chat/completions`.
 * `AI_MODEL`: model name. Default: `glm-5.3-flash`.
 * `AI_API_KEY` or `OPENAI_API_KEY`: optional bearer token.
-* `AI_TIMEOUT_SECONDS`: API timeout, 1--600. Default: 60.
-* `AI_COMMAND_TIMEOUT_SECONDS`: shell timeout, 1--600. Default: 60.
+* `AI_TIMEOUT_SECONDS`: API timeout, 1--1800. Default: 300.
+* `AI_COMMAND_TIMEOUT_SECONDS`: shell timeout, 1--1800. Default: 120.
 
 Only HTTP IPv4 endpoints (including `localhost`) are supported. HTTPS would
 require a TLS implementation and violate the zero-runtime-dependency design;

@@ -56,7 +56,7 @@
 #define MAX_RESPONSE (256 * 1024)
 #define CAPTURE_SIZE 16384
 #define MODEL_OUTPUT_SIZE 3072
-#define MAX_TIMEOUT 600
+#define MAX_TIMEOUT 1800
 #define MAX_STEERING_LINES 64
 #define MAX_SKILLS 16
 #define MAX_SKILL_NAME 64
@@ -102,8 +102,8 @@ static char api_path[MAX_PATH] = "/v1/chat/completions";
 static int api_port = 8090;
 static char api_key[MAX_KEY];
 static char model[MAX_MODEL] = DEFAULT_MODEL;
-static int api_timeout = 60;
-static int command_timeout = 60;
+static int api_timeout = 300;
+static int command_timeout = 120;
 static bool full_access = false; // Always default to secure mode
 static volatile sig_atomic_t interrupted;
 static int ui_mode;
