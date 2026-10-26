@@ -1677,7 +1677,7 @@ post_execution_steer (char *steer, size_t capacity)
 
   for (;;)
     {
-      if (! steering_available () || full_access)
+      if (!steering_available () || full_access)
         return 0;
       if (read_line ("[s]teer before next AI request, Enter to continue, q quit: ", answer, sizeof (answer)) < 0)
         return -1;

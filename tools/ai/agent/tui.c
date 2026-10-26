@@ -213,8 +213,8 @@ static void
 draw_pane_status (PaneId pane_id, WINDOW *border, int height, int width)
 {
   const char *status = pane_id == PANE_THOUGHTS && live_steering_active ? " Live steering "
-                       : pane_id == PANE_COMMANDS && ai_request_active   ? " AI is working "
-                                                                          : "";
+                       : pane_id == PANE_COMMANDS && ai_request_active  ? " AI is working "
+                                                                        : "";
   int column = width - (int)strlen (status) - 2;
 
   if (column < 3)
@@ -452,10 +452,8 @@ display_agent_line (const char *line)
   if (strncmp (line, "[AI Response]", 13) == 0)
     output_mode = PANE_THOUGHTS;
   else if (strncmp (line, "[AI requests command]", 21) == 0 || strncmp (line, "[command]", 9) == 0
-           || strncmp (line, "[command output]", 16) == 0
-           || strncmp (line, "Command output:", 15) == 0
-           || strncmp (line, "[command timed out after", 24) == 0
-           || strncmp (line, "[command completed]", 19) == 0)
+           || strncmp (line, "[command output]", 16) == 0 || strncmp (line, "Command output:", 15) == 0
+           || strncmp (line, "[command timed out after", 24) == 0 || strncmp (line, "[command completed]", 19) == 0)
     output_mode = PANE_COMMANDS;
   else if (strncmp (line, "[You]", 5) == 0 || strncmp (line, "[live steering", 14) == 0
            || strncmp (line, "[a]llow", 7) == 0 || strncmp (line, "[edited command]", 16) == 0
