@@ -137,8 +137,19 @@ usage (FILE *stream)
 {
   fprintf (stream, "usage: ai-tui [--full-access] [--help] [--version]\n"
                    "\n"
+                   "Keys:\n"
+                   "  F1                 quit\n"
+                   "  F2/F3              maximize pane 1/2\n"
+                   "  Tab                switch pane\n"
+                   "  PgUp/PgDn          scroll\n"
+                   "  C-A/E/B/F/D/K/U    edit\n"
+                   "  C-J                newline\n"
+                   "  Enter              submit\n"
+                   "  Ctrl+C             cancel\n"
+                   "\n"
                    "Environment configures AI_API_URL, AI_MODEL, AI_API_KEY or\n"
-                   "OPENAI_API_KEY, AI_TIMEOUT_SECONDS and AI_COMMAND_TIMEOUT_SECONDS.\n");
+                   "OPENAI_API_KEY, AI_TIMEOUT_SECONDS and AI_COMMAND_TIMEOUT_SECONDS.\n"
+                   "AI_TOOL_ROUNDS is also supported.\n");
 }
 
 static int
@@ -957,9 +968,7 @@ tui_main (int argc, char **argv)
   redraw_layout ();
   start_agent (agent_path, &agent_stdin, &agent_stdout);
   wtimeout (input_window, 100);
-  write_line (PANE_THOUGHTS, "F1 quit; F2/F3 maximize pane 1/2; Tab pane; PgUp/PgDn scroll; "
-                             "C-A/E/B/F/D/K/U edit; "
-                             "C-J newline; Enter submit; Ctrl+C cancel");
+  write_line (PANE_THOUGHTS, "F1 quit; F2/F3 max; Tab pane; PgUp/Dn scroll");
   refresh_content_panes ();
   draw_input (&input);
   while (!interrupted && !agent_exited)
