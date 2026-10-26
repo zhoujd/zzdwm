@@ -50,7 +50,7 @@
 #define MAX_NAME 128
 #define MAX_TOOL_CALLS 8
 #define MAX_MESSAGES 24
-#define MAX_TOOL_ROUNDS 8
+#define MAX_TOOL_ROUNDS 64
 #define MESSAGE_SIZE 12288
 #define MAX_REQUEST (512 * 1024)
 #define MAX_RESPONSE (256 * 1024)
@@ -104,6 +104,7 @@ static char api_key[MAX_KEY];
 static char model[MAX_MODEL] = DEFAULT_MODEL;
 static int api_timeout = 300;
 static int command_timeout = 120;
+static int max_tool_rounds = MAX_TOOL_ROUNDS;
 static bool full_access = false; // Always default to secure mode
 static volatile sig_atomic_t interrupted;
 static int ui_mode;
@@ -232,11 +233,7 @@ print_formatted (const char *format, ...)
 static void
 live_steering_prompt (void)
 {
-  if (!live_input.terminal_configured)
-    print_formatted ("[live steering active]: type one direction per blank line\n");
-  else
-    print_formatted ("[live steering active]: Enter newline; blank line queues; BS delete; C-U word; C-D line\n"
-                     "\33[K");
+  print_formatted ("[AI request active]\n[live steering active]\n");
 }
 
 static void
@@ -929,6 +926,17 @@ configure_environment (void)
         }
       command_timeout = timeout;
     }
+  value = getenv ("AI_TOOL_ROUNDS");
+  if (value != NULL)
+    {
+      timeout = parse_positive_integer (value, MAX_TOOL_ROUNDS);
+      if (timeout < 0)
+        {
+          print_formatted ("error: AI_TOOL_ROUNDS is invalid\n");
+          return -1;
+        }
+      max_tool_rounds = timeout;
+    }
   return 0;
 }
 
@@ -1368,6 +1376,8 @@ call_endpoint_threaded (const char **response_body, char *response_storage)
     }
   poll_live_input ();
   end_live_input ();
+  print_formatted ("[AI request inactive]\n");
+  print_formatted ("[live steering inactive]\n");
   if (!wait.done)
     {
       pthread_cancel (wait.worker);
@@ -1552,7 +1562,7 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
   descriptor.fd = pipe_fds[0];
   descriptor.events = POLLIN;
   begin_live_input ();
-  live_steering_prompt ();
+  print_formatted ("[command output]\n");
   for (;;)
     {
       char chunk[2048];
@@ -1610,6 +1620,7 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
   while (!have_status && waitpid (child, &status, 0) < 0 && errno == EINTR)
     ;
   end_live_input ();
+  print_formatted ("[live steering inactive]\n");
   close (pipe_fds[0]);
   if (WIFEXITED (status))
     *exit_status = WEXITSTATUS (status);
@@ -1746,7 +1757,7 @@ process_tool_calls (ToolCall *calls, size_t call_count)
                 return -1;
               continue;
             }
-          snprintf (result, sizeof (result), "Command completed with exit status %d. Output:", status);
+          snprintf (result, sizeof (result), "[command completed] exit status %d. Output:", status);
           if (append_bounded_output (&calls[index], result, output, output_length) < 0)
             return -1;
           if (post_execution_steer (steer, sizeof (steer)) < 0)
@@ -1967,7 +1978,8 @@ usage (FILE *stream)
   fprintf (stream, "usage: ai [--full-access] [--ui] [--help] [--version]\n"
                    "\n"
                    "Environment configures AI_API_URL, AI_MODEL, AI_API_KEY or\n"
-                   "OPENAI_API_KEY, AI_TIMEOUT_SECONDS and AI_COMMAND_TIMEOUT_SECONDS.\n");
+                   "OPENAI_API_KEY, AI_TIMEOUT_SECONDS and AI_COMMAND_TIMEOUT_SECONDS.\n"
+                   "AI_TOOL_ROUNDS is also supported.\n");
 }
 
 static int
@@ -2022,7 +2034,8 @@ ai_main (int argc, char **argv)
   conversation_reset ();
   print_formatted ("ai %s %s %s interactive AI agent\n", VERSION, BUILD_DATE, BUILD_REVISION);
   print_formatted ("Endpoint: http://%s:%d%s\n", api_host, api_port, api_path);
-  print_formatted ("Model: %s; API timeout: %ds; command timeout: %ds\n", model, api_timeout, command_timeout);
+  print_formatted ("Model: %s; API timeout: %ds; command timeout: %ds; tool rounds: %d\n", model, api_timeout,
+                   command_timeout, max_tool_rounds);
   if (skill_count > 0)
     {
       char listing[MAX_SKILLS * (MAX_SKILL_NAME + 2) + 16];
@@ -2114,9 +2127,9 @@ ai_main (int argc, char **argv)
         pending_round = result;
         for (round = 1; result == 1; round++)
           {
-            if (round == MAX_TOOL_ROUNDS)
+            if (round == max_tool_rounds)
               {
-                print_formatted ("\n[AI Response]: Stopped after %d tool rounds.\n", MAX_TOOL_ROUNDS);
+                print_formatted ("\n[AI Response]: Stopped after %d tool rounds.\n", max_tool_rounds);
                 result = 0;
                 break;
               }

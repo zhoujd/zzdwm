@@ -17,8 +17,8 @@ make -C tools/ai/agent ai
 ```
 
 Run `tools/ai/agent/ai tui`. It launches the adjacent dependency-free `ai`
-executable in `--ui` mode and renders two windows, like the Claude Code CLI:
-a scrolling conversation transcript and a keyboard input box.
+executable in `--ui` mode and renders three windows: shared AI/user thoughts,
+AI command status/output, and a keyboard input box.
 
 Press `PageUp`/`PageDown` to scroll the conversation history.
 
@@ -67,6 +67,8 @@ Configuration is read from the environment:
 * `AI_API_KEY` or `OPENAI_API_KEY`: optional bearer token.
 * `AI_TIMEOUT_SECONDS`: API timeout, 1--1800. Default: 300.
 * `AI_COMMAND_TIMEOUT_SECONDS`: shell timeout, 1--1800. Default: 120.
+* `AI_TOOL_ROUNDS`: maximum consecutive tool/model rounds per user task,
+  1--64. Default: 64.
 
 Only HTTP IPv4 endpoints (including `localhost`) are supported. HTTPS would
 require a TLS implementation and violate the zero-runtime-dependency design;

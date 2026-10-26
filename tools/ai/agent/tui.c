@@ -30,8 +30,8 @@
 
 typedef enum
 {
-  PANE_LOGS,
-  PANE_RESPONSE,
+  PANE_THOUGHTS,
+  PANE_COMMANDS,
   PANE_COUNT
 } PaneId;
 
@@ -39,8 +39,8 @@ typedef enum
 {
   PANE_LAYOUT_NORMAL,
   PANE_LAYOUT_EQUAL,
-  PANE_LAYOUT_MAX_LOGS,
-  PANE_LAYOUT_MAX_RESPONSE
+  PANE_LAYOUT_MAX_THOUGHTS,
+  PANE_LAYOUT_MAX_COMMANDS
 } PaneLayout;
 
 typedef enum
@@ -68,12 +68,14 @@ typedef struct
 
 static Pane panes[PANE_COUNT];
 static WINDOW *input_window;
+static int live_steering_active;
+static int ai_request_active;
 static int terminal_height;
 static int terminal_width;
 static volatile sig_atomic_t interrupted;
 static pid_t agent_pid;
-static int output_mode_response;
-static PaneId selected_pane = PANE_LOGS;
+static PaneId output_mode = PANE_THOUGHTS;
+static PaneId selected_pane = PANE_THOUGHTS;
 static PaneLayout pane_layout = PANE_LAYOUT_EQUAL;
 static InputMode input_mode = INPUT_MULTILINE;
 static int full_access;
@@ -87,29 +89,29 @@ content_pane_geometry (PaneId pane_id, int *start_y, int *height)
 
   if (pane_layout == PANE_LAYOUT_EQUAL)
     {
-      int logs_height = content_height / 2;
+      int thoughts_height = content_height / 2;
 
-      if (pane_id == PANE_LOGS)
+      if (pane_id == PANE_THOUGHTS)
         {
           *start_y = 0;
-          *height = logs_height;
+          *height = thoughts_height;
         }
       else
         {
-          *start_y = logs_height;
-          *height = content_height - logs_height;
+          *start_y = thoughts_height;
+          *height = content_height - thoughts_height;
         }
       return;
     }
-  if (pane_layout == PANE_LAYOUT_MAX_LOGS || pane_layout == PANE_LAYOUT_MAX_RESPONSE)
+  if (pane_layout == PANE_LAYOUT_MAX_THOUGHTS || pane_layout == PANE_LAYOUT_MAX_COMMANDS)
     {
-      int maximize_logs = pane_layout == PANE_LAYOUT_MAX_LOGS;
+      int maximize_thoughts = pane_layout == PANE_LAYOUT_MAX_THOUGHTS;
 
       *start_y = 0;
-      *height = pane_id == (maximize_logs ? PANE_LOGS : PANE_RESPONSE) ? content_height : 0;
+      *height = pane_id == (maximize_thoughts ? PANE_THOUGHTS : PANE_COMMANDS) ? content_height : 0;
       return;
     }
-  if (pane_id == PANE_LOGS)
+  if (pane_id == PANE_THOUGHTS)
     {
       *start_y = 0;
       *height = TOP_HEIGHT;
@@ -197,6 +199,19 @@ destroy_panes (void)
 }
 
 static void
+draw_pane_status (PaneId pane_id, WINDOW *border, int height, int width)
+{
+  const char *status = pane_id == PANE_THOUGHTS && live_steering_active ? " Live steering "
+                       : pane_id == PANE_COMMANDS && ai_request_active   ? " AI is working "
+                                                                          : "";
+  int column = width - (int)strlen (status) - 2;
+
+  if (column < 3)
+    return;
+  mvwprintw (border, height - 1, column, "%s", status);
+}
+
+static void
 create_pane (PaneId pane_id, int height, int start_y, const char *title)
 {
   Pane *pane = &panes[pane_id];
@@ -218,40 +233,72 @@ create_pane (PaneId pane_id, int height, int start_y, const char *title)
   leaveok (pane->pad, TRUE);
   box (pane->border, 0, 0);
   mvwprintw (pane->border, 0, 2, " %s%s ", title, marker);
+  draw_pane_status (pane_id, pane->border, height, terminal_width);
   wnoutrefresh (pane->border);
   prefresh (pane->pad, 0, 0, start_y + 1, 1, start_y + height - 2, terminal_width - 2);
+}
+
+static int
+visible_pane_start (const Pane *pane, int pane_height)
+{
+  int visible_start;
+
+  if (pane->line_count > pane_height)
+    visible_start = pane->line_count - pane_height - pane->view_offset;
+  else
+    visible_start = 0;
+  return visible_start < 0 ? 0 : visible_start;
+}
+
+static void
+set_pane_status (PaneId pane_id, int active)
+{
+  int start_y;
+  int height;
+  int *state = pane_id == PANE_THOUGHTS ? &live_steering_active : &ai_request_active;
+  const char *title = pane_id == PANE_THOUGHTS ? "1. AI & User Thoughts" : "2. AI Command Status";
+
+  if (*state == active)
+    return;
+  *state = active;
+  content_pane_geometry (pane_id, &start_y, &height);
+  if (panes[pane_id].border == NULL)
+    return;
+  redrawwin (panes[pane_id].border);
+  box (panes[pane_id].border, 0, 0);
+  mvwprintw (panes[pane_id].border, 0, 2, " %s%s ", title, selected_pane == pane_id ? " [*]" : "");
+  draw_pane_status (pane_id, panes[pane_id].border, height, terminal_width);
+  wnoutrefresh (panes[pane_id].border);
+  prefresh (panes[pane_id].pad, visible_pane_start (&panes[pane_id], height - 2), 0, start_y + 1, 1,
+            start_y + height - 2, terminal_width - 2);
+  touchwin (input_window);
+  wrefresh (input_window);
 }
 
 static void
 render_pane (PaneId pane_id, int start_y, int height)
 {
   Pane *pane = &panes[pane_id];
-  int pane_height = height - 2;
   int visible_start;
 
-  if (pane_height <= 0)
+  if (height - 2 <= 0)
     return;
-  if (pane->line_count > pane_height)
-    visible_start = pane->line_count - pane_height - pane->view_offset;
-  else
-    visible_start = 0;
-  if (visible_start < 0)
-    visible_start = 0;
+  visible_start = visible_pane_start (pane, height - 2);
   prefresh (pane->pad, visible_start, 0, start_y + 1, 1, start_y + height - 2, terminal_width - 2);
 }
 
 static void
 refresh_content_panes (void)
 {
-  int logs_y;
-  int logs_height;
-  int response_y;
-  int response_height;
+  int thoughts_y;
+  int thoughts_height;
+  int commands_y;
+  int commands_height;
 
-  content_pane_geometry (PANE_LOGS, &logs_y, &logs_height);
-  content_pane_geometry (PANE_RESPONSE, &response_y, &response_height);
-  render_pane (PANE_LOGS, logs_y, logs_height);
-  render_pane (PANE_RESPONSE, response_y, response_height);
+  content_pane_geometry (PANE_THOUGHTS, &thoughts_y, &thoughts_height);
+  content_pane_geometry (PANE_COMMANDS, &commands_y, &commands_height);
+  render_pane (PANE_THOUGHTS, thoughts_y, thoughts_height);
+  render_pane (PANE_COMMANDS, commands_y, commands_height);
   touchwin (input_window);
   wrefresh (input_window);
 }
@@ -259,18 +306,18 @@ refresh_content_panes (void)
 static void
 redraw_layout (void)
 {
-  int logs_y;
-  int logs_height;
-  int response_y;
-  int response_height;
+  int thoughts_y;
+  int thoughts_height;
+  int commands_y;
+  int commands_height;
 
   clear ();
   refresh ();
   destroy_layout ();
-  content_pane_geometry (PANE_LOGS, &logs_y, &logs_height);
-  content_pane_geometry (PANE_RESPONSE, &response_y, &response_height);
-  create_pane (PANE_LOGS, logs_height, logs_y, "1. Agent Thoughts & System Status");
-  create_pane (PANE_RESPONSE, response_height, response_y, "2. AI Response");
+  content_pane_geometry (PANE_THOUGHTS, &thoughts_y, &thoughts_height);
+  content_pane_geometry (PANE_COMMANDS, &commands_y, &commands_height);
+  create_pane (PANE_THOUGHTS, thoughts_height, thoughts_y, "1. AI & User Thoughts");
+  create_pane (PANE_COMMANDS, commands_height, commands_y, "2. AI Command Status");
   input_window = newwin (BOTTOM_HEIGHT, terminal_width, terminal_height - BOTTOM_HEIGHT, 0);
   leaveok (input_window, FALSE);
   scrollok (input_window, TRUE);
@@ -392,21 +439,46 @@ display_agent_line (const char *line)
   const char *hint;
 
   if (strncmp (line, "[AI Response]", 13) == 0)
-    output_mode_response = 1;
-  else if (strncmp (line, "[You]", 5) == 0 || strncmp (line, "[AI requests command]", 21) == 0
-           || strncmp (line, "[live steering", 14) == 0 || strncmp (line, "[a]llow", 7) == 0
-           || strncmp (line, "[edited command]", 16) == 0 || strncmp (line, "[steer]", 7) == 0
-           || strncmp (line, "[s]teer", 7) == 0)
-    output_mode_response = 0;
+    output_mode = PANE_THOUGHTS;
+  else if (strncmp (line, "[AI requests command]", 21) == 0 || strncmp (line, "[command]", 9) == 0
+           || strncmp (line, "[command output]", 16) == 0
+           || strncmp (line, "Command output:", 15) == 0
+           || strncmp (line, "[command timed out after", 24) == 0
+           || strncmp (line, "[command completed]", 19) == 0)
+    output_mode = PANE_COMMANDS;
+  else if (strncmp (line, "[You]", 5) == 0 || strncmp (line, "[live steering", 14) == 0
+           || strncmp (line, "[a]llow", 7) == 0 || strncmp (line, "[edited command]", 16) == 0
+           || strncmp (line, "[steer]", 7) == 0 || strncmp (line, "[s]teer", 7) == 0)
+    output_mode = PANE_THOUGHTS;
   hint = agent_prompt_hint (line);
+  if (strcmp (line, "[AI request active]") == 0)
+    {
+      set_pane_status (PANE_COMMANDS, 1);
+      return;
+    }
+  if (strcmp (line, "[AI request inactive]") == 0)
+    {
+      set_pane_status (PANE_COMMANDS, 0);
+      return;
+    }
+  if (strcmp (line, "[live steering active]") == 0)
+    {
+      set_pane_status (PANE_THOUGHTS, 1);
+      return;
+    }
+  if (strcmp (line, "[live steering inactive]") == 0)
+    {
+      set_pane_status (PANE_THOUGHTS, 0);
+      return;
+    }
   if (is_agent_prompt (line) || hint != NULL)
     {
       if (hint != NULL)
-        write_line (PANE_LOGS, hint);
+        write_line (PANE_THOUGHTS, hint);
       handle_agent_prompt (line);
       return;
     }
-  write_line (output_mode_response ? PANE_RESPONSE : PANE_LOGS, line);
+  write_line (output_mode, line);
   handle_agent_prompt (line);
 }
 
@@ -526,13 +598,13 @@ submit_input (int agent_stdin, const char *line)
       || write_all (agent_stdin, input_mode == INPUT_MULTILINE ? "\n\n" : "\n", input_mode == INPUT_MULTILINE ? 2 : 1)
              < 0)
     {
-      write_line (PANE_LOGS, "[error]: unable to send prompt to agent");
+      write_line (PANE_THOUGHTS, "[error]: unable to send prompt to agent");
       return;
     }
   if (length != 0)
     {
-      write_line (PANE_LOGS, "[You]:");
-      write_multiline (PANE_LOGS, line);
+      write_line (PANE_THOUGHTS, "[You]:");
+      write_multiline (PANE_THOUGHTS, line);
     }
 }
 
@@ -884,9 +956,9 @@ tui_main (int argc, char **argv)
   redraw_layout ();
   start_agent (agent_path, &agent_stdin, &agent_stdout);
   wtimeout (input_window, 100);
-  write_line (PANE_LOGS, "F1 quit; F2/F3 maximize pane 1/2; Tab pane; PgUp/PgDn scroll; "
-                         "C-A/E/B/F/D/K/U edit; "
-                         "C-J newline; Enter submit; Ctrl+C cancel");
+  write_line (PANE_THOUGHTS, "F1 quit; F2/F3 maximize pane 1/2; Tab pane; PgUp/PgDn scroll; "
+                             "C-A/E/B/F/D/K/U edit; "
+                             "C-J newline; Enter submit; Ctrl+C cancel");
   refresh_content_panes ();
   draw_input (&input);
   while (!interrupted && !agent_exited)
@@ -909,7 +981,7 @@ tui_main (int argc, char **argv)
         }
       if (key == '\t')
         {
-          selected_pane = selected_pane == PANE_LOGS ? PANE_RESPONSE : PANE_LOGS;
+          selected_pane = selected_pane == PANE_THOUGHTS ? PANE_COMMANDS : PANE_THOUGHTS;
           pane_layout = PANE_LAYOUT_EQUAL;
           redraw_layout ();
           draw_input (&input);
@@ -917,16 +989,16 @@ tui_main (int argc, char **argv)
         }
       if (key == KEY_F (2))
         {
-          selected_pane = PANE_LOGS;
-          pane_layout = pane_layout == PANE_LAYOUT_MAX_LOGS ? PANE_LAYOUT_EQUAL : PANE_LAYOUT_MAX_LOGS;
+          selected_pane = PANE_THOUGHTS;
+          pane_layout = pane_layout == PANE_LAYOUT_MAX_THOUGHTS ? PANE_LAYOUT_EQUAL : PANE_LAYOUT_MAX_THOUGHTS;
           redraw_layout ();
           draw_input (&input);
           continue;
         }
       if (key == KEY_F (3))
         {
-          selected_pane = PANE_RESPONSE;
-          pane_layout = pane_layout == PANE_LAYOUT_MAX_RESPONSE ? PANE_LAYOUT_EQUAL : PANE_LAYOUT_MAX_RESPONSE;
+          selected_pane = PANE_COMMANDS;
+          pane_layout = pane_layout == PANE_LAYOUT_MAX_COMMANDS ? PANE_LAYOUT_EQUAL : PANE_LAYOUT_MAX_COMMANDS;
           redraw_layout ();
           draw_input (&input);
           continue;

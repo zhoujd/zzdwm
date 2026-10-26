@@ -115,7 +115,7 @@ def text_response(content):
 class AgentTests(unittest.TestCase):
     def run_agent(
         self, responses, stdin, full_access=False, command_timeout="2",
-        delay=0, cwd=None
+        tool_rounds=None, delay=0, cwd=None
     ):
         endpoint = Endpoint(responses, delay)
         self.addCleanup(endpoint.thread.join, timeout=2)
@@ -126,6 +126,8 @@ class AgentTests(unittest.TestCase):
             "AI_COMMAND_TIMEOUT_SECONDS": command_timeout,
             "PATH": os.environ["PATH"],
         }
+        if tool_rounds is not None:
+            settings["AI_TOOL_ROUNDS"] = tool_rounds
         command = [EXECUTABLE]
         if full_access:
             command.append("--full-access")
@@ -366,6 +368,29 @@ class AgentTests(unittest.TestCase):
             command_timeout="1",
         )
         self.assertIn("command timed out after 1 seconds", result.stdout)
+
+    def test_tool_round_limit_is_configurable(self):
+        result, _ = self.run_agent(
+            [text_response("done")],
+            "diagnose\n\n/exit\n\n",
+            tool_rounds="3",
+        )
+        self.assertIn("tool rounds: 3", result.stdout)
+
+    def test_invalid_tool_round_limit_is_rejected(self):
+        process = subprocess.run(
+            [EXECUTABLE],
+            input="diagnose\n\n/exit\n\n",
+            text=True,
+            capture_output=True,
+            env={
+                "AI_API_URL": "http://127.0.0.1:1/v1",
+                "AI_TOOL_ROUNDS": "65",
+            },
+            timeout=5,
+        )
+        self.assertEqual(process.returncode, 2)
+        self.assertIn("AI_TOOL_ROUNDS is invalid", process.stdout + process.stderr)
 
     def write_dummy_skill(self, workspace):
         skill_dir = os.path.join(workspace, ".agents", "skills", "dummy")
