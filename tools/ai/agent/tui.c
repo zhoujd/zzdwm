@@ -983,6 +983,8 @@ tui_main (int argc, char **argv)
         {
           selected_pane = selected_pane == PANE_THOUGHTS ? PANE_COMMANDS : PANE_THOUGHTS;
           pane_layout = PANE_LAYOUT_EQUAL;
+          panes[PANE_THOUGHTS].view_offset = 0;
+          panes[PANE_COMMANDS].view_offset = 0;
           redraw_layout ();
           draw_input (&input);
           continue;
