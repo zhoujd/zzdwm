@@ -24,9 +24,9 @@ main (int argc, char *argv[])
   // Explicit CLI Subcommand Fallback
   if (argc > 1)
     {
-      if (strcmp (argv[1], "tui") == 0 || strcmp (argv[1], "ui") == 0)
+      if (strcmp (argv[1], "tui") == 0)
         {
-          return run_tui (argc - 1, &argv[1]);
+          return run_tui (argc - 1, argv + 1);
         }
     }
   // Notify user of TUI availability

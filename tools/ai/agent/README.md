@@ -16,9 +16,9 @@ Build the agent and optional ncurses TUI with:
 make -C tools/ai/agent ai
 ```
 
-Run `tools/ai/agent/ai tui`. It launches the adjacent dependency-free `ai`
-executable in `--ui` mode and renders three windows: shared AI/user thoughts,
-AI command status/output, and a keyboard input box.
+Run `tools/ai/agent/ai tui`. It launches the backend in `--ui` mode and
+renders three windows: shared AI/user thoughts, AI command status/output, and
+a keyboard input box.
 
 Press `PageUp`/`PageDown` to scroll the conversation history.
 
