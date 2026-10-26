@@ -244,6 +244,31 @@ class AgentTests(unittest.TestCase):
             endpoint.requests[1]["messages"][-1]["content"],
         )
 
+    def test_runtime_force_toggle_allows_then_requires_approval(self):
+        result, endpoint = self.run_agent(
+            [
+                tool_response("printf 'forced\\n'"),
+                text_response("done"),
+                tool_response("printf 'not-run\\n'"),
+                text_response("done"),
+            ],
+            "/force\n\ndiagnose\n\n\n\n/force\n\ndiagnose\n\nn\n\n/exit\n\n",
+        )
+        self.assertIn("forced", result.stdout)
+        self.assertIn("not-run", result.stdout)
+        refused_messages = [
+            message["content"] for message in endpoint.requests[2]["messages"]
+            if message["role"] == "tool"
+        ]
+        refused_messages += [
+            message["content"] for message in endpoint.requests[3]["messages"]
+            if message["role"] == "tool"
+        ]
+        self.assertTrue(
+            any("Execution refused by the human" in content for content in refused_messages)
+        )
+        self.assertEqual(len(endpoint.requests), 4)
+
     def test_live_steering_during_command(self):
         result, endpoint = self.run_agent_later(
             [tool_response("sleep 1"), text_response("done")],

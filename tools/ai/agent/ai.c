@@ -2075,7 +2075,7 @@ ai_main (int argc, char **argv)
       if (strcmp (prompt, "/force") == 0)
         {
           full_access = !full_access;
-          print_formatted ("[force mode is now %s]\n", full_access ? "ON" : "OFF");
+          print_formatted ("[force mode is now %s]\n", full_access ? "ON; commands run without approval" : "OFF");
           continue;
         }
       if (strcmp (prompt, "/skills") == 0)

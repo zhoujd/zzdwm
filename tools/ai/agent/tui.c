@@ -448,7 +448,8 @@ display_agent_line (const char *line)
     output_mode = PANE_COMMANDS;
   else if (strncmp (line, "[You]", 5) == 0 || strncmp (line, "[live steering", 14) == 0
            || strncmp (line, "[a]llow", 7) == 0 || strncmp (line, "[edited command]", 16) == 0
-           || strncmp (line, "[steer]", 7) == 0 || strncmp (line, "[s]teer", 7) == 0)
+           || strncmp (line, "[steer]", 7) == 0 || strncmp (line, "[s]teer", 7) == 0
+           || strncmp (line, "[force mode", 11) == 0)
     output_mode = PANE_THOUGHTS;
   hint = agent_prompt_hint (line);
   if (strcmp (line, "[AI request active]") == 0)

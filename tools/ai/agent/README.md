@@ -80,6 +80,8 @@ steering instruction without running it, or `n` to refuse it. With
 appears after every command before the next model request. Commands execute
 through `/bin/sh -c` with the current process privileges. All output is shown
 live and a bounded tail is returned to the model.
+`/force` toggles full access while the agent is running; the startup mode
+remains the safer approval-based default.
 
 While an AI request or command is running, input is accepted as live steering.
 Use one line per steering line and a blank line to queue the completed
