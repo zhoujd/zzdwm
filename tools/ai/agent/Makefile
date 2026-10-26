@@ -15,7 +15,8 @@ LDLIBS += $(shell pkg-config --libs ncursesw)
 # musl-gcc compiles with -nostdinc, so it cannot use the host glibc
 # ncurses headers; probe each toolchain instead of assuming it works.
 # The \# escape keeps make from treating the include as a comment.
-NCURSES_PROBE = printf '%s\n' '\#include <ncurses.h>' 'int main(void) { return 0; }' | $(1) -x c -o /dev/null - >/dev/null 2>&1
+NCURSES_PROBE = printf '%s\n' '\#include <ncurses.h>' 'int main(void) { return 0; }' | \
+                  $(1) -x c -o /dev/null - >/dev/null 2>&1
 
 release:
 	@if [ -n "$$INSIDE_DOCKER" ]; then \
