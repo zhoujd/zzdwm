@@ -79,9 +79,10 @@ appears after every command before the next model request. Commands execute
 through `/bin/sh -c` with the current process privileges. All output is shown
 live and a bounded tail is returned to the model.
 
-While an AI request or command is running, completed input lines are accepted as
-live steering. Lines typed during a request are sent before the next request;
-lines typed during a command are sent with the command result before the next
+While an AI request or command is running, input is accepted as live steering.
+Use one line per steering line and a blank line to queue the completed
+direction. Steering typed during a request is sent before the next request;
+steering typed during a command is sent with the command result before the next
 request. Live steering cannot alter a request already submitted, but it can
 guide the next turn.
 

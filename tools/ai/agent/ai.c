@@ -233,9 +233,9 @@ static void
 live_steering_prompt (void)
 {
   if (!live_input.terminal_configured)
-    print_formatted ("[live steering active]: type one line per direction\n");
+    print_formatted ("[live steering active]: type one direction per blank line\n");
   else
-    print_formatted ("[live steering active]: Enter queue; BS delete; C-U word; C-D line\n"
+    print_formatted ("[live steering active]: Enter newline; blank line queues; BS delete; C-U word; C-D line\n"
                      "\33[K");
 }
 
@@ -307,6 +307,7 @@ static void
 poll_live_input (void)
 {
   char character;
+  int queued_input = 0;
 
   if (!live_input.input_open)
     return;
@@ -314,11 +315,19 @@ poll_live_input (void)
     {
       if (character == '\n' || character == '\r')
         {
-          if (live_input.line_length != 0)
+          if (live_input.line_length == 0 && queued_input)
             {
+              queue_live_line ("", 0);
+              queued_input = 0;
+            }
+          else if (live_input.line_length != 0)
+            {
+              if (live_input.line_length < sizeof (live_input.line) - 1)
+                live_input.line[live_input.line_length++] = '\n';
               live_input.line[live_input.line_length] = 0;
-              queue_live_line (live_input.line, live_input.line_length);
-              live_input.line_length = 0;
+              queued_input = 1;
+              if (live_input.terminal_configured)
+                print_formatted ("\r\33[K%s", live_input.line);
             }
         }
       else if (character == 127 || character == 8)

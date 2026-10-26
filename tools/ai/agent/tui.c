@@ -287,8 +287,8 @@ agent_prompt_hint (const char *line)
     return "Edited command: enter the replacement command";
   if (strcmp (line, "[s]teer before next AI request, Enter to continue, q quit: ") == 0)
     return "Next request: s steer, Enter continue, q quit (after command output)";
-  if (strcmp (line, "[live steering active]: type one line per direction") == 0)
-    return "Live steering: type one line per direction";
+  if (strcmp (line, "[live steering active]: type one direction per blank line") == 0)
+    return "Live steering: type one direction per blank line";
   if (strcmp (line, "Steering ends with an empty line.") == 0)
     return "Steering: C-J newline, Enter submit";
   return NULL;

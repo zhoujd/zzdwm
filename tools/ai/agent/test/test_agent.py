@@ -164,7 +164,7 @@ class AgentTests(unittest.TestCase):
         )
         process.stdin.write("diagnose\n\n")
         process.stdin.flush()
-        time.sleep(0.5)
+        time.sleep(kwargs.pop("live_delay", 0.5))
         process.stdin.write(live)
         process.stdin.flush()
         time.sleep(kwargs.pop("wait", 3.3))
@@ -225,15 +225,17 @@ class AgentTests(unittest.TestCase):
             "中文 UTF-8", endpoint.requests[1]["messages"][-1]["content"]
         )
 
-    def test_full_access_runs_and_allows_post_execution_steering(self):
-        result, endpoint = self.run_agent(
+    def test_full_access_runs_and_accepts_live_steering(self):
+        result, endpoint = self.run_agent_later(
             [tool_response("printf 'auto\\n'"), text_response("done")],
-            "diagnose\n\ns\nstop here\n\n\n/exit\n\n",
+            "stop here\n\n",
+            "/exit\n\n",
             full_access=True,
+            live_delay=1.0,
         )
-        self.assertIn("auto", result.stdout)
+        self.assertIn("auto", result)
         self.assertIn(
-            "HUMAN STEERING DURING TOOL EXECUTION",
+            "HUMAN STEERING DURING TOOL EXECUTION: stop here",
             endpoint.requests[1]["messages"][-1]["content"],
         )
 
@@ -241,7 +243,7 @@ class AgentTests(unittest.TestCase):
         result, endpoint = self.run_agent_later(
             [tool_response("sleep 1"), text_response("done")],
             "stop after this output\n",
-            "\n/exit\n\n",
+            "\n\n/exit\n\n",
             full_access=True,
             delay=0.5,
             wait=1.8,
@@ -253,11 +255,27 @@ class AgentTests(unittest.TestCase):
             messages[-1]["content"],
         )
 
+    def test_live_steering_during_command_preserves_multiple_lines(self):
+        result, endpoint = self.run_agent_later(
+            [tool_response("sleep 1"), text_response("done")],
+            "first line\nsecond line\n\n",
+            "/exit\n\n",
+            full_access=True,
+            delay=0.5,
+            wait=1.8,
+        )
+        self.assertIn("live steering queued", result)
+        messages = endpoint.requests[1]["messages"]
+        self.assertIn(
+            "HUMAN STEERING DURING TOOL EXECUTION: first line\nsecond line",
+            messages[-1]["content"],
+        )
+
     def test_live_steering_editing_uses_backspace(self):
         output, endpoint = self.run_agent_later(
             [tool_response("sleep 1"), text_response("done")],
             "stop after output" + "\x7f" + "t",
-            "\n/exit\n\n",
+            "\n\n/exit\n\n",
             full_access=True,
             delay=0.5,
             wait=1.8,
@@ -288,6 +306,26 @@ class AgentTests(unittest.TestCase):
         )
         self.assertIn(
             "HUMAN STEERING DURING AI REQUEST: prioritize read-only diagnosis",
+            steering["content"],
+        )
+
+    def test_live_steering_during_request_preserves_multiple_lines(self):
+        result, endpoint = self.run_agent_later(
+            [text_response("first"), text_response("done")],
+            "prioritize safety\nthen summarize\n\n",
+            "continue\n\n/exit\n\n",
+            api_timeout="5",
+            delay=2,
+            wait=3.5,
+        )
+        self.assertIn("live steering queued", result)
+        messages = endpoint.requests[1]["messages"]
+        steering = next(
+            message for message in messages
+            if "HUMAN STEERING DURING AI REQUEST" in message.get("content", "")
+        )
+        self.assertIn(
+            "HUMAN STEERING DURING AI REQUEST: prioritize safety\nthen summarize",
             steering["content"],
         )
 
