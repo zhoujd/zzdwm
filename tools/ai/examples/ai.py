@@ -15,9 +15,10 @@ python3 ai.py
 
 import os
 import json
+import shlex
 import subprocess
 import argparse
-import readline
+import readline  # side effect: enables line editing and history for input()
 import requests
 
 # Safely read integer from an environment variable
@@ -34,18 +35,32 @@ AI_MODEL = os.environ.get("AI_MODEL", "glm-5.3-flash")
 AI_TIMEOUT_SECONDS = get_env_int("AI_TIMEOUT_SECONDS", 60)
 AI_COMMAND_TIMEOUT_SECONDS = get_env_int("AI_COMMAND_TIMEOUT_SECONDS", 60)
 
+# Best-effort guardrail for commands whose primary purpose is deletion or
+# destructive disk access. The confirmation prompt remains the security gate;
+# shell syntax cannot be classified safely with a simple regex.
+BLOCKED_COMMANDS = {"rm", "rmdir", "shred", "unlink", "dd", "mkfs"}
+
+
 # Define the host tool: Execute system commands
 def run_terminal_command(command: str, full_access: bool = False) -> str:
     """Executes a terminal command on the host environment and returns the output."""
-    # Security Guardrail: Prohibit dangerous deletion commands
-    if "rm " in command or "format" in command:
-        return "Error: Deletion or formatting commands are prohibited for security reasons."
+    try:
+        argv = shlex.split(command, posix=True)
+    except ValueError:
+        return "Error: Invalid shell command syntax."
+    executable = os.path.basename(argv[0]) if argv else ""
+    if executable in BLOCKED_COMMANDS or executable.startswith("mkfs."):
+        return "Error: Destructive commands are prohibited for security reasons."
 
     print(f"\n[AI requests to execute command]: {command}")
     if full_access:
         print("Running without confirmation (--full-access).")
     else:
-        confirm = input("Allow execution? (y/n): ")
+        try:
+            confirm = input("Allow execution? (y/n): ")
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return "Execution refused by the user."
         if confirm.lower() != 'y':
             return "Execution refused by the user."
 
@@ -91,6 +106,7 @@ def ask_ai_and_run(user_prompt: str, messages=None, full_access=False):
         messages = [
             {"role": "system", "content": "You are a local operations assistant. You can use tools to execute commands on the user's host machine to solve problems."}
         ]
+    transcript_start = len(messages)
     messages.append({"role": "user", "content": user_prompt})
 
     payload = {
@@ -100,44 +116,64 @@ def ask_ai_and_run(user_prompt: str, messages=None, full_access=False):
         "tool_choice": "auto"
     }
 
-    for request_count in range(max_requests):
-        response = requests.post(f"{API_URL}/chat/completions", headers=headers,
-                                 json=payload, timeout=AI_TIMEOUT_SECONDS).json()
-        response_message = response['choices'][0]['message']
+    try:
+        for request_count in range(max_requests):
+            try:
+                response = requests.post(f"{API_URL}/chat/completions", headers=headers,
+                                         json=payload, timeout=AI_TIMEOUT_SECONDS)
+                response.raise_for_status()
+                response = response.json()
+                response_message = response['choices'][0]['message']
+            except (requests.exceptions.RequestException, ValueError) as e:
+                print(f"\n[AI Response]: Request failed: {e}")
+                return messages
+            except (KeyError, IndexError):
+                print(f"\n[AI Response]: Unexpected response from server:\n{response}")
+                return messages
 
-        if not response_message.get("tool_calls"):
-            print(f"\n[AI Response]:\n{response_message['content']}")
-            messages.append({
-                "role": "assistant",
-                "content": response_message["content"]
-            })
-            return messages
+            if not response_message.get("tool_calls"):
+                print(f"\n[AI Response]:\n{response_message['content']}")
+                messages.append({
+                    "role": "assistant",
+                    "content": response_message["content"]
+                })
+                return messages
 
-        messages.append(response_message)
-        for tool_call in response_message["tool_calls"]:
-            if tool_call["function"]["name"] != "run_terminal_command":
-                tool_output = "Error: Unsupported tool."
-            else:
-                arguments = json.loads(tool_call["function"]["arguments"])
-                tool_output = run_terminal_command(arguments.get("command"),
-                                                   full_access)
+            messages.append(response_message)
+            for tool_call in response_message["tool_calls"]:
+                name = tool_call["function"]["name"]
+                if name != "run_terminal_command":
+                    tool_output = "Error: Unsupported tool."
+                else:
+                    try:
+                        arguments = json.loads(tool_call["function"]["arguments"])
+                    except (TypeError, ValueError):
+                        arguments = None
+                    if not isinstance(arguments, dict):
+                        arguments = {}
+                    command = arguments.get("command")
+                    if not isinstance(command, str) or not command.strip():
+                        tool_output = "Error: Missing or invalid 'command' argument."
+                    else:
+                        tool_output = run_terminal_command(command, full_access)
 
-            print(f"[Host Output]:\n{tool_output}")
-            messages.append({
-                "tool_call_id": tool_call["id"],
-                "role": "tool",
-                "name": "run_terminal_command",
-                "content": tool_output
-            })
+                print(f"[Host Output]:\n{tool_output}")
+                messages.append({
+                    "tool_call_id": tool_call["id"],
+                    "role": "tool",
+                    "name": name,
+                    "content": tool_output
+                })
 
-        payload["messages"] = messages
-
-    print("\n[AI Response]: Stopped after the maximum number of tool rounds.")
-    return messages
+        print("\n[AI Response]: Stopped after the maximum number of tool rounds.")
+        return messages
+    except KeyboardInterrupt:
+        del messages[transcript_start:]
+        print("\n[Request interrupted]")
+        return messages
 
 def interactive_loop(full_access):
     messages = None
-    abort = False
 
     print("Interactive AI assistant. Finish multiline input with an empty line.")
     print(f"Endpoint: {API_URL}")
@@ -156,23 +192,27 @@ def interactive_loop(full_access):
             break
 
         lines = [first_line]
+        cancel = False
         while True:
             try:
                 line = input("[...]:\n")
             except (EOFError, KeyboardInterrupt):
-                abort = True
+                cancel = True
                 break
             if line.strip() == "":
                 break
             lines.append(line)
-        if abort:
-            print()
-            break;
+        if cancel:
+            print("\n[Input canceled]")
+            continue
 
         user_prompt = "\n".join(lines).strip()
         if not user_prompt:
             continue
-        messages = ask_ai_and_run(user_prompt, messages, full_access)
+        try:
+            messages = ask_ai_and_run(user_prompt, messages, full_access)
+        except KeyboardInterrupt:
+            print("\n[Request interrupted]")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
