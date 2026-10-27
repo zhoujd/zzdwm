@@ -287,6 +287,8 @@ KEY key[] = {
   {-1,                  insertmacro,       "ins-macro"},
   {-1,                  setoverstrike,     "set-overstrike"},
   {-1,                  freetags,          "free-tags"},
+  {-1,                  nexttagtarget,     "next-tag-target"},
+  {-1,                  backtagtarget,     "back-tag-target"},
 #if HAS_CSCOPE
   {-1,                  nextcscope,        "next-cscope"},
 #endif

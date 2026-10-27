@@ -102,6 +102,9 @@ TAGORIGIN;
 
 static TAGORIGIN tagorigins[RINGSIZE];
 static int tagorigincount;
+static TAGORIGIN tagtargets[RINGSIZE];
+static int tagtargetcount;
+static int tagtargetindex;
 
 /*
  * Free up the memory associated with the current
@@ -448,6 +451,58 @@ restoretagorigin (const TAGORIGIN *origin)
   curwp->w_flag |= WFMOVE;
 }
 
+static TAGORIGIN
+currenttaglocation (void)
+{
+  TAGORIGIN location;
+
+  location.buffer = curbp;
+  location.line = taglineno (curbp, curwp->w_dot.p);
+  location.offset = curwp->w_dot.o;
+  return location;
+}
+
+static int
+restoretagtarget (int direction)
+{
+  TAGORIGIN target;
+
+  while (tagtargetcount > 0)
+    {
+      if (direction >= 0)
+        {
+          if (tagtargetindex >= tagtargetcount)
+            {
+              eprintf ("No next tag target");
+              return FALSE;
+            }
+          target = tagtargets[tagtargetindex++];
+        }
+      else
+        {
+          if (tagtargetindex <= 0)
+            {
+              eprintf ("No previous tag target");
+              return FALSE;
+            }
+          target = tagtargets[--tagtargetindex - 1];
+        }
+      if (tagbufferexists (target.buffer) == TRUE
+          && swbuffer (target.buffer) == TRUE)
+        {
+          restoretagorigin (&target);
+          return TRUE;
+        }
+      memmove (&tagtargets[tagtargetindex - 1],
+               &tagtargets[tagtargetindex],
+               (tagtargetcount - tagtargetindex)
+               * sizeof (tagtargets[0]));
+      --tagtargetcount;
+    }
+  eprintf ("No tag targets");
+  return FALSE;
+}
+
 int
 poptagmark (int f, int n, int k)
 {
@@ -474,10 +529,27 @@ poptagmark (int f, int n, int k)
   return FALSE;
 }
 
+int
+nexttagtarget (int f, int n, int k)
+{
+  (void) f;
+  (void) k;
+  return restoretagtarget (n >= 0 ? 1 : -1);
+}
+
+int
+backtagtarget (int f, int n, int k)
+{
+  (void) f;
+  (void) k;
+  return restoretagtarget (n >= 0 ? -1 : 1);
+}
+
 void
 removetagbuffer (BUFFER *buffer)
 {
   int index;
+  int target;
 
   for (index = 0; index < tagorigincount; )
     {
@@ -491,6 +563,21 @@ removetagbuffer (BUFFER *buffer)
         }
       else
         ++index;
+    }
+
+  for (target = 0; target < tagtargetcount; target++)
+    {
+      if (tagtargets[target].buffer == buffer)
+        {
+          if (target < tagtargetindex)
+            --tagtargetindex;
+          memmove (&tagtargets[target],
+                   &tagtargets[target + 1],
+                   (tagtargetcount - target - 1)
+                   * sizeof (tagtargets[0]));
+          --tagtargetcount;
+          --target;
+        }
     }
 }
 
@@ -648,14 +735,24 @@ searchtag (int f, int n, prepfunc prep, const char * tagtype)
    * to the line containing this tag.
    */
   tf = r->file;
-  origin.buffer = curbp;
-  origin.line = taglineno (curbp, curwp->w_dot.p);
-  origin.offset = curwp->w_dot.o;
+  origin = currenttaglocation ();
   if ((s = visit_file (tf->fname)) != TRUE)
     return s;
   pushtagorigin (origin);
   if (gotoline (TRUE, r->line, 0) == FALSE)
     return FALSE;
+  if (tagtargetcount == RINGSIZE)
+    {
+      int index;
+
+      if (tagtargetindex > 0)
+        --tagtargetindex;
+      for (index = 0; index < RINGSIZE - 1; index++)
+        tagtargets[index] = tagtargets[index + 1];
+      --tagtargetcount;
+    }
+  tagtargets[tagtargetcount++] = currenttaglocation ();
+  tagtargetindex = tagtargetcount;
 #if DPRINT
   fclose (report);
 #endif

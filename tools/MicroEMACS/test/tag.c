@@ -177,6 +177,22 @@ main (void)
   assert (curwp->w_dot.p == target_first);
   assert (tagorigincount == 3);
 
+  assert (tagtargetcount == 3);
+  assert (tagtargetindex == 3);
+  assert (backtagtarget (FALSE, 1, 0) == TRUE);
+  assert (curwp->w_dot.p == target_second);
+  assert (nexttagtarget (FALSE, 1, 0) == TRUE);
+  assert (curwp->w_dot.p == target_first);
+  assert (nexttagtarget (FALSE, 1, 0) == FALSE);
+  assert (strcmp (error_message, "No next tag target") == 0);
+  assert (backtagtarget (FALSE, 1, 0) == TRUE);
+  assert (curwp->w_dot.p == target_second);
+  assert (backtagtarget (FALSE, 1, 0) == TRUE);
+  assert (curwp->w_dot.p == target_first);
+  assert (backtagtarget (FALSE, 1, 0) == FALSE);
+  assert (strcmp (error_message, "No previous tag target") == 0);
+  assert (tagorigincount == 3);
+
   origin_second->l_used = 1;
   assert (poptagmark (FALSE, 1, 0) == TRUE);
   assert (curbp == &target_buffer);

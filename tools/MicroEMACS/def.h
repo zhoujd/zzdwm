@@ -1102,6 +1102,8 @@ const char * modename (BUFFER *bp);     /* Return name for current mode */
 int findtag (int f, int n, int k);      /* Search for a tag             */
 int freetags (int f, int n, int k);     /* Free up tag list             */
 int poptagmark (int f, int n, int k);   /* Return to tag origin         */
+int nexttagtarget (int f, int n, int k); /* Next tag target             */
+int backtagtarget (int f, int n, int k); /* Previous tag target         */
 void removetagbuffer (BUFFER *buffer);  /* Remove dead tag origins      */
 
 /*
