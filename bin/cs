@@ -55,8 +55,8 @@ usage() {
 Usage:
 $ $app {n} {text/file} [-p]  - Search code (optional -p to pick & open)
 $ $app h {symbol}            - Show function header via ref tool
-$ $app r | --rebuild         - Force rebuild cscope and ctags tags
-$ $app c | --clean           - Clean up cscope files in current directory
+$ $app r | --rebuild         - Force rebuild cscope and ctags/etags tags
+$ $app c | --clean           - Clean up generated index files
 
 Environment Variables:
 CS_COLOR=color  - Control highlight color (red, green, yellow, blue, magenta, cyan)
@@ -69,6 +69,7 @@ The list of possible values for {n}
 3: Find functions calling this function
 4: Find this text string
 5: List functions/definitions using ctags
+e: List functions/definitions using TAGS (etags format)
 6: Find this egrep pattern
 7: Find this file
 8: Find files #including this file
@@ -81,9 +82,9 @@ clean_cscope() {
     rm -f ./cscope.files ./cscope.out ./cscope.in.out ./cscope.po.out
 }
 
-# Function to clean up ctags files in the current directory
-clean_ctags() {
-    rm -f ./tags
+# Function to clean up ctags and etags files in the current directory
+clean_tags() {
+    rm -f ./tags ./TAGS
 }
 
 # Function to force a fresh rebuild of cscope databases
@@ -101,6 +102,58 @@ rebuild_cscope() {
 rebuild_ctags() {
     # Rebuild ctags
     ctags -u --exclude=build --exclude=dist -R . 2>/dev/null
+}
+
+# Function to force a fresh rebuild of the etags-format TAGS database.
+# ctags emits explicit tag names, which GNU etags omits for C functions.
+rebuild_etags() {
+    ctags -e -u --exclude=build --exclude=dist -R . 2>/dev/null
+}
+
+# Reshapes etags-format TAGS lines into 'file:line: <symbol> code' format.
+format_etags() {
+    awk '
+        /^\f/ {
+            file = ""
+            in_file = 0
+            next
+        }
+        !in_file {
+            file = $0
+            sub(/,[0-9]+$/, "", file)
+            if (file == "")
+                next
+            in_file = 1
+            next
+        }
+        {
+            tag_start = index($0, "\177")
+            if (tag_start == 0)
+                next
+
+            code = substr($0, 1, tag_start - 1)
+            location = substr($0, tag_start + 1)
+            symbol = ""
+
+            symbol_end = index(location, "\001")
+            if (symbol_end > 0) {
+                symbol = substr(location, 1, symbol_end - 1)
+                location = substr(location, symbol_end + 1)
+            }
+
+            comma = index(location, ",")
+            if (comma == 0)
+                next
+
+            line = substr(location, 1, comma - 1)
+            if (line !~ /^[0-9]+\r?$/)
+                next
+
+            sub(/\r$/, "", line)
+            sub(/[[:space:]]+$/, "", symbol)
+
+            print file ":" line ": <" symbol "> " code
+        }'
 }
 
 # Reshapes 'ctags -x' into 'file:line: <symbol> code' format.
@@ -165,8 +218,8 @@ pick_open() {
 if [ "$1" == "c" ] || [ "$1" == "--clean" ]; then
     echo "Cleaning up cscope index files in the current directory..."
     clean_cscope
-    echo "Cleaning up ctags index files in the current directory..."
-    clean_ctags
+    echo "Cleaning up ctags and etags index files in the current directory..."
+    clean_tags
     echo "Done."
     exit 0
 elif [ "$1" == "r" ] || [ "$1" == "--rebuild" ]; then
@@ -174,6 +227,8 @@ elif [ "$1" == "r" ] || [ "$1" == "--rebuild" ]; then
     rebuild_cscope
     echo "Rebuilding ctags indexes in the current directory..."
     rebuild_ctags
+    echo "Rebuilding etags index in the current directory..."
+    rebuild_etags
     echo "Done."
     exit 0
 fi
@@ -190,8 +245,8 @@ if [ $# -lt 2 ] || [ $# -gt 3 ]; then
     exit 1
 fi
 
-# Only allow exactly 0-9 and 'h' as the first parameter
-if [[ ! "$1" =~ ^[0-9h]$ ]]; then
+# Only allow exactly 0-9, 'e', and 'h' as the first parameter
+if [[ ! "$1" =~ ^[0-9eh]$ ]]; then
     echo "Error: Unrecognized option '$1'."
     echo ""
     usage
@@ -231,6 +286,37 @@ if [ "${1}" == "h" ]; then
         exit 1
     else
         echo "$OUTPUT" | grep $GREP_COLOR_FLAG -i -E "${2}|$"
+    fi
+    exit 0
+fi
+
+# Handle option 'e' since it relies on TAGS instead of cscope
+if [ "${1}" == "e" ]; then
+    SEARCH_ETAGS=$(search_up "TAGS")
+    if [ -z "$SEARCH_ETAGS" ]; then
+        echo "TAGS not found anywhere. Rebuilding in the current directory..."
+        rebuild_etags
+        if [ ! -f "./TAGS" ]; then
+            echo "Error: No indexed source files found for TAGS."
+            exit 1
+        fi
+        SEARCH_ETAGS=$PWD
+    fi
+    ETAGS_FILE="$SEARCH_ETAGS/TAGS"
+
+    if [ $USE_PICK -eq 1 ]; then
+        MATCH=$(format_etags < "$ETAGS_FILE" | grep -i -E "${2}" | pick)
+        if [ -n "$MATCH" ]; then
+            (cd "$SEARCH_ETAGS" && pick_open "$MATCH")
+        fi
+    else
+        if [ -f "$SEARCH_ETAGS/${2}" ]; then
+            echo "Listing functions/definitions in file: ${2}"
+            format_etags < "$ETAGS_FILE" | grep $GREP_COLOR_FLAG -i -F "${2}"
+        else
+            echo "Searching TAGS for '${2}'..."
+            format_etags < "$ETAGS_FILE" | grep $GREP_COLOR_FLAG -i -E "${2}"
+        fi
     fi
     exit 0
 fi
