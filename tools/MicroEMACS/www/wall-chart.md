@@ -230,6 +230,7 @@ C-X C-E : echo
 `M-G` : find-grep
 
 `M-.` : find-tag
+`C-X 4 .` : find-tag-other-window
 
 ``C-X ` `` : next-error
 

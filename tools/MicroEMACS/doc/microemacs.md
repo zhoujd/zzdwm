@@ -2335,6 +2335,14 @@ M-C-.
     `M-- M-C-.` finds the previous match. Regular-expression and identifier
     tag searches keep separate patterns and match positions.
 
+C-X 4 .
+
+:   **find-tag-other-window**\index{find-tag-other-window}\index{C-X 4 .}
+
+    This command behaves like `find-tag`, but selects the next window; if there
+    is only one window, it splits the window first. `C-X 4 M-C-.` runs
+    `find-tag-regexp-other-window` and behaves like `find-tag-regexp`.
+
 M-*
 
 :   **pop-tag-mark**\index{pop-tag-mark}
@@ -3708,6 +3716,14 @@ M-G
 M-.
 
 :   find-tag
+
+M-C-.
+
+:   find-tag-regexp
+
+C-X 4 .
+
+:   find-tag-other-window
 
 M-C-E
 

@@ -192,6 +192,7 @@ KEY key[] = {
   {KCTLX | '0',         zapwind,           "zap-window"},
   {KCTLX | '1',         onlywind,          "only-window"},
   {KCTLX | '2',         splitwind,         "split-window"},
+  {KCTLX | '4',         otherwindprefix,  "prefix-other-window"},
   {KCTLX | 'B',         usebuffer,         "use-buffer"},
   {KCTLX | 'C',         spawncli,          "spawn-cli"},
   {KCTLX | 'D',         dired,             "dired"},
@@ -288,6 +289,9 @@ KEY key[] = {
   {-1,                  insertmacro,       "ins-macro"},
   {-1,                  setoverstrike,     "set-overstrike"},
   {-1,                  freetags,          "free-tags"},
+  {-1,                  findtagotherwind,  "find-tag-other-window"},
+  {-1,                  findtagregexpotherwind,
+                                            "find-tag-regexp-other-window"},
   {-1,                  nexttagtarget,     "next-tag-target"},
   {-1,                  backtagtarget,     "back-tag-target"},
 #if HAS_CSCOPE

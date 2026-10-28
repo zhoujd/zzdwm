@@ -58,6 +58,14 @@ M-C-.
     the `TAGS` file. Its argument behavior matches `find-tag`, and it keeps a
     separate pattern and match position from ordinary tag searches.
 
+C-X 4 .
+
+:   **find-tag-other-window**
+
+    This command behaves like `find-tag`, but selects the next window; if there
+    is only one window, it splits the window first. `C-X 4 M-C-.` runs
+    `find-tag-regexp-other-window` and behaves like `find-tag-regexp`.
+
 M-*
 
 :   **pop-tag-mark**

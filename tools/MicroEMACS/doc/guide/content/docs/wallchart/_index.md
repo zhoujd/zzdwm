@@ -164,6 +164,7 @@ section.
 | M-, | find-cscope |
 | M-G | find-grep |
 | M-. | find-tag |
+| C-X 4 . | find-tag-other-window |
 | C-X ` | next-error |
 | M-C-E | goto-error |
 

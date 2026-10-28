@@ -10,13 +10,20 @@
 BUFFER *curbp;
 EWINDOW *curwp;
 BUFFER *bheadp;
+EWINDOW *wheadp;
 
 static BUFFER origin_buffer;
 static BUFFER target_buffer;
 static EWINDOW window;
+static EWINDOW other_window;
 static char error_message[128];
 static int visit_file_status = TRUE;
 static const char *reply_pattern = "alpha";
+static int next_getkey;
+static int macro_keys[2];
+int kbdm[NKBDM] = { KCTLX | ')' };
+int *kbdmip;
+int *kbdmop;
 
 static LINE *
 make_line (const char *text)
@@ -109,6 +116,41 @@ gotoline (int flag, int line, int key)
 }
 
 int
+splitwind (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  window.w_wndp = &other_window;
+  other_window.w_bufp = &origin_buffer;
+  other_window.w_dot.p = firstline (&origin_buffer);
+  other_window.w_dot.o = 0;
+  return TRUE;
+}
+
+int
+nextwind (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  curwp = curwp->w_wndp ? curwp->w_wndp : wheadp;
+  curbp = curwp->w_bufp;
+  return TRUE;
+}
+
+int
+getkey (void)
+{
+  int key;
+
+  assert (next_getkey != 0);
+  key = next_getkey;
+  next_getkey = 0;
+  return key;
+}
+
+int
 cisword (wchar_t character)
 {
   return iswalnum ((wint_t) character) || character == '_';
@@ -157,6 +199,8 @@ main (void)
   bheadp = &origin_buffer;
 
   memset (&window, 0, sizeof (window));
+  memset (&other_window, 0, sizeof (other_window));
+  wheadp = &window;
   curwp = &window;
   curbp = &origin_buffer;
   curwp->w_bufp = curbp;
@@ -265,6 +309,31 @@ main (void)
   removetagbuffer (&origin_buffer);
   assert (tagorigincount == 0);
   assert (poptagmark (FALSE, 1, 0) == FALSE);
+
+  curwp = &other_window;
+  curbp = &origin_buffer;
+  macro_keys[0] = '.';
+  macro_keys[1] = 0;
+  kbdmop = macro_keys;
+  assert (otherwindprefix (TRUE, 1, 0) == TRUE);
+  kbdmop = NULL;
+  assert (curwp == &window);
+  assert (curwp->w_dot.p == target_second);
+  assert (findtagregexp (TRUE, -1, 0) == TRUE);
+  assert (curwp->w_dot.p == target_first);
+  kbdmip = kbdm;
+  reply_pattern = "^alph";
+  strcpy (tagregpat, "^alph");
+  next_getkey = KMETA | KCTRL | '.';
+  assert (otherwindprefix (TRUE, 1, 0) == TRUE);
+  assert (kbdmip == kbdm + 1);
+  assert (kbdm[0] == (KMETA | KCTRL | '.'));
+  kbdmip = NULL;
+  kbdmop = NULL;
+  assert (curwp == &other_window);
+  assert (curwp->w_dot.p == target_second);
+  assert (tagtargetcount == 11);
+  assert (tagtargetindex == 11);
 
   free (lback (origin_buffer.b_linep));
   free (firstline (&origin_buffer));

@@ -845,3 +845,66 @@ findtagregexp (int f, int n, int k)
   (void) k;
   return searchtag (f, n, preptag, "tag regexp", TRUE);
 }
+
+static int findtagother (int regexp, int f, int n);
+
+/*
+ * Search for a tag in another window. If there is only one window,
+ * split it first. The tag ring behavior matches find-tag.
+ */
+int
+findtagotherwind (int f, int n, int k)
+{
+  (void) k;
+  return findtagother (FALSE, f, n);
+}
+
+/*
+ * Search for a regexp tag in another window.
+ */
+int
+findtagregexpotherwind (int f, int n, int k)
+{
+  (void) k;
+  return findtagother (TRUE, f, n);
+}
+
+static int
+findtagother (int regexp, int f, int n)
+{
+  if (wheadp->w_wndp == NULL
+      && splitwind (FALSE, 0, KRANDOM) != TRUE)
+    return FALSE;
+  nextwind (FALSE, 1, KRANDOM);
+  return searchtag (f, n, preptag, regexp ? "tag regexp" : "tag", regexp);
+}
+
+/*
+ * Dispatch a C-X 4 command.
+ */
+int
+otherwindprefix (int f, int n, int k)
+{
+  int key;
+
+  (void) k;
+  if (kbdmop != NULL)
+    key = *kbdmop++;
+  else
+    {
+      key = getkey ();
+      if (kbdmip != NULL)
+        {
+          if (kbdmip > &kbdm[NKBDM - 2])
+            return ABORT;
+          *kbdmip++ = key;
+        }
+    }
+
+  if (key == '.')
+    return findtagother (FALSE, f, n);
+  if (key == (KMETA | KCTRL | '.'))
+    return findtagother (TRUE, f, n);
+  eprintf ("Unknown C-X 4 command");
+  return ABORT;
+}

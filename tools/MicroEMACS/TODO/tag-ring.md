@@ -9,6 +9,8 @@ grep navigation.
 * `M-.` prompts for a tag and jumps to the first match.
 * `M-C-.` runs `find-tag-regexp` and matches tag names with a regular
   expression.
+* `C-X 4 .` runs `find-tag-other-window`, and `C-X 4 M-C-.` runs
+  `find-tag-regexp-other-window`; with one window, the window is split.
 * `C-u M-.` jumps to the next match for that tag.
 * `M-- M-.` jumps to the previous match for that tag.
 * `M-*` runs `pop-tag-mark` and returns to the most recent origin.
@@ -29,5 +31,4 @@ grep navigation.
 
 ## Future Work
 
-* Consider other-window and other-frame tag navigation variants if window and
-  frame support make them useful.
+* Consider other-frame tag navigation if frame support is added.
