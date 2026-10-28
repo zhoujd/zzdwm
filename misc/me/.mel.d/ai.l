@@ -55,3 +55,4 @@
 
 (define-lisp-command "ai-ask-region" #'ai-ask-region)
 (define-key "C-x a" "ai-ask-region")
+(provide 'ai)
