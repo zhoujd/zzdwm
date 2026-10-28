@@ -30,6 +30,31 @@ grep navigation.
 * Existing `M-.` argument behavior is unchanged: an argument still selects the
   next or previous match in the tag list.
 
+## Target History Cursor
+
+The two rings use different navigation models. Origins form a stack:
+`tagorigincount` is both the number of entries and the next push position, and
+popping an origin removes it. No separate cursor is needed because origin
+navigation only moves backward.
+
+Targets form a browsable history. `tagtargetcount` is the number of retained
+destinations, while `tagtargetindex` is the user's current cursor into that
+history. A new destination is appended and `tagtargetindex` is set to
+`tagtargetcount`. `back-tag-target` decrements the cursor, and
+`next-tag-target` increments it, without consuming destinations:
+
+```text
+targets: [A, B, C]
+count:   3
+index:   3             /* on C, the newest destination */
+
+back-tag-target
+index:   2             /* on B */
+
+next-tag-target
+index:   3             /* on C again */
+```
+
 ## Future Work
 
 * Consider other-frame tag navigation if frame support is added.
