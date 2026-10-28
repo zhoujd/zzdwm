@@ -44,7 +44,8 @@ and identifier tag searches keep separate patterns and match positions.
 **C-X 4 .** (**find-tag-other-window**)
 
 This command behaves like **find-tag**, but selects the next window; if there
-is only one window, it splits the window first. **C-X 4 M-C-.** runs
+is only one window, it splits the window only after a matching tag is found.
+**C-X 4 M-C-.** runs
 **find-tag-regexp-other-window** and behaves like **find-tag-regexp**.
 
 **M-*** (**pop-tag-mark**)

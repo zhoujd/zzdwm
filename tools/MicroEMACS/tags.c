@@ -849,8 +849,8 @@ findtagregexp (int f, int n, int k)
 static int findtagother (int regexp, int f, int n);
 
 /*
- * Search for a tag in another window. If there is only one window,
- * split it first. The tag ring behavior matches find-tag.
+ * Search for a tag in another window.  Search first, so canceling the
+ * prompt does not change the window configuration.
  */
 int
 findtagotherwind (int f, int n, int k)
@@ -872,11 +872,32 @@ findtagregexpotherwind (int f, int n, int k)
 static int
 findtagother (int regexp, int f, int n)
 {
+  EWINDOW *originwp = curwp;
+  BUFFER *originbp = curbp;
+  POS origin = curwp->w_dot;
+  BUFFER *targetbp;
+  POS target;
+  int s = searchtag (f, n, preptag,
+                     regexp ? "tag regexp" : "tag", regexp);
+
+  if (s != TRUE)
+    return s;
+
+  targetbp = curbp;
+  target = curwp->w_dot;
+  if (swbuffer (originbp) != TRUE)
+    return FALSE;
+  originwp->w_dot = origin;
+
   if (wheadp->w_wndp == NULL
       && splitwind (FALSE, 0, KRANDOM) != TRUE)
     return FALSE;
   nextwind (FALSE, 1, KRANDOM);
-  return searchtag (f, n, preptag, regexp ? "tag regexp" : "tag", regexp);
+
+  if (swbuffer (targetbp) != TRUE)
+    return FALSE;
+  curwp->w_dot = target;
+  return TRUE;
 }
 
 /*

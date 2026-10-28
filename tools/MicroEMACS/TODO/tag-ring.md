@@ -10,7 +10,8 @@ grep navigation.
 * `M-C-.` runs `find-tag-regexp` and matches tag names with a regular
   expression.
 * `C-X 4 .` runs `find-tag-other-window`, and `C-X 4 M-C-.` runs
-  `find-tag-regexp-other-window`; with one window, the window is split.
+  `find-tag-regexp-other-window`; with one window, the window is split only
+  after a matching tag is found.
 * `C-u M-.` jumps to the next match for that tag.
 * `M-- M-.` jumps to the previous match for that tag.
 * `M-*` runs `pop-tag-mark` and returns to the most recent origin.

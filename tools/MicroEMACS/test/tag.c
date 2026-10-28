@@ -21,6 +21,8 @@ static int visit_file_status = TRUE;
 static const char *reply_pattern = "alpha";
 static int next_getkey;
 static int macro_keys[2];
+static int splitwind_calls;
+static int reply_status = TRUE;
 int kbdm[NKBDM] = { KCTLX | ')' };
 int *kbdmip;
 int *kbdmop;
@@ -61,7 +63,7 @@ ereply (const char *prompt, char *buffer, int size, ...)
   (void) prompt;
   (void) size;
   strcpy (buffer, reply_pattern);
-  return TRUE;
+  return reply_status;
 }
 
 void
@@ -121,6 +123,7 @@ splitwind (int f, int n, int k)
   (void) f;
   (void) n;
   (void) k;
+  ++splitwind_calls;
   window.w_wndp = &other_window;
   other_window.w_bufp = &origin_buffer;
   other_window.w_dot.p = firstline (&origin_buffer);
@@ -310,6 +313,22 @@ main (void)
   assert (tagorigincount == 0);
   assert (poptagmark (FALSE, 1, 0) == FALSE);
 
+  window.w_wndp = NULL;
+  splitwind_calls = 0;
+  reply_status = ABORT;
+  macro_keys[0] = '.';
+  macro_keys[1] = 0;
+  kbdmop = macro_keys;
+  assert (otherwindprefix (FALSE, 1, 0) == ABORT);
+  kbdmop = NULL;
+  reply_status = TRUE;
+  curwp = &window;
+  curbp = window.w_bufp;
+  tagpat[0] = '\0';
+  assert (splitwind_calls == 0);
+  assert (window.w_wndp == NULL);
+  assert (curwp == &window);
+
   curwp = &other_window;
   curbp = &origin_buffer;
   macro_keys[0] = '.';
@@ -317,6 +336,7 @@ main (void)
   kbdmop = macro_keys;
   assert (otherwindprefix (TRUE, 1, 0) == TRUE);
   kbdmop = NULL;
+  assert (splitwind_calls == 1);
   assert (curwp == &window);
   assert (curwp->w_dot.p == target_second);
   assert (findtagregexp (TRUE, -1, 0) == TRUE);
