@@ -1096,7 +1096,11 @@ trim (int f, int n, int k)
     return FALSE;
 
   if (f == FALSE)
-    n = reglines ();
+    {
+      n = reglines ();
+      if (n <= 0)                 /* no region: trim current line */
+        n = 1;
+    }
 
   inc = ((n > 0) ? 1 : -1);
   while (n)
@@ -1112,7 +1116,7 @@ trim (int f, int n, int k)
       trim_len = 0;
       while (length > offset)
         {
-          char c = lgetc (lp, length - 1);
+          char c = wlgetc (lp, length - 1);
           if (c != ' ' && c != '\t')
             break;
           trim_len++;
@@ -1124,7 +1128,7 @@ trim (int f, int n, int k)
         {
           curwp->w_dot.o = length;        /* Move dot to start of trailing spaces */
           saveundo (UMOVE, &curwp->w_dot);  /* Save cursor state before delete */
-          ldelete ((long)trim_len, FALSE);  /* Properly record UDELETE and update buffer */
+          ldelete (trim_len, FALSE);  /* Properly record UDELETE and update buffer */
         }
 
       /* Advance to next line */
