@@ -18,10 +18,10 @@ command remains available as **M-X dired**; loading the Lisp example rebinds
   uses the current directory. In `--script` mode, the default is returned
   without prompting.
 - `create-mode` installs a buffer-local `Dired` mode. `define-mode-key` binds
-  **Enter**, **g**, and **r** only in that buffer.
+  **Enter**, **^**, **g**, and **r** only in that buffer.
 - **Enter** resolves the selected entry and opens files with the built-in
-  `me-find-file`; directory entries reload Dired. **g** and **r** refresh the
-  listing.
+  `me-find-file`; directory entries reload Dired. **^** opens the parent
+  directory. **g** and **r** refresh the listing.
 - The Dired buffer is read-only and records its directory in the buffer file
   name for refresh and path construction.
 
@@ -34,6 +34,8 @@ The implementation uses these host forms:
 (dired-list "directory")
 (create-mode "Dired")
 (define-mode-key "C-m" "dired-find-file")
+(define-mode-key "^" "dired-up-directory")
+(join-path "directory" "..")
 (set-buffer-readonly t)
 (buffer-file-name)
 (string-suffix-p "directory/" "/")
@@ -47,6 +49,5 @@ The implementation uses these host forms:
 
 ## Future Work
 
-- Add parent-directory and up-directory convenience keys.
 - Add mark, copy, rename, and delete operations with explicit confirmation.
 - Consider hiding the `./` entry or adding a configurable hidden-file filter.

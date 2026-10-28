@@ -81,6 +81,8 @@ static SYMBOL dired_refresh_symbol = { NULL, 0, "dired-refresh",
                                        NULL, NULL };
 static SYMBOL dired_find_file_symbol = { NULL, 0, "dired-find-file",
                                          NULL, NULL };
+static SYMBOL dired_up_directory_symbol = { NULL, 0, "dired-up-directory",
+                                            NULL, NULL };
 static SYMBOL smart_find_file_symbol = { NULL, 0, "smart-find-file",
                                          NULL, NULL };
 static int ai_command_defined;
@@ -88,6 +90,7 @@ static int ai_region_command_defined;
 static int lisp_dired_defined;
 static int dired_refresh_defined;
 static int dired_find_file_defined;
+static int dired_up_directory_defined;
 static int smart_find_file_defined;
 static BUFFER syntax_buffer;
 static char syntax_filetype[32];
@@ -108,12 +111,14 @@ static int shell_status = TRUE;
 static char shell_output[NLINE];
 static int getregion_status = TRUE;
 static REGION test_region;
+static LINE switch_end;
 static EWINDOW eobp_window;
 static BUFFER eobp_buffer;
 static LINE eobp_line;
 static LINE eobp_end;
 static LINE *primitive_line;
 static LINE primitive_end;
+static LINE dired_end;
 static BUFFER primitive_buffer;
 static EWINDOW primitive_window;
 
@@ -212,6 +217,9 @@ symlookup (const char *name)
   if (dired_find_file_defined
       && strcmp (name, dired_find_file_symbol.s_name) == 0)
     return &dired_find_file_symbol;
+  if (dired_up_directory_defined
+      && strcmp (name, dired_up_directory_symbol.s_name) == 0)
+    return &dired_up_directory_symbol;
   if (strcmp (name, command_symbol.s_name) == 0)
     return &command_symbol;
   if (strcmp (name, smart_find_file_symbol.s_name) == 0)
@@ -250,6 +258,8 @@ bclear (BUFFER *buffer)
 {
   bclear_called++;
   bclear_buffer = buffer;
+  buffer->b_dot.p = buffer->b_linep;
+  buffer->b_dot.o = 0;
   feature_line_count = 0;
   return TRUE;
 }
@@ -278,6 +288,8 @@ gotobob (int flag, int count, int key)
   (void) flag;
   (void) count;
   (void) key;
+  curwp->w_dot.p = curbp->b_linep;
+  curwp->w_dot.o = 0;
   gotobob_called++;
   return TRUE;
 }
@@ -343,6 +355,12 @@ swbuffer (BUFFER *buffer)
 {
   if (buffer != &switch_buffer && buffer != &dired_buffer)
     return FALSE;
+  curbp = buffer;
+  curwp->w_bufp = buffer;
+  curwp->w_dot.p = buffer->b_linep = buffer == &dired_buffer
+                    ? &dired_end : &switch_end;
+  lforw (curwp->w_dot.p) = curwp->w_dot.p;
+  lback (curwp->w_dot.p) = curwp->w_dot.p;
   snprintf (switched_buffer_name, sizeof (switched_buffer_name),
             buffer == &dired_buffer ? "*dired*" : "*AI*");
   return TRUE;
@@ -448,6 +466,8 @@ symdefmacro (const char *name, const int *macro, size_t count)
     dired_refresh_defined = TRUE;
   if (strcmp (name, dired_find_file_symbol.s_name) == 0)
     dired_find_file_defined = TRUE;
+  if (strcmp (name, dired_up_directory_symbol.s_name) == 0)
+    dired_up_directory_defined = TRUE;
   if (strcmp (name, smart_find_file_symbol.s_name) == 0)
     smart_find_file_defined = TRUE;
   defined_macro_name = name;
@@ -472,7 +492,8 @@ int
 syntax_set_buffer (BUFFER *bp, const char *filetype)
 {
   if (colorflag == FALSE || bp != curbp || filetype == NULL
-      || strcmp (filetype, "sql") != 0)
+      || (strcmp (filetype, "text") != 0
+          && strcmp (filetype, "sql") != 0))
     return FALSE;
   snprintf (syntax_filetype, sizeof (syntax_filetype), "%s", filetype);
   return TRUE;
@@ -1445,14 +1466,48 @@ main (void)
     lisp_dired_defined = FALSE;
     dired_refresh_defined = FALSE;
     dired_find_file_defined = FALSE;
+    dired_up_directory_defined = FALSE;
     bound_key = 0;
     bound_symbol = NULL;
     assert (evaluate_example_file ("lisp/dired.l",
                                    result, sizeof (result)) == TRUE);
     assert (lisp_dired_defined && dired_refresh_defined
-            && dired_find_file_defined);
+            && dired_find_file_defined && dired_up_directory_defined);
     assert (bound_key == (KCTLX | 'D'));
     assert (bound_symbol == &lisp_dired_symbol);
+
+    {
+      char entry[128];
+
+      assert (rmdir ("/tmp/microemacs-dired-test/parent") == 0
+              || errno == ENOENT);
+      assert (rmdir ("/tmp/microemacs-dired-test") == 0
+              || errno == ENOENT);
+      assert (mkdir ("/tmp/microemacs-dired-test", 0755) == 0);
+      assert (mkdir ("/tmp/microemacs-dired-test/parent", 0755) == 0);
+      snprintf (entry, sizeof (entry),
+                "%-10s %3llu %8lld %16s  %s",
+                "drwxr-xr-x", 2ULL, 4096LL,
+                "2026-10-15 10:00", "parent/");
+      set_primitive_line (entry);
+      strcpy (primitive_buffer.b_fname, "/tmp/microemacs-dired-test/parent");
+      inserted_text[0] = 0;
+      assert (tiny_lisp_eval ("(dired-up-directory)",
+                              result, sizeof (result)) == 1);
+      assert (strcmp (result,
+                      "\"Dired: Enter opens, ^ goes up, g refreshes\"")
+              == 0);
+      assert (strcmp (dired_buffer.b_fname,
+                      "/tmp/microemacs-dired-test") == 0);
+      assert (strncmp (inserted_text, "/tmp/microemacs-dired-test:\n",
+                       strlen ("/tmp/microemacs-dired-test:\n")) == 0);
+      assert (bound_mode_key == '^');
+      assert (bound_mode_symbol == &dired_up_directory_symbol);
+      assert (rmdir ("/tmp/microemacs-dired-test/parent") == 0);
+      assert (rmdir ("/tmp/microemacs-dired-test") == 0);
+      curbp = &primitive_buffer;
+      curwp = &primitive_window;
+    }
 
     {
       FILE *file = fopen ("/tmp/microemacs-dired-open.txt", "wb");

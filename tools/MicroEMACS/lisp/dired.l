@@ -10,8 +10,9 @@
   (define-mode-key "C-m" "dired-find-file")
   (define-mode-key "g" "dired-refresh")
   (define-mode-key "r" "dired-refresh")
+  (define-mode-key "^" "dired-up-directory")
   (set-buffer-readonly t)
-  (message "Dired: Enter opens, g refreshes"))
+  (message "Dired: Enter opens, ^ goes up, g refreshes"))
 
 (defun lisp-dired (&optional directory)
   "Open DIRECTORY, or the current directory, in Lisp Dired."
@@ -38,8 +39,14 @@
               (me-find-file (or resolved path)))))
       (message "No file on this line"))))
 
+(defun dired-up-directory ()
+  "Open the parent of the directory shown in the current Dired buffer."
+  (interactive)
+  (dired-setup (join-path (buffer-file-name) "..")))
+
 (define-lisp-command "lisp-dired" #'lisp-dired)
 (define-lisp-command "dired-refresh" #'dired-refresh)
 (define-lisp-command "dired-find-file" #'dired-find-file)
+(define-lisp-command "dired-up-directory" #'dired-up-directory)
 (define-key "C-x d" "lisp-dired")
 (provide 'dired)
