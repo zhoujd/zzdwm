@@ -11,8 +11,9 @@
   (define-mode-key "g" "dired-refresh")
   (define-mode-key "r" "dired-refresh")
   (define-mode-key "^" "dired-up-directory")
+  (define-mode-key "q" "dired-quit")
   (set-buffer-readonly t)
-  (message "Dired: Enter opens, ^ goes up, g refreshes"))
+  (message "Dired: Enter opens, ^ goes up, g refreshes, q quits"))
 
 (defun lisp-dired (&optional directory)
   "Open DIRECTORY, or the current directory, in Lisp Dired."
@@ -44,9 +45,15 @@
   (interactive)
   (dired-setup (join-path (buffer-file-name) "..")))
 
+(defun dired-quit ()
+  "Return to the previous buffer from Dired."
+  (interactive)
+  (execute-command "back-buffer"))
+
 (define-lisp-command "lisp-dired" #'lisp-dired)
 (define-lisp-command "dired-refresh" #'dired-refresh)
 (define-lisp-command "dired-find-file" #'dired-find-file)
 (define-lisp-command "dired-up-directory" #'dired-up-directory)
+(define-lisp-command "dired-quit" #'dired-quit)
 (define-key "C-x d" "lisp-dired")
 (provide 'dired)

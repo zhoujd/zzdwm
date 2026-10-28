@@ -18,10 +18,11 @@ command remains available as **M-X dired**; loading the Lisp example rebinds
   uses the current directory. In `--script` mode, the default is returned
   without prompting.
 - `create-mode` installs a buffer-local `Dired` mode. `define-mode-key` binds
-  **Enter**, **^**, **g**, and **r** only in that buffer.
+  **Enter**, **^**, **g**, **q**, and **r** only in that buffer.
 - **Enter** resolves the selected entry and opens files with the built-in
   `me-find-file`; directory entries reload Dired. **^** opens the parent
-  directory. **g** and **r** refresh the listing.
+  directory. **g** and **r** refresh the listing. **q** returns to the previous
+  buffer.
 - The Dired buffer is read-only and records its directory in the buffer file
   name for refresh and path construction.
 
@@ -35,6 +36,8 @@ The implementation uses these host forms:
 (create-mode "Dired")
 (define-mode-key "C-m" "dired-find-file")
 (define-mode-key "^" "dired-up-directory")
+(define-mode-key "q" "dired-quit")
+(execute-command "back-buffer")
 (join-path "directory" "..")
 (set-buffer-readonly t)
 (buffer-file-name)

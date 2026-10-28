@@ -83,6 +83,8 @@ static SYMBOL dired_find_file_symbol = { NULL, 0, "dired-find-file",
                                          NULL, NULL };
 static SYMBOL dired_up_directory_symbol = { NULL, 0, "dired-up-directory",
                                             NULL, NULL };
+static SYMBOL dired_quit_symbol = { NULL, 0, "dired-quit", NULL, NULL };
+static SYMBOL back_buffer_symbol = { NULL, 0, "back-buffer", NULL, NULL };
 static SYMBOL smart_find_file_symbol = { NULL, 0, "smart-find-file",
                                          NULL, NULL };
 static int ai_command_defined;
@@ -91,6 +93,8 @@ static int lisp_dired_defined;
 static int dired_refresh_defined;
 static int dired_find_file_defined;
 static int dired_up_directory_defined;
+static int dired_quit_defined;
+static int back_buffer_called;
 static int smart_find_file_defined;
 static BUFFER syntax_buffer;
 static char syntax_filetype[32];
@@ -220,6 +224,12 @@ symlookup (const char *name)
   if (dired_up_directory_defined
       && strcmp (name, dired_up_directory_symbol.s_name) == 0)
     return &dired_up_directory_symbol;
+  if (dired_quit_defined
+      && strcmp (name, dired_quit_symbol.s_name) == 0)
+    return &dired_quit_symbol;
+  if (back_buffer_symbol.s_funcp != NULL
+      && strcmp (name, back_buffer_symbol.s_name) == 0)
+    return &back_buffer_symbol;
   if (strcmp (name, command_symbol.s_name) == 0)
     return &command_symbol;
   if (strcmp (name, smart_find_file_symbol.s_name) == 0)
@@ -300,6 +310,16 @@ test_command (int flag, int count, int key)
   (void) key;
   command_flag = flag;
   command_count = count;
+  return TRUE;
+}
+
+static int
+test_back_buffer (int flag, int count, int key)
+{
+  (void) flag;
+  (void) count;
+  (void) key;
+  back_buffer_called++;
   return TRUE;
 }
 
@@ -468,6 +488,8 @@ symdefmacro (const char *name, const int *macro, size_t count)
     dired_find_file_defined = TRUE;
   if (strcmp (name, dired_up_directory_symbol.s_name) == 0)
     dired_up_directory_defined = TRUE;
+  if (strcmp (name, dired_quit_symbol.s_name) == 0)
+    dired_quit_defined = TRUE;
   if (strcmp (name, smart_find_file_symbol.s_name) == 0)
     smart_find_file_defined = TRUE;
   defined_macro_name = name;
@@ -683,6 +705,7 @@ int
 main (void)
 {
   command_symbol.s_funcp = test_command;
+  back_buffer_symbol.s_funcp = test_back_buffer;
   memset (&feature_buffer, 0, sizeof (feature_buffer));
   tabsize = 4;
   assert (evaluate ("(set-variable \"tab-width\" \"8\")") == TRUE);
@@ -1467,12 +1490,14 @@ main (void)
     dired_refresh_defined = FALSE;
     dired_find_file_defined = FALSE;
     dired_up_directory_defined = FALSE;
+    dired_quit_defined = FALSE;
     bound_key = 0;
     bound_symbol = NULL;
     assert (evaluate_example_file ("lisp/dired.l",
                                    result, sizeof (result)) == TRUE);
     assert (lisp_dired_defined && dired_refresh_defined
-            && dired_find_file_defined && dired_up_directory_defined);
+            && dired_find_file_defined && dired_up_directory_defined
+            && dired_quit_defined);
     assert (bound_key == (KCTLX | 'D'));
     assert (bound_symbol == &lisp_dired_symbol);
 
@@ -1495,14 +1520,26 @@ main (void)
       assert (tiny_lisp_eval ("(dired-up-directory)",
                               result, sizeof (result)) == 1);
       assert (strcmp (result,
-                      "\"Dired: Enter opens, ^ goes up, g refreshes\"")
+                      "\"Dired: Enter opens, ^ goes up, g refreshes, q quits\"")
               == 0);
       assert (strcmp (dired_buffer.b_fname,
                       "/tmp/microemacs-dired-test") == 0);
       assert (strncmp (inserted_text, "/tmp/microemacs-dired-test:\n",
                        strlen ("/tmp/microemacs-dired-test:\n")) == 0);
+      assert (bound_mode_key == 'q');
+      assert (bound_mode_symbol == &dired_quit_symbol);
+      assert (evaluate ("(define-mode-key \"^\" \"dired-up-directory\")")
+              == TRUE);
       assert (bound_mode_key == '^');
       assert (bound_mode_symbol == &dired_up_directory_symbol);
+      assert (evaluate ("(define-mode-key \"q\" \"dired-quit\")")
+              == TRUE);
+      assert (bound_mode_key == 'q');
+      assert (bound_mode_symbol == &dired_quit_symbol);
+      back_buffer_called = 0;
+      assert (tiny_lisp_eval ("(dired-quit)", result, sizeof (result)) == 1);
+      assert (strcmp (result, "t") == 0);
+      assert (back_buffer_called == 1);
       assert (rmdir ("/tmp/microemacs-dired-test/parent") == 0);
       assert (rmdir ("/tmp/microemacs-dired-test") == 0);
       curbp = &primitive_buffer;
