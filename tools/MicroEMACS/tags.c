@@ -487,7 +487,8 @@ restoretagtarget (int direction)
               eprintf ("No previous tag target");
               return FALSE;
             }
-          target = tagtargets[--tagtargetindex - 1];
+          --tagtargetindex;
+          target = tagtargets[tagtargetindex];
         }
       if (tagbufferexists (target.buffer) == TRUE
           && swbuffer (target.buffer) == TRUE)
@@ -495,8 +496,8 @@ restoretagtarget (int direction)
           restoretagorigin (&target);
           return TRUE;
         }
-      memmove (&tagtargets[tagtargetindex - 1],
-               &tagtargets[tagtargetindex],
+      memmove (&tagtargets[tagtargetindex],
+               &tagtargets[tagtargetindex + 1],
                (tagtargetcount - tagtargetindex)
                * sizeof (tagtargets[0]));
       --tagtargetcount;

@@ -254,11 +254,13 @@ main (void)
   assert (tagtargetcount == 6);
   assert (tagtargetindex == 6);
   assert (backtagtarget (FALSE, 1, 0) == TRUE);
-  assert (curwp->w_dot.p == target_second);
+  assert (curwp->w_dot.p == target_first);
   assert (nexttagtarget (FALSE, 1, 0) == TRUE);
   assert (curwp->w_dot.p == target_first);
   assert (nexttagtarget (FALSE, 1, 0) == FALSE);
   assert (strcmp (error_message, "No next tag target") == 0);
+  assert (backtagtarget (FALSE, 1, 0) == TRUE);
+  assert (curwp->w_dot.p == target_first);
   assert (backtagtarget (FALSE, 1, 0) == TRUE);
   assert (curwp->w_dot.p == target_second);
   assert (backtagtarget (FALSE, 1, 0) == TRUE);
@@ -340,8 +342,8 @@ main (void)
   kbdmip = NULL;
   assert (curwp == &other_window);
   assert (curwp->w_dot.p == target_second);
-  assert (tagtargetcount == 11);
-  assert (tagtargetindex == 11);
+  assert (tagtargetcount == 12);
+  assert (tagtargetindex == 12);
 
   free (lback (origin_buffer.b_linep));
   free (firstline (&origin_buffer));
