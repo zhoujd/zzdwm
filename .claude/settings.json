@@ -1,4 +1,7 @@
 {
+  "env": {
+    "INCLUDE_CO_AUTHORED_BY": "false"
+  },
   "attribution": {
     "commit": "",
     "pr": "",
