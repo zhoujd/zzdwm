@@ -316,11 +316,7 @@ main (void)
   window.w_wndp = NULL;
   splitwind_calls = 0;
   reply_status = ABORT;
-  macro_keys[0] = '.';
-  macro_keys[1] = 0;
-  kbdmop = macro_keys;
-  assert (otherwindprefix (FALSE, 1, 0) == ABORT);
-  kbdmop = NULL;
+  assert (findtagotherwind (FALSE, 1, 0) == ABORT);
   reply_status = TRUE;
   curwp = &window;
   curbp = window.w_bufp;
@@ -331,11 +327,7 @@ main (void)
 
   curwp = &other_window;
   curbp = &origin_buffer;
-  macro_keys[0] = '.';
-  macro_keys[1] = 0;
-  kbdmop = macro_keys;
-  assert (otherwindprefix (TRUE, 1, 0) == TRUE);
-  kbdmop = NULL;
+  assert (findtagotherwind (TRUE, 1, 0) == TRUE);
   assert (splitwind_calls == 1);
   assert (curwp == &window);
   assert (curwp->w_dot.p == target_second);
@@ -344,12 +336,8 @@ main (void)
   kbdmip = kbdm;
   reply_pattern = "^alph";
   strcpy (tagregpat, "^alph");
-  next_getkey = KMETA | KCTRL | '.';
-  assert (otherwindprefix (TRUE, 1, 0) == TRUE);
-  assert (kbdmip == kbdm + 1);
-  assert (kbdm[0] == (KMETA | KCTRL | '.'));
+  assert (findtagregotherwind (TRUE, 1, 0) == TRUE);
   kbdmip = NULL;
-  kbdmop = NULL;
   assert (curwp == &other_window);
   assert (curwp->w_dot.p == target_second);
   assert (tagtargetcount == 11);

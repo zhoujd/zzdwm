@@ -899,33 +899,3 @@ findtagother (int regexp, int f, int n)
   curwp->w_dot = target;
   return TRUE;
 }
-
-/*
- * Dispatch a C-X 4 command.
- */
-int
-otherwindprefix (int f, int n, int k)
-{
-  int key;
-
-  (void) k;
-  if (kbdmop != NULL)
-    key = *kbdmop++;
-  else
-    {
-      key = getkey ();
-      if (kbdmip != NULL)
-        {
-          if (kbdmip > &kbdm[NKBDM - 2])
-            return ABORT;
-          *kbdmip++ = key;
-        }
-    }
-
-  if (key == '.')
-    return findtagother (FALSE, f, n);
-  if (key == (KMETA | KCTRL | '.'))
-    return findtagother (TRUE, f, n);
-  eprintf ("Unknown C-X 4 command");
-  return ABORT;
-}

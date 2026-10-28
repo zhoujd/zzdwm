@@ -554,6 +554,48 @@ keymapinit ()
 }
 
 /*
+ * Dispatch a C-X 4 command.  Read the key that follows the prefix,
+ * preserving macro playback and recording, and invoke its command.
+ */
+int
+otherwindprefix (int f, int n, int k)
+{
+  typedef struct OTHERWINDKEY
+  {
+    int ok_key;                      /* Key following C-X 4.      */
+    int (*ok_funcp) (int f, int n, int k);
+  } OTHERWINDKEY;
+
+  static const OTHERWINDKEY otherwindkey[] =
+  {
+    {'.',                 findtagotherwind},
+    {KMETA | KCTRL | '.', findtagregotherwind}
+  };
+  int key;
+
+  (void) k;
+  if (kbdmop != NULL)
+    key = *kbdmop++;
+  else
+    {
+      key = getkey ();
+      if (kbdmip != NULL)
+        {
+          if (kbdmip > &kbdm[NKBDM - 2])
+            return ABORT;
+          *kbdmip++ = key;
+        }
+    }
+
+  for (unsigned int index = 0;
+       index < sizeof (otherwindkey) / sizeof (otherwindkey[0]); index++)
+    if (otherwindkey[index].ok_key == key)
+      return otherwindkey[index].ok_funcp (f, n, key);
+  eprintf ("Unknown C-X 4 command");
+  return ABORT;
+}
+
+/*
  * Add a symbol to the appropriate hash chain.
  */
 static void

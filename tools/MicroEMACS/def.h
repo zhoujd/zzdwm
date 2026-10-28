@@ -1089,6 +1089,7 @@ void setbinding (int key, SYMBOL *sym); /* Add global key binding       */
 void setmodebinding (int key,
                      SYMBOL *sym);      /* Add key binding to mode      */
 int wallchart (int f, int n, int k);    /* Make wall chart.             */
+int otherwindprefix (int f, int n, int k); /* Dispatch C-X 4 commands   */
 const char * symsearch (const char *sname, /* Search for symbol.        */
                         int cpos,
                         const char *prev);
@@ -1103,7 +1104,6 @@ int findtag (int f, int n, int k);      /* Search for a tag             */
 int findtagotherwind (int f, int n, int k); /* Search tag in other window */
 int findtagregexp (int f, int n, int k); /* Search tags by regexp       */
 int findtagregotherwind (int f, int n, int k); /* Regexp in other window */
-int otherwindprefix (int f, int n, int k); /* Dispatch C-X 4 commands */
 int freetags (int f, int n, int k);     /* Free up tag list             */
 int poptagmark (int f, int n, int k);   /* Return to tag origin         */
 int nexttagtarget (int f, int n, int k); /* Next tag target             */
