@@ -863,7 +863,7 @@ findtagotherwind (int f, int n, int k)
  * Search for a regexp tag in another window.
  */
 int
-findtagregexpotherwind (int f, int n, int k)
+findtagregotherwind (int f, int n, int k)
 {
   (void) k;
   return findtagother (TRUE, f, n);
