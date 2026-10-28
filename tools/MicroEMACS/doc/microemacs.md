@@ -1137,23 +1137,24 @@ M-C-T
 :   **trim-line**\index{M-C-T}\index{trim-line}
 
     Remove trailing spaces and tabs. With no argument, trim each line in the
-    current region; with an argument, trim that many lines.
+    current region, or the current line when no region is marked; with an
+    argument, trim that many lines.
 
 C-X C-D
 
 :   **detab-line**\index{C-X C-D}\index{detab-line}
 
     Convert tabs to spaces using the current tab size. With no
-    argument, operate on the current region; with an argument, operate on
-    that many lines.
+    argument, operate on the current region, or the current line when no
+    region is marked; with an argument, operate on that many lines.
 
 C-X C-E
 
 :   **entab-line**\index{C-X C-E}\index{entab-line}
 
     Convert runs of spaces to tabs where they reach a tab stop. With no
-    argument, operate on the current region; with an argument, operate on
-    that many lines.
+    argument, operate on the current region, or the current line when no
+    region is marked; with an argument, operate on that many lines.
 
 M-+
 

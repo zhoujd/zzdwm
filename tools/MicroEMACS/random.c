@@ -934,7 +934,7 @@ detab(int f, int n, int k)
       while (curwp->w_dot.o < wllength(curwp->w_dot.p))
         {
           /* if we have a tab */
-          if (lgetc(curwp->w_dot.p, curwp->w_dot.o) == '\t')
+          if (wlgetc(curwp->w_dot.p, curwp->w_dot.o) == '\t')
             {
               /* Calculate spaces needed BEFORE deleting the tab */
               spaces = (tabmask + 1) - (curwp->w_dot.o & tabmask);
@@ -1000,7 +1000,7 @@ entab (int f, int n, int k)
         {
           /* Read char or handle end-of-line boundary virtual char */
           if (curwp->w_dot.o < wllength(curwp->w_dot.p))
-            cchar = lgetc(curwp->w_dot.p, curwp->w_dot.o);
+            cchar = wlgetc(curwp->w_dot.p, curwp->w_dot.o);
           else
             cchar = '\0';  /* EOL sentinel to flush trailing space runs */
 
@@ -1096,11 +1096,7 @@ trim (int f, int n, int k)
     return FALSE;
 
   if (f == FALSE)
-    {
-      n = reglines ();
-      if (n <= 0)                 /* no region: trim current line */
-        n = 1;
-    }
+    n = reglines ();
 
   inc = ((n > 0) ? 1 : -1);
   while (n)

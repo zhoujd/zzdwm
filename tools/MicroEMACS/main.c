@@ -807,11 +807,7 @@ int
 ctlxe (int f, int n, int k)
 {
   if (f == FALSE)
-    {
-      n = reglines();
-      if (n <= 0)
-        n = 1;
-    }
+    n = reglines ();
   return domacro (&kbdm[0], n);
 }
 

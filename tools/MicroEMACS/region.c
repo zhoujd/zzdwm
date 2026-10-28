@@ -369,8 +369,8 @@ reglines ()
   REGION region;
 
   /* check for a valid region first */
-  if (getregion (&region) != TRUE )
-      return (FALSE);
+  if (getregion (&region) != TRUE)
+    return (1);
 
   /* start at the top of the region.... */
   linep = region.r_pos.p;
@@ -389,7 +389,7 @@ reglines ()
   curwp->w_dot.p = region.r_pos.p;
   curwp->w_dot.o = region.r_pos.o;
 
-  return (n);
+  return (n > 0 ? n : 1);
 }
 
 /*
