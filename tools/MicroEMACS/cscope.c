@@ -225,7 +225,7 @@ prepref (const char *string)
 int
 findcscope (int f, int n, int k)
 {
-  return searchtag (f, n, prepref, "ref");
+  return searchtag (f, n, prepref, "ref", FALSE);
 }
 
 /*
@@ -234,7 +234,7 @@ findcscope (int f, int n, int k)
 int
 nextcscope (int f, int n, int k)
 {
-  return searchtag (1, n, prepref, "ref");
+  return searchtag (1, n, prepref, "ref", FALSE);
 }
 
 /*
@@ -256,5 +256,5 @@ prepgrep (const char *string)
 int
 findgrep (int f, int n, int k)
 {
-  return searchtag (f, n, prepgrep, "grep");
+  return searchtag (f, n, prepgrep, "grep", FALSE);
 }

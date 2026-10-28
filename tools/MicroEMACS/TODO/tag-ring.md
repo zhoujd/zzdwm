@@ -7,6 +7,8 @@ targets. The target history records locations reached by tag, cscope, or
 grep navigation.
 
 * `M-.` prompts for a tag and jumps to the first match.
+* `M-C-.` runs `find-tag-regexp` and matches tag names with a regular
+  expression.
 * `C-u M-.` jumps to the next match for that tag.
 * `M-- M-.` jumps to the previous match for that tag.
 * `M-*` runs `pop-tag-mark` and returns to the most recent origin.
@@ -27,6 +29,5 @@ grep navigation.
 
 ## Future Work
 
-* Consider a GNU Emacs-style `find-tag-regexp` command.
 * Consider other-window and other-frame tag navigation variants if window and
   frame support make them useful.

@@ -2325,6 +2325,16 @@ M-.
     `M-- M-.` to find the previous match.  The command then visits the
     corresponding file and places the dot at the line containing the identifier.
 
+M-C-.
+
+:   **find-tag-regexp**\index{find-tag-regexp}\index{M-C-.}
+
+    This command prompts for a regular expression, then searches tag names in
+    the `TAGS` file. Its argument behavior matches `find-tag`: no argument
+    starts from the first tag, `C-u M-C-.` finds the next match, and
+    `M-- M-C-.` finds the previous match. Regular-expression and identifier
+    tag searches keep separate patterns and match positions.
+
 M-*
 
 :   **pop-tag-mark**\index{pop-tag-mark}
@@ -3376,6 +3386,10 @@ C-@,C-space
 M-.
 
 :   find-tag
+
+M-C-.
+
+:   find-tag-regexp
 
 C-X H
 

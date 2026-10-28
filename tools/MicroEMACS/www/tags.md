@@ -35,6 +35,12 @@ finds the next occurence.  Use `C-u M-.` to find the next match and `M-- M-.`
 to find the previous match.  The command then visits the corresponding file
 and places the dot at the line containing the identifier.
 
+**M-C-.** (**find-tag-regexp**)
+
+This command prompts for a regular expression, then searches tag names in the
+`TAGS` file. Its argument behavior matches **find-tag**. Regular-expression
+and identifier tag searches keep separate patterns and match positions.
+
 **M-*** (**pop-tag-mark**)
 
 This command returns to the buffer and location from which the most recent

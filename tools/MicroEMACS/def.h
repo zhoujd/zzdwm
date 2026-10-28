@@ -1100,6 +1100,7 @@ const char * modename (BUFFER *bp);     /* Return name for current mode */
  * Defined by "tags.c".
  */
 int findtag (int f, int n, int k);      /* Search for a tag             */
+int findtagregexp (int f, int n, int k); /* Search tags by regexp       */
 int freetags (int f, int n, int k);     /* Free up tag list             */
 int poptagmark (int f, int n, int k);   /* Return to tag origin         */
 int nexttagtarget (int f, int n, int k); /* Next tag target             */
@@ -1115,7 +1116,7 @@ tagfile * findtagfile (const char *name);
 tagref * addtagref (const char *string, tagfile *file, int line, long offset,
                     int exact);
 int searchtag (int f, int n, int (*prep)(const char *string),
-               const char *tagtype);
+               const char *tagtype, int regexp);
 
 void getcursorword (char *buffer,       /* Get word under cursor.       */
                     int size,

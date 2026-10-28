@@ -57,6 +57,7 @@
  *
  */
 #include "def.h"
+#include "regexp.h"
 #include <string.h>
 #include <unistd.h>
 
@@ -89,6 +90,7 @@ tagref tagreflist = {		/* list of all tags             */
 };
 
 char tagpat[NPAT];		/* tag pattern to search        */
+static char tagregpat[NPAT];	/* tag regular expression       */
 
 static int havetags;		/* true if tags file was read	*/
 
@@ -655,15 +657,51 @@ getcursorword (char *buffer, int size, int alpha)
 
 typedef int (*prepfunc)(const char *string);
 
-int
-searchtag (int f, int n, prepfunc prep, const char * tagtype)
+static int
+matchtag (const char *string, regexp *pattern)
 {
-  static tagref *lastref;	/* remember last ref    */
+  return pattern == NULL
+         ? strstr (string, tagpat) != NULL
+         : regexec (pattern, string) == TRUE;
+}
+
+struct tagsearch
+{
+  tagref *lastref;
+  struct regexp *lastpattern;
+};
+
+int
+searchtag (int f, int n, prepfunc prep, const char * tagtype, int regexp)
+{
+  static struct tagsearch searches[2];
+  struct tagsearch *search;
   tagref *r;			/* current tag          */
   tagfile *tf;			/* current file         */
   TAGORIGIN origin;		/* location before jump */
+  struct regexp *pattern;	/* compiled tag pattern */
   int s;
   char tpat[NPAT];		/* temporary pattern    */
+  char *pat;			/* pattern to use       */
+
+  search = &searches[regexp != FALSE];
+  pat = regexp ? tagregpat : tagpat;
+  pattern = NULL;
+
+  if (!f)
+    {
+      free (search->lastpattern);
+      search->lastpattern = NULL;
+    }
+  else if (regexp)
+    {
+      if (search->lastpattern == NULL)
+        {
+          eprintf ("No tag regexps have been searched");
+          return FALSE;
+        }
+      pattern = search->lastpattern;
+    }
 
   /* If an argument is specified (whose value is ignored),
    * search for the next tag whose name matches the last
@@ -674,32 +712,48 @@ searchtag (int f, int n, prepfunc prep, const char * tagtype)
     {				/* argument specified?  */
       /* Start searching where we left off last time.
        */
-      r = lastref ? (n >= 0 ? lastref->next : lastref->prev) : &tagreflist;
+      r = search->lastref
+          ? (n >= 0 ? search->lastref->next : search->lastref->prev)
+          : &tagreflist;
     }
   else
     {
       /* Get a default string to search for by looking at the word
        * under the cursor (if any).
        */
-      getcursorword (tagpat, sizeof (tagpat), FALSE);
+      if (!regexp)
+        getcursorword (pat, NPAT, FALSE);
 
       /* Prompt for the tag to search for if no argument
        * specified.
        */
-      s = ereply ("Find %s [%s]: ", tpat, NPAT, tagtype, tagpat);
+      s = ereply ("Find %s [%s]: ", tpat, NPAT, tagtype, pat);
       if (s == TRUE)		/* Specified            */
-        strcpy (tagpat, tpat);
-      else if (s == FALSE && tagpat[0] != 0)	/* CR, but old one      */
+        strcpy (pat, tpat);
+      else if (s == FALSE && pat[0] != 0)	/* CR, but old one      */
         s = TRUE;
       if (s != TRUE)
         return s;
+
+      if (regexp)
+        {
+          pattern = regcomp (pat);
+          if (pattern == NULL)
+            return FALSE;
+        }
 
       /* Prepare things for an initial search.  This gives the
        * caller an opportunity to prime the tag list based on the
        * string specified by the user.
        */
-      if (prep (tagpat) == FALSE)
-        return FALSE;
+      if (prep (pat) == FALSE)
+        {
+          free (pattern);
+          return FALSE;
+        }
+
+      if (regexp)
+        search->lastpattern = pattern;
 
 #if DPRINT
       report = fopen ("report", "w");
@@ -716,20 +770,21 @@ searchtag (int f, int n, prepfunc prep, const char * tagtype)
     {
       dprintf ((report, "Ref %s, line %ld, offset %ld, file %s\n",
                 r->string, r->line, r->offset, r->file->tf->fname));
-      if (strstr (r->string, tagpat) != NULL)
+      if (matchtag (r->string, pattern))
         break;
       r = n >= 0 ? r->next : r->prev;	/* skip to next tag */
     }
   if (r == &tagreflist)
     {
-      eprintf ("No %s%ss for %s", f ? "more " : "", tagtype, tagpat);
-      return FALSE;
+      eprintf ("No %s%ss for %s", f ? "more " : "", tagtype, pat);
+      s = FALSE;
+      goto cleanup;
     }
 
   /* Save the current position in the tag list so we can
    * later resume the search at this point.
    */
-  lastref = r;
+  search->lastref = r;
 
   /* Visit the file specified by this tag, then move
    * to the line containing this tag.
@@ -737,10 +792,13 @@ searchtag (int f, int n, prepfunc prep, const char * tagtype)
   tf = r->file;
   origin = currenttaglocation ();
   if ((s = visit_file (tf->fname)) != TRUE)
-    return s;
+    goto cleanup;
   pushtagorigin (origin);
   if (gotoline (TRUE, r->line, 0) == FALSE)
-    return FALSE;
+    {
+      s = FALSE;
+      goto cleanup;
+    }
   if (tagtargetcount == RINGSIZE)
     {
       int index;
@@ -756,7 +814,10 @@ searchtag (int f, int n, prepfunc prep, const char * tagtype)
 #if DPRINT
   fclose (report);
 #endif
-  return TRUE;
+  s = TRUE;
+
+cleanup:
+  return s;
 }
 
 /*
@@ -771,5 +832,16 @@ searchtag (int f, int n, prepfunc prep, const char * tagtype)
 int
 findtag (int f, int n, int k)
 {
-  return searchtag (f, n, preptag, "tag");
+  return searchtag (f, n, preptag, "tag", FALSE);
+}
+
+/*
+ * Search for a tag whose name matches a regular expression.
+ * The argument behavior matches find-tag.
+ */
+int
+findtagregexp (int f, int n, int k)
+{
+  (void) k;
+  return searchtag (f, n, preptag, "tag regexp", TRUE);
 }

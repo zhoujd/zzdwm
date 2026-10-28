@@ -32,7 +32,7 @@ tcap: tcap.c
 reftag: reftag.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
-tag-test: tag.c $(ROOT)/utf8.c
+tag-test: tag.c $(ROOT)/regexp.c $(ROOT)/regexp.h $(ROOT)/utf8.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections \
 		$(LDFLAGS) -Wl,--gc-sections -o $@ -DCOLOR -I$(ROOT) \
 		-I$(ROOT)/sys/unix -I$(ROOT)/tty/ncurses $^

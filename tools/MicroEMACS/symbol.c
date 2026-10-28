@@ -232,6 +232,7 @@ KEY key[] = {
   {KMETA | KCTRL | 'W', killpara,          "kill-paragraph"},
   {KMETA | KCTRL | 'Z', scrnextup,         "scroll-next-up"},
   {KMETA | '.',         findtag,           "find-tag"},
+  {KMETA | KCTRL | '.', findtagregexp,     "find-tag-regexp"},
   {KMETA | '*',         poptagmark,        "pop-tag-mark"},
 #if HAS_CSCOPE
   {KMETA | ',',         findcscope,        "find-cscope"},

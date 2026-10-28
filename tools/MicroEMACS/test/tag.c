@@ -16,6 +16,7 @@ static BUFFER target_buffer;
 static EWINDOW window;
 static char error_message[128];
 static int visit_file_status = TRUE;
+static const char *reply_pattern = "alpha";
 
 static LINE *
 make_line (const char *text)
@@ -52,8 +53,14 @@ ereply (const char *prompt, char *buffer, int size, ...)
 {
   (void) prompt;
   (void) size;
-  strcpy (buffer, "alpha");
+  strcpy (buffer, reply_pattern);
   return TRUE;
+}
+
+void
+regerror (const char *message)
+{
+  eprintf ("regular expression error: %s", message);
 }
 
 void
@@ -177,8 +184,28 @@ main (void)
   assert (curwp->w_dot.p == target_first);
   assert (tagorigincount == 3);
 
-  assert (tagtargetcount == 3);
-  assert (tagtargetindex == 3);
+  assert (findtagregexp (TRUE, 1, 0) == FALSE);
+  assert (strcmp (error_message, "No tag regexps have been searched") == 0);
+
+  reply_pattern = "no-such-tag";
+  strcpy (tagregpat, "no-such-tag");
+  assert (findtagregexp (FALSE, 1, 0) == FALSE);
+  assert (strcmp (error_message, "No tag regexps for no-such-tag") == 0);
+
+  reply_pattern = "^alph";
+  assert (findtagregexp (FALSE, 1, 0) == TRUE);
+  assert (curbp == &target_buffer);
+  assert (curwp->w_dot.p == target_first);
+  assert (tagorigincount == 4);
+
+  assert (findtagregexp (TRUE, 1, 0) == TRUE);
+  assert (curwp->w_dot.p == target_second);
+
+  assert (findtagregexp (TRUE, -1, 0) == TRUE);
+  assert (curwp->w_dot.p == target_first);
+
+  assert (tagtargetcount == 6);
+  assert (tagtargetindex == 6);
   assert (backtagtarget (FALSE, 1, 0) == TRUE);
   assert (curwp->w_dot.p == target_second);
   assert (nexttagtarget (FALSE, 1, 0) == TRUE);
@@ -189,26 +216,39 @@ main (void)
   assert (curwp->w_dot.p == target_second);
   assert (backtagtarget (FALSE, 1, 0) == TRUE);
   assert (curwp->w_dot.p == target_first);
+  assert (backtagtarget (FALSE, 1, 0) == TRUE);
+  assert (curwp->w_dot.p == target_first);
+  assert (backtagtarget (FALSE, 1, 0) == TRUE);
+  assert (curwp->w_dot.p == target_second);
+  assert (backtagtarget (FALSE, 1, 0) == TRUE);
+  assert (curwp->w_dot.p == target_first);
   assert (backtagtarget (FALSE, 1, 0) == FALSE);
   assert (strcmp (error_message, "No previous tag target") == 0);
-  assert (tagorigincount == 3);
+  assert (tagorigincount == 6);
+
+  assert (findtag (TRUE, 1, 0) == TRUE);
+  assert (curwp->w_dot.p == target_second);
+  assert (findtagregexp (TRUE, 1, 0) == TRUE);
+  assert (curwp->w_dot.p == target_second);
 
   origin_second->l_used = 1;
   assert (poptagmark (FALSE, 1, 0) == TRUE);
   assert (curbp == &target_buffer);
   assert (curwp->w_dot.p == target_second);
-  assert (tagorigincount == 2);
+  assert (tagorigincount == 7);
 
   assert (poptagmark (FALSE, 1, 0) == TRUE);
   assert (curbp == &target_buffer);
   assert (curwp->w_dot.p == target_first);
-  assert (tagorigincount == 1);
+  assert (tagorigincount == 6);
 
-  assert (poptagmark (FALSE, 1, 0) == TRUE);
-  assert (curbp == &origin_buffer);
+  do
+    assert (poptagmark (FALSE, 1, 0) == TRUE);
+  while (curbp != &origin_buffer);
   assert (curwp->w_dot.p == origin_second);
   assert (curwp->w_dot.o == 1);
-  assert (tagorigincount == 0);
+  while (tagorigincount > 0)
+    assert (poptagmark (FALSE, 1, 0) == TRUE);
 
   assert (poptagmark (FALSE, 1, 0) == FALSE);
   assert (strcmp (error_message, "No tag mark") == 0);
@@ -217,7 +257,8 @@ main (void)
   assert (findtag (FALSE, 1, 0) == FALSE);
   assert (tagorigincount == 0);
   visit_file_status = TRUE;
-
+  reply_pattern = "alpha";
+  tagpat[0] = '\0';
   assert (findtag (FALSE, 1, 0) == TRUE);
   assert (tagorigincount == 1);
   assert (tagorigins[0].buffer == &origin_buffer);
