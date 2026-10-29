@@ -236,17 +236,17 @@ usage() {
 Usage: init.sh <option>
 
 Build:
-  build | -b   Build binaries
-  clean | -c   Clean build artifacts
-  all   | -a   Init and build everything
+build | -b   Build binaries
+clean | -c   Clean build artifacts
+all   | -a   Init and build everything
 
 Install (Default DEST=/usr/local):
-  dep          Install system dependencies (Ubuntu/Debian/Void)
-  bin          Install binaries
-  tool         Install internal tools
-  dm           Install XSession desktop assets
-  misc         Install miscellaneous configs
-  install | -i Install all components
+dep          Install system dependencies (Ubuntu/Debian/Void)
+bin          Install binaries
+tool         Install internal tools
+dm           Install XSession desktop assets
+misc         Install miscellaneous configs
+install | -i Install all components
 EOF
 }
 
