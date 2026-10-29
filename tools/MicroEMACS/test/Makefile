@@ -1,8 +1,8 @@
 ## Test Makefile
 
 ROOT = ..
-TARGET = utf8 regtest tcap reftag tag-test syntax-test display-test \
-	cscope-test lisp-test ai-test path-test
+TARGET = utf8 regtest tcap reftag tag-test symbol-test syntax-test \
+	display-test cscope-test lisp-test ai-test path-test
 CFLAGS := -Os
 
 ifeq ($(INSIDE_DOCKER), yes)
@@ -36,6 +36,11 @@ tag-test: tag.c $(ROOT)/regexp.c $(ROOT)/regexp.h $(ROOT)/utf8.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections \
 		$(LDFLAGS) -Wl,--gc-sections -o $@ -DCOLOR -I$(ROOT) \
 		-I$(ROOT)/sys/unix -I$(ROOT)/tty/ncurses $^
+
+symbol-test: symbol.c $(ROOT)/def.h $(ROOT)/symbol.c
+	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections \
+		$(LDFLAGS) -Wl,--gc-sections -o $@ -DCOLOR -I$(ROOT) \
+		-I$(ROOT)/sys/unix -I$(ROOT)/tty/ncurses symbol.c $(ROOT)/def.h
 
 syntax-test: syntax.c $(ROOT)/utf8.c $(ROOT)/syntax.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ -I$(ROOT) -I$(ROOT)/sys/unix \

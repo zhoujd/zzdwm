@@ -557,6 +557,16 @@ keymapinit ()
  * Dispatch a C-X 4 command.  Read the key that follows the prefix,
  * preserving macro playback and recording, and invoke its command.
  */
+static int
+abortotherwind (int f, int n, int k)
+{
+  int status = ctrlg (f, n, k);
+
+  if (status == ABORT)
+    eprintf ("[Aborted]");
+  return status;
+}
+
 int
 otherwindprefix (int f, int n, int k)
 {
@@ -569,7 +579,8 @@ otherwindprefix (int f, int n, int k)
   static const OTHERWINDKEY otherwindkey[] =
   {
     {'.',                 findtagotherwind},
-    {KMETA | KCTRL | '.', findtagregotherwind}
+    {KMETA | KCTRL | '.', findtagregotherwind},
+    {KCTRL | 'G',         abortotherwind}
   };
   int key;
 
