@@ -414,6 +414,37 @@ test_shift_wheel (void)
   free_window ();
 }
 
+/* The scroll-left and scroll-right commands share the Shift+wheel
+   engine: default step four, prefix argument overrides it, right
+   stops at the widest visible line, left clamps at column 0, and the
+   view is pinned with the dot untouched. */
+static void
+test_hscroll_commands (void)
+{
+  make_window ();
+
+  assert (scrollright (FALSE, 1, KRANDOM) == TRUE);
+  assert (test_win.w_leftcol == 4);
+  assert (test_win.w_hscroll != 0);
+  assert (scrollright (FALSE, 1, KRANDOM) == TRUE);
+  assert (test_win.w_leftcol == 8);
+  assert (scrollright (FALSE, 1, KRANDOM) == TRUE);
+  assert (test_win.w_leftcol == 8);	/* 8 + 4 >= 11: stop */
+  assert_pos (&test_win.w_dot, test_line1, 0);  /* dot untouched */
+  assert ((test_win.w_flag & WFHARD) != 0);
+
+  assert (scrollleft (FALSE, 1, KRANDOM) == TRUE);
+  assert (test_win.w_leftcol == 4);
+
+  /* A prefix argument steps by that many columns. */
+  assert (scrollright (TRUE, 2, KRANDOM) == TRUE);
+  assert (test_win.w_leftcol == 6);
+  assert (scrollleft (TRUE, 20, KRANDOM) == TRUE);
+  assert (test_win.w_leftcol == 0);	/* clamped */
+
+  free_window ();
+}
+
 /* Deterministic clock for the SGR click-count window. */
 static long fake_clock_time;
 static long
@@ -823,6 +854,7 @@ main (void)
   test_modeline_click ();
   test_wheel ();
   test_shift_wheel ();
+  test_hscroll_commands ();
   test_sgr_decode ();
   test_x10_pattern ();
   test_selection_highlight ();

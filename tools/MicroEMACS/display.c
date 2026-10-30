@@ -2244,6 +2244,62 @@ mouse_button_click (void)
 }
 
 /*
+ * Scroll a window horizontally by the signed "cols" columns and pin
+ * the view (w_hscroll) so update()'s automatic recentring around dot
+ * does not pull it straight back; the pin drops when dot next moves
+ * or is edited.  Scrolling right stops while text remains: the
+ * widest visible line sets the limit, so the view never runs past
+ * the end of the text.  Scrolling left stops at column 0.
+ */
+static int
+hscroll_window (EWINDOW * wp, int cols)
+{
+  LINE *lp;
+  int i, widest;
+
+  widest = 0;
+  lp = wp->w_linep;
+  for (i = 0; i < wp->w_ntrows && lp != wp->w_bufp->b_linep; ++i)
+    {
+      if (wllength (lp) > widest)
+	widest = wllength (lp);
+      lp = lforw (lp);
+    }
+  if (cols < 0)
+    {				/* Left, clamped at the left edge. */
+      wp->w_leftcol += cols;
+      if (wp->w_leftcol < 0)
+	wp->w_leftcol = 0;
+    }
+  else if (wp->w_leftcol + cols < widest)
+    wp->w_leftcol += cols;	/* Right, while text remains. */
+  wp->w_hscroll = TRUE;
+  wp->w_flag |= WFHARD;
+  return (TRUE);
+}
+
+/*
+ * Scroll the current window left (scroll-left) or right
+ * (scroll-right) by "n" columns, four by default: the keyboard
+ * counterparts of Shift+wheel, runnable from M-x or bound in Lisp.
+ */
+int
+scrollleft (int f, int n, int k)
+{
+  if (f == FALSE)
+    n = 4;
+  return hscroll_window (curwp, -n);
+}
+
+int
+scrollright (int f, int n, int k)
+{
+  if (f == FALSE)
+    n = 4;
+  return hscroll_window (curwp, n);
+}
+
+/*
  * Handle a mouse event.  The tty backend decodes the event into
  * mouse_kind, mouse_mods, mouse_button, mouse_row, and mouse_column.
  *
@@ -2278,35 +2334,8 @@ mouseevent (int f, int n, int k)
         wp = curwp;
       mouse_switch_window (wp);
       if ((mouse_mods & MOUSE_SHIFT) != 0)
-        {
-          /* Shift+wheel scrolls horizontally, in columns.  The
-             window is pinned (w_hscroll) so update() does not
-             pull the view straight back around dot; the pin
-             drops when dot next moves or is edited. */
-          LINE *lp;
-          int i, widest;
-
-          widest = 0;
-          lp = wp->w_linep;
-          for (i = 0; i < wp->w_ntrows && lp != wp->w_bufp->b_linep;
-               ++i)
-            {
-              if (wllength (lp) > widest)
-                widest = wllength (lp);
-              lp = lforw (lp);
-            }
-          if (mouse_button == 3)
-            {			/* Wheel up scrolls left. */
-              wp->w_leftcol -= 4;
-              if (wp->w_leftcol < 0)
-                wp->w_leftcol = 0;
-            }
-          else if (wp->w_leftcol + 4 < widest)
-            wp->w_leftcol += 4;	/* Wheel down, text remains. */
-          wp->w_hscroll = TRUE;
-          wp->w_flag |= WFHARD;
-          return (TRUE);
-        }
+        /* Shift+wheel scrolls horizontally, in columns. */
+        return hscroll_window (wp, mouse_button == 3 ? -4 : 4);
       return mvupwind (FALSE,
                        mouse_button == 3 ? mouse_wheel_step
                                          : -mouse_wheel_step,

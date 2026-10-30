@@ -745,6 +745,8 @@ void update (void);                     /* Make sure display is right.  */
 void vtinit (void);                     /* Initialize video display.    */
 void vttidy (void);                     /* Tidy display before exit.    */
 int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
+int scrollleft (int f, int n, int k);   /* Scroll window left.          */
+int scrollright (int f, int n, int k);  /* Scroll window right.         */
 int mouse_col_to_offset (LINE * lp, int target); /* Click column to char. */
 void mouse_decode_sgr (int b, int row, int col, int release);
                                 /* Decode SGR event into mouse_*. */
