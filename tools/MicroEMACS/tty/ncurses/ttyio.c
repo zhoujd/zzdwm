@@ -44,6 +44,7 @@
 
 static struct termios oldtty;	/* Old tty state		*/
 static struct termios newtty;	/* New tty state		*/
+static mmask_t oldmousemask;	/* Old mouse event mask		*/
 
 int nrow;			/* Terminal size, rows.         */
 int ncol;			/* Terminal size, columns.      */
@@ -94,6 +95,19 @@ ttopen (void)
   cbreak ();			/* take input chars one at a time, no wait for \n */
   noecho ();
   raw ();
+  if (mouse)
+    {
+      /* Enable mouse reporting; ncurses picks the protocol
+       * (SGR or X10) that the terminal supports.  Events arrive
+       * as KEY_MOUSE and are decoded in ttykbd.c.
+       */
+      mouseinterval (200);
+      mousemask (BUTTON1_PRESSED | BUTTON1_RELEASED
+                 | BUTTON2_PRESSED | BUTTON2_RELEASED
+                 | BUTTON3_PRESSED | BUTTON3_RELEASED
+                 | BUTTON4_PRESSED | BUTTON5_PRESSED
+                 | REPORT_MOUSE_POSITION, &oldmousemask);
+    }
   setttysize ();
   tcgetattr (0, &newtty);
 }
@@ -133,6 +147,8 @@ ttnew (void)
 void
 ttclose (void)
 {
+  if (mouse)
+    mousemask (oldmousemask, (mmask_t *) 0);
   endwin ();
   tcsetattr (0, TCSANOW, &oldtty);
 }

@@ -299,6 +299,8 @@ parse_or_mouse (TRIE first)
       mouse_button = ttgetc () - ' ';
       mouse_column = ttgetc () - ' ' - 1;
       mouse_row    = ttgetc () - ' ' - 1;
+      mouse_kind = MOUSE_PRESS;        /* X10 reports presses only. */
+      mouse_mods = 0;
 #if DEBUG
       fprintf (stderr, "button %d, row %d, column %d\n",
                mouse_button, mouse_row, mouse_column);

@@ -159,11 +159,15 @@ VIDEO blanks;			/* Blank line image.            */
 static uchar spaces[NCOL];	/* ASCII spaces.		*/
 
 /*
- * These variables are set by ttykbd.c when a mouse button is pressed.
+ * These variables are set by the tty backends when a mouse event
+ * arrives.  Rows and columns are 0-based screen positions in the
+ * editor's (possibly page-stacked) coordinate space.
  */
-int mouse_button;		/* 0=left, 1=middle, 2=right	*/
+int mouse_button;		/* 0=left, 1=middle, 2=right    */
 int mouse_row;			/* screen row (0 = top)		*/
 int mouse_column;		/* screen column (0 = left)	*/
+int mouse_kind;			/* MOUSE_PRESS and friends	*/
+int mouse_mods;			/* MOUSE_SHIFT/ALT/CTRL bits	*/
 
 #if GOSLING
 /*
@@ -1603,13 +1607,94 @@ traceback (int offs, int size, int i, int j)
 #endif	/* GOSLING */
 
 /*
- * Handle mouse button event.
+ * Convert a screen column relative to the start of a window's text
+ * area into a Unicode character index into line "lp".  Wide
+ * characters that would be split by the click are not entered; the
+ * position stops before them.  Tabs count as one column.  A target
+ * past the end of the line clamps to the end of the line.
+ */
+int
+mouse_col_to_offset (LINE * lp, int target)
+{
+  int i;
+  int col;
+  int len;
+
+  if (target < 0)
+    target = 0;
+  len = wllength (lp);
+  col = 0;
+  for (i = 0; i < len; ++i)
+    {
+      int w = uwidth (wlgetc (lp, i));
+
+      if (w <= 0)
+        w = 1;
+      if (col + w > target)
+        break;
+      col += w;
+    }
+  return (i);
+}
+
+/*
+ * Handle a mouse event.  The tty backend decodes the event into
+ * mouse_kind, mouse_mods, mouse_button, mouse_row, and mouse_column.
+ * A button press in the text of a window moves the point to the
+ * clicked position; a press on a mode line selects that window.
+ * Other event kinds are ignored for now.
  */
 int
 mouseevent (int f, int n, int k)
 {
-  eprintf ("[Mouse button %d, row %d, column %d]",
-           mouse_button, mouse_row, mouse_column);
+  EWINDOW *wp;
+  LINE *lp;
+  int rowoff;
+  int col;
+
+  if (mouse_kind != MOUSE_PRESS)
+    return (TRUE);
+
+  /* Find the window that owns the clicked row. */
+  for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
+    {
+      if (mouse_row < wp->w_toprow + wp->w_ntrows)
+        break;              /* Text rows of this window. */
+      if (mouse_row == wp->w_toprow + wp->w_ntrows)
+        break;              /* Mode line of this window.  */
+    }
+  if (wp == NULL)
+    return (TRUE);          /* Below the last mode line.  */
+
+  /* Clicking a mode line selects the window. */
+  if (mouse_row == wp->w_toprow + wp->w_ntrows)
+    {
+      if (wp != curwp)
+        {
+          curwp = wp;
+          curbp = wp->w_bufp;
+          updatemode ();
+        }
+      return (TRUE);
+    }
+
+  /* Clicking the text moves the point to the clicked cell. */
+  if (wp != curwp)
+    {
+      curwp = wp;
+      curbp = wp->w_bufp;
+      updatemode ();
+    }
+
+  lp = wp->w_linep;
+  rowoff = mouse_row - wp->w_toprow;
+  while (rowoff-- > 0 && lforw (lp) != wp->w_bufp->b_linep)
+    lp = lforw (lp);
+
+  col = mouse_column - window_gutter_width (wp) + wp->w_leftcol;
+  wp->w_dot.p = lp;
+  wp->w_dot.o = mouse_col_to_offset (lp, col);
+  wp->w_flag |= WFMOVE;
   return (TRUE);
 }
 

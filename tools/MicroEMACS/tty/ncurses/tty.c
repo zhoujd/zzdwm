@@ -127,6 +127,27 @@ get_actual_pos (int row, int col, int *actual_row, int *actual_col)
 }
 
 /*
+ * Translate real screen coordinates from a mouse event into the
+ * page-stacked virtual coordinates used by the editor, the inverse
+ * of get_actual_pos.  With one page this is the identity.
+ */
+void
+mouse_page_coords (int x, int y, int *vrow, int *vcol)
+{
+  int page;
+
+  if (npages < 2)
+    {
+      *vrow = y;
+      *vcol = x;
+      return;
+    }
+  page = x / (ncol + 1);
+  *vrow = page * actual_nrow + y;
+  *vcol = x - page * (ncol + 1);
+}
+
+/*
  * Move the cursor to the specified
  * origin 0 row and column position. Try to
  * optimize out extra moves; redisplay may

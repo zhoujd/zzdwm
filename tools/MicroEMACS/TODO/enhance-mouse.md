@@ -1,6 +1,8 @@
 # Enhance Mouse Support
 
-Status: proposal
+Status: in progress — P0 implemented on the ncurses backend (click
+to move point, mode-line click selects window; `mouse-test` covers
+the column mapping). Wheel, drag, and clipboard phases pending.
 Last updated: 2026-10-30
 
 ## Current State

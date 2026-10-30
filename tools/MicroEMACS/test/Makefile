@@ -2,7 +2,7 @@
 
 ROOT = ..
 TARGET = utf8 regtest tcap reftag tag-test symbol-test syntax-test \
-	display-test cscope-test lisp-test ai-test path-test
+	display-test mouse-test cscope-test lisp-test ai-test path-test
 CFLAGS := -Os
 
 ifeq ($(INSIDE_DOCKER), yes)
@@ -47,6 +47,11 @@ syntax-test: syntax.c $(ROOT)/utf8.c $(ROOT)/syntax.c
 		-I$(ROOT)/tty/ncurses -DCOLOR -DTEST syntax.c $(ROOT)/utf8.c
 
 display-test: display.c $(ROOT)/path.c $(ROOT)/utf8.c
+	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \
+		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/mingw \
+		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DTEST $^
+
+mouse-test: mouse.c $(ROOT)/path.c $(ROOT)/utf8.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \
 		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/mingw \
 		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DTEST $^

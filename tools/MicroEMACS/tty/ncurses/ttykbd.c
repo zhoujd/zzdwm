@@ -79,6 +79,8 @@ int specmap[32] = {
  * get remapped by "getkey".  The keys ALT-A through
  * ALT-Z are mapped to META-A through META-Z.
  */
+static int mouse_decode (void);
+
 int
 getkbd (void)
 {
@@ -97,10 +99,78 @@ getkbd (void)
   if (c == KEY_RESIZE)
     return CTRL('L');
 
+  /* Decode mouse events into the shared mouse_* variables. */
+  if (c == KEY_MOUSE)
+    return mouse_decode ();
+
   for (i = 0; i < 32; i++)		/* search SPECIAL map	*/
     if (c == specmap[i])		/* found it?		*/
       return (KFIRST + i);		/* return internal code */
   return (c);				/* not found, maybe Unicode? */
+}
+
+/*
+ * Decode a KEY_MOUSE event into the mouse_* variables shared with
+ * mouseevent in display.c, and return KMOUSE.  Wheel events are
+ * reported by ncurses as BUTTON4/BUTTON5_PRESSED.  Coordinates are
+ * translated into the page-stacked space used by the editor.
+ */
+static int
+mouse_decode (void)
+{
+  MEVENT ev;
+
+  mouse_kind = MOUSE_PRESS;
+  mouse_mods = 0;
+  mouse_button = 0;
+  mouse_row = 0;
+  mouse_column = 0;
+
+  if (getmouse (&ev) != OK)
+    return (KMOUSE);
+
+  mouse_page_coords (ev.x, ev.y, &mouse_row, &mouse_column);
+  if (ev.bstate & BUTTON_SHIFT)
+    mouse_mods |= MOUSE_SHIFT;
+  if (ev.bstate & BUTTON_ALT)
+    mouse_mods |= MOUSE_ALT;
+  if (ev.bstate & BUTTON_CTRL)
+    mouse_mods |= MOUSE_CTRL;
+
+  if (ev.bstate & BUTTON4_PRESSED)
+    {
+      mouse_kind = MOUSE_WHEEL;
+      mouse_button = 3;              /* Wheel up.   */
+    }
+  else if (ev.bstate & BUTTON5_PRESSED)
+    {
+      mouse_kind = MOUSE_WHEEL;
+      mouse_button = 4;              /* Wheel down. */
+    }
+  else if (ev.bstate & BUTTON1_PRESSED)
+    mouse_button = 0;
+  else if (ev.bstate & BUTTON2_PRESSED)
+    mouse_button = 1;
+  else if (ev.bstate & BUTTON3_PRESSED)
+    mouse_button = 2;
+  else if (ev.bstate & BUTTON1_RELEASED)
+    {
+      mouse_kind = MOUSE_RELEASE;
+      mouse_button = 0;
+    }
+  else if (ev.bstate & BUTTON2_RELEASED)
+    {
+      mouse_kind = MOUSE_RELEASE;
+      mouse_button = 1;
+    }
+  else if (ev.bstate & BUTTON3_RELEASED)
+    {
+      mouse_kind = MOUSE_RELEASE;
+      mouse_button = 2;
+    }
+  else
+    mouse_kind = MOUSE_MOTION;   /* Position report only. */
+  return (KMOUSE);
 }
 
 /*
@@ -142,4 +212,5 @@ ttykeymapinit (void)
   keydup (KF10,  "only-window");
   keydup (KF11,  "find-cscope");
   keydup (KF12,  "next-cscope");
+  keydup (KMOUSE, "mouse-event");
 }

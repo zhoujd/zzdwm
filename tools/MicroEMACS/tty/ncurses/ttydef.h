@@ -64,5 +64,9 @@
 #define	NFKEYS 12		/* # of function keys (k0-k9, K0-K9) */
 #endif
 
+/* Mouse events are reported by ncurses as KEY_MOUSE. */
+#define KMOUSE  K1F
+
 /* Functions. */
 void putline (int row, int col, const wchar_t *buf);
+void mouse_page_coords (int x, int y, int *vrow, int *vcol);

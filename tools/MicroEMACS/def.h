@@ -539,6 +539,18 @@ LINE;
 #define wloffset(lp, n)  (uoffset((lp)->l_text,(n)))
 
 /*
+ * Mouse event kinds and modifier bits, filled in by the tty
+ * backends along with mouse_button, mouse_row, and mouse_column.
+ */
+#define MOUSE_PRESS   0         /* Button press.                 */
+#define MOUSE_RELEASE 1         /* Button release.               */
+#define MOUSE_MOTION  2         /* Motion with a button down.    */
+#define MOUSE_WHEEL   3         /* Scroll wheel.                 */
+#define MOUSE_SHIFT   0x01      /* Shift was held.               */
+#define MOUSE_ALT     0x02      /* Alt was held.                 */
+#define MOUSE_CTRL    0x04      /* Ctrl was held.                */
+
+/*
  * Externals.
  */
 extern int thisflag;
@@ -583,6 +595,8 @@ extern int ttcol;
 extern int mouse_button;
 extern int mouse_row;
 extern int mouse_column;
+extern int mouse_kind;
+extern int mouse_mods;
 extern int tceeol;
 extern int tcinsl[];
 extern int tcdell[];
@@ -721,6 +735,7 @@ void update (void);                     /* Make sure display is right.  */
 void vtinit (void);                     /* Initialize video display.    */
 void vttidy (void);                     /* Tidy display before exit.    */
 int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
+int mouse_col_to_offset (LINE * lp, int target); /* Click column to char. */
 int showvisable (int f, int n, int k);  /* Show visable on modeline.    */
 int setnumber (int f, int n, int k);    /* Set line number display      */
 void vtputc_color (unsigned int c, int color);
