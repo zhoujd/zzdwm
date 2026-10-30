@@ -44,9 +44,6 @@
 
 static struct termios oldtty;	/* Old tty state		*/
 static struct termios newtty;	/* New tty state		*/
-#ifdef MOUSE
-static mmask_t oldmousemask;	/* Old mouse event mask		*/
-#endif
 
 int nrow;			/* Terminal size, rows.         */
 int ncol;			/* Terminal size, columns.      */
@@ -99,16 +96,7 @@ ttopen (void)
   raw ();
 #ifdef MOUSE
   if (mouse)
-    {
-      mouseinterval (200);
-      mousemask (BUTTON1_PRESSED | BUTTON1_RELEASED | BUTTON1_CLICKED
-                 | BUTTON1_DOUBLE_CLICKED | BUTTON1_TRIPLE_CLICKED
-                 | BUTTON2_PRESSED | BUTTON2_RELEASED | BUTTON2_CLICKED
-                 | BUTTON2_DOUBLE_CLICKED | BUTTON2_TRIPLE_CLICKED
-                 | BUTTON3_PRESSED | BUTTON3_RELEASED | BUTTON3_CLICKED
-                 | BUTTON3_DOUBLE_CLICKED | BUTTON3_TRIPLE_CLICKED,
-                 &oldmousemask);
-    }
+    ttsetmouse (TRUE);
 #endif
   setttysize ();
   tcgetattr (0, &newtty);
@@ -149,13 +137,34 @@ ttnew (void)
 void
 ttclose (void)
 {
+  endwin ();
 #ifdef MOUSE
   if (mouse)
-    mousemask (oldmousemask, (mmask_t *) 0);
+    ttsetmouse (FALSE);
 #endif
-  endwin ();
   tcsetattr (0, TCSANOW, &oldtty);
 }
+
+#ifdef MOUSE
+/*
+ * Enable normal press/release reporting with SGR encoding. Motion and the
+ * legacy X10 encoding remain disabled.
+ */
+void
+ttsetmouse (int flag)
+{
+  if (flag != FALSE)
+    {
+      if (write (1, "\033[?1000h\033[?1006h", 16) < 0)
+        perror ("mouse enable");
+    }
+  else
+    {
+      if (write (1, "\033[?1006l\033[?1000l", 16) < 0)
+        perror ("mouse disable");
+    }
+}
+#endif
 
 /*
  * Check for keyboard typeahead.  Return TRUE if any characters have
