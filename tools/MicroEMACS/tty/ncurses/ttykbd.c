@@ -33,7 +33,6 @@
 
 #include "def.h"
 #include <ncurses.h>
-#include <stdio.h>
 
 #define CTRL(x) ((x) & 0x1f)
 
@@ -73,9 +72,7 @@ int specmap[32] = {
 };
 
 #ifdef MOUSE
-#define KEY_SGRMOUSE (KEY_MAX + 1)
-
-static int mouse_decode_sgr (void);
+static int mouse_decode (void);
 #endif
 
 /*
@@ -94,8 +91,8 @@ getkbd (void)
 
   c = ttgetc ();
 #ifdef MOUSE
-  if (c == KEY_SGRMOUSE)
-    return mouse_decode_sgr ();
+  if (c == KEY_MOUSE)
+    return mouse_decode ();
 #endif
   if (c < KEY_MIN)			/* normal key?		*/
      return (c);			/* just return it	*/
@@ -115,44 +112,69 @@ getkbd (void)
 }
 
 #ifdef MOUSE
-/*
- * Decode the body of an SGR mouse report. Ncurses matches the fixed prefix;
- * this function reads "code;column;row" and the final M (press) or m
- * (release) byte.
- */
+/* Decode an ncurses mouse report into the normalized event queue. */
 static int
-mouse_decode_sgr (void)
+mouse_decode (void)
 {
-  char body[40];
+  MEVENT terminal_event;
   MOUSE_EVENT event;
-  int c = ERR;
-  int length = 0;
-  int release = FALSE;
-  int code, column, row;
 
-  while (length < (int) sizeof (body) - 1)
-    {
-      c = ttgetc ();
-      if (c == ERR)
-        break;
-      if (c == 'M' || c == 'm')
-        {
-          release = c == 'm';
-          break;
-        }
-      body[length++] = (char) c;
-    }
-  body[length] = 0;
+  if (getmouse (&terminal_event) != OK)
+    return KMOUSE;
 
-  if ((c == 'M' || c == 'm')
-      && sscanf (body, "%d;%d;%d", &code, &column, &row) == 3
-      && column > 0 && row > 0)
+  memset (&event, 0, sizeof (event));
+  mouse_page_coords (terminal_event.y, terminal_event.x,
+                     &event.row, &event.column);
+
+  if ((terminal_event.bstate & BUTTON1_PRESSED) != 0)
     {
-      mouse_page_coords (row - 1, column - 1, &row, &column);
-      if (mousedecodesgr (&event, code, row, column, release) == TRUE)
-        mouseenqueue (&event);
+      event.kind = MOUSE_PRESS;
+      event.button = 0;
     }
-  return (KMOUSE);
+  else if ((terminal_event.bstate & (BUTTON1_CLICKED
+                                     | BUTTON1_DOUBLE_CLICKED
+                                     | BUTTON1_TRIPLE_CLICKED)) != 0)
+    {
+      event.kind = MOUSE_PRESS;
+      event.button = 0;
+    }
+  else if ((terminal_event.bstate & BUTTON2_PRESSED) != 0)
+    {
+      event.kind = MOUSE_PRESS;
+      event.button = 1;
+    }
+  else if ((terminal_event.bstate & BUTTON3_PRESSED) != 0)
+    {
+      event.kind = MOUSE_PRESS;
+      event.button = 2;
+    }
+  else if ((terminal_event.bstate & BUTTON1_RELEASED) != 0)
+    {
+      event.kind = MOUSE_RELEASE;
+      event.button = 0;
+    }
+  else if ((terminal_event.bstate & BUTTON2_RELEASED) != 0)
+    {
+      event.kind = MOUSE_RELEASE;
+      event.button = 1;
+    }
+  else if ((terminal_event.bstate & BUTTON3_RELEASED) != 0)
+    {
+      event.kind = MOUSE_RELEASE;
+      event.button = 2;
+    }
+  else
+    return KMOUSE;
+
+  if ((terminal_event.bstate & BUTTON_SHIFT) != 0)
+    event.modifiers |= MOUSE_SHIFT;
+  if ((terminal_event.bstate & BUTTON_ALT) != 0)
+    event.modifiers |= MOUSE_ALT;
+  if ((terminal_event.bstate & BUTTON_CTRL) != 0)
+    event.modifiers |= MOUSE_CTRL;
+
+  mouseenqueue (&event);
+  return KMOUSE;
 }
 #endif
 
@@ -196,7 +218,6 @@ ttykeymapinit (void)
   keydup (KF11,  "find-cscope");
   keydup (KF12,  "next-cscope");
 #ifdef MOUSE
-  define_key ("\033[<", KEY_SGRMOUSE);
   keydup (KMOUSE, "mouse-event");
 #endif
 }

@@ -488,6 +488,75 @@ window_gutter_width (const EWINDOW *wp)
   return width;
 }
 
+static int
+mouse_line_offset (const LINE *line, int column)
+{
+  const uchar *text = lgets (line);
+  const uchar *end = text + llength (line);
+  int display_column = 0;
+  int offset = 0;
+
+  while (text < end)
+    {
+      wchar_t character;
+      int character_width;
+      int length;
+
+      character = ugetc (text, 0, &length);
+      character_width = character == '\t'
+                        ? tabsize - display_column % tabsize : uwidth (character);
+      if (display_column >= column || display_column + character_width > column)
+        return offset;
+
+      display_column += character_width;
+      text += length;
+      ++offset;
+    }
+  return offset;
+}
+
+static int
+mouse_move_point (const MOUSE_EVENT *event)
+{
+  EWINDOW *window;
+  LINE *line;
+  int row;
+  int text_column;
+
+  ALLWIND (window)
+    if (event->row >= window->w_toprow
+        && event->row < window->w_toprow + window->w_ntrows)
+      break;
+
+  if (window == NULL)
+    return FALSE;
+
+  line = window->w_linep;
+  for (row = window->w_toprow; row < event->row; ++row)
+    {
+      if (line == window->w_bufp->b_linep)
+        break;
+      line = lforw (line);
+    }
+  if (line == window->w_bufp->b_linep && lback (line) != line)
+    line = lback (line);
+
+  if (window != curwp)
+    {
+      curwp = window;
+      curbp = window->w_bufp;
+      updatemode ();
+    }
+
+  text_column = event->column - window_gutter_width (window)
+                + window->w_leftcol;
+  curwp->w_dot.p = line;
+  curwp->w_dot.o = mouse_line_offset (line, text_column);
+  curwp->w_hscroll = FALSE;
+  curwp->w_flag |= WFMOVE;
+  return TRUE;
+}
+
 static void
 draw_line_number (int row, int number, int width)
 {
@@ -1675,10 +1744,16 @@ mouseevent (int f, int n, int k)
   if (mousedrop (&event) == FALSE)
     return FALSE;
 
-  eprintf ("[Mouse kind %d, button %d, row %d, column %d, "
-           "modifiers %d, clicks %d]",
-           event.kind, event.button, event.row, event.column,
-           event.modifiers, event.clicks);
+  if (event.kind == MOUSE_PRESS && event.button == 0
+      && event.modifiers == 0
+      && mouse_move_point (&event) == TRUE)
+    return TRUE;
+
+  if (event.kind != MOUSE_RELEASE)
+    eprintf ("[Mouse kind %d, button %d, row %d, column %d, "
+             "modifiers %d, clicks %d]",
+             event.kind, event.button, event.row, event.column,
+             event.modifiers, event.clicks);
   return (TRUE);
 }
 

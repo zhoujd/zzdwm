@@ -6,6 +6,7 @@
 
 int ncol;
 int tabsize;
+int numberflag;
 
 static VIDEO row;
 
@@ -14,14 +15,22 @@ static LINE *short_line;
 static LINE line_header;
 static BUFFER buffer;
 static EWINDOW window;
+static EWINDOW second_window;
 
 EWINDOW *curwp = &window;
 BUFFER *curbp = &buffer;
+EWINDOW *wheadp;
 
 int
 cisctrl (wchar_t c)
 {
   return c < 0x20 || c == 0x7f;
+}
+
+void
+eprintf (const char *format, ...)
+{
+  (void) format;
 }
 
 static void
@@ -84,6 +93,31 @@ reset_scroll_window (void)
   window.w_dot.p = long_line;
   window.w_dot.o = 3;
   curwp = &window;
+  wheadp = &window;
+  window.w_wndp = NULL;
+}
+
+static void
+reset_mouse_windows (void)
+{
+  reset_scroll_window ();
+
+  window.w_wndp = &second_window;
+  window.w_toprow = 0;
+  window.w_ntrows = 2;
+  window.w_leftcol = 0;
+  window.w_hscroll = TRUE;
+  window.w_flag = 0;
+  second_window.w_wndp = NULL;
+  second_window.w_toprow = 3;
+  second_window.w_ntrows = 2;
+  second_window.w_bufp = &buffer;
+  second_window.w_linep = short_line;
+  second_window.w_dot.p = short_line;
+  second_window.w_dot.o = 0;
+  second_window.w_flag = 0;
+  curwp = &window;
+  curbp = &buffer;
 }
 
 int
@@ -118,6 +152,33 @@ main (void)
   assert ((window.w_flag & WFHARD) != 0);
   assert (window.w_dot.p == long_line);
   assert (window.w_dot.o == 3);
+
+  reset_mouse_windows ();
+  {
+    MOUSE_EVENT event;
+
+    memset (&event, 0, sizeof (event));
+    event.kind = MOUSE_PRESS;
+    event.button = 0;
+    event.row = 4;
+    event.column = 6;
+    assert (mouseenqueue (&event) == TRUE);
+    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    assert (curwp == &second_window);
+    assert (curbp == &buffer);
+    assert (second_window.w_dot.p == short_line);
+    assert (second_window.w_dot.o == 6);
+    assert (second_window.w_hscroll == FALSE);
+    assert ((second_window.w_flag & WFMOVE) != 0);
+
+    event.row = 1;
+    event.column = 30;
+    assert (mouseenqueue (&event) == TRUE);
+    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    assert (curwp == &window);
+    assert (window.w_dot.p == short_line);
+    assert (window.w_dot.o == wllength (short_line));
+  }
 
   free (long_line);
   free (short_line);
