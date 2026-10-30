@@ -46,7 +46,22 @@ Use interactive checks only when the user asks for manual testing:
 - `./me -C` — color disabled.
 - `./me -2`, `./me -3`, or `./me -4` — multipage display.
 
-### 3. Validate Linux minimal me
+### 3. Run the pty end-to-end scripts
+
+The Python pty tests live in `test/python/` by default. They drive the
+real `./me` binary in a pseudo-terminal, cover the tty layer end to end
+(mouse reports, paste, wheel), and are run after a build — they are not
+part of `build.sh -b test`:
+
+```sh
+for s in test/python/me_*.py; do python3 "$s" || break; done
+```
+
+`me_dvtm_e2e.py` also needs a built dvtm binary in `../dvtm` and skips
+when it is absent. The terminfo entries `st-256color` and `linux` must
+be installed.
+
+### 4. Validate Linux minimal me
 
 From `tools/MicroEMACS`, build the minimal editor without color, Lisp, and AI:
 
@@ -77,7 +92,7 @@ If a final standard static artifact is required afterward, restore it with:
 ./build.sh -p
 ```
 
-### 4. Build and validate Windows me.exe
+### 5. Build and validate Windows me.exe
 
 From `tools/MicroEMACS`, build the Windows binary:
 
@@ -109,7 +124,7 @@ For a minimal Windows build without color, Lisp, and AI:
 
 Then run the same headless Wine smoke test from the repository root.
 
-### 5. Handle missing Docker images
+### 6. Handle missing Docker images
 
 Build the required image from the repository root:
 
