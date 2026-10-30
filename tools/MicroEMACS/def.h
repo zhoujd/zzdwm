@@ -546,6 +546,7 @@ LINE;
 #define MOUSE_RELEASE 1         /* Button release.               */
 #define MOUSE_MOTION  2         /* Motion with a button down.    */
 #define MOUSE_WHEEL   3         /* Scroll wheel.                 */
+#define MOUSE_CLICK   4         /* Press and release together.   */
 #define MOUSE_SHIFT   0x01      /* Shift was held.               */
 #define MOUSE_ALT     0x02      /* Alt was held.                 */
 #define MOUSE_CTRL    0x04      /* Ctrl was held.                */

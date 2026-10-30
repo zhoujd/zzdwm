@@ -171,7 +171,11 @@ int mouse_mods;			/* MOUSE_SHIFT/ALT/CTRL bits	*/
 int mouse_wheel_step = 3;	/* Lines per wheel scroll	*/
 
 static int mouse_dragging;	/* Left button drag in progress */
-static POS mouse_anchor;	/* Position where it started	*/
+static int mouse_drag_moved;	/* Mouse moved during the drag  */
+static EWINDOW *mouse_anchor_wp;	/* Window of the drag   */
+static int mouse_anchor_row;	/* Screen row of the press      */
+static int mouse_anchor_col;	/* Screen column of the press   */
+static POS mouse_saved_mark;	/* Mark before the drag started */
 
 #if GOSLING
 /*
@@ -1663,76 +1667,41 @@ mouse_find_window (int row)
 }
 
 /*
- * Handle a mouse event.  The tty backend decodes the event into
- * mouse_kind, mouse_mods, mouse_button, mouse_row, and mouse_column.
- *
- * A wheel event scrolls the window under the mouse by
- * mouse-wheel-step lines.  A button press in the text of a window
- * moves the point to the clicked position and starts a drag; motion
- * while the drag is active extends the region from the press
- * position, and the release ends it.  The mark is only written once
- * the mouse actually moves, so a plain click does not disturb an
- * existing mark.  A press on a mode line selects that window.
+ * Make the window under the mouse the current window.
  */
-int
-mouseevent (int f, int n, int k)
+static void
+mouse_switch_window (EWINDOW * wp)
 {
-  EWINDOW *wp;
-  LINE *lp;
-  int rowoff;
-  int col;
-
-  if (mouse_kind == MOUSE_WHEEL)
-    {
-      wp = mouse_find_window (mouse_row);
-      if (wp == NULL)
-        wp = curwp;
-      if (wp != curwp)
-        {
-          curwp = wp;
-          curbp = wp->w_bufp;
-          updatemode ();
-        }
-      return mvupwind (FALSE,
-                       mouse_button == 3 ? mouse_wheel_step
-                                         : -mouse_wheel_step,
-                       KRANDOM);
-    }
-
-  if (mouse_kind == MOUSE_RELEASE)
-    {
-      mouse_dragging = FALSE;
-      return (TRUE);
-    }
-
-  if (mouse_kind == MOUSE_MOTION && !mouse_dragging)
-    return (TRUE);          /* Idle motion.             */
-
-  wp = mouse_find_window (mouse_row);
-  if (wp == NULL)
-    return (TRUE);          /* Below the last mode line. */
-
-  /* Clicking a mode line selects the window. */
-  if (mouse_row == wp->w_toprow + wp->w_ntrows)
-    {
-      mouse_dragging = FALSE;
-      if (wp != curwp)
-        {
-          curwp = wp;
-          curbp = wp->w_bufp;
-          updatemode ();
-        }
-      return (TRUE);
-    }
-
-  /* Clicking or dragging over the text moves the point to the
-     cell under the mouse. */
   if (wp != curwp)
     {
       curwp = wp;
       curbp = wp->w_bufp;
       updatemode ();
     }
+}
+
+/*
+ * Move the point to the cell under the mouse in the text area of
+ * the window below.  When "only" is not NULL the point moves only
+ * within that window, so a drag stays in the window it started in.
+ * Returns the window whose point moved, or NULL when the mouse is
+ * not over text (below the last window, on a mode line, or outside
+ * "only").
+ */
+static EWINDOW *
+mouse_drop_dot (EWINDOW * only)
+{
+  EWINDOW *wp;
+  LINE *lp;
+  int rowoff;
+  int col;
+
+  wp = mouse_find_window (mouse_row);
+  if (wp == NULL || (only != NULL && wp != only))
+    return (NULL);
+  if (mouse_row == wp->w_toprow + wp->w_ntrows)
+    return (NULL);              /* Mode line, not text. */
+  mouse_switch_window (wp);
 
   lp = wp->w_linep;
   rowoff = mouse_row - wp->w_toprow;
@@ -1743,14 +1712,130 @@ mouseevent (int f, int n, int k)
   wp->w_dot.p = lp;
   wp->w_dot.o = mouse_col_to_offset (lp, col);
   wp->w_flag |= WFMOVE;
+  return (wp);
+}
 
-  if (!mouse_dragging && mouse_button == 0)
+/*
+ * Handle a mouse event.  The tty backend decodes the event into
+ * mouse_kind, mouse_mods, mouse_button, mouse_row, and mouse_column.
+ *
+ * A wheel event scrolls the window under the mouse by
+ * mouse-wheel-step lines.  A press in the text of a window moves the
+ * point there and anchors a drag: the mark before the drag is
+ * remembered and the mark is dropped on the pressed cell right
+ * away, because terminals differ in whether they report motion
+ * while the button is held.  Motion during the drag extends the
+ * region, and the release position completes it even when no motion
+ * was reported; a press and release on the same cell is a plain
+ * click, and the saved mark goes back, so clicking does not disturb
+ * an existing mark.  A click that the tty layer reports as one
+ * complete event just moves the point.  A press on a mode line
+ * selects that window.
+ */
+int
+mouseevent (int f, int n, int k)
+{
+  EWINDOW *wp;
+
+  if (mouse_kind == MOUSE_WHEEL)
     {
-      mouse_dragging = TRUE;
-      mouse_anchor = wp->w_dot;
+      wp = mouse_find_window (mouse_row);
+      if (wp == NULL)
+        wp = curwp;
+      mouse_switch_window (wp);
+      return mvupwind (FALSE,
+                       mouse_button == 3 ? mouse_wheel_step
+                                         : -mouse_wheel_step,
+                       KRANDOM);
     }
-  else if (mouse_dragging && mouse_button == 0)
-    wp->w_mark = mouse_anchor;
+
+  /* A release ends the drag.  A release away from the pressed cell
+     completes the region at the release position even on terminals
+     that report no motion while the button is held; a release on
+     the pressed cell without motion was a plain click, so the
+     saved mark goes back. */
+  if (mouse_kind == MOUSE_RELEASE)
+    {
+      int keep;                  /* Region survives the release. */
+
+      if (mouse_dragging && mouse_button == 0)
+        {
+          mouse_dragging = FALSE;
+          keep = FALSE;
+          if (mouse_drag_moved
+              || mouse_row != mouse_anchor_row
+              || mouse_column != mouse_anchor_col)
+            {
+              /* A release outside the window the drag started in
+                 keeps whatever motion already selected. */
+              keep = mouse_drop_dot (mouse_anchor_wp) != NULL
+                     || mouse_drag_moved;
+            }
+          if (!keep)
+            {
+              if (mouse_saved_mark.p != NULL)
+                mouse_anchor_wp->w_mark = mouse_saved_mark;
+              else
+                mouse_anchor_wp->w_mark.p = NULL;
+            }
+        }
+      return (TRUE);
+    }
+
+  /* Idle motion without a drag is ignored. */
+  if (mouse_kind == MOUSE_MOTION && !mouse_dragging)
+    return (TRUE);
+
+  /* A click reported as one event is a whole press/release gesture:
+     move the point, or select the window, without touching the
+     mark. */
+  if (mouse_kind == MOUSE_CLICK)
+    {
+      mouse_dragging = FALSE;
+      wp = mouse_find_window (mouse_row);
+      if (wp == NULL)
+        return (TRUE);
+      if (mouse_row == wp->w_toprow + wp->w_ntrows)
+        mouse_switch_window (wp);
+      else
+        (void) mouse_drop_dot (NULL);
+      return (TRUE);
+    }
+
+  /* A fresh press anchors a drag on the pressed cell; a press on a
+     mode line selects that window instead. */
+  if (!mouse_dragging)
+    {
+      wp = mouse_find_window (mouse_row);
+      if (wp == NULL)
+        return (TRUE);
+      if (mouse_row == wp->w_toprow + wp->w_ntrows)
+        {
+          mouse_switch_window (wp);
+          return (TRUE);
+        }
+      if (mouse_button != 0)
+        {
+          (void) mouse_drop_dot (NULL);
+          return (TRUE);
+        }
+      wp = mouse_drop_dot (NULL);
+      if (wp == NULL)
+        return (TRUE);
+      mouse_dragging = TRUE;
+      mouse_drag_moved = FALSE;
+      mouse_anchor_wp = wp;
+      mouse_anchor_row = mouse_row;
+      mouse_anchor_col = mouse_column;
+      mouse_saved_mark = wp->w_mark;
+      wp->w_mark = wp->w_dot;
+      return (TRUE);
+    }
+
+  /* Dragging: motion reports extend the region by moving the point
+     within the window the drag started in. */
+  if (mouse_drop_dot (mouse_anchor_wp) != NULL)
+    mouse_drag_moved = TRUE;
   return (TRUE);
 }
 

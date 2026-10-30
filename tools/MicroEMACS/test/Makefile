@@ -51,10 +51,10 @@ display-test: display.c $(ROOT)/path.c $(ROOT)/utf8.c
 		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/mingw \
 		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DTEST $^
 
-mouse-test: mouse.c $(ROOT)/path.c $(ROOT)/utf8.c
+mouse-test: mouse.c $(ROOT)/display.c $(ROOT)/path.c $(ROOT)/utf8.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \
 		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/mingw \
-		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DTEST $^
+		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DTEST mouse.c $(ROOT)/path.c $(ROOT)/utf8.c
 
 cscope-test: cscope.c $(ROOT)/cscope.c $(ROOT)/sys/unix/spawn.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \

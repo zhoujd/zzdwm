@@ -112,10 +112,10 @@ getkbd (void)
 /*
  * Decode a KEY_MOUSE event into the mouse_* variables shared with
  * mouseevent in display.c, and return KMOUSE.  Wheel events are
- * reported by ncurses as BUTTON4/BUTTON5_PRESSED, and clicks within
- * the mouseinterval as CLICKED/DOUBLE/TRIPLE_CLICKED, which count
- * as presses.  Coordinates are translated into the page-stacked
- * space used by the editor.
+ * reported by ncurses as BUTTON4/BUTTON5_PRESSED, and press/release
+ * pairs within the mouseinterval as CLICKED/DOUBLE/TRIPLE_CLICKED,
+ * which are complete gestures, not presses.  Coordinates are
+ * translated into the page-stacked space used by the editor.
  */
 static int
 mouse_decode (void)
@@ -157,13 +157,22 @@ mouse_decode (void)
     mouse_button = 2;
   else if (ev.bstate & (BUTTON1_CLICKED | BUTTON1_DOUBLE_CLICKED
                         | BUTTON1_TRIPLE_CLICKED))
-    mouse_button = 0;
+    {
+      mouse_kind = MOUSE_CLICK;      /* Complete gesture.  */
+      mouse_button = 0;
+    }
   else if (ev.bstate & (BUTTON2_CLICKED | BUTTON2_DOUBLE_CLICKED
                         | BUTTON2_TRIPLE_CLICKED))
-    mouse_button = 1;
+    {
+      mouse_kind = MOUSE_CLICK;
+      mouse_button = 1;
+    }
   else if (ev.bstate & (BUTTON3_CLICKED | BUTTON3_DOUBLE_CLICKED
                         | BUTTON3_TRIPLE_CLICKED))
-    mouse_button = 2;
+    {
+      mouse_kind = MOUSE_CLICK;
+      mouse_button = 2;
+    }
   else if (ev.bstate & BUTTON1_RELEASED)
     {
       mouse_kind = MOUSE_RELEASE;
