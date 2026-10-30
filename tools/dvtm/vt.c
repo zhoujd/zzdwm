@@ -1738,6 +1738,10 @@ void vt_mouse(Vt *t, int x, int y, mmask_t mask)
 		button = 1;
 	else if (mask & (BUTTON3_PRESSED | BUTTON3_CLICKED))
 		button = 2;
+	else if (mask & BUTTON4_PRESSED)
+		button = 64; /* wheel: bit 6 set, low bit is the direction */
+	else if (mask & BUTTON5_PRESSED)
+		button = 65;
 	else if (mask & (BUTTON1_RELEASED | BUTTON2_RELEASED | BUTTON3_RELEASED))
 		button = 3;
 
@@ -1750,8 +1754,8 @@ void vt_mouse(Vt *t, int x, int y, mmask_t mask)
 		state |= 16;
 
 	seq[3] = 32 + button + state;
-	seq[4] = 32 + x;
-	seq[5] = 32 + y;
+	seq[4] = 33 + x; /* X10 coordinates are 1-based */
+	seq[5] = 33 + y;
 
 	vt_write(t, seq, sizeof seq);
 
@@ -1899,6 +1903,11 @@ void *vt_data_get(Vt *t)
 bool vt_cursor_visible(Vt *t)
 {
 	return t->buffer->scroll_below ? false : !t->curshid;
+}
+
+bool vt_mousemode(Vt *t)
+{
+	return t->mousetrack;
 }
 
 pid_t vt_pid_get(Vt *t)

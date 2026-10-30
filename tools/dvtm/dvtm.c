@@ -1993,8 +1993,14 @@ handle_mouse(void) {
 	vt_mouse(msel->term, event.x - msel->x, event.y - msel->y, event.bstate);
 
 	for (i = 0; i < LENGTH(buttons); i++) {
-		if (event.bstate & buttons[i].mask)
+		if (event.bstate & buttons[i].mask) {
+			/* the wheel belongs to a client that tracks the
+			 * mouse, not to the local scrollback view */
+			if ((event.bstate & (BUTTON4_PRESSED | BUTTON5_PRESSED))
+			    && vt_mousemode(msel->term))
+				continue;
 			buttons[i].action.cmd(buttons[i].action.args);
+		}
 	}
 
 	msel = NULL;
