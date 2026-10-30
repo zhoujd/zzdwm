@@ -49,12 +49,12 @@ syntax-test: syntax.c $(ROOT)/utf8.c $(ROOT)/syntax.c
 display-test: display.c $(ROOT)/path.c $(ROOT)/utf8.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \
 		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/mingw \
-		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DTEST $^
+		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DMOUSE -DTEST $^
 
 mouse-test: mouse.c $(ROOT)/display.c $(ROOT)/cinfo.c $(ROOT)/path.c $(ROOT)/utf8.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \
 		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/mingw \
-		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DTEST mouse.c $(ROOT)/cinfo.c \
+		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DMOUSE -DTEST mouse.c $(ROOT)/cinfo.c \
 		$(ROOT)/path.c $(ROOT)/utf8.c
 
 cscope-test: cscope.c $(ROOT)/cscope.c $(ROOT)/sys/unix/spawn.c

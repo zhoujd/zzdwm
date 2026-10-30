@@ -79,8 +79,10 @@ int specmap[32] = {
  * get remapped by "getkey".  The keys ALT-A through
  * ALT-Z are mapped to META-A through META-Z.
  */
+#ifdef MOUSE
 static int mouse_decode (void);
 static int mouse_decode_x10 (void);
+#endif
 
 int
 getkbd (void)
@@ -100,11 +102,13 @@ getkbd (void)
   if (c == KEY_RESIZE)
     return CTRL('L');
 
+#ifdef MOUSE
   /* Decode mouse events into the shared mouse_* variables. */
   if (c == KEY_MAX + 3)
     return mouse_decode ();
   if (c == KEY_MAX + 6)
     return mouse_decode_x10 ();
+#endif
 
   /* Terminals that bypass mouse reporting while Shift is held (st,
      for one) send Shift+PageUp/PageDown keys in place of the
@@ -139,6 +143,7 @@ getkbd (void)
   return (c);				/* not found, maybe Unicode? */
 }
 
+#ifdef MOUSE
 /*
  * Read and decode one SGR mouse event into the mouse_* variables
  * shared with mouseevent in display.c, and return KMOUSE.  The
@@ -221,6 +226,7 @@ mouse_decode_x10 (void)
     mouse_decode_sgr (b, row, col, FALSE);	/* Wheel/motion. */
   return (KMOUSE);
 }
+#endif /* MOUSE */
 
 /*
  * Terminal specific keymap initialization.
@@ -261,7 +267,14 @@ ttykeymapinit (void)
   keydup (KF10,  "only-window");
   keydup (KF11,  "find-cscope");
   keydup (KF12,  "next-cscope");
+#ifdef MOUSE
   keydup (KMOUSE, "mouse-event");
+#else
+  /* No reporting is enabled; the only events reaching the KMOUSE
+     binding are the wheel events decoded from the shifted page
+     keys, so bind the wheel-only dispatcher. */
+  keydup (KMOUSE, "wheel-event");
+#endif
   /* Teach curses the bracketed paste markers as keys, so pasted
    * text arrives between two paste keys instead of being replayed
    * as keystrokes.  Bound to the command that inserts it as a unit.
@@ -269,6 +282,7 @@ ttykeymapinit (void)
   define_key ("\033[200~", KEY_MAX + 1);
   define_key ("\033[201~", KEY_MAX + 2);
   keydup (KPASTE, "bracketed-paste");
+#ifdef MOUSE
   /* SGR mouse events have a fixed prefix and variable parameters;
      match the prefix here and read the rest in mouse_decode. */
   define_key ("\033[<", KEY_MAX + 3);
@@ -277,6 +291,7 @@ ttykeymapinit (void)
      X10, and ncurses would otherwise swallow the prefix and the three
      data bytes and return an undecodable KEY_MOUSE. */
   define_key ("\033[M", KEY_MAX + 6);
+#endif
   /* The shifted page keys some terminals send for Shift+wheel
      (kPRV/kNXT in terminfo) are claimed here, ahead of terminfo,
      and turned back into wheel events in getkbd. */

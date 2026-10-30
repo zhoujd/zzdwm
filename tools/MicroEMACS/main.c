@@ -89,7 +89,9 @@ int inprof;                        /* True if reading profile      */
 int bflag;                         /* True if -b option specified  */
 char *cscope_path = "cscope";      /* Name of cscope program       */
 int noupdatecscope;                /* True if -u option specified  */
+#ifdef MOUSE
 int mouse;                         /* True if -m option specified  */
+#endif
 int rflag;                         /* True if -r option specified  */
 int scriptmode;                    /* True if running a Lisp script */
 int xflag;                         /* True if -x option specified  */
@@ -260,9 +262,11 @@ main (int argc, char *argv[])
                 noninteractive = FALSE;
               break;
 #endif
+#ifdef MOUSE
             case 'm':
               mouse = TRUE;
               break;
+#endif
             case 'n':
               numberflag = TRUE;
               break;
@@ -598,8 +602,10 @@ loop:
       *kbdmip++ = c;
     }
   startsaveundo ();
+#ifdef MOUSE
   if (c != KMOUSE)
     endmouseselect ();		/* Keyboard ends mouse selection. */
+#endif
   execute (c, f, n);		/* Do it.               */
   endsaveundo ();
   replyq_clear ();

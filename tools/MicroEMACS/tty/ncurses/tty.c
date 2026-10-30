@@ -126,6 +126,7 @@ get_actual_pos (int row, int col, int *actual_row, int *actual_col)
     }
 }
 
+#ifdef MOUSE
 /*
  * Translate real screen coordinates from a mouse event into the
  * page-stacked virtual coordinates used by the editor, the inverse
@@ -146,6 +147,7 @@ mouse_page_coords (int x, int y, int *vrow, int *vcol)
   *vrow = page * actual_nrow + y;
   *vcol = x - page * (ncol + 1);
 }
+#endif
 
 /*
  * Move the cursor to the specified

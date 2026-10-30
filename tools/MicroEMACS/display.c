@@ -170,15 +170,19 @@ int mouse_kind;			/* MOUSE_PRESS and friends	*/
 int mouse_mods;			/* MOUSE_SHIFT/ALT/CTRL bits	*/
 int mouse_clicks;		/* Clicks in one gesture	*/
 int mouse_wheel_step = 3;	/* Lines per wheel scroll	*/
+#ifdef MOUSE
 int mouseselect;			/* Region highlight is shown	*/
+#endif
 int osc52 = 1;			/* Copy regions to the clipboard */
 
+#ifdef MOUSE
 static int mouse_dragging;	/* Left button drag in progress */
 static int mouse_drag_moved;	/* Mouse moved during the drag  */
 static EWINDOW *mouse_anchor_wp;	/* Window of the drag   */
 static int mouse_anchor_row;	/* Screen row of the press      */
 static int mouse_anchor_col;	/* Screen column of the press   */
 static POS mouse_saved_mark;	/* Mark before the drag started */
+#endif
 
 /* Click gesture state for mouse_decode_sgr.  A release at the cell
    of the press, with no motion between, is a click; consecutive
@@ -278,11 +282,13 @@ mouse_decode_sgr (int b, int row, int col, int release)
 }
 
 #ifdef COLOR
+#ifdef MOUSE
 static LINE *select_line1;	/* First line of the region.    */
 static int select_off1;		/* Offset on the first line.    */
 static LINE *select_line2;	/* Last line of the region.     */
 static int select_off2;		/* Offset after the last char.  */
 static int select_inside;	/* Drawn lines inside region.   */
+#endif
 #endif
 
 #if GOSLING
@@ -314,10 +320,12 @@ static void uline (int row, VIDEO *vvp, VIDEO *pvp);
 static void modeline (EWINDOW *wp);
 #ifdef COLOR
 static void put_video_colors (wchar_t *text, short *attrs, int count);
+#ifdef MOUSE
 static int selection_column (LINE * lp, int o);
 static int selection_setup (EWINDOW * wp, LINE * first);
 static void draw_selection (LINE * lp);
 static void selection_step (LINE * lp);
+#endif
 #endif
 #if GOSLING
 static void hash (VIDEO *vp);
@@ -933,7 +941,9 @@ update (void)
           gutter = window_gutter_width (wp);
           line_number = wp->w_topline;
 #ifdef COLOR
+#ifdef MOUSE
           selection_setup (wp, lp);
+#endif
 #endif
 #ifdef COLOR
           if ((wp->w_flag & WFEDIT) != 0 && syntax != NULL)
@@ -975,7 +985,9 @@ update (void)
                 vtputs (lgets (lp), llength (lp));
               vteeol ();
 #ifdef COLOR
+#ifdef MOUSE
               draw_selection (lp);
+#endif
 #endif
               leftcol = 0;
               leftmargin = 0;
@@ -1011,8 +1023,10 @@ update (void)
 #endif
                         vtputs (lgets (lp), llength (lp));
 #ifdef COLOR
+#ifdef MOUSE
                       draw_selection (lp);
                       selection_step (lp);
+#endif
 #endif
                       ++line_number;
                       lp = lforw (lp);
@@ -1748,6 +1762,7 @@ traceback (int offs, int size, int i, int j)
 }
 #endif	/* GOSLING */
 
+#ifdef MOUSE
 /*
  * Convert a screen column relative to the start of a window's text
  * area into a Unicode character index into line "lp".  Wide
@@ -1778,6 +1793,7 @@ mouse_col_to_offset (LINE * lp, int target)
     }
   return (i);
 }
+#endif
 
 /*
  * Find the window that owns the given screen row, or NULL if the
@@ -1800,6 +1816,7 @@ mouse_find_window (int row)
   return NULL;
 }
 
+#ifdef MOUSE
 /*
  * Turn off the selection highlight.  Every window whose mark is
  * set may be showing it, and needs a full repaint.
@@ -1816,6 +1833,7 @@ endmouseselect (void)
     if (wp->w_mark.p != NULL)
       wp->w_flag |= WFHARD;
 }
+#endif
 
 /*
  * Copy the region "rp" to the system clipboard with the OSC 52
@@ -1942,6 +1960,7 @@ osc52send (const REGION *rp)
 
 
 #ifdef COLOR
+#ifdef MOUSE
 /*
  * Show the selection while the region highlight is active: the
  * mark-to-point region of every window whose mark is set, painted
@@ -2116,6 +2135,7 @@ draw_selection (LINE * lp)
   for (; cell < last; ++cell)
     vscreen[vtrow]->v_attr[cell] = CSELECT;
 }
+#endif	/* MOUSE */
 #endif	/* COLOR */
 
 /*
@@ -2132,6 +2152,7 @@ mouse_switch_window (EWINDOW * wp)
     }
 }
 
+#ifdef MOUSE
 /*
  * Move the point to the cell under the mouse in the text area of
  * the window below.  When "only" is not NULL the point moves only
@@ -2242,6 +2263,7 @@ mouse_button_click (void)
     }
   return (FALSE);
 }
+#endif
 
 /*
  * Scroll a window horizontally by the signed "cols" columns and pin
@@ -2300,6 +2322,32 @@ scrollright (int f, int n, int k)
 }
 
 /*
+ * Scroll for a wheel event: vertically by mouse-wheel-step lines in
+ * the window under the mouse, or horizontally in columns of four
+ * when Shift was held.  Shared by the full mouse dispatcher and,
+ * in builds without the mouse interactions (MOUSE not defined), by
+ * the wheel-only dispatcher below, which is what the shifted page
+ * keys some terminals send for Shift+wheel feed.
+ */
+static int
+mouse_wheel_scroll (void)
+{
+  EWINDOW *wp;
+
+  wp = mouse_find_window (mouse_row);
+  if (wp == NULL)
+    wp = curwp;
+  mouse_switch_window (wp);
+  if ((mouse_mods & MOUSE_SHIFT) != 0)
+    return hscroll_window (wp, mouse_button == 3 ? -4 : 4);
+  return mvupwind (FALSE,
+                   mouse_button == 3 ? mouse_wheel_step
+                                     : -mouse_wheel_step,
+                   KRANDOM);
+}
+
+#ifdef MOUSE
+/*
  * Handle a mouse event.  The tty backend decodes the event into
  * mouse_kind, mouse_mods, mouse_button, mouse_row, and mouse_column.
  *
@@ -2328,19 +2376,7 @@ mouseevent (int f, int n, int k)
   EWINDOW *wp;
 
   if (mouse_kind == MOUSE_WHEEL)
-    {
-      wp = mouse_find_window (mouse_row);
-      if (wp == NULL)
-        wp = curwp;
-      mouse_switch_window (wp);
-      if ((mouse_mods & MOUSE_SHIFT) != 0)
-        /* Shift+wheel scrolls horizontally, in columns. */
-        return hscroll_window (wp, mouse_button == 3 ? -4 : 4);
-      return mvupwind (FALSE,
-                       mouse_button == 3 ? mouse_wheel_step
-                                         : -mouse_wheel_step,
-                       KRANDOM);
-    }
+    return mouse_wheel_scroll ();
 
   /* A release ends the drag.  A release away from the pressed cell
      completes the region at the release position even on terminals
@@ -2471,6 +2507,22 @@ mouseevent (int f, int n, int k)
     }
   return (TRUE);
 }
+#else /* !MOUSE */
+/*
+ * Wheel-only dispatcher for builds without the mouse interactions
+ * (MOUSE not defined): no reporting is enabled and no button events
+ * can arrive, but the shifted page keys some terminals send for
+ * Shift+wheel are decoded into wheel events and reach this through
+ * the KMOUSE binding, so horizontal scrolling keeps working.
+ */
+int
+wheelevent (int f, int n, int k)
+{
+  if (mouse_kind == MOUSE_WHEEL)
+    return mouse_wheel_scroll ();
+  return (TRUE);
+}
+#endif /* MOUSE */
 
 /*
  * Show visable on modeline.

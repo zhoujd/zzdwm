@@ -72,4 +72,6 @@
 
 /* Functions. */
 void putline (int row, int col, const wchar_t *buf);
+#ifdef MOUSE
 void mouse_page_coords (int x, int y, int *vrow, int *vcol);
+#endif

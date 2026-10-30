@@ -579,7 +579,9 @@ extern int scriptmode;
 extern int rflag;
 extern int noupdatecscope;
 extern char *cscope_path;
+#ifdef MOUSE
 extern int mouse;
+#endif
 extern int xflag;
 extern int zflag;
 extern int numberflag;
@@ -603,7 +605,9 @@ extern int mouse_kind;
 extern int mouse_mods;
 extern int mouse_clicks;        /* Clicks in one gesture.       */
 extern int mouse_wheel_step;
+#ifdef MOUSE
 extern int mouseselect;         /* Region highlight is shown.   */
+#endif
 extern int osc52;               /* Copy regions to the clipboard. */
 extern int pastestart;          /* Last paste key was the start
                                    marker.                      */
@@ -744,14 +748,18 @@ int findgrep (int f, int n, int k);     /* Search for an egrep ref      */
 void update (void);                     /* Make sure display is right.  */
 void vtinit (void);                     /* Initialize video display.    */
 void vttidy (void);                     /* Tidy display before exit.    */
+#ifdef MOUSE
 int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
+int mouse_col_to_offset (LINE * lp, int target); /* Click column to char. */
+void endmouseselect (void);    /* Turn the region highlight off. */
+#else
+int wheelevent (int f, int n, int k);   /* Handle wheel event only.     */
+#endif
 int scrollleft (int f, int n, int k);   /* Scroll window left.          */
 int scrollright (int f, int n, int k);  /* Scroll window right.         */
-int mouse_col_to_offset (LINE * lp, int target); /* Click column to char. */
 void mouse_decode_sgr (int b, int row, int col, int release);
                                 /* Decode SGR event into mouse_*. */
 extern long (*mouse_clock) (void);      /* Second clock, test override. */
-void endmouseselect (void);    /* Turn the region highlight off. */
 void osc52send (const REGION *rp);      /* Copy region to the clipboard. */
 int bracketedpaste (int f, int n, int k); /* Insert pasted text at dot.  */
 int showvisable (int f, int n, int k);  /* Show visable on modeline.    */

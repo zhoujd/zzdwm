@@ -296,7 +296,11 @@ KEY key[] = {
 #if HAS_CSCOPE
   {-1,                  nextcscope,          "next-cscope"},
 #endif
+#ifdef MOUSE
   {-1,                  mouseevent,          "mouse-event"},
+#else
+  {-1,                  wheelevent,          "wheel-event"},
+#endif
   {-1,                  scrollleft,          "scroll-left"},
   {-1,                  scrollright,         "scroll-right"},
   {-1,                  bracketedpaste,      "bracketed-paste"},

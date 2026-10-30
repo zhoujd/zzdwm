@@ -94,6 +94,7 @@ ttopen (void)
   cbreak ();			/* take input chars one at a time, no wait for \n */
   noecho ();
   raw ();
+#ifdef MOUSE
   if (mouse)
     {
       /* Enable mouse reporting and take over the decoding: the
@@ -108,6 +109,7 @@ ttopen (void)
        */
       write (1, "\033[?1000h\033[?1002h\033[?1006h", 24);
     }
+#endif
   /* Enable bracketed paste mode: the terminal then wraps pasted
    * text in mode-2004 markers, which ttykbd.c decodes as paste
    * keys, so a paste is inserted as one unit instead of being
@@ -155,8 +157,10 @@ void
 ttclose (void)
 {
   endwin ();
+#ifdef MOUSE
   if (mouse)
     write (1, "\033[?1006l\033[?1002l\033[?1000l", 24);
+#endif
   write (1, "\033[?2004l", 8);	/* Disable bracketed paste. */
   tcsetattr (0, TCSANOW, &oldtty);
 }

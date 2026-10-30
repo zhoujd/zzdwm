@@ -40,7 +40,13 @@ older rxvt — keep click and wheel support, and terminfo kmous
 entries can no longer swallow mouse bytes into an undecodable
 KEY_MOUSE.  The P4 terminal gate is done by this decode coverage
 (no allow list needed) and the multiplexer passthrough notes are in
-the manual's -m entry.  Pending:
+the manual's -m entry.  The mouse interactions are also strippable
+at build time now: MOUSE=no (Make.Linux/Make.Mingw, default yes,
+same pattern as COLOR/LISP/AI) compiles out the reporting, the
+decoders, and the click/drag/select/paste interactions — what
+remains is the wheel-and-scroll spine, so the shifted page keys
+still scroll horizontally through the wheel-only dispatcher
+(wheelevent) bound to KMOUSE.  Pending:
 a smarter highlight color than plain reverse video, then P5.
 Last updated: 2026-10-30
 
@@ -246,7 +252,11 @@ pattern (`COLOR`/`LISP`/`AI`); mouse needs no new compile flag, only the
 ## Lisp Integration
 
 - `mouse` as a runtime settable variable plus a `toggle-mouse` command
-  (enables/disables reporting without restarting).
+  (enables/disables reporting without restarting).  Done in part: the
+  horizontal scroll ships as the `scroll-left`/`scroll-right` commands
+  (default four columns, prefix argument overrides), and
+  `mouse-wheel-step`/`osc52` are settable; the toggle command is not
+  written yet.  A `MOUSE=no` build drops `mouse` and `-m` entirely.
 - `mouse-wheel-step` for the P1 knob and `osc52` for P3 (the planned
   `mouse-osc52` shipped as `osc52`: the copy fires on plain region
   commands too, not just mouse selections).

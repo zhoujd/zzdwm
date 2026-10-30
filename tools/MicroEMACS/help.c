@@ -13,11 +13,16 @@
 #else
 #define OPT_BACKUP ""
 #endif
+#ifdef MOUSE
+#define OPT_MOUSE "m"
+#else
+#define OPT_MOUSE ""
+#endif
 
 void
 usage (FILE *stream)
 {
-  fprintf (stream, "usage: me [-234" OPT_BACKUP "DmnNqrTuxz] [-c path] [-d path] [-g line]"
+  fprintf (stream, "usage: me [-234" OPT_BACKUP "D" OPT_MOUSE "nNqrTuxz] [-c path] [-d path] [-g line]"
                    " [-p profile] [-s string] [-t size]\n"
                    "          [+[line]] [file[:line[:column]] ...]"
                    " [file://path[:line[:column]] ...]\n");
@@ -65,7 +70,9 @@ usage (FILE *stream)
 #ifdef COLOR
   usage_option (stream, "-C", "disable color output");
 #endif
+#ifdef MOUSE
   usage_option (stream, "-m", "enable mouse support (click, drag and wheel)");
+#endif
   usage_option (stream, "-x", "use XON/XOFF flow control");
 
   fputs ("\nFile handling:\n", stream);
