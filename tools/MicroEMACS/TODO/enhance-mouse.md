@@ -1,6 +1,6 @@
 # Enhance Mouse Support
 
-Status: in progress — P0, P1 and P2 implemented on the ncurses
+Status: in progress — P0 through P3 implemented on the ncurses
 backend: click to move point, mode-line click selects window,
 wheel scrolls the window under the mouse by the Lisp-settable
 `mouse-wheel-step` lines, and left-drag selects the
@@ -14,9 +14,16 @@ Emacs).  Double click selects the word at the click (or the run
 of blanks), triple click selects the line (ncurses counts the
 clicks; mouse_clicks), middle click yanks the kill buffer at the
 clicked cell, and right click extends the region to the clicked
-cell.  Pending: Shift+wheel horizontal scroll (fights the
-automatic horizontal recentering around dot), a smarter highlight
-color than plain reverse video, then P3–P5.
+cell.  Copy-region and kill-region also send the region to the
+system clipboard with OSC 52 (osc52send in display.c, gated by
+the `osc52` Lisp variable, on by default; regions over a million
+characters are skipped), and bracketed paste (mode 2004) is
+always enabled on the ncurses backend: pasted text inserts as
+one unit and one undo step (bracketedpaste in random.c), with
+function keys and other non-text keys dropped.  Pending:
+Shift+wheel horizontal scroll (fights the automatic horizontal
+recentering around dot), a smarter highlight color than plain
+reverse video, then P4–P5.
 Last updated: 2026-10-30
 
 ## Current State
@@ -121,13 +128,24 @@ integration keep working unchanged.
   selection semantics).
 - Right click: extend selection to click point.
 
-### P3 — Clipboard and paste interop
+### P3 — Clipboard and paste interop — done
 
 - OSC 52 (`\033]52;c;BASE64\007`) copy of the selected region, so
   selection lands in the system clipboard even over ssh. Gate behind a
-  variable (some terminals/pagers refuse OSC 52).
+  variable (some terminals/pagers refuse OSC 52).  Done: copy-region
+  and kill-region call `osc52send` (display.c) after `getregion`;
+  the variable shipped as `osc52` (default 1) since the copy also
+  fires on plain `M-W`/`^W` with no mouse involved.  The sequence is
+  written raw by `ttosc52` in each tty backend (a no-op on the
+  Windows consoles).
 - Bracketed paste (mode 2004) as a separate toggle: pasted text inserts
-  as one unit instead of replaying keystrokes.
+  as one unit instead of replaying keystrokes.  Done on the ncurses
+  backend: `ttopen` sends `\033[?2004h` unconditionally (no mouse flag
+  needed) and `ttclose` sends `\033[?2004l`; the markers are taught to
+  curses with `define_key` and decoded in `getkbd` as `KPASTE` with
+  `pastestart` distinguishing open from close.  The termcap backend
+  does not enable the mode (it has no decoder for the markers, so they
+  would leak into the keymap).
 
 ### P4 — Terminal gate and multiplexer passthrough
 
@@ -188,7 +206,9 @@ pattern (`COLOR`/`LISP`/`AI`); mouse needs no new compile flag, only the
 
 - `mouse` as a runtime settable variable plus a `toggle-mouse` command
   (enables/disables reporting without restarting).
-- `mouse-wheel-step`, `mouse-osc52` variables for P1/P3 knobs.
+- `mouse-wheel-step` for the P1 knob and `osc52` for P3 (the planned
+  `mouse-osc52` shipped as `osc52`: the copy fires on plain region
+  commands too, not just mouse selections).
 - Expose `%(mouse-p)` style predicate only if a use case appears.
 
 ## Testing

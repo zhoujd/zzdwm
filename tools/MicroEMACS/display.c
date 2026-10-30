@@ -171,6 +171,7 @@ int mouse_mods;			/* MOUSE_SHIFT/ALT/CTRL bits	*/
 int mouse_clicks;		/* Clicks in one gesture	*/
 int mouse_wheel_step = 3;	/* Lines per wheel scroll	*/
 int mouseselect;			/* Region highlight is shown	*/
+int osc52 = 1;			/* Copy regions to the clipboard */
 
 static int mouse_dragging;	/* Left button drag in progress */
 static int mouse_drag_moved;	/* Mouse moved during the drag  */
@@ -1706,6 +1707,130 @@ endmouseselect (void)
     if (wp->w_mark.p != NULL)
       wp->w_flag |= WFHARD;
 }
+
+/*
+ * Copy the region "rp" to the system clipboard with the OSC 52
+ * escape sequence, so text copied or killed in me can be pasted
+ * into other applications, even over ssh.  Called by the region
+ * commands when the "osc52" variable is set; terminals that refuse
+ * OSC 52 simply ignore the sequence.  Very large regions are
+ * skipped: no terminal is happy with a megabyte-sized paste.
+ * The region is measured in characters (r_size); the text is
+ * collected in bytes, with newlines between lines, exactly the
+ * way copyregion fills the kill buffer.
+ */
+void
+osc52send (const REGION *rp)
+{
+  static const char b64tab[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  char *buf;			/* Region text in UTF-8 bytes. */
+  char *b64;			/* Base64 encoded text.        */
+  LINE *linep;
+  int loffs;
+  int nbytes;			/* Total bytes collected.      */
+  int rsize;			/* Characters left to collect. */
+  int chunk;
+  int i, o;
+
+  if (osc52 == FALSE || rp->r_size > 1000 * 1000)
+    return;
+
+  /* First pass: count the bytes. */
+  nbytes = 0;
+  rsize = rp->r_size;
+  linep = rp->r_pos.p;
+  loffs = rp->r_pos.o;
+  while (rsize > 0)
+    {
+      if (loffs == wllength (linep))
+        {			/* End of line: a newline.     */
+          nbytes++;
+          linep = lforw (linep);
+          loffs = 0;
+          rsize--;
+        }
+      else
+        {
+          chunk = wllength (linep) - loffs;
+          if (chunk > rsize)
+            chunk = rsize;
+          nbytes += unblen (wlgetcptr (linep, loffs), chunk);
+          loffs += chunk;
+          rsize -= chunk;
+        }
+    }
+
+  /* Second pass: collect the bytes. */
+  buf = malloc (nbytes != 0 ? nbytes : 1);
+  if (buf == NULL)
+    return;
+  nbytes = 0;
+  rsize = rp->r_size;
+  linep = rp->r_pos.p;
+  loffs = rp->r_pos.o;
+  while (rsize > 0)
+    {
+      if (loffs == wllength (linep))
+        {
+          buf[nbytes++] = '\n';
+          linep = lforw (linep);
+          loffs = 0;
+          rsize--;
+        }
+      else
+        {
+          const uchar *cptr;
+          int bytes;
+
+          chunk = wllength (linep) - loffs;
+          if (chunk > rsize)
+            chunk = rsize;
+          cptr = wlgetcptr (linep, loffs);
+          bytes = unblen (cptr, chunk);
+          memcpy (&buf[nbytes], cptr, bytes);
+          nbytes += bytes;
+          loffs += chunk;
+          rsize -= chunk;
+        }
+    }
+
+  /* Base64 encode: every 3 bytes become 4 characters. */
+  b64 = malloc (4 * ((long) nbytes + 2) / 3 + 1);
+  if (b64 != NULL)
+    {
+      for (i = 0, o = 0; nbytes - i >= 3; i += 3, o += 4)
+        {
+          b64[o] = b64tab[(buf[i] >> 2) & 0x3f];
+          b64[o + 1] = b64tab[((buf[i] & 0x03) << 4)
+                              | ((buf[i + 1] >> 4) & 0x0f)];
+          b64[o + 2] = b64tab[((buf[i + 1] & 0x0f) << 2)
+                              | ((buf[i + 2] >> 6) & 0x03)];
+          b64[o + 3] = b64tab[buf[i + 2] & 0x3f];
+        }
+      if (nbytes - i == 1)
+        {
+          b64[o] = b64tab[(buf[i] >> 2) & 0x3f];
+          b64[o + 1] = b64tab[(buf[i] & 0x03) << 4];
+          b64[o + 2] = '=';
+          b64[o + 3] = '=';
+          o += 4;
+        }
+      else if (nbytes - i == 2)
+        {
+          b64[o] = b64tab[(buf[i] >> 2) & 0x3f];
+          b64[o + 1] = b64tab[((buf[i] & 0x03) << 4)
+                              | ((buf[i + 1] >> 4) & 0x0f)];
+          b64[o + 2] = b64tab[(buf[i + 1] & 0x0f) << 2];
+          b64[o + 3] = '=';
+          o += 4;
+        }
+      b64[o] = '\0';
+      ttosc52 (b64);
+    }
+  free (buf);
+}
+
 
 #ifdef COLOR
 /*

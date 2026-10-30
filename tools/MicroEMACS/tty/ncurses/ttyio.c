@@ -111,6 +111,13 @@ ttopen (void)
                  | BUTTON4_PRESSED | BUTTON5_PRESSED
                  | REPORT_MOUSE_POSITION, &oldmousemask);
     }
+  /* Enable bracketed paste mode: the terminal then wraps pasted
+   * text in mode-2004 markers, which ttykbd.c decodes as paste
+   * keys, so a paste is inserted as one unit instead of being
+   * replayed as keystrokes.  Terminals without the mode ignore
+   * this sequence.
+   */
+  write (1, "\033[?2004h", 8);
   setttysize ();
   tcgetattr (0, &newtty);
 }
@@ -153,6 +160,7 @@ ttclose (void)
   if (mouse)
     mousemask (oldmousemask, (mmask_t *) 0);
   endwin ();
+  write (1, "\033[?2004l", 8);	/* Disable bracketed paste. */
   tcsetattr (0, TCSANOW, &oldtty);
 }
 
@@ -260,6 +268,20 @@ void
 ttflush (void)
 {
    refresh ();
+}
+
+/*
+ * Copy base64-encoded text to the system clipboard with the
+ * OSC 52 escape sequence.  The sequence moves no cursor, so it
+ * is written past curses straight to the terminal; terminals
+ * that do not allow clipboard writes just ignore it.
+ */
+void
+ttosc52 (const char *b64)
+{
+  write (1, "\033]52;c;", 7);
+  write (1, b64, strlen (b64));
+  write (1, "\007", 1);
 }
 
 /*

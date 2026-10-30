@@ -854,6 +854,87 @@ yank (int f, int n, int k)
   return (TRUE);
 }
 
+int pastestart;			/* Last paste key was the start
+				   marker.                      */
+
+/*
+ * Insert text between the bracketed paste markers.  Bound to the
+ * paste key that the ncurses backend returns when the terminal
+ * wraps a paste in the mode-2004 markers, so the paste is inserted
+ * as one unit (one undo step, because the command loop wraps
+ * execute in startsaveundo/endsaveundo) instead of being replayed
+ * as keystrokes.  Text is inserted literally; keys that are not
+ * text (function keys, mouse events, control characters other
+ * than newline and tab) cannot be pasted and are dropped.
+ */
+int
+bracketedpaste (int f, int n, int k)
+{
+  char lbuf[80];		/* Text between newlines.      */
+  uchar ubuf[6];		/* One character in UTF-8.     */
+  register LINE *lp;
+  register int c;
+  register int j = 0;
+  register int ulen;
+  register int nline = 0;
+
+  if (pastestart == FALSE)	/* Stray end marker.   */
+    return (TRUE);
+  while ((c = getkey ()) != KPASTE)
+    {
+      if (c == (KCTRL | 'G'))
+        {			/* Abort the paste.    */
+          eprintf ("[Aborted]");
+          if (j > 0)
+            linsert (j, 0, lbuf);
+          return (FALSE);
+        }
+      if (c == (KCTRL | 'M') || c == (KCTRL | 'J'))
+        {			/* Newline.            */
+          if (j > 0)
+            {			/* Flush the buffer.   */
+              linsert (j, 0, lbuf);
+              j = 0;
+            }
+          if (newline (FALSE, 1, KRANDOM) == FALSE)
+            return (FALSE);
+          ++nline;
+        }
+      else if (c == (KCTRL | 'I'))
+        {			/* Tab.                */
+          if (j + 1 >= (int) sizeof (lbuf))
+            {
+              linsert (j, 0, lbuf);
+              j = 0;
+            }
+          lbuf[j++] = '\t';
+        }
+      else if (c >= ' ' && c < KCTRL && (c < KFIRST || c > KLAST))
+        {			/* Insertable character. */
+          ulen = uputc (c, ubuf);
+          if (j + ulen >= (int) sizeof (lbuf))
+            {			/* Need flush?  */
+              linsert (j, 0, lbuf);
+              j = 0;
+            }
+          memcpy (&lbuf[j], ubuf, ulen);
+          j += ulen;
+        }
+      /* Everything else cannot be pasted as text; drop it. */
+    }
+  if (j > 0)			/* Flush the buffer.    */
+    linsert (j, 0, lbuf);
+  lp = curwp->w_linep;		/* Cosmetic adjustment  */
+  if (curwp->w_dot.p == lp)
+    {				/* if offscreen insert. */
+      while (nline-- && lp != firstline (curbp))
+        lp = lback (lp);
+      curwp->w_linep = lp;	/* Adjust framing.      */
+      curwp->w_flag |= WFHARD;
+    }
+  return (TRUE);
+}
+
 /*
  * Set the tab size according to the numeric argument.
  */

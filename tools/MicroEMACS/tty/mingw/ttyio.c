@@ -138,6 +138,16 @@ ttflush (void)
 }
 
 /*
+ * The Windows console has no OSC 52; console mouse support (P5)
+ * can set the clipboard with the Win32 API instead.
+ */
+void
+ttosc52 (const char *b64)
+{
+  (void) b64;
+}
+
+/*
  * Read character.
  */
 int

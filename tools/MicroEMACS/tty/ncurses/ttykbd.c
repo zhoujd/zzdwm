@@ -103,6 +103,21 @@ getkbd (void)
   if (c == KEY_MOUSE)
     return mouse_decode ();
 
+  /* Decode bracketed paste markers (the mode is enabled by ttopen)
+   * into a paste key; "pastestart" tells the paste command whether
+   * this marker opens or closes the paste.
+   */
+  if (c == KEY_MAX + 1)
+    {
+      pastestart = TRUE;
+      return (KPASTE);
+    }
+  if (c == KEY_MAX + 2)
+    {
+      pastestart = FALSE;
+      return (KPASTE);
+    }
+
   for (i = 0; i < 32; i++)		/* search SPECIAL map	*/
     if (c == specmap[i])		/* found it?		*/
       return (KFIRST + i);		/* return internal code */
@@ -241,4 +256,11 @@ ttykeymapinit (void)
   keydup (KF11,  "find-cscope");
   keydup (KF12,  "next-cscope");
   keydup (KMOUSE, "mouse-event");
+  /* Teach curses the bracketed paste markers as keys, so pasted
+   * text arrives between two paste keys instead of being replayed
+   * as keystrokes.  Bound to the command that inserts it as a unit.
+   */
+  define_key ("\033[200~", KEY_MAX + 1);
+  define_key ("\033[201~", KEY_MAX + 2);
+  keydup (KPASTE, "bracketed-paste");
 }

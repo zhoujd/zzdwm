@@ -602,6 +602,9 @@ extern int mouse_mods;
 extern int mouse_clicks;        /* Clicks in one gesture.       */
 extern int mouse_wheel_step;
 extern int mouseselect;         /* Region highlight is shown.   */
+extern int osc52;               /* Copy regions to the clipboard. */
+extern int pastestart;          /* Last paste key was the start
+                                   marker.                      */
 extern int tceeol;
 extern int tcinsl[];
 extern int tcdell[];
@@ -742,6 +745,8 @@ void vttidy (void);                     /* Tidy display before exit.    */
 int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
 int mouse_col_to_offset (LINE * lp, int target); /* Click column to char. */
 void endmouseselect (void);    /* Turn the region highlight off. */
+void osc52send (const REGION *rp);      /* Copy region to the clipboard. */
+int bracketedpaste (int f, int n, int k); /* Insert pasted text at dot.  */
 int showvisable (int f, int n, int k);  /* Show visable on modeline.    */
 int setnumber (int f, int n, int k);    /* Set line number display      */
 void vtputc_color (unsigned int c, int color);
@@ -1184,6 +1189,7 @@ int ttputc (int c);
 int ttinsertc (int c);
 void ttdelc (void);
 void ttputs (const wchar_t *buf, int size);
+void ttosc52 (const char *b64);   /* Copy base64 text to the clipboard. */
 void ttflush (void);
 int ttgetc (void);
 void panic (char *s);

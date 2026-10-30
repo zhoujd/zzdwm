@@ -67,6 +67,9 @@
 /* Mouse events are reported by ncurses as KEY_MOUSE. */
 #define KMOUSE  K1F
 
+/* Bracketed paste markers arrive as a paste key (ncurses only). */
+#define KPASTE  KFIRST
+
 /* Functions. */
 void putline (int row, int col, const wchar_t *buf);
 void mouse_page_coords (int x, int y, int *vrow, int *vcol);

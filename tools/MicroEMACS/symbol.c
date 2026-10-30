@@ -297,6 +297,7 @@ KEY key[] = {
   {-1,                  nextcscope,          "next-cscope"},
 #endif
   {-1,                  mouseevent,          "mouse-event"},
+  {-1,                  bracketedpaste,      "bracketed-paste"},
   {-1,                  jeffexit,            "jeff-exit"},
   {-1,                  displaymessage,      "display-message"},
   {-1,                  listbuffers,         "display-buffers"},

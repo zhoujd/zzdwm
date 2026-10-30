@@ -144,6 +144,7 @@ killregion (int f, int n, int k)
 
   if ((s = getregion (&region)) != TRUE)
     return (s);
+  osc52send (&region);		/* Copy to the system clipboard. */
   kdelete ();			/* Purge kill buffer    */
   curwp->w_dot = region.r_pos;
   saveundo (UMOVE, &curwp->w_dot);
@@ -166,6 +167,7 @@ copyregion (int f, int n, int k)
 
   if (getregion (&region) != TRUE)
     return (FALSE);
+  osc52send (&region);		/* Copy to the system clipboard. */
   kdelete ();			/* Purge kill buffer    */
   linep = region.r_pos.p;	/* Current line.        */
   loffs = region.r_pos.o;	/* Current offset.      */

@@ -144,6 +144,15 @@ ttflush()
 }
 
 /*
+ * The Windows console has no OSC 52.
+ */
+void
+ttosc52 (const char *b64)
+{
+  (void) b64;
+}
+
+/*
  * Read character.
  */
 int

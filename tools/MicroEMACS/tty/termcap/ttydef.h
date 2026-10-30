@@ -75,5 +75,8 @@
 #define	KSF9    K1E
 #define KMOUSE  K1F
 
+/* Bracketed paste markers arrive as a paste key (ncurses only). */
+#define KPASTE  KFIRST
+
 #define	NFKEYS  20		/* # of function keys (k0-k9, K0-K9) */
 #endif

@@ -65,6 +65,20 @@ yank (int f, int n, int k)
   return TRUE;
 }
 
+/*
+ * Capture clipboard copies for osc52send instead of writing an
+ * escape sequence to the test terminal.
+ */
+static char last_osc52[512];
+static int osc52_calls;
+
+void
+ttosc52 (const char *b64)
+{
+  ++osc52_calls;
+  snprintf (last_osc52, sizeof (last_osc52), "%s", b64);
+}
+
 static BUFFER test_buf;
 static EWINDOW test_win;
 static LINE *test_line1;
@@ -582,6 +596,67 @@ test_right_click (void)
   free_window ();
 }
 
+/*
+ * Copy regions to the clipboard (osc52send in display.c): the text
+ * between the region ends, in bytes with newlines between lines,
+ * base64 encoded the way OSC 52 wants it.
+ */
+static void
+send_region (LINE *lp, int o, int size)
+{
+  REGION region;
+
+  region.r_pos.p = lp;
+  region.r_pos.o = o;
+  region.r_size = size;
+  osc52send (&region);
+}
+
+static void
+test_osc52 (void)
+{
+  LINE *lp;
+  int calls;
+
+  make_window ();
+  assert (osc52 == 1);              /* on by default */
+  osc52_calls = 0;
+
+  /* Region across three lines, from mid-line into mid-line:
+     "beta" + newline + "gamma delta" + newline + "eps". */
+  send_region (test_line1, 6, 4 + 1 + 11 + 1 + 3);
+  assert (osc52_calls == 1);
+  assert (strcmp (last_osc52, "YmV0YQpnYW1tYSBkZWx0YQplcHM=") == 0);
+
+  /* Region that ends exactly at the end of a line adds no
+     trailing newline. */
+  send_region (test_line1, 0, 10 + 1 + 11);
+  assert (strcmp (last_osc52, "YWxwaGEgYmV0YQpnYW1tYSBkZWx0YQ==") == 0);
+
+  /* Single line, one pad character. */
+  send_region (test_line2, 0, 5);   /* "gamma" */
+  assert (strcmp (last_osc52, "Z2FtbWE=") == 0);
+
+  /* Two pad characters. */
+  send_region (test_line1, 6, 4);   /* "beta" */
+  assert (strcmp (last_osc52, "YmV0YQ==") == 0);
+
+  /* UTF-8 characters are copied as bytes, not columns. */
+  lp = make_line ("a\303\251b");    /* a é b */
+  send_region (lp, 0, 3);
+  assert (strcmp (last_osc52, "YcOpYg==") == 0);
+  free (lp);
+
+  /* The Lisp variable turns the copy off. */
+  calls = osc52_calls;
+  osc52 = 0;
+  send_region (test_line2, 0, 5);
+  assert (osc52_calls == calls);
+  osc52 = 1;
+
+  free_window ();
+}
+
 int
 main (void)
 {
@@ -597,6 +672,7 @@ main (void)
   test_triple_click ();
   test_middle_click ();
   test_right_click ();
+  test_osc52 ();
   puts ("mouse tests passed");
   return 0;
 }

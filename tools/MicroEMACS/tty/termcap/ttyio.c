@@ -278,6 +278,20 @@ ttflush (void)
 }
 
 /*
+ * Copy base64-encoded text to the system clipboard with the
+ * OSC 52 escape sequence.  Terminals that do not allow
+ * clipboard writes just ignore the sequence.
+ */
+void
+ttosc52 (const char *b64)
+{
+  ttflush ();			/* Keep the output order tidy. */
+  write (1, "\033]52;c;", 7);
+  write (1, b64, strlen (b64));
+  write (1, "\007", 1);
+}
+
+/*
  * Read character from terminal.  Read
  * UTF-8 input and convert it to Unicode.
  */

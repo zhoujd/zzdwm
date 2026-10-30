@@ -80,3 +80,6 @@
 
 /* Mouse events have no source on this backend yet. */
 #define KMOUSE  K1F
+
+/* Bracketed paste markers arrive as a paste key (ncurses only). */
+#define KPASTE  KFIRST
