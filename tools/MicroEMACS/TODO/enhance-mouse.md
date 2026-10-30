@@ -283,7 +283,9 @@ pattern (`COLOR`/`LISP`/`AI`); mouse needs no new compile flag, only the
   `INPUT_RECORD`-to-`mouse_*` mapping belongs in the same test as a
   pure function (record in, fields out) so it runs on Linux CI too.
 - Suite: `./build.sh -b test clean all` plus
-  `./test/mouse-test` alongside syntax/display/lisp tests.
+  `./test/mouse-test` alongside syntax/display/lisp tests.  The pty
+  end-to-end scripts that drive the real binary over the wire live in
+  `test/python/` (see its README); they are run manually after a build.
 - Manual matrix: xterm, st, rxvt (terminfo from `misc/term/`), inside
   dvtm, inside screen, inside tmux — click, drag, wheel, double-click,
   suspend/resume (`^Z`) must leave no stuck mouse mode.
