@@ -66,3 +66,7 @@
 
 /* Functions. */
 void putline (int row, int col, const wchar_t *buf);
+#ifdef MOUSE
+void mouse_page_coords (int terminal_row, int terminal_column,
+                        int *row, int *column);
+#endif

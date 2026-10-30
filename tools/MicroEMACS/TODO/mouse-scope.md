@@ -2,9 +2,9 @@
 
 ## Decision: 2026-10-30
 
-MicroEMACS remains terminal-native and terminal-independent by default. Mouse
-reporting stays disabled unless a terminal or multiplexer provides it directly;
-the editor does not enable or decode mouse protocols itself.
+MicroEMACS remains terminal-native and terminal-independent by default. The
+core event model is normalized and protocol-neutral, while mouse reporting
+remains disabled in standard builds.
 
 This deliberately excludes mouse reporting modes, wheel-event decoding,
 X10/SGR compatibility layers, drag selection, selection rendering, and
@@ -24,7 +24,11 @@ The horizontal-scroll commands remain valuable without that layer:
   clamped at column zero.
 * `w_hscroll` pins the view until dot moves or the buffer is edited.
 
-If mouse interaction is needed later, add a small optional layer that supports
-one normalized event representation, preferably SGR-only. Terminal protocol
-decoding should remain in the backend, and `display.c` should consume only
-normalized events.
+The normalized foundation keeps a bounded thirty-two-entry queue in `mouse.c`.
+Backends translate reports into `MOUSE_EVENT` values, `mouse-event` dispatches
+the oldest event, `define-key "Mouse"` lets Lisp replace that dispatcher, and
+the handler can consume the event with `read-mouse-event`. A compile-time
+`MOUSE=yes` ncurses backend opts into normal SGR press/release reporting only.
+It does not request motion, drag selection, or clipboard behavior. The legacy
+termcap backend decodes X10 reports for compatibility, including multipage
+coordinate conversion where available.

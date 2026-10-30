@@ -126,6 +126,29 @@ get_actual_pos (int row, int col, int *actual_row, int *actual_col)
     }
 }
 
+#ifdef MOUSE
+/*
+ * Translate terminal mouse coordinates into the page-stacked coordinates
+ * used by the editor. With one page this is the identity.
+ */
+void
+mouse_page_coords (int terminal_row, int terminal_column,
+                   int *row, int *column)
+{
+  int page;
+
+  if (npages < 2)
+    {
+      *row = terminal_row;
+      *column = terminal_column;
+      return;
+    }
+  page = terminal_column / (ncol + 1);
+  *row = page * actual_nrow + terminal_row;
+  *column = terminal_column - page * (ncol + 1);
+}
+#endif
+
 /*
  * Move the cursor to the specified
  * origin 0 row and column position. Try to

@@ -18,9 +18,11 @@ INC = -I$(srcdir) -I$(SYS) -I$(TTY)
 COLOR ?= yes
 LISP ?= yes
 AI ?= yes
+MOUSE ?= no
 MINIMAL ?= no
 COLOR_FLAG := $(if $(filter yes,$(COLOR)),-DCOLOR,)
 LISP_FLAG := $(if $(filter yes,$(LISP)),-DLISP,)
+MOUSE_FLAG := $(if $(filter yes,$(MOUSE)),-DMOUSE,)
 MINIMAL_FLAG := $(if $(filter yes,$(MINIMAL)),-DMINIMAL,)
 AI_FLAG :=
 AI_OBJ :=
@@ -36,7 +38,8 @@ endif
 
 CC = gcc
 CFLAGS = -std=c99 -D_GNU_SOURCE -DLINUX -DBACKUP \
-         $(COLOR_FLAG) $(LISP_FLAG) $(MINIMAL_FLAG) $(AI_FLAG) $(INC) \
+         $(COLOR_FLAG) $(LISP_FLAG) $(MOUSE_FLAG) $(MINIMAL_FLAG) \
+         $(AI_FLAG) $(INC) \
          -Wall -Wextra -pedantic \
          -Wno-unused-parameter \
          -Wno-implicit-fallthrough
@@ -83,6 +86,7 @@ OBJ := \
 	$(LISP_OBJ) \
 	$(AI_OBJ) \
 	main.o \
+	mouse.o \
 	paragraph.o \
 	random.o \
 	regexp.o \

@@ -11,6 +11,7 @@
 int fillcol;
 int tabsize;
 int colorflag;
+int mouse;
 int modefg256 = 15;
 int modebg256 = 22;
 int modefg = 0;
@@ -796,6 +797,8 @@ main (void)
   assert (evaluate ("(define-key \"C-x C-b\" \"buffer-menu\")") == TRUE);
   assert (bound_key == (KCTLX | KCTRL | 'B'));
   assert (bound_symbol == &command_symbol);
+  assert (evaluate ("(define-key \"Mouse\" \"buffer-menu\")") == TRUE);
+  assert (bound_key == KMOUSE);
   assert (evaluate ("(define-key \"C-x C-b\" \"unknown\")") == FALSE);
   assert (evaluate ("(define-key \"C-x C-b\")") == FALSE);
 
@@ -1089,6 +1092,7 @@ main (void)
           == FALSE);
 
   colorflag = TRUE;
+  mouse = TRUE;
   curbp = &syntax_buffer;
   tt_mode_color_called = 0;
   updatemode_called = 0;
@@ -1111,6 +1115,27 @@ main (void)
   assert (evaluate ("(set-modeline-color 15 22 0)") == FALSE);
   assert (evaluate ("(set-modeline-color 15 22 0 256)") == FALSE);
   assert (evaluate ("(set-modeline-color 15 22 0 -1)") == FALSE);
+
+  {
+    MOUSE_EVENT event;
+    char result[LISP_OUTPUT_SIZE];
+
+    memset (&event, 0, sizeof (event));
+    event.kind = MOUSE_PRESS;
+    event.button = 1;
+    event.row = 4;
+    event.column = 9;
+    assert (mouseenqueue (&event) == TRUE);
+    assert (tiny_lisp_eval ("(read-mouse-event)", result, sizeof (result))
+            == 1);
+    assert (strcmp (result, "\"0 1 4 9 0 0\"") == 0
+            || strcmp (result, "0 1 4 9 0 0") == 0);
+    assert (tiny_lisp_eval ("(read-mouse-event)", result, sizeof (result))
+            == 1);
+    assert (strcmp (result, "nil") == 0);
+    lisp_input = "extra";
+    assert (evaluate ("ignored") == FALSE);
+  }
 
   assert (evaluate ("(+ 1 2)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: 3]") == 0);

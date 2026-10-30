@@ -2,7 +2,7 @@
 
 ROOT = ..
 TARGET = utf8 regtest tcap reftag tag-test symbol-test syntax-test \
-	display-test cscope-test lisp-test ai-test path-test
+	display-test mouse-test cscope-test lisp-test ai-test path-test
 CFLAGS := -Os
 
 ifeq ($(INSIDE_DOCKER), yes)
@@ -51,18 +51,23 @@ display-test: display.c $(ROOT)/path.c $(ROOT)/utf8.c
 		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/mingw \
 		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DTEST $^
 
+mouse-test: mouse.c $(ROOT)/def.h $(ROOT)/mouse.c
+	$(CC) $(CFLAGS) -Wno-unused-parameter $(LDFLAGS) -o $@ \
+		-I$(ROOT) -I$(ROOT)/sys/unix -I$(ROOT)/tty/ncurses mouse.c
+
 cscope-test: cscope.c $(ROOT)/cscope.c $(ROOT)/sys/unix/spawn.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \
 		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/unix \
 		-I$(ROOT)/tty/ncurses -DTEST cscope.c $(ROOT)/sys/unix/spawn.c
 
 lisp-test: lisp.c $(ROOT)/lisp.c $(ROOT)/tinylisp.c $(ROOT)/tinylisp.h \
-		$(ROOT)/path.c $(ROOT)/utf8.c
+		$(ROOT)/mouse.c $(ROOT)/path.c $(ROOT)/utf8.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections \
 		-fno-asynchronous-unwind-tables $(LDFLAGS) -Wl,--gc-sections \
-		-o $@ -DCOLOR -DLISP -DAI -I$(ROOT) -I$(ROOT)/sys/unix \
+	-o $@ -DCOLOR -DLISP -DAI -DMOUSE -I$(ROOT) -I$(ROOT)/sys/unix \
 		-I$(ROOT)/tty/ncurses \
-		$< $(ROOT)/tinylisp.c $(ROOT)/path.c $(ROOT)/utf8.c
+		$< $(ROOT)/tinylisp.c $(ROOT)/mouse.c $(ROOT)/path.c \
+		$(ROOT)/utf8.c
 
 ai-test: ai.c $(ROOT)/ai.c $(ROOT)/def.h
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections \

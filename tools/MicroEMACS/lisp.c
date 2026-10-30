@@ -70,6 +70,10 @@ lisp_key_code (const char *name)
         }
       break;
     }
+#ifdef MOUSE
+  if (strncasecmp (name, "Mouse", 5) == 0 && name[5] == 0)
+    return KMOUSE;
+#endif
   if (name[0] == 0 || name[1] != 0)
     return -1;
   if ((key & (KCTRL | KMETA | KCTLX)) != 0
@@ -129,6 +133,24 @@ lisp_integer (const char *text, int *value)
     return FALSE;
   *value = (int) parsed;
   return TRUE;
+}
+
+static int
+lisp_mouse_event (int argc, const char *const *argv,
+                  char *result, size_t result_size)
+{
+  MOUSE_EVENT event;
+  int length;
+
+  (void) argv;
+  if (argc != 0 || mousedrop (&event) == FALSE)
+    return TINY_LISP_HOST_NIL;
+
+  length = snprintf (result, result_size, "%d %d %d %d %d %d",
+                     event.kind, event.button, event.row, event.column,
+                     event.modifiers, event.clicks);
+  return length >= 0 && (size_t) length < result_size
+         ? TINY_LISP_HOST_STRING : FALSE;
 }
 
 static int
@@ -1466,6 +1488,7 @@ lisp_register_hosts (void)
     { "shell-command-to-string", lisp_shell_command_to_string },
     { "editor-cmd", lisp_execute_command },
     { "get-char", lisp_get_char },
+    { "read-mouse-event", lisp_mouse_event },
     { "me-find-file", lisp_find_file },
     { "insert-char", lisp_insert_char },
     { "get-line", lisp_get_line },

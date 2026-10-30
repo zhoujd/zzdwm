@@ -291,17 +291,21 @@ parse (first)
 static int
 parse_or_mouse (TRIE first)
 {
+  MOUSE_EVENT event;
   int c;
 
   c = parse (first);
   if (c == KMOUSE)
     {
-      mouse_button = ttgetc () - ' ';
-      mouse_column = ttgetc () - ' ' - 1;
-      mouse_row    = ttgetc () - ' ' - 1;
+      int code = ttgetc () - ' ';
+      int column = ttgetc () - ' ' - 1;
+      int row = ttgetc () - ' ' - 1;
+
+      if (mousedecodesgr (&event, code, row, column, FALSE) == TRUE)
+        mouseenqueue (&event);
 #if DEBUG
-      fprintf (stderr, "button %d, row %d, column %d\n",
-               mouse_button, mouse_row, mouse_column);
+      fprintf (stderr, "kind %d, button %d, row %d, column %d\n",
+               event.kind, event.button, event.row, event.column);
 #endif
     }
   return c;

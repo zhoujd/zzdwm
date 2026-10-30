@@ -94,6 +94,10 @@ ttopen (void)
   cbreak ();			/* take input chars one at a time, no wait for \n */
   noecho ();
   raw ();
+#ifdef MOUSE
+  if (mouse)
+    ttsetmouse (TRUE);
+#endif
   setttysize ();
   tcgetattr (0, &newtty);
 }
@@ -134,8 +138,33 @@ void
 ttclose (void)
 {
   endwin ();
+#ifdef MOUSE
+  if (mouse)
+    ttsetmouse (FALSE);
+#endif
   tcsetattr (0, TCSANOW, &oldtty);
 }
+
+#ifdef MOUSE
+/*
+ * Enable normal press/release reporting with SGR encoding. Motion and the
+ * legacy X10 encoding remain disabled.
+ */
+void
+ttsetmouse (int flag)
+{
+  if (flag != FALSE)
+    {
+      if (write (1, "\033[?1000h\033[?1006h", 16) < 0)
+        perror ("mouse enable");
+    }
+  else
+    {
+      if (write (1, "\033[?1006l\033[?1000l", 16) < 0)
+        perror ("mouse disable");
+    }
+}
+#endif
 
 /*
  * Check for keyboard typeahead.  Return TRUE if any characters have

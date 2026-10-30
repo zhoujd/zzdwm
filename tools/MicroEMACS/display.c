@@ -158,13 +158,6 @@ VIDEO video[2 * (NROW - 1)];	/* Actual screen data.          */
 VIDEO blanks;			/* Blank line image.            */
 static uchar spaces[NCOL];	/* ASCII spaces.		*/
 
-/*
- * These variables are set by ttykbd.c when a mouse button is pressed.
- */
-int mouse_button;		/* 0=left, 1=middle, 2=right	*/
-int mouse_row;			/* screen row (0 = top)		*/
-int mouse_column;		/* screen column (0 = left)	*/
-
 #if GOSLING
 /*
  * This matrix is written as an array because
@@ -218,6 +211,7 @@ vtinit (void)
   register VIDEO *vp;
   register int i;
 
+  mousereset ();
   if (nrow > NROW)
     nrow = NROW;
   if (ncol > NCOL)
@@ -1676,8 +1670,15 @@ scrollright (int f, int n, int k)
 int
 mouseevent (int f, int n, int k)
 {
-  eprintf ("[Mouse button %d, row %d, column %d]",
-           mouse_button, mouse_row, mouse_column);
+  MOUSE_EVENT event;
+
+  if (mousedrop (&event) == FALSE)
+    return FALSE;
+
+  eprintf ("[Mouse kind %d, button %d, row %d, column %d, "
+           "modifiers %d, clicks %d]",
+           event.kind, event.button, event.row, event.column,
+           event.modifiers, event.clicks);
   return (TRUE);
 }
 

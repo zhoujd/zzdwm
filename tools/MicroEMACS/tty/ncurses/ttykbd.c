@@ -33,6 +33,7 @@
 
 #include "def.h"
 #include <ncurses.h>
+#include <stdio.h>
 
 #define CTRL(x) ((x) & 0x1f)
 
@@ -71,6 +72,12 @@ int specmap[32] = {
   KEY_F(18), KEY_F(19), KEY_F(20), 0
 };
 
+#ifdef MOUSE
+#define KEY_SGRMOUSE (KEY_MAX + 1)
+
+static int mouse_decode_sgr (void);
+#endif
+
 /*
  * Read in a key, doing the low level mapping
  * of Unicode to 32 bit internal key code. This level deals with
@@ -86,6 +93,10 @@ getkbd (void)
   register int	i;
 
   c = ttgetc ();
+#ifdef MOUSE
+  if (c == KEY_SGRMOUSE)
+    return mouse_decode_sgr ();
+#endif
   if (c < KEY_MIN)			/* normal key?		*/
      return (c);			/* just return it	*/
 
@@ -102,6 +113,48 @@ getkbd (void)
       return (KFIRST + i);		/* return internal code */
   return (c);				/* not found, maybe Unicode? */
 }
+
+#ifdef MOUSE
+/*
+ * Decode the body of an SGR mouse report. Ncurses matches the fixed prefix;
+ * this function reads "code;column;row" and the final M (press) or m
+ * (release) byte.
+ */
+static int
+mouse_decode_sgr (void)
+{
+  char body[40];
+  MOUSE_EVENT event;
+  int c = ERR;
+  int length = 0;
+  int release = FALSE;
+  int code, column, row;
+
+  while (length < (int) sizeof (body) - 1)
+    {
+      c = ttgetc ();
+      if (c == ERR)
+        break;
+      if (c == 'M' || c == 'm')
+        {
+          release = c == 'm';
+          break;
+        }
+      body[length++] = (char) c;
+    }
+  body[length] = 0;
+
+  if ((c == 'M' || c == 'm')
+      && sscanf (body, "%d;%d;%d", &code, &column, &row) == 3
+      && column > 0 && row > 0)
+    {
+      mouse_page_coords (row - 1, column - 1, &row, &column);
+      if (mousedecodesgr (&event, code, row, column, release) == TRUE)
+        mouseenqueue (&event);
+    }
+  return (KMOUSE);
+}
+#endif
 
 /*
  * Terminal specific keymap initialization.
@@ -142,4 +195,8 @@ ttykeymapinit (void)
   keydup (KF10,  "only-window");
   keydup (KF11,  "find-cscope");
   keydup (KF12,  "next-cscope");
+#ifdef MOUSE
+  define_key ("\033[<", KEY_SGRMOUSE);
+  keydup (KMOUSE, "mouse-event");
+#endif
 }

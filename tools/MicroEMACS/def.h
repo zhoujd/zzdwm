@@ -276,6 +276,10 @@ choice_padding (size_t used, size_t length)
 #define K1E     0x009E
 #define K1F     0x009F
 
+#ifdef MOUSE
+#define KMOUSE  K1F
+#endif
+
 /*
  * Macro for key with Control prefix
  */
@@ -540,6 +544,32 @@ LINE;
 #define wloffset(lp, n)  (uoffset((lp)->l_text,(n)))
 
 /*
+ * Normalized mouse events. Terminal backends translate their protocol
+ * into these fields before MicroEMACS dispatches or exposes an event.
+ */
+#define MOUSE_PRESS    0
+#define MOUSE_RELEASE  1
+#define MOUSE_MOTION   2
+#define MOUSE_WHEEL    3
+
+#define MOUSE_SHIFT    0x01
+#define MOUSE_ALT      0x02
+#define MOUSE_CTRL     0x04
+
+#define MOUSE_QUEUE_SIZE 32
+
+typedef struct MOUSE_EVENT
+{
+  int kind;
+  int button;
+  int row;
+  int column;
+  int modifiers;
+  int clicks;
+}
+MOUSE_EVENT;
+
+/*
  * Externals.
  */
 extern int thisflag;
@@ -581,12 +611,12 @@ extern int npages;
 extern char *version[];
 extern int ttrow;
 extern int ttcol;
-extern int mouse_button;
-extern int mouse_row;
-extern int mouse_column;
 extern int tceeol;
 extern int tcinsl[];
 extern int tcdell[];
+#ifdef MOUSE
+void ttsetmouse (int flag);            /* Enable/disable SGR reports.  */
+#endif
 extern char cinfo[];
 extern char upmap[];
 extern char *keystrings[];
@@ -722,6 +752,13 @@ void update (void);                     /* Make sure display is right.  */
 void vtinit (void);                     /* Initialize video display.    */
 void vttidy (void);                     /* Tidy display before exit.    */
 int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
+void mousereset (void);                 /* Clear the mouse event queue. */
+int mouseeventcount (void);             /* Count queued mouse events.   */
+int mouseenqueue (const MOUSE_EVENT *event); /* Add a normalized event. */
+int mousepeek (MOUSE_EVENT *event);     /* Copy the oldest event.       */
+int mousedrop (MOUSE_EVENT *event);     /* Remove the oldest event.     */
+int mousedecodesgr (MOUSE_EVENT *event, int code, int row, int column,
+                    int release);       /* Decode an SGR event.         */
 int scrollleft (int f, int n, int k);   /* Scroll window left.          */
 int scrollright (int f, int n, int k);  /* Scroll window right.         */
 int showvisable (int f, int n, int k);  /* Show visable on modeline.    */
