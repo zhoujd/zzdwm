@@ -25,6 +25,14 @@ Native Windows mouse support should remain a separate backend feature. Its
 message loop and window/event API boundary are naturally backend-specific and
 should not complicate the terminal-independent event model.
 
+## Future task: native Windows mouse backend
+
+Translate Windows console mouse records from `ReadConsoleInput` into
+`ME_MOUSE_EVENT` values in the MinGW backend, initially exposing unmodified
+button-one presses for click-to-move-point. Keep event-mode changes, coordinate
+conversion, and input draining inside `tools/MicroEMACS/tty/mingw`; do not
+introduce SGR parsing or Linux terminal state into that backend.
+
 The horizontal-scroll commands remain valuable without that layer:
 
 * `C-x <` runs `scroll-left` and `C-x >` runs `scroll-right`; they use the
@@ -34,7 +42,7 @@ The horizontal-scroll commands remain valuable without that layer:
 * `w_hscroll` pins the view until dot moves or the buffer is edited.
 
 The normalized foundation keeps a bounded thirty-two-entry queue in `mouse.c`.
-Backends translate reports into `MOUSE_EVENT` values, `mouse-event` dispatches
+Backends translate reports into `ME_MOUSE_EVENT` values, `mouse-event` dispatches
 the oldest event, `define-key "Mouse"` lets Lisp replace that dispatcher, and
 the handler can consume the event with `read-mouse-event`. A compile-time
 `MOUSE=yes` ncurses backend opts into normal SGR press/release reporting and

@@ -291,7 +291,7 @@ parse (first)
 static int
 parse_or_mouse (TRIE first)
 {
-  MOUSE_EVENT event;
+  ME_MOUSE_EVENT event;
   int c;
 
   c = parse (first);

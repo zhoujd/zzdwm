@@ -139,7 +139,7 @@ static int
 lisp_mouse_event (int argc, const char *const *argv,
                   char *result, size_t result_size)
 {
-  MOUSE_EVENT event;
+  ME_MOUSE_EVENT event;
   int length;
 
   (void) argv;

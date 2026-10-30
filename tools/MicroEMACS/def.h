@@ -558,7 +558,7 @@ LINE;
 
 #define MOUSE_QUEUE_SIZE 32
 
-typedef struct MOUSE_EVENT
+typedef struct ME_MOUSE_EVENT
 {
   int kind;
   int button;
@@ -567,7 +567,7 @@ typedef struct MOUSE_EVENT
   int modifiers;
   int clicks;
 }
-MOUSE_EVENT;
+ME_MOUSE_EVENT;
 
 /*
  * Externals.
@@ -754,10 +754,10 @@ void vttidy (void);                     /* Tidy display before exit.    */
 int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
 void mousereset (void);                 /* Clear the mouse event queue. */
 int mouseeventcount (void);             /* Count queued mouse events.   */
-int mouseenqueue (const MOUSE_EVENT *event); /* Add a normalized event. */
-int mousepeek (MOUSE_EVENT *event);     /* Copy the oldest event.       */
-int mousedrop (MOUSE_EVENT *event);     /* Remove the oldest event.     */
-int mousedecodesgr (MOUSE_EVENT *event, int code, int row, int column,
+int mouseenqueue (const ME_MOUSE_EVENT *event); /* Add a normalized event. */
+int mousepeek (ME_MOUSE_EVENT *event);     /* Copy the oldest event.     */
+int mousedrop (ME_MOUSE_EVENT *event);     /* Remove the oldest event.   */
+int mousedecodesgr (ME_MOUSE_EVENT *event, int code, int row, int column,
                     int release);       /* Decode an SGR event.         */
 int scrollleft (int f, int n, int k);   /* Scroll window left.          */
 int scrollright (int f, int n, int k);  /* Scroll window right.         */

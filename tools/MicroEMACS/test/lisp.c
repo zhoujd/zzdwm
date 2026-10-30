@@ -1117,7 +1117,7 @@ main (void)
   assert (evaluate ("(set-modeline-color 15 22 0 -1)") == FALSE);
 
   {
-    MOUSE_EVENT event;
+    ME_MOUSE_EVENT event;
     char result[LISP_OUTPUT_SIZE];
 
     memset (&event, 0, sizeof (event));

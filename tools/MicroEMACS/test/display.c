@@ -155,7 +155,7 @@ main (void)
 
   reset_mouse_windows ();
   {
-    MOUSE_EVENT event;
+    ME_MOUSE_EVENT event;
 
     memset (&event, 0, sizeof (event));
     event.kind = MOUSE_PRESS;
