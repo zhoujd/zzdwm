@@ -33,9 +33,15 @@ which cannot express modified wheel events.  Terminals that bypass
 mouse reporting while Shift is held (st, whose forcemousemod routes
 Shift+wheel to Shift+PageUp/PageDown keys) are covered too: those
 byte sequences are claimed ahead of terminfo with define_key and
-decoded back into wheel events anchored at the cursor.  Pending:
-a smarter highlight color than plain reverse video, the P4
-terminal allow list and multiplexer passthrough notes, then P5.
+decoded back into wheel events anchored at the cursor.  Legacy X10
+reports ("\033[M" plus three raw bytes) are decoded as well, so
+terminals that honor mode 1000 but not 1006 — the Linux console,
+older rxvt — keep click and wheel support, and terminfo kmous
+entries can no longer swallow mouse bytes into an undecodable
+KEY_MOUSE.  The P4 terminal gate is done by this decode coverage
+(no allow list needed) and the multiplexer passthrough notes are in
+the manual's -m entry.  Pending:
+a smarter highlight color than plain reverse video, then P5.
 Last updated: 2026-10-30
 
 ## Current State
@@ -174,15 +180,23 @@ fixed `\033[<` SGR prefix is taught to curses with `define_key`, and
 clock injectable for tests) turns the parameters into the shared
 `mouse_*` fields — ncurses' own decoder mangles X10 modifier bits on
 wheel events and garbles SGR sequences (tested on ncurses 6.4).
-What remains here is the gate and the passthrough documentation.
 
-- Replace the `strncmp(TERM, "xterm", 5)` gate with an explicit allow
-  list or a capability probe; `-m` is already opt-in, so when in doubt,
-  trust the user.
-- Document passthrough: inside `tmux` needs `set -g mouse off` or
-  `allow-passthrough`; inside this repo's own `dvtm`, the multiplexer
-  grabs the mouse first — document `MOD+` escape or run dvtm with mouse
-  disabled. Same for `screen`.
+The gate is now done by decoding instead of by `TERM` inspection —
+no allow list or capability probe.  Every terminal is safe to enable
+reporting on: SGR terminals answer in SGR, terminals that honor only
+mode 1000 answer in legacy X10 bytes, which `mouse_decode_x10`
+(ttykbd.c) decodes with the same `mouse_decode_sgr` semantics (a
+press is completed as a click right away, since X10 has no release
+event), and terminals without any mouse support ignore the modes and
+send nothing.  The `\033[M` prefix is claimed with `define_key`
+ahead of terminfo `kmous`, which would otherwise eat the prefix plus
+three data bytes and return an undecodable `KEY_MOUSE` (probed on
+ncurses 6.4).  The old `strncmp(TERM, "xterm", 5)` gate lives only
+in the legacy termcap backend, which `build.sh` does not build.
+Passthrough is documented in the `-m` entry of the manual and
+www/starting.md: tmux `set -g mouse off`, dvtm MOD+M (its own mouse
+handling is off by default, `ENABLE_MOUSE false`), GNU screen
+`mousetrack off`.
 
 ### P5 — Windows MinGW console
 

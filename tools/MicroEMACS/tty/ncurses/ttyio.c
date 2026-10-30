@@ -101,7 +101,10 @@ ttopen (void)
        * (mode 1006) encoding, and ttykbd.c parses the sequences
        * itself.  ncurses' own decoder is bypassed (mousemask is
        * left alone) because it cannot express modifier bits on
-       * wheel events, which Shift+wheel scrolling needs.
+       * wheel events, which Shift+wheel scrolling needs.  A
+       * terminal that honors only mode 1000 answers in legacy X10
+       * bytes, which ttykbd.c decodes as well, so no terminal
+       * needs to be gated out by its TERM type here.
        */
       write (1, "\033[?1000h\033[?1002h\033[?1006h", 24);
     }

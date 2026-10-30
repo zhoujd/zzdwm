@@ -494,6 +494,43 @@ test_sgr_decode (void)
   mouse_clock = real_clock;
 }
 
+/* The X10 fallback in the ncurses backend (mouse_decode_x10) decodes
+   a plain press byte as a press immediately followed by its release,
+   because X10 has no release event, and wheel or motion bytes with a
+   single call.  The tty layer itself is not linked into this test, so
+   pin that calling pattern here. */
+static void
+test_x10_pattern (void)
+{
+  long (*real_clock) (void) = mouse_clock;
+
+  mouse_clock = fake_clock;
+  fake_clock_time = 300;
+
+  /* A press and its synthesized release at one cell is a click. */
+  mouse_decode_sgr (0, 2, 3, FALSE);
+  mouse_decode_sgr (0, 2, 3, TRUE);
+  assert (mouse_kind == MOUSE_CLICK && mouse_clicks == 1);
+  mouse_decode_sgr (0, 2, 3, FALSE);
+  mouse_decode_sgr (0, 2, 3, TRUE);
+  assert (mouse_kind == MOUSE_CLICK && mouse_clicks == 2);
+
+  /* A wheel byte is one call: Shift+wheel-up (68) as st-era X10
+     terminals send it. */
+  mouse_decode_sgr (68, 2, 3, FALSE);
+  assert (mouse_kind == MOUSE_WHEEL && mouse_button == 3);
+  assert (mouse_mods == MOUSE_SHIFT && mouse_clicks == 0);
+
+  /* A motion byte is one call and never looks like a release. */
+  mouse_decode_sgr (0, 2, 3, FALSE);
+  mouse_decode_sgr (32, 2, 6, FALSE);
+  assert (mouse_kind == MOUSE_MOTION);
+  mouse_decode_sgr (0, 2, 6, TRUE);
+  assert (mouse_kind == MOUSE_RELEASE);
+
+  mouse_clock = real_clock;
+}
+
 static void
 test_selection_highlight (void)
 {
@@ -787,6 +824,7 @@ main (void)
   test_wheel ();
   test_shift_wheel ();
   test_sgr_decode ();
+  test_x10_pattern ();
   test_selection_highlight ();
   test_double_click ();
   test_triple_click ();

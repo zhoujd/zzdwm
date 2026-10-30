@@ -80,6 +80,7 @@ int specmap[32] = {
  * ALT-Z are mapped to META-A through META-Z.
  */
 static int mouse_decode (void);
+static int mouse_decode_x10 (void);
 
 int
 getkbd (void)
@@ -102,6 +103,8 @@ getkbd (void)
   /* Decode mouse events into the shared mouse_* variables. */
   if (c == KEY_MAX + 3)
     return mouse_decode ();
+  if (c == KEY_MAX + 6)
+    return mouse_decode_x10 ();
 
   /* Terminals that bypass mouse reporting while Shift is held (st,
      for one) send Shift+PageUp/PageDown keys in place of the
@@ -190,6 +193,36 @@ mouse_decode (void)
 }
 
 /*
+ * Read and decode one legacy X10 mouse report: three raw bytes after
+ * the "\033[M" prefix matched by the keymap, holding the button code,
+ * the column, and the row, each with 32 added.  Terminals that honor
+ * mode 1000 but not 1006 answer in this encoding (the Linux console,
+ * older rxvt); the event semantics are the same mouse_decode_sgr as
+ * for SGR.  X10 reports no releases, so a press is decoded as a press
+ * immediately followed by its release, which completes the click;
+ * wheel and motion events are one call each.
+ */
+static int
+mouse_decode_x10 (void)
+{
+  int b, x, y;
+  int row, col;
+
+  b = ttgetc () - 32;
+  x = ttgetc () - 32;
+  y = ttgetc () - 32;
+  mouse_page_coords (x - 1, y - 1, &row, &col);
+  if ((b & (64 | 32)) == 0)
+    {
+      mouse_decode_sgr (b, row, col, FALSE);	/* Press...   */
+      mouse_decode_sgr (b, row, col, TRUE);	/* ...click.  */
+    }
+  else
+    mouse_decode_sgr (b, row, col, FALSE);	/* Wheel/motion. */
+  return (KMOUSE);
+}
+
+/*
  * Terminal specific keymap initialization.
  * Attach the special keys to the appropriate built
  * in functions. Bind all of the assigned graphics in the
@@ -239,6 +272,11 @@ ttykeymapinit (void)
   /* SGR mouse events have a fixed prefix and variable parameters;
      match the prefix here and read the rest in mouse_decode. */
   define_key ("\033[<", KEY_MAX + 3);
+  /* The X10 prefix is claimed for the same reason, ahead of terminfo
+     kmous entries: terminals without SGR (mode 1006) keep working in
+     X10, and ncurses would otherwise swallow the prefix and the three
+     data bytes and return an undecodable KEY_MOUSE. */
+  define_key ("\033[M", KEY_MAX + 6);
   /* The shifted page keys some terminals send for Shift+wheel
      (kPRV/kNXT in terminfo) are claimed here, ahead of terminfo,
      and turned back into wheel events in getkbd. */

@@ -616,8 +616,13 @@ meanings:
 
 -m
 
-:   Tells MicroEMACS to enable the experimental mouse support. Warning:
-    this is not fully functional.
+:   Tells MicroEMACS to enable mouse support: click to move point,
+    drag to select, and the wheel to scroll (Shift+wheel scrolls
+    horizontally). Reports are decoded in both the SGR and the legacy
+    X10 encoding, so terminals without SGR mouse support still work.
+    Inside a multiplexer, turn its own mouse handling off so the
+    events reach the editor: tmux `set -g mouse off`, dvtm MOD+M,
+    GNU screen `mousetrack off`.
 
 -n
 
