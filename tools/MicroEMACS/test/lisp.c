@@ -10,6 +10,7 @@
 
 int fillcol;
 int tabsize;
+int mouse_wheel_step;
 int colorflag;
 int modefg256 = 15;
 int modebg256 = 22;

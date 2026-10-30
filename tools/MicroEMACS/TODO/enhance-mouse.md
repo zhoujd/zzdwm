@@ -1,8 +1,13 @@
 # Enhance Mouse Support
 
-Status: in progress — P0 implemented on the ncurses backend (click
-to move point, mode-line click selects window; `mouse-test` covers
-the column mapping). Wheel, drag, and clipboard phases pending.
+Status: in progress — P0 and P1 (vertical part) implemented on the
+ncurses backend: click to move point, mode-line click selects
+window, wheel scrolls the window under the mouse by the
+Lisp-settable `mouse-wheel-step` lines, and left-drag extends the
+mark-to-point region (mark is only written once the mouse moves).
+Pending: Shift+wheel horizontal scroll (fights the automatic
+horizontal recentering around dot), visible region highlight (the
+display has no region attribute yet), then P2–P5.
 Last updated: 2026-10-30
 
 ## Current State

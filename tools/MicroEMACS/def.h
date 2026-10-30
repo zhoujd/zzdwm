@@ -597,6 +597,7 @@ extern int mouse_row;
 extern int mouse_column;
 extern int mouse_kind;
 extern int mouse_mods;
+extern int mouse_wheel_step;
 extern int tceeol;
 extern int tcinsl[];
 extern int tcdell[];

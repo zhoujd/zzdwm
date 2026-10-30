@@ -168,6 +168,10 @@ int mouse_row;			/* screen row (0 = top)		*/
 int mouse_column;		/* screen column (0 = left)	*/
 int mouse_kind;			/* MOUSE_PRESS and friends	*/
 int mouse_mods;			/* MOUSE_SHIFT/ALT/CTRL bits	*/
+int mouse_wheel_step = 3;	/* Lines per wheel scroll	*/
+
+static int mouse_dragging;	/* Left button drag in progress */
+static POS mouse_anchor;	/* Position where it started	*/
 
 #if GOSLING
 /*
@@ -1638,11 +1642,37 @@ mouse_col_to_offset (LINE * lp, int target)
 }
 
 /*
+ * Find the window that owns the given screen row, or NULL if the
+ * row does not belong to a window (for example the echo line).
+ * Windows are laid out top to bottom without gaps, so the first
+ * window whose mode line is at or below the row owns it.
+ */
+static EWINDOW *
+mouse_find_window (int row)
+{
+  EWINDOW *wp;
+
+  for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
+    {
+      if (row < wp->w_toprow + wp->w_ntrows)
+        return wp;          /* Text rows of this window. */
+      if (row == wp->w_toprow + wp->w_ntrows)
+        return wp;          /* Mode line of this window.  */
+    }
+  return NULL;
+}
+
+/*
  * Handle a mouse event.  The tty backend decodes the event into
  * mouse_kind, mouse_mods, mouse_button, mouse_row, and mouse_column.
- * A button press in the text of a window moves the point to the
- * clicked position; a press on a mode line selects that window.
- * Other event kinds are ignored for now.
+ *
+ * A wheel event scrolls the window under the mouse by
+ * mouse-wheel-step lines.  A button press in the text of a window
+ * moves the point to the clicked position and starts a drag; motion
+ * while the drag is active extends the region from the press
+ * position, and the release ends it.  The mark is only written once
+ * the mouse actually moves, so a plain click does not disturb an
+ * existing mark.  A press on a mode line selects that window.
  */
 int
 mouseevent (int f, int n, int k)
@@ -1652,23 +1682,40 @@ mouseevent (int f, int n, int k)
   int rowoff;
   int col;
 
-  if (mouse_kind != MOUSE_PRESS)
-    return (TRUE);
-
-  /* Find the window that owns the clicked row. */
-  for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
+  if (mouse_kind == MOUSE_WHEEL)
     {
-      if (mouse_row < wp->w_toprow + wp->w_ntrows)
-        break;              /* Text rows of this window. */
-      if (mouse_row == wp->w_toprow + wp->w_ntrows)
-        break;              /* Mode line of this window.  */
+      wp = mouse_find_window (mouse_row);
+      if (wp == NULL)
+        wp = curwp;
+      if (wp != curwp)
+        {
+          curwp = wp;
+          curbp = wp->w_bufp;
+          updatemode ();
+        }
+      return mvupwind (FALSE,
+                       mouse_button == 3 ? mouse_wheel_step
+                                         : -mouse_wheel_step,
+                       KRANDOM);
     }
+
+  if (mouse_kind == MOUSE_RELEASE)
+    {
+      mouse_dragging = FALSE;
+      return (TRUE);
+    }
+
+  if (mouse_kind == MOUSE_MOTION && !mouse_dragging)
+    return (TRUE);          /* Idle motion.             */
+
+  wp = mouse_find_window (mouse_row);
   if (wp == NULL)
-    return (TRUE);          /* Below the last mode line.  */
+    return (TRUE);          /* Below the last mode line. */
 
   /* Clicking a mode line selects the window. */
   if (mouse_row == wp->w_toprow + wp->w_ntrows)
     {
+      mouse_dragging = FALSE;
       if (wp != curwp)
         {
           curwp = wp;
@@ -1678,7 +1725,8 @@ mouseevent (int f, int n, int k)
       return (TRUE);
     }
 
-  /* Clicking the text moves the point to the clicked cell. */
+  /* Clicking or dragging over the text moves the point to the
+     cell under the mouse. */
   if (wp != curwp)
     {
       curwp = wp;
@@ -1695,6 +1743,14 @@ mouseevent (int f, int n, int k)
   wp->w_dot.p = lp;
   wp->w_dot.o = mouse_col_to_offset (lp, col);
   wp->w_flag |= WFMOVE;
+
+  if (!mouse_dragging && mouse_button == 0)
+    {
+      mouse_dragging = TRUE;
+      mouse_anchor = wp->w_dot;
+    }
+  else if (mouse_dragging && mouse_button == 0)
+    wp->w_mark = mouse_anchor;
   return (TRUE);
 }
 

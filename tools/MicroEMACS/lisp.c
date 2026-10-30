@@ -1289,7 +1289,8 @@ lisp_set_variable (int argc, const char *const *argv,
   static const LispVariable variables[] = {
     { "tab-size", &tabsize },
     { "tab-width", &tabsize },
-    { "fill-column", &fillcol }
+    { "fill-column", &fillcol },
+    { "mouse-wheel-step", &mouse_wheel_step }
   };
   char *end;
   long value;
