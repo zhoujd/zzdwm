@@ -731,7 +731,7 @@ update (void)
   if (curwp->w_hscroll == FALSE)
     {
       /* Recentre around dot, but not while the view is pinned by
-         a Shift+wheel scroll: the pin survives updates that leave
+         a horizontal scroll: the pin survives updates that leave
          dot alone, with dot parked off the side of the window. */
       if (curcol >= text_width + curwp->w_leftcol)
         {			/* need scroll right?   */
@@ -1651,8 +1651,8 @@ hscroll_window (EWINDOW * wp, int cols)
 
 /*
  * Scroll the current window left (scroll-left) or right
- * (scroll-right) by "n" columns, four by default: the keyboard
- * counterparts of Shift+wheel, runnable from M-x or bound in Lisp.
+ * (scroll-right) by "n" columns, four by default, runnable from M-x or
+ * bound in Lisp.
  */
 int
 scrollleft (int f, int n, int k)

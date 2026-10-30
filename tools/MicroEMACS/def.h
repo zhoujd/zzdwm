@@ -434,7 +434,7 @@ typedef struct EWINDOW
   char w_force;                 /* If NZ, forcing row.          */
   char w_flag;                  /* Flags.                       */
   int w_leftcol;                /* left column of window        */
-  int w_hscroll;                /* view pinned by Shift+wheel   */
+  int w_hscroll;                /* view pinned by horizontal scroll */
   short w_lwidth;               /* Width of line number gutter  */
   int w_topline;                /* Line number of top line      */
 }

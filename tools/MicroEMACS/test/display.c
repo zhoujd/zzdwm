@@ -9,6 +9,15 @@ int tabsize;
 
 static VIDEO row;
 
+static LINE *long_line;
+static LINE *short_line;
+static LINE line_header;
+static BUFFER buffer;
+static EWINDOW window;
+
+EWINDOW *curwp = &window;
+BUFFER *curbp = &buffer;
+
 int
 cisctrl (wchar_t c)
 {
@@ -41,6 +50,42 @@ expect_cjk_layout (int cjk_color, int following_color)
   assert (row.v_attr[2] == following_color);
 }
 
+static LINE *
+make_line (const char *text)
+{
+  size_t length = strlen (text);
+  LINE *line = calloc (1, LINEHDR_SIZE + length);
+
+  assert (line != NULL);
+  line->l_size = length;
+  line->l_used = length;
+  memcpy (line->l_text, text, length);
+  return line;
+}
+
+static void
+reset_scroll_window (void)
+{
+  memset (&window, 0, sizeof (window));
+  memset (&buffer, 0, sizeof (buffer));
+  memset (&line_header, 0, sizeof (line_header));
+
+  buffer.b_linep = &line_header;
+  line_header.l_fp = long_line;
+  line_header.l_bp = short_line;
+  long_line->l_fp = short_line;
+  long_line->l_bp = &line_header;
+  short_line->l_fp = &line_header;
+  short_line->l_bp = long_line;
+
+  window.w_bufp = &buffer;
+  window.w_linep = long_line;
+  window.w_ntrows = 2;
+  window.w_dot.p = long_line;
+  window.w_dot.o = 3;
+  curwp = &window;
+}
+
 int
 main (void)
 {
@@ -55,6 +100,27 @@ main (void)
   vtattr = CSTRING;
   vtputs (utf8_text, sizeof (utf8_text));
   expect_cjk_layout (CSTRING, CSTRING);
+
+  long_line = make_line ("012345678901234567890123456789");
+  short_line = make_line ("short line");
+  reset_scroll_window ();
+  assert (scrollright (FALSE, 99, 0) == TRUE);
+  assert (window.w_leftcol == 4);
+  assert (scrollright (TRUE, 7, 0) == TRUE);
+  assert (window.w_leftcol == 11);
+  assert (scrollright (TRUE, 999, 0) == TRUE);
+  assert (window.w_leftcol == 11);
+  assert (scrollleft (TRUE, 999, 0) == TRUE);
+  assert (window.w_leftcol == 0);
+  assert (scrollleft (FALSE, 99, 0) == TRUE);
+  assert (window.w_leftcol == 0);
+  assert (window.w_hscroll == TRUE);
+  assert ((window.w_flag & WFHARD) != 0);
+  assert (window.w_dot.p == long_line);
+  assert (window.w_dot.o == 3);
+
+  free (long_line);
+  free (short_line);
 
   puts ("display tests passed");
   return 0;
