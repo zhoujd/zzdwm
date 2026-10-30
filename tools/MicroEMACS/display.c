@@ -169,6 +169,7 @@ int mouse_column;		/* screen column (0 = left)	*/
 int mouse_kind;			/* MOUSE_PRESS and friends	*/
 int mouse_mods;			/* MOUSE_SHIFT/ALT/CTRL bits	*/
 int mouse_wheel_step = 3;	/* Lines per wheel scroll	*/
+int mouseselect;			/* Region highlight is shown	*/
 
 static int mouse_dragging;	/* Left button drag in progress */
 static int mouse_drag_moved;	/* Mouse moved during the drag  */
@@ -176,6 +177,14 @@ static EWINDOW *mouse_anchor_wp;	/* Window of the drag   */
 static int mouse_anchor_row;	/* Screen row of the press      */
 static int mouse_anchor_col;	/* Screen column of the press   */
 static POS mouse_saved_mark;	/* Mark before the drag started */
+
+#ifdef COLOR
+static LINE *select_line1;	/* First line of the region.    */
+static int select_off1;		/* Offset on the first line.    */
+static LINE *select_line2;	/* Last line of the region.     */
+static int select_off2;		/* Offset after the last char.  */
+static int select_inside;	/* Drawn lines inside region.   */
+#endif
 
 #if GOSLING
 /*
@@ -206,6 +215,9 @@ static void uline (int row, VIDEO *vvp, VIDEO *pvp);
 static void modeline (EWINDOW *wp);
 #ifdef COLOR
 static void put_video_colors (wchar_t *text, short *attrs, int count);
+static int selection_column (LINE * lp, int o);
+static int selection_setup (EWINDOW * wp, LINE * first);
+static void draw_selection (LINE * lp);
 #endif
 #if GOSLING
 static void hash (VIDEO *vp);
@@ -809,6 +821,9 @@ update (void)
           gutter = window_gutter_width (wp);
           line_number = wp->w_topline;
 #ifdef COLOR
+          selection_setup (wp, lp);
+#endif
+#ifdef COLOR
           if ((wp->w_flag & WFEDIT) != 0 && syntax != NULL)
             {
               syntax_state = syntax_state_before (wp->w_bufp, wp->w_dot.p);
@@ -847,6 +862,9 @@ update (void)
 #endif
                 vtputs (lgets (lp), llength (lp));
               vteeol ();
+#ifdef COLOR
+              draw_selection (lp);
+#endif
               leftcol = 0;
               leftmargin = 0;
             }
@@ -880,6 +898,13 @@ update (void)
                       else
 #endif
                         vtputs (lgets (lp), llength (lp));
+#ifdef COLOR
+                      draw_selection (lp);
+                      if (lp == select_line1)
+                        select_inside = TRUE;
+                      else if (lp == select_line2)
+                        select_inside = FALSE;
+#endif
                       ++line_number;
                       lp = lforw (lp);
                     }
@@ -1667,6 +1692,183 @@ mouse_find_window (int row)
 }
 
 /*
+ * Turn off the selection highlight.  Every window whose mark is
+ * set may be showing it, and needs a full repaint.
+ */
+void
+endmouseselect (void)
+{
+  EWINDOW *wp;
+
+  if (mouseselect == FALSE)
+    return;
+  mouseselect = FALSE;
+  ALLWIND (wp)
+    if (wp->w_mark.p != NULL)
+      wp->w_flag |= WFHARD;
+}
+
+#ifdef COLOR
+/*
+ * Show the selection while the region highlight is active: the
+ * mark-to-point region of every window whose mark is set, painted
+ * by update as the lines are drawn.  This block computes the
+ * region once per window paint pass.
+ *
+ * Display column of character "o" on line "lp", with tabs
+ * expanded the way the screen draws them.
+ */
+static int
+selection_column (LINE * lp, int o)
+{
+  int col;
+  int i;
+  int len;
+
+  col = 0;
+  len = wllength (lp);
+  for (i = 0; i < o && i < len; ++i)
+    {
+      int c = wlgetc (lp, i);
+      int w = uwidth (c);
+
+      if (w <= 0)
+        w = 1;
+      if (c == '\t')
+        col += tabsize - (col % tabsize);
+      else
+        col += w;
+    }
+  return (col);
+}
+
+/*
+ * Remember the region between the mark and the point of window
+ * "wp", in buffer order, for selection highlighting; "first" is
+ * the first line the window is about to draw.  Returns FALSE when
+ * there is nothing to draw, and sets select_line1 to NULL so that
+ * draw_selection knows it.
+ */
+static int
+selection_setup (EWINDOW * wp, LINE * first)
+{
+  LINE *lp;
+  POS *front;
+  POS *back;
+
+  select_line1 = NULL;
+  select_inside = FALSE;
+  if (mouseselect == FALSE || wp->w_mark.p == NULL)
+    return (FALSE);
+
+  if (wp->w_dot.p == wp->w_mark.p)
+    {
+      if (wp->w_dot.o == wp->w_mark.o)
+        return (FALSE);             /* Empty region. */
+      front = &wp->w_dot;
+      back = &wp->w_mark;
+      if (front->o > back->o)
+        {
+          POS *swap = front;
+
+          front = back;
+          back = swap;
+        }
+    }
+  else
+    {
+      /* The mark comes after the point if walking forward from the
+         point meets it before the end-of-buffer line. */
+      LINE *endp = wp->w_bufp->b_linep;
+      POS *dot = &wp->w_dot;
+      POS *mark = &wp->w_mark;
+
+      lp = dot->p;
+      for (;;)
+        {
+          if (lp == mark->p)
+            break;
+          if (lp == endp)
+            {
+              POS *swap = dot;
+
+              dot = mark;
+              mark = swap;
+              break;
+            }
+          lp = lforw (lp);
+        }
+      front = dot;
+      back = mark;
+    }
+  select_line1 = front->p;
+  select_off1 = front->o;
+  select_line2 = back->p;
+  select_off2 = back->o;
+
+  /* The first drawn line may already be inside the region. */
+  if (first == select_line1 || first == select_line2)
+    return (TRUE);
+  for (lp = lforw (select_line1); lp != select_line2; lp = lforw (lp))
+    if (lp == first)
+      {
+        select_inside = TRUE;
+        break;
+      }
+  return (TRUE);
+}
+
+/*
+ * Paint the selection color over the cells of the row just drawn
+ * on vtrow that fall inside the region set up by selection_setup.
+ * "lp" is the line that was drawn.  Called with the drawing
+ * leftmargin/leftcol still in effect.
+ */
+static void
+draw_selection (LINE * lp)
+{
+  int c1;
+  int c2;
+  int cell;
+  int last;
+
+  if (select_line1 == NULL)
+    return;
+  if (lp == select_line1 && lp == select_line2)
+    {
+      c1 = selection_column (lp, select_off1);
+      c2 = selection_column (lp, select_off2);
+    }
+  else if (lp == select_line1)
+    {
+      c1 = selection_column (lp, select_off1);
+      c2 = selection_column (lp, wllength (lp));
+    }
+  else if (lp == select_line2)
+    {
+      c1 = 0;
+      c2 = selection_column (lp, select_off2);
+    }
+  else if (select_inside != FALSE)
+    {
+      c1 = 0;
+      c2 = selection_column (lp, wllength (lp));
+    }
+  else
+    return;
+
+  cell = leftmargin + c1 - leftcol;
+  if (cell < leftmargin)
+    cell = leftmargin;
+  last = leftmargin + c2 - leftcol;
+  if (last > ncol)
+    last = ncol;
+  for (; cell < last; ++cell)
+    vscreen[vtrow]->v_attr[cell] = CSELECT;
+}
+#endif	/* COLOR */
+
+/*
  * Make the window under the mouse the current window.
  */
 static void
@@ -1730,7 +1932,9 @@ mouse_drop_dot (EWINDOW * only)
  * click, and the saved mark goes back, so clicking does not disturb
  * an existing mark.  A click that the tty layer reports as one
  * complete event just moves the point.  A press on a mode line
- * selects that window.
+ * selects that window.  While a mouse selection is active the
+ * mark-to-point region is drawn in the selection color; any key
+ * but a mouse event ends that (see endmouseselect).
  */
 int
 mouseevent (int f, int n, int k)
@@ -1773,11 +1977,16 @@ mouseevent (int f, int n, int k)
             }
           if (!keep)
             {
+              /* Plain click after all: the saved mark goes back,
+                 and the highlight with it. */
+              endmouseselect ();
               if (mouse_saved_mark.p != NULL)
                 mouse_anchor_wp->w_mark = mouse_saved_mark;
               else
                 mouse_anchor_wp->w_mark.p = NULL;
             }
+          else
+            mouse_anchor_wp->w_flag |= WFHARD;
         }
       return (TRUE);
     }
@@ -1792,6 +2001,7 @@ mouseevent (int f, int n, int k)
   if (mouse_kind == MOUSE_CLICK)
     {
       mouse_dragging = FALSE;
+      endmouseselect ();
       wp = mouse_find_window (mouse_row);
       if (wp == NULL)
         return (TRUE);
@@ -1812,10 +2022,12 @@ mouseevent (int f, int n, int k)
       if (mouse_row == wp->w_toprow + wp->w_ntrows)
         {
           mouse_switch_window (wp);
+          endmouseselect ();
           return (TRUE);
         }
       if (mouse_button != 0)
         {
+          endmouseselect ();
           (void) mouse_drop_dot (NULL);
           return (TRUE);
         }
@@ -1829,13 +2041,18 @@ mouseevent (int f, int n, int k)
       mouse_anchor_col = mouse_column;
       mouse_saved_mark = wp->w_mark;
       wp->w_mark = wp->w_dot;
+      mouseselect = TRUE;
+      wp->w_flag |= WFHARD;
       return (TRUE);
     }
 
   /* Dragging: motion reports extend the region by moving the point
      within the window the drag started in. */
   if (mouse_drop_dot (mouse_anchor_wp) != NULL)
-    mouse_drag_moved = TRUE;
+    {
+      mouse_drag_moved = TRUE;
+      mouse_anchor_wp->w_flag |= WFHARD;
+    }
   return (TRUE);
 }
 

@@ -61,5 +61,8 @@
 #define	KSF9	K1D
 #define	KSF10	K1E
 
+/* Mouse events have no source on this backend yet. */
+#define KMOUSE  K1F
+
 /* Functions. */
 void putline(int row, int col, const wchar_t *buf);

@@ -1,13 +1,18 @@
 # Enhance Mouse Support
 
-Status: in progress — P0 and P1 (vertical part) implemented on the
-ncurses backend: click to move point, mode-line click selects
-window, wheel scrolls the window under the mouse by the
-Lisp-settable `mouse-wheel-step` lines, and left-drag extends the
-mark-to-point region (mark is only written once the mouse moves).
-Pending: Shift+wheel horizontal scroll (fights the automatic
-horizontal recentering around dot), visible region highlight (the
-display has no region attribute yet), then P2–P5.
+Status: in progress — P0 and P1 implemented on the ncurses
+backend: click to move point, mode-line click selects window,
+wheel scrolls the window under the mouse by the Lisp-settable
+`mouse-wheel-step` lines, and left-drag selects the
+mark-to-point region (the press anchors the mark right away and the
+release position completes the region, so drags work even on
+terminals that report no motion while the button is held).  The
+region is drawn in reverse video while the selection is active
+(CSELECT per-cell attribute; COLOR builds only), and any
+non-mouse key ends the highlight (endmouseselect, transient like
+Emacs).  Pending: Shift+wheel horizontal scroll (fights the
+automatic horizontal recentering around dot), a smarter highlight
+color than plain reverse video, then P2–P5.
 Last updated: 2026-10-30
 
 ## Current State

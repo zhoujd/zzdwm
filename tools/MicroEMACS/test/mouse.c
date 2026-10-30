@@ -39,6 +39,7 @@ EWINDOW *curwp;
 EWINDOW *wheadp;
 int ncol = 80;                  /* Console width, for the gutter. */
 int numberflag;                 /* Line-number mode is off.       */
+int tabsize = 8;                /* Tab width, for selection cols. */
 
 static int mvupwind_calls;
 static int mvupwind_last_n;
@@ -178,6 +179,12 @@ test_drag_with_motion (void)
   assert_pos (&test_win.w_dot, test_line3, 7);   /* clamp to line end */
   assert_pos (&test_win.w_mark, test_line1, 6);
 
+  /* The highlight stays on until a non-mouse key. */
+  assert (mouseselect == TRUE);
+  endmouseselect ();
+  assert (mouseselect == FALSE);
+  assert ((test_win.w_flag & WFHARD) != 0);      /* repaint asked */
+
   /* Idle motion after the release moves nothing. */
   send_mouse (MOUSE_MOTION, 0, 1, 3);
   assert_pos (&test_win.w_dot, test_line3, 7);
@@ -213,6 +220,7 @@ test_click_restores_mark (void)
   send_mouse (MOUSE_CLICK, 0, 1, 4);
   assert_pos (&test_win.w_dot, test_line2, 4);
   assert_pos (&test_win.w_mark, test_line3, 3);
+  assert (mouseselect == FALSE);         /* click ends highlight */
 
   /* A press and release at the same cell is a plain click too:
      the mark before the gesture goes back. */
@@ -327,6 +335,84 @@ test_wheel (void)
   free_window ();
 }
 
+static void
+test_selection_highlight (void)
+{
+  VIDEO *vrow;
+  int i;
+
+  make_window ();
+  vrow = calloc (1, sizeof (VIDEO));
+  assert (vrow != NULL);
+  vscreen[0] = vrow;
+  vttextmove (0, 0, 0);
+
+  /* Region from (line1,6) to (line3,3). */
+  test_win.w_mark.p = test_line1;
+  test_win.w_mark.o = 6;
+  test_win.w_dot.p = test_line3;
+  test_win.w_dot.o = 3;
+  mouseselect = TRUE;
+
+#define CLEAR_ATTRS() do { for (i = 0; i < NCOL; ++i) vrow->v_attr[i] = CTEXT; } while (0)
+
+  /* First line: columns 6..9 selected ("alpha beta" is 10 wide). */
+  CLEAR_ATTRS ();
+  assert (selection_setup (&test_win, test_line1) == TRUE);
+  draw_selection (test_line1);
+  assert (vrow->v_attr[5] == CTEXT);
+  assert (vrow->v_attr[6] == CSELECT);
+  assert (vrow->v_attr[9] == CSELECT);
+  assert (vrow->v_attr[10] == CTEXT);
+
+  /* Middle line: fully selected ("gamma delta" is 11 wide). */
+  CLEAR_ATTRS ();
+  assert (selection_setup (&test_win, test_line2) == TRUE);
+  draw_selection (test_line2);
+  assert (vrow->v_attr[0] == CSELECT);
+  assert (vrow->v_attr[10] == CSELECT);
+  assert (vrow->v_attr[11] == CTEXT);
+
+  /* Last line: columns 0..2 selected. */
+  CLEAR_ATTRS ();
+  assert (selection_setup (&test_win, test_line1) == TRUE);
+  draw_selection (test_line3);
+  assert (vrow->v_attr[0] == CSELECT);
+  assert (vrow->v_attr[2] == CSELECT);
+  assert (vrow->v_attr[3] == CTEXT);
+
+  /* Swapping mark and point paints the same cells. */
+  test_win.w_mark.p = test_line3;
+  test_win.w_mark.o = 3;
+  test_win.w_dot.p = test_line1;
+  test_win.w_dot.o = 6;
+  CLEAR_ATTRS ();
+  assert (selection_setup (&test_win, test_line1) == TRUE);
+  draw_selection (test_line1);
+  assert (vrow->v_attr[6] == CSELECT);
+  assert (vrow->v_attr[10] == CTEXT);
+
+  /* Empty region and highlight off draw nothing. */
+  test_win.w_mark = test_win.w_dot;
+  CLEAR_ATTRS ();
+  assert (selection_setup (&test_win, test_line1) == FALSE);
+  draw_selection (test_line1);
+  assert (vrow->v_attr[6] == CTEXT);
+  test_win.w_mark.p = test_line1;
+  test_win.w_mark.o = 6;
+  mouseselect = FALSE;
+  CLEAR_ATTRS ();
+  assert (selection_setup (&test_win, test_line1) == FALSE);
+  draw_selection (test_line1);
+  assert (vrow->v_attr[6] == CTEXT);
+
+#undef CLEAR_ATTRS
+  mouseselect = FALSE;
+  vscreen[0] = NULL;
+  free (vrow);
+  free_window ();
+}
+
 int
 main (void)
 {
@@ -337,6 +423,7 @@ main (void)
   test_click_ends_drag ();
   test_modeline_click ();
   test_wheel ();
+  test_selection_highlight ();
   puts ("mouse tests passed");
   return 0;
 }

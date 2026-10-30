@@ -77,3 +77,6 @@
 #define	KSF8    K1C
 #define	KSF9    K1D
 #define	KSF10   K1E
+
+/* Mouse events have no source on this backend yet. */
+#define KMOUSE  K1F

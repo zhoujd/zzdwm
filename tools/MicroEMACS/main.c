@@ -598,6 +598,8 @@ loop:
       *kbdmip++ = c;
     }
   startsaveundo ();
+  if (c != KMOUSE)
+    endmouseselect ();		/* Keyboard ends mouse selection. */
   execute (c, f, n);		/* Do it.               */
   endsaveundo ();
   replyq_clear ();

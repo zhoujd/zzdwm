@@ -569,12 +569,15 @@ ttcolor (int color)
             case CPREPROC:
               ttputs (L"\033[35m", 5);
               break;
+            case CSELECT:
+              ttputs (L"\033[7m", 4);
+              break;
             default:
               ttputs (L"\033[0m", 4);
               break;
             }
         }
-      else if (color == CMODE)
+      else if (color == CMODE || color == CSELECT)
         {
           ttputs (L"\033[7m", 4);
         }
@@ -587,7 +590,7 @@ ttcolor (int color)
         {			/* Normal video.        */
           putpad (SE);
         }
-      else if (color == CMODE)
+      else if (color == CMODE || color == CSELECT)
         {			/* Reverse video.       */
           putpad (SO);
         }

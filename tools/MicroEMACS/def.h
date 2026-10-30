@@ -204,6 +204,7 @@ choice_padding (size_t used, size_t length)
 #define CCOMMENT 5              /* C comment color.             */
 #define CPREPROC 6              /* C preprocessor color.        */
 #endif
+#define CSELECT 7               /* Selected region color.       */
 
 /*
  * Flags for "eread".
@@ -599,6 +600,7 @@ extern int mouse_column;
 extern int mouse_kind;
 extern int mouse_mods;
 extern int mouse_wheel_step;
+extern int mouseselect;         /* Region highlight is shown.   */
 extern int tceeol;
 extern int tcinsl[];
 extern int tcdell[];
@@ -738,6 +740,7 @@ void vtinit (void);                     /* Initialize video display.    */
 void vttidy (void);                     /* Tidy display before exit.    */
 int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
 int mouse_col_to_offset (LINE * lp, int target); /* Click column to char. */
+void endmouseselect (void);    /* Turn the region highlight off. */
 int showvisable (int f, int n, int k);  /* Show visable on modeline.    */
 int setnumber (int f, int n, int k);    /* Set line number display      */
 void vtputc_color (unsigned int c, int color);

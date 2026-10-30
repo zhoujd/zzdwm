@@ -253,13 +253,16 @@ ttcolor (int color)
         case CPREPROC:
           pair = 4;
           break;
+        case CSELECT:
+          attrs = A_REVERSE;
+          break;
         default:
           break;
         }
       bkgdset (' ' | COLOR_PAIR (pair) | attrs);
       return;
     }
-  if (color == CMODE)
+  if (color == CMODE || color == CSELECT)
     {
       bkgdset (' ' | A_REVERSE);
       return;
@@ -270,7 +273,8 @@ ttcolor (int color)
       return;
     }
 #endif
-  bkgdset (' ' | (color == CMODE ? A_REVERSE : A_NORMAL));
+  bkgdset (' ' | (color == CMODE || color == CSELECT
+                  ? A_REVERSE : A_NORMAL));
 }
 
 #ifdef COLOR
