@@ -29,7 +29,11 @@ the physical cursor is parked at the window edge while dot is
 scrolled off view.  The mouse transport is now owned by the editor
 on the ncurses backend: ttopen enables modes 1000/1002/1006 itself
 and an SGR decoder (mouse_decode_sgr) replaces ncurses' decoding,
-which cannot express modified wheel events.  Pending:
+which cannot express modified wheel events.  Terminals that bypass
+mouse reporting while Shift is held (st, whose forcemousemod routes
+Shift+wheel to Shift+PageUp/PageDown keys) are covered too: those
+byte sequences are claimed ahead of terminfo with define_key and
+decoded back into wheel events anchored at the cursor.  Pending:
 a smarter highlight color than plain reverse video, the P4
 terminal allow list and multiplexer passthrough notes, then P5.
 Last updated: 2026-10-30

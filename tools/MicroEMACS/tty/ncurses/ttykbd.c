@@ -103,6 +103,18 @@ getkbd (void)
   if (c == KEY_MAX + 3)
     return mouse_decode ();
 
+  /* Terminals that bypass mouse reporting while Shift is held (st,
+     for one) send Shift+PageUp/PageDown keys in place of the
+     Shift+wheel event.  Decode them as the wheel events they stand
+     for, anchored at the cursor so the window under it scrolls.
+     ttrow/ttcol are already in the page-stacked space of mouse_row. */
+  if (c == KEY_MAX + 4 || c == KEY_MAX + 5)
+    {
+      mouse_decode_sgr (c == KEY_MAX + 4 ? 64 + 4 : 64 + 4 + 1,
+			ttrow, ttcol, FALSE);
+      return (KMOUSE);
+    }
+
   /* Decode bracketed paste markers (the mode is enabled by ttopen)
    * into a paste key; "pastestart" tells the paste command whether
    * this marker opens or closes the paste.
@@ -227,4 +239,9 @@ ttykeymapinit (void)
   /* SGR mouse events have a fixed prefix and variable parameters;
      match the prefix here and read the rest in mouse_decode. */
   define_key ("\033[<", KEY_MAX + 3);
+  /* The shifted page keys some terminals send for Shift+wheel
+     (kPRV/kNXT in terminfo) are claimed here, ahead of terminfo,
+     and turned back into wheel events in getkbd. */
+  define_key ("\033[5;2~", KEY_MAX + 4);
+  define_key ("\033[6;2~", KEY_MAX + 5);
 }
