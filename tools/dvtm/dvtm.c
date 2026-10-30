@@ -1012,14 +1012,30 @@ keypress(int code) {
 static void
 mouse_setup(void) {
 #ifdef CONFIG_MOUSE
+	static mmask_t armed;
 	mmask_t mask = 0;
 
 	if (mouse_events_enabled) {
 		mask = BUTTON1_CLICKED | BUTTON2_CLICKED;
 		for (unsigned int i = 0; i < LENGTH(buttons); i++)
 			mask |= buttons[i].mask;
+	} else {
+		/* no local bindings, but a client tracking the mouse (DECSET
+		 * 1000) needs the outer terminal to report on its behalf */
+		for (Client *c = clients; c; c = c->next) {
+			if (vt_mousemode(c->term)) {
+				mask = BUTTON1_PRESSED | BUTTON1_RELEASED | BUTTON1_CLICKED
+				     | BUTTON2_PRESSED | BUTTON2_RELEASED | BUTTON2_CLICKED
+				     | BUTTON3_PRESSED | BUTTON3_RELEASED | BUTTON3_CLICKED
+				     | BUTTON4_PRESSED | BUTTON5_PRESSED;
+				break;
+			}
+		}
 	}
-	mousemask(mask, NULL);
+	if (mask != armed) {
+		mousemask(mask, NULL);
+		armed = mask;
+	}
 #endif /* CONFIG_MOUSE */
 }
 
@@ -1992,7 +2008,7 @@ handle_mouse(void) {
 
 	vt_mouse(msel->term, event.x - msel->x, event.y - msel->y, event.bstate);
 
-	for (i = 0; i < LENGTH(buttons); i++) {
+	for (i = 0; mouse_events_enabled && i < LENGTH(buttons); i++) {
 		if (event.bstate & buttons[i].mask) {
 			/* the wheel belongs to a client that tracks the
 			 * mouse, not to the local scrollback view */
@@ -2304,6 +2320,7 @@ main(int argc, char *argv[]) {
 						c->died = true;
 					continue;
 				}
+				mouse_setup(); /* tracking may have changed */
 			}
 
 			if (c != sel && is_content_visible(c)) {
