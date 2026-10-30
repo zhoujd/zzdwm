@@ -433,6 +433,51 @@ test_selection_highlight (void)
   draw_selection (test_line1);
   assert (vrow->v_attr[6] == CTEXT);
 
+  /* A region on a single line (double click on a word) must not
+     leak onto the lines below it: walk the rows like update does,
+     one setup and a draw/step per line. */
+  test_win.w_mark.p = test_line1;
+  test_win.w_mark.o = 6;
+  test_win.w_dot.p = test_line1;
+  test_win.w_dot.o = 10;
+  mouseselect = TRUE;
+  CLEAR_ATTRS ();
+  assert (selection_setup (&test_win, test_line1) == TRUE);
+  draw_selection (test_line1);
+  selection_step (test_line1);
+  assert (vrow->v_attr[6] == CSELECT);
+  assert (vrow->v_attr[9] == CSELECT);
+  assert (vrow->v_attr[10] == CTEXT);
+  CLEAR_ATTRS ();
+  draw_selection (test_line2);
+  selection_step (test_line2);
+  assert (vrow->v_attr[0] == CTEXT);
+  draw_selection (test_line3);
+  assert (vrow->v_attr[0] == CTEXT);
+
+  /* The same walk with a window that starts inside the region
+     still finds the end of it. */
+  test_win.w_mark.p = test_line1;
+  test_win.w_mark.o = 6;
+  test_win.w_dot.p = test_line3;
+  test_win.w_dot.o = 3;
+  CLEAR_ATTRS ();
+  assert (selection_setup (&test_win, test_line2) == TRUE);
+  assert (select_inside == TRUE);
+  draw_selection (test_line2);
+  selection_step (test_line2);
+  assert (vrow->v_attr[10] == CSELECT);
+  assert (vrow->v_attr[11] == CTEXT);
+  CLEAR_ATTRS ();
+  draw_selection (test_line3);
+  selection_step (test_line3);
+  assert (vrow->v_attr[2] == CSELECT);
+  assert (vrow->v_attr[3] == CTEXT);
+  assert (select_inside == FALSE);
+  CLEAR_ATTRS ();
+  draw_selection (test_end);
+  assert (vrow->v_attr[0] == CTEXT);      /* walk ended */
+
 #undef CLEAR_ATTRS
   mouseselect = FALSE;
   vscreen[0] = NULL;

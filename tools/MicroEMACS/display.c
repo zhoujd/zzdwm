@@ -219,6 +219,7 @@ static void put_video_colors (wchar_t *text, short *attrs, int count);
 static int selection_column (LINE * lp, int o);
 static int selection_setup (EWINDOW * wp, LINE * first);
 static void draw_selection (LINE * lp);
+static void selection_step (LINE * lp);
 #endif
 #if GOSLING
 static void hash (VIDEO *vp);
@@ -901,10 +902,7 @@ update (void)
                         vtputs (lgets (lp), llength (lp));
 #ifdef COLOR
                       draw_selection (lp);
-                      if (lp == select_line1)
-                        select_inside = TRUE;
-                      else if (lp == select_line2)
-                        select_inside = FALSE;
+                      selection_step (lp);
 #endif
                       ++line_number;
                       lp = lforw (lp);
@@ -1810,13 +1808,30 @@ selection_setup (EWINDOW * wp, LINE * first)
   /* The first drawn line may already be inside the region. */
   if (first == select_line1 || first == select_line2)
     return (TRUE);
-  for (lp = lforw (select_line1); lp != select_line2; lp = lforw (lp))
-    if (lp == first)
-      {
-        select_inside = TRUE;
-        break;
-      }
+  if (select_line1 != select_line2)
+    for (lp = lforw (select_line1); lp != select_line2; lp = lforw (lp))
+      if (lp == first)
+        {
+          select_inside = TRUE;
+          break;
+        }
   return (TRUE);
+}
+
+/*
+ * Advance the selection walk after the line "lp" was drawn: the
+ * line after the region's first line is inside the region, and
+ * the line after its last line is outside again.  The last line
+ * is tested first, because a region on a single line must leave
+ * the walk outside.
+ */
+static void
+selection_step (LINE * lp)
+{
+  if (lp == select_line2)
+    select_inside = FALSE;
+  else if (lp == select_line1)
+    select_inside = TRUE;
 }
 
 /*
