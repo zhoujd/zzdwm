@@ -298,6 +298,7 @@ KEY key[] = {
 #endif
 #ifdef MOUSE
   {-1,                  mouseevent,          "mouse-event"},
+  {-1,                  togglemouse,         "toggle-mouse"},
 #else
   {-1,                  wheelevent,          "wheel-event"},
 #endif

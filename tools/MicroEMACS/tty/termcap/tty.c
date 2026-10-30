@@ -620,6 +620,19 @@ ttsetcolorpair (int pair, int fg256, int bg256, int fg, int bg)
 }
 #endif
 
+#ifdef MOUSE
+/*
+ * The legacy backend enables X10 reporting only at startup and only
+ * on an xterm TERM (see ttinit); runtime toggling is not supported
+ * here.
+ */
+void
+ttsetmouse (int flag)
+{
+  (void) flag;
+}
+#endif
+
 /*
  * This routine is called by the
  * "refresh the screen" command to try and resize

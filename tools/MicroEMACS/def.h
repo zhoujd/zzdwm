@@ -754,8 +754,10 @@ void vtinit (void);                     /* Initialize video display.    */
 void vttidy (void);                     /* Tidy display before exit.    */
 #ifdef MOUSE
 int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
+int togglemouse (int f, int n, int k);  /* Toggle mouse reporting.      */
 int mouse_col_to_offset (LINE * lp, int target); /* Click column to char. */
 void endmouseselect (void);    /* Turn the region highlight off. */
+void ttsetmouse (int flag);    /* Enable/disable mouse reporting. */
 #else
 int wheelevent (int f, int n, int k);   /* Handle wheel event only.     */
 #endif

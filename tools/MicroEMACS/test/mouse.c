@@ -40,10 +40,28 @@ EWINDOW *wheadp;
 int ncol = 80;                  /* Console width, for the gutter. */
 int numberflag;                 /* Line-number mode is off.       */
 int tabsize = 8;                /* Tab width, for selection cols. */
+int mouse;                      /* Reporting flag togglemouse flips. */
 
 static int mvupwind_calls;
 static int mvupwind_last_n;
 static int yank_calls;
+static int tt_setmouse_flag = -1;
+
+/*
+ * Capture the reporting mode togglemouse asks for, instead of
+ * writing escape sequences to the test terminal.
+ */
+void
+ttsetmouse (int flag)
+{
+  tt_setmouse_flag = flag;
+}
+
+void
+eprintf (const char *format, ...)
+{
+  (void) format;
+}
 
 int
 mvupwind (int f, int n, int k)
@@ -443,6 +461,27 @@ test_hscroll_commands (void)
   assert (test_win.w_leftcol == 0);	/* clamped */
 
   free_window ();
+}
+
+/* toggle-mouse flips the reporting flag without a prefix and
+   forces a state with one: zero is off, anything else is on.  The
+   terminal modes follow the flag on every call. */
+static void
+test_toggle_mouse (void)
+{
+  mouse = FALSE;
+  tt_setmouse_flag = -1;
+  assert (togglemouse (FALSE, 1, KRANDOM) == TRUE);	/* flip on */
+  assert (mouse != FALSE && tt_setmouse_flag != FALSE);
+  assert (togglemouse (TRUE, 0, KRANDOM) == TRUE);	/* force off */
+  assert (mouse == FALSE && tt_setmouse_flag == FALSE);
+  assert (togglemouse (TRUE, 1, KRANDOM) == TRUE);	/* force on */
+  assert (mouse != FALSE && tt_setmouse_flag != FALSE);
+  assert (togglemouse (TRUE, 5, KRANDOM) == TRUE);	/* any nonzero */
+  assert (mouse != FALSE && tt_setmouse_flag != FALSE);
+  assert (togglemouse (FALSE, 1, KRANDOM) == TRUE);	/* flip off */
+  assert (mouse == FALSE && tt_setmouse_flag == FALSE);
+  mouse = FALSE;
 }
 
 /* Deterministic clock for the SGR click-count window. */
@@ -855,6 +894,7 @@ main (void)
   test_wheel ();
   test_shift_wheel ();
   test_hscroll_commands ();
+  test_toggle_mouse ();
   test_sgr_decode ();
   test_x10_pattern ();
   test_selection_highlight ();

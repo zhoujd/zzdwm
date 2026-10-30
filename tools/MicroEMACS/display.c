@@ -2507,6 +2507,21 @@ mouseevent (int f, int n, int k)
     }
   return (TRUE);
 }
+
+/*
+ * Toggle mouse reporting without restarting the editor.  With no
+ * prefix argument the state flips; a prefix of zero turns reporting
+ * off, and any other prefix turns it on.  ttsetmouse switches the
+ * terminal modes the same way ttopen and ttclose do.
+ */
+int
+togglemouse (int f, int n, int k)
+{
+  mouse = f ? (n != 0) : !mouse;
+  ttsetmouse (mouse);
+  eprintf ("[Mouse now %s]", mouse ? "ON" : "OFF");
+  return (TRUE);
+}
 #else /* !MOUSE */
 /*
  * Wheel-only dispatcher for builds without the mouse interactions

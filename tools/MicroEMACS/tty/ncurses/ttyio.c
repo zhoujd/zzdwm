@@ -113,7 +113,7 @@ ttopen (void)
        * bytes, which ttykbd.c decodes as well, so no terminal
        * needs to be gated out by its TERM type here.
        */
-      write (1, "\033[?1000h\033[?1002h\033[?1006h", 24);
+      ttsetmouse (TRUE);
     }
 #endif
   /* Enable bracketed paste mode: the terminal then wraps pasted
@@ -155,6 +155,22 @@ ttnew (void)
 
 
 /*
+ * Enable or disable mouse reporting at the terminal.  The raw write
+ * bypasses curses, which has no calls for these modes; ttopen,
+ * ttclose, and the toggle-mouse command all switch them.
+ */
+#ifdef MOUSE
+void
+ttsetmouse (int flag)
+{
+  if (flag != FALSE)
+    write (1, "\033[?1000h\033[?1002h\033[?1006h", 24);
+  else
+    write (1, "\033[?1006l\033[?1002l\033[?1000l", 24);
+}
+#endif
+
+/*
  * This function gets called just
  * before we go back home to the shell. Put all of
  * the terminal parameters back.
@@ -165,7 +181,7 @@ ttclose (void)
   endwin ();
 #ifdef MOUSE
   if (mouse)
-    write (1, "\033[?1006l\033[?1002l\033[?1000l", 24);
+    ttsetmouse (FALSE);
 #endif
   write (1, "\033[?2004l", 8);	/* Disable bracketed paste. */
   tcsetattr (0, TCSANOW, &oldtty);

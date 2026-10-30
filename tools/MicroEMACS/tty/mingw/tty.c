@@ -352,6 +352,18 @@ ttsetcolorpair (int pair, int fg256, int bg256, int fg, int bg)
 }
 #endif
 
+#ifdef MOUSE
+/*
+ * The Windows console has no reporting modes to switch: mouse events
+ * arrive through the console API once it is read for them (P5).
+ */
+void
+ttsetmouse (int flag)
+{
+  (void) flag;
+}
+#endif
+
 /*
  * Resize the screen.  Pass the flag (0 or 1) to qvinit.  The flag
  * says whether to switch to 43-line or 50-line mode on EGA or VGA.

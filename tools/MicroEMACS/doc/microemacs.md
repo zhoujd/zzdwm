@@ -620,6 +620,10 @@ meanings:
     drag to select, and the wheel to scroll (Shift+wheel scrolls
     horizontally). Reports are decoded in both the SGR and the legacy
     X10 encoding, so terminals without SGR mouse support still work.
+    The **toggle-mouse**\index{toggle-mouse} extended command turns
+    reporting off and back on without restarting the editor; it is
+    not bound to a key. With no prefix argument it flips, a zero
+    prefix turns reporting off, and any other prefix turns it on.
     Inside a multiplexer, turn its own mouse handling off so the
     events reach the editor: tmux `set -g mouse off`, dvtm MOD+M,
     GNU screen `mousetrack off`.
