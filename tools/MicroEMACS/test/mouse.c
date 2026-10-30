@@ -43,6 +43,7 @@ int tabsize = 8;                /* Tab width, for selection cols. */
 
 static int mvupwind_calls;
 static int mvupwind_last_n;
+static int yank_calls;
 
 int
 mvupwind (int f, int n, int k)
@@ -51,6 +52,16 @@ mvupwind (int f, int n, int k)
   (void) k;
   mvupwind_calls++;
   mvupwind_last_n = n;
+  return TRUE;
+}
+
+int
+yank (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  yank_calls++;
   return TRUE;
 }
 
@@ -115,6 +126,22 @@ send_mouse (int kind, int button, int row, int col)
   mouse_row = row;
   mouse_column = col;
   mouse_mods = 0;
+  mouse_clicks = 0;
+  assert (mouseevent (FALSE, 1, KRANDOM) == TRUE);
+}
+
+/*
+ * Feed a completed click gesture with a click count.
+ */
+static void
+send_click (int button, int row, int col, int clicks)
+{
+  mouse_kind = MOUSE_CLICK;
+  mouse_button = button;
+  mouse_row = row;
+  mouse_column = col;
+  mouse_mods = 0;
+  mouse_clicks = clicks;
   assert (mouseevent (FALSE, 1, KRANDOM) == TRUE);
 }
 
@@ -413,6 +440,103 @@ test_selection_highlight (void)
   free_window ();
 }
 
+static void
+test_double_click (void)
+{
+  make_window ();
+
+  /* Double click inside "beta" selects the word. */
+  send_click (0, 0, 8, 2);
+  assert_pos (&test_win.w_dot, test_line1, 10);
+  assert_pos (&test_win.w_mark, test_line1, 6);
+  assert (mouseselect == TRUE);
+
+  /* Double click on the space selects the blank run. */
+  send_click (0, 0, 5, 2);
+  assert_pos (&test_win.w_mark, test_line1, 5);
+  assert_pos (&test_win.w_dot, test_line1, 6);
+
+  /* A single click still just moves the point and leaves the mark
+     alone. */
+  send_click (0, 0, 2, 1);
+  assert_pos (&test_win.w_dot, test_line1, 2);
+  assert_pos (&test_win.w_mark, test_line1, 5);
+  assert (mouseselect == FALSE);
+
+  /* Past the end of the line there is no word to select. */
+  send_click (0, 2, 20, 2);
+  assert_pos (&test_win.w_dot, test_line3, 7);  /* clamped */
+  assert (mouseselect == FALSE);
+
+  free_window ();
+}
+
+static void
+test_triple_click (void)
+{
+  make_window ();
+
+  /* Triple click selects the whole clicked line. */
+  send_click (0, 1, 4, 3);
+  assert_pos (&test_win.w_mark, test_line2, 0);
+  assert_pos (&test_win.w_dot, test_line2, 11);
+  assert (mouseselect == TRUE);
+
+  free_window ();
+}
+
+static void
+test_middle_click (void)
+{
+  make_window ();
+  test_win.w_mark.p = NULL;
+  yank_calls = 0;
+
+  /* A middle click yanks the kill buffer at the clicked cell. */
+  send_click (1, 0, 3, 1);
+  assert (yank_calls == 1);
+  assert_pos (&test_win.w_dot, test_line1, 3);
+  assert (mouseselect == FALSE);
+
+  /* A middle press (a slow click) yanks too, and its release is
+     ignored. */
+  send_mouse (MOUSE_PRESS, 1, 0, 4);
+  assert (yank_calls == 2);
+  send_mouse (MOUSE_RELEASE, 1, 0, 4);
+  assert (yank_calls == 2);
+
+  free_window ();
+}
+
+static void
+test_right_click (void)
+{
+  make_window ();
+
+  /* With a mark set, the region extends to the clicked cell. */
+  test_win.w_mark.p = test_line1;
+  test_win.w_mark.o = 2;
+  mouseselect = TRUE;
+  send_click (2, 1, 9, 1);
+  assert_pos (&test_win.w_dot, test_line2, 9);
+  assert_pos (&test_win.w_mark, test_line1, 2);
+  assert (mouseselect == TRUE);
+
+  /* A right press extends as well. */
+  send_mouse (MOUSE_PRESS, 2, 0, 4);
+  assert_pos (&test_win.w_dot, test_line1, 4);
+  assert_pos (&test_win.w_mark, test_line1, 2);
+
+  /* Without a mark it just moves the point. */
+  test_win.w_mark.p = NULL;
+  endmouseselect ();
+  send_click (2, 0, 6, 1);
+  assert_pos (&test_win.w_dot, test_line1, 6);
+  assert (mouseselect == FALSE);
+
+  free_window ();
+}
+
 int
 main (void)
 {
@@ -424,6 +548,10 @@ main (void)
   test_modeline_click ();
   test_wheel ();
   test_selection_highlight ();
+  test_double_click ();
+  test_triple_click ();
+  test_middle_click ();
+  test_right_click ();
   puts ("mouse tests passed");
   return 0;
 }

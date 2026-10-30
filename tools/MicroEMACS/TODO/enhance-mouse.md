@@ -1,6 +1,6 @@
 # Enhance Mouse Support
 
-Status: in progress — P0 and P1 implemented on the ncurses
+Status: in progress — P0, P1 and P2 implemented on the ncurses
 backend: click to move point, mode-line click selects window,
 wheel scrolls the window under the mouse by the Lisp-settable
 `mouse-wheel-step` lines, and left-drag selects the
@@ -10,9 +10,13 @@ terminals that report no motion while the button is held).  The
 region is drawn in reverse video while the selection is active
 (CSELECT per-cell attribute; COLOR builds only), and any
 non-mouse key ends the highlight (endmouseselect, transient like
-Emacs).  Pending: Shift+wheel horizontal scroll (fights the
+Emacs).  Double click selects the word at the click (or the run
+of blanks), triple click selects the line (ncurses counts the
+clicks; mouse_clicks), middle click yanks the kill buffer at the
+clicked cell, and right click extends the region to the clicked
+cell.  Pending: Shift+wheel horizontal scroll (fights the
 automatic horizontal recentering around dot), a smarter highlight
-color than plain reverse video, then P2–P5.
+color than plain reverse video, then P3–P5.
 Last updated: 2026-10-30
 
 ## Current State

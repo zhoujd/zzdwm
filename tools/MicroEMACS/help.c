@@ -65,7 +65,7 @@ usage (FILE *stream)
 #ifdef COLOR
   usage_option (stream, "-C", "disable color output");
 #endif
-  usage_option (stream, "-m", "enable mouse support (click to move point)");
+  usage_option (stream, "-m", "enable mouse support (click, drag and wheel)");
   usage_option (stream, "-x", "use XON/XOFF flow control");
 
   fputs ("\nFile handling:\n", stream);

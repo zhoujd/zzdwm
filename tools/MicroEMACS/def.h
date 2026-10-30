@@ -599,6 +599,7 @@ extern int mouse_row;
 extern int mouse_column;
 extern int mouse_kind;
 extern int mouse_mods;
+extern int mouse_clicks;        /* Clicks in one gesture.       */
 extern int mouse_wheel_step;
 extern int mouseselect;         /* Region highlight is shown.   */
 extern int tceeol;

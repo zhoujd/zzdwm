@@ -301,6 +301,7 @@ parse_or_mouse (TRIE first)
       mouse_row    = ttgetc () - ' ' - 1;
       mouse_kind = MOUSE_CLICK;        /* X10 reports presses only. */
       mouse_mods = 0;
+      mouse_clicks = 1;
 #if DEBUG
       fprintf (stderr, "button %d, row %d, column %d\n",
                mouse_button, mouse_row, mouse_column);
