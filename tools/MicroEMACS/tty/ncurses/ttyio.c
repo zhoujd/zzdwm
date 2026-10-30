@@ -102,9 +102,12 @@ ttopen (void)
        * as KEY_MOUSE and are decoded in ttykbd.c.
        */
       mouseinterval (200);
-      mousemask (BUTTON1_PRESSED | BUTTON1_RELEASED
-                 | BUTTON2_PRESSED | BUTTON2_RELEASED
-                 | BUTTON3_PRESSED | BUTTON3_RELEASED
+      mousemask (BUTTON1_PRESSED | BUTTON1_RELEASED | BUTTON1_CLICKED
+                 | BUTTON1_DOUBLE_CLICKED | BUTTON1_TRIPLE_CLICKED
+                 | BUTTON2_PRESSED | BUTTON2_RELEASED | BUTTON2_CLICKED
+                 | BUTTON2_DOUBLE_CLICKED | BUTTON2_TRIPLE_CLICKED
+                 | BUTTON3_PRESSED | BUTTON3_RELEASED | BUTTON3_CLICKED
+                 | BUTTON3_DOUBLE_CLICKED | BUTTON3_TRIPLE_CLICKED
                  | BUTTON4_PRESSED | BUTTON5_PRESSED
                  | REPORT_MOUSE_POSITION, &oldmousemask);
     }
