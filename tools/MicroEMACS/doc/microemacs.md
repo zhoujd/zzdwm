@@ -627,12 +627,13 @@ meanings:
     Inside a multiplexer, make sure the events reach the editor.
     In tmux and GNU screen turn the multiplexer's own mouse
     handling off: tmux `set -g mouse off`, GNU screen `mousetrack
-    off`. dvtm is the opposite: it swallows the editor's mouse
-    modes instead of relaying them, so its mouse handling must be
-    on (MOD+M); dvtm then decodes the reports itself and forwards
-    them to the client under the mouse (wheel events and exact
-    click coordinates need dvtm 0.15 with the mouse-forwarding
-    fix).
+    off`. dvtm needs nothing: when the editor enables mouse
+    tracking it turns on reporting on the outer terminal itself
+    and forwards the reports to the client under the mouse —
+    `-m`, `toggle-mouse`, and the wheel all work with dvtm's own
+    mouse handling off (MOD+M is only for dvtm's own click
+    bindings; the relay needs dvtm 0.15 with the mouse-relay
+    fixes).
 
 -n
 

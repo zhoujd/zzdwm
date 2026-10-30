@@ -204,17 +204,20 @@ ncurses 6.4).  The old `strncmp(TERM, "xterm", 5)` gate lives only
 in the legacy termcap backend, which `build.sh` does not build.
 Passthrough is documented in the `-m` entry of the manual and
 www/starting.md: tmux `set -g mouse off`, GNU screen `mousetrack
-off`.  dvtm is the reverse case: it eats the editor's DECSET 1000
-instead of relaying it to the outer terminal, so its own mouse
-handling must be on (MOD+M; `ENABLE_MOUSE false` only changes the
-default) for anything to reach the editor — dvtm's ncurses decodes
-the outer reports (terminfo `kmous=\E[M` under `st-256color`) and
-`vt_mouse` re-encodes them as X10 for the client.  dvtm's wheel
-forwarding (BUTTON4/5 → X10 buttons 64/65), the scrollback-binding
-skip for mouse-tracking clients, and the one-based X10 coordinates
-shipped in the zzdwm dvtm tree (2026-10); verified end-to-end with
-a pty probe — wheel scrolls me, clicks land exactly, and the local
-scrollback no longer steals the wheel.
+off`.  dvtm relays by itself now: it eats the editor's DECSET 1000
+rather than passing it through, but when any client tracks the
+mouse it enables reporting on the outer terminal (recomputed as
+client output is processed, so me's runtime `toggle-mouse` opens
+and closes the relay), its ncurses decodes the reports (terminfo
+`kmous=\E[M` under `st-256color`), and `vt_mouse` re-encodes them
+as X10 for the client, with the local button bindings skipped in
+forwarding-only mode.  dvtm's wheel forwarding (BUTTON4/5 → X10
+buttons 64/65), the scrollback-binding skip, and the one-based X10
+coordinates shipped in the zzdwm dvtm tree (2026-10).  All covered
+by test/python/me_dvtm_e2e.py: relay on `-m` and on `toggle-mouse`,
+closed on quit and on toggle off, no byte leak, wheel scrolls me,
+clicks land exactly, and the local scrollback no longer steals the
+wheel.
 
 ### P5 — Windows MinGW console
 
