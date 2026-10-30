@@ -69,7 +69,10 @@ backchar (int f, int n, int k)
           curwp->w_flag |= WFMOVE;
         }
       else
-        curwp->w_dot.o--;
+        {
+          curwp->w_dot.o--;
+          curwp->w_flag |= WFMOVE;
+        }
     }
   return (TRUE);
 }
@@ -110,7 +113,10 @@ forwchar (int f, int n, int k)
           curwp->w_flag |= WFMOVE;
         }
       else
-        curwp->w_dot.o++;
+        {
+          curwp->w_dot.o++;
+          curwp->w_flag |= WFMOVE;
+        }
     }
   return (TRUE);
 }

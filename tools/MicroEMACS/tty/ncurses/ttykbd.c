@@ -100,7 +100,7 @@ getkbd (void)
     return CTRL('L');
 
   /* Decode mouse events into the shared mouse_* variables. */
-  if (c == KEY_MOUSE)
+  if (c == KEY_MAX + 3)
     return mouse_decode ();
 
   /* Decode bracketed paste markers (the mode is enabled by ttopen)
@@ -125,94 +125,55 @@ getkbd (void)
 }
 
 /*
- * Decode a KEY_MOUSE event into the mouse_* variables shared with
- * mouseevent in display.c, and return KMOUSE.  Wheel events are
- * reported by ncurses as BUTTON4/BUTTON5_PRESSED, and press/release
- * pairs within the mouseinterval as CLICKED/DOUBLE/TRIPLE_CLICKED,
- * which are complete gestures, not presses; the click count is
- * passed on in mouse_clicks.  Coordinates are translated into the
- * page-stacked space used by the editor.
+ * Read and decode one SGR mouse event into the mouse_* variables
+ * shared with mouseevent in display.c, and return KMOUSE.  The
+ * "\033[<" prefix was already matched by the keymap (ttykeymapinit);
+ * what follows is "b;x;y" and a final "M" (press or motion) or "m"
+ * (release).  The event semantics live in mouse_decode_sgr
+ * (display.c); this reads the bytes and translates the 1-based
+ * coordinates into the page-stacked space used by the editor.
  */
 static int
 mouse_decode (void)
 {
-  MEVENT ev;
+  char buf[40];			/* Room for "b;x;y" + final.  */
+  int c = ERR;
+  int n = 0;
+  int release = FALSE;
 
-  mouse_kind = MOUSE_PRESS;
-  mouse_mods = 0;
-  mouse_clicks = 0;
-  mouse_button = 0;
-  mouse_row = 0;
-  mouse_column = 0;
-
-  if (getmouse (&ev) != OK)
-    return (KMOUSE);
-
-  mouse_page_coords (ev.x, ev.y, &mouse_row, &mouse_column);
-  if (ev.bstate & BUTTON_SHIFT)
-    mouse_mods |= MOUSE_SHIFT;
-  if (ev.bstate & BUTTON_ALT)
-    mouse_mods |= MOUSE_ALT;
-  if (ev.bstate & BUTTON_CTRL)
-    mouse_mods |= MOUSE_CTRL;
-
-  if (ev.bstate & BUTTON4_PRESSED)
+  while (n < (int) sizeof (buf) - 1 && (c = ttgetc ()) != ERR)
     {
-      mouse_kind = MOUSE_WHEEL;
-      mouse_button = 3;              /* Wheel up.   */
+      if (c == 'M' || c == 'm')
+        {
+          release = (c == 'm');
+          break;
+        }
+      buf[n++] = (char) c;
     }
-  else if (ev.bstate & BUTTON5_PRESSED)
+  buf[n] = '\0';
+  if (c == 'M' || c == 'm')
     {
-      mouse_kind = MOUSE_WHEEL;
-      mouse_button = 4;              /* Wheel down. */
-    }
-  else if (ev.bstate & BUTTON1_PRESSED)
-    mouse_button = 0;
-  else if (ev.bstate & BUTTON2_PRESSED)
-    mouse_button = 1;
-  else if (ev.bstate & BUTTON3_PRESSED)
-    mouse_button = 2;
-  else if (ev.bstate & (BUTTON1_CLICKED | BUTTON1_DOUBLE_CLICKED
-                        | BUTTON1_TRIPLE_CLICKED))
-    {
-      mouse_kind = MOUSE_CLICK;      /* Complete gesture.  */
-      mouse_button = 0;
-      if (ev.bstate & BUTTON1_TRIPLE_CLICKED)
-        mouse_clicks = 3;
-      else if (ev.bstate & BUTTON1_DOUBLE_CLICKED)
-        mouse_clicks = 2;
+      int b, x, y;
+      int row, col;
+
+      if (sscanf (buf, "%d;%d;%d", &b, &x, &y) == 3)
+        {
+          mouse_page_coords (x - 1, y - 1, &row, &col);
+          mouse_decode_sgr (b, row, col, release);
+        }
       else
-        mouse_clicks = 1;
-    }
-  else if (ev.bstate & (BUTTON2_CLICKED | BUTTON2_DOUBLE_CLICKED
-                        | BUTTON2_TRIPLE_CLICKED))
-    {
-      mouse_kind = MOUSE_CLICK;
-      mouse_button = 1;
-    }
-  else if (ev.bstate & (BUTTON3_CLICKED | BUTTON3_DOUBLE_CLICKED
-                        | BUTTON3_TRIPLE_CLICKED))
-    {
-      mouse_kind = MOUSE_CLICK;
-      mouse_button = 2;
-    }
-  else if (ev.bstate & BUTTON1_RELEASED)
-    {
-      mouse_kind = MOUSE_RELEASE;
-      mouse_button = 0;
-    }
-  else if (ev.bstate & BUTTON2_RELEASED)
-    {
-      mouse_kind = MOUSE_RELEASE;
-      mouse_button = 1;
-    }
-  else if (ev.bstate & BUTTON3_RELEASED)
-    {
-      mouse_kind = MOUSE_RELEASE;
-      mouse_button = 2;
+        {			/* Garbled parameters; drop. */
+          mouse_kind = MOUSE_MOTION;
+          mouse_mods = 0;
+          mouse_clicks = 0;
+        }
     }
   else
-    mouse_kind = MOUSE_MOTION;   /* Position report only. */
+    {				/* Truncated sequence; drop. */
+      mouse_kind = MOUSE_MOTION;
+      mouse_mods = 0;
+      mouse_clicks = 0;
+    }
   return (KMOUSE);
 }
 
@@ -263,4 +224,7 @@ ttykeymapinit (void)
   define_key ("\033[200~", KEY_MAX + 1);
   define_key ("\033[201~", KEY_MAX + 2);
   keydup (KPASTE, "bracketed-paste");
+  /* SGR mouse events have a fixed prefix and variable parameters;
+     match the prefix here and read the rest in mouse_decode. */
+  define_key ("\033[<", KEY_MAX + 3);
 }

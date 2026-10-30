@@ -44,7 +44,6 @@
 
 static struct termios oldtty;	/* Old tty state		*/
 static struct termios newtty;	/* New tty state		*/
-static mmask_t oldmousemask;	/* Old mouse event mask		*/
 
 int nrow;			/* Terminal size, rows.         */
 int ncol;			/* Terminal size, columns.      */
@@ -97,19 +96,14 @@ ttopen (void)
   raw ();
   if (mouse)
     {
-      /* Enable mouse reporting; ncurses picks the protocol
-       * (SGR or X10) that the terminal supports.  Events arrive
-       * as KEY_MOUSE and are decoded in ttykbd.c.
+      /* Enable mouse reporting and take over the decoding: the
+       * modes ask for press, release, and drag reporting with SGR
+       * (mode 1006) encoding, and ttykbd.c parses the sequences
+       * itself.  ncurses' own decoder is bypassed (mousemask is
+       * left alone) because it cannot express modifier bits on
+       * wheel events, which Shift+wheel scrolling needs.
        */
-      mouseinterval (200);
-      mousemask (BUTTON1_PRESSED | BUTTON1_RELEASED | BUTTON1_CLICKED
-                 | BUTTON1_DOUBLE_CLICKED | BUTTON1_TRIPLE_CLICKED
-                 | BUTTON2_PRESSED | BUTTON2_RELEASED | BUTTON2_CLICKED
-                 | BUTTON2_DOUBLE_CLICKED | BUTTON2_TRIPLE_CLICKED
-                 | BUTTON3_PRESSED | BUTTON3_RELEASED | BUTTON3_CLICKED
-                 | BUTTON3_DOUBLE_CLICKED | BUTTON3_TRIPLE_CLICKED
-                 | BUTTON4_PRESSED | BUTTON5_PRESSED
-                 | REPORT_MOUSE_POSITION, &oldmousemask);
+      write (1, "\033[?1000h\033[?1002h\033[?1006h", 24);
     }
   /* Enable bracketed paste mode: the terminal then wraps pasted
    * text in mode-2004 markers, which ttykbd.c decodes as paste
@@ -157,9 +151,9 @@ ttnew (void)
 void
 ttclose (void)
 {
-  if (mouse)
-    mousemask (oldmousemask, (mmask_t *) 0);
   endwin ();
+  if (mouse)
+    write (1, "\033[?1006l\033[?1002l\033[?1000l", 24);
   write (1, "\033[?2004l", 8);	/* Disable bracketed paste. */
   tcsetattr (0, TCSANOW, &oldtty);
 }

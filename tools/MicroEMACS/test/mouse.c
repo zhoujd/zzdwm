@@ -133,15 +133,21 @@ free_window (void)
  * Feed one event to mouseevent and require success.
  */
 static void
-send_mouse (int kind, int button, int row, int col)
+send_mouse_mods (int kind, int button, int row, int col, int mods)
 {
   mouse_kind = kind;
   mouse_button = button;
   mouse_row = row;
   mouse_column = col;
-  mouse_mods = 0;
+  mouse_mods = mods;
   mouse_clicks = 0;
   assert (mouseevent (FALSE, 1, KRANDOM) == TRUE);
+}
+
+static void
+send_mouse (int kind, int button, int row, int col)
+{
+  send_mouse_mods (kind, button, row, col, 0);
 }
 
 /*
@@ -374,6 +380,118 @@ test_wheel (void)
   mouse_wheel_step = 3;
 
   free_window ();
+}
+
+static void
+test_shift_wheel (void)
+{
+  int before = mvupwind_calls;
+
+  make_window ();
+
+  /* Shift+wheel-down steps right in columns of four, clamped so
+     the view never runs past the widest visible line (11 chars
+     here: "gamma delta"). */
+  send_mouse_mods (MOUSE_WHEEL, 4, 1, 0, MOUSE_SHIFT);
+  assert (test_win.w_leftcol == 4);
+  assert (test_win.w_hscroll != 0);
+  send_mouse_mods (MOUSE_WHEEL, 4, 1, 0, MOUSE_SHIFT);
+  assert (test_win.w_leftcol == 8);
+  send_mouse_mods (MOUSE_WHEEL, 4, 1, 0, MOUSE_SHIFT);
+  assert (test_win.w_leftcol == 8);	/* 8 + 4 >= 11: stop */
+  assert (mvupwind_calls == before);	/* never a vertical scroll */
+  assert_pos (&test_win.w_dot, test_line1, 0);  /* dot untouched */
+  assert ((test_win.w_flag & WFHARD) != 0);
+
+  /* Wheel-up steps back and clamps at the left edge. */
+  send_mouse_mods (MOUSE_WHEEL, 3, 1, 0, MOUSE_SHIFT);
+  assert (test_win.w_leftcol == 4);
+  send_mouse_mods (MOUSE_WHEEL, 3, 1, 0, MOUSE_SHIFT);
+  send_mouse_mods (MOUSE_WHEEL, 3, 1, 0, MOUSE_SHIFT);
+  send_mouse_mods (MOUSE_WHEEL, 3, 1, 0, MOUSE_SHIFT);
+  assert (test_win.w_leftcol == 0);
+
+  free_window ();
+}
+
+/* Deterministic clock for the SGR click-count window. */
+static long fake_clock_time;
+static long
+fake_clock (void)
+{
+  return fake_clock_time;
+}
+
+static void
+test_sgr_decode (void)
+{
+  long (*real_clock) (void) = mouse_clock;
+
+  mouse_clock = fake_clock;
+  fake_clock_time = 100;
+
+  /* Press and release at one cell is a click; repeats count up. */
+  mouse_decode_sgr (0, 1, 4, FALSE);
+  assert (mouse_kind == MOUSE_PRESS && mouse_button == 0);
+  assert (mouse_row == 1 && mouse_column == 4);
+  mouse_decode_sgr (0, 1, 4, TRUE);
+  assert (mouse_kind == MOUSE_CLICK && mouse_clicks == 1);
+  mouse_decode_sgr (0, 1, 4, FALSE);
+  mouse_decode_sgr (0, 1, 4, TRUE);
+  assert (mouse_kind == MOUSE_CLICK && mouse_clicks == 2);
+  mouse_decode_sgr (0, 1, 4, FALSE);
+  mouse_decode_sgr (0, 1, 4, TRUE);
+  assert (mouse_kind == MOUSE_CLICK && mouse_clicks == 3);
+
+  /* A wheel between clicks starts a fresh gesture.  The clock jump
+     also expires the previous gesture, so the pair below counts 1. */
+  fake_clock_time = 200;
+  mouse_decode_sgr (0, 1, 4, FALSE);
+  mouse_decode_sgr (0, 1, 4, TRUE);
+  assert (mouse_kind == MOUSE_CLICK && mouse_clicks == 1);
+  mouse_decode_sgr (64, 1, 4, FALSE);
+  mouse_decode_sgr (0, 1, 4, FALSE);
+  mouse_decode_sgr (0, 1, 4, TRUE);
+  assert (mouse_kind == MOUSE_CLICK && mouse_clicks == 1);
+
+  /* Motion during the press makes the release a plain release. */
+  mouse_decode_sgr (0, 2, 2, FALSE);
+  mouse_decode_sgr (32, 2, 5, FALSE);
+  assert (mouse_kind == MOUSE_MOTION && mouse_button == 0);
+  mouse_decode_sgr (0, 2, 5, TRUE);
+  assert (mouse_kind == MOUSE_RELEASE && mouse_clicks == 0);
+  mouse_decode_sgr (0, 2, 5, TRUE);   /* stray release: no gesture */
+  assert (mouse_kind == MOUSE_RELEASE);
+
+  /* Clicks too far apart do not count up. */
+  fake_clock_time = 1000;
+  mouse_decode_sgr (0, 1, 4, FALSE);
+  mouse_decode_sgr (0, 1, 4, TRUE);
+  assert (mouse_kind == MOUSE_CLICK && mouse_clicks == 1);
+
+  /* Wheel and modifier decoding, Shift+wheel above all. */
+  mouse_decode_sgr (69, 1, 4, FALSE);
+  assert (mouse_kind == MOUSE_WHEEL && mouse_button == 4);
+  assert (mouse_mods == MOUSE_SHIFT);
+  mouse_decode_sgr (68, 1, 4, FALSE);
+  assert (mouse_kind == MOUSE_WHEEL && mouse_button == 3);
+  assert (mouse_mods == MOUSE_SHIFT);
+  mouse_decode_sgr (64, 1, 4, FALSE);
+  assert (mouse_kind == MOUSE_WHEEL && mouse_button == 3);
+  assert (mouse_mods == 0);
+  mouse_decode_sgr (16, 1, 4, FALSE);
+  assert (mouse_kind == MOUSE_PRESS && mouse_mods == MOUSE_CTRL);
+  mouse_decode_sgr (2 | 8, 1, 4, FALSE);
+  assert (mouse_kind == MOUSE_PRESS && mouse_button == 2);
+  assert (mouse_mods == MOUSE_ALT);
+
+  /* A release at a different cell is a plain release. */
+  fake_clock_time = 2000;
+  mouse_decode_sgr (0, 1, 1, FALSE);
+  mouse_decode_sgr (0, 1, 6, TRUE);
+  assert (mouse_kind == MOUSE_RELEASE);
+
+  mouse_clock = real_clock;
 }
 
 static void
@@ -667,6 +785,8 @@ main (void)
   test_click_ends_drag ();
   test_modeline_click ();
   test_wheel ();
+  test_shift_wheel ();
+  test_sgr_decode ();
   test_selection_highlight ();
   test_double_click ();
   test_triple_click ();

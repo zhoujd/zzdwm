@@ -20,10 +20,18 @@ the `osc52` Lisp variable, on by default; regions over a million
 characters are skipped), and bracketed paste (mode 2004) is
 always enabled on the ncurses backend: pasted text inserts as
 one unit and one undo step (bracketedpaste in random.c), with
-function keys and other non-text keys dropped.  Pending:
-Shift+wheel horizontal scroll (fights the automatic horizontal
-recentering around dot), a smarter highlight color than plain
-reverse video, then P4–P5.
+function keys and other non-text keys dropped.  Shift+wheel scrolls
+horizontally in steps of four columns: the window is pinned
+(w_hscroll) so update()'s automatic recentring around dot does not
+undo the scroll, the pin drops when dot next moves or is edited
+(forwchar/backchar now set WFMOVE for same-line motion too), and
+the physical cursor is parked at the window edge while dot is
+scrolled off view.  The mouse transport is now owned by the editor
+on the ncurses backend: ttopen enables modes 1000/1002/1006 itself
+and an SGR decoder (mouse_decode_sgr) replaces ncurses' decoding,
+which cannot express modified wheel events.  Pending:
+a smarter highlight color than plain reverse video, the P4
+terminal allow list and multiplexer passthrough notes, then P5.
 Last updated: 2026-10-30
 
 ## Current State
@@ -114,7 +122,12 @@ integration keep working unchanged.
 
 - Wheel up/down: scroll the window under the cursor 3 lines (default),
   configurable via a Lisp variable, e.g. `mouse-wheel-step`.
-- Shift+wheel: horizontal scroll by 4 columns.
+- Shift+wheel: horizontal scroll by 4 columns — done.  The scroll sets
+  `w_hscroll` on the window so the automatic recentring around dot
+  (display.c `update`) leaves the view alone until dot next moves, is
+  edited, or a reframe is forced; scrolling right is clamped against
+  the widest visible line, and the cursor is parked at the window edge
+  while dot sits outside the view.
 - Drag with left button: set mark at press position, extend region on
   motion, redisplay with the region highlight.
 - Motion events during drag must coalesce — update point, let the normal
@@ -148,6 +161,16 @@ integration keep working unchanged.
   would leak into the keymap).
 
 ### P4 — Terminal gate and multiplexer passthrough
+
+Partially pulled forward by the Shift+wheel work: the ncurses backend
+no longer uses ncurses' mouse decoding at all.  `ttopen` enables
+modes 1000/1002/1006 with a raw write (like bracketed paste), the
+fixed `\033[<` SGR prefix is taught to curses with `define_key`, and
+`mouse_decode_sgr` (display.c, a pure function with the click-count
+clock injectable for tests) turns the parameters into the shared
+`mouse_*` fields — ncurses' own decoder mangles X10 modifier bits on
+wheel events and garbles SGR sequences (tested on ncurses 6.4).
+What remains here is the gate and the passthrough documentation.
 
 - Replace the `strncmp(TERM, "xterm", 5)` gate with an explicit allow
   list or a capability probe; `-m` is already opt-in, so when in doubt,

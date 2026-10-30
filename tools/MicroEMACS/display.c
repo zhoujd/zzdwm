@@ -180,6 +180,103 @@ static int mouse_anchor_row;	/* Screen row of the press      */
 static int mouse_anchor_col;	/* Screen column of the press   */
 static POS mouse_saved_mark;	/* Mark before the drag started */
 
+/* Click gesture state for mouse_decode_sgr.  A release at the cell
+   of the press, with no motion between, is a click; consecutive
+   clicks at the same cell count up. */
+static int mouse_press_pending;	/* Press awaits its release     */
+static int mouse_press_button;	/* Button of that press         */
+static int mouse_press_row;	/* Cell of that press           */
+static int mouse_press_col;
+static int mouse_press_drag;	/* Motion since that press      */
+static int mouse_gesture_clicks;/* Clicks in one gesture        */
+static long mouse_gesture_time;	/* Time of the last click       */
+
+static long
+mouse_real_time (void)
+{
+  return (time (NULL));
+}
+
+long (*mouse_clock) (void) = mouse_real_time;
+
+/*
+ * Decode one SGR mouse event into the mouse_* variables.  "b" is
+ * the event code from the sequence: bits 0-1 carry the button
+ * (0/1/2), bit 2 shift, bit 3 alt, bit 4 ctrl, bit 5 motion, and
+ * bit 6 the wheel (wheel-down adds bit 0).  "row" and "col" are
+ * the already translated 0-based screen coordinates; "release" is
+ * TRUE when the final byte was "m".  A press followed by a release
+ * at the same cell without motion becomes a MOUSE_CLICK whose
+ * mouse_clicks counts consecutive clicks.
+ */
+void
+mouse_decode_sgr (int b, int row, int col, int release)
+{
+  mouse_mods = 0;
+  mouse_clicks = 0;
+  if ((b & 4) != 0)
+    mouse_mods |= MOUSE_SHIFT;
+  if ((b & 8) != 0)
+    mouse_mods |= MOUSE_ALT;
+  if ((b & 16) != 0)
+    mouse_mods |= MOUSE_CTRL;
+  mouse_row = row;
+  mouse_column = col;
+
+  if ((b & 64) != 0)
+    {				/* Wheel events.        */
+      mouse_kind = MOUSE_WHEEL;
+      mouse_button = (b & 1) != 0 ? 4 : 3;
+      mouse_gesture_clicks = 0;
+    }
+  else if ((b & 32) != 0)
+    {				/* Motion, button held. */
+      mouse_kind = MOUSE_MOTION;
+      mouse_button = b & 3;
+      if (mouse_press_pending != FALSE)
+        {
+          mouse_press_drag = TRUE;
+          mouse_gesture_clicks = 0;
+        }
+    }
+  else if (release == FALSE)
+    {				/* Button press.        */
+      mouse_kind = MOUSE_PRESS;
+      mouse_button = b & 3;
+      /* A fresh gesture starts when the cell or the button changed,
+         or the previous click was too long ago. */
+      if (mouse_gesture_clicks != 0
+          && (mouse_gesture_time + 1 < (*mouse_clock) ()
+              || mouse_press_button != mouse_button
+              || mouse_press_row != row || mouse_press_col != col))
+        mouse_gesture_clicks = 0;
+      mouse_press_pending = TRUE;
+      mouse_press_button = mouse_button;
+      mouse_press_row = row;
+      mouse_press_col = col;
+      mouse_press_drag = FALSE;
+    }
+  else
+    {				/* Button release.      */
+      mouse_button = b & 3;
+      if (mouse_press_pending != FALSE && mouse_press_drag == FALSE
+          && mouse_press_button == mouse_button
+          && mouse_press_row == row && mouse_press_col == col)
+        {			/* Press and release at one cell. */
+          mouse_kind = MOUSE_CLICK;
+          ++mouse_gesture_clicks;
+          mouse_clicks = mouse_gesture_clicks;
+          mouse_gesture_time = (*mouse_clock) ();
+        }
+      else
+        {
+          mouse_kind = MOUSE_RELEASE;
+          mouse_gesture_clicks = 0;
+        }
+      mouse_press_pending = FALSE;
+    }
+}
+
 #ifdef COLOR
 static LINE *select_line1;	/* First line of the region.    */
 static int select_off1;		/* Offset on the first line.    */
@@ -753,21 +850,33 @@ update (void)
       else
         curcol += uwidth(c);
     }
-  if (curcol >= text_width + curwp->w_leftcol)
-    {				/* need scroll right?   */
-      curwp->w_leftcol = curcol - text_width / 2;
-      curwp->w_flag |= WFHARD;	/* force redraw         */
-    }
-  else if (curcol < curwp->w_leftcol)
-    {				/* need scroll left?    */
-      if (curcol < text_width / 2)	/* near left end?       */
-        curwp->w_leftcol = 0;	/* put left edge at 0   */
-      else
-        curwp->w_leftcol = curcol - text_width / 2;
-      curwp->w_flag |= WFHARD;	/* force redraw         */
+  if ((curwp->w_flag & (WFMOVE | WFEDIT | WFFORCE)) != 0)
+    curwp->w_hscroll = FALSE;	/* Dot moved; unpin view. */
+  if (curwp->w_hscroll == FALSE)
+    {
+      /* Recentre around dot, but not while the view is pinned by
+         a Shift+wheel scroll: the pin survives updates that leave
+         dot alone, with dot parked off the side of the window. */
+      if (curcol >= text_width + curwp->w_leftcol)
+        {			/* need scroll right?   */
+          curwp->w_leftcol = curcol - text_width / 2;
+          curwp->w_flag |= WFHARD;	/* force redraw */
+        }
+      else if (curcol < curwp->w_leftcol)
+        {			/* need scroll left?    */
+          if (curcol < text_width / 2)	/* near left end?       */
+            curwp->w_leftcol = 0;	/* put left edge at 0   */
+          else
+            curwp->w_leftcol = curcol - text_width / 2;
+          curwp->w_flag |= WFHARD;	/* force redraw */
+        }
     }
   curcol -= curwp->w_leftcol;	/* adjust column        */
   curcol += gutter;
+  if (curcol < gutter)		/* Dot scrolled off the view?  Park */
+    curcol = gutter;		/* the cursor at the near edge.    */
+  else if (curcol >= ncol)
+    curcol = ncol - 1;
 
 #if GOSLING
   hflag = FALSE;		/* Not hard.            */
@@ -2168,6 +2277,36 @@ mouseevent (int f, int n, int k)
       if (wp == NULL)
         wp = curwp;
       mouse_switch_window (wp);
+      if ((mouse_mods & MOUSE_SHIFT) != 0)
+        {
+          /* Shift+wheel scrolls horizontally, in columns.  The
+             window is pinned (w_hscroll) so update() does not
+             pull the view straight back around dot; the pin
+             drops when dot next moves or is edited. */
+          LINE *lp;
+          int i, widest;
+
+          widest = 0;
+          lp = wp->w_linep;
+          for (i = 0; i < wp->w_ntrows && lp != wp->w_bufp->b_linep;
+               ++i)
+            {
+              if (wllength (lp) > widest)
+                widest = wllength (lp);
+              lp = lforw (lp);
+            }
+          if (mouse_button == 3)
+            {			/* Wheel up scrolls left. */
+              wp->w_leftcol -= 4;
+              if (wp->w_leftcol < 0)
+                wp->w_leftcol = 0;
+            }
+          else if (wp->w_leftcol + 4 < widest)
+            wp->w_leftcol += 4;	/* Wheel down, text remains. */
+          wp->w_hscroll = TRUE;
+          wp->w_flag |= WFHARD;
+          return (TRUE);
+        }
       return mvupwind (FALSE,
                        mouse_button == 3 ? mouse_wheel_step
                                          : -mouse_wheel_step,

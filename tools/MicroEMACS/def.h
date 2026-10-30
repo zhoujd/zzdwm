@@ -126,6 +126,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <wchar.h>
+#include <time.h>
 
 #include "sysdef.h"             /* Order is critical.           */
 #include "ttydef.h"
@@ -435,6 +436,7 @@ typedef struct EWINDOW
   char w_force;                 /* If NZ, forcing row.          */
   char w_flag;                  /* Flags.                       */
   int w_leftcol;                /* left column of window        */
+  int w_hscroll;                /* view pinned by Shift+wheel   */
   short w_lwidth;               /* Width of line number gutter  */
   int w_topline;                /* Line number of top line      */
 }
@@ -744,6 +746,9 @@ void vtinit (void);                     /* Initialize video display.    */
 void vttidy (void);                     /* Tidy display before exit.    */
 int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
 int mouse_col_to_offset (LINE * lp, int target); /* Click column to char. */
+void mouse_decode_sgr (int b, int row, int col, int release);
+                                /* Decode SGR event into mouse_*. */
+extern long (*mouse_clock) (void);      /* Second clock, test override. */
 void endmouseselect (void);    /* Turn the region highlight off. */
 void osc52send (const REGION *rp);      /* Copy region to the clipboard. */
 int bracketedpaste (int f, int n, int k); /* Insert pasted text at dot.  */

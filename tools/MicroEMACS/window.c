@@ -283,6 +283,7 @@ splitwind (int f, int n, int k)
   wp->w_flag = 0;
   wp->w_force = 0;
   wp->w_leftcol = curwp->w_leftcol;
+  wp->w_hscroll = curwp->w_hscroll;
   wp->w_lwidth = 0;
   wp->w_topline = 0;
   ntru = (curwp->w_ntrows - 1) / 2;	/* Upper size           */
