@@ -1131,10 +1131,36 @@ lisp_set_modeline_color (int argc, const char *const *argv,
   modebg256 = colors[1];
   modefg = colors[2];
   modebg = colors[3];
-  ttsetmodecolor (modefg256, modebg256, modefg, modebg);
+  ttsetcolorpair (5, modefg256, modebg256, modefg, modebg);
   updatemode ();
   return TRUE;
 }
+
+#ifdef MOUSE
+static int
+lisp_set_selection_color (int argc, const char *const *argv,
+                          char *result, size_t result_size)
+{
+  int colors[4];
+  int index;
+
+  (void) result;
+  (void) result_size;
+  if (argc != 4)
+    return FALSE;
+  for (index = 0; index < 4; index++)
+    if (lisp_integer (argv[index], &colors[index]) == FALSE
+        || colors[index] < 0 || colors[index] > 255)
+      return FALSE;
+
+  selfg256 = colors[0];
+  selbg256 = colors[1];
+  selfg = colors[2];
+  selbg = colors[3];
+  ttsetcolorpair (6, selfg256, selbg256, selfg, selbg);
+  return TRUE;
+}
+#endif
 #endif
 
 static int
@@ -1503,6 +1529,9 @@ lisp_register_hosts (void)
 #endif
 #ifdef COLOR
     { "set-modeline-color", lisp_set_modeline_color },
+#ifdef MOUSE
+    { "set-selection-color", lisp_set_selection_color },
+#endif
     { "set-syntax", lisp_set_syntax }
 #endif
   };

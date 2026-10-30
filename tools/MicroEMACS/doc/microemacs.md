@@ -2688,6 +2688,7 @@ These forms also provide access to MicroEMACS state and the current buffer:
     (debug-message 1 "Done: %s" "ok")
     (set-syntax "sql")
     (set-modeline-color 15 22 0 2)
+    (set-selection-color 15 24 7 4)
     (execute-command "file-save")
     (me-find-file "file.c")
     (get-char)
@@ -2761,6 +2762,9 @@ text.
 first two arguments are the foreground and background 256-color indexes; the
 last two are the fallback colors for 8/16-color terminals and the Windows
 console. All color indexes must be from 0 through 255.
+`set-selection-color` sets the mouse selection highlight the same way in
+builds with the mouse compiled in; the default is 15 24 7 4, bright white on
+a deep blue background instead of reverse video.
 
 `switch-to-buffer` finds or creates a named buffer and makes it current.
 `buffer-file-name` returns the current buffer's file name as a string.
@@ -2947,6 +2951,14 @@ startup file with:
 The first two values are the foreground and background 256-color indexes; the
 last two are the fallback colors for 8/16-color terminals and the Windows
 console.
+
+In builds with the mouse compiled in, the mouse selection highlight gets its
+own color the same way, in place of reverse video. The default is bright white
+on a deep blue background:
+
+```lisp
+(set-selection-color 15 24 7 4)
+```
 
 Start MicroEMACS with `-C` to disable color for a session:
 

@@ -7,8 +7,10 @@ wheel scrolls the window under the mouse by the Lisp-settable
 mark-to-point region (the press anchors the mark right away and the
 release position completes the region, so drags work even on
 terminals that report no motion while the button is held).  The
-region is drawn in reverse video while the selection is active
-(CSELECT per-cell attribute; COLOR builds only), and any
+region is drawn in the selection highlight color while the selection is
+active (CSELECT per-cell attribute; COLOR builds only — color pair 6,
+defaults 15 24 7 4 = bright white on deep blue, settable with the
+set-selection-color Lisp form; other builds use reverse video), and any
 non-mouse key ends the highlight (endmouseselect, transient like
 Emacs).  Double click selects the word at the click (or the run
 of blanks), triple click selects the line (ncurses counts the
@@ -47,7 +49,7 @@ decoders, and the click/drag/select/paste interactions — what
 remains is the wheel-and-scroll spine, so the shifted page keys
 still scroll horizontally through the wheel-only dispatcher
 (wheelevent) bound to KMOUSE.  Pending:
-a smarter highlight color than plain reverse video, then P5.
+P5.
 Last updated: 2026-10-30
 
 ## Current State
@@ -254,9 +256,12 @@ pattern (`COLOR`/`LISP`/`AI`); mouse needs no new compile flag, only the
 - `mouse` as a runtime settable variable plus a `toggle-mouse` command
   (enables/disables reporting without restarting).  Done in part: the
   horizontal scroll ships as the `scroll-left`/`scroll-right` commands
-  (default four columns, prefix argument overrides), and
-  `mouse-wheel-step`/`osc52` are settable; the toggle command is not
-  written yet.  A `MOUSE=no` build drops `mouse` and `-m` entirely.
+  (default four columns, prefix argument overrides),
+  `mouse-wheel-step`/`osc52` are settable, and the selection highlight
+  color ships as `set-selection-color` (COLOR+MOUSE builds, same four
+  arguments as `set-modeline-color`); the toggle command is not
+  written yet.  A `MOUSE=no` build drops `mouse`, `-m`, and
+  `set-selection-color` entirely.
 - `mouse-wheel-step` for the P1 knob and `osc52` for P3 (the planned
   `mouse-osc52` shipped as `osc52`: the copy fires on plain region
   commands too, not just mouse selections).

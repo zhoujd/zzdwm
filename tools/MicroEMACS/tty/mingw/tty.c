@@ -323,7 +323,8 @@ ttcolor (int color)
           ttattr = (attnorm & 0xF0) | FOREGROUND_RED | FOREGROUND_BLUE;
           break;
         case CSELECT:
-          ttattr = attinv;
+          ttattr = (windows_colors[selbg & 15] << 4)
+                   | windows_colors[selfg & 15];
           break;
         default:
           ttattr = attnorm;
@@ -337,12 +338,13 @@ ttcolor (int color)
 
 #ifdef COLOR
 /*
- * The Windows console builds attributes from the mode line variables when
- * the mode line is drawn, so no initialization is needed here.
+ * The Windows console builds attributes from the mode line and selection
+ * variables when text is drawn, so no initialization is needed here.
  */
 void
-ttsetmodecolor (int fg256, int bg256, int fg, int bg)
+ttsetcolorpair (int pair, int fg256, int bg256, int fg, int bg)
 {
+  (void) pair;
   (void) fg256;
   (void) bg256;
   (void) fg;

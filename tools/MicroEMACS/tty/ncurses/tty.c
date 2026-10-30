@@ -256,7 +256,7 @@ ttcolor (int color)
           pair = 4;
           break;
         case CSELECT:
-          attrs = A_REVERSE;
+          pair = 6;
           break;
         default:
           break;
@@ -281,17 +281,18 @@ ttcolor (int color)
 
 #ifdef COLOR
 /*
- * Update the mode line color pair after Lisp configuration changes it.
+ * Update a color pair (5 mode line, 6 selection) after Lisp
+ * configuration changes it.
  */
 void
-ttsetmodecolor (int fg256, int bg256, int fg, int bg)
+ttsetcolorpair (int pair, int fg256, int bg256, int fg, int bg)
 {
   if (has_colors () == FALSE)
     return;
   if (COLORS >= 256)
-    init_pair (5, fg256 % COLORS, bg256 % COLORS);
+    init_pair (pair, fg256 % COLORS, bg256 % COLORS);
   else
-    init_pair (5, fg % COLORS, bg % COLORS);
+    init_pair (pair, fg % COLORS, bg % COLORS);
 }
 #endif
 

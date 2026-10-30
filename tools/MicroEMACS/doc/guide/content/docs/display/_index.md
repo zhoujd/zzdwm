@@ -29,6 +29,15 @@ The first two values are the foreground and background 256-color indexes; the
 last two are the fallback colors for 8/16-color terminals and the Windows
 console.
 
+In builds with the mouse compiled in, the mouse selection highlight gets its
+own color the same way, in place of reverse video. The default is bright white
+on a deep blue background:
+
+```lisp
+(set-selection-color 15 24 7 4)
+```
+
+
 Start MicroEMACS with `-C` to disable color for a session:
 
 ```

@@ -591,6 +591,10 @@ extern int modefg256;
 extern int modebg256;
 extern int modefg;
 extern int modebg;
+extern int selfg256;
+extern int selbg256;
+extern int selfg;
+extern int selbg;
 #endif
 extern int nrow;
 extern int ncol;
@@ -1174,7 +1178,7 @@ int inwordpos (struct LINE *linep,      /* Word char at pos?            */
 void ttinit (void);
 void ttcolor (int color);
 #ifdef COLOR
-void ttsetmodecolor (int fg256, int bg256, int fg, int bg);
+void ttsetcolorpair (int pair, int fg256, int bg256, int fg, int bg);
 #endif
 void ttwindow (int top, int bot);
 void ttnowindow (void);

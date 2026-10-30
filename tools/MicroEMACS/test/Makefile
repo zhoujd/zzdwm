@@ -66,7 +66,7 @@ lisp-test: lisp.c $(ROOT)/lisp.c $(ROOT)/tinylisp.c $(ROOT)/tinylisp.h \
 		$(ROOT)/path.c $(ROOT)/utf8.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections \
 		-fno-asynchronous-unwind-tables $(LDFLAGS) -Wl,--gc-sections \
-		-o $@ -DCOLOR -DLISP -DAI -I$(ROOT) -I$(ROOT)/sys/unix \
+		-o $@ -DCOLOR -DLISP -DAI -DMOUSE -I$(ROOT) -I$(ROOT)/sys/unix \
 		-I$(ROOT)/tty/ncurses \
 		$< $(ROOT)/tinylisp.c $(ROOT)/path.c $(ROOT)/utf8.c
 

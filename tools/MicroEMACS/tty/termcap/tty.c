@@ -527,6 +527,28 @@ ttnowindow (void)
  * line by line basis, so don't bother sending
  * out the color shift.
  */
+#ifdef COLOR
+/*
+ * Send an escape sequence selecting the given foreground and background
+ * colors, in the 256-color or the basic encoding the terminal supports.
+ */
+static void
+setcolors (int fg256, int bg256, int fg, int bg)
+{
+  wchar_t sequence[32];
+  int length;
+
+  if (terminal_colors >= 256)
+    length = swprintf (sequence, sizeof (sequence) / sizeof (sequence[0]),
+                       L"\033[38;5;%d;48;5;%dm", fg256, bg256);
+  else
+    length = swprintf (sequence, sizeof (sequence) / sizeof (sequence[0]),
+                       L"\033[%d;%dm", 30 + (fg & 7), 40 + (bg & 7));
+  if (length > 0)
+    ttputs (sequence, length);
+}
+#endif
+
 void
 ttcolor (int color)
 {
@@ -538,24 +560,7 @@ ttcolor (int color)
           switch (color)
             {
             case CMODE:
-              {
-                wchar_t sequence[32];
-                int length;
-
-                if (terminal_colors >= 256)
-                  length = swprintf (sequence,
-                                     sizeof (sequence) / sizeof (sequence[0]),
-                                     L"\033[38;5;%d;48;5;%dm",
-                                     modefg256, modebg256);
-                else
-                  length = swprintf (sequence,
-                                     sizeof (sequence) / sizeof (sequence[0]),
-                                     L"\033[%d;%dm",
-                                     30 + (modefg & 7),
-                                     40 + (modebg & 7));
-                if (length > 0)
-                  ttputs (sequence, length);
-              }
+              setcolors (modefg256, modebg256, modefg, modebg);
               break;
             case CKEYWORD:
               ttputs (L"\033[1;34m", 7);
@@ -570,7 +575,7 @@ ttcolor (int color)
               ttputs (L"\033[35m", 5);
               break;
             case CSELECT:
-              ttputs (L"\033[7m", 4);
+              setcolors (selfg256, selbg256, selfg, selbg);
               break;
             default:
               ttputs (L"\033[0m", 4);
@@ -601,12 +606,13 @@ ttcolor (int color)
 
 #ifdef COLOR
 /*
- * Termcap builds the escape sequence from the mode line variables when the
- * mode line is drawn, so no initialization is needed here.
+ * Termcap builds the escape sequences from the mode line and selection
+ * variables when text is drawn, so no initialization is needed here.
  */
 void
-ttsetmodecolor (int fg256, int bg256, int fg, int bg)
+ttsetcolorpair (int pair, int fg256, int bg256, int fg, int bg)
 {
+  (void) pair;
   (void) fg256;
   (void) bg256;
   (void) fg;

@@ -17,6 +17,10 @@ int modefg256 = 15;
 int modebg256 = 22;
 int modefg = 0;
 int modebg = 2;
+int selfg256 = 15;
+int selbg256 = 24;
+int selfg = 7;
+int selbg = 4;
 BUFFER *curbp;
 EWINDOW *curwp;
 int *kbdmip;
@@ -102,6 +106,7 @@ static BUFFER syntax_buffer;
 static char syntax_filetype[32];
 static BUFFER *syntax_mode_buffer;
 static int tt_mode_color_called;
+static int tt_sel_color_called;
 static int updatemode_called;
 static const char *ai_prompt;
 static char *ai_model;
@@ -190,13 +195,25 @@ ttflush (void)
 }
 
 void
-ttsetmodecolor (int fg256, int bg256, int fg, int bg)
+ttsetcolorpair (int pair, int fg256, int bg256, int fg, int bg)
 {
-  tt_mode_color_called++;
-  assert (fg256 == modefg256);
-  assert (bg256 == modebg256);
-  assert (fg == modefg);
-  assert (bg == modebg);
+  if (pair == 5)
+    {
+      tt_mode_color_called++;
+      assert (fg256 == modefg256);
+      assert (bg256 == modebg256);
+      assert (fg == modefg);
+      assert (bg == modebg);
+    }
+  else
+    {
+      assert (pair == 6);
+      tt_sel_color_called++;
+      assert (fg256 == selfg256);
+      assert (bg256 == selbg256);
+      assert (fg == selfg);
+      assert (bg == selbg);
+    }
 }
 
 void
@@ -1113,6 +1130,20 @@ main (void)
   assert (evaluate ("(set-modeline-color 15 22 0)") == FALSE);
   assert (evaluate ("(set-modeline-color 15 22 0 256)") == FALSE);
   assert (evaluate ("(set-modeline-color 15 22 0 -1)") == FALSE);
+
+  tt_sel_color_called = 0;
+  assert (evaluate ("(set-selection-color 250 238 7 0)") == TRUE);
+  assert (selfg256 == 250 && selbg256 == 238);
+  assert (selfg == 7 && selbg == 0);
+  assert (tt_sel_color_called == 1);
+  assert (evaluate ("(set-selection-color 15 24 7 4)") == TRUE);
+  assert (selfg256 == 15 && selbg256 == 24);
+  assert (selfg == 7 && selbg == 4);
+  assert (tt_sel_color_called == 2);
+  assert (evaluate ("(set-selection-color 15 24 7)") == FALSE);
+  assert (evaluate ("(set-selection-color 15 24 7 256)") == FALSE);
+  assert (evaluate ("(set-selection-color -1 24 7 4)") == FALSE);
+  assert (tt_sel_color_called == 2);
 
   assert (evaluate ("(+ 1 2)") == TRUE);
   assert (strcmp (lisp_message, "[Lisp: 3]") == 0);
