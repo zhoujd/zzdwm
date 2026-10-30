@@ -624,9 +624,15 @@ meanings:
     reporting off and back on without restarting the editor; it is
     not bound to a key. With no prefix argument it flips, a zero
     prefix turns reporting off, and any other prefix turns it on.
-    Inside a multiplexer, turn its own mouse handling off so the
-    events reach the editor: tmux `set -g mouse off`, dvtm MOD+M,
-    GNU screen `mousetrack off`.
+    Inside a multiplexer, make sure the events reach the editor.
+    In tmux and GNU screen turn the multiplexer's own mouse
+    handling off: tmux `set -g mouse off`, GNU screen `mousetrack
+    off`. dvtm is the opposite: it swallows the editor's mouse
+    modes instead of relaying them, so its mouse handling must be
+    on (MOD+M); dvtm then decodes the reports itself and forwards
+    them to the client under the mouse (wheel events and exact
+    click coordinates need dvtm 0.15 with the mouse-forwarding
+    fix).
 
 -n
 
