@@ -434,6 +434,7 @@ typedef struct EWINDOW
   char w_force;                 /* If NZ, forcing row.          */
   char w_flag;                  /* Flags.                       */
   int w_leftcol;                /* left column of window        */
+  int w_hscroll;                /* view pinned by Shift+wheel   */
   short w_lwidth;               /* Width of line number gutter  */
   int w_topline;                /* Line number of top line      */
 }
@@ -721,6 +722,8 @@ void update (void);                     /* Make sure display is right.  */
 void vtinit (void);                     /* Initialize video display.    */
 void vttidy (void);                     /* Tidy display before exit.    */
 int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
+int scrollleft (int f, int n, int k);   /* Scroll window left.          */
+int scrollright (int f, int n, int k);  /* Scroll window right.         */
 int showvisable (int f, int n, int k);  /* Show visable on modeline.    */
 int setnumber (int f, int n, int k);    /* Set line number display      */
 void vtputc_color (unsigned int c, int color);

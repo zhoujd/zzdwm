@@ -185,6 +185,7 @@ usebuf (BUFFER *bp)
         curwp->w_dot = wp->w_dot;
         curwp->w_mark = wp->w_mark;
         curwp->w_leftcol = wp->w_leftcol;
+        curwp->w_hscroll = wp->w_hscroll;
         break;
       }
   }
@@ -324,6 +325,7 @@ popblist (void)
         wp->w_linep = lp;
         wp->w_dot.p = lp;
         wp->w_leftcol = 0;
+        wp->w_hscroll = 0;
         wp->w_dot.o = 0;
         wp->w_mark.p = NULL;
         wp->w_mark.o = 0;

@@ -726,21 +726,33 @@ update (void)
       else
         curcol += uwidth(c);
     }
-  if (curcol >= text_width + curwp->w_leftcol)
-    {				/* need scroll right?   */
-      curwp->w_leftcol = curcol - text_width / 2;
-      curwp->w_flag |= WFHARD;	/* force redraw         */
-    }
-  else if (curcol < curwp->w_leftcol)
-    {				/* need scroll left?    */
-      if (curcol < text_width / 2)	/* near left end?       */
-        curwp->w_leftcol = 0;	/* put left edge at 0   */
-      else
-        curwp->w_leftcol = curcol - text_width / 2;
-      curwp->w_flag |= WFHARD;	/* force redraw         */
+  if ((curwp->w_flag & (WFMOVE | WFEDIT | WFFORCE)) != 0)
+    curwp->w_hscroll = FALSE;	/* Dot moved; unpin view. */
+  if (curwp->w_hscroll == FALSE)
+    {
+      /* Recentre around dot, but not while the view is pinned by
+         a Shift+wheel scroll: the pin survives updates that leave
+         dot alone, with dot parked off the side of the window. */
+      if (curcol >= text_width + curwp->w_leftcol)
+        {			/* need scroll right?   */
+          curwp->w_leftcol = curcol - text_width / 2;
+          curwp->w_flag |= WFHARD;	/* force redraw */
+        }
+      else if (curcol < curwp->w_leftcol)
+        {			/* need scroll left?    */
+          if (curcol < text_width / 2)	/* near left end?       */
+            curwp->w_leftcol = 0;	/* put left edge at 0   */
+          else
+            curwp->w_leftcol = curcol - text_width / 2;
+          curwp->w_flag |= WFHARD;	/* force redraw */
+        }
     }
   curcol -= curwp->w_leftcol;	/* adjust column        */
   curcol += gutter;
+  if (curcol < gutter)		/* Dot scrolled off the view?  Park */
+    curcol = gutter;		/* the cursor at the near edge.    */
+  else if (curcol >= ncol)
+    curcol = ncol - 1;
 
 #if GOSLING
   hflag = FALSE;		/* Not hard.            */
@@ -1601,6 +1613,62 @@ traceback (int offs, int size, int i, int j)
   uline (k, vscreen[k], pscreen[offs + i - 1]);
 }
 #endif	/* GOSLING */
+
+/*
+ * Scroll a window horizontally by the signed "cols" columns and pin
+ * the view (w_hscroll) so update()'s automatic recentring around dot
+ * does not pull it straight back; the pin drops when dot next moves
+ * or is edited.  Scrolling right stops while text remains: the
+ * widest visible line sets the limit, so the view never runs past
+ * the end of the text.  Scrolling left stops at column 0.
+ */
+static int
+hscroll_window (EWINDOW * wp, int cols)
+{
+  LINE *lp;
+  int i, widest;
+
+  widest = 0;
+  lp = wp->w_linep;
+  for (i = 0; i < wp->w_ntrows && lp != wp->w_bufp->b_linep; ++i)
+    {
+      if (wllength (lp) > widest)
+	widest = wllength (lp);
+      lp = lforw (lp);
+    }
+  if (cols < 0)
+    {				/* Left, clamped at the left edge. */
+      wp->w_leftcol += cols;
+      if (wp->w_leftcol < 0)
+	wp->w_leftcol = 0;
+    }
+  else if (wp->w_leftcol + cols < widest)
+    wp->w_leftcol += cols;	/* Right, while text remains. */
+  wp->w_hscroll = TRUE;
+  wp->w_flag |= WFHARD;
+  return (TRUE);
+}
+
+/*
+ * Scroll the current window left (scroll-left) or right
+ * (scroll-right) by "n" columns, four by default: the keyboard
+ * counterparts of Shift+wheel, runnable from M-x or bound in Lisp.
+ */
+int
+scrollleft (int f, int n, int k)
+{
+  if (f == FALSE)
+    n = 4;
+  return hscroll_window (curwp, -n);
+}
+
+int
+scrollright (int f, int n, int k)
+{
+  if (f == FALSE)
+    n = 4;
+  return hscroll_window (curwp, n);
+}
 
 /*
  * Handle mouse button event.

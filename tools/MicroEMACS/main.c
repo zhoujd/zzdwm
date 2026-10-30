@@ -713,6 +713,7 @@ bufinit (const char *fname)
       wp->w_force = 0;
       wp->w_flag = WFMODE | WFHARD;	/* Full.                */
       wp->w_leftcol = 0;	/* Display at left edge */
+      wp->w_hscroll = 0;
       wp->w_lwidth = 0;
       wp->w_topline = 0;
       wp->w_savep = NULL;

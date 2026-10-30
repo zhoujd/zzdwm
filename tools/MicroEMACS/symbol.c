@@ -297,6 +297,8 @@ KEY key[] = {
   {-1,                  nextcscope,          "next-cscope"},
 #endif
   {-1,                  mouseevent,          "mouse-event"},
+  {-1,                  scrollleft,          "scroll-left"},
+  {-1,                  scrollright,         "scroll-right"},
   {-1,                  jeffexit,            "jeff-exit"},
   {-1,                  displaymessage,      "display-message"},
   {-1,                  listbuffers,         "display-buffers"},
