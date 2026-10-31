@@ -25,6 +25,17 @@ Native Windows mouse support should remain a separate backend feature. Its
 message loop and window/event API boundary are naturally backend-specific and
 should not complicate the terminal-independent event model.
 
+## Expect Features 2026-10-31
+
+1. Enable toggle-mouse command to enable mouse feature during runtime
+2. Add OSC 52 clipboard copy and bracketed paste
+  - Considering the feature could undepend mouse feature
+  - New source file osc52.c may needed
+  - Prefer color the mouse selection highlight, add set-selection-color
+3. Mouse click to pick word/line still need, good with
+4. Mouse drag still not need, and reserve the Mouse drag to Termimal
+5. Mouse wheel still need, good to make it co-work with dvtm/screen
+
 ## Future task: native Windows mouse backend
 
 Translate Windows console mouse records from `ReadConsoleInput` into
