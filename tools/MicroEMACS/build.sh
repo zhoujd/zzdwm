@@ -19,7 +19,7 @@ docs|-D         update PDF documentation
 clean|-c        clean {test|-t|all|-a}
 debug|-d        debug
 release|-r      release
-minimal|-m      build minimal me without color, Lisp, and AI
+minimal|-m      build minimal me without color, mouse, Lisp, and AI
 publish|-p      publish Linux static me
 package|-s      package MicroEMACS source code
 install|-i      install

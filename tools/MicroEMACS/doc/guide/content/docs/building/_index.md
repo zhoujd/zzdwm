@@ -64,7 +64,7 @@ the editor. Run it from `tools/MicroEMACS`:
     ./build.sh -b test     # Build the test targets
     ./build.sh -d          # Build a debug executable
     ./build.sh -r          # Build and strip a local release
-    ./build.sh -m          # Build me without color, Lisp, and AI
+    ./build.sh -m          # Build me without color, mouse, Lisp, and AI
     ./build.sh -a          # Build me with AI support; enabled by default
     ./build.sh -p          # Build a static executable in Docker
     ./build.sh -s          # Package the MicroEMACS source tree
@@ -72,8 +72,9 @@ the editor. Run it from `tools/MicroEMACS`:
     ./build.sh -i          # Install the Linux executable in /usr/local/bin
     ./build.sh -c          # Remove generated build files
 
-The default builds enable color support with `-DCOLOR`, Lisp extensions with
-`-DLISP`, and AI completion with `-DAI`. To use termcap
+The default builds enable color support with `-DCOLOR`, mouse support with
+`-DMOUSE`, Lisp extensions with `-DLISP`, and AI completion with `-DAI`.
+Mouse support is omitted from the minimal build. To use termcap
 instead of ncursesw, pass `TERMCAP=yes` to make:
 
     make MF=Make.Linux TERMCAP=yes clean all

@@ -58,7 +58,9 @@ compatibility with other editors.
 **-m**
 
 Tells MicroEMACS to enable the experimental mouse support.  Warning: this is not
-fully functional.
+fully functional. This option is available only in builds compiled with
+`-DMOUSE`; the `toggle-mouse` extended command can change it while the editor
+is running.
 
 **-n**
 

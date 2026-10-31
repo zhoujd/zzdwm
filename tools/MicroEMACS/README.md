@@ -72,15 +72,16 @@ When combining both options, place `-l` before `--script`, because
 
 ## Building
 
-The default Linux and Windows builds enable color, Lisp, and AI support with
-`-DCOLOR`, `-DLISP`, and `-DAI`. The recommended build commands are:
+The default Linux and Windows builds enable color, mouse, Lisp, and AI support
+with `-DCOLOR`, `-DMOUSE`, `-DLISP`, and `-DAI`. The minimal build omits mouse
+support along with color, Lisp, and AI. The recommended build commands are:
 
 ```sh
 ./build.sh -b        # Build for the host system
 ./build.sh -b test   # Build the test targets
 ./build.sh -d        # Build with debug symbols
 ./build.sh -r        # Build and strip a local release
-./build.sh -m        # Build without color, Lisp, or AI; compact help
+./build.sh -m        # Build without color, mouse, Lisp, or AI; compact help
 ./build.sh -a        # Build with AI support; enabled by default
 ./build.sh -p        # Build a stripped static Linux executable
 ./build.sh -w        # Build me.exe with MinGW in Docker

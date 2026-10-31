@@ -617,7 +617,9 @@ meanings:
 -m
 
 :   Tells MicroEMACS to enable the experimental mouse support. Warning:
-    this is not fully functional.
+    this is not fully functional. This option is available only in builds
+    compiled with `-DMOUSE`; the `toggle-mouse` extended command can change
+    it while the editor is running.
 
 -n
 
@@ -3135,7 +3137,7 @@ editor. Run it from `tools/MicroEMACS`:
     ./build.sh -b test     # Build the test targets
     ./build.sh -d          # Build a debug executable
     ./build.sh -r          # Build and strip a local release
-    ./build.sh -m          # Build me without color, Lisp, and AI
+    ./build.sh -m          # Build me without color, mouse, Lisp, and AI
     ./build.sh -a          # Build me with AI support; enabled by default
     ./build.sh -p          # Build a static executable in Docker
     ./build.sh -s          # Package the MicroEMACS source tree
