@@ -25,16 +25,22 @@ Native Windows mouse support should remain a separate backend feature. Its
 message loop and window/event API boundary are naturally backend-specific and
 should not complicate the terminal-independent event model.
 
-## Expect Features 2026-10-31
+## Status: 2026-10-31
 
-1. Enable toggle-mouse command to enable mouse feature during runtime
-2. Add OSC 52 clipboard copy and bracketed paste
-  - Considering the feature could undepend mouse feature
-  - New source file osc52.c may needed
-  - Prefer color the mouse selection highlight, add set-selection-color
-3. Mouse click to pick word/line still need, good with
-4. Mouse drag still not need, and reserve the Mouse drag to Termimal
-5. Mouse wheel still need, good to make it co-work with dvtm/screen
+1. Done: `toggle-mouse` enables or disables terminal mouse reporting during
+   runtime; positive, negative, and zero prefix arguments explicitly enable,
+   disable, and toggle it.
+2. Done: OSC 52 clipboard copy and bracketed paste are independent of mouse
+   support and are implemented in `osc52.c`. The `osc52` Lisp variable controls
+   clipboard copy, and minimal builds include both features.
+3. Remaining: mouse click to pick word/line. Mouse-owned selections should
+   support highlight and a `set-selection-color` Lisp extension. Keyboard
+   region selection remains unchanged, so non-mouse and minimal builds do not
+   need selection rendering.
+4. Remaining by choice: mouse drag; continue delegating selection to the
+   terminal rather than implementing editor-side drag state.
+5. Remaining: mouse wheel support, pending a design that cooperates reliably
+   with dvtm and GNU screen.
 
 ## Future task: native Windows mouse backend
 
@@ -61,6 +67,6 @@ decodes button events directly, avoiding ncurses' click interval. It does not
 request motion, wheel, drag selection, or clipboard behavior. The legacy
 termcap backend decodes X10 reports for compatibility.
 
-Build the demo with `./build.sh -b me`, then run `./me -m`. Linux builds
-enable `MOUSE` by default; `./build.sh -m` still builds the minimal editor and
-does not include mouse support.
+Build the standard editor with `make`, then run `./me -m`. Linux builds enable
+`MOUSE` by default; `./build.sh -m` still builds the minimal editor and does
+not include mouse support.
