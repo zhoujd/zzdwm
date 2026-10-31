@@ -4,6 +4,10 @@
 
 #include "../mouse.c"
 
+int mouse;
+
+static int ttsetmouse_flag;
+
 static void
 expect_event (EMOUSE event, int kind, int button, int row, int column,
               int modifiers)
@@ -14,6 +18,18 @@ expect_event (EMOUSE event, int kind, int button, int row, int column,
   assert (event.column == column);
   assert (event.modifiers == modifiers);
   assert (event.clicks == 0);
+}
+
+void
+ttsetmouse (int flag)
+{
+  ttsetmouse_flag = flag;
+}
+
+void
+eprintf (const char *format, ...)
+{
+  (void) format;
 }
 
 int
@@ -71,6 +87,15 @@ main (void)
   expect_event (event, MOUSE_WHEEL, 3, 2, 5, 0);
   assert (mousedecodesgr (&event, 65, 2, 5, FALSE) == TRUE);
   expect_event (event, MOUSE_WHEEL, 4, 2, 5, 0);
+
+  assert (togglemouse (FALSE, 0, 0) == TRUE);
+  assert (mouse == TRUE && ttsetmouse_flag == TRUE);
+  assert (togglemouse (FALSE, 0, 0) == TRUE);
+  assert (mouse == FALSE && ttsetmouse_flag == FALSE);
+  assert (togglemouse (FALSE, 1, 0) == TRUE);
+  assert (mouse == TRUE && ttsetmouse_flag == TRUE);
+  assert (togglemouse (FALSE, -1, 0) == TRUE);
+  assert (mouse == FALSE && ttsetmouse_flag == FALSE);
 
   puts ("mouse tests passed");
   return 0;

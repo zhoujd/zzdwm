@@ -92,4 +92,23 @@ mousedecodesgr (EMOUSE *event, int code, int row, int column,
   return TRUE;
 }
 
+int
+togglemouse (int f, int n, int k)
+{
+  (void) f;
+  (void) k;
+
+  if (n < 0)
+    mouse = FALSE;
+  else if (n > 0)
+    mouse = TRUE;
+  else
+    mouse = mouse == FALSE;
+
+  mousereset ();
+  ttsetmouse (mouse);
+  eprintf (mouse ? "[Mouse enabled]" : "[Mouse disabled]");
+  return TRUE;
+}
+
 #endif

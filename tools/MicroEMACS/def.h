@@ -785,6 +785,7 @@ int setcolor (int f, int n, int k);     /* Set color display flag       */
  * Defined by "mouse.c".
  */
 void ttsetmouse (int flag);             /* Enable/disable SGR reports.  */
+int togglemouse (int f, int n, int k);  /* Toggle mouse reporting.      */
 void mousereset (void);                 /* Clear the mouse event queue. */
 int mouseeventcount (void);             /* Count queued mouse events.   */
 int mouseenqueue (const EMOUSE *event); /* Add a normalized event.      */
