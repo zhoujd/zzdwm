@@ -372,7 +372,20 @@ typedef struct MARKRING
 MARKRING;
 
 #ifdef COLOR
-typedef struct SYNTAX SYNTAX;
+typedef struct SYNTAX
+{
+  const char *name;
+  const char *const *filetypes;
+  size_t filetype_count;
+  const char *const *keywords;
+  size_t keyword_count;
+  const char *const *extensions;
+  size_t extension_count;
+  const char *const *shebangs;
+  size_t shebang_count;
+  unsigned features;
+}
+SYNTAX;
 #endif
 
 /*

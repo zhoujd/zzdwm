@@ -40,20 +40,6 @@
 #define SYNTAX_STATE_CMAKE_BRACKET_COMMENT  7
 #define SYNTAX_STATE_CMAKE_BRACKET_MAX      31
 
-struct SYNTAX
-{
-  const char *name;
-  const char *const *filetypes;
-  size_t filetype_count;
-  const char *const *keywords;
-  size_t keyword_count;
-  const char *const *extensions;
-  size_t extension_count;
-  const char *const *shebangs;
-  size_t shebang_count;
-  unsigned features;
-};
-
 static const char *const c_keywords[] = {
   "_Alignas", "_Alignof", "_Atomic", "_Bool", "_Complex",
   "_Generic", "_Imaginary", "_Noreturn", "_Static_assert",
