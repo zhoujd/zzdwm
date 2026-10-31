@@ -5,7 +5,7 @@
 #include "../mouse.c"
 
 static void
-expect_event (ME_MOUSE_EVENT event, int kind, int button, int row, int column,
+expect_event (EMOUSE event, int kind, int button, int row, int column,
               int modifiers)
 {
   assert (event.kind == kind);
@@ -19,7 +19,7 @@ expect_event (ME_MOUSE_EVENT event, int kind, int button, int row, int column,
 int
 main (void)
 {
-  ME_MOUSE_EVENT event;
+  EMOUSE event;
   int index;
 
   mousereset ();

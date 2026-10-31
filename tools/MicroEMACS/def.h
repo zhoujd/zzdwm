@@ -558,7 +558,7 @@ LINE;
 
 #define MOUSE_QUEUE_SIZE 32
 
-typedef struct ME_MOUSE_EVENT
+typedef struct EMOUSE
 {
   int kind;
   int button;
@@ -567,7 +567,7 @@ typedef struct ME_MOUSE_EVENT
   int modifiers;
   int clicks;
 }
-ME_MOUSE_EVENT;
+EMOUSE;
 
 /*
  * Externals.
@@ -752,13 +752,6 @@ void update (void);                     /* Make sure display is right.  */
 void vtinit (void);                     /* Initialize video display.    */
 void vttidy (void);                     /* Tidy display before exit.    */
 int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
-void mousereset (void);                 /* Clear the mouse event queue. */
-int mouseeventcount (void);             /* Count queued mouse events.   */
-int mouseenqueue (const ME_MOUSE_EVENT *event); /* Add a normalized event. */
-int mousepeek (ME_MOUSE_EVENT *event);     /* Copy the oldest event.     */
-int mousedrop (ME_MOUSE_EVENT *event);     /* Remove the oldest event.   */
-int mousedecodesgr (ME_MOUSE_EVENT *event, int code, int row, int column,
-                    int release);       /* Decode an SGR event.         */
 int scrollleft (int f, int n, int k);   /* Scroll window left.          */
 int scrollright (int f, int n, int k);  /* Scroll window right.         */
 int showvisable (int f, int n, int k);  /* Show visable on modeline.    */
@@ -767,6 +760,17 @@ void vtputc_color (unsigned int c, int color);
 #ifdef COLOR
 int setcolor (int f, int n, int k);     /* Set color display flag       */
 #endif
+
+/*
+ * Defined by "mouse.c".
+ */
+void mousereset (void);                 /* Clear the mouse event queue. */
+int mouseeventcount (void);             /* Count queued mouse events.   */
+int mouseenqueue (const EMOUSE *event); /* Add a normalized event.      */
+int mousepeek (EMOUSE *event);          /* Copy the oldest event.       */
+int mousedrop (EMOUSE *event);          /* Remove the oldest event.     */
+int mousedecodesgr (EMOUSE *event, int code, int row, int column,
+                    int release);       /* Decode an SGR event.         */
 
 /*
  * Defined by "syntax.c".

@@ -516,7 +516,7 @@ mouse_line_offset (const LINE *line, int column)
 }
 
 static int
-mouse_move_point (const ME_MOUSE_EVENT *event)
+mouse_move_point (const EMOUSE *event)
 {
   EWINDOW *window;
   LINE *line;
@@ -1739,7 +1739,7 @@ scrollright (int f, int n, int k)
 int
 mouseevent (int f, int n, int k)
 {
-  ME_MOUSE_EVENT event;
+  EMOUSE event;
 
   if (mousedrop (&event) == FALSE)
     return FALSE;

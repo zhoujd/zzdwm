@@ -124,7 +124,7 @@ static int
 mouse_decode_sgr (void)
 {
   char body[40];
-  ME_MOUSE_EVENT event;
+  EMOUSE event;
   int c = ERR;
   int length = 0;
   int release = FALSE;

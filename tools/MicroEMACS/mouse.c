@@ -4,7 +4,7 @@
 
 #include "def.h"
 
-static ME_MOUSE_EVENT mouse_queue[MOUSE_QUEUE_SIZE];
+static EMOUSE mouse_queue[MOUSE_QUEUE_SIZE];
 static int mouse_queue_head;
 static int mouse_queue_count;
 
@@ -22,7 +22,7 @@ mouseeventcount (void)
 }
 
 int
-mouseenqueue (const ME_MOUSE_EVENT *event)
+mouseenqueue (const EMOUSE *event)
 {
   int tail;
 
@@ -36,7 +36,7 @@ mouseenqueue (const ME_MOUSE_EVENT *event)
 }
 
 int
-mousepeek (ME_MOUSE_EVENT *event)
+mousepeek (EMOUSE *event)
 {
   if (event == NULL || mouse_queue_count == 0)
     return FALSE;
@@ -46,7 +46,7 @@ mousepeek (ME_MOUSE_EVENT *event)
 }
 
 int
-mousedrop (ME_MOUSE_EVENT *event)
+mousedrop (EMOUSE *event)
 {
   if (mousepeek (event) == FALSE)
     return FALSE;
@@ -57,7 +57,7 @@ mousedrop (ME_MOUSE_EVENT *event)
 }
 
 int
-mousedecodesgr (ME_MOUSE_EVENT *event, int code, int row, int column,
+mousedecodesgr (EMOUSE *event, int code, int row, int column,
                 int release)
 {
   if (event == NULL || code < 0 || code > 255 || row < 0 || column < 0)
