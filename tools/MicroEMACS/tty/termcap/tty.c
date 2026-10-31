@@ -64,13 +64,23 @@ extern int tthue;
 int tceeol;         /* Costs are set later */
 int tcinsl[NROW + 1];
 int tcdell[NROW + 1];
-int xterm_mouse;    /* Are we doing mouse control on an xterm? */
-
 #ifdef COLOR
 static int terminal_colors;
 #endif
 
 static int insdel;  /* Do we have both insert & delete line? */
+
+#ifdef MOUSE
+static int xterm_mouse; /* Are we doing mouse control on an xterm? */
+#endif
+
+#ifdef MOUSE
+void
+ttsetmouse (int flag)
+{
+  xterm_mouse = flag != FALSE;
+}
+#endif
 
 #define TCAPSLEN 1024
 
@@ -132,6 +142,7 @@ ttinit (void)
 #endif
     panic ("Environment variable TERM not defined!");
 
+#ifdef MOUSE
   /* If -m flag (mouse reporting) is enabled and we're running
    * on an xterm, enable X10-compatible mouse button press reporting.
    */
@@ -140,6 +151,7 @@ ttinit (void)
       xterm_mouse = TRUE;
       ttputs (L"\033[?9h", 5);
     }
+#endif
 
   if ((tgetent (tcbuf, tv_stype)) != 1)
     {
@@ -296,10 +308,12 @@ tttidy (void)
   ttykeymaptidy ();
 #endif
 
+#ifdef MOUSE
   /* Disable xterm mouse event reporting.
    */
   if (xterm_mouse)
       ttputs (L"\033[?9l", 5);
+#endif
 }
 
 /*

@@ -616,7 +616,9 @@ extern int scriptmode;
 extern int rflag;
 extern int noupdatecscope;
 extern char *cscope_path;
+#ifdef MOUSE
 extern int mouse;
+#endif
 extern int xflag;
 extern int zflag;
 extern int numberflag;

@@ -192,7 +192,9 @@ static void tdelete (TRIE t);
 static TRIE talloc (void);
 static TRIE tinsert (const char *kstring, KEY kcode, TRIE first);
 static int parse (TRIE first);
+#ifdef MOUSE
 static int parse_or_mouse (TRIE first);
+#endif
 
 /*
  * Get keyboard character, and interpret
@@ -227,7 +229,13 @@ getkbd (void)
     if (t->value == c)
       {				/* possible function key sequence  */
         if (c != METACH)
-          return parse_or_mouse (t->child);
+          {
+#ifdef MOUSE
+            return parse_or_mouse (t->child);
+#else
+            return parse (t->child);
+#endif
+          }
         else
           {			/* maybe sequence, maybe META char */
             c = ttgetc ();
@@ -236,7 +244,11 @@ getkbd (void)
 #endif
             for (t = t->child; t->type == NODE; t = t->sibling)
               if (t->value == c)
+#ifdef MOUSE
                 return parse_or_mouse (t->child);
+#else
+                return parse (t->child);
+#endif
             /* METACH-METACH -> METACH */
             if (c == METACH)
               return (METACH);
@@ -288,6 +300,7 @@ parse (first)
 }
 #endif
 
+#ifdef MOUSE
 static int
 parse_or_mouse (TRIE first)
 {
@@ -310,6 +323,7 @@ parse_or_mouse (TRIE first)
     }
   return c;
 }
+#endif
 
 /*
  * If XKEYS is defined, get key definitions from the termcap
@@ -409,7 +423,9 @@ ttykeymapinit (void)
   keydup (KF9, "only-window");
   keydup (KSF0, "find-cscope");
   keydup (KSF1, "next-cscope");
+#ifdef MOUSE
   keydup (KMOUSE, "mouse-event");
+#endif
   /*
    * These bindings sort of go with the termcap I use for my vt220
    * clone, which is why they're #ifdef'd.  I don't really use
