@@ -570,8 +570,6 @@ LINE;
 #define MOUSE_ALT      0x02
 #define MOUSE_CTRL     0x04
 
-#define MOUSE_QUEUE_SIZE 32
-
 typedef struct EMOUSE
 {
   int kind;
@@ -629,9 +627,6 @@ extern int ttcol;
 extern int tceeol;
 extern int tcinsl[];
 extern int tcdell[];
-#ifdef MOUSE
-void ttsetmouse (int flag);            /* Enable/disable SGR reports.  */
-#endif
 extern char cinfo[];
 extern char upmap[];
 extern char *keystrings[];
@@ -780,6 +775,7 @@ int setcolor (int f, int n, int k);     /* Set color display flag       */
 /*
  * Defined by "mouse.c".
  */
+void ttsetmouse (int flag);             /* Enable/disable SGR reports.  */
 void mousereset (void);                 /* Clear the mouse event queue. */
 int mouseeventcount (void);             /* Count queued mouse events.   */
 int mouseenqueue (const EMOUSE *event); /* Add a normalized event.      */

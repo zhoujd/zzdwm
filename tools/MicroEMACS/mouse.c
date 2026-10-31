@@ -6,6 +6,8 @@
 
 #ifdef MOUSE
 
+#define MOUSE_QUEUE_SIZE 32
+
 static EMOUSE mouse_queue[MOUSE_QUEUE_SIZE];
 static int mouse_queue_head;
 static int mouse_queue_count;
