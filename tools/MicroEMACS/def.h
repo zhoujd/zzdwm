@@ -770,7 +770,9 @@ int findgrep (int f, int n, int k);     /* Search for an egrep ref      */
 void update (void);                     /* Make sure display is right.  */
 void vtinit (void);                     /* Initialize video display.    */
 void vttidy (void);                     /* Tidy display before exit.    */
+#ifdef MOUSE
 int mouseevent (int f, int n, int k);   /* Handle mouse button event.   */
+#endif
 int scrollleft (int f, int n, int k);   /* Scroll window left.          */
 int scrollright (int f, int n, int k);  /* Scroll window right.         */
 int showvisable (int f, int n, int k);  /* Show visable on modeline.    */

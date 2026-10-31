@@ -211,7 +211,9 @@ vtinit (void)
   register VIDEO *vp;
   register int i;
 
+#ifdef MOUSE
   mousereset ();
+#endif
   if (nrow > NROW)
     nrow = NROW;
   if (ncol > NCOL)
@@ -488,6 +490,7 @@ window_gutter_width (const EWINDOW *wp)
   return width;
 }
 
+#ifdef MOUSE
 static int
 mouse_line_offset (const LINE *line, int column)
 {
@@ -556,6 +559,7 @@ mouse_move_point (const EMOUSE *event)
   curwp->w_flag |= WFMOVE;
   return TRUE;
 }
+#endif
 
 static void
 draw_line_number (int row, int number, int width)
@@ -1736,6 +1740,7 @@ scrollright (int f, int n, int k)
 /*
  * Handle mouse button event.
  */
+#ifdef MOUSE
 int
 mouseevent (int f, int n, int k)
 {
@@ -1756,6 +1761,7 @@ mouseevent (int f, int n, int k)
              event.modifiers, event.clicks);
   return (TRUE);
 }
+#endif
 
 /*
  * Show visable on modeline.

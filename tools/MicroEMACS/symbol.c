@@ -299,9 +299,9 @@ KEY key[] = {
   {-1,                  nextcscope,          "next-cscope"},
 #endif
 #ifdef MOUSE
-  {-1,                  togglemouse,          "toggle-mouse"},
-#endif
+  {-1,                  togglemouse,         "toggle-mouse"},
   {-1,                  mouseevent,          "mouse-event"},
+#endif
   {-1,                  scrollleft,          "scroll-left"},
   {-1,                  scrollright,         "scroll-right"},
   {-1,                  jeffexit,            "jeff-exit"},

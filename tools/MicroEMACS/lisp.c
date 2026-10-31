@@ -135,6 +135,7 @@ lisp_integer (const char *text, int *value)
   return TRUE;
 }
 
+#ifdef MOUSE
 static int
 lisp_mouse_event (int argc, const char *const *argv,
                   char *result, size_t result_size)
@@ -152,6 +153,7 @@ lisp_mouse_event (int argc, const char *const *argv,
   return length >= 0 && (size_t) length < result_size
          ? TINY_LISP_HOST_STRING : FALSE;
 }
+#endif
 
 static int
 lisp_shell_command_to_string (int argc, const char *const *argv,
@@ -1488,7 +1490,9 @@ lisp_register_hosts (void)
     { "shell-command-to-string", lisp_shell_command_to_string },
     { "editor-cmd", lisp_execute_command },
     { "get-char", lisp_get_char },
+#ifdef MOUSE
     { "read-mouse-event", lisp_mouse_event },
+#endif
     { "me-find-file", lisp_find_file },
     { "insert-char", lisp_insert_char },
     { "get-line", lisp_get_line },
