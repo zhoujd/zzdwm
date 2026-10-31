@@ -408,7 +408,8 @@ replaceregion (int f, int n, int k)
   int c;
   int num_replaced = 0;
   int replace_all = FALSE;
-  int plen = 0, rlen = 0;
+  int plen;
+  int rlen;
 
   if (curwp->w_mark.p == NULL)
     {
@@ -442,8 +443,8 @@ replaceregion (int f, int n, int k)
   curwp->w_dot.p = region.r_pos.p;
   curwp->w_dot.o = region.r_pos.o;
 
-  while (pat[plen]) plen++;
-  while (rpat[rlen]) rlen++;
+  plen = patlen;
+  rlen = uslen ((const uchar *) rpat);
 
   while (forwsrch () == TRUE)
     {
@@ -476,7 +477,15 @@ replaceregion (int f, int n, int k)
       if (curwp->w_dot.p == limit_p)
         limit_o += (rlen - plen);
 
-      lreplace (plen, rpat, FALSE);
+      if (lreplace (plen, rpat, FALSE) == FALSE)
+        {
+          curwp->w_dot.p = orig_p;
+          curwp->w_dot.o = orig_o;
+          curwp->w_flag |= WFMOVE;
+          return FALSE;
+        }
+      if (curwp->w_dot.p == orig_p && curwp->w_dot.o < orig_o)
+        orig_o += rlen - plen;
       num_replaced++;
     }
 

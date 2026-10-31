@@ -619,6 +619,7 @@ extern char *cscope_path;
 #ifdef MOUSE
 extern int mouse;
 #endif
+extern int patlen;                /* Pattern length in characters. */
 extern int xflag;
 extern int zflag;
 extern int numberflag;
