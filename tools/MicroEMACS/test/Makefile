@@ -49,12 +49,13 @@ syntax-test: syntax.c $(ROOT)/utf8.c $(ROOT)/syntax.c
 display-test: display.c $(ROOT)/mouse.c $(ROOT)/path.c $(ROOT)/utf8.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \
 		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/mingw \
-		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DTEST display.c \
+		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DMOUSE -DTEST display.c \
 		$(ROOT)/mouse.c $(ROOT)/path.c $(ROOT)/utf8.c
 
 mouse-test: mouse.c $(ROOT)/def.h $(ROOT)/mouse.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter $(LDFLAGS) -o $@ \
-		-I$(ROOT) -I$(ROOT)/sys/unix -I$(ROOT)/tty/ncurses mouse.c
+		-I$(ROOT) -I$(ROOT)/sys/unix -I$(ROOT)/tty/ncurses \
+		-DMOUSE mouse.c
 
 cscope-test: cscope.c $(ROOT)/cscope.c $(ROOT)/sys/unix/spawn.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \

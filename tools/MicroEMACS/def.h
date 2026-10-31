@@ -372,6 +372,11 @@ typedef struct MARKRING
 MARKRING;
 
 #ifdef COLOR
+/*
+ * A syntax definition describes one language for color support.  The
+ * filetype, keyword, extension, and shebang lists identify the language;
+ * the feature bits control its highlighting rules.
+ */
 typedef struct SYNTAX
 {
   const char *name;
@@ -484,7 +489,7 @@ EWINDOW;
  * I'll await more comments from the folks with the little
  * machines; I have a VAX, and everything fits.
  */
-typedef struct
+typedef struct REGION
 {
   struct POS r_pos;             /* Origin position              */
   int r_size;                   /* Length in characters.        */
@@ -570,6 +575,10 @@ LINE;
 #define MOUSE_ALT      0x02
 #define MOUSE_CTRL     0x04
 
+/*
+ * A normalized mouse event.  Coordinates are zero-based physical screen
+ * positions, while kind and modifiers use the MOUSE_* constants above.
+ */
 typedef struct EMOUSE
 {
   int kind;
