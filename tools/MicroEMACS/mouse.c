@@ -96,18 +96,13 @@ int
 togglemouse (int f, int n, int k)
 {
   (void) f;
+  (void) n;
   (void) k;
 
-  if (n < 0)
-    mouse = FALSE;
-  else if (n > 0)
-    mouse = TRUE;
-  else
-    mouse = mouse == FALSE;
-
+  mouse = !mouse;
   mousereset ();
   ttsetmouse (mouse);
-  eprintf (mouse ? "[Mouse enabled]" : "[Mouse disabled]");
+  eprintf ("[Mouse now %s]", mouse ? "ON" : "OFF");
   return TRUE;
 }
 
