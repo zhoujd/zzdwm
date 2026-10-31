@@ -62,6 +62,11 @@ ifeq ($(LISP), yes)
 LISP_OBJ := lisp.o tinylisp.o
 endif
 
+MOUSE_OBJ :=
+ifeq ($(MOUSE), yes)
+MOUSE_OBJ := mouse.o
+endif
+
 OBJ := \
 	basic.o \
 	buffer.o \
@@ -77,7 +82,7 @@ OBJ := \
 	$(LISP_OBJ) \
 	$(AI_OBJ) \
 	main.o \
-	mouse.o \
+	$(MOUSE_OBJ) \
 	paragraph.o \
 	random.o \
 	regexp.o \

@@ -543,6 +543,7 @@ LINE;
 #define wlgetcptr(lp, n) (ugetcptr((lp)->l_text,(n)))
 #define wloffset(lp, n)  (uoffset((lp)->l_text,(n)))
 
+#ifdef MOUSE
 /*
  * Normalized mouse events. Terminal backends translate their protocol
  * into these fields before MicroEMACS dispatches or exposes an event.
@@ -568,6 +569,7 @@ typedef struct EMOUSE
   int clicks;
 }
 EMOUSE;
+#endif
 
 /*
  * Externals.
@@ -761,6 +763,7 @@ void vtputc_color (unsigned int c, int color);
 int setcolor (int f, int n, int k);     /* Set color display flag       */
 #endif
 
+#ifdef MOUSE
 /*
  * Defined by "mouse.c".
  */
@@ -771,6 +774,7 @@ int mousepeek (EMOUSE *event);          /* Copy the oldest event.       */
 int mousedrop (EMOUSE *event);          /* Remove the oldest event.     */
 int mousedecodesgr (EMOUSE *event, int code, int row, int column,
                     int release);       /* Decode an SGR event.         */
+#endif
 
 /*
  * Defined by "syntax.c".

@@ -4,6 +4,8 @@
 
 #include "def.h"
 
+#ifdef MOUSE
+
 static EMOUSE mouse_queue[MOUSE_QUEUE_SIZE];
 static int mouse_queue_head;
 static int mouse_queue_count;
@@ -87,3 +89,5 @@ mousedecodesgr (EMOUSE *event, int code, int row, int column,
 
   return TRUE;
 }
+
+#endif
