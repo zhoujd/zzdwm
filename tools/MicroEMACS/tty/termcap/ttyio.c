@@ -63,6 +63,26 @@ static int nobuf;
 static struct termios oldtty;	/* Old tty state		*/
 static struct termios newtty;	/* New tty state		*/
 
+static void
+terminal_write (const char *buffer, size_t length)
+{
+  while (length > 0)
+    {
+      ssize_t count = write (STDOUT_FILENO, buffer, length);
+
+      if (count > 0)
+        {
+          buffer += count;
+          length -= count;
+        }
+      else if (errno != EINTR)
+        {
+          perror ("terminal write");
+          return;
+        }
+    }
+}
+
 int nrow;       /* Terminal size, rows.         */
 int ncol;       /* Terminal size, columns.      */
 int npages = 1; /* Number of pages on terminal. */
@@ -281,16 +301,16 @@ void
 ttosc52 (const char *encoded)
 {
   ttflush ();
-  write (1, "\033]52;c;", 7);
-  write (1, encoded, strlen (encoded));
-  write (1, "\007", 1);
+  terminal_write ("\033]52;c;", 7);
+  terminal_write (encoded, strlen (encoded));
+  terminal_write ("\007", 1);
 }
 
 void
 ttsetpaste (int flag)
 {
   ttflush ();
-  write (1, flag != FALSE ? "\033[?2004h" : "\033[?2004l", 8);
+  terminal_write (flag != FALSE ? "\033[?2004h" : "\033[?2004l", 8);
 }
 
 /*

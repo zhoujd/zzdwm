@@ -1,3 +1,7 @@
+/*
+ * Filename osc52.c
+ */
+
 #include "def.h"
 
 #define OSC52_MAX_BYTES 1000000
