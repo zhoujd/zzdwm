@@ -61,5 +61,7 @@
 #define	KSF9	K1D
 #define	KSF10	K1E
 
+#define KPASTE KFIRST
+
 /* Functions. */
 void putline(int row, int col, const wchar_t *buf);

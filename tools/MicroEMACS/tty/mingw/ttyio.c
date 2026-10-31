@@ -129,6 +129,18 @@ ttclose (void)
   SetConsoleMode (hout, houtmode);
 }
 
+void
+ttosc52 (const char *encoded)
+{
+  (void) encoded;
+}
+
+void
+ttsetpaste (int flag)
+{
+  (void) flag;
+}
+
 /*
  * No operation in MS-DOS.
  */

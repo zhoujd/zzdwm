@@ -72,9 +72,11 @@ int specmap[32] = {
   KEY_F(18), KEY_F(19), KEY_F(20), 0
 };
 
-#ifdef MOUSE
 #define KEY_SGRMOUSE (KEY_MAX + 1)
+#define KEY_PASTE_START (KEY_MAX + 2)
+#define KEY_PASTE_END (KEY_MAX + 3)
 
+#ifdef MOUSE
 static int mouse_decode_sgr (void);
 #endif
 
@@ -93,6 +95,16 @@ getkbd (void)
   register int	i;
 
   c = ttgetc ();
+  if (c == KEY_PASTE_START)
+    {
+      pastestart = TRUE;
+      return KPASTE;
+    }
+  if (c == KEY_PASTE_END)
+    {
+      pastestart = FALSE;
+      return KPASTE;
+    }
 #ifdef MOUSE
   if (c == KEY_SGRMOUSE)
     return mouse_decode_sgr ();
@@ -197,6 +209,11 @@ ttykeymapinit (void)
   keydup (KF12,  "next-cscope");
 #ifdef MOUSE
   define_key ("\033[<", KEY_SGRMOUSE);
+#endif
+  define_key ("\033[200~", KEY_PASTE_START);
+  define_key ("\033[201~", KEY_PASTE_END);
+  keydup (KPASTE, "bracketed-paste");
+#ifdef MOUSE
   keydup (KMOUSE, "mouse-event");
 #endif
 }

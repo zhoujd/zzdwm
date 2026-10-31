@@ -80,6 +80,7 @@
 
 int overstrike = 0;		/* TRUE if in overstrike mode */
 int tabmask = 0x07;		/* tabulator mask */
+int pastestart;
 
 /*
  * Display a bunch of useful information about
@@ -852,6 +853,90 @@ yank (int f, int n, int k)
       curwp->w_flag |= WFHARD;
     }
   return (TRUE);
+}
+
+/*
+ * Insert a terminal bracketed paste.  The backend delivers the start and
+ * end markers as KPASTE; all intervening printable text, tabs, and newlines
+ * is inserted as one command.
+ */
+int
+bracketedpaste (int f, int n, int k)
+{
+  char buffer[80];
+  uchar utf8[6];
+  LINE *linep;
+  int length = 0;
+  int newlines = 0;
+  int character;
+  int utf8_length;
+
+  (void) f;
+  (void) n;
+  (void) k;
+
+  if (pastestart == FALSE)
+    return TRUE;
+
+  while ((character = getkey ()) != KPASTE)
+    {
+      if (character == (KCTRL | 'G'))
+        {
+          if (length > 0)
+            linsert (length, 0, buffer);
+          eprintf ("[Paste aborted]");
+          return FALSE;
+        }
+
+      if (character == (KCTRL | 'M') || character == (KCTRL | 'J'))
+        {
+          if (length > 0)
+            {
+              if (linsert (length, 0, buffer) == FALSE)
+                return FALSE;
+              length = 0;
+            }
+          if (newline (FALSE, 1, KRANDOM) == FALSE)
+            return FALSE;
+          ++newlines;
+        }
+      else if (character == (KCTRL | 'I'))
+        {
+          if (length + 1 >= (int) sizeof (buffer))
+            {
+              if (linsert (length, 0, buffer) == FALSE)
+                return FALSE;
+              length = 0;
+            }
+          buffer[length++] = '\t';
+        }
+      else if (character >= ' ' && character <= KCHAR
+               && (character < KFIRST || character > KLAST))
+        {
+          utf8_length = uputc (character, utf8);
+          if (length + utf8_length >= (int) sizeof (buffer))
+            {
+              if (linsert (length, 0, buffer) == FALSE)
+                return FALSE;
+              length = 0;
+            }
+          memcpy (buffer + length, utf8, (size_t) utf8_length);
+          length += utf8_length;
+        }
+    }
+
+  if (length > 0 && linsert (length, 0, buffer) == FALSE)
+    return FALSE;
+
+  linep = curwp->w_linep;
+  if (curwp->w_dot.p == linep)
+    {
+      while (newlines-- && linep != firstline (curbp))
+        linep = lback (linep);
+      curwp->w_linep = linep;
+      curwp->w_flag |= WFHARD;
+    }
+  return TRUE;
 }
 
 /*

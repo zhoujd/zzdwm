@@ -302,6 +302,7 @@ KEY key[] = {
   {-1,                  togglemouse,         "toggle-mouse"},
   {-1,                  mouseevent,          "mouse-event"},
 #endif
+  {-1,                  bracketedpaste,      "bracketed-paste"},
   {-1,                  scrollleft,          "scroll-left"},
   {-1,                  scrollright,         "scroll-right"},
   {-1,                  jeffexit,            "jeff-exit"},

@@ -2,7 +2,8 @@
 
 ROOT = ..
 TARGET = utf8 regtest tcap reftag tag-test symbol-test syntax-test \
-	display-test mouse-test cscope-test lisp-test ai-test path-test
+	display-test mouse-test cscope-test lisp-test ai-test path-test \
+	osc52-test
 CFLAGS := -Os
 
 ifeq ($(INSIDE_DOCKER), yes)
@@ -84,6 +85,10 @@ path-mingw-test: path.c $(ROOT)/path.c $(ROOT)/def.h $(ROOT)/sys/mingw/fileio.c
 	$(CC) $(CFLAGS) -D_GNU_SOURCE -DMINGW -ffunction-sections \
 		-fdata-sections $(LDFLAGS) -Wl,--gc-sections -o $@ \
 		-I$(ROOT) -I$(ROOT)/sys/mingw -I$(ROOT)/tty/mingw $<
+
+osc52-test: osc52.c $(ROOT)/osc52.c $(ROOT)/utf8.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ -I$(ROOT) -I$(ROOT)/sys/unix \
+		-I$(ROOT)/tty/ncurses osc52.c $(ROOT)/utf8.c
 
 clean:
 	rm -f $(TARGET) *.[o]

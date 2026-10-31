@@ -10,6 +10,7 @@
 
 int fillcol;
 int tabsize;
+int osc52;
 int colorflag;
 int mouse;
 int modefg256 = 15;
@@ -715,6 +716,10 @@ main (void)
   assert (tabsize == 12);
   assert (evaluate ("(set-variable \"fill-column\" \"72\")") == TRUE);
   assert (fillcol == 72);
+  assert (evaluate ("(set-variable \"osc52\" \"0\")") == TRUE);
+  assert (osc52 == 0);
+  assert (evaluate ("(set-variable \"osc52\" \"1\")") == TRUE);
+  assert (osc52 == 1);
   assert (evaluate ("(set-variable \"unknown\" \"8\")") == FALSE);
   assert (evaluate ("(set-variable \"tab-width\" \"0\")") == FALSE);
   assert (evaluate ("(set-variable \"tab-width\" \"8junk\")") == FALSE);

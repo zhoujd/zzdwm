@@ -620,6 +620,8 @@ extern int mouse;
 extern int xflag;
 extern int zflag;
 extern int numberflag;
+extern int osc52;                 /* Copy regions to the clipboard. */
+extern int pastestart;            /* Last paste key started a paste. */
 #ifdef COLOR
 extern int colorflag;
 extern int modefg256;
@@ -777,6 +779,8 @@ int scrollleft (int f, int n, int k);   /* Scroll window left.          */
 int scrollright (int f, int n, int k);  /* Scroll window right.         */
 int showvisable (int f, int n, int k);  /* Show visable on modeline.    */
 int setnumber (int f, int n, int k);    /* Set line number display      */
+void osc52send (const REGION *region);  /* Copy a region with OSC 52. */
+int bracketedpaste (int f, int n, int k); /* Insert bracketed paste. */
 void vtputc_color (unsigned int c, int color);
 #ifdef COLOR
 int setcolor (int f, int n, int k);     /* Set color display flag       */
@@ -1232,6 +1236,8 @@ int ttputc (int c);
 int ttinsertc (int c);
 void ttdelc (void);
 void ttputs (const wchar_t *buf, int size);
+void ttosc52 (const char *encoded); /* Copy encoded text to clipboard. */
+void ttsetpaste (int flag);         /* Set bracketed paste mode.       */
 void ttflush (void);
 int ttgetc (void);
 void panic (char *s);

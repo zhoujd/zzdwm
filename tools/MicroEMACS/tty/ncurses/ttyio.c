@@ -94,6 +94,7 @@ ttopen (void)
   cbreak ();			/* take input chars one at a time, no wait for \n */
   noecho ();
   raw ();
+  ttsetpaste (TRUE);
 #ifdef MOUSE
   if (mouse)
     ttsetmouse (TRUE);
@@ -138,6 +139,7 @@ void
 ttclose (void)
 {
   endwin ();
+  ttsetpaste (FALSE);
 #ifdef MOUSE
   if (mouse)
     ttsetmouse (FALSE);
@@ -270,6 +272,20 @@ void
 ttflush (void)
 {
    refresh ();
+}
+
+void
+ttosc52 (const char *encoded)
+{
+  (void) write (1, "\033]52;c;", 7);
+  (void) write (1, encoded, strlen (encoded));
+  (void) write (1, "\007", 1);
+}
+
+void
+ttsetpaste (int flag)
+{
+  (void) write (1, flag != FALSE ? "\033[?2004h" : "\033[?2004l", 8);
 }
 
 /*

@@ -1313,19 +1313,35 @@ lisp_set_variable (int argc, const char *const *argv,
   static const LispVariable variables[] = {
     { "tab-size", &tabsize },
     { "tab-width", &tabsize },
-    { "fill-column", &fillcol }
+    { "fill-column", &fillcol },
+    { "osc52", &osc52 }
   };
+  static const char *boolean_variables[] = { "osc52" };
   char *end;
   long value;
   size_t index;
+  size_t boolean_index;
 
   (void) result;
   (void) result_size;
   if (argc != 2)
     return FALSE;
   value = strtol (argv[1], &end, 10);
-  if (argv[1][0] == 0 || *end != 0 || value <= 0 || value > INT_MAX)
+  if (argv[1][0] == 0 || *end != 0 || value < 0 || value > INT_MAX)
     return FALSE;
+
+  if (value == 0)
+    {
+      for (boolean_index = 0;
+           boolean_index < sizeof (boolean_variables)
+                           / sizeof (boolean_variables[0]);
+           boolean_index++)
+        if (strcmp (argv[0], boolean_variables[boolean_index]) == 0)
+          break;
+      if (boolean_index == sizeof (boolean_variables)
+                            / sizeof (boolean_variables[0]))
+        return FALSE;
+    }
 
   value = (int) value;
   for (index = 0; index < sizeof (variables) / sizeof (variables[0]);

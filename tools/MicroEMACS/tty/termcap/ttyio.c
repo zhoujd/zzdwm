@@ -277,6 +277,22 @@ ttflush (void)
     }
 }
 
+void
+ttosc52 (const char *encoded)
+{
+  ttflush ();
+  write (1, "\033]52;c;", 7);
+  write (1, encoded, strlen (encoded));
+  write (1, "\007", 1);
+}
+
+void
+ttsetpaste (int flag)
+{
+  ttflush ();
+  write (1, flag != FALSE ? "\033[?2004h" : "\033[?2004l", 8);
+}
+
 /*
  * Read character from terminal.  Read
  * UTF-8 input and convert it to Unicode.

@@ -75,5 +75,7 @@
 #define	KSF9    K1E
 #define KMOUSE  K1F
 
+#define KPASTE KFIRST
+
 #define	NFKEYS  20		/* # of function keys (k0-k9, K0-K9) */
 #endif

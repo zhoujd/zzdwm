@@ -70,3 +70,5 @@ void putline (int row, int col, const wchar_t *buf);
 void mouse_page_coords (int terminal_row, int terminal_column,
                         int *row, int *column);
 #endif
+
+#define KPASTE KFIRST

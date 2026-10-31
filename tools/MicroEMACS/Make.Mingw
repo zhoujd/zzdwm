@@ -83,6 +83,7 @@ OBJ := \
 	$(AI_OBJ) \
 	main.o \
 	$(MOUSE_OBJ) \
+	osc52.o \
 	paragraph.o \
 	random.o \
 	regexp.o \
