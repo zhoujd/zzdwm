@@ -51,6 +51,26 @@ int npages = 1;			/* Number of pages on terminal. */
 int waiting;
 int interrupted;
 
+static void
+terminal_write (const char *buffer, size_t length)
+{
+  while (length > 0)
+    {
+      ssize_t count = write (STDOUT_FILENO, buffer, length);
+
+      if (count > 0)
+        {
+          buffer += count;
+          length -= count;
+        }
+      else if (errno != EINTR)
+        {
+          perror ("terminal write");
+          return;
+        }
+    }
+}
+
 /*
  * set the tty size. Functionized for 43BSD.
  */
@@ -277,15 +297,15 @@ ttflush (void)
 void
 ttosc52 (const char *encoded)
 {
-  (void) write (1, "\033]52;c;", 7);
-  (void) write (1, encoded, strlen (encoded));
-  (void) write (1, "\007", 1);
+  terminal_write ("\033]52;c;", 7);
+  terminal_write (encoded, strlen (encoded));
+  terminal_write ("\007", 1);
 }
 
 void
 ttsetpaste (int flag)
 {
-  (void) write (1, flag != FALSE ? "\033[?2004h" : "\033[?2004l", 8);
+  terminal_write (flag != FALSE ? "\033[?2004h" : "\033[?2004l", 8);
 }
 
 /*
