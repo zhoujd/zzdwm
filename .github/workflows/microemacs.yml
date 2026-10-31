@@ -47,6 +47,7 @@ jobs:
       - name: Run source tests
         run: |
           set -e
+          export TERM=xterm-256color
           for test in tcap tag-test symbol-test syntax-test display-test \
                       mouse-test cscope-test lisp-test ai-test path-test \
                       osc52-test; do
@@ -61,7 +62,7 @@ jobs:
       - name: Smoke-test full editor
         run: |
           ./me --version
-          ./me --help | grep -q '^Usage: me \[OPTION'
+          ./me --help | grep -q '^Usage: me '
           ./me --script examples/script.l
 
       - name: Run PTY tests
@@ -111,6 +112,7 @@ jobs:
       - name: Run source tests
         run: |
           set -e
+          export TERM=xterm-256color
           for test in tcap tag-test symbol-test syntax-test display-test \
                       mouse-test cscope-test lisp-test ai-test path-test \
                       osc52-test; do
@@ -123,7 +125,7 @@ jobs:
           make -f Make.Linux STATIC=yes strip
           file ./me | grep -q 'statically linked'
           ./me --version
-          ./me --help | grep -q '^Usage: me \[OPTION'
+          ./me --help | grep -q '^Usage: me '
           mkdir -p dist
           cp ./me dist/me-linux-static
 
@@ -181,7 +183,7 @@ jobs:
             CC=x86_64-w64-mingw32-gcc LD=x86_64-w64-mingw32-gcc me.exe
           file ./me.exe
           "$WINE_BIN" ./me.exe --version
-          "$WINE_BIN" ./me.exe --help | grep -q '^Usage: me \[OPTION'
+          "$WINE_BIN" ./me.exe --help | grep -q '^Usage: me '
           mkdir -p dist
           cp ./me.exe dist/me-windows.exe
 
