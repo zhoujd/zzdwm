@@ -442,6 +442,18 @@ ttputs_color (const wchar_t *text, const short *attrs, int count)
   return TRUE;
 }
 
+#ifdef MOUSE
+/*
+ * The Windows console has no reporting modes to switch: mouse events
+ * arrive through the console API once it is read for them (P5).
+ */
+void
+ttsetmouse (int flag)
+{
+  (void) flag;
+}
+#endif
+
 /*
  * High speed screen update.  row and col are 1-based.
  */
