@@ -47,7 +47,9 @@ jobs:
       - name: Run source tests
         run: |
           set -e
-          for test in syntax-test display-test lisp-test path-test tag-test cscope-test ai-test; do
+          for test in tcap tag-test symbol-test syntax-test display-test \
+                      mouse-test cscope-test lisp-test ai-test path-test \
+                      osc52-test; do
             "./test/$test"
           done
 
@@ -61,6 +63,12 @@ jobs:
           ./me --version
           ./me --help | grep -q '^Usage: me \[OPTION'
           ./me --script examples/script.l
+
+      - name: Run PTY tests
+        run: |
+          set -e
+          PYTHONPATH=test/python python3 test/python/me_replace_region.py
+          PYTHONPATH=test/python python3 test/python/me_paste_osc52.py
 
       - name: Build source package
         run: |
@@ -103,7 +111,9 @@ jobs:
       - name: Run source tests
         run: |
           set -e
-          for test in syntax-test display-test lisp-test path-test tag-test cscope-test ai-test; do
+          for test in tcap tag-test symbol-test syntax-test display-test \
+                      mouse-test cscope-test lisp-test ai-test path-test \
+                      osc52-test; do
             "./test/$test"
           done
 
