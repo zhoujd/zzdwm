@@ -90,7 +90,7 @@ int bflag;                         /* True if -b option specified  */
 char *cscope_path = "cscope";      /* Name of cscope program       */
 int noupdatecscope;                /* True if -u option specified  */
 #ifdef MOUSE
-int mouse;                         /* True if -m option specified  */
+int mouse = FALSE;                 /* True if -m option specified  */
 #endif
 int rflag;                         /* True if -r option specified  */
 int scriptmode;                    /* True if running a Lisp script */
