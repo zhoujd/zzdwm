@@ -1,13 +1,23 @@
-## MicroEMACS clang-format file
-
 ---
+# GNU C Style Configuration for MicroEmacs Variants
 Language: Cpp
 BasedOnStyle: GNU
-ColumnLimit: 120
-IndentWidth: 2
-TabWidth: 4
+
+# Strict GNU Constraints
+ColumnLimit: 79
+
+# White Space & Line Endings
 UseTab: Never
-UseCRLF: false
-MaxEmptyLinesToKeep: 2
-SortIncludes: false
+LineEnding: LF
+TabWidth: 8
+IndentWidth: 2
+ContinuationIndentWidth: 4
+
+# Bracket and Space Formatting Rules
+BreakBeforeBraces: GNU
+SpaceBeforeParens: Always
+
+# Pointer and Field Adjustments
+PointerAlignment: Right
+AlignTrailingComments: true
 ---
