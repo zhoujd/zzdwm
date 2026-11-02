@@ -170,6 +170,23 @@ static int mouse_anchor_col;	/* Pressed cell, column.	 */
 static MARKRING mouse_saved_ring; /* Mark ring before the drag.   */
 
 /*
+ * Click counting.  The SGR protocol reports raw presses and releases,
+ * so consecutive plain clicks on one cell are counted here: the
+ * second selects the word at the clicked cell, the third the whole
+ * line.  The count breaks when a click lands elsewhere or any other
+ * mouse event intervenes.
+ */
+static int mouse_click_streak;	/* Consecutive plain clicks.	 */
+static int mouse_click_row;	/* Cell of the last click, row.	 */
+static int mouse_click_col;	/* Cell of the last click, col.	 */
+
+static void
+mouse_click_reset (void)
+{
+  mouse_click_streak = 0;
+}
+
+/*
  * Move the point to the cell under the mouse in the text area of
  * the window below.  When "only" is not NULL the point moves only
  * within that window, so a drag stays in the window it started in.
@@ -233,6 +250,81 @@ mouse_wheel_scroll (const EMOUSE *event)
 }
 
 /*
+ * Select the word around the point of window "wp": the run of word
+ * characters, or the run of blanks, that the point sits in.  The
+ * selection stays on one line.  Returns FALSE when the point is at
+ * the end of the line and there is nothing to select.
+ */
+static int
+mouse_select_word (EWINDOW *wp)
+{
+  LINE *lp;
+  int len;
+  int o;
+  int word;
+
+  lp = wp->w_dot.p;
+  len = wllength (lp);
+  o = wp->w_dot.o;
+  if (o >= len)
+    return FALSE;
+  word = CISWORD (wlgetc (lp, o)) != 0;
+  while (o > 0 && (CISWORD (wlgetc (lp, o - 1)) != 0) == word)
+    --o;
+  wp->w_mark.p = lp;
+  wp->w_mark.o = o;
+  o = wp->w_dot.o;
+  while (o < len && (CISWORD (wlgetc (lp, o)) != 0) == word)
+    ++o;
+  wp->w_dot.o = o;
+  return TRUE;
+}
+
+/*
+ * Select the line the point of window "wp" is on, from its first
+ * to its last character.
+ */
+static void
+mouse_select_line (EWINDOW *wp)
+{
+  wp->w_mark.p = wp->w_dot.p;
+  wp->w_mark.o = 0;
+  wp->w_dot.o = wllength (wp->w_dot.p);
+}
+
+/*
+ * A middle event yanks the kill buffer at the clicked cell; a right
+ * event extends the region to the clicked cell.  Returns TRUE when
+ * the button was one of these, FALSE for the left button.
+ */
+static int
+mouse_button_click (const EMOUSE *event)
+{
+  EWINDOW *wp;
+
+  if (event->button == 1)
+    {
+      endmouseselect ();
+      if (mouse_drop_dot (event, NULL) != NULL)
+        (void) yank (FALSE, 1, KRANDOM);
+      return TRUE;
+    }
+  if (event->button == 2)
+    {
+      wp = mouse_drop_dot (event, NULL);
+      if (wp != NULL && wp->w_mark.p != NULL)
+        {
+          mouseselect = TRUE;
+          wp->w_flag |= WFHARD;
+        }
+      else
+        endmouseselect ();
+      return TRUE;
+    }
+  return FALSE;
+}
+
+/*
  * Handle a mouse event.  The tty backend decodes the report into an
  * EMOUSE event on the queue.
  *
@@ -245,7 +337,14 @@ mouse_wheel_scroll (const EMOUSE *event)
  * the region, and the release position completes it even when no
  * motion was reported; a press and release on the same cell is a
  * plain click, and the saved mark ring goes back, so clicking does
- * not disturb an existing mark.
+ * not disturb an existing mark.  Consecutive plain clicks on one
+ * cell select the word (second click) or the whole line (third
+ * click) at the clicked cell.  A middle event yanks the kill
+ * buffer at the clicked cell, and a right event extends the region
+ * to the clicked cell.  A press or click on a mode line selects
+ * that window.  A click that the tty layer reports as one complete
+ * MOUSE_CLICK gesture is handled the same way, with the click
+ * count supplied by the backend.
  */
 int
 mouseevent (int f, int n, int k)
@@ -257,7 +356,55 @@ mouseevent (int f, int n, int k)
     return FALSE;
 
   if (event.kind == MOUSE_WHEEL)
-    return mouse_wheel_scroll (&event);
+    {
+      mouse_click_reset ();
+      return mouse_wheel_scroll (&event);
+    }
+
+  /* A click reported as one event is a whole press/release gesture
+     with the backend's click count. */
+  if (event.kind == MOUSE_CLICK)
+    {
+      mouse_dragging = FALSE;
+      mouse_click_reset ();
+      wp = mouse_find_window (event.row);
+      if (wp == NULL)
+        return (TRUE);
+      if (event.row == wp->w_toprow + wp->w_ntrows)
+        {
+          mouse_switch_window (wp);
+          endmouseselect ();
+          return (TRUE);
+        }
+      if (mouse_button_click (&event) != FALSE)
+        return (TRUE);
+      if (event.clicks >= 3)
+        {
+          wp = mouse_drop_dot (&event, NULL);
+          if (wp != NULL)
+            {
+              mouse_select_line (wp);
+              mouseselect = TRUE;
+              wp->w_flag |= WFHARD;
+            }
+          return (TRUE);
+        }
+      if (event.clicks == 2)
+        {
+          wp = mouse_drop_dot (&event, NULL);
+          if (wp != NULL && mouse_select_word (wp) != FALSE)
+            {
+              mouseselect = TRUE;
+              wp->w_flag |= WFHARD;
+            }
+          else
+            endmouseselect ();
+          return (TRUE);
+        }
+      endmouseselect ();
+      (void) mouse_drop_dot (&event, NULL);
+      return (TRUE);
+    }
 
   /* A release ends the drag.  A release away from the pressed cell
      completes the region at the release position even on terminals
@@ -284,27 +431,75 @@ mouseevent (int f, int n, int k)
           if (!keep)
             {
               /* Plain click after all: the saved mark ring goes
-                 back. */
-              endmouseselect ();
+                 back.  Consecutive plain clicks on one cell select
+                 the word, then the whole line. */
+              mouse_click_streak
+                = (event.row == mouse_click_row
+                   && event.column == mouse_click_col)
+                  ? mouse_click_streak + 1 : 1;
+              mouse_click_row = event.row;
+              mouse_click_col = event.column;
               mouse_anchor_wp->w_ring = mouse_saved_ring;
-              mouse_anchor_wp->w_flag |= WFMOVE;
+              if (mouse_click_streak == 2
+                  && mouse_select_word (mouse_anchor_wp) != FALSE)
+                {
+                  mouseselect = TRUE;
+                  mouse_anchor_wp->w_flag |= WFHARD;
+                }
+              else if (mouse_click_streak >= 3)
+                {
+                  mouse_select_line (mouse_anchor_wp);
+                  mouseselect = TRUE;
+                  mouse_anchor_wp->w_flag |= WFHARD;
+                }
+              else
+                {
+                  endmouseselect ();
+                  mouse_anchor_wp->w_flag |= WFMOVE;
+                }
             }
           else
-            mouse_anchor_wp->w_flag |= WFHARD;
+            {
+              mouse_click_reset ();
+              mouse_anchor_wp->w_flag |= WFHARD;
+            }
         }
       return (TRUE);
     }
 
   /* Idle motion without a drag is ignored. */
   if (event.kind == MOUSE_MOTION && !mouse_dragging)
-    return (TRUE);
+    {
+      mouse_click_reset ();
+      return (TRUE);
+    }
 
-  /* A fresh press anchors a drag on the pressed cell. */
+  /* A fresh press anchors a drag on the pressed cell; a middle or
+     right press acts like the matching click, and a press on a
+     mode line selects that window. */
   if (!mouse_dragging)
     {
-      if (event.kind == MOUSE_PRESS && event.button == 0
-          && event.modifiers == 0)
+      if (event.kind == MOUSE_PRESS && event.modifiers == 0)
         {
+          wp = mouse_find_window (event.row);
+          if (wp == NULL)
+            {
+              endmouseselect ();
+              mouse_click_reset ();
+              return (TRUE);
+            }
+          if (event.row == wp->w_toprow + wp->w_ntrows)
+            {
+              mouse_switch_window (wp);
+              endmouseselect ();
+              mouse_click_reset ();
+              return (TRUE);
+            }
+          if (event.button != 0)
+            {
+              mouse_click_reset ();
+              return mouse_button_click (&event);
+            }
           wp = mouse_drop_dot (&event, NULL);
           if (wp == NULL)
             return (TRUE);
@@ -320,6 +515,7 @@ mouseevent (int f, int n, int k)
           return (TRUE);
         }
 
+      mouse_click_reset ();
       eprintf ("[Mouse kind %d, button %d, row %d, column %d, "
                "modifiers %d, clicks %d]",
                event.kind, event.button, event.row, event.column,
@@ -329,6 +525,7 @@ mouseevent (int f, int n, int k)
 
   /* Dragging: motion reports extend the region by moving the point
      within the window the drag started in. */
+  mouse_click_reset ();
   if (mouse_drop_dot (&event, mouse_anchor_wp) != NULL)
     {
       mouse_drag_moved = TRUE;

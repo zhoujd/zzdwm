@@ -571,6 +571,7 @@ LINE;
 #define MOUSE_RELEASE  1
 #define MOUSE_MOTION   2
 #define MOUSE_WHEEL    3
+#define MOUSE_CLICK    4		/* Complete gesture, clicks set.	*/
 
 #define MOUSE_SHIFT    0x01
 #define MOUSE_ALT      0x02

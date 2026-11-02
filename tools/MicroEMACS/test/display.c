@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <wctype.h>
 
 #include "../display.c"
 
@@ -27,6 +28,12 @@ cisctrl (wchar_t c)
   return c < 0x20 || c == 0x7f;
 }
 
+int
+cisword (wchar_t c)
+{
+  return iswalnum ((wint_t) c) || c == '$' || c == '\'';
+}
+
 void
 eprintf (const char *format, ...)
 {
@@ -35,6 +42,7 @@ eprintf (const char *format, ...)
 
 static int mvupwind_calls;
 static int mvupwind_last_n;
+static int yank_calls;
 
 int
 mvupwind (int f, int n, int k)
@@ -43,6 +51,16 @@ mvupwind (int f, int n, int k)
   (void) k;
   ++mvupwind_calls;
   mvupwind_last_n = n;
+  return TRUE;
+}
+
+int
+yank (int f, int n, int k)
+{
+  (void) f;
+  (void) n;
+  (void) k;
+  ++yank_calls;
   return TRUE;
 }
 
@@ -63,6 +81,24 @@ send_mouse (int kind, int button, int row, int column)
   event.button = button;
   event.row = row;
   event.column = column;
+  assert (mouseenqueue (&event) == TRUE);
+  assert (mouseevent (FALSE, 1, 0) == TRUE);
+}
+
+/*
+ * Feed a complete click gesture with the given click count.
+ */
+static void
+send_click (int button, int row, int column, int clicks)
+{
+  EMOUSE event;
+
+  memset (&event, 0, sizeof (event));
+  event.kind = MOUSE_CLICK;
+  event.button = button;
+  event.row = row;
+  event.column = column;
+  event.clicks = clicks;
   assert (mouseenqueue (&event) == TRUE);
   assert (mouseevent (FALSE, 1, 0) == TRUE);
 }
@@ -291,6 +327,155 @@ main (void)
     assert (mvupwind_calls == 5);
     assert (mvupwind_last_n == -7);
     mouse_wheel_step = 3;
+  }
+
+  /* Consecutive plain clicks on one cell select the word, then the
+     whole line. */
+  reset_mouse_windows ();
+  {
+    send_mouse (MOUSE_PRESS, 0, 3, 8);
+    send_mouse (MOUSE_RELEASE, 0, 3, 8);
+    assert (mouseselect == FALSE);	/* first click is plain */
+    assert_pos (&second_window.w_dot, short_line, 8);
+    assert (second_window.w_mark.p == NULL);
+    send_mouse (MOUSE_PRESS, 0, 3, 8);
+    send_mouse (MOUSE_RELEASE, 0, 3, 8);
+    assert_pos (&second_window.w_mark, short_line, 6);
+    assert_pos (&second_window.w_dot, short_line, 10);
+    assert (mouseselect == TRUE);
+    send_mouse (MOUSE_PRESS, 0, 3, 8);
+    send_mouse (MOUSE_RELEASE, 0, 3, 8);
+    assert_pos (&second_window.w_mark, short_line, 0);
+    assert_pos (&second_window.w_dot, short_line, 10);
+    assert (mouseselect == TRUE);
+
+    /* A click on another cell starts the count over. */
+    send_mouse (MOUSE_PRESS, 0, 3, 2);
+    send_mouse (MOUSE_RELEASE, 0, 3, 2);
+    assert_pos (&second_window.w_dot, short_line, 2);
+    assert_pos (&second_window.w_mark, short_line, 0);
+    assert (mouseselect == FALSE);
+
+    /* A double click on the space selects the run of blanks. */
+    send_mouse (MOUSE_PRESS, 0, 3, 5);
+    send_mouse (MOUSE_RELEASE, 0, 3, 5);
+    send_mouse (MOUSE_PRESS, 0, 3, 5);
+    send_mouse (MOUSE_RELEASE, 0, 3, 5);
+    assert_pos (&second_window.w_mark, short_line, 5);
+    assert_pos (&second_window.w_dot, short_line, 6);
+    assert (mouseselect == TRUE);
+
+    /* Past the end of the line there is no word to select, so the
+       second click stays a plain click. */
+    send_mouse (MOUSE_PRESS, 0, 3, 20);
+    send_mouse (MOUSE_RELEASE, 0, 3, 20);
+    send_mouse (MOUSE_PRESS, 0, 3, 20);
+    send_mouse (MOUSE_RELEASE, 0, 3, 20);
+    assert_pos (&second_window.w_dot, short_line, 10);	/* clamped */
+    assert_pos (&second_window.w_mark, short_line, 5);
+    assert (mouseselect == FALSE);
+
+    /* A drag in between breaks the count. */
+    send_mouse (MOUSE_PRESS, 0, 3, 8);
+    send_mouse (MOUSE_RELEASE, 0, 3, 8);	/* count 1 */
+    send_mouse (MOUSE_PRESS, 0, 3, 8);
+    send_mouse (MOUSE_MOTION, 0, 3, 7);		/* drag */
+    send_mouse (MOUSE_RELEASE, 0, 3, 7);
+    assert_pos (&second_window.w_mark, short_line, 8);	/* kept */
+    send_mouse (MOUSE_PRESS, 0, 3, 8);
+    send_mouse (MOUSE_RELEASE, 0, 3, 8);	/* count 1 again */
+    assert_pos (&second_window.w_mark, short_line, 8);
+    assert (mouseselect == FALSE);
+
+    /* Idle motion between clicks breaks the count too. */
+    send_mouse (MOUSE_PRESS, 0, 3, 2);
+    send_mouse (MOUSE_RELEASE, 0, 3, 2);	/* count 1 elsewhere */
+    send_mouse (MOUSE_PRESS, 0, 3, 8);
+    send_mouse (MOUSE_RELEASE, 0, 3, 8);	/* count 1 */
+    send_mouse (MOUSE_MOTION, 0, 3, 0);		/* idle */
+    send_mouse (MOUSE_PRESS, 0, 3, 8);
+    send_mouse (MOUSE_RELEASE, 0, 3, 8);	/* still count 1 */
+    assert_pos (&second_window.w_mark, short_line, 8);
+    assert (mouseselect == FALSE);
+    endmouseselect ();
+  }
+
+  /* Complete click gestures with a backend-supplied count. */
+  reset_mouse_windows ();
+  {
+    /* A double click selects the word at the clicked cell. */
+    send_click (0, 3, 8, 2);
+    assert_pos (&second_window.w_mark, short_line, 6);
+    assert_pos (&second_window.w_dot, short_line, 10);
+    assert (mouseselect == TRUE);
+
+    /* A triple click selects the whole clicked line. */
+    send_click (0, 3, 4, 3);
+    assert_pos (&second_window.w_mark, short_line, 0);
+    assert_pos (&second_window.w_dot, short_line, 10);
+
+    /* A single click just moves the point. */
+    send_click (0, 3, 2, 1);
+    assert_pos (&second_window.w_dot, short_line, 2);
+    assert (mouseselect == FALSE);
+
+    /* A click on a mode line selects that window. */
+    send_click (0, 2, 0, 1);
+    assert (curwp == &window);
+    send_click (0, 5, 0, 1);
+    assert (curwp == &second_window);
+  }
+
+  /* A middle click yanks; a right click extends the region. */
+  reset_mouse_windows ();
+  {
+    yank_calls = 0;
+    send_click (1, 3, 4, 1);
+    assert (yank_calls == 1);
+    assert_pos (&second_window.w_dot, short_line, 4);
+    assert (mouseselect == FALSE);
+
+    /* A slow middle press yanks too, and its release is ignored. */
+    send_mouse (MOUSE_PRESS, 1, 0, 4);
+    assert (yank_calls == 2);
+    assert_pos (&window.w_dot, long_line, 4);
+    send_mouse (MOUSE_RELEASE, 1, 0, 4);
+    assert (yank_calls == 2);
+
+    /* With a mark set, a right click extends the region to the
+       clicked cell. */
+    second_window.w_mark.p = short_line;
+    second_window.w_mark.o = 2;
+    mouseselect = TRUE;
+    send_click (2, 3, 9, 1);
+    assert_pos (&second_window.w_dot, short_line, 9);
+    assert_pos (&second_window.w_mark, short_line, 2);
+    assert (mouseselect == TRUE);
+
+    /* A right press extends as well. */
+    send_mouse (MOUSE_PRESS, 2, 3, 4);
+    assert_pos (&second_window.w_dot, short_line, 4);
+    assert_pos (&second_window.w_mark, short_line, 2);
+
+    /* Without a mark it just moves the point. */
+    second_window.w_mark.p = NULL;
+    endmouseselect ();
+    send_click (2, 3, 6, 1);
+    assert_pos (&second_window.w_dot, short_line, 6);
+    assert (mouseselect == FALSE);
+  }
+
+  /* A press on a mode line selects that window. */
+  reset_mouse_windows ();
+  {
+    mouseselect = TRUE;
+    send_mouse (MOUSE_PRESS, 0, 5, 0);
+    assert (curwp == &second_window);
+    assert (mouseselect == FALSE);
+    send_mouse (MOUSE_RELEASE, 0, 5, 0);
+    assert (curwp == &second_window);
+    send_mouse (MOUSE_PRESS, 0, 2, 0);
+    assert (curwp == &window);
   }
 
   /* Selection highlight painting. */
