@@ -16,6 +16,7 @@ escape sequences to terminal output modes.
 | `me_x10_e2e.py` | legacy X10 reports on `st-256color` and `linux` terminfo |
 | `me_mouse_e2e.py` | click-to-dot, double-click word select, vertical wheel |
 | `me_toggle_e2e.py` | `toggle-mouse` runtime reporting on/off |
+| `me_dvtm_e2e.py` | mouse forwarding through dvtm, with and without its own mouse handling |
 
 `common.py` is the shared pty harness, not a test. The tests are
 self-contained otherwise: each builds its own scratch files and can be

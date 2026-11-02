@@ -58,6 +58,8 @@ for s in test/python/me_*.py; do python3 "$s" || break; done
 ```
 
 The terminfo entries `st-256color` and `linux` must be installed.
+`me_dvtm_e2e.py` also needs a built dvtm binary in `../dvtm` and skips
+when it is absent.
 
 ### 4. Validate Linux minimal me
 

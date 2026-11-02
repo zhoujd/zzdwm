@@ -626,7 +626,13 @@ meanings:
     horizontally; terminals like st that send the Shift+PageUp/PageDown
     keys for it scroll the window under the cursor instead). Reports
     are decoded in both the SGR and the legacy X10 encoding, so
-    terminals without SGR mouse support still work. Warning:
+    terminals without SGR mouse support still work. Inside a
+    multiplexer, turn its own mouse handling off so the reports
+    reach the editor: tmux `set -g mouse off`, GNU screen
+    `mousetrack off`. dvtm needs nothing: when the editor enables
+    mouse tracking it arms reporting on the outer terminal itself
+    and forwards the reports, in the client window's coordinates,
+    to the editor. Warning:
     this is not fully
     functional. This option is available only in builds
     compiled with `-DMOUSE`; the `toggle-mouse` extended command can change

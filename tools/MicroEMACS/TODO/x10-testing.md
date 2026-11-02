@@ -23,9 +23,16 @@ An X10 report is six bytes with no terminator:
   2 = right), 4 = Shift, 8 = Alt, 16 = Ctrl, 32 = motion, 64 = wheel.
 * `<column>` then `<row>` are 1-based, counted from the top left of the
   terminal.
-* There are no release reports.  A press is the whole gesture, so the
-  decoder queues it as one complete `MOUSE_CLICK` and counts consecutive
-  presses on one cell itself.
+* X10 itself has no release reports: a press byte is the whole
+  gesture, queued as one complete `MOUSE_CLICK` with the decoder
+  counting consecutive presses near one cell itself.  Mode-1000
+  terminals that do send releases, and dvtm's relay, encode them with
+  button bits 3 (no button).  A press byte alone cannot say whether
+  releases follow, so the first release byte flips the decoder:
+  presses become plain presses of a press/motion/release gesture, and
+  that first release carries the click count already built from whole
+  clicks, so the core's count continues the streak.  Until the flip, a
+  press byte is a whole `MOUSE_CLICK`.
 * Coordinates past 223, or any data byte above 127, are unreliable in
   UTF-8 terminals — that is the reason the SGR encoding exists.  The
   examples below stay in the low bytes.
@@ -115,7 +122,9 @@ port; the decoder treats it as any other mode-1000 terminal.
 ## What to expect
 
 * A plain left click moves point to the clicked cell; the click streak
-  resets when a press lands on another cell.
+  survives one column of drift (a hand settling onto a cell wobbles
+  across a cell boundary) and resets when a press lands on another row
+  or farther away.
 * The second press on one cell selects the word under it (or the run of
   blanks); a third selects the whole line.  The highlight uses the
   selection color (`set-selection-color`; bright white on deep blue,
@@ -128,9 +137,16 @@ port; the decoder treats it as any other mode-1000 terminal.
 * Shift+wheel scrolls horizontally by the `scroll-left`/`scroll-right`
   amount (four columns), clamped at column zero and the widest visible
   line.
-* Drag selection is SGR-only: with no release report there is no
-  press-anchored drag, which is why a press is reported as a complete
-  click instead.
+* Drag selection needs releases.  On a terminal that sends release
+  bytes (dvtm's relay, and mode-1000 terminals like the console's GPM
+  when it repeats them), drags work after the decoder has flipped:
+  presses anchor, motion bytes extend, releases complete the region.
+  A drag as the very first gesture — the press was decoded as a click
+  before the flip — still selects: the flip release lands away from
+  the clicked cell and completes the region from it.  On a terminal
+  that never sends a release (true X10), a press byte is one complete
+  click, so there is nothing to extend with a drag; motion bytes are
+  reported but arrive with no anchor.
 
 The core calling pattern the decoder relies on is pinned by the X10
 block in `test/display.c` (wheel and click bytes run through

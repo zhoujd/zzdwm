@@ -41,9 +41,11 @@ should not complicate the terminal-independent event model.
    array does not exist otherwise). A double click selects the word at the
    clicked cell (or the run of blanks), and a third click selects the whole
    line. The SGR protocol reports raw presses and releases, so consecutive
-   plain clicks on one cell are counted in `mouse.c`; the count breaks when
-   a click lands elsewhere or another mouse event intervenes (there is no
-   clock in the core to time the interval). Backends that pair clicks
+   plain clicks near one cell are counted in `mouse.c`; the count breaks
+   when a click lands on another row or more than one column away (a
+   hand settling onto a cell wobbles across a boundary), or another
+   mouse event intervenes (there is no clock in the core to time the
+   interval). Backends that pair clicks
    themselves can report a complete `MOUSE_CLICK` gesture with the count.
    Keyboard region selection remains unchanged, so non-mouse and minimal
    builds do not need selection rendering.
@@ -64,8 +66,8 @@ should not complicate the terminal-independent event model.
    so the horizontal skip, the clamp, and the cursor stay aligned on lines
    with wide characters; the ncurses and termcap output paths skip the
    filler cell because the terminal advances two columns itself.
-   Delivery through dvtm and GNU screen still needs the multiplexer
-   forwarding work.
+   GNU screen needs no forwarding work: it passes the reports through
+   unchanged (verified interactively).  dvtm is item 8.
 6. Done: terminals that bypass mouse reporting while Shift is held
    (st, whose `forcemousemod` routes Shift+wheel to the
    Shift+PageUp/PageDown keys) are covered on the ncurses backend.
@@ -83,9 +85,33 @@ should not complicate the terminal-independent event model.
    would otherwise swallow the prefix and the three data bytes and
    return an undecodable `KEY_MOUSE`.  X10 reports no releases, so a
    press byte is queued as one complete `MOUSE_CLICK` gesture with the
-   backend counting consecutive presses on one cell; wheel and motion
-   bytes are single events.  With both encodings covered, enabling
+   backend counting consecutive presses near one cell, like the core;
+   wheel and motion
+   bytes are single events.  A terminal that does send release bytes
+   (button bits 3) flips the decoder on the first one: presses become
+   plain presses, and drags work as under SGR.  With both encodings
+   covered, enabling
    mouse reporting is safe on any TERM, so no terminal gate is needed.
+8. Done: dvtm relays mouse reporting to the client under the mouse.
+   `vt_mouse` re-encodes wheel events (ncurses BUTTON4/5) as X10
+   buttons 64/65, drag motion (REPORT_MOUSE_POSITION) as the X10
+   motion bit, and presses and releases as press bytes and the
+   mode-1000 release byte (button bits 3), using the one-based
+   coordinates the protocol specifies; `mouse_setup` arms a
+   forwarding-only mask on the outer terminal whenever any client
+   enables tracking, recomputed as client output arrives so runtime
+   toggles open and close the relay, while dvtm's local button
+   bindings stay off in that mode; the relay mask carries
+   REPORT_MOUSE_POSITION, so ncurses' button-event tracking (mode
+   1002) is armed alongside it for the drag motion, and click
+   resolution is disabled (`mouseinterval(0)`) in relay mode, because
+   ncurses holds a press for click classification and merges it into
+   the first motion report of a quick drag, losing the anchor cell;
+   and the forwarded coordinates are those of the client's content, so
+   the title line does not shift clicks onto the next line.  Plain
+   clicks, click counting, the wheel, and drag selection all work
+   through dvtm; a drag as the first gesture is completed by its
+   release, and later ones anchor on the press.
 
 ## Future task: native Windows mouse backend
 

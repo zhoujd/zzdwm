@@ -428,6 +428,22 @@ main (void)
     send_mouse (MOUSE_RELEASE, 0, 3, 8);	/* still count 1 */
     assert_pos (&second_window.w_mark, short_line, 8);
     assert (mouseselect == FALSE);
+
+    /* A release that drifts a cell from the pressed cell without
+       any motion between them is a settling click, not a drag: the
+       count continues, so the double click still selects the word.
+       (A drag with motion keeps the region, as pinned above.) */
+    send_mouse (MOUSE_PRESS, 0, 3, 2);
+    send_mouse (MOUSE_RELEASE, 0, 3, 2);	/* count 1 elsewhere */
+    send_mouse (MOUSE_PRESS, 0, 3, 8);
+    send_mouse (MOUSE_RELEASE, 0, 3, 7);	/* drift, no motion */
+    assert (mouseselect == FALSE);
+    assert_pos (&second_window.w_dot, short_line, 8);
+    send_mouse (MOUSE_PRESS, 0, 3, 8);
+    send_mouse (MOUSE_RELEASE, 0, 3, 8);	/* count 2: word */
+    assert_pos (&second_window.w_mark, short_line, 6);
+    assert_pos (&second_window.w_dot, short_line, 10);
+    assert (mouseselect == TRUE);
     endmouseselect ();
   }
 
@@ -573,11 +589,17 @@ main (void)
 
   /* Legacy X10 reports carry the same button bits as SGR, so the X10
      decoder in the tty layer (mouse_decode_x10) runs them through
-     mousedecodesgr: a press byte is queued as one complete click,
-     because X10 reports no releases, and consecutive presses on one
-     cell are counted; wheel and motion bytes are single events that
-     break the count.  The tty layer is not linked into this test, so
-     pin that calling pattern here. */
+     mousedecodesgr: until a release byte is seen, a press byte is
+     queued as one complete click, because X10 reports no releases of
+     its own, and consecutive presses near one cell are counted; once
+     one release byte (button bits 3, the mode 1000 encoding, which
+     dvtm re-encodes clicks with) has arrived, presses are queued as
+     plain presses and the core anchors drags on them and counts
+     clicks on the releases, as for SGR.  The first release carries
+     the count of the presses already reported as clicks, which the
+     core adopts so the streak continues.  Wheel and motion bytes
+     are single events that break the count.  The tty layer is not
+     linked into this test, so pin that calling pattern here.  */
   reset_mouse_windows ();
   {
     EMOUSE event;
@@ -592,6 +614,19 @@ main (void)
     assert (mousedecodesgr (&event, 68, 3, 8, FALSE) == TRUE);
     assert (event.kind == MOUSE_WHEEL && event.button == 3);
     assert (event.modifiers == MOUSE_SHIFT && event.clicks == 0);
+
+    /* The decoder re-tags a button-3 press as a release of button 0,
+       because the byte names no button; without a matching press
+       the core's release handler must not disturb the click count
+       or a fresh selection. */
+    assert (mousedecodesgr (&event, 3, 3, 8, FALSE) == TRUE);
+    assert (event.kind == MOUSE_PRESS && event.button == 3);
+    event.kind = MOUSE_RELEASE;
+    event.button = 0;
+    event.clicks = 0;
+    assert (mouseenqueue (&event) == TRUE);
+    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    assert (mouseselect == FALSE);
 
     /* One X10 press is one click gesture with the count: 1 moves the
        point, 2 selects the word, 3 the line. */
@@ -615,6 +650,72 @@ main (void)
     send_click (0, 3, 8, 1);
     assert (mouseselect == FALSE);
     assert_pos (&second_window.w_dot, short_line, 8);
+
+    /* The first release of a terminal that reports them carries the
+       count of the presses already reported as whole clicks; the
+       core adopts it, so the next release of the streak counts as
+       the word-selecting second click. */
+    send_click (0, 3, 8, 1);		/* press queued as a click */
+    assert (mouseselect == FALSE);
+    memset (&event, 0, sizeof (event));
+    event.kind = MOUSE_RELEASE;		/* first release: count 1 */
+    event.button = 0;
+    event.row = 3;
+    event.column = 8;
+    event.clicks = 1;
+    assert (mouseenqueue (&event) == TRUE);
+    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    send_mouse (MOUSE_PRESS, 0, 3, 8);	/* now a plain press */
+    send_mouse (MOUSE_RELEASE, 0, 3, 8); /* count 2: word select */
+    assert_pos (&second_window.w_mark, short_line, 6);
+    assert_pos (&second_window.w_dot, short_line, 10);
+    assert (mouseselect == TRUE);
+
+    /* After the switch to plain presses, a press/motion/release
+       drag extends the region, as for SGR: the mark stays on the
+       pressed cell and the point follows the drag. */
+    send_mouse (MOUSE_PRESS, 0, 3, 8);
+    send_mouse (MOUSE_MOTION, 0, 3, 5);
+    send_mouse (MOUSE_RELEASE, 0, 3, 5);
+    assert_pos (&second_window.w_mark, short_line, 8);
+    assert_pos (&second_window.w_dot, short_line, 5);
+    assert (mouseselect == TRUE);
+    endmouseselect ();
+
+    /* A drag as the very first gesture of a release-reporting
+       terminal: the press was reported as one whole click before
+       any release had been seen, so the release completes the
+       region from the clicked cell to the released cell. */
+    reset_mouse_windows ();
+    second_window.w_leftcol = 0;
+    send_click (0, 3, 5, 1);		/* press reported as a click */
+    assert (mouseselect == FALSE);
+    memset (&event, 0, sizeof (event));
+    event.kind = MOUSE_RELEASE;		/* its release, far away */
+    event.button = 0;
+    event.row = 3;
+    event.column = 8;
+    event.clicks = 1;
+    assert (mouseenqueue (&event) == TRUE);
+    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    assert_pos (&second_window.w_mark, short_line, 5);
+    assert_pos (&second_window.w_dot, short_line, 8);
+    assert (mouseselect == TRUE);
+    endmouseselect ();
+
+    /* The same release near the clicked cell stays a settling
+       click, not a two-cell drag. */
+    send_click (0, 3, 5, 1);
+    assert_pos (&second_window.w_dot, short_line, 5);
+    memset (&event, 0, sizeof (event));
+    event.kind = MOUSE_RELEASE;
+    event.button = 0;
+    event.row = 3;
+    event.column = 6;			/* one cell of drift */
+    event.clicks = 1;
+    assert (mouseenqueue (&event) == TRUE);
+    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    assert (mouseselect == FALSE);
   }
 
   /* Selection highlight painting. */
