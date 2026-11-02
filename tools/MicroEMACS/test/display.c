@@ -13,6 +13,7 @@ static VIDEO row;
 
 static LINE *long_line;
 static LINE *short_line;
+static LINE *cjk_line;
 static LINE line_header;
 static BUFFER buffer;
 static EWINDOW window;
@@ -99,6 +100,24 @@ send_click (int button, int row, int column, int clicks)
   event.row = row;
   event.column = column;
   event.clicks = clicks;
+  assert (mouseenqueue (&event) == TRUE);
+  assert (mouseevent (FALSE, 1, 0) == TRUE);
+}
+
+/*
+ * Feed a mouse event with modifier bits.
+ */
+static void
+send_mouse_mods (int kind, int button, int row, int column, int modifiers)
+{
+  EMOUSE event;
+
+  memset (&event, 0, sizeof (event));
+  event.kind = kind;
+  event.button = button;
+  event.row = row;
+  event.column = column;
+  event.modifiers = modifiers;
   assert (mouseenqueue (&event) == TRUE);
   assert (mouseevent (FALSE, 1, 0) == TRUE);
 }
@@ -204,6 +223,18 @@ main (void)
   vtattr = CSTRING;
   vtputs (utf8_text, sizeof (utf8_text));
   expect_cjk_layout (CSTRING, CSTRING);
+
+  /* The horizontal skip is in display columns: with the view
+     scrolled two columns, the wide first character is skipped whole
+     and the following X lands in the first cell. */
+  reset_display ();
+  vscreen[0] = &row;
+  vtattr = CSTRING;
+  vttextmove (0, 0, 2);
+  vtputs (utf8_text, sizeof (utf8_text));
+  assert (row.v_text[0] == 'X');
+  assert (row.v_text[1] == 0);
+  assert (vtcol == 3);
 
   long_line = make_line ("012345678901234567890123456789");
   short_line = make_line ("short line");
@@ -476,6 +507,68 @@ main (void)
     assert (curwp == &second_window);
     send_mouse (MOUSE_PRESS, 0, 2, 0);
     assert (curwp == &window);
+  }
+
+  /* A shifted wheel scrolls horizontally instead of vertically. */
+  reset_mouse_windows ();
+  {
+    int i;
+
+    send_mouse_mods (MOUSE_WHEEL, 4, 0, 0, MOUSE_SHIFT);
+    assert (curwp == &window);
+    assert (window.w_leftcol == 4);
+    assert (window.w_hscroll == TRUE);
+    assert ((window.w_flag & WFHARD) != 0);
+
+    /* Right scrolling stops while the widest visible line (30
+       columns) still has text to show. */
+    for (i = 0; i < 7; ++i)
+      send_mouse_mods (MOUSE_WHEEL, 4, 0, 0, MOUSE_SHIFT);
+    assert (window.w_leftcol == 28);
+    send_mouse_mods (MOUSE_WHEEL, 4, 0, 0, MOUSE_SHIFT);
+    assert (window.w_leftcol == 28);	/* clamped */
+
+    /* Wheel up scrolls back and stops at the left edge. */
+    for (i = 0; i < 8; ++i)
+      send_mouse_mods (MOUSE_WHEEL, 3, 0, 0, MOUSE_SHIFT);
+    assert (window.w_leftcol == 0);
+    send_mouse_mods (MOUSE_WHEEL, 3, 0, 0, MOUSE_SHIFT);
+    assert (window.w_leftcol == 0);	/* clamped */
+
+    /* The second window scrolls by its own widest line (10). */
+    send_mouse_mods (MOUSE_WHEEL, 4, 3, 0, MOUSE_SHIFT);
+    assert (curwp == &second_window);
+    assert (second_window.w_leftcol == 4);
+    send_mouse_mods (MOUSE_WHEEL, 4, 3, 0, MOUSE_SHIFT);
+    assert (second_window.w_leftcol == 8);
+    send_mouse_mods (MOUSE_WHEEL, 4, 3, 0, MOUSE_SHIFT);
+    assert (second_window.w_leftcol == 8);	/* clamped */
+
+    /* An unshifted wheel still scrolls vertically. */
+    mvupwind_calls = 0;
+    send_mouse (MOUSE_WHEEL, 3, 0, 0);
+    assert (mvupwind_calls == 1);
+    assert (window.w_leftcol == 0);	/* untouched */
+
+    /* A widest line of wide characters counts display columns: ten
+       wide characters are twenty columns, so scrolling stops four
+       columns short of twenty. */
+    cjk_line = make_line ("\xe4\xb8\x80\xe4\xba\x8c\xe4\xb8\x89"
+                          "\xe5\x9b\x9b\xe4\xba\x94\xe5\x85\xad"
+                          "\xe4\xb8\x83\xe5\x85\xab\xe4\xb9\x9d"
+                          "\xe5\x8d\x81");
+    long_line->l_fp = cjk_line;
+    cjk_line->l_bp = long_line;
+    cjk_line->l_fp = short_line;
+    short_line->l_bp = cjk_line;
+    window.w_linep = cjk_line;
+    window.w_dot.p = cjk_line;
+    window.w_leftcol = 0;
+    for (i = 0; i < 5; ++i)
+      send_mouse_mods (MOUSE_WHEEL, 4, 0, 0, MOUSE_SHIFT);
+    assert (window.w_leftcol == 16);
+    send_mouse_mods (MOUSE_WHEEL, 4, 0, 0, MOUSE_SHIFT);
+    assert (window.w_leftcol == 16);	/* clamped */
   }
 
   /* Selection highlight painting. */

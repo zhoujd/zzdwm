@@ -271,6 +271,8 @@ ttputs (const wchar_t *buf, int size)
   for (i = 0; i < size; i++)
     {
       wch[0] = buf[i];
+      if (wch[0] == 0)
+        continue;			/* Wide-char filler cell. */
       if (modifier != 0)
         {
           wch[1] = modifier;

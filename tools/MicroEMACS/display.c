@@ -311,11 +311,7 @@ vttextend (void)
 static void
 vtput_display_char (unsigned int c)
 {
-#if defined(MINGW) || defined(_WIN32)
   int width = uwidth (c);
-#else
-  const int width = 1;
-#endif
 
   if (width == 0)
     return;
@@ -1017,6 +1013,8 @@ put_video_colors (wchar_t *text, short *attrs, int count)
   ttcolor (color);
   for (i = 0; i < count; ++i)
     {
+      if (text[i] == 0)
+        continue;		/* Wide-char filler cell.  */
       if (attrs[i] != color)
         {
           color = attrs[i];
@@ -1817,12 +1815,39 @@ traceback (int offs, int size, int i, int j)
 #endif	/* GOSLING */
 
 /*
+ * Display width of line "lp" in screen columns, with tabs expanded
+ * and wide characters counted the way the screen draws them.
+ */
+static int
+line_display_width (const LINE *lp)
+{
+  const uchar *text = lgets (lp);
+  const uchar *end = text + llength (lp);
+  int column = 0;
+
+  while (text < end)
+    {
+      wchar_t character;
+      int length;
+
+      character = ugetc (text, 0, &length);
+      if (character == '\t')
+        column += tabsize - column % tabsize;
+      else
+        column += uwidth (character);
+      text += length;
+    }
+  return column;
+}
+
+/*
  * Scroll a window horizontally by the signed "cols" columns and pin
  * the view (w_hscroll) so update()'s automatic recentring around dot
  * does not pull it straight back; the pin drops when dot next moves
  * or is edited.  Scrolling right stops while text remains: the
- * widest visible line sets the limit, so the view never runs past
- * the end of the text.  Scrolling left stops at column 0.
+ * widest visible line in screen columns sets the limit, so the view
+ * never runs past the end of the text.  Scrolling left stops at
+ * column 0.
  */
 static int
 hscroll_window (EWINDOW * wp, int cols)
@@ -1834,8 +1859,8 @@ hscroll_window (EWINDOW * wp, int cols)
   lp = wp->w_linep;
   for (i = 0; i < wp->w_ntrows && lp != wp->w_bufp->b_linep; ++i)
     {
-      if (wllength (lp) > widest)
-	widest = wllength (lp);
+      if (line_display_width (lp) > widest)
+	widest = line_display_width (lp);
       lp = lforw (lp);
     }
   if (cols < 0)

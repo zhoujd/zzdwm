@@ -622,7 +622,8 @@ meanings:
     region, a middle click to yank the kill buffer at the clicked cell, a
     right click to extend the region, and the wheel to
     scroll the window under the mouse, by
-    `mouse-wheel-step` lines per tick. Warning: this is not fully
+    `mouse-wheel-step` lines per tick (a shifted wheel scrolls
+    horizontally). Warning: this is not fully
     functional. This option is available only in builds
     compiled with `-DMOUSE`; the `toggle-mouse` extended command can change
     it while the editor is running.

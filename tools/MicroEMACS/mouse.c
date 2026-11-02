@@ -232,7 +232,11 @@ mouse_drop_dot (const EMOUSE *event, EWINDOW *only)
 /*
  * Scroll for a wheel event: vertically by mouse-wheel-step lines in
  * the window under the mouse, button 3 up and button 4 down.  A
- * wheel report outside every window scrolls the current window.
+ * shifted wheel scrolls horizontally instead, by the scroll-left and
+ * scroll-right columns, and the window is pinned (w_hscroll) so
+ * update()'s automatic recentring around dot does not pull the view
+ * straight back.  A wheel report outside every window scrolls the
+ * current window.
  */
 static int
 mouse_wheel_scroll (const EMOUSE *event)
@@ -243,6 +247,12 @@ mouse_wheel_scroll (const EMOUSE *event)
   if (wp == NULL)
     wp = curwp;
   mouse_switch_window (wp);
+  if ((event->modifiers & MOUSE_SHIFT) != 0)
+    {
+      if (event->button == 3)
+        return scrollleft (TRUE, 4, KRANDOM);
+      return scrollright (TRUE, 4, KRANDOM);
+    }
   return mvupwind (FALSE,
                    event->button == 3 ? mouse_wheel_step
                                       : -mouse_wheel_step,
@@ -329,7 +339,8 @@ mouse_button_click (const EMOUSE *event)
  * EMOUSE event on the queue.
  *
  * A wheel event scrolls the window under the mouse by
- * mouse-wheel-step lines.  A press in the text of a window moves
+ * mouse-wheel-step lines, or horizontally when the wheel is shifted.
+ * A press in the text of a window moves
  * the point there and anchors a drag: the mark ring before the
  * drag is remembered and the mark is dropped on the pressed cell
  * right away, because terminals differ in whether they report

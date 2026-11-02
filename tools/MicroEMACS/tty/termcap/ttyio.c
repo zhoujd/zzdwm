@@ -280,7 +280,11 @@ void
 ttputs (const wchar_t *buf, int size)
 {
   while (size--)
-    ttputc (*buf++);
+    {
+      if (*buf != 0)		/* Skip wide-char filler cells. */
+        ttputc (*buf);
+      ++buf;
+    }
 }
 
 /*

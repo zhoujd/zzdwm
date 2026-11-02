@@ -55,8 +55,17 @@ should not complicate the terminal-independent event model.
    is held. The region is not rendered yet (item 3).
 5. Done: the wheel scrolls the window under the mouse, by the
    `mouse-wheel-step` Lisp variable's lines per tick (3 by default); a wheel
-   report outside every window scrolls the current window. Delivery through
-   dvtm and GNU screen still needs the multiplexer forwarding work.
+   report outside every window scrolls the current window. A shifted wheel
+   scrolls the window horizontally by the `scroll-left`/`scroll-right`
+   columns (four), clamped to the left edge and to the widest visible line,
+   with the view pinned (`w_hscroll`) until dot next moves or is edited.
+   The screen model now counts display columns on every build (wide
+   characters occupy two cells, as the Windows backend always drew them),
+   so the horizontal skip, the clamp, and the cursor stay aligned on lines
+   with wide characters; the ncurses and termcap output paths skip the
+   filler cell because the terminal advances two columns itself.
+   Delivery through dvtm and GNU screen still needs the multiplexer
+   forwarding work.
 
 ## Future task: native Windows mouse backend
 
