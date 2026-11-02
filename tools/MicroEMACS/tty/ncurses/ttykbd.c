@@ -75,6 +75,8 @@ int specmap[32] = {
 #define KEY_SGRMOUSE (KEY_MAX + 1)
 #define KEY_PASTE_START (KEY_MAX + 2)
 #define KEY_PASTE_END (KEY_MAX + 3)
+#define KEY_SPAGEUP (KEY_MAX + 4)
+#define KEY_SPAGEDN (KEY_MAX + 5)
 
 #ifdef MOUSE
 static int mouse_decode_sgr (void);
@@ -108,6 +110,20 @@ getkbd (void)
 #ifdef MOUSE
   if (c == KEY_SGRMOUSE)
     return mouse_decode_sgr ();
+
+  /* Terminals that bypass mouse reporting while Shift is held (st,
+     for one) send Shift+PageUp/PageDown keys in place of the
+     Shift+wheel event.  Decode them as the wheel events they stand
+     for, anchored at the cursor so the window under it scrolls.
+     ttrow/ttcol are already in the page-stacked space of mouse_row. */
+  if (c == KEY_SPAGEUP || c == KEY_SPAGEDN)
+    {
+      EMOUSE event;
+      int code = 64 + 4 + (c == KEY_SPAGEDN);
+      if (mousedecodesgr (&event, code, ttrow, ttcol, FALSE) == TRUE)
+	mouseenqueue (&event);
+      return (KMOUSE);
+    }
 #endif
   if (c < KEY_MIN)			/* normal key?		*/
      return (c);			/* just return it	*/
@@ -209,6 +225,11 @@ ttykeymapinit (void)
   keydup (KF12,  "next-cscope");
 #ifdef MOUSE
   define_key ("\033[<", KEY_SGRMOUSE);
+  /* The shifted page keys some terminals send for Shift+wheel
+     (kPRV/kNXT in terminfo) are claimed here, ahead of terminfo,
+     and turned back into wheel events in getkbd. */
+  define_key ("\033[5;2~", KEY_SPAGEUP);
+  define_key ("\033[6;2~", KEY_SPAGEDN);
 #endif
   define_key ("\033[200~", KEY_PASTE_START);
   define_key ("\033[201~", KEY_PASTE_END);

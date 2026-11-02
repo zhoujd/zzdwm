@@ -66,6 +66,16 @@ should not complicate the terminal-independent event model.
    filler cell because the terminal advances two columns itself.
    Delivery through dvtm and GNU screen still needs the multiplexer
    forwarding work.
+6. Done: terminals that bypass mouse reporting while Shift is held
+   (st, whose `forcemousemod` routes Shift+wheel to the
+   Shift+PageUp/PageDown keys) are covered on the ncurses backend.
+   Those byte sequences are claimed ahead of terminfo with
+   `define_key` and decoded back into shift+wheel events anchored at
+   the cursor, so the horizontal scroll runs whether the wheel
+   arrives as an SGR report or as the keystroke the terminal
+   substitutes for it; this also stops the key codes (ncurses
+   `KEY_SPREVIOUS`/`KEY_SNEXT`) leaking into the buffer as Unicode
+   glyphs.
 
 ## Future task: native Windows mouse backend
 

@@ -623,7 +623,9 @@ meanings:
     right click to extend the region, and the wheel to
     scroll the window under the mouse, by
     `mouse-wheel-step` lines per tick (a shifted wheel scrolls
-    horizontally). Warning: this is not fully
+    horizontally; terminals like st that send the Shift+PageUp/PageDown
+    keys for it scroll the window under the cursor instead). Warning:
+    this is not fully
     functional. This option is available only in builds
     compiled with `-DMOUSE`; the `toggle-mouse` extended command can change
     it while the editor is running.
