@@ -39,8 +39,10 @@ should not complicate the terminal-independent event model.
    need selection rendering.
 4. Remaining by choice: mouse drag; continue delegating selection to the
    terminal rather than implementing editor-side drag state.
-5. Remaining: mouse wheel support, pending a design that cooperates reliably
-   with dvtm and GNU screen.
+5. Done: the wheel scrolls the window under the mouse, by the
+   `mouse-wheel-step` Lisp variable's lines per tick (3 by default); a wheel
+   report outside every window scrolls the current window. Delivery through
+   dvtm and GNU screen still needs the multiplexer forwarding work.
 
 ## Future task: native Windows mouse backend
 

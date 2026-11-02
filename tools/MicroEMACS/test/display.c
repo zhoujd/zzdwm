@@ -33,6 +33,19 @@ eprintf (const char *format, ...)
   (void) format;
 }
 
+static int mvupwind_calls;
+static int mvupwind_last_n;
+
+int
+mvupwind (int f, int n, int k)
+{
+  (void) f;
+  (void) k;
+  ++mvupwind_calls;
+  mvupwind_last_n = n;
+  return TRUE;
+}
+
 static void
 reset_display (void)
 {
@@ -178,6 +191,54 @@ main (void)
     assert (curwp == &window);
     assert (window.w_dot.p == short_line);
     assert (window.w_dot.o == wllength (short_line));
+
+    /* Wheel up in the second window scrolls that window up by
+       mouse-wheel-step lines. */
+    event.kind = MOUSE_WHEEL;
+    event.button = 3;
+    event.row = 4;
+    event.column = 0;
+    assert (mouseenqueue (&event) == TRUE);
+    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    assert (curwp == &second_window);
+    assert (mvupwind_calls == 1);
+    assert (mvupwind_last_n == mouse_wheel_step);
+
+    /* Wheel down in the first window scrolls that window down. */
+    event.button = 4;
+    event.row = 0;
+    assert (mouseenqueue (&event) == TRUE);
+    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    assert (curwp == &window);
+    assert (mvupwind_calls == 2);
+    assert (mvupwind_last_n == -mouse_wheel_step);
+
+    /* A wheel report on a mode line still scrolls that window. */
+    event.button = 3;
+    event.row = 3 + 2;
+    assert (mouseenqueue (&event) == TRUE);
+    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    assert (curwp == &second_window);
+    assert (mvupwind_calls == 3);
+    assert (mvupwind_last_n == mouse_wheel_step);
+
+    /* A wheel report outside every window scrolls the current one. */
+    event.row = 6;
+    assert (mouseenqueue (&event) == TRUE);
+    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    assert (curwp == &second_window);
+    assert (mvupwind_calls == 4);
+    assert (mvupwind_last_n == mouse_wheel_step);
+
+    /* mouse-wheel-step sets the number of lines per tick. */
+    mouse_wheel_step = 7;
+    event.button = 4;
+    event.row = 1;
+    assert (mouseenqueue (&event) == TRUE);
+    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    assert (mvupwind_calls == 5);
+    assert (mvupwind_last_n == -7);
+    mouse_wheel_step = 3;
   }
 
   free (long_line);

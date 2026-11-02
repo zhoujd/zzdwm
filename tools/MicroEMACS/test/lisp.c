@@ -10,6 +10,7 @@
 
 int fillcol;
 int tabsize;
+int mouse_wheel_step;
 int osc52;
 int colorflag;
 int mouse;

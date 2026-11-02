@@ -623,6 +623,7 @@ extern int patlen;                /* Pattern length in characters. */
 extern int xflag;
 extern int zflag;
 extern int numberflag;
+extern int mouse_wheel_step;      /* Lines per wheel scroll.        */
 extern int osc52;                 /* Copy regions to the clipboard. */
 extern int pastestart;            /* Last paste key started a paste. */
 #ifdef COLOR

@@ -1314,6 +1314,7 @@ lisp_set_variable (int argc, const char *const *argv,
     { "tab-size", &tabsize },
     { "tab-width", &tabsize },
     { "fill-column", &fillcol },
+    { "mouse-wheel-step", &mouse_wheel_step },
     { "osc52", &osc52 }
   };
   static const char *boolean_variables[] = { "osc52" };

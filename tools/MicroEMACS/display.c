@@ -157,6 +157,7 @@ VIDEO video[2 * (NROW - 1)];	/* Actual screen data.          */
 #endif
 VIDEO blanks;			/* Blank line image.            */
 static uchar spaces[NCOL];	/* ASCII spaces.		*/
+int mouse_wheel_step = 3;	/* Lines per wheel scroll.	*/
 
 #if GOSLING
 /*
@@ -558,6 +559,61 @@ mouse_move_point (const EMOUSE *event)
   curwp->w_hscroll = FALSE;
   curwp->w_flag |= WFMOVE;
   return TRUE;
+}
+
+/*
+ * Find the window that owns the given screen row, or NULL if the
+ * row does not belong to a window (for example the echo line).
+ * Windows are laid out top to bottom without gaps, so the first
+ * window whose mode line is at or below the row owns it.
+ */
+static EWINDOW *
+mouse_find_window (int row)
+{
+  EWINDOW *wp;
+
+  ALLWIND (wp)
+    {
+      if (row < wp->w_toprow + wp->w_ntrows)
+        return wp;		/* Text rows of this window. */
+      if (row == wp->w_toprow + wp->w_ntrows)
+        return wp;		/* Mode line of this window.  */
+    }
+  return NULL;
+}
+
+/*
+ * Make the window under the mouse the current window.
+ */
+static void
+mouse_switch_window (EWINDOW *wp)
+{
+  if (wp != curwp)
+    {
+      curwp = wp;
+      curbp = wp->w_bufp;
+      updatemode ();
+    }
+}
+
+/*
+ * Scroll for a wheel event: vertically by mouse-wheel-step lines in
+ * the window under the mouse, button 3 up and button 4 down.  A
+ * wheel report outside every window scrolls the current window.
+ */
+static int
+mouse_wheel_scroll (const EMOUSE *event)
+{
+  EWINDOW *wp;
+
+  wp = mouse_find_window (event->row);
+  if (wp == NULL)
+    wp = curwp;
+  mouse_switch_window (wp);
+  return mvupwind (FALSE,
+                   event->button == 3 ? mouse_wheel_step
+                                      : -mouse_wheel_step,
+                   KRANDOM);
 }
 #endif
 
@@ -1748,6 +1804,9 @@ mouseevent (int f, int n, int k)
 
   if (mousedrop (&event) == FALSE)
     return FALSE;
+
+  if (event.kind == MOUSE_WHEEL)
+    return mouse_wheel_scroll (&event);
 
   if (event.kind == MOUSE_PRESS && event.button == 0
       && event.modifiers == 0
