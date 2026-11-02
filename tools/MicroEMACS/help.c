@@ -71,7 +71,7 @@ usage (FILE *stream)
   usage_option (stream, "-C", "disable color output");
 #endif
 #ifdef MOUSE
-  usage_option (stream, "-m", "enable experimental mouse support (click, drag and wheel)");
+  usage_option (stream, "-m", "enable mouse support (click, drag and wheel)");
 #endif
   usage_option (stream, "-x", "use XON/XOFF flow control");
 
