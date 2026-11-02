@@ -176,8 +176,10 @@ ttclose (void)
 #ifdef MOUSE
 /*
  * Enable press/release reporting with SGR encoding, plus motion reporting
- * while a button is held, so a drag can extend the region. The legacy X10
- * encoding remains disabled.
+ * while a button is held, so a drag can extend the region.  A terminal
+ * that honors only mode 1000 answers in legacy X10 bytes, which ttykbd.c
+ * decodes as well, so no terminal needs to be gated out by its TERM
+ * type here.
  */
 void
 ttsetmouse (int flag)

@@ -77,9 +77,11 @@ int specmap[32] = {
 #define KEY_PASTE_END (KEY_MAX + 3)
 #define KEY_SPAGEUP (KEY_MAX + 4)
 #define KEY_SPAGEDN (KEY_MAX + 5)
+#define KEY_X10MOUSE (KEY_MAX + 6)
 
 #ifdef MOUSE
 static int mouse_decode_sgr (void);
+static int mouse_decode_x10 (void);
 #endif
 
 /*
@@ -110,6 +112,8 @@ getkbd (void)
 #ifdef MOUSE
   if (c == KEY_SGRMOUSE)
     return mouse_decode_sgr ();
+  if (c == KEY_X10MOUSE)
+    return mouse_decode_x10 ();
 
   /* Terminals that bypass mouse reporting while Shift is held (st,
      for one) send Shift+PageUp/PageDown keys in place of the
@@ -182,6 +186,55 @@ mouse_decode_sgr (void)
     }
   return (KMOUSE);
 }
+
+/*
+ * Read and decode one legacy X10 mouse report: three raw bytes after
+ * the "\033[M" prefix matched by the keymap, holding the button code,
+ * the column, and the row, each with 32 added.  Terminals that honor
+ * mode 1000 but not 1006 answer in this encoding (the Linux console,
+ * older rxvt).  X10 reports no releases, so a press byte is a whole
+ * press/release gesture and is queued as one MOUSE_CLICK event, with
+ * consecutive presses on one cell counted, like the core counts
+ * releases.  Wheel and motion bytes are single events, and they break
+ * the count.
+ */
+static int
+mouse_decode_x10 (void)
+{
+  static int click_row = -1;	/* Cell of the last X10 click.	 */
+  static int click_column = -1;
+  static int clicks;		/* Presses on that cell so far.	 */
+  EMOUSE event;
+  int b, x, y;
+  int row, column;
+
+  b = ttgetc () - 32;
+  x = ttgetc () - 32;
+  y = ttgetc () - 32;
+  mouse_page_coords (y - 1, x - 1, &row, &column);
+  if ((b & (64 | 32)) != 0)
+    {
+      click_row = -1;		/* Wheel or motion, not a click. */
+      if (mousedecodesgr (&event, b, row, column, FALSE) == TRUE)
+	mouseenqueue (&event);
+      return (KMOUSE);
+    }
+  if (row == click_row && column == click_column)
+    ++clicks;
+  else
+    clicks = 1;
+  click_row = row;
+  click_column = column;
+  if (mousedecodesgr (&event, b, row, column, FALSE) == TRUE)
+    {
+      event.kind = MOUSE_CLICK;	/* No release follows an X10
+				   press, so this is the whole
+				   gesture. */
+      event.clicks = clicks;
+      mouseenqueue (&event);
+    }
+  return (KMOUSE);
+}
 #endif
 
 /*
@@ -225,6 +278,11 @@ ttykeymapinit (void)
   keydup (KF12,  "next-cscope");
 #ifdef MOUSE
   define_key ("\033[<", KEY_SGRMOUSE);
+  /* The X10 prefix is claimed for the same reason, ahead of terminfo
+     kmous entries: terminals without SGR (mode 1006) keep working in
+     X10, and ncurses would otherwise swallow the prefix and the three
+     data bytes and return an undecodable KEY_MOUSE. */
+  define_key ("\033[M", KEY_X10MOUSE);
   /* The shifted page keys some terminals send for Shift+wheel
      (kPRV/kNXT in terminfo) are claimed here, ahead of terminfo,
      and turned back into wheel events in getkbd. */

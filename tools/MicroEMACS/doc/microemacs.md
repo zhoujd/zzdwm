@@ -624,7 +624,9 @@ meanings:
     scroll the window under the mouse, by
     `mouse-wheel-step` lines per tick (a shifted wheel scrolls
     horizontally; terminals like st that send the Shift+PageUp/PageDown
-    keys for it scroll the window under the cursor instead). Warning:
+    keys for it scroll the window under the cursor instead). Reports
+    are decoded in both the SGR and the legacy X10 encoding, so
+    terminals without SGR mouse support still work. Warning:
     this is not fully
     functional. This option is available only in builds
     compiled with `-DMOUSE`; the `toggle-mouse` extended command can change

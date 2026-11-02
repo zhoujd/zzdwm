@@ -76,6 +76,16 @@ should not complicate the terminal-independent event model.
    substitutes for it; this also stops the key codes (ncurses
    `KEY_SPREVIOUS`/`KEY_SNEXT`) leaking into the buffer as Unicode
    glyphs.
+7. Done: legacy X10 reports ("\033[M" plus three raw bytes) are decoded
+   on the ncurses backend as well, so terminals that honor mode 1000
+   but not 1006 (the Linux console, older rxvt) keep click and wheel
+   support.  The prefix is claimed ahead of terminfo `kmous`, which
+   would otherwise swallow the prefix and the three data bytes and
+   return an undecodable `KEY_MOUSE`.  X10 reports no releases, so a
+   press byte is queued as one complete `MOUSE_CLICK` gesture with the
+   backend counting consecutive presses on one cell; wheel and motion
+   bytes are single events.  With both encodings covered, enabling
+   mouse reporting is safe on any TERM, so no terminal gate is needed.
 
 ## Future task: native Windows mouse backend
 

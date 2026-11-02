@@ -25,3 +25,5 @@ samples belong in [`examples`](../examples).
   internal POSIX path format and MinGW conversion boundaries.
 - [`file-handling.md`](file-handling.md) — closed proposal favoring shell
   filters such as `xxd` over native binary Hexl support.
+- [`x10-testing.md`](x10-testing.md) — how to exercise the legacy X10 mouse
+  decoder with injected reports and X10-only terminals.

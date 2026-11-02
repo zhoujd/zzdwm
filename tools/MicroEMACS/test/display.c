@@ -571,6 +571,52 @@ main (void)
     assert (window.w_leftcol == 16);	/* clamped */
   }
 
+  /* Legacy X10 reports carry the same button bits as SGR, so the X10
+     decoder in the tty layer (mouse_decode_x10) runs them through
+     mousedecodesgr: a press byte is queued as one complete click,
+     because X10 reports no releases, and consecutive presses on one
+     cell are counted; wheel and motion bytes are single events that
+     break the count.  The tty layer is not linked into this test, so
+     pin that calling pattern here. */
+  reset_mouse_windows ();
+  {
+    EMOUSE event;
+
+    /* The shifted-wheel block above leaves the second window
+       scrolled; clicks there are text columns of the view. */
+    second_window.w_leftcol = 0;
+    second_window.w_mark.p = NULL;
+
+    /* A wheel byte decodes with its modifier bits, as an X10 terminal
+       sends Shift+wheel (button code 68). */
+    assert (mousedecodesgr (&event, 68, 3, 8, FALSE) == TRUE);
+    assert (event.kind == MOUSE_WHEEL && event.button == 3);
+    assert (event.modifiers == MOUSE_SHIFT && event.clicks == 0);
+
+    /* One X10 press is one click gesture with the count: 1 moves the
+       point, 2 selects the word, 3 the line. */
+    send_click (0, 3, 8, 1);
+    assert_pos (&second_window.w_dot, short_line, 8);
+    assert (second_window.w_mark.p == NULL);
+    send_click (0, 3, 8, 2);
+    assert_pos (&second_window.w_mark, short_line, 6);
+    assert_pos (&second_window.w_dot, short_line, 10);
+    send_click (0, 3, 8, 3);
+    assert_pos (&second_window.w_mark, short_line, 0);
+
+    /* A press on another cell starts the count over. */
+    send_click (0, 3, 2, 1);
+    assert (mouseselect == FALSE);
+    send_click (0, 3, 8, 2);
+    assert_pos (&second_window.w_mark, short_line, 6);
+
+    /* A wheel byte between presses breaks the count too. */
+    send_mouse_mods (MOUSE_WHEEL, 4, 3, 8, 0);
+    send_click (0, 3, 8, 1);
+    assert (mouseselect == FALSE);
+    assert_pos (&second_window.w_dot, short_line, 8);
+  }
+
   /* Selection highlight painting. */
   reset_mouse_windows ();
   {
