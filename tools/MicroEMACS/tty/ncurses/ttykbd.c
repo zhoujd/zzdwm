@@ -192,11 +192,21 @@ mouse_decode_sgr (void)
  * the "\033[M" prefix matched by the keymap, holding the button code,
  * the column, and the row, each with 32 added.  Terminals that honor
  * mode 1000 but not 1006 answer in this encoding (the Linux console,
- * older rxvt).  X10 reports no releases, so a press byte is a whole
- * press/release gesture and is queued as one MOUSE_CLICK event, with
- * consecutive presses on one cell counted, like the core counts
- * releases.  Wheel and motion bytes are single events, and they break
- * the count.
+ * older rxvt), and dvtm re-encodes reports for the client under the
+ * mouse this way.
+ *
+ * A press byte alone does not say whether releases follow, so the
+ * first release byte (button bits 3; mode 1000 terminals that report
+ * releases, and dvtm, encode them with no button) marks the terminal
+ * as one that does, and presses become plain presses of a
+ * press/motion/release gesture: the core anchors drags on them and
+ * counts clicks on the releases, as for SGR.  That first release
+ * carries the count of the presses already reported as whole clicks,
+ * so the core's count continues the streak instead of restarting it.
+ * Until a release is seen, and on terminals that never send one, a
+ * press byte is a whole press/release gesture and is queued as one
+ * MOUSE_CLICK event, with consecutive presses near one cell counted.
+ * Wheel and motion bytes are single events, and they break the count.
  */
 static int
 mouse_decode_x10 (void)
@@ -204,6 +214,7 @@ mouse_decode_x10 (void)
   static int click_row = -1;	/* Cell of the last X10 click.	 */
   static int click_column = -1;
   static int clicks;		/* Presses on that cell so far.	 */
+  static int have_releases;	/* Terminal sends release bytes.  */
   EMOUSE event;
   int b, x, y;
   int row, column;
@@ -216,6 +227,36 @@ mouse_decode_x10 (void)
   if ((b & (64 | 32)) != 0)
     {
       click_row = -1;		/* Wheel or motion, not a click. */
+      if (mousedecodesgr (&event, b, row, column, FALSE) == TRUE)
+	mouseenqueue (&event);
+      return (KMOUSE);
+    }
+  if ((b & 3) == 3)
+    {
+      /* A release, not a third button; any modifier bits ride
+         along.  The byte names no button, and only a button 0
+         release is looked for (to end a drag), so call it
+         button 0. */
+      if (mousedecodesgr (&event, b, row, column, FALSE) == TRUE)
+	{
+	  event.kind = MOUSE_RELEASE;
+	  event.button = 0;
+	  if (have_releases == FALSE)
+	    {
+	      /* The press was reported as a whole click; hand its
+	         count to the core, which counts releases from here
+	         on. */
+	      event.clicks = clicks;
+	      have_releases = TRUE;
+	    }
+	  mouseenqueue (&event);
+	}
+      return (KMOUSE);
+    }
+  if (have_releases)
+    {
+      /* A press of a gesture: the release, or motion bytes, will
+         follow. */
       if (mousedecodesgr (&event, b, row, column, FALSE) == TRUE)
 	mouseenqueue (&event);
       return (KMOUSE);
