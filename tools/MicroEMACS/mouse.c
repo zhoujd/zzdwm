@@ -8,6 +8,8 @@
 
 #define MOUSE_QUEUE_SIZE 32
 
+int mouseselect;			/* Region highlight is shown.	*/
+
 static EMOUSE mouse_queue[MOUSE_QUEUE_SIZE];
 static int mouse_queue_head;
 static int mouse_queue_count;
@@ -283,9 +285,12 @@ mouseevent (int f, int n, int k)
             {
               /* Plain click after all: the saved mark ring goes
                  back. */
+              endmouseselect ();
               mouse_anchor_wp->w_ring = mouse_saved_ring;
               mouse_anchor_wp->w_flag |= WFMOVE;
             }
+          else
+            mouse_anchor_wp->w_flag |= WFHARD;
         }
       return (TRUE);
     }
@@ -310,7 +315,8 @@ mouseevent (int f, int n, int k)
           mouse_anchor_col = event.column;
           mouse_saved_ring = wp->w_ring;
           wp->w_mark = wp->w_dot;
-          wp->w_flag |= WFMOVE;
+          mouseselect = TRUE;
+          wp->w_flag |= WFMOVE | WFHARD;
           return (TRUE);
         }
 
@@ -324,8 +330,28 @@ mouseevent (int f, int n, int k)
   /* Dragging: motion reports extend the region by moving the point
      within the window the drag started in. */
   if (mouse_drop_dot (&event, mouse_anchor_wp) != NULL)
-    mouse_drag_moved = TRUE;
+    {
+      mouse_drag_moved = TRUE;
+      mouse_anchor_wp->w_flag |= WFHARD;
+    }
   return (TRUE);
+}
+
+/*
+ * Turn off the selection highlight.  Every window whose mark is
+ * set may be showing it, and needs a full repaint.
+ */
+void
+endmouseselect (void)
+{
+  EWINDOW *wp;
+
+  if (mouseselect == FALSE)
+    return;
+  mouseselect = FALSE;
+  ALLWIND (wp)
+    if (wp->w_mark.p != NULL)
+      wp->w_flag |= WFHARD;
 }
 
 int

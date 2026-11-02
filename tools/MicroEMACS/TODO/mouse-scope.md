@@ -33,10 +33,13 @@ should not complicate the terminal-independent event model.
 2. Done: OSC 52 clipboard copy and bracketed paste are independent of mouse
    support and are implemented in `osc52.c`. The `osc52` Lisp variable controls
    clipboard copy, and minimal builds include both features.
-3. Remaining: mouse click to pick word/line. Mouse-owned selections should
-   support highlight and a `set-selection-color` Lisp extension. Keyboard
-   region selection remains unchanged, so non-mouse and minimal builds do not
-   need selection rendering.
+3. Partially done: the mouse-selected region is drawn in reverse video while
+   the selection is active, and any non-mouse key ends the highlight
+   (transient, like Emacs; COLOR builds only, since the per-cell attribute
+   array does not exist otherwise). Remaining: mouse click to pick word/line
+   and a `set-selection-color` Lisp extension for the highlight color.
+   Keyboard region selection remains unchanged, so non-mouse and minimal
+   builds do not need selection rendering.
 4. Done: a button-0 press anchors the mark at the pressed cell and a drag
    extends the mark-to-point region until the release; a press and release
    on the same cell is a plain click that leaves the mark ring as it was,

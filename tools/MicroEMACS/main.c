@@ -602,6 +602,10 @@ loop:
       *kbdmip++ = c;
     }
   startsaveundo ();
+#ifdef MOUSE
+  if (c != KMOUSE)
+    endmouseselect ();		/* Keyboard ends mouse selection. */
+#endif
   execute (c, f, n);		/* Do it.               */
   endsaveundo ();
   replyq_clear ();

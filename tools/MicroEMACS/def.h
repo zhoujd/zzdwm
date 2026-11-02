@@ -204,6 +204,7 @@ choice_padding (size_t used, size_t length)
 #define CCOMMENT 5              /* C comment color.             */
 #define CPREPROC 6              /* C preprocessor color.        */
 #endif
+#define CSELECT 7               /* Selected region color.       */
 
 /*
  * Flags for "eread".
@@ -618,6 +619,7 @@ extern int noupdatecscope;
 extern char *cscope_path;
 #ifdef MOUSE
 extern int mouse;
+extern int mouseselect;         /* Region highlight is shown.   */
 #endif
 extern int patlen;                /* Pattern length in characters. */
 extern int xflag;
@@ -803,6 +805,7 @@ int mousepeek (EMOUSE *event);          /* Copy the oldest event.       */
 int mousedrop (EMOUSE *event);          /* Remove the oldest event.     */
 int mousedecodesgr (EMOUSE *event, int code, int row, int column,
                     int release);       /* Decode an SGR event.         */
+void endmouseselect (void);    /* Turn the region highlight off. */
 #endif
 
 /*

@@ -322,6 +322,9 @@ ttcolor (int color)
         case CPREPROC:
           ttattr = (attnorm & 0xF0) | FOREGROUND_RED | FOREGROUND_BLUE;
           break;
+        case CSELECT:
+          ttattr = attinv;
+          break;
         default:
           ttattr = attnorm;
           break;
@@ -329,7 +332,7 @@ ttcolor (int color)
       return;
     }
 #endif
-  ttattr = color == CMODE ? attinv : attnorm;
+  ttattr = color == CMODE || color == CSELECT ? attinv : attnorm;
 }
 
 #ifdef COLOR

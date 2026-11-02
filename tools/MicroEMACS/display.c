@@ -187,6 +187,12 @@ static void uline (int row, VIDEO *vvp, VIDEO *pvp);
 static void modeline (EWINDOW *wp);
 #ifdef COLOR
 static void put_video_colors (wchar_t *text, short *attrs, int count);
+#ifdef MOUSE
+static int selection_column (const LINE *lp, int o);
+static int selection_setup (EWINDOW *wp, LINE *first);
+static void draw_selection (LINE *lp);
+static void selection_step (LINE *lp);
+#endif
 #endif
 #if GOSLING
 static void hash (VIDEO *vp);
@@ -805,6 +811,11 @@ update (void)
           gutter = window_gutter_width (wp);
           line_number = wp->w_topline;
 #ifdef COLOR
+#ifdef MOUSE
+          selection_setup (wp, lp);
+#endif
+#endif
+#ifdef COLOR
           if ((wp->w_flag & WFEDIT) != 0 && syntax != NULL)
             {
               syntax_state = syntax_state_before (wp->w_bufp, wp->w_dot.p);
@@ -843,6 +854,11 @@ update (void)
 #endif
                 vtputs (lgets (lp), llength (lp));
               vteeol ();
+#ifdef COLOR
+#ifdef MOUSE
+              draw_selection (lp);
+#endif
+#endif
               leftcol = 0;
               leftmargin = 0;
             }
@@ -876,6 +892,12 @@ update (void)
                       else
 #endif
                         vtputs (lgets (lp), llength (lp));
+#ifdef COLOR
+#ifdef MOUSE
+                      draw_selection (lp);
+                      selection_step (lp);
+#endif
+#endif
                       ++line_number;
                       lp = lforw (lp);
                     }
@@ -1004,6 +1026,190 @@ put_video_colors (wchar_t *text, short *attrs, int count)
       ttcol += uwidth (text[i]);
     }
 }
+
+#ifdef MOUSE
+/*
+ * Show the selection while the region highlight is active: the
+ * mark-to-point region of every window whose mark is set, painted
+ * by update as the lines are drawn.  This block computes the
+ * region once per window paint pass.
+ */
+static LINE *select_line1;	/* First line of the region.	 */
+static LINE *select_line2;	/* Last line of the region.	 */
+static int select_off1;		/* First character offset.	 */
+static int select_off2;		/* Last character offset.	 */
+static int select_inside;	/* Drawing inside the region.	 */
+
+/*
+ * Display column of character "o" on line "lp", with tabs
+ * expanded the way the screen draws them.
+ */
+static int
+selection_column (const LINE *lp, int o)
+{
+  const uchar *text = lgets (lp);
+  const uchar *end = text + llength (lp);
+  int column = 0;
+  int offset = 0;
+
+  while (text < end && offset < o)
+    {
+      wchar_t character;
+      int length;
+
+      character = ugetc (text, 0, &length);
+      if (character == '\t')
+        column += tabsize - column % tabsize;
+      else
+        column += uwidth (character);
+      text += length;
+      ++offset;
+    }
+  return column;
+}
+
+/*
+ * Remember the region between the mark and the point of window
+ * "wp", in buffer order, for selection highlighting; "first" is
+ * the first line the window is about to draw.  Returns FALSE when
+ * there is nothing to draw, and sets select_line1 to NULL so that
+ * draw_selection knows it.
+ */
+static int
+selection_setup (EWINDOW *wp, LINE *first)
+{
+  LINE *lp;
+  POS *front;
+  POS *back;
+
+  select_line1 = NULL;
+  select_inside = FALSE;
+  if (mouseselect == FALSE || wp->w_mark.p == NULL)
+    return FALSE;
+
+  if (wp->w_dot.p == wp->w_mark.p)
+    {
+      if (wp->w_dot.o == wp->w_mark.o)
+        return FALSE;		/* Empty region. */
+      front = &wp->w_dot;
+      back = &wp->w_mark;
+      if (front->o > back->o)
+        {
+          POS *swap = front;
+
+          front = back;
+          back = swap;
+        }
+    }
+  else
+    {
+      /* The mark comes after the point if walking forward from the
+         point meets it before the end-of-buffer line. */
+      LINE *endp = wp->w_bufp->b_linep;
+      POS *dot = &wp->w_dot;
+      POS *mark = &wp->w_mark;
+
+      lp = dot->p;
+      for (;;)
+        {
+          if (lp == mark->p)
+            break;
+          if (lp == endp)
+            {
+              POS *swap = dot;
+
+              dot = mark;
+              mark = swap;
+              break;
+            }
+          lp = lforw (lp);
+        }
+      front = dot;
+      back = mark;
+    }
+  select_line1 = front->p;
+  select_off1 = front->o;
+  select_line2 = back->p;
+  select_off2 = back->o;
+
+  /* The first drawn line may already be inside the region. */
+  if (first == select_line1 || first == select_line2)
+    return TRUE;
+  if (select_line1 != select_line2)
+    for (lp = lforw (select_line1); lp != select_line2; lp = lforw (lp))
+      if (lp == first)
+        {
+          select_inside = TRUE;
+          break;
+        }
+  return TRUE;
+}
+
+/*
+ * Advance the selection walk after the line "lp" was drawn: the
+ * line after the region's first line is inside the region, and
+ * the line after its last line is outside again.  The last line
+ * is tested first, because a region on a single line must leave
+ * the walk outside.
+ */
+static void
+selection_step (LINE *lp)
+{
+  if (lp == select_line2)
+    select_inside = FALSE;
+  else if (lp == select_line1)
+    select_inside = TRUE;
+}
+
+/*
+ * Paint the selection color over the cells of the row just drawn
+ * on vtrow that fall inside the region set up by selection_setup.
+ * "lp" is the line that was drawn.  Called with the drawing
+ * leftmargin/leftcol still in effect.
+ */
+static void
+draw_selection (LINE *lp)
+{
+  int c1;
+  int c2;
+  int cell;
+  int last;
+
+  if (select_line1 == NULL)
+    return;
+  if (lp == select_line1 && lp == select_line2)
+    {
+      c1 = selection_column (lp, select_off1);
+      c2 = selection_column (lp, select_off2);
+    }
+  else if (lp == select_line1)
+    {
+      c1 = selection_column (lp, select_off1);
+      c2 = selection_column (lp, llength (lp));
+    }
+  else if (lp == select_line2)
+    {
+      c1 = 0;
+      c2 = selection_column (lp, select_off2);
+    }
+  else if (select_inside != FALSE)
+    {
+      c1 = 0;
+      c2 = selection_column (lp, llength (lp));
+    }
+  else
+    return;
+
+  cell = leftmargin + c1 - leftcol;
+  if (cell < leftmargin)
+    cell = leftmargin;
+  last = leftmargin + c2 - leftcol;
+  if (last > ncol)
+    last = ncol;
+  for (; cell < last; ++cell)
+    vscreen[vtrow]->v_attr[cell] = CSELECT;
+}
+#endif	/* MOUSE */
 #endif
 
 #if !MEMMAP

@@ -217,6 +217,7 @@ main (void)
     assert_pos (&window.w_mark, long_line, 4);
     send_mouse (MOUSE_RELEASE, 0, 0, 4);
     assert_pos (&window.w_mark, short_line, 3);
+    assert (mouseselect == FALSE);	/* click ends highlight */
     window.w_mark.p = NULL;
 
     /* Terminals that report no motion while dragging: the press
@@ -241,6 +242,12 @@ main (void)
     /* Idle motion after the release moves nothing. */
     send_mouse (MOUSE_MOTION, 0, 0, 3);
     assert_pos (&window.w_dot, short_line, 10);
+
+    /* The highlight stays on until a non-mouse key ends it. */
+    assert (mouseselect == TRUE);
+    endmouseselect ();
+    assert (mouseselect == FALSE);
+    assert ((window.w_flag & WFHARD) != 0);	/* repaint asked */
 
     /* A drag stays in the window it started in: press in the
        second window and release over the first selects nothing, so
@@ -284,6 +291,79 @@ main (void)
     assert (mvupwind_calls == 5);
     assert (mvupwind_last_n == -7);
     mouse_wheel_step = 3;
+  }
+
+  /* Selection highlight painting. */
+  reset_mouse_windows ();
+  {
+    int i;
+
+    ncol = 80;
+    memset (&row, 0, sizeof (row));
+    vscreen[0] = &row;
+    vttextmove (0, 0, 0);
+    for (i = 0; i < NCOL; ++i)
+      row.v_attr[i] = CTEXT;
+
+    /* Nothing without the highlight, and nothing for an empty
+       region. */
+    window.w_mark.p = long_line;
+    window.w_mark.o = 4;
+    window.w_dot.p = long_line;
+    window.w_dot.o = 4;
+    mouseselect = FALSE;
+    assert (selection_setup (&window, long_line) == FALSE);
+    mouseselect = TRUE;
+    assert (selection_setup (&window, long_line) == FALSE);
+
+    /* A single-line region paints its own columns only. */
+    window.w_mark.o = 6;
+    window.w_dot.o = 8;
+    assert (selection_setup (&window, long_line) == TRUE);
+    draw_selection (long_line);
+    assert (row.v_attr[5] == CTEXT);
+    assert (row.v_attr[6] == CSELECT);
+    assert (row.v_attr[7] == CSELECT);
+    assert (row.v_attr[8] == CTEXT);
+
+    /* A two-line region paints the tail of the first line and the
+       head of the last. */
+    window.w_mark.p = long_line;
+    window.w_mark.o = 2;
+    window.w_dot.p = short_line;
+    window.w_dot.o = 3;
+    for (i = 0; i < NCOL; ++i)
+      row.v_attr[i] = CTEXT;
+    assert (selection_setup (&window, long_line) == TRUE);
+    draw_selection (long_line);
+    assert (row.v_attr[1] == CTEXT);
+    assert (row.v_attr[2] == CSELECT);
+    assert (row.v_attr[29] == CSELECT);
+    assert (row.v_attr[30] == CTEXT);
+    for (i = 0; i < NCOL; ++i)
+      row.v_attr[i] = CTEXT;
+    draw_selection (short_line);
+    assert (row.v_attr[0] == CSELECT);
+    assert (row.v_attr[2] == CSELECT);
+    assert (row.v_attr[3] == CTEXT);
+
+    /* Swapping mark and point paints the same cells. */
+    window.w_mark.p = short_line;
+    window.w_mark.o = 3;
+    window.w_dot.p = long_line;
+    window.w_dot.o = 2;
+    for (i = 0; i < NCOL; ++i)
+      row.v_attr[i] = CTEXT;
+    assert (selection_setup (&window, long_line) == TRUE);
+    draw_selection (long_line);
+    assert (row.v_attr[2] == CSELECT);
+    assert (row.v_attr[29] == CSELECT);
+    for (i = 0; i < NCOL; ++i)
+      row.v_attr[i] = CTEXT;
+    draw_selection (short_line);
+    assert (row.v_attr[0] == CSELECT);
+    assert (row.v_attr[3] == CTEXT);
+    mouseselect = FALSE;
   }
 
   free (long_line);
