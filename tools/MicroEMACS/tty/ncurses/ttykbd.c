@@ -207,6 +207,7 @@ mouse_decode_x10 (void)
   EMOUSE event;
   int b, x, y;
   int row, column;
+  int drift;			/* Column drift since the last press.  */
 
   b = ttgetc () - 32;
   x = ttgetc () - 32;
@@ -219,7 +220,9 @@ mouse_decode_x10 (void)
 	mouseenqueue (&event);
       return (KMOUSE);
     }
-  if (row == click_row && column == click_column)
+  drift = column - click_column;
+  if (row == click_row
+      && drift >= -MOUSE_CLICK_SLOP && drift <= MOUSE_CLICK_SLOP)
     ++clicks;
   else
     clicks = 1;

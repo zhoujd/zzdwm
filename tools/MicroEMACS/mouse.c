@@ -171,10 +171,11 @@ static MARKRING mouse_saved_ring; /* Mark ring before the drag.   */
 
 /*
  * Click counting.  The SGR protocol reports raw presses and releases,
- * so consecutive plain clicks on one cell are counted here: the
+ * so consecutive plain clicks near one cell are counted here: the
  * second selects the word at the clicked cell, the third the whole
- * line.  The count breaks when a click lands elsewhere or any other
- * mouse event intervenes.
+ * line.  The count breaks when a click lands on another row or more
+ * than MOUSE_CLICK_SLOP columns away, or any other mouse event
+ * intervenes.
  */
 static int mouse_click_streak;	/* Consecutive plain clicks.	 */
 static int mouse_click_row;	/* Cell of the last click, row.	 */
@@ -419,20 +420,24 @@ mouseevent (int f, int n, int k)
 
   /* A release ends the drag.  A release away from the pressed cell
      completes the region at the release position even on terminals
-     that report no motion while the button is held; a release on
-     the pressed cell without motion was a plain click, so the
-     saved mark ring goes back. */
+     that report no motion while the button is held.  A release near
+     the pressed cell without motion was a plain click — a hand
+     settling onto a cell wobbles across a boundary, the way
+     consecutive clicks do — so the saved mark ring goes back and
+     the click counts. */
   if (event.kind == MOUSE_RELEASE)
     {
       int keep;			/* Region survives the release.  */
+      int drift;			/* Column drift since the last click. */
 
       if (mouse_dragging && event.button == 0)
         {
           mouse_dragging = FALSE;
           keep = FALSE;
+          drift = event.column - mouse_anchor_col;
           if (mouse_drag_moved
               || event.row != mouse_anchor_row
-              || event.column != mouse_anchor_col)
+              || drift < -MOUSE_CLICK_SLOP || drift > MOUSE_CLICK_SLOP)
             {
               /* A release outside the window the drag started in
                  keeps whatever motion already selected. */
@@ -442,11 +447,13 @@ mouseevent (int f, int n, int k)
           if (!keep)
             {
               /* Plain click after all: the saved mark ring goes
-                 back.  Consecutive plain clicks on one cell select
+                 back.  Consecutive plain clicks near one cell select
                  the word, then the whole line. */
+              drift = event.column - mouse_click_col;
               mouse_click_streak
                 = (event.row == mouse_click_row
-                   && event.column == mouse_click_col)
+                   && drift >= -MOUSE_CLICK_SLOP
+                   && drift <= MOUSE_CLICK_SLOP)
                   ? mouse_click_streak + 1 : 1;
               mouse_click_row = event.row;
               mouse_click_col = event.column;

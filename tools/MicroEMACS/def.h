@@ -577,6 +577,11 @@ LINE;
 #define MOUSE_ALT      0x02
 #define MOUSE_CTRL     0x04
 
+/* Clicks counted as one streak may drift this many columns on one
+   row: a hand settling onto a cell wobbles a few pixels between
+   presses, which crosses at most one cell boundary.  */
+#define MOUSE_CLICK_SLOP 1
+
 /*
  * A normalized mouse event.  Coordinates are zero-based physical screen
  * positions, while kind and modifiers use the MOUSE_* constants above.
