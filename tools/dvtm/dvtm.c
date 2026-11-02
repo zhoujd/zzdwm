@@ -1012,14 +1012,52 @@ keypress(int code) {
 static void
 mouse_setup(void) {
 #ifdef CONFIG_MOUSE
+	static mmask_t armed;
 	mmask_t mask = 0;
 
 	if (mouse_events_enabled) {
 		mask = BUTTON1_CLICKED | BUTTON2_CLICKED;
 		for (unsigned int i = 0; i < LENGTH(buttons); i++)
 			mask |= buttons[i].mask;
+	} else {
+		/* no local bindings, but a client tracking the mouse (DECSET
+		 * 1000) needs the outer terminal to report on its behalf:
+		 * presses, releases and drag motion (button 1 held), so the
+		 * client can anchor and extend selections */
+		for (Client *c = clients; c; c = c->next) {
+			if (vt_mousemode(c->term)) {
+				mask = BUTTON1_PRESSED | BUTTON1_RELEASED
+				     | BUTTON2_PRESSED | BUTTON2_RELEASED
+				     | BUTTON3_PRESSED | BUTTON3_RELEASED
+				     | REPORT_MOUSE_POSITION
+				     | BUTTON4_PRESSED | BUTTON5_PRESSED;
+				break;
+			}
+		}
 	}
-	mousemask(mask, NULL);
+	if (mask != armed) {
+		static int click_interval = -1;
+		if (click_interval < 0)
+			click_interval = mouseinterval(-1); /* once: the default */
+		mousemask(mask, NULL);
+		/* ncurses holds each press for click resolution, and a drag's
+		 * first motion report swallows the held press into itself,
+		 * so the client never sees the cell the drag started on.
+		 * Relay clients get raw presses and releases and count
+		 * clicks themselves, so resolve clicks only while the local
+		 * bindings, which match on CLICKED, are armed. */
+		/* ncurses arms what the terminfo XM string knows, which on
+		 * simple entries is mode 1000 alone; button-event tracking
+		 * (1002) is what makes the outer terminal report the drag
+		 * motion REPORT_MOUSE_POSITION stands for.  Never 1003: a
+		 * motion with no button held arrives as a phantom button 1
+		 * press. */
+		bool motion = mask & REPORT_MOUSE_POSITION;
+		mouseinterval(motion ? 0 : click_interval);
+		putp(motion ? "\033[?1002h" : "\033[?1002l");
+		fflush(stdout);
+		armed = mask;
+	}
 #endif /* CONFIG_MOUSE */
 }
 
@@ -1162,6 +1200,12 @@ cleanup(void) {
 	while (clients)
 		destroy(clients);
 	vt_shutdown();
+#ifdef CONFIG_MOUSE
+	/* mouse_setup arms button-event tracking (1002) beyond what
+	 * endwin turns off */
+	putp("\033[?1002l");
+	fflush(stdout);
+#endif /* CONFIG_MOUSE */
 	endwin();
 	free(copyreg.data);
 	if (bar.fd > 0)
@@ -1988,13 +2032,27 @@ handle_mouse(void) {
 	if (!msel)
 		return;
 
-	debug("mouse x:%d y:%d cx:%d cy:%d mask:%d\n", event.x, event.y, event.x - msel->x, event.y - msel->y, event.bstate);
+	/* forward coordinates relative to the client's content: the title
+	 * line, when shown, is the first row of the client window and not
+	 * part of what the client draws */
+	{
+		int cx = event.x - msel->x;
+		int cy = event.y - msel->y - msel->has_title_line;
 
-	vt_mouse(msel->term, event.x - msel->x, event.y - msel->y, event.bstate);
+		debug("mouse x:%d y:%d cx:%d cy:%d mask:%d\n", event.x, event.y, cx, cy, event.bstate);
+		if (cx >= 0 && cy >= 0 && cx < msel->w && cy < msel->h - msel->has_title_line)
+			vt_mouse(msel->term, cx, cy, event.bstate);
+	}
 
-	for (i = 0; i < LENGTH(buttons); i++) {
-		if (event.bstate & buttons[i].mask)
+	for (i = 0; mouse_events_enabled && i < LENGTH(buttons); i++) {
+		if (event.bstate & buttons[i].mask) {
+			/* the wheel belongs to a client that tracks the
+			 * mouse, not to the local scrollback view */
+			if ((event.bstate & (BUTTON4_PRESSED | BUTTON5_PRESSED))
+			    && vt_mousemode(msel->term))
+				continue;
 			buttons[i].action.cmd(buttons[i].action.args);
+		}
 	}
 
 	msel = NULL;
@@ -2298,6 +2356,7 @@ main(int argc, char *argv[]) {
 						c->died = true;
 					continue;
 				}
+				mouse_setup(); /* tracking may have changed */
 			}
 
 			if (c != sel && is_content_visible(c)) {
