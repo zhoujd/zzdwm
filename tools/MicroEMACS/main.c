@@ -104,6 +104,10 @@ int modefg256 = 15;                /* 256-color mode line foreground */
 int modebg256 = 22;                /* 256-color mode line background */
 int modefg = 0;                    /* Basic mode line foreground    */
 int modebg = 2;                    /* Basic mode line background    */
+int selfg256 = 15;                 /* 256-color selection foreground */
+int selbg256 = 24;                 /* 256-color selection background */
+int selfg = 7;                     /* Basic selection foreground    */
+int selbg = 4;                     /* Basic selection background    */
 #endif
 int fillcol = 70;                  /* Fill column for paragraphs.  */
 int tabsize = 8;                   /* No. of columns for a tab     */
