@@ -180,6 +180,7 @@ static MARKRING mouse_saved_ring; /* Mark ring before the drag.   */
 static int mouse_click_streak;	/* Consecutive plain clicks.	 */
 static int mouse_click_row;	/* Cell of the last click, row.	 */
 static int mouse_click_col;	/* Cell of the last click, col.	 */
+static EWINDOW *mouse_click_wp;	/* Window the last click was in.  */
 
 static void
 mouse_click_reset (void)
@@ -390,6 +391,12 @@ mouseevent (int f, int n, int k)
         }
       if (mouse_button_click (&event) != FALSE)
         return (TRUE);
+      /* Remember where the click landed, so the release that first
+         tells of a release-reporting terminal can tell a settling
+         click from a drag away from the clicked cell. */
+      mouse_click_row = event.row;
+      mouse_click_col = event.column;
+      mouse_click_wp = wp;
       if (event.clicks >= 3)
         {
           wp = mouse_drop_dot (&event, NULL);
@@ -481,6 +488,41 @@ mouseevent (int f, int n, int k)
               mouse_click_reset ();
               mouse_anchor_wp->w_flag |= WFHARD;
             }
+        }
+      else if (event.clicks > 0)
+        {
+          /* A release from a backend that counts clicks itself: it
+             reported the matching press as one complete click and
+             attached its count, which the releases that follow are
+             counted from, so a streak started before the backend
+             switched to plain presses continues unbroken. */
+          drift = event.column - mouse_click_col;
+          if (event.clicks == 1
+              && (event.row != mouse_click_row
+                  || drift < -MOUSE_CLICK_SLOP || drift > MOUSE_CLICK_SLOP))
+            {
+              /* The click stood in for a press the terminal was not
+                 yet known to release; a release this far from the
+                 clicked cell was really a drag, so complete the
+                 region from the clicked cell to here.  The point
+                 still sits on the clicked cell, which becomes the
+                 mark. */
+              wp = mouse_find_window (event.row);
+              if (wp != NULL && wp == mouse_click_wp && wp->w_dot.p != NULL)
+                {
+                  wp->w_mark = wp->w_dot;
+                  if (mouse_drop_dot (&event, wp) != NULL)
+                    {
+                      mouseselect = TRUE;
+                      wp->w_flag |= WFHARD;
+                      mouse_click_reset ();
+                      return (TRUE);
+                    }
+                }
+            }
+          mouse_click_streak = event.clicks;
+          mouse_click_row = event.row;
+          mouse_click_col = event.column;
         }
       return (TRUE);
     }
