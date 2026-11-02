@@ -54,7 +54,8 @@ display-test: display.c $(ROOT)/mouse.c $(ROOT)/path.c $(ROOT)/utf8.c
 		$(ROOT)/mouse.c $(ROOT)/path.c $(ROOT)/utf8.c
 
 mouse-test: mouse.c $(ROOT)/def.h $(ROOT)/mouse.c
-	$(CC) $(CFLAGS) -Wno-unused-parameter $(LDFLAGS) -o $@ \
+	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections \
+		-fdata-sections $(LDFLAGS) -Wl,--gc-sections -o $@ \
 		-I$(ROOT) -I$(ROOT)/sys/unix -I$(ROOT)/tty/ncurses \
 		-DMOUSE mouse.c
 

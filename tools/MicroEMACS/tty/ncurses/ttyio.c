@@ -169,20 +169,21 @@ ttclose (void)
 
 #ifdef MOUSE
 /*
- * Enable normal press/release reporting with SGR encoding. Motion and the
- * legacy X10 encoding remain disabled.
+ * Enable press/release reporting with SGR encoding, plus motion reporting
+ * while a button is held, so a drag can extend the region. The legacy X10
+ * encoding remains disabled.
  */
 void
 ttsetmouse (int flag)
 {
   if (flag != FALSE)
     {
-      if (write (1, "\033[?1000h\033[?1006h", 16) < 0)
+      if (write (1, "\033[?1000h\033[?1002h\033[?1006h", 24) < 0)
         perror ("mouse enable");
     }
   else
     {
-      if (write (1, "\033[?1006l\033[?1000l", 16) < 0)
+      if (write (1, "\033[?1006l\033[?1002l\033[?1000l", 24) < 0)
         perror ("mouse disable");
     }
 }

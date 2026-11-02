@@ -933,6 +933,8 @@ int checkreadonly (void);               /* Is current buffer readonly?  */
 int readlines (LINE *lp2, int *statptr);
                                         /* Read lines from file.        */
 void updatemode (void);                 /* Update mode lines.           */
+int window_gutter_width (const EWINDOW *wp);
+                                        /* Line number gutter width.    */
 void unqname (char *name, int maxlen);  /* Unique buffer name.          */
 int writeout (const char *fn);          /* Performs the file writing    */
 

@@ -157,7 +157,6 @@ VIDEO video[2 * (NROW - 1)];	/* Actual screen data.          */
 #endif
 VIDEO blanks;			/* Blank line image.            */
 static uchar spaces[NCOL];	/* ASCII spaces.		*/
-int mouse_wheel_step = 3;	/* Lines per wheel scroll.	*/
 
 #if GOSLING
 /*
@@ -181,7 +180,7 @@ static int vttextend (void);
 static int decimal_width (int value);
 static int is_buffer_end_marker (const LINE *lp, const BUFFER *bp);
 static void update_line_number_cache (EWINDOW *wp);
-static int window_gutter_width (const EWINDOW *wp);
+int window_gutter_width (const EWINDOW *wp);
 static void draw_line_number (int row, int number, int width);
 static void ucopy (VIDEO *vvp, VIDEO *pvp);
 static void uline (int row, VIDEO *vvp, VIDEO *pvp);
@@ -478,7 +477,7 @@ update_line_number_cache (EWINDOW *wp)
   wp->w_lwidth = decimal_width (lines) + 1;
 }
 
-static int
+int
 window_gutter_width (const EWINDOW *wp)
 {
   int width;
@@ -490,132 +489,6 @@ window_gutter_width (const EWINDOW *wp)
     width = ncol > 1 ? ncol - 1 : 0;
   return width;
 }
-
-#ifdef MOUSE
-static int
-mouse_line_offset (const LINE *line, int column)
-{
-  const uchar *text = lgets (line);
-  const uchar *end = text + llength (line);
-  int display_column = 0;
-  int offset = 0;
-
-  while (text < end)
-    {
-      wchar_t character;
-      int character_width;
-      int length;
-
-      character = ugetc (text, 0, &length);
-      character_width = character == '\t'
-                        ? tabsize - display_column % tabsize : uwidth (character);
-      if (display_column >= column || display_column + character_width > column)
-        return offset;
-
-      display_column += character_width;
-      text += length;
-      ++offset;
-    }
-  return offset;
-}
-
-static int
-mouse_move_point (const EMOUSE *event)
-{
-  EWINDOW *window;
-  LINE *line;
-  int row;
-  int text_column;
-
-  ALLWIND (window)
-    if (event->row >= window->w_toprow
-        && event->row < window->w_toprow + window->w_ntrows)
-      break;
-
-  if (window == NULL)
-    return FALSE;
-
-  line = window->w_linep;
-  for (row = window->w_toprow; row < event->row; ++row)
-    {
-      if (line == window->w_bufp->b_linep)
-        break;
-      line = lforw (line);
-    }
-  if (line == window->w_bufp->b_linep && lback (line) != line)
-    line = lback (line);
-
-  if (window != curwp)
-    {
-      curwp = window;
-      curbp = window->w_bufp;
-      updatemode ();
-    }
-
-  text_column = event->column - window_gutter_width (window)
-                + window->w_leftcol;
-  curwp->w_dot.p = line;
-  curwp->w_dot.o = mouse_line_offset (line, text_column);
-  curwp->w_hscroll = FALSE;
-  curwp->w_flag |= WFMOVE;
-  return TRUE;
-}
-
-/*
- * Find the window that owns the given screen row, or NULL if the
- * row does not belong to a window (for example the echo line).
- * Windows are laid out top to bottom without gaps, so the first
- * window whose mode line is at or below the row owns it.
- */
-static EWINDOW *
-mouse_find_window (int row)
-{
-  EWINDOW *wp;
-
-  ALLWIND (wp)
-    {
-      if (row < wp->w_toprow + wp->w_ntrows)
-        return wp;		/* Text rows of this window. */
-      if (row == wp->w_toprow + wp->w_ntrows)
-        return wp;		/* Mode line of this window.  */
-    }
-  return NULL;
-}
-
-/*
- * Make the window under the mouse the current window.
- */
-static void
-mouse_switch_window (EWINDOW *wp)
-{
-  if (wp != curwp)
-    {
-      curwp = wp;
-      curbp = wp->w_bufp;
-      updatemode ();
-    }
-}
-
-/*
- * Scroll for a wheel event: vertically by mouse-wheel-step lines in
- * the window under the mouse, button 3 up and button 4 down.  A
- * wheel report outside every window scrolls the current window.
- */
-static int
-mouse_wheel_scroll (const EMOUSE *event)
-{
-  EWINDOW *wp;
-
-  wp = mouse_find_window (event->row);
-  if (wp == NULL)
-    wp = curwp;
-  mouse_switch_window (wp);
-  return mvupwind (FALSE,
-                   event->button == 3 ? mouse_wheel_step
-                                      : -mouse_wheel_step,
-                   KRANDOM);
-}
-#endif
 
 static void
 draw_line_number (int row, int number, int width)
@@ -1792,35 +1665,6 @@ scrollright (int f, int n, int k)
     n = 4;
   return hscroll_window (curwp, n);
 }
-
-/*
- * Handle mouse button event.
- */
-#ifdef MOUSE
-int
-mouseevent (int f, int n, int k)
-{
-  EMOUSE event;
-
-  if (mousedrop (&event) == FALSE)
-    return FALSE;
-
-  if (event.kind == MOUSE_WHEEL)
-    return mouse_wheel_scroll (&event);
-
-  if (event.kind == MOUSE_PRESS && event.button == 0
-      && event.modifiers == 0
-      && mouse_move_point (&event) == TRUE)
-    return TRUE;
-
-  if (event.kind != MOUSE_RELEASE)
-    eprintf ("[Mouse kind %d, button %d, row %d, column %d, "
-             "modifiers %d, clicks %d]",
-             event.kind, event.button, event.row, event.column,
-             event.modifiers, event.clicks);
-  return (TRUE);
-}
-#endif
 
 /*
  * Show visable on modeline.

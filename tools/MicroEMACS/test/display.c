@@ -47,6 +47,27 @@ mvupwind (int f, int n, int k)
 }
 
 static void
+assert_pos (POS *pos, LINE *line, int offset)
+{
+  assert (pos->p == line);
+  assert (pos->o == offset);
+}
+
+static void
+send_mouse (int kind, int button, int row, int column)
+{
+  EMOUSE event;
+
+  memset (&event, 0, sizeof (event));
+  event.kind = kind;
+  event.button = button;
+  event.row = row;
+  event.column = column;
+  assert (mouseenqueue (&event) == TRUE);
+  assert (mouseevent (FALSE, 1, 0) == TRUE);
+}
+
+static void
 reset_display (void)
 {
   memset (&row, 0, sizeof (row));
@@ -168,74 +189,98 @@ main (void)
 
   reset_mouse_windows ();
   {
-    EMOUSE event;
-
-    memset (&event, 0, sizeof (event));
-    event.kind = MOUSE_PRESS;
-    event.button = 0;
-    event.row = 4;
-    event.column = 6;
-    assert (mouseenqueue (&event) == TRUE);
-    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    /* Click in the second window moves the point there and anchors
+       a drag; the release at the same cell is a plain click, so
+       the mark ring goes back. */
+    send_mouse (MOUSE_PRESS, 0, 4, 6);
     assert (curwp == &second_window);
     assert (curbp == &buffer);
-    assert (second_window.w_dot.p == short_line);
-    assert (second_window.w_dot.o == 6);
+    assert_pos (&second_window.w_dot, short_line, 6);
     assert (second_window.w_hscroll == FALSE);
     assert ((second_window.w_flag & WFMOVE) != 0);
+    assert (second_window.w_mark.p != NULL);
+    send_mouse (MOUSE_RELEASE, 0, 4, 6);
+    assert (second_window.w_mark.p == NULL);
 
-    event.row = 1;
-    event.column = 30;
-    assert (mouseenqueue (&event) == TRUE);
-    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    /* A click past the line end clamps the point to the end. */
+    send_mouse (MOUSE_PRESS, 0, 1, 30);
     assert (curwp == &window);
-    assert (window.w_dot.p == short_line);
-    assert (window.w_dot.o == wllength (short_line));
+    assert_pos (&window.w_dot, short_line, wllength (short_line));
+    send_mouse (MOUSE_RELEASE, 0, 1, 30);
+    assert (window.w_mark.p == NULL);
+
+    /* A plain click does not disturb an existing mark. */
+    window.w_mark.p = short_line;
+    window.w_mark.o = 3;
+    send_mouse (MOUSE_PRESS, 0, 0, 4);
+    assert_pos (&window.w_dot, long_line, 4);
+    assert_pos (&window.w_mark, long_line, 4);
+    send_mouse (MOUSE_RELEASE, 0, 0, 4);
+    assert_pos (&window.w_mark, short_line, 3);
+    window.w_mark.p = NULL;
+
+    /* Terminals that report no motion while dragging: the press
+       anchors the mark, and the release position completes the
+       region. */
+    send_mouse (MOUSE_PRESS, 0, 0, 6);
+    send_mouse (MOUSE_RELEASE, 0, 1, 5);
+    assert_pos (&window.w_dot, short_line, 5);
+    assert_pos (&window.w_mark, long_line, 6);
+
+    /* Motion during the drag extends the region by moving the
+       point only, and the release keeps it. */
+    send_mouse (MOUSE_PRESS, 0, 0, 6);
+    assert_pos (&window.w_mark, long_line, 6);
+    send_mouse (MOUSE_MOTION, 0, 1, 5);
+    assert_pos (&window.w_dot, short_line, 5);
+    assert_pos (&window.w_mark, long_line, 6);
+    send_mouse (MOUSE_RELEASE, 0, 1, 20);
+    assert_pos (&window.w_dot, short_line, 10);
+    assert_pos (&window.w_mark, long_line, 6);
+
+    /* Idle motion after the release moves nothing. */
+    send_mouse (MOUSE_MOTION, 0, 0, 3);
+    assert_pos (&window.w_dot, short_line, 10);
+
+    /* A drag stays in the window it started in: press in the
+       second window and release over the first selects nothing, so
+       the mark ring goes back. */
+    send_mouse (MOUSE_PRESS, 0, 3, 2);
+    assert_pos (&second_window.w_dot, short_line, 2);
+    assert (second_window.w_mark.p != NULL);
+    send_mouse (MOUSE_RELEASE, 0, 0, 2);
+    assert (curwp == &second_window);
+    assert_pos (&second_window.w_dot, short_line, 2);
+    assert (second_window.w_mark.p == NULL);
 
     /* Wheel up in the second window scrolls that window up by
        mouse-wheel-step lines. */
-    event.kind = MOUSE_WHEEL;
-    event.button = 3;
-    event.row = 4;
-    event.column = 0;
-    assert (mouseenqueue (&event) == TRUE);
-    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    send_mouse (MOUSE_WHEEL, 3, 4, 0);
     assert (curwp == &second_window);
     assert (mvupwind_calls == 1);
     assert (mvupwind_last_n == mouse_wheel_step);
 
     /* Wheel down in the first window scrolls that window down. */
-    event.button = 4;
-    event.row = 0;
-    assert (mouseenqueue (&event) == TRUE);
-    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    send_mouse (MOUSE_WHEEL, 4, 0, 0);
     assert (curwp == &window);
     assert (mvupwind_calls == 2);
     assert (mvupwind_last_n == -mouse_wheel_step);
 
     /* A wheel report on a mode line still scrolls that window. */
-    event.button = 3;
-    event.row = 3 + 2;
-    assert (mouseenqueue (&event) == TRUE);
-    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    send_mouse (MOUSE_WHEEL, 3, 3 + 2, 0);
     assert (curwp == &second_window);
     assert (mvupwind_calls == 3);
     assert (mvupwind_last_n == mouse_wheel_step);
 
     /* A wheel report outside every window scrolls the current one. */
-    event.row = 6;
-    assert (mouseenqueue (&event) == TRUE);
-    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    send_mouse (MOUSE_WHEEL, 3, 6, 0);
     assert (curwp == &second_window);
     assert (mvupwind_calls == 4);
     assert (mvupwind_last_n == mouse_wheel_step);
 
     /* mouse-wheel-step sets the number of lines per tick. */
     mouse_wheel_step = 7;
-    event.button = 4;
-    event.row = 1;
-    assert (mouseenqueue (&event) == TRUE);
-    assert (mouseevent (FALSE, 1, 0) == TRUE);
+    send_mouse (MOUSE_WHEEL, 4, 1, 0);
     assert (mvupwind_calls == 5);
     assert (mvupwind_last_n == -7);
     mouse_wheel_step = 3;

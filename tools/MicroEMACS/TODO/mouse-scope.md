@@ -37,8 +37,12 @@ should not complicate the terminal-independent event model.
    support highlight and a `set-selection-color` Lisp extension. Keyboard
    region selection remains unchanged, so non-mouse and minimal builds do not
    need selection rendering.
-4. Remaining by choice: mouse drag; continue delegating selection to the
-   terminal rather than implementing editor-side drag state.
+4. Done: a button-0 press anchors the mark at the pressed cell and a drag
+   extends the mark-to-point region until the release; a press and release
+   on the same cell is a plain click that leaves the mark ring as it was,
+   and a drag stays in the window it started in. The press anchors right
+   away, so drags work on terminals that report no motion while the button
+   is held. The region is not rendered yet (item 3).
 5. Done: the wheel scrolls the window under the mouse, by the
    `mouse-wheel-step` Lisp variable's lines per tick (3 by default); a wheel
    report outside every window scrolls the current window. Delivery through
