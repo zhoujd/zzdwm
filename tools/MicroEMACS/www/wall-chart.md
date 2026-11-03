@@ -113,6 +113,8 @@ C-X r C-c : clear-rectangle
 
 C-X r C-o : open-rectangle
 
+C-X r C-t : string-rectangle
+
 C-X r C-w : kill-rectangle
 
 C-X r M-W : copy-rectangle

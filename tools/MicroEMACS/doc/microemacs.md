@@ -1303,7 +1303,8 @@ text is copied. The rectangle clipboard is separate from the kill
 buffer. The prefix is **C-X r**\index{C-X r}, as in GNU Emacs, and
 the keys take the region verbs one
 prefix deeper — **C-w**\index{C-w} kill, **M-W**\index{M-W} copy,
-**C-y** yank — with **C-c** clear and **C-o** open from GNU's
+**C-y** yank — with **C-c** clear, **C-o** open, and **C-t** string
+from GNU's
 rectangle chords, and the anchor on **C-@**\index{C-@}, the
 **set-mark** key, as GNU's rectangles run between point and mark.
 
@@ -1330,9 +1331,22 @@ C-X r C-o
 :   **open-rectangle**\index{C-X r C-o}\index{open-rectangle}
 
     Insert a column of blanks the width of the rectangle, shifting
-    the text to the right of it. Lines too short to reach the
-    rectangle are padded out to its left edge first. Dot is left on
-    the upper left corner of the opened column.
+    the text to the right of it. A prefix argument gives the width
+    of the opened column in place of the rectangle's own. Lines too
+    short to reach the rectangle are padded out to its left edge
+    first. Dot is left on the upper left corner of the opened
+    column.
+
+C-X r C-t
+
+:   **string-rectangle**\index{C-X r C-t}\index{string-rectangle}
+
+    Prompt for a string, then replace the rectangle with it: each
+    line's slice of the rectangle is removed and the string is
+    inserted at its left edge. A line too short to reach the
+    rectangle is padded out to its left edge first. Dot is left on
+    the upper left corner of what was the rectangle, at the head of
+    the string.
 
 C-X r C-w
 
@@ -3557,6 +3571,10 @@ C-X r C-c
 C-X r C-o
 
 :   open-rectangle
+
+C-X r C-t
+
+:   string-rectangle
 
 C-X r C-w
 

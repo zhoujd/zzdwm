@@ -1121,6 +1121,7 @@ int rectcopy (int f, int n, int k);   /* Copy rectangle.          */
 int rectkill (int f, int n, int k);   /* Kill rectangle.          */
 int rectclear (int f, int n, int k);  /* Blank rectangle.         */
 int rectopen (int f, int n, int k);   /* Open rectangle columns.  */
+int rectstring (int f, int n, int k); /* String each line.        */
 int rectyank (int f, int n, int k);   /* Yank rectangle.          */
 int rectprefix (int f, int n, int k); /* The C-X r prefix reader. */
 

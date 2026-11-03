@@ -384,22 +384,24 @@ rectclear (int f, int n, int k)
 
 /*
  * Open the rectangle: insert one column of blanks per column of the
- * rectangle, shifting the text to the right of it.  Lines too short
- * to reach the rectangle are padded out to its left edge first.
- * Point is left on the upper left corner of the opened column.
+ * rectangle, shifting the text to the right of it.  A prefix
+ * argument gives the width of the opened column in place of the
+ * rectangle's own width, as in GNU Emacs.  Lines too short to reach
+ * the rectangle are padded out to its left edge first.  Point is
+ * left on the upper left corner of the opened column.
  */
 int
 rectopen (int f, int n, int k)
 {
   LINE *lp, *first, *last, *above;
-  int s_col, e_col, count;
+  int s_col, e_col, count, width;
 
-  (void) f;
-  (void) n;
   (void) k;
-
   if (rectbounds (&first, &last, &s_col, &e_col) == FALSE)
     return (FALSE);
+  width = e_col - s_col;
+  if (f != FALSE && n > 0)
+    width = n;
   above = lback (first);
   count = 0;
   for (lp = first; ; )
@@ -418,7 +420,7 @@ rectopen (int f, int n, int k)
         }
       curwp->w_dot.o = wlcoloffset (lp, s_col);
       saveundo (UMOVE, &curwp->w_dot);
-      if (linsert (e_col - s_col, ' ', NULLPTR) == FALSE)
+      if (linsert (width, ' ', NULLPTR) == FALSE)
         return (FALSE);
       ++count;
       if (done)
@@ -430,6 +432,66 @@ rectopen (int f, int n, int k)
   curwp->w_dot.o = wlcoloffset (curwp->w_dot.p, s_col);
   curwp->w_flag |= WFMOVE;
   eprintf ("[Rectangle of %d lines opened]", count);
+  return (TRUE);
+}
+
+/*
+ * Replace the rectangle with a string: each line's slice of the
+ * rectangle is removed and the string goes in at its left edge, so a
+ * line too short to reach the rectangle is padded out to the edge
+ * first.  Point is left on the upper left corner of what was the
+ * rectangle, at the head of the string.
+ */
+int
+rectstring (int f, int n, int k)
+{
+  char string[NSTRING];
+  LINE *lp, *first, *last, *above;
+  int s_col, e_col, bytes, count;
+
+  (void) f;
+  (void) n;
+  (void) k;
+
+  if (rectbounds (&first, &last, &s_col, &e_col) == FALSE)
+    return (FALSE);
+  if (ereply ("String rectangle: ", string, NSTRING) != TRUE)
+    return (FALSE);
+  above = lback (first);
+  count = 0;
+  for (lp = first; ; )
+    {
+      LINE *next = lforw (lp);
+      int done = lp == last;
+      int end_col = wlcolumn (lp, wllength (lp));
+      curwp->w_dot.p = lp;
+      if (end_col < s_col)
+        {
+          curwp->w_dot.o = wllength (lp);
+          saveundo (UMOVE, &curwp->w_dot);
+          if (linsert (s_col - end_col, ' ', NULLPTR) == FALSE)
+            return (FALSE);
+          lp = curwp->w_dot.p;	/* The pad may replace the line. */
+        }
+      /* A cut leaves dot at the left edge of the rectangle; a line
+         that missed it kept dot at the pad, which is that edge too. */
+      if (rectcutline (lp, s_col, e_col, FALSE) == FALSE)
+        return (FALSE);
+      curwp->w_dot.o = wlcoloffset (curwp->w_dot.p, s_col);
+      saveundo (UMOVE, &curwp->w_dot);
+      bytes = strlen (string);
+      if (linsert (bytes, 0, string) == FALSE)
+        return (FALSE);
+      ++count;
+      if (done)
+        break;
+      lp = next;
+    }
+  rect_lp = NULL;
+  curwp->w_dot.p = lforw (above);
+  curwp->w_dot.o = wlcoloffset (curwp->w_dot.p, s_col);
+  curwp->w_flag |= WFMOVE;
+  eprintf ("[Rectangle of %d lines stringed]", count);
   return (TRUE);
 }
 
@@ -512,10 +574,10 @@ abortrectangle (int f, int n, int k)
 /*
  * The C-X r prefix, as in GNU Emacs: read the next key and run the
  * rectangle command it names.  The keys take the region verbs one
- * prefix deeper (C-W kill, M-W copy, C-y yank), with C-c clear and
- * C-o open from GNU Emacs's C-x r chords, and the anchor sits on
- * C-@, the set-mark key, as GNU's rectangles run between point and
- * mark.
+ * prefix deeper (C-W kill, M-W copy, C-y yank), with C-c clear,
+ * C-o open, and C-t string from GNU Emacs's C-x r chords, and the
+ * anchor sits on C-@, the set-mark key, as GNU's rectangles run
+ * between point and mark.
  */
 int
 rectprefix (int f, int n, int k)
@@ -533,6 +595,7 @@ rectprefix (int f, int n, int k)
     {KCTRL | 'C', rectclear},
     {KCTRL | 'W', rectkill},
     {KCTRL | 'O', rectopen},
+    {KCTRL | 'T', rectstring},
     {KMETA | 'W', rectcopy},
     {KCTRL | 'Y', rectyank},
     {KCTRL | 'G', abortrectangle}

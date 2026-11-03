@@ -16,8 +16,8 @@ is copied. The rectangle clipboard is separate from the kill buffer.
 The prefix is **C-X r**, as in GNU Emacs. The keys under it take
 the region verbs one prefix deeper —
 **C-w** kill, **M-W** copy ([copy-region](deleting.md)), **C-y**
-yank — with **C-c** clear and **C-o** open from GNU's rectangle
-chords, and the anchor on **C-@**, the
+yank — with **C-c** clear, **C-o** open, and **C-t** string from
+GNU's rectangle chords, and the anchor on **C-@**, the
 [set-mark](moving-around.md) key, as GNU's rectangles run between
 point and mark.
 
@@ -37,9 +37,18 @@ column.
 **C-X r C-o** (**open-rectangle**)
 
 Insert a column of blanks the width of the rectangle, shifting the
-text to the right of it. Lines too short to reach the rectangle are
-padded out to its left edge first. Dot is left on the upper left
-corner of the opened column.
+text to the right of it. A prefix argument gives the width of the
+opened column in place of the rectangle's own. Lines too short to
+reach the rectangle are padded out to its left edge first. Dot is
+left on the upper left corner of the opened column.
+
+**C-X r C-t** (**string-rectangle**)
+
+Prompt for a string, then replace the rectangle with it: each line's
+slice of the rectangle is removed and the string is inserted at its
+left edge. A line too short to reach the rectangle is padded out to
+its left edge first. Dot is left on the upper left corner of what
+was the rectangle, at the head of the string.
 
 **C-X r C-w** (**kill-rectangle**)
 

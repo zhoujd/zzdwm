@@ -22,8 +22,6 @@ redo, the read-only guard, the lost-anchor case, prefix errors) and
 
 ## Remaining
 
-* `string-rectangle` (replace the rectangle with a string on every
-  line) and a prefix argument as the width of `open-rectangle`.
 * Rectangle highlight rendering while the anchor is set, as a
   rectangular variant of the mouse selection highlight; the anchor
   currently has no visual.

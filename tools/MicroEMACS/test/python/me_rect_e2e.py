@@ -18,6 +18,7 @@ COPY = b"\x18r\x1bW"             # C-X r M-W
 KILL = b"\x18r\x17"              # C-X r C-w
 CLEAR = b"\x18r\x03"             # C-X r C-c
 OPEN = b"\x18r\x0f"              # C-X r C-o
+STRING = b"\x18r\x14"            # C-X r C-t
 YANK = b"\x18r\x19"              # C-X r C-y
 UNDO = b"\x18U"
 REDO = b"\x15\x18U"                 # C-U C-X U
@@ -92,6 +93,35 @@ def main():
             [RIGHT, ANCHOR, DOWN, LEFT, OPEN])        # cols [4,8)
         expect(content == b"    \tabc\nplai    n\n",
                "open inserts a column of blanks (%r)" % content)
+
+        # Open shifts text right by the rectangle's width; a C-U
+        # argument gives the width in place of the rectangle's own.
+        # C-N preserves the character offset, so the moves here keep
+        # track of it: anchor (0,1), dot (1,3).
+        content, _ = run(
+            directory, "rect_c2.txt", b"abcd\nwxyz\n",
+            [RIGHT, ANCHOR, DOWN, RIGHT * 2,
+             b"\x15", b"3",                        # C-U 3
+             OPEN])                                # cols [1,3), width 3
+        expect(content == b"a   bcd\nw   xyz\n",
+               "open takes the width from the argument (%r)" % content)
+
+        # String-rectangle: each line's slice goes and the string is
+        # inserted at the left edge; a line ending at the left edge
+        # ("x") is not padded and just gets the string.  Anchor (0,1),
+        # dot (2,3); C-N from column 1 keeps offset 1, so two more
+        # rights reach offset 3.
+        content, _ = run(
+            directory, "rect_g1.txt", b"abcd\nx\nlonger line\n",
+            [RIGHT, ANCHOR, DOWN * 2, RIGHT * 2, STRING, b"XX\r"])
+        expect(content == b"aXXd\nxXX\nlXXger line\n",
+               "string replaces each line's slice (%r)" % content)
+        content, _ = run(
+            directory, "rect_g2.txt", b"abcd\nx\nlonger line\n",
+            [RIGHT, ANCHOR, DOWN * 2, RIGHT * 2, STRING, b"XX\r", UNDO],
+            undo=True)
+        expect(content == b"abcd\nx\nlonger line\n",
+               "one undo restores the whole string (%r)" % content)
 
         # A kill whose right edge falls inside a tab expands the tab
         # to spaces first, so only the part of it inside the
