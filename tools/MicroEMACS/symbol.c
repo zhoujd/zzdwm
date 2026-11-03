@@ -195,7 +195,6 @@ KEY key[] = {
   {KCTLX | '1',         onlywind,            "only-window"},
   {KCTLX | '2',         splitwind,           "split-window"},
   {KCTLX | '4',         otherwindprefix,     "prefix-other-window"},
-  {KCTLX | 'A',         rectprefix,          "prefix-rectangle"},
   {KCTLX | 'B',         usebuffer,           "use-buffer"},
   {KCTLX | 'C',         spawncli,            "spawn-cli"},
   {KCTLX | 'D',         dired,               "dired"},
@@ -209,8 +208,7 @@ KEY key[] = {
   {KCTLX | 'K',         killbuffer,          "kill-buffer"},
   {KCTLX | 'N',         nextwind,            "forw-window"},
   {KCTLX | 'P',         prevwind,            "back-window"},
-  {KCTLX | 'R',         backsearch,          "back-search"},
-  {KCTLX | 'S',         forwsearch,          "forw-search"},
+  {KCTLX | 'R',         rectprefix,          "prefix-rectangle"},
   {KCTLX | 'U',         undo,                "undo"},
   {KCTLX | 'V',         showversion,         "display-version"},
   {KCTLX | 'X',         nextbuffer,          "forw-buffer"},
@@ -551,7 +549,7 @@ keymapinit ()
   keydup (KMETA | ' ', "set-mark");
   keydup (KMETA | '%', "query-replace");
   keydup (KCTLX | 'Q', "quote");        /* For terminals   */
-  keydup (KMETA | 'S', "forw-search");  /*  using xon/xoff */
+  keydup (KMETA | 'S', "forw-i-search");  /* using xon/xoff */
   keydup (KMETA | 0x7F, "back-del-word");
   keydup (KCTLX | 'O', "forw-window");  /* like MINCE */
   /*

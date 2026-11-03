@@ -185,7 +185,7 @@ or one character at a time; when shifted they move by pages or word.
 When preceded by the F6 key (BLUE on Z-19), the arrow keys
 move to the beginning
 or end of the current line or buffer.
-The 5 key is the same as **C-S** (forw-search), and shift-5 is
+The 5 key is the same as **C-S** (forw-i-search), and shift-5 is
 search-again.  See the [Wall Chart](wall-chart.md) section of this manual
 for further key bindings for the Z-19/29.
 

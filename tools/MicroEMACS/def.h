@@ -1122,7 +1122,7 @@ int rectkill (int f, int n, int k);   /* Kill rectangle.          */
 int rectclear (int f, int n, int k);  /* Blank rectangle.         */
 int rectopen (int f, int n, int k);   /* Open rectangle columns.  */
 int rectyank (int f, int n, int k);   /* Yank rectangle.          */
-int rectprefix (int f, int n, int k); /* The C-X a prefix reader. */
+int rectprefix (int f, int n, int k); /* The C-X r prefix reader. */
 
 /*
  Defined by "search.c".

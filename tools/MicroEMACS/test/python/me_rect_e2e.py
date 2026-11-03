@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rectangle editing through the C-X a prefix: anchor one corner,
+"""Rectangle editing through the C-X r prefix: anchor one corner,
 put point on the other, and copy/kill/yank/clear/open the column
 range between them.  The rectangles are cut on the display-cell grid,
 so a tab counts as the cells it renders as: clearing replaces it with
@@ -13,12 +13,12 @@ import tempfile
 from common import drain, kill, save_quit, spawn
 
 UP, DOWN, RIGHT, LEFT = b"\x1bOA", b"\x1bOB", b"\x1bOC", b"\x1bOD"
-ANCHOR = b"\x18a\x00"             # C-X a C-@ (C-Space sends the same NUL)
-COPY = b"\x18a\x1bW"             # C-X a M-W
-KILL = b"\x18a\x17"              # C-X a C-w
-CLEAR = b"\x18a\x03"             # C-X a C-c
-OPEN = b"\x18a\x0f"              # C-X a C-o
-YANK = b"\x18a\x19"              # C-X a C-y
+ANCHOR = b"\x18r\x00"             # C-X r C-@ (C-Space sends the same NUL)
+COPY = b"\x18r\x1bW"             # C-X r M-W
+KILL = b"\x18r\x17"              # C-X r C-w
+CLEAR = b"\x18r\x03"             # C-X r C-c
+OPEN = b"\x18r\x0f"              # C-X r C-o
+YANK = b"\x18r\x19"              # C-X r C-y
 UNDO = b"\x18U"
 REDO = b"\x15\x18U"                 # C-U C-X U
 READONLY = b"\x18\x11"
@@ -169,9 +169,9 @@ def main():
         # a message the way C-X 4 does, and C-G aborts cleanly.
         content, terminal = run(
             directory, "rect_f.txt", b"one\ntwo\n",
-            [b"\x18a\x0e",                            # C-X a C-N
-             b"\x18a\x07"])                           # C-X a C-G
-        expect(terminal.count (b"Unknown C-X a command") == 1,
+            [b"\x18r\x0e",                            # C-X r C-N
+             b"\x18r\x07"])                           # C-X r C-G
+        expect(terminal.count (b"Unknown C-X r command") == 1,
                "an unknown key after the prefix is refused")
         expect(b"[Aborted]" in terminal,
                "C-G aborts out of the prefix cleanly")

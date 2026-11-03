@@ -45,11 +45,11 @@ The current makefiles use MicroEMACS's built-in regular-expression engine.
 PCRE2 support is not enabled by these makefiles.
 
 
-**C-S, M-S** (**forw-search**)
+**C-S, M-S** (**forw-i-search**)
 
-Search forward, from the current location, toward the end of
-the buffer. If found, dot is positioned after the matched text. If the
-text is not found, dot does not move.
+Incremental search forward, from the current location, toward the
+end of the buffer: each character typed extends the search string
+and moves the dot as far as it matches. **ESC** exits.
 
 The **C-S**
 form of the command is not usable if the terminal being used
@@ -61,11 +61,19 @@ The **M-S** form of this command is easily entered on the Z-29
  keyboard
 by pressing the `F1` key.
 
-**C-R** (**back-search**)
+A **RET** pressed before any text has been typed drops into the
+plain, non-incremental **forw-search**: prompt for a string, then
+search forward. If found, dot is positioned after the matched text.
+If the text is not found, dot does not move.
 
-Search reverse, from the current location, toward the front of
-the buffer. If found, dot is positioned at the first character of the
-matched text. If the text is not found, dot does not move.
+**C-R** (**back-i-search**)
+
+Incremental search in reverse, from the current location, toward
+the front of the buffer; otherwise identical to **C-S**. A **RET**
+pressed before any text has been typed drops into the plain
+**back-search**: prompt for a string, then search in reverse. If
+found, dot is positioned at the first character of the matched text.
+If the text is not found, dot does not move.
 
 **M-C-S** (**forw-regexp-search**)
 
@@ -95,15 +103,15 @@ following: (){}[]<>
 
 **Pad-1,Shift-5** (**search-again**)
 
-Repeat the last forw-search command
-(**C-S, M-S**) or prev-search command (**C-R, M-R**),
+Repeat the last search, forward
+(**C-S, M-S**) or reverse (**C-R**),
 without prompting for a string.  This command is bound to two keys
 on the numeric keypad of the Z-29
 terminal: the `1` key, and the shifted
 `5` key.
 On PCs, this function is also bound to `F9`.
 
-**C-X S** (**forw-i-search**)
+**C-S** (**forw-i-search**)
 
 Enters incremental search mode, with
 the initial search direction being forward.  In incremental search mode
@@ -125,6 +133,9 @@ of the string.
 
 * **C-Q** (or **C-^**) quotes the next character (allows searching for C-N, etc.).
 
+* **RET** exits like **ESC**; pressed before any text has been typed,
+it drops into the plain **forw-search** or **back-search** instead.
+
 * **ESC** exits from incremental search mode.
 
 * **C-G** restores dot to original location before incremental search mode
@@ -138,11 +149,11 @@ characters accumulate into search string.
 * All other control characters exit from incremental search mode and
 are interpreted as normal commands.
 
-**C-X R** (**back-i-search**)
+**C-R** (**back-i-search**)
 
 Enters incremental search mode, with the initial search direction
 being reverse.
-Otherwise identical to **C-X S**.
+Otherwise identical to **C-S**.
 
 **M-Q,M-%** (**query-replace**)
 

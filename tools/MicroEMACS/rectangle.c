@@ -510,20 +510,19 @@ abortrectangle (int f, int n, int k)
 }
 
 /*
- * The C-X a prefix: read the next key and run the rectangle command
- * it names.  "getctl" folds the case of the key after C-X, so C-X r
- * cannot be told from C-X R "back-search".  The keys take the region
- * verbs one prefix deeper (C-W kill, M-W copy, C-y yank), with C-c
- * clear and C-o open from GNU Emacs's C-x r chords, and the anchor
- * sits on C-@, the set-mark key, as GNU's rectangles run between
- * point and mark.
+ * The C-X r prefix, as in GNU Emacs: read the next key and run the
+ * rectangle command it names.  The keys take the region verbs one
+ * prefix deeper (C-W kill, M-W copy, C-y yank), with C-c clear and
+ * C-o open from GNU Emacs's C-x r chords, and the anchor sits on
+ * C-@, the set-mark key, as GNU's rectangles run between point and
+ * mark.
  */
 int
 rectprefix (int f, int n, int k)
 {
   typedef struct RECTKEY
   {
-    int rk_key;			/* Key following C-X a.		 */
+    int rk_key;			/* Key following C-X r.		 */
     int (*rk_funcp) (int f, int n, int k);
   }
   RECTKEY;
@@ -558,6 +557,6 @@ rectprefix (int f, int n, int k)
        index < sizeof (rectkey) / sizeof (rectkey[0]); index++)
     if (rectkey[index].rk_key == key)
       return rectkey[index].rk_funcp (f, n, key);
-  eprintf ("Unknown C-X a command");
+  eprintf ("Unknown C-X r command");
   return ABORT;
 }

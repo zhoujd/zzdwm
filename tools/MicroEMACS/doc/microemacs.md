@@ -1291,7 +1291,7 @@ C-X C-O
 A *rectangle* is a column range of lines, cut on the *display-cell
 grid* \index{Display-cell grid}: the grid a line renders on, where a
 tab counts as the cells up to the next tab stop and a control
-character as two. Set the anchor on one corner with **C-X a C-@**
+character as two. Set the anchor on one corner with **C-X r C-@**
 (**C-Space** sends the same key), put dot on the opposite corner,
 and run a command; the corners work in any order, and each command
 drops the anchor once it has used it.
@@ -1300,18 +1300,16 @@ range, so one straddling an edge is taken whole; the commands that
 edit the buffer first expand a straddling tab into the spaces it
 renders as. Lines shorter than the rectangle read as blanks where
 text is copied. The rectangle clipboard is separate from the kill
-buffer. **C-X r**\index{C-X r}, the rectangle prefix in GNU Emacs,
-cannot be used here: the key reader folds the case of the character
-after **C-X**, so it would collide with **C-X R**
-(**back-search**). The keys under **C-X a** take the region verbs one
+buffer. The prefix is **C-X r**\index{C-X r}, as in GNU Emacs, and
+the keys take the region verbs one
 prefix deeper — **C-w**\index{C-w} kill, **M-W**\index{M-W} copy,
 **C-y** yank — with **C-c** clear and **C-o** open from GNU's
 rectangle chords, and the anchor on **C-@**\index{C-@}, the
 **set-mark** key, as GNU's rectangles run between point and mark.
 
-C-X a C-@
+C-X r C-@
 
-:   **rectangle-anchor**\index{C-X a C-@}\index{rectangle-anchor}
+:   **rectangle-anchor**\index{C-X r C-@}\index{rectangle-anchor}
 
     Drop the rectangle anchor at dot, remembering its line and
     column, or drop the anchor when one is already set. The anchor
@@ -1319,43 +1317,43 @@ C-X a C-@
     anchored line drops the anchor; the next command reports
     "Rectangle anchor lost".
 
-C-X a C-c
+C-X r C-c
 
-:   **clear-rectangle**\index{C-X a C-c}\index{clear-rectangle}
+:   **clear-rectangle**\index{C-X r C-c}\index{clear-rectangle}
 
     Blank the rectangle in place: its characters become spaces, one
     per cell they occupied, so nothing to the right moves. Dot stays
     at its column.
 
-C-X a C-o
+C-X r C-o
 
-:   **open-rectangle**\index{C-X a C-o}\index{open-rectangle}
+:   **open-rectangle**\index{C-X r C-o}\index{open-rectangle}
 
     Insert a column of blanks the width of the rectangle, shifting
     the text to the right of it. Lines too short to reach the
     rectangle are padded out to its left edge first. Dot is left on
     the upper left corner of the opened column.
 
-C-X a C-w
+C-X r C-w
 
-:   **kill-rectangle**\index{C-X a C-w}\index{kill-rectangle}
+:   **kill-rectangle**\index{C-X r C-w}\index{kill-rectangle}
 
     Copy the rectangle as **copy-rectangle** does, then remove its
     characters from each line. Dot is left on the upper left corner
     of what was the rectangle. One **C-X U** undoes the whole
     command.
 
-C-X a M-W
+C-X r M-W
 
-:   **copy-rectangle**\index{C-X a M-W}\index{copy-rectangle}
+:   **copy-rectangle**\index{C-X r M-W}\index{copy-rectangle}
 
     Copy the rectangle between the anchor and dot into the
     rectangle clipboard, leaving the buffer alone. A line of the
     rectangle that ends before the right edge contributes blanks.
 
-C-X a C-y
+C-X r C-y
 
-:   **yank-rectangle**\index{C-X a C-y}\index{yank-rectangle}
+:   **yank-rectangle**\index{C-X r C-y}\index{yank-rectangle}
 
     Insert the rectangle clipboard at dot's column, one slice on dot's
     line and the lines below. A line that ends before the column is
@@ -1606,31 +1604,36 @@ searches using a subset of POSIX regular expressions:
 
 * `+` (one or more occurrences)
 
-C-X S, M-S
+C-S RET
 
-:   **forw-search**\index{C-X S}\index{M-S}\index{forw-search}
+:   **forw-search**\index{C-S}\index{forw-search}
 
-    Search forward, from the current location, toward the end of
-    the buffer. If found, dot is positioned after the matched text. If the
-    text is not found, dot does not move.
+    A **RET** pressed in incremental search before any search text
+    has been typed drops into the plain, non-incremental search:
+    prompt for a string, then search forward, from the current
+    location, toward the end of the buffer. If found, dot is
+    positioned after the matched text. If the text is not found,
+    dot does not move.
 
     The **C-S**\index{Control-S}
     form of the command is not usable if the terminal being used
     required XON/XOFF\index{XON/XOFF} support.
     In fact, if you use this format of the command
     on such a terminal, it will hang until you type **C-Q**.
+    **M-S**, the `F1` key on the Z-29
+    \index{Zenith Z-29} keyboard,
+    starts the incremental search like **C-S**.
 
-    The **M-S** form of this command is easily entered on the Z-29
-    \index{Zenith Z-29} keyboard
-    by pressing the `F1` key.
+C-R RET
 
-C-X R
+:   **back-search**\index{C-R}\index{back-search}
 
-:   **back-search**\index{C-X R}\index{back-search}
-
-    Search reverse, from the current location, toward the front of
-    the buffer. If found, dot is positioned at the first character of the
-    matched text. If the text is not found, dot does not move.
+    A **RET** pressed in reverse incremental search before any search
+    text has been typed drops into the plain, non-incremental reverse
+    search: prompt for a string, then search in reverse, from the
+    current location, toward the front of the buffer. If found, dot is
+    positioned at the first character of the matched text. If the text
+    is not found, dot does not move.
 
 M-C-S
 
@@ -1704,6 +1707,10 @@ C-S
 
     * **C-W** appends the rest of the word after dot to the search pattern.
 
+    * **RET** exits like **ESC**; pressed before any text has been
+    typed, it drops into the plain **forw-search** or **back-search**
+    instead.
+
     * **ESC** exits from incremental search mode.
 
     * **C-G** restores dot to original location before incremental search mode
@@ -1723,7 +1730,7 @@ C-R
 
     Enters incremental search mode, with the initial search direction
     being reverse.
-    Otherwise identical to **C-X S**.
+    Otherwise identical to **C-S**.
 
 M-Q,M-%
 
@@ -2592,8 +2599,8 @@ name.
     them with the Control-Q (quote)\index{Control-Q}\index{quote} character.
 
     A quoted string must always follow a command that normally
-    prompt the user to enter a response string (for example, the search command
-    **C-X S**).  The
+    prompt the user to enter a response string (for example, the
+    **M-R** replace-string command).  The
     last character in the response string must be a carriage return
     (written as \\r).
 
@@ -3539,27 +3546,27 @@ M-+
 
 *Rectangles*
 
-C-X a C-@
+C-X r C-@
 
 :   rectangle-anchor
 
-C-X a C-c
+C-X r C-c
 
 :   clear-rectangle
 
-C-X a C-o
+C-X r C-o
 
 :   open-rectangle
 
-C-X a C-w
+C-X r C-w
 
 :   kill-rectangle
 
-C-X a M-W
+C-X r M-W
 
 :   copy-rectangle
 
-C-X a C-y
+C-X r C-y
 
 :   yank-rectangle
 
@@ -3571,7 +3578,7 @@ C-S
 
 M-S
 
-:   forw-search
+:   forw-i-search
 
 C-R
 
@@ -3597,11 +3604,11 @@ M-R
 
 :   replace-string
 
-C-X S
+C-S RET
 
 :   forw-search
 
-C-X R
+C-R RET
 
 :   back-search
 

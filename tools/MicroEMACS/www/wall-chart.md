@@ -107,25 +107,25 @@ C-X C-U : upper-region
 
 ## Rectangles
 
-C-X a C-@ : rectangle-anchor
+C-X r C-@ : rectangle-anchor
 
-C-X a C-c : clear-rectangle
+C-X r C-c : clear-rectangle
 
-C-X a C-o : open-rectangle
+C-X r C-o : open-rectangle
 
-C-X a C-w : kill-rectangle
+C-X r C-w : kill-rectangle
 
-C-X a M-W : copy-rectangle
+C-X r M-W : copy-rectangle
 
-C-X a C-y : yank-rectangle
+C-X r C-y : yank-rectangle
 
 ## Search and Replace
 
-`C-S` : forw-search
+`C-S` : forw-i-search
 
-`M-S` : forw-search
+`M-S` : forw-i-search
 
-`C-R` : back-search
+`C-R` : back-i-search
 
 `M-C-F` : fold-case
 
@@ -136,10 +136,6 @@ C-X a C-y : yank-rectangle
 `M-%` : query-replace
 
 `M-R` : replace-string
-
-C-X S : forw-i-search
-
-C-X R : back-i-search
 
 `M-C-S` : forw-regexp-search
 

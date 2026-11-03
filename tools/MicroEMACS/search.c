@@ -757,6 +757,8 @@ is_prompt (int dir, int flag, int success)
  *	^R	switch direction to reverse, find prev
  *	^Q	quote next character (allows searching for ^N etc.)
  *	<CR>	exit from Isearch. (<ESC> also does it).
+ *		With nothing typed yet, C-s RET / C-r RET drop
+ *		into the plain non-incremental search, as in GNU.
  *	<DEL>	undoes last character typed. (tricky job to do this correctly).
  *	<BKSP>	same as <DEL>
  *	else	accumulate into search string
@@ -804,7 +806,20 @@ isearch (int dir)
       switch (c)
         {
         case METACH:		/* ESC */
+          srch_lastdir = dir;
+          eprintf ("[Done]");
+          return (TRUE);
+
         case CCHR ('M'):	/* carriage return */
+          /* Nothing typed yet: C-s RET / C-r RET drop into the
+             plain non-incremental search, as in GNU.  A pattern
+             deleted back to empty has pptr 0, not -1, and exits. */
+          if (pptr == -1)
+            {
+              if (dir == SRCH_BACK)
+                return (backsearch (FALSE, 1, KRANDOM));
+              return (forwsearch (FALSE, 1, KRANDOM));
+            }
           srch_lastdir = dir;
           eprintf ("[Done]");
           return (TRUE);
