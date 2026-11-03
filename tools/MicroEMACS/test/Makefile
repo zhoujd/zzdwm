@@ -47,9 +47,10 @@ syntax-test: syntax.c $(ROOT)/utf8.c $(ROOT)/syntax.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ -I$(ROOT) -I$(ROOT)/sys/unix \
 		-I$(ROOT)/tty/ncurses -DCOLOR -DTEST syntax.c $(ROOT)/utf8.c
 
-display-test: display.c $(ROOT)/line.c $(ROOT)/mouse.c $(ROOT)/path.c $(ROOT)/utf8.c
-	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \
-		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/mingw \
+display-test: display.c $(ROOT)/line.c $(ROOT)/mouse.c $(ROOT)/path.c \
+		$(ROOT)/utf8.c $(ROOT)/rectangle.c
+	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections \
+		$(LDFLAGS) -Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/mingw \
 		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DMOUSE -DTEST display.c \
 		$(ROOT)/line.c $(ROOT)/mouse.c $(ROOT)/path.c $(ROOT)/utf8.c \
 		$(ROOT)/rectangle.c
@@ -61,15 +62,15 @@ mouse-test: mouse.c $(ROOT)/def.h $(ROOT)/mouse.c
 		-DMOUSE mouse.c
 
 cscope-test: cscope.c $(ROOT)/cscope.c $(ROOT)/sys/unix/spawn.c
-	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \
-		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/unix \
+	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections \
+		$(LDFLAGS) -Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/unix \
 		-I$(ROOT)/tty/ncurses -DTEST cscope.c $(ROOT)/sys/unix/spawn.c
 
 lisp-test: lisp.c $(ROOT)/lisp.c $(ROOT)/tinylisp.c $(ROOT)/tinylisp.h \
 		$(ROOT)/mouse.c $(ROOT)/path.c $(ROOT)/utf8.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections \
 		-fno-asynchronous-unwind-tables $(LDFLAGS) -Wl,--gc-sections \
-	-o $@ -DCOLOR -DLISP -DAI -DMOUSE -I$(ROOT) -I$(ROOT)/sys/unix \
+		-o $@ -DCOLOR -DLISP -DAI -DMOUSE -I$(ROOT) -I$(ROOT)/sys/unix \
 		-I$(ROOT)/tty/ncurses \
 		$< $(ROOT)/tinylisp.c $(ROOT)/mouse.c $(ROOT)/path.c \
 		$(ROOT)/utf8.c
