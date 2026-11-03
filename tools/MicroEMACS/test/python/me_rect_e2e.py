@@ -27,6 +27,16 @@ READONLY = b"\x18\x11"
 KILLLINE = b"\x0b"
 
 
+def sgr_mouse(code, col, row, final=b"M"):
+    """One SGR mouse report for a 0-based COL/ROW cell."""
+    return b"\x1b[<%d;%d;%d%s" % (code, col + 1, row + 1, final)
+
+
+def x10_mouse(code, col, row):
+    """One legacy X10 report for a 0-based COL/ROW cell."""
+    return b"\x1b[M" + bytes((32 + code, 33 + col, 33 + row))
+
+
 def expect(condition, description):
     print(("PASS " if condition else "FAIL ") + description)
     if not condition:
@@ -246,6 +256,77 @@ def main():
                    "C-G drops the anchor and its highlight")
         finally:
             kill(process, fd)
+
+        # A shifted button drag sweeps the rectangle: the press anchors
+        # the corner under the mouse, the drag carries the point with
+        # the highlight following it, and the release leaves the anchor
+        # set, so the next operator keys act on the dragged rectangle.
+        # SGR reports: press col 1 row 0 with shift, drag to col 4
+        # row 1, release there -- cols [1,4) over both lines.
+        content, terminal = run(
+            directory, "rect_i1.txt", b"abcd\nwxyz\n",
+            [sgr_mouse(4, 1, 0), sgr_mouse(36, 4, 1),
+             sgr_mouse(4, 4, 1, b"m"), CLEAR], mouse=True)
+        expect(b"48;5;24" in terminal,
+               "a shifted drag highlights the rectangle")
+        expect(b"[Rectangle of 2 lines selected]" in terminal,
+               "the release reports the swept lines")
+        expect(content == b"a   \nw   \n",
+               "clear acts on the dragged rectangle (%r)" % content)
+
+        # The same drag on the legacy X10 reports: the press arrives as
+        # a whole-gesture click with shift riding along, and the
+        # release is the three-button code with shift.  Kill takes the
+        # swept cells: cols [1,4) of both lines.
+        content, terminal = run(
+            directory, "rect_i2.txt", b"abcd\nwxyz\n",
+            [x10_mouse(4, 1, 0), x10_mouse(36, 4, 1),
+             x10_mouse(7, 4, 1), KILL], mouse=True)
+        expect(b"[Rectangle of 2 lines selected]" in terminal,
+               "an X10 release also completes the drag")
+        expect(content == b"a\nw\n",
+               "kill acts on the X10-dragged rectangle (%r)" % content)
+
+        # A control drag sweeps the same rectangle: st and xterm keep
+        # a shifted button for their own text selection, so control
+        # is the modifier that reaches the editor there.  Drag up and
+        # left this time -- press col 4 row 1, release col 1 row 0,
+        # the corners taken in the other order.
+        content, terminal = run(
+            directory, "rect_i3.txt", b"abcd\nwxyz\n",
+            [sgr_mouse(16, 4, 1), sgr_mouse(48, 1, 0),
+             sgr_mouse(16, 1, 0, b"m"), CLEAR], mouse=True)
+        expect(b"[Rectangle of 2 lines selected]" in terminal,
+               "a control drag also completes the rectangle")
+        expect(content == b"a   \nw   \n",
+               "clear acts on the control-dragged rectangle (%r)" % content)
+
+        # A right click extends the anchored rectangle instead of the
+        # region, so the two highlights never paint together: drag
+        # rows 0-1, right click on row 3, and the clear takes all
+        # four rows.
+        content, terminal = run(
+            directory, "rect_i4.txt", b"abcd\nwxyz\n1234\n7890\n",
+            [sgr_mouse(16, 1, 0), sgr_mouse(48, 4, 1),
+             sgr_mouse(16, 4, 1, b"m"),            # ctrl drag: rows 0-1
+             sgr_mouse(2, 5, 3), sgr_mouse(2, 5, 3, b"m"),  # right click
+             CLEAR], mouse=True)
+        expect(b"[Mouse kind" not in terminal,
+               "a right click with an anchor set is not a stray event")
+        expect(content == b"a   \nw   \n1   \n7   \n",
+               "a right click extends the anchored rectangle (%r)" % content)
+
+        # A plain click supersedes the anchor: after one, the kill
+        # reports the lost anchor and changes nothing.
+        content, terminal = run(
+            directory, "rect_i5.txt", b"abcd\nwxyz\n",
+            [sgr_mouse(16, 1, 0), sgr_mouse(16, 4, 1, b"m"),  # anchor set
+             sgr_mouse(0, 2, 0), sgr_mouse(0, 2, 0, b"m"),    # plain click
+             KILL], mouse=True)
+        expect(b"No rectangle anchor" in terminal,
+               "a plain click drops the rectangle anchor")
+        expect(content == b"abcd\nwxyz\n",
+               "the dropped anchor kills nothing (%r)" % content)
 
     print("RESULT: all passed")
 

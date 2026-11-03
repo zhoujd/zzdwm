@@ -92,6 +92,33 @@ rectcancel (void)
 }
 
 /*
+ * Set the anchor at point outright, without the toggle: the mouse
+ * sets it wherever the previous anchor was, as a shifted drag
+ * starts a fresh rectangle.  Returns FALSE past the last line,
+ * where "rectanchor" reports instead.
+ */
+int
+rectstart (void)
+{
+  if (curwp->w_dot.p == curbp->b_linep)
+    return (FALSE);
+  rect_lp = curwp->w_dot.p;
+  rect_col = wlcolumn (curwp->w_dot.p, curwp->w_dot.o);
+  rectchanged ();
+  return (TRUE);
+}
+
+/*
+ * Say whether the anchor is set, so the mouse can tell a gesture at
+ * the rectangle from one at the region.
+ */
+int
+rectset (void)
+{
+  return (rect_lp != NULL);
+}
+
+/*
  * The ordered corners of the rectangle: the anchor must still name a
  * line of this buffer, and the corners are normalized so that
  * "*first" is the upper line and "*s_col" the left column, both
@@ -346,14 +373,11 @@ rectanchor (int f, int n, int k)
       eprintf ("[Rectangle anchor dropped]");
       return (TRUE);
     }
-  if (curwp->w_dot.p == curbp->b_linep)
+  if (rectstart () == FALSE)
     {
       eprintf ("Cannot anchor past the last line");
       return (FALSE);
     }
-  rect_lp = curwp->w_dot.p;
-  rect_col = wlcolumn (curwp->w_dot.p, curwp->w_dot.o);
-  rectchanged ();
   eprintf ("[Rectangle anchored at column %d]", rect_col + 1);
   return (TRUE);
 }

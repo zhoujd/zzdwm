@@ -619,8 +619,14 @@ meanings:
 :   Tells MicroEMACS to enable the experimental mouse support: click to
     move point, double click to select the word under the mouse (a third
     click selects the whole line), drag to select the mark-to-point
-    region, a middle click to yank the kill buffer at the clicked cell, a
-    right click to extend the region, and the wheel to
+    region, a shifted or control drag to sweep out a rectangle (anchored
+    at the pressed cell and left set for the C-X r commands; control
+    for the terminals, st and xterm among them, that keep a shifted
+    drag for their own text selection), a middle click to
+    yank the kill buffer at the clicked cell, a
+    right click to extend the region — or the anchored rectangle, when
+    one is set, and a plain click then drops the anchor — and the
+    wheel to
     scroll the window under the mouse, by
     `mouse-wheel-step` lines per tick (a shifted wheel scrolls
     horizontally; terminals like st that send the Shift+PageUp/PageDown

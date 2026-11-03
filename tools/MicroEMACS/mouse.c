@@ -134,8 +134,12 @@ mouse_switch_window (EWINDOW *wp)
 /*
  * Drag selection state: a button-0 press anchors the mark at the
  * pressed cell and the drag extends the region until the release.
+ * A shifted or control press anchors the rectangle instead, and its
+ * drag sweeps the far corner: the point moves with the mouse, and
+ * the rectangle anchor stays where the press landed.
  */
 static int mouse_dragging;	/* Button 0 is held down.	 */
+static int mouse_rect_dragging; /* Shifted button 0 is held.	 */
 static int mouse_drag_moved;	/* Motion extended the region.	 */
 static EWINDOW *mouse_anchor_wp; /* Window the drag started in.  */
 static int mouse_anchor_row;	/* Pressed cell, row.		 */
@@ -279,8 +283,9 @@ mouse_select_line (EWINDOW *wp)
 
 /*
  * A middle event yanks the kill buffer at the clicked cell; a right
- * event extends the region to the clicked cell.  Returns TRUE when
- * the button was one of these, FALSE for the left button.
+ * event extends the region to the clicked cell, or the anchored
+ * rectangle when one is set.  Returns TRUE when the button was one
+ * of these, FALSE for the left button.
  */
 static int
 mouse_button_click (const EMOUSE *event)
@@ -297,7 +302,9 @@ mouse_button_click (const EMOUSE *event)
   if (event->button == 2)
     {
       wp = mouse_drop_dot (event, NULL);
-      if (wp != NULL && wp->w_mark.p != NULL)
+      if (wp != NULL && rectset () != FALSE)
+        wp->w_flag |= WFHARD;        /* The rectangle takes the cell. */
+      else if (wp != NULL && wp->w_mark.p != NULL)
         {
           mouseselect = TRUE;
           wp->w_flag |= WFHARD;
@@ -307,6 +314,44 @@ mouse_button_click (const EMOUSE *event)
       return TRUE;
     }
   return FALSE;
+}
+
+/*
+ * Begin a shifted drag on the pressed cell: anchor the rectangle
+ * there, and let the drag sweep the far corner, which is the point
+ * the mouse moves.  The mark and the region selection are left
+ * alone, and the new rectangle replaces whatever anchor stood, as
+ * "rectstart" sets one outright.
+ */
+static int
+mouse_rect_press (const EMOUSE *event)
+{
+  EWINDOW *wp;
+
+  wp = mouse_find_window (event->row);
+  if (wp == NULL)
+    {
+      endmouseselect ();
+      mouse_click_reset ();
+      return (TRUE);
+    }
+  if (event->row == wp->w_toprow + wp->w_ntrows)
+    {
+      mouse_switch_window (wp);
+      endmouseselect ();
+      mouse_click_reset ();
+      return (TRUE);
+    }
+  wp = mouse_drop_dot (event, NULL);
+  if (wp == NULL)
+    return (TRUE);
+  endmouseselect ();
+  if (rectstart () == FALSE)
+    return (TRUE);
+  mouse_rect_dragging = TRUE;
+  mouse_anchor_wp = wp;
+  wp->w_flag |= WFMOVE | WFHARD;
+  return (TRUE);
 }
 
 /*
@@ -323,11 +368,21 @@ mouse_button_click (const EMOUSE *event)
  * the region, and the release position completes it even when no
  * motion was reported; a press and release on the same cell is a
  * plain click, and the saved mark ring goes back, so clicking does
- * not disturb an existing mark.  Consecutive plain clicks on one
+ * not disturb an existing mark.  A shifted or control press anchors
+ * the rectangle at the pressed cell instead, and its drag sweeps
+ * the rectangle's far corner with the mouse, column-locked on the
+ * display-cell grid; the release reports the rectangle and leaves
+ * the anchor set for the next C-X r command.  Control works where
+ * shift cannot: st, xterm, and the like keep a shifted button for
+ * their own text selection.  Consecutive plain
+ * clicks on one
  * cell select the word (second click) or the whole line (third
  * click) at the clicked cell.  A middle event yanks the kill
  * buffer at the clicked cell, and a right event extends the region
- * to the clicked cell.  A press or click on a mode line selects
+ * to the clicked cell, or the anchored rectangle when one is set;
+ * a plain press or click drops a set anchor first, so the region
+ * and rectangle highlights never paint together.  A press or click
+ * on a mode line selects
  * that window.  A click that the tty layer reports as one complete
  * MOUSE_CLICK gesture is handled the same way, with the click
  * count supplied by the backend.
@@ -362,8 +417,14 @@ mouseevent (int f, int n, int k)
           endmouseselect ();
           return (TRUE);
         }
+      if (event.button == 0
+          && (event.modifiers & (MOUSE_SHIFT | MOUSE_CTRL)) != 0)
+        return mouse_rect_press (&event);
       if (mouse_button_click (&event) != FALSE)
         return (TRUE);
+      /* A plain click supersedes a set rectangle anchor; keeping it
+         would paint the two highlights over one cell. */
+      rectcancel ();
       /* Remember where the click landed, so the release that first
          tells of a release-reporting terminal can tell a settling
          click from a drag away from the clicked cell. */
@@ -409,6 +470,35 @@ mouseevent (int f, int n, int k)
     {
       int keep;			/* Region survives the release.  */
       int drift;			/* Column drift since the last click. */
+
+      /* A shifted drag ends by completing the rectangle at the
+         release cell; the anchor stays set for the next C-X r
+         command.  A release off the window the drag started in
+         keeps whatever the motion already swept. */
+      if (mouse_rect_dragging && event.button == 0)
+        {
+          LINE *first;
+          LINE *last;
+          int s_col, e_col, count;
+
+          mouse_rect_dragging = FALSE;
+          mouse_click_reset ();
+          wp = mouse_drop_dot (&event, mouse_anchor_wp);
+          if (wp == NULL)
+            return (TRUE);
+          if (rectdrawbounds (wp, &first, &last, &s_col, &e_col) == FALSE)
+            return (TRUE);
+          count = 0;
+          for (; ; first = lforw (first))
+            {
+              ++count;
+              if (first == last)
+                break;
+            }
+          eprintf ("[Rectangle of %d lines selected]", count);
+          wp->w_flag |= WFHARD;
+          return (TRUE);
+        }
 
       if (mouse_dragging && event.button == 0)
         {
@@ -501,7 +591,7 @@ mouseevent (int f, int n, int k)
     }
 
   /* Idle motion without a drag is ignored. */
-  if (event.kind == MOUSE_MOTION && !mouse_dragging)
+  if (event.kind == MOUSE_MOTION && !mouse_dragging && !mouse_rect_dragging)
     {
       mouse_click_reset ();
       return (TRUE);
@@ -510,7 +600,7 @@ mouseevent (int f, int n, int k)
   /* A fresh press anchors a drag on the pressed cell; a middle or
      right press acts like the matching click, and a press on a
      mode line selects that window. */
-  if (!mouse_dragging)
+  if (!mouse_dragging && !mouse_rect_dragging)
     {
       if (event.kind == MOUSE_PRESS && event.modifiers == 0)
         {
@@ -533,6 +623,9 @@ mouseevent (int f, int n, int k)
               mouse_click_reset ();
               return mouse_button_click (&event);
             }
+          /* A plain press supersedes a set rectangle anchor; keeping
+             it would paint the two highlights over one cell. */
+          rectcancel ();
           wp = mouse_drop_dot (&event, NULL);
           if (wp == NULL)
             return (TRUE);
@@ -548,6 +641,10 @@ mouseevent (int f, int n, int k)
           return (TRUE);
         }
 
+      if (event.kind == MOUSE_PRESS && event.button == 0
+          && (event.modifiers & (MOUSE_SHIFT | MOUSE_CTRL)) != 0)
+        return mouse_rect_press (&event);
+
       mouse_click_reset ();
       eprintf ("[Mouse kind %d, button %d, row %d, column %d, "
                "modifiers %d, clicks %d]",
@@ -557,8 +654,16 @@ mouseevent (int f, int n, int k)
     }
 
   /* Dragging: motion reports extend the region by moving the point
-     within the window the drag started in. */
+     within the window the drag started in.  A rectangle drag does
+     the same moving of the point; the anchored corner makes it the
+     far corner of the rectangle. */
   mouse_click_reset ();
+  if (mouse_rect_dragging)
+    {
+      if (mouse_drop_dot (&event, mouse_anchor_wp) != NULL)
+        mouse_anchor_wp->w_flag |= WFHARD;
+      return (TRUE);
+    }
   if (mouse_drop_dot (&event, mouse_anchor_wp) != NULL)
     {
       mouse_drag_moved = TRUE;

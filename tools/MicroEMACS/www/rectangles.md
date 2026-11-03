@@ -7,7 +7,14 @@ one corner with **C-X r C-@** (**C-Space** sends the same key), put
 dot on the opposite corner, and run a command; the corners work in any
 order, and each command drops the anchor once it has used it. While
 the anchor is set the rectangle between it and dot is highlighted,
-following dot, out past the end of a line that ends first.
+following dot, out past the end of a line that ends first. With the
+mouse on, a shifted or control drag selects the rectangle instead:
+the press anchors the cell under it, the drag sweeps the opposite
+corner, and the release leaves the anchor set for these commands;
+control is the one to use in terminals like st and xterm, which keep
+a shifted drag for their own text selection. While the anchor stands,
+a right click moves the far corner and a plain click drops the
+anchor, so the rectangle and region highlights never mix.
 
 A character is part of the rectangle when its cells intersect the
 range, so one straddling an edge is taken whole; the commands that

@@ -1128,6 +1128,8 @@ int rectdrawbounds (EWINDOW *wp, LINE **first, LINE **last,
                     int *s_col, int *e_col);
                                       /* Bounds for the highlight. */
 void rectcancel (void);               /* Drop anchor on an abort.  */
+int rectstart (void);                 /* Anchor at point, no toggle. */
+int rectset (void);                   /* Say whether the anchor is set. */
 
 /*
  Defined by "search.c".
