@@ -7,6 +7,8 @@ samples belong in [`examples`](../examples).
   origin ring and remaining navigation ideas.
 - [`cscope-hardening.md`](cscope-hardening.md) — completed implementation notes
   for robust cscope response parsing and Unix pipe handling.
+- [`enable-rectangle.md`](enable-rectangle.md) — completed implementation notes
+  for display-grid rectangle editing on the C-X r prefix.
 - [`legacy-platform-files.md`](legacy-platform-files.md) — completed notes for
   retaining obsolete BSD/VAX sources under `sys/legacy/`.
 - [`ai-connection.md`](ai-connection.md) — proposal for a local Ollama
