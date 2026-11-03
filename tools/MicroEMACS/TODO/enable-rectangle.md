@@ -43,5 +43,3 @@ search merge).
 
 * Region corners: taking the corners from mark-to-dot, the Emacs
   rule, instead of a dedicated anchor.
-* `bin/win64/me.exe` has not been rebuilt since the feature landed;
-  `Make.Mingw` already lists `rectangle.o`.
