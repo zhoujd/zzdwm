@@ -51,7 +51,8 @@ display-test: display.c $(ROOT)/line.c $(ROOT)/mouse.c $(ROOT)/path.c $(ROOT)/ut
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \
 		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/mingw \
 		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DMOUSE -DTEST display.c \
-		$(ROOT)/line.c $(ROOT)/mouse.c $(ROOT)/path.c $(ROOT)/utf8.c
+		$(ROOT)/line.c $(ROOT)/mouse.c $(ROOT)/path.c $(ROOT)/utf8.c \
+		$(ROOT)/rectangle.c
 
 mouse-test: mouse.c $(ROOT)/def.h $(ROOT)/mouse.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections \
