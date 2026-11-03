@@ -27,3 +27,7 @@ samples belong in [`examples`](../examples).
   filters such as `xxd` over native binary Hexl support.
 - [`x10-testing.md`](x10-testing.md) — how to exercise the legacy X10 mouse
   decoder with injected reports and X10-only terminals.
+- [`mouse-scope.md`](mouse-scope.md) — scope decisions and status of the
+  terminal mouse support.
+- [`enable-rectangle.md`](enable-rectangle.md) — proposal and plan for
+  enabling the rectangle editing sketch in `rectangle.c`.
