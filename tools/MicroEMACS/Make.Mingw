@@ -86,6 +86,7 @@ OBJ := \
 	osc52.o \
 	paragraph.o \
 	random.o \
+	rectangle.o \
 	regexp.o \
 	region.o \
 	regsub.o \

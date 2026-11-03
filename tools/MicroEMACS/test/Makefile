@@ -47,11 +47,11 @@ syntax-test: syntax.c $(ROOT)/utf8.c $(ROOT)/syntax.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ -I$(ROOT) -I$(ROOT)/sys/unix \
 		-I$(ROOT)/tty/ncurses -DCOLOR -DTEST syntax.c $(ROOT)/utf8.c
 
-display-test: display.c $(ROOT)/mouse.c $(ROOT)/path.c $(ROOT)/utf8.c
+display-test: display.c $(ROOT)/line.c $(ROOT)/mouse.c $(ROOT)/path.c $(ROOT)/utf8.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections -fdata-sections $(LDFLAGS) \
 		-Wl,--gc-sections -o $@ -I$(ROOT) -I$(ROOT)/sys/mingw \
 		-I$(ROOT)/tty/mingw -DMINGW -DCOLOR -DMOUSE -DTEST display.c \
-		$(ROOT)/mouse.c $(ROOT)/path.c $(ROOT)/utf8.c
+		$(ROOT)/line.c $(ROOT)/mouse.c $(ROOT)/path.c $(ROOT)/utf8.c
 
 mouse-test: mouse.c $(ROOT)/def.h $(ROOT)/mouse.c
 	$(CC) $(CFLAGS) -Wno-unused-parameter -ffunction-sections \

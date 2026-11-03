@@ -996,6 +996,62 @@ lcmp (LINE *lp1, LINE *lp2)
 }
 
 /*
+ * Display width of the character "c" when the text before it already
+ * occupies "col" cells: tabs expand to the next tab stop, control
+ * characters render as a two-cell "^X", and everything else is as
+ * wide as the terminal shows it (zero for combining characters).
+ * This is the cell grid "vtputc" paints.
+ */
+static int
+cellwidth (wchar_t c, int col)
+{
+  if (c == '\t')
+    return tabsize - col % tabsize;
+  if (CISCTRL (c) != FALSE)
+    return 2;
+  return uwidth (c);
+}
+
+/*
+ * Display column of character offset "offset" on line "lp": the
+ * number of cells the characters before that offset occupy.  The
+ * mouse maps its cells onto this grid, and the rectangles of
+ * "rectangle.c" are cut on it.
+ */
+int
+wlcolumn (LINE *lp, int offset)
+{
+  int col, i;
+
+  col = 0;
+  for (i = 0; i < offset && i < wllength (lp); ++i)
+    col += cellwidth (wlgetc (lp, i), col);
+  return col;
+}
+
+/*
+ * Character offset of display column "column" on line "lp": the
+ * first character whose cells reach that column, so a character
+ * straddling the column is the one found.  The offset is the line's
+ * length when the line ends first.
+ */
+int
+wlcoloffset (LINE *lp, int column)
+{
+  int col, off, width;
+
+  col = 0;
+  for (off = 0; off < wllength (lp); ++off)
+    {
+      width = cellwidth (wlgetc (lp, off), col);
+      if (col >= column || col + width > column)
+        return off;
+      col += width;
+    }
+  return off;
+}
+
+/*
  * Reset read pointer to start of kill buffer
  */
 void

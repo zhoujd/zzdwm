@@ -3,269 +3,561 @@
  */
 
 #include "def.h"
-#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /*
- * =========================================================================
- * RECTANGLE ENGINE CONFIGURATION & STRUCTURES (Add to def.h if needed)
- * =========================================================================
+ * Rectangle editing: operations on the column range between an
+ * anchored corner and point, on the display-cell grid (tabs and wide
+ * characters expanded) that "wlcolumn" and "wlcoloffset" map.  The
+ * commands share one dedicated clipboard, separate from the linear
+ * kill buffer, which holds one NUL-terminated UTF-8 string per line
+ * of the last rectangle copied or killed.
+ *
+ * A character belongs to the rectangle when its cells intersect the
+ * column range, so a character straddling an edge is included whole.
+ * The commands that edit the buffer first expand a tab that straddles
+ * an edge into the spaces it renders as, so only the part of it
+ * inside the rectangle goes; wide characters cannot be split and move
+ * whole.  Lines shorter than the rectangle read as blanks when text
+ * is copied, and only "open-rectangle" and "yank-rectangle" pad them
+ * out with real spaces.
+ *
+ * Every edit goes through linsert and ldelete, which check the
+ * read-only flag, save undo, and set the window flags.  Each edit
+ * position is first anchored with a UMOVE undo record, as the region
+ * commands do, so one undo replays the lines each at its own anchor
+ * and reverses the whole rectangle command.
  */
-#define MAX_RECT_LINES 512
 
-/* Structure to act as our dedicated column-based clipboard */
-typedef struct RECT_CLIPBOARD
-{
-  char *lines[MAX_RECT_LINES];
-  int line_count;
-  int width;
-}
-RECT_CLIPBOARD;
+static LINE *rect_lp;		/* Anchor line, NULL when none.	 */
+static int rect_col;		/* Anchor display column.	 */
 
-static RECT_CLIPBOARD rect_kill_buffer = { { NULL }, 0, 0 };
+static uchar **rect_lines;	/* Clipboard slices.		 */
+static int rect_count;
 
-/* Global tracking states (Ensure these are defined in def.h / main.c) */
-int rect_start_line = 0;
-int rect_start_col = 0;
-int rect_active = FALSE;
+static int rectbounds (LINE **first, LINE **last, int *s_col, int *e_col);
+static int rectsave (LINE *first, LINE *last, int s_col, int e_col);
+static uchar *rectslice (LINE *lp, int s_col, int e_col);
+static int rectcutline (LINE *lp, int s_col, int e_col, int blank);
 
 /*
- * Helper: Calculates the normalized bounding box.
- * This handles rectangles drawn backwards (bottom-to-top or right-to-left).
+ * Free the clipboard slices.
  */
 static void
-get_rect_bounds (int *s_row, int *e_row, int *s_col, int *e_col)
+rectfree (void)
 {
-  /*
-   * TODO: MicroEmacs tracks lines via a linked list of LINE structures
-   * (w_dotp). You will need to calculate the current integer row number of
-   * curwp->w_dotp relative to the top of the buffer to compare it against
-   * rect_start_line.
-   */
-  int current_row = 1; /* Placeholder: Implement get_current_row_index() */
-  int current_col
-      = getccol (FALSE); /* Native MicroEmacs function for current column */
-
-  *s_row = (rect_start_line < current_row) ? rect_start_line : current_row;
-  *e_row = (rect_start_line > current_row) ? rect_start_line : current_row;
-  *s_col = (rect_start_col < current_col) ? rect_start_col : current_col;
-  *e_col = (rect_start_col > current_col) ? rect_start_col : current_col;
+  while (rect_count > 0)
+    free (rect_lines[--rect_count]);
+  free (rect_lines);
+  rect_lines = NULL;
 }
 
 /*
- * Helper: Ensures a line structure physically has enough characters to reach
- * target_col. If it's too short, it pads it out with native space characters.
+ * The ordered corners of the rectangle: the anchor must still name a
+ * line of this buffer, and the corners are normalized so that
+ * "*first" is the upper line and "*s_col" the left column, both
+ * columns display columns counted from zero.
  */
 static int
-pad_line_to_col (LINE *lp, int target_col)
+rectbounds (LINE **first, LINE **last, int *s_col, int *e_col)
 {
-  while (lp->l_used < target_col)
+  LINE *lp;
+  int col;
+
+  if (rect_lp == NULL)
     {
-      /*
-       * TODO: Call your native character insertion primitive.
-       * Traditional MicroEmacs uses: linsert(1, ' ');
-       * This expands lp->l_text and increments lp->l_used.
-       */
-      if (linsert (1, ' ') == FALSE)
-        return FALSE;
+      eprintf ("No rectangle anchor");
+      return (FALSE);
     }
-  return TRUE;
-}
-
-/*
- * =========================================================================
- * CORE RECTANGLE INTERACTIVE COMMANDS
- * =========================================================================
- */
-
-/* Toggle Rectangle Mode on/off and drop anchor */
-int
-toggle_rectangle_mode (int f, int n, int k)
-{
-  if (rect_active)
+  /* The anchor line may have been deleted since the anchor was set;
+     look for it, so a pointer to freed memory is never followed. */
+  for (lp = lforw (curbp->b_linep); lp != curbp->b_linep; lp = lforw (lp))
+    if (lp == rect_lp)
+      break;
+  if (lp == curbp->b_linep)
     {
-      rect_active = FALSE;
-      eprintf ("[Rectangle Mode Disabled]");
+      rect_lp = NULL;
+      eprintf ("Rectangle anchor lost");
+      return (FALSE);
+    }
+  if (curwp->w_dot.p == curbp->b_linep)
+    {
+      eprintf ("Point is past the last line");
+      return (FALSE);
+    }
+  if (lcmp (rect_lp, curwp->w_dot.p) < 0)
+    {
+      *first = rect_lp;
+      *last = curwp->w_dot.p;
     }
   else
     {
-      rect_active = TRUE;
-      /* Record anchoring position */
-      rect_start_col = getccol (FALSE);
-      rect_start_line = 1; /* TODO: Assign actual current row index */
-      eprintf ("[Rectangle Mode Enabled]");
+      *first = curwp->w_dot.p;
+      *last = rect_lp;
     }
-  curwp->w_flag |= WFMOVE; /* Force MicroEmacs window redraw flag */
-  return TRUE;
+  col = wlcolumn (curwp->w_dot.p, curwp->w_dot.o);
+  *s_col = rect_col < col ? rect_col : col;
+  *e_col = rect_col > col ? rect_col : col;
+  return (TRUE);
 }
 
-/* Copy text within the bounds into the dedicated column clipboard */
-int
-copy_rectangle (int f, int n)
+/*
+ * One line's slice of the rectangle: the characters whose cells
+ * intersect [s_col, e_col), padded with spaces to the rectangle's
+ * width when the line ends first.  Returns a NUL-terminated
+ * malloc'ed string, or NULL when memory ran out.  The line is not
+ * modified; a character straddling an edge is taken whole.
+ */
+static uchar *
+rectslice (LINE *lp, int s_col, int e_col)
 {
-  int s_row, e_row, s_col, e_col;
-  get_rect_bounds (&s_row, &e_row, &s_col, &e_col);
+  uchar *slice;
+  int start, end;		/* Character offsets of the slice. */
+  int bytes, pad;
 
-  /* TODO: Free old strings inside rect_kill_buffer to avoid memory leaks */
-  rect_kill_buffer.line_count = 0;
-  rect_kill_buffer.width = e_col - s_col;
+  start = wlcoloffset (lp, s_col);
+  end = wlcoloffset (lp, e_col);
+  if (end < wllength (lp) && wlcolumn (lp, end) < e_col)
+    ++end;			/* The last character straddles.  */
+  bytes = wloffset (lp, end) - wloffset (lp, start);
+  /* Blanks for the cells from where the characters end, or from the
+     left edge on a line that never reaches it, to the right edge. */
+  pad = e_col - wlcolumn (lp, end);
+  if (wlcolumn (lp, end) < s_col)
+    pad = e_col - s_col;
+  if (pad < 0)
+    pad = 0;
+  slice = (uchar *) malloc (bytes + pad + 1);
+  if (slice == NULL)
+    return NULL;
+  memcpy (slice, lgets (lp) + wloffset (lp, start), bytes);
+  memset (slice + bytes, ' ', pad);
+  slice[bytes + pad] = '\0';
+  return slice;
+}
 
-  /* Find starting line structure pointer */
-  LINE *lp = curbp->b_linep->l_forw; /* Start at buffer top line */
-  // TODO: Loop lp = lforw(lp) until reaching s_row
+/*
+ * Read the whole rectangle into the clipboard, replacing what was
+ * there.  The lines are read before any of them is edited, so a kill
+ * saves the original characters.
+ */
+static int
+rectsave (LINE *first, LINE *last, int s_col, int e_col)
+{
+  uchar **lines;
+  int count;
 
-  for (int r = s_row; r <= e_row; r++)
+  lines = NULL;
+  count = 0;
+  for (LINE *lp = first; ; lp = lforw (lp))
     {
-      int width = e_col - s_col;
-      /* Allocate buffer slice */
-      char *slice = (char *)malloc (width + 1);
-
-      /* Copy out characters safely balancing line lengths */
-      for (int c = 0; c < width; c++)
+      uchar *slice = rectslice (lp, s_col, e_col);
+      uchar **grown = (uchar **) realloc (lines, (count + 1)
+                                          * sizeof (uchar *));
+      if (slice == NULL || grown == NULL)
         {
-          int actual_col = s_col + c;
-          if (actual_col < lp->l_used)
-            {
-              slice[c] = lp->l_text[actual_col];
-            }
-          else
-            {
-              slice[c] = ' '; /* Virtual white space padding */
-            }
+          /* realloc moved the array when it succeeded; free the
+             slices through whichever copy holds them. */
+          uchar **kept = grown != NULL ? grown : lines;
+          free (slice);
+          while (count > 0)
+            free (kept[--count]);
+          free (kept);
+          eprintf ("Out of memory");
+          return (FALSE);
         }
-      slice[width] = '\0';
-      rect_kill_buffer.lines[rect_kill_buffer.line_count++] = slice;
-
-      lp = lforw (lp);
+      lines = grown;
+      lines[count++] = slice;
+      if (lp == last)
+        break;
     }
-
-  rect_active = FALSE;
-  eprintf ("[Rectangle Copied]");
-  return TRUE;
+  rectfree ();
+  rect_lines = lines;
+  rect_count = count;
+  return (TRUE);
 }
 
-/* Delete characters within column bounds, shifting right side leftwards */
-int
-kill_rectangle (int f, int n, int k)
+/*
+ * Expand the tab at character offset "off" of line "lp" into the
+ * spaces it renders as, so a cut may split inside it.  Dot is left
+ * on the last replacement space.  Growing the line may reallocate
+ * it: the caller must take the line back from "curwp->w_dot.p"
+ * afterwards, not keep using "lp".
+ */
+static int
+rectexpandtab (LINE *lp, int off)
 {
-  /* First, copy it so it behaves like a true cut operation */
-  copy_rectangle (FALSE, 1);
+  int width = tabsize - wlcolumn (lp, off) % tabsize;
 
-  int s_row, e_row, s_col, e_col;
-  get_rect_bounds (&s_row, &e_row, &s_col, &e_col);
-  int width = e_col - s_col;
+  curwp->w_dot.p = lp;
+  curwp->w_dot.o = off;
+  saveundo (UMOVE, &curwp->w_dot);
+  if (ldelete (1, FALSE) == FALSE)
+    return (FALSE);
+  return linsert (width, ' ', NULLPTR);
+}
 
-  LINE *lp = curbp->b_linep->l_forw;
-  // TODO: Navigate lp pointer to s_row
+/*
+ * Cut the characters whose cells intersect [s_col, e_col) out of one
+ * line, through the ordinary edit primitives.  When "blank" is TRUE
+ * the cells are replaced by spaces instead of removed, so the line
+ * keeps its width.  A line that never reaches the rectangle is left
+ * alone.  Returns FALSE when the edit was refused.  The edits may
+ * replace "lp" with a reallocated line; the caller must not use its
+ * copy of "lp" afterwards.
+ */
+static int
+rectcutline (LINE *lp, int s_col, int e_col, int blank)
+{
+  int start, end, bytes, cells;
 
-  for (int r = s_row; r <= e_row; r++)
+  /* A tab straddling an edge goes as spaces, so only its cells
+     inside the rectangle are cut. */
+  for (int edge = 0; edge < 2; ++edge)
     {
-      if (lp->l_used > s_col)
+      int col = edge == 0 ? s_col : e_col;
+      int off = wlcoloffset (lp, col);
+      if (off < wllength (lp) && wlgetc (lp, off) == '\t'
+          && wlcolumn (lp, off) < col)
         {
-          /* Position cursor line internally to process modifications */
-          curwp->w_dotp = lp;
-          curwp->w_doto = s_col;
-
-          /* Calculate true width available to delete on this line */
-          int to_delete
-              = (s_col + width > lp->l_used) ? (lp->l_used - s_col) : width;
-
-          /* Native MicroEmacs deletion loop or internal ldelete call */
-          ldelete ((long)to_delete, FALSE);
+          if (rectexpandtab (lp, off) == FALSE)
+            return (FALSE);
+          lp = curwp->w_dot.p;
         }
-      lp = lforw (lp);
     }
-
-  sgarbf = TRUE; /* Force a complete terminal frame refresh */
-  return TRUE;
+  start = wlcoloffset (lp, s_col);
+  end = wlcoloffset (lp, e_col);
+  if (end < wllength (lp) && wlcolumn (lp, end) < e_col)
+    ++end;			/* A wide character straddles.	 */
+  if (start >= end)
+    return (TRUE);		/* Line misses the rectangle.	 */
+  bytes = wloffset (lp, end) - wloffset (lp, start);
+  cells = wlcolumn (lp, end) - wlcolumn (lp, start);
+  curwp->w_dot.p = lp;
+  curwp->w_dot.o = start;
+  saveundo (UMOVE, &curwp->w_dot);
+  if (ldelete (bytes, FALSE) == FALSE)
+    return (FALSE);
+  if (blank)
+    return linsert (cells, ' ', NULLPTR);
+  return (TRUE);
 }
 
-/* Insert clipboard column content down row intersections */
+/*
+ * Toggle the rectangle anchor at point.  The operators take the
+ * rectangle between the anchor and point, either way around, and the
+ * anchor is dropped once it has been used.
+ */
 int
-yank_rectangle (int f, int n, int k)
+rectanchor (int f, int n, int k)
 {
-  if (rect_kill_buffer.line_count == 0)
+  (void) f;
+  (void) n;
+  (void) k;
+
+  if (rect_lp != NULL)
     {
-      eprintf ("Error: Rectangle clipboard is empty.");
-      return FALSE;
+      rect_lp = NULL;
+      eprintf ("[Rectangle anchor dropped]");
+      return (TRUE);
     }
-
-  LINE *lp = curwp->w_dotp;
-  int target_col = curwp->w_doto;
-
-  for (int i = 0; i < rect_kill_buffer.line_count; i++)
+  if (curwp->w_dot.p == curbp->b_linep)
     {
+      eprintf ("Cannot anchor past the last line");
+      return (FALSE);
+    }
+  rect_lp = curwp->w_dot.p;
+  rect_col = wlcolumn (curwp->w_dot.p, curwp->w_dot.o);
+  eprintf ("[Rectangle anchored at column %d]", rect_col + 1);
+  return (TRUE);
+}
+
+/*
+ * Copy the rectangle between the anchor and point into the rectangle
+ * clipboard, leaving the buffer alone.  Short lines contribute
+ * blanks; they are not padded out in the buffer.
+ */
+int
+rectcopy (int f, int n, int k)
+{
+  LINE *first, *last;
+  int s_col, e_col;
+
+  (void) f;
+  (void) n;
+  (void) k;
+
+  if (rectbounds (&first, &last, &s_col, &e_col) == FALSE)
+    return (FALSE);
+  if (rectsave (first, last, s_col, e_col) == FALSE)
+    return (FALSE);
+  rect_lp = NULL;
+  eprintf ("[Rectangle of %d lines copied]", rect_count);
+  return (TRUE);
+}
+
+/*
+ * Kill the rectangle: save it as "copy-rectangle" does, then remove
+ * its characters from each line.  Point is left on the upper left
+ * corner of what was the rectangle.
+ */
+int
+rectkill (int f, int n, int k)
+{
+  LINE *lp, *first, *last, *above;
+  int s_col, e_col;
+
+  (void) f;
+  (void) n;
+  (void) k;
+
+  if (rectbounds (&first, &last, &s_col, &e_col) == FALSE)
+    return (FALSE);
+  if (rectsave (first, last, s_col, e_col) == FALSE)
+    return (FALSE);
+  /* "above" names the upper left corner after the cuts: a cut that
+     grows a line frees and replaces it, and this neighbor is never
+     touched.  Likewise "next" is read before the line holding it
+     can be cut. */
+  above = lback (first);
+  for (lp = first; ; )
+    {
+      LINE *next = lforw (lp);
+      int done = lp == last;
+      if (rectcutline (lp, s_col, e_col, FALSE) == FALSE)
+        return (FALSE);
+      if (done)
+        break;
+      lp = next;
+    }
+  rect_lp = NULL;
+  curwp->w_dot.p = lforw (above);
+  curwp->w_dot.o = wlcoloffset (curwp->w_dot.p, s_col);
+  curwp->w_flag |= WFMOVE;
+  eprintf ("[Rectangle of %d lines killed]", rect_count);
+  return (TRUE);
+}
+
+/*
+ * Blank the rectangle in place: its characters become spaces, one
+ * per cell they occupied, so nothing on the line moves.  Point is
+ * left at the column it was at.
+ */
+int
+rectclear (int f, int n, int k)
+{
+  LINE *lp, *first, *last, *beyond;
+  int before, col, s_col, e_col, count;
+
+  (void) f;
+  (void) n;
+  (void) k;
+
+  if (rectbounds (&first, &last, &s_col, &e_col) == FALSE)
+    return (FALSE);
+  /* Remember point by the neighbor outside the rectangle beside its
+     line and by its column, because a blank that grows the line
+     frees and replaces the line itself. */
+  before = curwp->w_dot.p == first;
+  beyond = before != FALSE ? lback (first) : lforw (last);
+  col = wlcolumn (curwp->w_dot.p, curwp->w_dot.o);
+  count = 0;
+  for (lp = first; ; )
+    {
+      LINE *next = lforw (lp);
+      int done = lp == last;
+      if (rectcutline (lp, s_col, e_col, TRUE) == FALSE)
+        return (FALSE);
+      ++count;
+      if (done)
+        break;
+      lp = next;
+    }
+  rect_lp = NULL;
+  curwp->w_dot.p = before != FALSE ? lforw (beyond) : lback (beyond);
+  curwp->w_dot.o = wlcoloffset (curwp->w_dot.p, col);
+  curwp->w_flag |= WFMOVE;
+  eprintf ("[Rectangle of %d lines cleared]", count);
+  return (TRUE);
+}
+
+/*
+ * Open the rectangle: insert one column of blanks per column of the
+ * rectangle, shifting the text to the right of it.  Lines too short
+ * to reach the rectangle are padded out to its left edge first.
+ * Point is left on the upper left corner of the opened column.
+ */
+int
+rectopen (int f, int n, int k)
+{
+  LINE *lp, *first, *last, *above;
+  int s_col, e_col, count;
+
+  (void) f;
+  (void) n;
+  (void) k;
+
+  if (rectbounds (&first, &last, &s_col, &e_col) == FALSE)
+    return (FALSE);
+  above = lback (first);
+  count = 0;
+  for (lp = first; ; )
+    {
+      LINE *next = lforw (lp);
+      int done = lp == last;
+      int end_col = wlcolumn (lp, wllength (lp));
+      curwp->w_dot.p = lp;
+      if (end_col < s_col)
+        {
+          curwp->w_dot.o = wllength (lp);
+          saveundo (UMOVE, &curwp->w_dot);
+          if (linsert (s_col - end_col, ' ', NULLPTR) == FALSE)
+            return (FALSE);
+          lp = curwp->w_dot.p;	/* The pad may replace the line. */
+        }
+      curwp->w_dot.o = wlcoloffset (lp, s_col);
+      saveundo (UMOVE, &curwp->w_dot);
+      if (linsert (e_col - s_col, ' ', NULLPTR) == FALSE)
+        return (FALSE);
+      ++count;
+      if (done)
+        break;
+      lp = next;
+    }
+  rect_lp = NULL;
+  curwp->w_dot.p = lforw (above);
+  curwp->w_dot.o = wlcoloffset (curwp->w_dot.p, s_col);
+  curwp->w_flag |= WFMOVE;
+  eprintf ("[Rectangle of %d lines opened]", count);
+  return (TRUE);
+}
+
+/*
+ * Yank the rectangle clipboard at point: each slice goes on the line
+ * of point and the lines below, at point's column, padded out with
+ * spaces when a line ends first.  The yank stops at the end of the
+ * buffer.
+ */
+int
+rectyank (int f, int n, int k)
+{
+  LINE *lp;
+  int col, i;
+
+  (void) f;
+  (void) n;
+  (void) k;
+
+  if (rect_count == 0 || rect_lines == NULL)
+    {
+      eprintf ("No rectangle in the clipboard");
+      return (FALSE);
+    }
+  if (curwp->w_dot.p == curbp->b_linep)
+    {
+      eprintf ("Cannot yank past the last line");
+      return (FALSE);
+    }
+  lp = curwp->w_dot.p;
+  col = wlcolumn (lp, curwp->w_dot.o);
+  for (i = 0; i < rect_count; ++i)
+    {
+      int end_col, bytes;
+      uchar *slice = rect_lines[i];
+      LINE *next;
+
       if (lp == curbp->b_linep)
-        break; /* Avoid passing buffer boundary */
-
-      curwp->w_dotp = lp;
-      pad_line_to_col (lp, target_col);
-      curwp->w_doto = target_col;
-
-      /* Insert text string at this line's target column */
-      char *str = rect_kill_buffer.lines[i];
-      while (*str)
         {
-          linsert (1, *str++);
+          eprintf ("[Yanked %d of %d lines: end of buffer]", i,
+                   rect_count);
+          break;
         }
-
-      lp = lforw (lp);
+      next = lforw (lp);		/* Read before "lp" can be replaced. */
+      end_col = wlcolumn (lp, wllength (lp));
+      curwp->w_dot.p = lp;
+      if (end_col < col)
+        {
+          curwp->w_dot.o = wllength (lp);
+          saveundo (UMOVE, &curwp->w_dot);
+          if (linsert (col - end_col, ' ', NULLPTR) == FALSE)
+            return (FALSE);
+          lp = curwp->w_dot.p;	/* The pad may replace the line. */
+        }
+      curwp->w_dot.o = wlcoloffset (lp, col);
+      saveundo (UMOVE, &curwp->w_dot);
+      bytes = strlen ((char *) slice);
+      if (linsert (bytes, 0, (char *) slice) == FALSE)
+        return (FALSE);
+      lp = next;
     }
-
-  sgarbf = TRUE;
-  return TRUE;
+  curwp->w_flag |= WFMOVE;
+  eprintf ("[Rectangle of %d lines yanked]", i);
+  return (TRUE);
 }
 
-/* Blank out structural components inside boundaries without changing text
- * positions */
-int
-clear_rectangle (int f, int n, int k)
+/*
+ * Abort out of the prefix, as "abortotherwind" does for C-X 4.
+ */
+static int
+abortrectangle (int f, int n, int k)
 {
-  int s_row, e_row, s_col, e_col;
-  get_rect_bounds (&s_row, &e_row, &s_col, &e_col);
+  int status = ctrlg (f, n, k);
 
-  LINE *lp = curbp->b_linep->l_forw;
-  // TODO: Navigate lp pointer to s_row
-
-  for (int r = s_row; r <= e_row; r++)
-    {
-      for (int c = s_col; c < e_col; c++)
-        {
-          if (c < lp->l_used)
-            {
-              lp->l_text[c] = ' '; /* Overwrite with spaces */
-            }
-        }
-      lp = lforw (lp);
-    }
-
-  lchange (WFMOD); /* Mark buffer altered/dirty state */
-  return TRUE;
+  if (status == ABORT)
+    eprintf ("[Aborted]");
+  return status;
 }
 
-/* Shift text columns eastwardly by inserting blank columns */
+/*
+ * The C-X a prefix: read the next key and run the rectangle command
+ * it names.  "getctl" folds the case of the key after C-X, so C-X r
+ * cannot be told from C-X R "back-search".  The keys take the region
+ * verbs one prefix deeper (C-W kill, M-W copy, C-y yank), with C-c
+ * clear and C-o open from GNU Emacs's C-x r chords, and the anchor
+ * sits on C-@, the set-mark key, as GNU's rectangles run between
+ * point and mark.
+ */
 int
-open_rectangle (int f, int n, int k)
+rectprefix (int f, int n, int k)
 {
-  int s_row, e_row, s_col, e_col;
-  get_rect_bounds (&s_row, &e_row, &s_col, &e_col);
-  int width = e_col - s_col;
+  typedef struct RECTKEY
+  {
+    int rk_key;			/* Key following C-X a.		 */
+    int (*rk_funcp) (int f, int n, int k);
+  }
+  RECTKEY;
 
-  LINE *lp = curbp->b_linep->l_forw;
-  // TODO: Navigate lp pointer to s_row
+  static const RECTKEY rectkey[] =
+  {
+    {KCTRL | '@', rectanchor},
+    {KCTRL | 'C', rectclear},
+    {KCTRL | 'W', rectkill},
+    {KCTRL | 'O', rectopen},
+    {KMETA | 'W', rectcopy},
+    {KCTRL | 'Y', rectyank},
+    {KCTRL | 'G', abortrectangle}
+  };
+  int key;
 
-  for (int r = s_row; r <= e_row; r++)
+  (void) k;
+  if (kbdmop != NULL)
+    key = *kbdmop++;
+  else
     {
-      curwp->w_dotp = lp;
-      pad_line_to_col (lp, s_col);
-      curwp->w_doto = s_col;
-
-      for (int i = 0; i < width; i++)
+      key = getkey ();
+      if (kbdmip != NULL)
         {
-          linsert (1, ' ');
+          if (kbdmip > &kbdm[NKBDM - 2])
+            return ABORT;
+          *kbdmip++ = key;
         }
-      lp = lforw (lp);
     }
 
-  sgarbf = TRUE;
-  return TRUE;
+  for (unsigned int index = 0;
+       index < sizeof (rectkey) / sizeof (rectkey[0]); index++)
+    if (rectkey[index].rk_key == key)
+      return rectkey[index].rk_funcp (f, n, key);
+  eprintf ("Unknown C-X a command");
+  return ABORT;
 }

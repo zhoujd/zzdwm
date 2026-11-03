@@ -9,6 +9,7 @@
 * [Moving Around](moving-around.md)
 * [Inserting](inserting.md)
 * [Deleting and Killing](deleting.md)
+* [Rectangles](rectangles.md)
 * [Words](words.md)
 * [Paragraphs](paragraphs.md)
 * [Case Conversion](case-conversion.md)

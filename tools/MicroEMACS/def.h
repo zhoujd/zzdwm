@@ -1025,6 +1025,8 @@ int lreplace (int plen, const char *st, int f);
 int kinsert (const char *s, int n);     /* Insert text in kill buffer   */
 void kdelete (void);                    /* Delete text in kill buffer   */
 int lcmp (LINE *lp1, LINE *lp2);        /* Compare two line pointers    */
+int wlcolumn (LINE *lp, int offset);    /* Display column of offset.    */
+int wlcoloffset (LINE *lp, int column); /* Offset of display column.    */
 void krewind (void);                    /* Reset read pointer to start  */
 int kgetc (void);                       /* Get next from kill buffer    */
 
@@ -1112,7 +1114,18 @@ void pushmark (POS pos);
 void clearmarks (MARKRING *ring);
 
 /*
- * Defined by "search.c".
+ * Defined by "rectangle.c".
+ */
+int rectanchor (int f, int n, int k); /* Toggle rectangle anchor. */
+int rectcopy (int f, int n, int k);   /* Copy rectangle.          */
+int rectkill (int f, int n, int k);   /* Kill rectangle.          */
+int rectclear (int f, int n, int k);  /* Blank rectangle.         */
+int rectopen (int f, int n, int k);   /* Open rectangle columns.  */
+int rectyank (int f, int n, int k);   /* Yank rectangle.          */
+int rectprefix (int f, int n, int k); /* The C-X a prefix reader. */
+
+/*
+ Defined by "search.c".
  */
 int forwsearch (int f, int n, int k);   /* Search forward               */
 int backsearch (int f, int n, int k);   /* Search backwards             */

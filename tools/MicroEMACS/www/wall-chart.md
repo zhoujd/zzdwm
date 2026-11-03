@@ -105,6 +105,20 @@ C-X C-U : upper-region
 
 `C-W` : kill-region
 
+## Rectangles
+
+C-X a C-@ : rectangle-anchor
+
+C-X a C-c : clear-rectangle
+
+C-X a C-o : open-rectangle
+
+C-X a C-w : kill-rectangle
+
+C-X a M-W : copy-rectangle
+
+C-X a C-y : yank-rectangle
+
 ## Search and Replace
 
 `C-S` : forw-search

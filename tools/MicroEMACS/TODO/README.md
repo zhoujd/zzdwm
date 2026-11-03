@@ -29,5 +29,3 @@ samples belong in [`examples`](../examples).
   decoder with injected reports and X10-only terminals.
 - [`mouse-scope.md`](mouse-scope.md) — scope decisions and status of the
   terminal mouse support.
-- [`enable-rectangle.md`](enable-rectangle.md) — proposal and plan for
-  enabling the rectangle editing sketch in `rectangle.c`.

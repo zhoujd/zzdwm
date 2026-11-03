@@ -96,33 +96,6 @@ mousedecodesgr (EMOUSE *event, int code, int row, int column,
 
 int mouse_wheel_step = 3;	/* Lines per wheel scroll.	*/
 
-static int
-mouse_line_offset (const LINE *line, int column)
-{
-  const uchar *text = lgets (line);
-  const uchar *end = text + llength (line);
-  int display_column = 0;
-  int offset = 0;
-
-  while (text < end)
-    {
-      wchar_t character;
-      int character_width;
-      int length;
-
-      character = ugetc (text, 0, &length);
-      character_width = character == '\t'
-                        ? tabsize - display_column % tabsize : uwidth (character);
-      if (display_column >= column || display_column + character_width > column)
-        return offset;
-
-      display_column += character_width;
-      text += length;
-      ++offset;
-    }
-  return offset;
-}
-
 /*
  * Find the window that owns the given screen row, or NULL if the
  * row does not belong to a window (for example the echo line).
@@ -225,7 +198,7 @@ mouse_drop_dot (const EMOUSE *event, EWINDOW *only)
   text_column = event->column - window_gutter_width (wp)
                 + wp->w_leftcol;
   wp->w_dot.p = line;
-  wp->w_dot.o = mouse_line_offset (line, text_column);
+  wp->w_dot.o = wlcoloffset (line, text_column);
   wp->w_hscroll = FALSE;
   wp->w_flag |= WFMOVE;
   return wp;
