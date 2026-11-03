@@ -16,7 +16,7 @@ escape sequences to terminal output modes.
 | `me_x10_e2e.py` | legacy X10 reports on `st-256color` and `linux` terminfo |
 | `me_mouse_e2e.py` | click-to-dot, double-click word select, vertical wheel |
 | `me_toggle_e2e.py` | `toggle-mouse` runtime reporting on/off |
-| `me_rect_e2e.py` | rectangle kill/yank/clear/open/string through the C-X r prefix |
+| `me_rect_e2e.py` | rectangle kill/yank/clear/open/string through the C-X r prefix, and the anchor highlight |
 | `me_search_e2e.py` | i-search on C-S/C-R/M-S, RET falling into the non-incremental search |
 | `me_dvtm_e2e.py` | mouse forwarding through dvtm, with and without its own mouse handling |
 

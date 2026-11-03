@@ -40,6 +40,8 @@ static int rectbounds (LINE **first, LINE **last, int *s_col, int *e_col);
 static int rectsave (LINE *first, LINE *last, int s_col, int e_col);
 static uchar *rectslice (LINE *lp, int s_col, int e_col);
 static int rectcutline (LINE *lp, int s_col, int e_col, int blank);
+static void rectchanged (void);
+static void rectdrop (void);
 
 /*
  * Free the clipboard slices.
@@ -51,6 +53,42 @@ rectfree (void)
     free (rect_lines[--rect_count]);
   free (rect_lines);
   rect_lines = NULL;
+}
+
+/*
+ * Note that the anchor moved or went away, so that every window
+ * repaints: a window can lose the highlight without a flag of its
+ * own, as when the anchor is dropped and nothing else changed.
+ */
+static void
+rectchanged (void)
+{
+  EWINDOW *wp;
+
+  ALLWIND (wp)
+    wp->w_flag |= WFHARD;
+}
+
+/*
+ * Drop the anchor, repainting the highlight that showed it.
+ */
+static void
+rectdrop (void)
+{
+  rect_lp = NULL;
+  rectchanged ();
+}
+
+/*
+ * Drop the anchor on an abort: C-G cancels the pending state of a
+ * command, and the highlight goes with the anchor, as GNU's C-G
+ * deactivates the mark.
+ */
+void
+rectcancel (void)
+{
+  if (rect_lp != NULL)
+    rectdrop ();
 }
 
 /*
@@ -77,7 +115,7 @@ rectbounds (LINE **first, LINE **last, int *s_col, int *e_col)
       break;
   if (lp == curbp->b_linep)
     {
-      rect_lp = NULL;
+      rectdrop ();
       eprintf ("Rectangle anchor lost");
       return (FALSE);
     }
@@ -97,6 +135,52 @@ rectbounds (LINE **first, LINE **last, int *s_col, int *e_col)
       *last = rect_lp;
     }
   col = wlcolumn (curwp->w_dot.p, curwp->w_dot.o);
+  *s_col = rect_col < col ? rect_col : col;
+  *e_col = rect_col > col ? rect_col : col;
+  return (TRUE);
+}
+
+/*
+ * The rectangle for the display: like "rectbounds", but for the
+ * point of window "wp" rather than the current one, and silent, as
+ * the display asks every window and having nothing to draw is not
+ * an error.  The order of the corners comes from the walk for the
+ * anchor line, not from "lcmp", which reads the current window's
+ * buffer.
+ */
+int
+rectdrawbounds (EWINDOW *wp, LINE **first, LINE **last, int *s_col,
+                int *e_col)
+{
+  LINE *lp;
+  int dot_first;
+  int col;
+
+  if (rect_lp == NULL || wp->w_dot.p == wp->w_bufp->b_linep)
+    return (FALSE);
+  /* Look for the anchor line, noting whether the point's line is
+     passed first: that gives the order of the corners. */
+  dot_first = FALSE;
+  for (lp = lforw (wp->w_bufp->b_linep); ; lp = lforw (lp))
+    {
+      if (lp == wp->w_dot.p)
+        dot_first = TRUE;
+      if (lp == rect_lp)
+        break;
+      if (lp == wp->w_bufp->b_linep)
+        return (FALSE);		/* Not this buffer's anchor.	 */
+    }
+  if (dot_first)
+    {
+      *first = wp->w_dot.p;
+      *last = rect_lp;
+    }
+  else
+    {
+      *first = rect_lp;
+      *last = wp->w_dot.p;
+    }
+  col = wlcolumn (wp->w_dot.p, wp->w_dot.o);
   *s_col = rect_col < col ? rect_col : col;
   *e_col = rect_col > col ? rect_col : col;
   return (TRUE);
@@ -258,7 +342,7 @@ rectanchor (int f, int n, int k)
 
   if (rect_lp != NULL)
     {
-      rect_lp = NULL;
+      rectdrop ();
       eprintf ("[Rectangle anchor dropped]");
       return (TRUE);
     }
@@ -269,6 +353,7 @@ rectanchor (int f, int n, int k)
     }
   rect_lp = curwp->w_dot.p;
   rect_col = wlcolumn (curwp->w_dot.p, curwp->w_dot.o);
+  rectchanged ();
   eprintf ("[Rectangle anchored at column %d]", rect_col + 1);
   return (TRUE);
 }
@@ -292,7 +377,7 @@ rectcopy (int f, int n, int k)
     return (FALSE);
   if (rectsave (first, last, s_col, e_col) == FALSE)
     return (FALSE);
-  rect_lp = NULL;
+  rectdrop ();
   eprintf ("[Rectangle of %d lines copied]", rect_count);
   return (TRUE);
 }
@@ -331,7 +416,7 @@ rectkill (int f, int n, int k)
         break;
       lp = next;
     }
-  rect_lp = NULL;
+  rectdrop ();
   curwp->w_dot.p = lforw (above);
   curwp->w_dot.o = wlcoloffset (curwp->w_dot.p, s_col);
   curwp->w_flag |= WFMOVE;
@@ -374,7 +459,7 @@ rectclear (int f, int n, int k)
         break;
       lp = next;
     }
-  rect_lp = NULL;
+  rectdrop ();
   curwp->w_dot.p = before != FALSE ? lforw (beyond) : lback (beyond);
   curwp->w_dot.o = wlcoloffset (curwp->w_dot.p, col);
   curwp->w_flag |= WFMOVE;
@@ -427,7 +512,7 @@ rectopen (int f, int n, int k)
         break;
       lp = next;
     }
-  rect_lp = NULL;
+  rectdrop ();
   curwp->w_dot.p = lforw (above);
   curwp->w_dot.o = wlcoloffset (curwp->w_dot.p, s_col);
   curwp->w_flag |= WFMOVE;
@@ -487,7 +572,7 @@ rectstring (int f, int n, int k)
         break;
       lp = next;
     }
-  rect_lp = NULL;
+  rectdrop ();
   curwp->w_dot.p = lforw (above);
   curwp->w_dot.o = wlcoloffset (curwp->w_dot.p, s_col);
   curwp->w_flag |= WFMOVE;

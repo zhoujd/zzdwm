@@ -5,7 +5,9 @@ grid*: the grid a line renders on, where a tab counts as the cells up
 to the next tab stop and a control character as two. Set the anchor on
 one corner with **C-X r C-@** (**C-Space** sends the same key), put
 dot on the opposite corner, and run a command; the corners work in any
-order, and each command drops the anchor once it has used it.
+order, and each command drops the anchor once it has used it. While
+the anchor is set the rectangle between it and dot is highlighted,
+following dot, out past the end of a line that ends first.
 
 A character is part of the rectangle when its cells intersect the
 range, so one straddling an edge is taken whole; the commands that
@@ -26,7 +28,8 @@ point and mark.
 Drop the rectangle anchor at dot, remembering its line and column, or
 drop the anchor when one is already set. The anchor cannot be set past
 the last line. Editing that removes the anchored line drops the
-anchor; the next command reports "Rectangle anchor lost".
+anchor; the next command reports "Rectangle anchor lost". **C-G**
+drops it too, taking the highlight with it.
 
 **C-X r C-c** (**clear-rectangle**)
 

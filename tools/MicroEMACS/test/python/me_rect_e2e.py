@@ -8,6 +8,7 @@ first.  Short lines read as blanks when text is copied and are padded
 out by yank.  One undo reverses a whole kill."""
 
 import os
+import re
 import tempfile
 
 from common import drain, kill, save_quit, spawn
@@ -207,6 +208,44 @@ def main():
                "C-G aborts out of the prefix cleanly")
         expect(content == b"one\ntwo\n",
                "the refused prefix keys changed nothing (%r)" % content)
+
+        # The anchor highlight: while the anchor is set, the
+        # anchor-to-point rectangle is painted in the selection
+        # color, following the point.  A drop changes nothing else,
+        # so the refresh after it is what proves the repaint; the
+        # clear at the mid-point repaints every row it blanked.
+        # The painted runs after a full refresh name their rows, so
+        # a rectangle off by a row is caught, not just its absence.
+        path = os.path.join(directory, "rect_h1.txt")
+        with open(path, "wb") as output_file:
+            output_file.write(b"abcd\nwxyz\n")
+        process, fd = spawn(path)
+        try:
+            startup = send(fd, b"", 1.5)
+            expect(b"48;5;24" not in startup,
+                   "no highlight before the anchor is set")
+            send(fd, ANCHOR)
+            moved = send(fd, DOWN + RIGHT * 2)       # point (1,2)
+            expect(b"48;5;24" in moved,
+                   "the anchor-to-point rectangle is highlighted")
+            full = send(fd, b"\x0c")                 # C-L refresh
+            runs = re.findall (rb"\x1b\[48;5;24m([^\x1b]*)", full)
+            expect(any(r.startswith(b"ab") for r in runs)
+                   and any(r.startswith(b"wx") for r in runs),
+                   "the highlight paints its own rows' cells (%r)" % runs)
+            cleared = send(fd, CLEAR)
+            expect(b"48;5;24" not in cleared,
+                   "the highlight is gone once the anchor is used")
+            send(fd, ANCHOR)                         # anchor at (1,2)
+            moved = send(fd, UP + RIGHT)             # point (0,3)
+            expect(b"48;5;24" in moved,
+                   "a fresh anchor highlights again")
+            aborted = send(fd, b"\x07")              # C-G drops it
+            redrawn = send(fd, b"\x0c")              # C-L refresh
+            expect(b"48;5;24" not in redrawn,
+                   "C-G drops the anchor and its highlight")
+        finally:
+            kill(process, fd)
 
     print("RESULT: all passed")
 

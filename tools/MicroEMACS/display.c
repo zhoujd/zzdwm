@@ -187,6 +187,9 @@ static void uline (int row, VIDEO *vvp, VIDEO *pvp);
 static void modeline (EWINDOW *wp);
 #ifdef COLOR
 static void put_video_colors (wchar_t *text, short *attrs, int count);
+static void rectangle_setup (EWINDOW *wp, LINE *first);
+static void draw_rect (LINE *lp);
+static void rect_step (LINE *lp);
 #ifdef MOUSE
 static int selection_column (const LINE *lp, int o);
 static int selection_setup (EWINDOW *wp, LINE *first);
@@ -810,6 +813,7 @@ update (void)
 #ifdef MOUSE
           selection_setup (wp, lp);
 #endif
+          rectangle_setup (wp, lp);
 #endif
 #ifdef COLOR
           if ((wp->w_flag & WFEDIT) != 0 && syntax != NULL)
@@ -870,6 +874,10 @@ update (void)
 #endif
               while (i < wp->w_toprow + wp->w_ntrows)
                 {
+#ifdef COLOR
+                  LINE *drawn = lp;	/* Line this row shows.	 */
+#endif
+
                   vscreen[i]->v_color = CTEXT;
                   vscreen[i]->v_flag |= (VFCHG | VFHBAD);
                   if (gutter != 0)
@@ -898,6 +906,15 @@ update (void)
                       lp = lforw (lp);
                     }
                   vteeol ();
+#ifdef COLOR
+                  /* After vteeol, and with the line the row shows:
+                     "lp" has moved on to the next line, and vteeol
+                     paints the fill cells' colors over what was
+                     drawn before it, while a rectangle runs past
+                     the end of its shorter lines. */
+                  draw_rect (drawn);
+                  rect_step (drawn);
+#endif
                   ++i;
                 }
               leftcol = 0;
@@ -1208,6 +1225,97 @@ draw_selection (LINE *lp)
     vscreen[vtrow]->v_attr[cell] = CSELECT;
 }
 #endif	/* MOUSE */
+
+/*
+ * Show the rectangle while an anchor is set: the anchor-to-point
+ * rectangle of every window on the anchor's buffer, painted by
+ * update as the lines are drawn — the rectangular counterpart of
+ * the mouse selection above.  The far corner is the point, so the
+ * rectangle moves with the cursor while the anchor holds.
+ */
+static LINE *rect_line1;	/* First line of the rectangle.	 */
+static LINE *rect_line2;	/* Last line of the rectangle.	 */
+static int rect_s_col;		/* Left column of the rectangle. */
+static int rect_e_col;		/* Column past its right edge.	 */
+static int rect_inside;		/* Drawing inside the rectangle. */
+
+/*
+ * Remember the rectangle between the anchor and the point of window
+ * "wp", in draw order, for highlighting; "first" is the first line
+ * the window is about to draw.  While the anchor is set the far
+ * corner of the rectangle is the point, which moves with every
+ * cursor motion, so the full redraw the highlight needs is forced
+ * here: a move alone paints nothing.
+ */
+static void
+rectangle_setup (EWINDOW *wp, LINE *first)
+{
+  LINE *lp;
+
+  rect_line1 = NULL;
+  rect_inside = FALSE;
+  /* Nothing can show it with colors off, and the forced redraws
+     would only churn; "setcolor" repaints on toggle, so the
+     highlight reappears or clears with the flag. */
+  if (colorflag == FALSE)
+    return;
+  if (rectdrawbounds (wp, &rect_line1, &rect_line2,
+                      &rect_s_col, &rect_e_col) == FALSE)
+    return;
+  wp->w_flag |= WFHARD;		/* The highlight follows the point. */
+
+  /* The first drawn line may already be inside the rectangle. */
+  if (first == rect_line1 || first == rect_line2)
+    return;
+  if (rect_line1 != rect_line2)
+    for (lp = lforw (rect_line1); lp != rect_line2; lp = lforw (lp))
+      if (lp == first)
+        {
+          rect_inside = TRUE;
+          break;
+        }
+}
+
+/*
+ * Advance the rectangle walk after the line "lp" was drawn, as
+ * "selection_step" does the region.
+ */
+static void
+rect_step (LINE *lp)
+{
+  if (lp == rect_line2)
+    rect_inside = FALSE;
+  else if (lp == rect_line1)
+    rect_inside = TRUE;
+}
+
+/*
+ * Paint the selection color over the cells of the row just drawn on
+ * vtrow that fall inside the rectangle set up by rectangle_setup:
+ * every line of the rectangle gets the whole column range, out past
+ * the end of a line that ends first, where the rectangle reads as
+ * blanks.  "lp" is the line that was drawn; called with the drawing
+ * leftmargin/leftcol still in effect.
+ */
+static void
+draw_rect (LINE *lp)
+{
+  int cell;
+  int last;
+
+  if (rect_line1 == NULL)
+    return;
+  if (lp != rect_line1 && lp != rect_line2 && rect_inside == FALSE)
+    return;
+  cell = leftmargin + rect_s_col - leftcol;
+  if (cell < leftmargin)
+    cell = leftmargin;
+  last = leftmargin + rect_e_col - leftcol;
+  if (last > ncol)
+    last = ncol;
+  for (; cell < last; ++cell)
+    vscreen[vtrow]->v_attr[cell] = CSELECT;
+}
 #endif
 
 #if !MEMMAP

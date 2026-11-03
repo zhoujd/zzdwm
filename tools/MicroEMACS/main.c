@@ -883,6 +883,7 @@ int
 ctrlg (int f, int n, int k)
 {
   ttbeep ();
+  rectcancel ();			/* Drop the rectangle anchor.	 */
   if (kbdmip != NULL)
     {
       kbdm[0] = (KCTLX | ')');
