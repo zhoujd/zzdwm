@@ -692,11 +692,9 @@ endmouseselect (void)
 int
 togglemouse (int f, int n, int k)
 {
-  (void) f;
-  (void) n;
   (void) k;
 
-  mouse = !mouse;
+  mouse = f ? (n != 0) : !mouse;
   mousereset ();
   ttsetmouse (mouse);
   eprintf ("[Mouse now %s]", mouse ? "ON" : "OFF");

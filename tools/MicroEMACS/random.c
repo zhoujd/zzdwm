@@ -967,13 +967,13 @@ settabsize (int f, int n, int k)
 }
 
 /*
- * If an argument is present, toggle the overstrike flag;
- * otherwise, set it to the argument.
+ * Set the overstrike flag according to the numeric argument if
+ * present, or toggle the value if no argument present.
  */
 int
 setoverstrike (int f, int n, int k)
 {
-  overstrike = f ? n : !overstrike;
+  overstrike = f ? (n != 0) : !overstrike;
   eprintf (overstrike ? "[Overstrike mode]" : "[Insert mode]");
   return (TRUE);
 }

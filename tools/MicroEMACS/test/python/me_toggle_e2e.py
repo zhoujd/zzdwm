@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """toggle-mouse switches reporting at runtime: the startup modes only
 appear with -m, the flip/force states match the echo line, and the
-enable/disable byte sequences go out on the wire on every change."""
+enable/disable byte sequences go out on the wire on every change.
+A prefix argument sets a toggle's state rather than flipping it, for
+toggle-mouse and toggle-readonly alike."""
 
 import os
 
@@ -40,13 +42,31 @@ out += drain(fd)
 check(ENABLE not in out, "without -m nothing enables reporting at startup")
 kill(p, fd)
 
-# --- C: a nonzero prefix forces the state on ---------------------------
+# --- C: a prefix sets the state rather than toggling it ----------------
 p, fd = spawn(path, mouse=False)
 drain(fd)
-os.write(fd, b"\x15" + mxcmd("toggle-mouse"))   # C-U prefix -> on
+os.write(fd, b"\x150" + mxcmd("toggle-mouse"))  # C-U 0 -> stays off
+out = drain(fd)
+check(ENABLE not in out and b"[Mouse now OFF]" in out,
+      "C-U 0 forces reporting off, not a flip")
+os.write(fd, b"\x151" + mxcmd("toggle-mouse"))  # C-U 1 -> on
 out = drain(fd)
 check(ENABLE in out and b"[Mouse now ON]" in out,
-      "C-U prefix forces reporting on")
+      "C-U 1 forces reporting on")
+kill(p, fd)
+
+# --- D: the same rule holds for toggle-readonly ------------------------
+p, fd = spawn(path)
+drain(fd)
+os.write(fd, b"\x151" + b"\x18\x11")            # C-U 1 C-X C-Q -> on
+out = drain(fd)
+check(b"Buffer is now read-only" in out, "C-U 1 makes the buffer read-only")
+os.write(fd, b"\x151" + b"\x18\x11")            # again -> stays on
+out = drain(fd)
+check(b"Buffer is now read-only" in out, "C-U 1 twice does not toggle it off")
+os.write(fd, b"\x18\x11")                       # bare -> off
+out = drain(fd)
+check(b"Buffer is now read-write" in out, "a bare C-X C-Q toggles it off")
 kill(p, fd)
 
 finish()

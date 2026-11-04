@@ -2013,7 +2013,7 @@ scrollright (int f, int n, int k)
 int
 showvisable (int f, int n, int k)
 {
-  visflag = !visflag;
+  visflag = f ? (n != 0) : !visflag;
   updatemode ();               /* Update mode lines    */
   return (TRUE);
 }

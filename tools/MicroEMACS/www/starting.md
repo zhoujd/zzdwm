@@ -80,7 +80,8 @@ client window's coordinates, to the editor.
 Warning: this is not fully functional.
 This option is available only in builds compiled with
 `-DMOUSE`; the `toggle-mouse` extended command can change it while the editor
-is running.
+is running — a numeric argument of zero turns reporting off, a nonzero one
+turns it on, and without one the setting is toggled.
 
 **-n**
 

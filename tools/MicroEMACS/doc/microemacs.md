@@ -648,7 +648,9 @@ meanings:
     this is not fully
     functional. This option is available only in builds
     compiled with `-DMOUSE`; the `toggle-mouse` extended command can change
-    it while the editor is running.
+    it while the editor is running — a numeric argument of zero turns
+    reporting off, a nonzero one turns it on, and without one the setting
+    is toggled.
 
 -n
 
@@ -1161,7 +1163,8 @@ M-I
     by the tab size (which you can set using **set-tab-size**).
     If you pass a non-zero argument to this command,
     MicroEMACS will revert back to the default behavior,
-    which is to preserve tabs.
+    which is to preserve tabs.  With no argument, the
+    setting is toggled.
 
 M-C-T
 
@@ -1691,7 +1694,8 @@ M-C-F
     argument to the command.  If the argument is zero, case folding
     is disabled, and searches will be sensitive to case.  If the
     argument is non-zero, case folding is enabled, and searches
-    will NOT be sensitive to case.
+    will NOT be sensitive to case.  With no argument, the
+    setting is toggled.
 
 M-P
 
@@ -1990,6 +1994,8 @@ M-\$
 :   **set-newline**\index{M-\$}\index{set-newline}\index{Line endings}
 
     Toggle whether the current buffer uses **LF** or **CRLF** line endings.
+    A numeric argument sets the ending rather than toggling it — nonzero
+    for **CRLF**, zero for **LF**.
     The current setting is shown by **C-X =** and used when the buffer is saved.
 
 C-X @
@@ -2254,7 +2260,9 @@ C-X C-Q
 
     This command toggles the read-only flag on the current buffer:
     if the buffer is currently read-only, it is made read-write;
-    otherwise it is made read-only.  This can be useful to counteract
+    otherwise it is made read-only.  A numeric argument sets the
+    flag rather than toggling it — nonzero makes the buffer
+    read-only, zero makes it read-write.  This can be useful to counteract
     the effect of [starting MicroEMACS](#starting) with the `-r` option.
 
 M-~
@@ -3192,7 +3200,9 @@ zero to turn color off, or a nonzero numeric argument to turn it on.
 :   **display-visable**\index{display-visable}
 
     Toggle a mode-line indicator that reports how much of the buffer is
-    visible. The indicator shows **all**, **top**, **bot**, **emp**, or a
+    visible. A numeric argument sets the indicator rather than toggling
+    it — nonzero turns it on, zero turns it off.
+    The indicator shows **all**, **top**, **bot**, **emp**, or a
     percentage through the buffer.
 
 The current implementation preserves double-width CJK characters on the

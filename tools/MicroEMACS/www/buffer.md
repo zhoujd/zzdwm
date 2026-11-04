@@ -70,5 +70,7 @@ file. You cannot delete a buffer that is being displayed.
 
 This command toggles the read-only flag on the current buffer:
 if the buffer is currently read-only, it is made read-write;
-otherwise it is made read-only.  This can be useful to counteract
+otherwise it is made read-only.  A numeric argument sets the
+flag rather than toggling it — nonzero makes the buffer
+read-only, zero makes it read-write.  This can be useful to counteract
 the effect of [starting MicroEMACS](starting.md) with the `-r` option.

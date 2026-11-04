@@ -102,15 +102,16 @@ int patlen;			/* # of Unicode characters in upat */
 int srch_lastdir = SRCH_NOPR;	/* Last search flags.   */
 
 /*
- * Set the casefold flag according to the numeric argument.
- * If zero, searches do not fold case (i.e. searches
- * will be exact).  If non-zero, searches will fold case (i.e.
- * upper case letters match their corresponding lower case letters).
+ * Set the casefold flag according to the numeric argument if
+ * present, or toggle the value if no argument present.  If zero,
+ * searches do not fold case (i.e. searches will be exact).  If
+ * non-zero, searches will fold case (i.e. upper case letters match
+ * their corresponding lower case letters).
  */
 int
 foldcase (int f, int n, int k)
 {
-  casefold = f ? n : !casefold;
+  casefold = f ? (n != 0) : !casefold;
   upmapinit ();			/* reset the translation table  */
   if (casefold)
     eprintf ("[Case folding now ON]");

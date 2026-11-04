@@ -439,12 +439,19 @@ filevisitreadonly (int f, int n, int k)
 }
 
 /*
- * Toggle the read-only state of the current buffer.
+ * Set the read-only state of the current buffer from the numeric
+ * argument if present, or toggle it if no argument is present.
  */
 int
 togglereadonly (int f, int n, int k)
 {
-  curbp->b_flag ^= BFRO;
+  int readonly;
+
+  readonly = f ? (n != 0) : ((curbp->b_flag & BFRO) == 0);
+  if (readonly)
+    curbp->b_flag |= BFRO;
+  else
+    curbp->b_flag &= ~BFRO;
   if ((curbp->b_flag & BFRO) != 0)
     eprintf ("Buffer is now read-only");
   else
@@ -1020,18 +1027,19 @@ setsavetabs (int f, int n, int k)
 int
 autonewline (int f, int n, int k)
 {
-  autonl = !autonl;
+  autonl = f ? (n != 0) : !autonl;
   eprintf ("[Auto newline at EOF now %s]", autonl ? "ON" : "OFF");
   return (TRUE);
 }
 
 /*
- * Set newline CRLF flag.
+ * Set newline CRLF flag from the numeric argument if present, or
+ * toggle the value if no argument present.
  */
 int
 setnewline (int f, int n, int k)
 {
-  curbp->b_crlf = !curbp->b_crlf;
+  curbp->b_crlf = f ? (n != 0) : !curbp->b_crlf;
   eprintf ("[Line ending now %s]", curbp->b_crlf ? "CRLF" : "LF");
   return (TRUE);
 }

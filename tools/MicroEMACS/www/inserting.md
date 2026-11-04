@@ -128,7 +128,8 @@ writing a file; the number of spaces is determined
 by the tab size (which you can set using **set-tab-size**).
 If you pass a non-zero argument to this command,
 MicroEMACS will revert back to the default behavior,
-which is to preserve tabs.
+which is to preserve tabs.  With no argument, the
+setting is toggled.
 
 **[unbound]** (**just-one-space**)
 

@@ -91,7 +91,8 @@ Enable or disable case folding in searches, depending on the
 argument to the command.  If the argument is zero, case folding
 is disabled, and searches will be sensitive to case.  If the
 argument is non-zero, case folding is enabled, and searches
-will NOT be sensitive to case.
+will NOT be sensitive to case.  With no argument, the
+setting is toggled.
 
 **M-P** (**search-paren**)
 
