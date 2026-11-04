@@ -70,6 +70,9 @@ jobs:
           set -e
           PYTHONPATH=test/python python3 test/python/me_replace_region.py
           PYTHONPATH=test/python python3 test/python/me_paste_osc52.py
+          PYTHONPATH=test/python python3 test/python/me_file_e2e.py
+          PYTHONPATH=test/python python3 test/python/me_hexl_e2e.py
+          PYTHONPATH=test/python python3 test/python/me_toggle_e2e.py
 
       - name: Build source package
         run: |
@@ -135,7 +138,7 @@ jobs:
           make -f Make.Linux COLOR=no LISP=no AI=no MINIMAL=yes STATIC=yes strip
           file ./me | grep -q 'statically linked'
           ./me --version
-          ./me --help | grep -q '^usage: me \[-234bDmnNqrTuxz\]'
+          ./me --help | grep -q '^usage: me \[-234bDHmnNqrTuxz\]'
           if grep -a -q 'eval-lisp' ./me; then
             echo 'minimal build unexpectedly contains eval-lisp' >&2
             exit 1
@@ -195,7 +198,7 @@ jobs:
             COLOR=no LISP=no AI=no MINIMAL=yes me.exe
           file ./me.exe
           "$WINE_BIN" ./me.exe --version
-          "$WINE_BIN" ./me.exe --help | grep -q '^usage: me \[-234bDmnNqrTuxz\]'
+          "$WINE_BIN" ./me.exe --help | grep -q '^usage: me \[-234bDHmnNqrTuxz\]'
           cp ./me.exe dist/me-windows-minimal.exe
 
       - name: Upload Windows binaries
