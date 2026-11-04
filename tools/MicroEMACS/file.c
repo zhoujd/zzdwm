@@ -506,6 +506,11 @@ readin (const char *fname)
   if ((s = bclear (bp)) != TRUE)	/* Might be old.        */
     return (s);
   lp2 = firstline (bp);			/* Header line          */
+  if ((bp->b_flag & BFHEXL) != 0)
+    {				/* Text reads as text,  */
+      bp->b_flag &= ~BFHEXL;		/* not as a hexl dump.  */
+      removemode (bp);
+    }
 #if BACKUP
   bp->b_flag &= ~(BFCHG | BFBAK);	/* No change, backup.   */
 #else
@@ -839,6 +844,11 @@ filewrite (int f, int n, int k)
   char fname[NFILEN];
   char *expanded_fname;
 
+  if ((curbp->b_flag & BFHEXL) != 0)
+    {				/* Writes its bytes,    */
+      eprintf ("[A hexl buffer saves its bytes with C-X C-S]");
+      return (FALSE);		/* not the dump.        */
+    }
   if ((s = egetfname ("Write file: ", fname, NFILEN)) != TRUE)
     return (s);
   if (ffcheckname (fname) == FALSE)
@@ -872,6 +882,8 @@ filesave (int f, int n, int k)
 {
   register int s;
 
+  if ((curbp->b_flag & BFHEXL) != 0)	/* Dump saves as bytes. */
+    return (hexlsave (f, n, k));
   if ((curbp->b_flag & BFCHG) == 0)	/* Return, no changes.  */
     return (TRUE);
   if (curbp->b_fname[0] == 0)

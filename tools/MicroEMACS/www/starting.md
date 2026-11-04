@@ -49,6 +49,11 @@ Changes to the specified directory before opening files.
 Uses DOS/CRLF line endings for newly created buffers. This is useful when
 editing files for Windows software that requires CRLF endings.
 
+**-H**
+
+Opens the files named on the command line as hex dumps, as the
+[Hexl Editing](hexl.md) section describes, instead of as text.
+
 **-g linenum**, **+ linenumber**
 
 Tells MicroEMACS to move to the specified line number in the first file

@@ -545,7 +545,7 @@ and mark do not matter.
 Start editing by typing the command
 
 \begin{Verbatim}[commandchars=\\\{\}]
-me [-234bCDmnNqrTuxz] [-c \emph{path}] [-d \emph{path}] [-g \emph{line}]
+me [-234bCDHmnNqrTuxz] [-c \emph{path}] [-d \emph{path}] [-g \emph{line}]
    [-l \emph{lisp}] [--script \emph{lisp}] [-p \emph{profile}]
    [-s \emph{string}] [-t \emph{size}] [+\emph{line}]
    \emph{file}[:\emph{line}[:\emph{column}]] ...
@@ -594,6 +594,12 @@ meanings:
 
 :   Uses DOS/CRLF line endings for newly created buffers. This is useful
     when editing files for Windows software that requires CRLF endings.
+
+-H
+
+:   Opens the files named on the command line as hex dumps, as the
+    [**Hexl Editing**](#hexl-editing) section describes, instead of as
+    text.
 
 -u
 
@@ -1910,7 +1916,9 @@ C-X C-S, M-T
     \index{Buffer changed flag} is
     reset. It is an error to use this command in a buffer which lacks
     an associated file name. This command is a no-operation if the
-    buffer has not been changed since the last write.
+    buffer has not been changed since the last write. In a hexl buffer
+    it writes the file as raw bytes parsed out of the dump, as the
+    [**Hexl Editing**](#hexl-editing) section describes.
 
     If you used the **-b** option when you invoked MicroEMACS, and
     this is first time a **file-save** command has been performed
@@ -1937,7 +1945,8 @@ C-X S
     leave it changed, and **C-G** to stop the tour with the buffers
     left as answered so far. Buffers with no file name are passed
     over. A prefix argument saves every changed buffer without
-    asking. The current buffer is put back when the tour ends.
+    asking. The current buffer is put back when the tour ends. A hexl
+    buffer on the tour saves its bytes, as **C-X C-S** does in one.
 
 C-X C-V
 
@@ -2013,6 +2022,46 @@ C-X D
     the `*dired*` buffer. When `lisp/dired.l` is loaded, this key instead
     opens the shell-free Lisp Dired implementation; the native command remains
     available as **M-X dired**.
+
+# Hexl Editing
+
+\index{Hexl editing}
+\index{Binary files}
+
+C-X C-H
+
+:   **hexl-find-file**\index{C-X C-H}\index{hexl-find-file}\index{File, hexl}
+
+    Prompt for a file name, then read the file as a hex dump: one line per
+    sixteen bytes, an eight digit offset, the bytes in hex in two groups of
+    eight, and the printable characters beside them, with `.` for a byte that
+    is not printable. The buffer takes the name of the file, the mode line
+    shows `(hexl)`, and a file already dumped is revisited, as **C-X C-F**
+    revisits its buffer. The ASCII area is display only; saving reads the hex.
+    Invoking MicroEMACS as `me -H file` opens the file this way on startup.
+
+    00000000: 48 65 6c 6c 6f 2c 20 57  6f 72 6c 64 21 0a 00 01  Hello, World!...
+
+    The blank slots that pad the last line hold no bytes, so a file always
+    dumps and saves at the same length.
+
+Bytes are edited by typing over them, in either column. In the hex area two
+hex digits write the byte, and the first stays on display until the second
+arrives; in the ASCII area a character writes its own value. Both columns
+follow each other, and the dot steps to the next byte once a byte is
+written; TAB\index{TAB, in a hexl buffer} steps to the next byte without
+writing. **C-X C-S** saves the dump by parsing the hex back out of the lines
+and writing the file as raw bytes, and it is that save which the
+**quit**\index{Quit} and **file-save-all**\index{file-save-all} commands
+carry out on a hexl buffer; **C-X C-W** is refused, as it would write the
+dump instead of the bytes. Commands that are not hexl aware, as backspace
+and the kills, can damage a line; the save checks every line before the file
+is touched and refuses a damaged one by its number, and
+**undo**\index{Undo} puts the line back.
+
+The `hexl-goto-address` extended command prompts for a byte's offset in the
+file, as decimal or as hex with a `0x` prefix, and moves the dot onto it; a
+prefix argument is taken as the address.
 
 # Keyboard Macros
 
@@ -3714,6 +3763,10 @@ C-X S
 C-X C-F
 
 :   find-file
+
+C-X C-H
+
+:   hexl-find-file
 
 M-@
 

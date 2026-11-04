@@ -47,11 +47,11 @@ def drain(fd, timeout=1.5, settle=0.4):
     return output
 
 
-def spawn(path, mouse=False, term="xterm-256color"):
+def spawn(path, mouse=False, term="xterm-256color", args=()):
     """Start ./me on a file with a fresh pseudo-terminal."""
     master, slave = pty.openpty()
     environment = dict(os.environ, TERM=term, LANG="C.UTF-8")
-    argv = [ME] + (["-m"] if mouse else []) + [path]
+    argv = [ME] + list(args) + (["-m"] if mouse else []) + [path]
     process = subprocess.Popen(
         argv,
         stdin=slave,

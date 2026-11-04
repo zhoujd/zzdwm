@@ -1,6 +1,8 @@
 # File Handling
 
-Status: closed — use the existing shell pipe integration for binary inspection.
+Status: the shell filters below remain the read-only inspection path;
+native Hexl editing has since been implemented, reopening this proposal
+for the editing half. See [`hexl-mode.md`](hexl-mode.md).
 
 ---
 
@@ -35,8 +37,11 @@ closed because:
 - native support would increase the static executable despite the proposal's
   footprint goal.
 
-Revisit native binary support only when direct binary patching from inside
-MicroEMACS becomes a required workflow.
+The reopening came when direct binary patching from inside MicroEMACS
+became the requested workflow; the implemented mode answers the closure
+concerns by keeping the buffer as plain ASCII dump text (no NULs), one
+fixed-width canonical line format, and a save that validates every line
+before touching the file.
 
 Reference code:
 zzdwm/tools/utils/fileview/fileview.c

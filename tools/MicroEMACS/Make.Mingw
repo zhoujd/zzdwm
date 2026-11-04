@@ -77,6 +77,7 @@ OBJ := \
 	extend.o \
 	file.o \
 	help.o \
+	hexl.o \
 	kbd.o \
 	line.o \
 	$(LISP_OBJ) \

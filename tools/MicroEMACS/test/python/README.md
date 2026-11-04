@@ -17,6 +17,7 @@ escape sequences to terminal output modes.
 | `me_mouse_e2e.py` | click-to-dot, double-click word select, vertical wheel |
 | `me_toggle_e2e.py` | `toggle-mouse` runtime reporting on/off |
 | `me_file_e2e.py` | save-all through C-X S: the argument form writing every changed buffer, the prompted tour answering per buffer, C-G stopping it, and the nothing-to-save report |
+| `me_hexl_e2e.py` | hexl through C-X C-H and the -H startup option: the dump layout, bytes written by hex pairs, ASCII characters, and addresses, the refused blank slots, and the save refusing a damaged line |
 | `me_rect_e2e.py` | rectangle kill/yank/clear/open/string through the C-X r prefix, the anchor highlight, mark-to-dot corners with the prefix's preview of them, and a shifted or control mouse drag selecting the rectangle |
 | `me_search_e2e.py` | i-search on C-S/C-R/M-S, RET falling into the non-incremental search |
 | `me_dvtm_e2e.py` | mouse forwarding through dvtm, with and without its own mouse handling |

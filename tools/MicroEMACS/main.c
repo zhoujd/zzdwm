@@ -116,6 +116,7 @@ int autonl = TRUE;                 /* True if auto add newline     */
 char *srchstr = NULL;              /* Initial search string passed */
 char *targetdir = NULL;            /* Target work directory passed */
 int dosmode = FALSE;               /* True if -D forces DOS/CRLF   */
+int hexlflag = FALSE;              /* True if -H opens files dumped */
 
 static int nbuf;                   /* number of buffers            */
 
@@ -253,6 +254,9 @@ main (int argc, char *argv[])
                   gotoflag = TRUE;
                   line = atoi (argv[n]);
                 }
+              break;
+            case 'H':
+              hexlflag = TRUE;
               break;
 #ifdef LISP
             case 'l':
@@ -414,7 +418,10 @@ main (int argc, char *argv[])
                 continue;
               /* File path is valid/resolvable */
               bufinit (expanded_arg);
-              readin (expanded_arg);
+              if (hexlflag)		/* -H dumps the bytes.  */
+                hexlread (expanded_arg);
+              else
+                readin (expanded_arg);
               if (gotoflag)		/* goto line specified  */
                 {
                   gotoline (TRUE, line, 0);

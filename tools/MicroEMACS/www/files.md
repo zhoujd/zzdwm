@@ -28,7 +28,9 @@ to its associated file. The "changed" flag for the current buffer
 is
 reset. It is an error to use this command in a buffer which lacks
 an associated file name. This command is a no-operation if the
-buffer has not been changed since the last write.
+buffer has not been changed since the last write. In a
+[hexl](hexl.md) buffer it writes the file as raw bytes parsed out
+of the dump.
 
 If you used the **-b** option when you invoked MicroEMACS, and
 this is first time a **file-save** command has been performed
@@ -53,7 +55,8 @@ turn — the buffer list runs newest first — with a "Save file (name)
 changed, and **C-G** to stop the tour with the buffers left as
 answered so far. Buffers with no file name are passed over. A prefix
 argument saves every changed buffer without asking. The current
-buffer is put back when the tour ends.
+buffer is put back when the tour ends. A [hexl](hexl.md) buffer on
+the tour saves its bytes, as **C-X C-S** does in one.
 
 **C-X C-V** (**file-visit**)
 
@@ -78,4 +81,6 @@ On PCs, this function is also bound to `F3`.
 This command prompts in the echo line for a file name,
 then it writes the contents of the current buffer to that file. The
 "changed" flag for the current buffer is reset, and the supplied file
-name becomes the associated file name for the current buffer.
+name becomes the associated file name for the current buffer. In a
+[hexl](hexl.md) buffer it is refused, as it would write the dump
+instead of the bytes.

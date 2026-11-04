@@ -15,6 +15,7 @@
 * [Case Conversion](case-conversion.md)
 * [Searching and Spelling](searching-and-spelling.md)
 * [Files](files.md)
+* [Hexl Editing](hexl.md)
 * [Keyboard Macros](macros.md)
 * [Buffer Management](buffer.md)
 * [Window Management](window.md)

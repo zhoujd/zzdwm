@@ -155,6 +155,8 @@ C-X C-V : file-visit
 
 C-X C-R : file-read
 
+C-X C-H : hexl-find-file
+
 C-X C-W : file-write
 
 `M-T` : file-save

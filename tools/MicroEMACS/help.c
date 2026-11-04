@@ -22,7 +22,7 @@
 void
 usage (FILE *stream)
 {
-  fprintf (stream, "usage: me [-234" OPT_BACKUP "D" OPT_MOUSE "nNqrTuxz] [-c path] [-d path] [-g line]"
+  fprintf (stream, "usage: me [-234" OPT_BACKUP "DH" OPT_MOUSE "nNqrTuxz] [-c path] [-d path] [-g line]"
                    " [-p profile] [-s string] [-t size]\n"
                    "          [+[line]] [file[:line[:column]] ...]"
                    " [file://path[:line[:column]] ...]\n");
@@ -79,6 +79,7 @@ usage (FILE *stream)
   usage_option (stream, "FILE:LINE:COLUMN", "open a file at a line and column");
   usage_option (stream, "+LINE", "open the first file at a line");
   usage_option (stream, "-g LINE", "go to a line in the first file");
+  usage_option (stream, "-H", "open files as hexl dumps");
 #if BACKUP
   usage_option (stream, "-b", "create backups when saving");
 #endif

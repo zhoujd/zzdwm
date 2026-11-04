@@ -26,7 +26,10 @@ samples belong in [`examples`](../examples).
 - [`path-boundaries.md`](path-boundaries.md) — completed design notes for the
   internal POSIX path format and MinGW conversion boundaries.
 - [`file-handling.md`](file-handling.md) — closed proposal favoring shell
-  filters such as `xxd` over native binary Hexl support.
+  filters such as `xxd` over native binary Hexl support; reopened for
+  editing, implemented as [`hexl-mode.md`](hexl-mode.md).
+- [`hexl-mode.md`](hexl-mode.md) — completed implementation notes for
+  native hexl byte editing on the dump buffer.
 - [`x10-testing.md`](x10-testing.md) — how to exercise the legacy X10 mouse
   decoder with injected reports and X10-only terminals.
 - [`mouse-scope.md`](mouse-scope.md) — scope decisions and status of the

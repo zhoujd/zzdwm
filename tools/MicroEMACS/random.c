@@ -320,6 +320,9 @@ selfinsert (int f, int n, int k)
   c = k & KCHAR;
   if ((k & KCTRL) != 0 && c >= '@' && c <= '_')	/* ASCII-ify.           */
     c -= '@';
+  if ((curbp->b_flag & BFHEXL) != 0	/* Over a dump, the      */
+      && (c >= ' ' || c == '\t'))	/* keys write bytes.     */
+    return (hexlself (c));
   if (overstrike && curwp->w_dot.o != wllength (curwp->w_dot.p))
     ldelete (1, FALSE);
   if (c == '\t' && !savetabs)

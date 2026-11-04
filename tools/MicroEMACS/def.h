@@ -433,6 +433,7 @@ BUFFER;
 #define BFCHG   0x01            /* Changed.                     */
 #define BFBAK   0x02            /* Need to make a backup.       */
 #define BFRO    0x04            /* Read-only.                   */
+#define BFHEXL  0x08            /* Hexl dump buffer.            */
 
 /*
  * There is a window structure allocated for
@@ -932,6 +933,11 @@ int togglereadonly (int f, int n, int k);
 int filewrite (int f, int n, int k);    /* Write a file                 */
 int filesave (int f, int n, int k);     /* Save current file            */
 int filesaveall (int f, int n, int k);  /* Save changed files           */
+int hexlfind (int f, int n, int k);     /* Read a file as a hexl dump   */
+int hexlread (const char *fname);       /* Read a dump into cur. buffer */
+int hexlsave (int f, int n, int k);     /* Write a hexl dump to a file  */
+int hexlgoto (int f, int n, int k);     /* Go to a byte by its address  */
+int hexlself (int c);                   /* Self-insert in a hexl buffer */
 int filename (int f, int n, int k);     /* Adjust file name             */
 int setsavetabs (int f, int n, int k);  /* Set tab save flag            */
 int autonewline (int f, int n, int k);  /* Set auto newline flag        */
