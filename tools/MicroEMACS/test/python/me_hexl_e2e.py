@@ -145,26 +145,26 @@ def main():
             expect(b"[Old buffer]" in out, "the dump is revisited")
 
             # The group size changes at runtime; the dump is re-laid
-            # out with gaps after every group.
+            # out with each group packed into one hex number.
             out = send(fd, GROUP + b"4\r", 1.2)
             expect(b"[Dump relaid: groups of 4, big-endian]" in out,
                    "group size 4 relaid the dump")
             out = send(fd, REFRESH)
-            expect(b"41 5a 6c 6c  59 2c 20 57  6f 72 6c 64" in out,
-                   "groups of 4 put a space after every group")
+            expect(b"415a6c6c    592c2057" in out,
+                   "groups of 4 pack each group into one number")
             out = send(fd, GROUP + b"3\r")
             expect(b"[Group size is 1, 2, 4, 8 or 16]" in out,
                    "a group size other than 1/2/4/8/16 is refused")
 
             # A byte typed before the relayout is kept by it.
-            send(fd, BOL + RIGHT * 10)       # display slot 0, byte 0
+            send(fd, BOL + RIGHT * 12)       # display slot 0, byte 0
             send(fd, b"77")                  # byte 0 -> 0x77, unsaved
             model[0] = 0x77
             out = send(fd, ENDIAN, 1.2)      # little-endian now
             expect(b"[Dump relaid: groups of 4, little-endian]" in out,
                    "the byte order switched to little-endian")
             out = send(fd, REFRESH)
-            expect(b"6c 6c 5a 77" in out,
+            expect(b"6c6c5a77" in out,
                    "a little-endian group reads its bytes reversed")
             out = send(fd, SAVE)
             expect(b"[Wrote 37 bytes]" in out,
@@ -174,7 +174,7 @@ def main():
 
             # Slot 0 of a little-endian group holds the group's LAST
             # byte: typing there writes byte 3.
-            send(fd, BOL + RIGHT * 10)
+            send(fd, BOL + RIGHT * 12)
             send(fd, b"88")                  # byte 3 -> 0x88, unsaved
             send(fd, ENDIAN)                 # back to big-endian
             model[3] = 0x88
@@ -182,23 +182,30 @@ def main():
             expect(content(path) == bytes(model),
                    "a little-endian slot wrote its own byte")
 
-            # The ASCII area keeps the file order in any layout; its
-            # column follows the group size (62 for groups of 4).
+            # The ASCII area keeps the file order in any layout, and
+            # its column never moves: the hex area is the same width
+            # whichever group size is set.
             send(fd, GOTO + b"1\r")
-            send(fd, BOL + RIGHT * 62)       # the ASCII column of byte 0
+            send(fd, BOL + RIGHT * 60)       # the ASCII column of byte 0
             send(fd, b"Q")
             model[0] = 0x51
             send(fd, SAVE)
             expect(content(path) == bytes(model),
                    "the ASCII area wrote its byte at group size 4")
 
-            # Back to the GNU layout, with the edits still in place.
+            # Groups of eight pack too, as xxd's -g 8 qwords do; the
+            # edits come along.  Groups of one space the pairs.
             out = send(fd, GROUP + b"8\r", 1.2)
             expect(b"[Dump relaid: groups of 8, big-endian]" in out,
-                   "the dump returned to the GNU layout")
+                   "groups of 8 relaid the dump")
             out = send(fd, REFRESH)
-            expect(b"51 5a 6c 88 59 2c 20 57" in out,
-                   "the edits came back in groups of 8")
+            expect(b"515a6c88592c2057" in out
+                   and b"6f726c64210a0001" in out,
+                   "groups of 8 pack into qwords")
+            out = send(fd, GROUP + b"1\r", 1.2)
+            out += send(fd, REFRESH)
+            expect(b"51 5a 6c 88 59 2c 20 57 6f" in out,
+                   "groups of 1 space the pairs")
         finally:
             save_quit(process, fd)
 

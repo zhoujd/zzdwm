@@ -602,6 +602,7 @@ bcreate (const char *bname)
   bp->b_crlf = dosmode ? TRUE : FALSE;
   bp->b_hexlgroup = HEXLDEFGROUP;
   bp->b_hexlendian = FALSE;
+  bp->b_hexlpacked = FALSE;
   return (bp);
 }
 

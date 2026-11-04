@@ -425,6 +425,7 @@ typedef struct BUFFER
   char b_crlf;                  /* NewLine CRLF flag            */
   int b_hexlgroup;              /* Hexl dump: bytes per group   */
   int b_hexlendian;             /* Hexl dump: little-endian?    */
+  int b_hexlpacked;             /* Hexl dump: groups packed?    */
 }
 BUFFER;
 

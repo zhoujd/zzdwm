@@ -36,6 +36,17 @@ dump is text, and undo, regions, and search work on it as text.
   by display slot — the dot steps to the slot on the right, which in
   little-endian is the next lower byte — while the ASCII area keeps the
   file order in any layout.
+- The group display follows `xxd`, Vim's hex dumper: as its `-g` option
+  packs each group into one hex number (`xxd -g 8` shows
+  `48656c6c6f2c2057 6f726c64210a0001`), a group here reads as the value
+  it holds — a word, a dword, a qword, an octaword. The padding around
+  the groups, rather than xxd's single spaces, is `fileview.c`'s
+  (`tools/utils/fileview`), which gives each byte three columns so the
+  hex area stays 48 wide and the line width (76) and the ASCII column
+  (60) never move, whichever size is set. The GNU layout the dump opens
+  in — spaced pairs, two groups of eight — is left once a group size is
+  set, and no command returns to it; killing the buffer and dumping the
+  file anew does.
 - `file-read` into a hexl buffer clears the hexl flag and mode, as the
   text it reads makes the buffer a text buffer again.
 
