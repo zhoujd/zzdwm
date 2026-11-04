@@ -1227,11 +1227,12 @@ draw_selection (LINE *lp)
 #endif	/* MOUSE */
 
 /*
- * Show the rectangle while an anchor is set: the anchor-to-point
- * rectangle of every window on the anchor's buffer, painted by
- * update as the lines are drawn — the rectangular counterpart of
- * the mouse selection above.  The far corner is the point, so the
- * rectangle moves with the cursor while the anchor holds.
+ * Show the rectangle while an anchor is set, or while the C-X r
+ * prefix waits for its key with none: the corner-to-point rectangle
+ * of every window on the corner's buffer, painted by update as the
+ * lines are drawn — the rectangular counterpart of the mouse
+ * selection above.  The far corner is the point, so the rectangle
+ * moves with the cursor while the anchor holds.
  */
 static LINE *rect_line1;	/* First line of the rectangle.	 */
 static LINE *rect_line2;	/* Last line of the rectangle.	 */
@@ -1240,12 +1241,13 @@ static int rect_e_col;		/* Column past its right edge.	 */
 static int rect_inside;		/* Drawing inside the rectangle. */
 
 /*
- * Remember the rectangle between the anchor and the point of window
+ * Remember the rectangle between the corner and the point of window
  * "wp", in draw order, for highlighting; "first" is the first line
- * the window is about to draw.  While the anchor is set the far
- * corner of the rectangle is the point, which moves with every
- * cursor motion, so the full redraw the highlight needs is forced
- * here: a move alone paints nothing.
+ * the window is about to draw.  The corner is the anchor, or the
+ * mark while the C-X r prefix shows its rectangle.  While the
+ * anchor is set the far corner of the rectangle is the point, which
+ * moves with every cursor motion, so the full redraw the highlight
+ * needs is forced here: a move alone paints nothing.
  */
 static void
 rectangle_setup (EWINDOW *wp, LINE *first)

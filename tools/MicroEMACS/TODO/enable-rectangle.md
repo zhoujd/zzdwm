@@ -14,11 +14,19 @@ the prefix to `C-X r`, as in GNU Emacs, by folding the plain
 incremental search on `C-S`/`C-R` — a bare `RET` before any search
 text drops into the plain command.  The region verbs sit one prefix
 deeper (`C-X r C-w` kill, `C-X r M-W` copy, `C-X r C-y` yank), with
-`C-c` clear, `C-o` open, and the anchor on `C-@`.  While the anchor
+`C-c` clear, `C-o` open, and the anchor on `C-@`.  With no anchor
+set the operators take the corners from mark-to-dot instead, the
+Emacs rule, so plain `C-Space` and the mouse drag's mark feed them
+as the anchor does.  While the anchor
 is set, `rectangle.c` and `display.c` highlight the
 anchor-to-dot rectangle in the selection color, the rectangular
 counterpart of the mouse selection highlight, following dot out
-past the end of a line that ends first; **C-G** drops the anchor
+past the end of a line that ends first; the mark's rectangle shows
+the same way while the `C-X r` prefix waits for its key and no
+anchor is set, which is the only time, as me's mark stands until
+it is cleared and an always-on highlight would glow after every
+move — and not while a mouse selection is showing either, whose
+highlight would paint the same cells.  **C-G** drops the anchor
 with the rest of the aborted state, as GNU's C-G deactivates the
 mark. A shifted or control button drag sweeps the rectangle with
 the mouse: the press anchors the cell under it (`mouse.c` calling
@@ -35,11 +43,7 @@ region highlights never paint together.
 
 Covered by `test/python/me_rect_e2e.py` (the operators, undo and
 redo, the read-only guard, the lost-anchor case, prefix errors,
-the anchor highlight, and the shifted and control mouse drag) and
+the anchor highlight, the shifted and control mouse drag, the
+mark-to-dot corners, and the prefix's preview of them) and
 `test/python/me_search_e2e.py` (the
 search merge).
-
-## Remaining
-
-* Region corners: taking the corners from mark-to-dot, the Emacs
-  rule, instead of a dedicated anchor.

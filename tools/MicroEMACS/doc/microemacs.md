@@ -1300,9 +1300,14 @@ tab counts as the cells up to the next tab stop and a control
 character as two. Set the anchor on one corner with **C-X r C-@**
 (**C-Space** sends the same key), put dot on the opposite corner,
 and run a command; the corners work in any order, and each command
-drops the anchor once it has used it. While the anchor is set the
+drops the anchor once it has used it. Or mark the corner with
+**C-Space** as in GNU Emacs: with no anchor set, the commands take
+the rectangle between mark and dot. While the anchor is set the
 rectangle between it and dot is highlighted, following dot, out
-past the end of a line that ends first.
+past the end of a line that ends first, and while the **C-X r**
+prefix waits for its key the rectangle the command would take is
+highlighted the same way — the anchor's, or the mark's when no
+anchor is set.
 A character is part of the rectangle when its cells intersect the
 range, so one straddling an edge is taken whole; the commands that
 edit the buffer first expand a straddling tab into the spaces it
@@ -1370,7 +1375,7 @@ C-X r M-W
 
 :   **copy-rectangle**\index{C-X r M-W}\index{copy-rectangle}
 
-    Copy the rectangle between the anchor and dot into the
+    Copy the rectangle between the corners into the
     rectangle clipboard, leaving the buffer alone. A line of the
     rectangle that ends before the right edge contributes blanks.
 

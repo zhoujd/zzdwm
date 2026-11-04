@@ -7,12 +7,14 @@
 #include <string.h>
 
 /*
- * Rectangle editing: operations on the column range between an
- * anchored corner and point, on the display-cell grid (tabs and wide
- * characters expanded) that "wlcolumn" and "wlcoloffset" map.  The
- * commands share one dedicated clipboard, separate from the linear
- * kill buffer, which holds one NUL-terminated UTF-8 string per line
- * of the last rectangle copied or killed.
+ * Rectangle editing: operations on the column range between two
+ * corners, on the display-cell grid (tabs and wide characters
+ * expanded) that "wlcolumn" and "wlcoloffset" map.  A corner is the
+ * anchor when one is set, and otherwise the mark, the Emacs rule:
+ * the rectangle then runs between mark and point.  The commands share
+ * one dedicated clipboard, separate from the linear kill buffer,
+ * which holds one NUL-terminated UTF-8 string per line of the last
+ * rectangle copied or killed.
  *
  * A character belongs to the rectangle when its cells intersect the
  * column range, so a character straddling an edge is included whole.
@@ -32,6 +34,7 @@
 
 static LINE *rect_lp;		/* Anchor line, NULL when none.	 */
 static int rect_col;		/* Anchor display column.	 */
+static int rectmarkshow;	/* Prefix shows the mark's rectangle. */
 
 static uchar **rect_lines;	/* Clipboard slices.		 */
 static int rect_count;
@@ -42,6 +45,7 @@ static uchar *rectslice (LINE *lp, int s_col, int e_col);
 static int rectcutline (LINE *lp, int s_col, int e_col, int blank);
 static void rectchanged (void);
 static void rectdrop (void);
+static void rectmarkend (void);
 
 /*
  * Free the clipboard slices.
@@ -92,6 +96,18 @@ rectcancel (void)
 }
 
 /*
+ * Stop showing the mark's rectangle, repainting what showed it: a
+ * command that takes no corners, as copy does, changes nothing a
+ * repaint would otherwise carry.
+ */
+static void
+rectmarkend (void)
+{
+  rectmarkshow = FALSE;
+  rectchanged ();
+}
+
+/*
  * Set the anchor at point outright, without the toggle: the mouse
  * sets it wherever the previous anchor was, as a shifted drag
  * starts a fresh rectangle.  Returns FALSE past the last line,
@@ -119,31 +135,51 @@ rectset (void)
 }
 
 /*
- * The ordered corners of the rectangle: the anchor must still name a
- * line of this buffer, and the corners are normalized so that
- * "*first" is the upper line and "*s_col" the left column, both
- * columns display columns counted from zero.
+ * The ordered corners of the rectangle: the corner opposite the
+ * point is the anchor when one is set, and otherwise the mark, as
+ * GNU's rectangles run between point and mark.  The corner must
+ * still name a line of this buffer, and the corners are normalized
+ * so that "*first" is the upper line and "*s_col" the left column,
+ * both columns display columns counted from zero.
  */
 static int
 rectbounds (LINE **first, LINE **last, int *s_col, int *e_col)
 {
   LINE *lp;
+  LINE *corner_lp;		/* The corner opposite the point.	 */
+  int corner_col;
   int col;
 
-  if (rect_lp == NULL)
+  if (rect_lp != NULL)
     {
-      eprintf ("No rectangle anchor");
+      corner_lp = rect_lp;
+      corner_col = rect_col;
+    }
+  else if (curwp->w_mark.p != NULL)
+    {
+      corner_lp = curwp->w_mark.p;
+      corner_col = wlcolumn (curwp->w_mark.p, curwp->w_mark.o);
+    }
+  else
+    {
+      eprintf ("No rectangle anchor or mark");
       return (FALSE);
     }
-  /* The anchor line may have been deleted since the anchor was set;
-     look for it, so a pointer to freed memory is never followed. */
+  /* The corner's line may have been deleted since the corner was
+     set; look for it, so a pointer to freed memory is never
+     followed. */
   for (lp = lforw (curbp->b_linep); lp != curbp->b_linep; lp = lforw (lp))
-    if (lp == rect_lp)
+    if (lp == corner_lp)
       break;
   if (lp == curbp->b_linep)
     {
-      rectdrop ();
-      eprintf ("Rectangle anchor lost");
+      if (rect_lp != NULL)
+        {
+          rectdrop ();
+          eprintf ("Rectangle anchor lost");
+        }
+      else
+        eprintf ("No mark in this window");
       return (FALSE);
     }
   if (curwp->w_dot.p == curbp->b_linep)
@@ -151,65 +187,86 @@ rectbounds (LINE **first, LINE **last, int *s_col, int *e_col)
       eprintf ("Point is past the last line");
       return (FALSE);
     }
-  if (lcmp (rect_lp, curwp->w_dot.p) < 0)
+  if (lcmp (corner_lp, curwp->w_dot.p) < 0)
     {
-      *first = rect_lp;
+      *first = corner_lp;
       *last = curwp->w_dot.p;
     }
   else
     {
       *first = curwp->w_dot.p;
-      *last = rect_lp;
+      *last = corner_lp;
     }
   col = wlcolumn (curwp->w_dot.p, curwp->w_dot.o);
-  *s_col = rect_col < col ? rect_col : col;
-  *e_col = rect_col > col ? rect_col : col;
+  *s_col = corner_col < col ? corner_col : col;
+  *e_col = corner_col > col ? corner_col : col;
   return (TRUE);
 }
 
 /*
  * The rectangle for the display: like "rectbounds", but for the
- * point of window "wp" rather than the current one, and silent, as
- * the display asks every window and having nothing to draw is not
- * an error.  The order of the corners comes from the walk for the
- * anchor line, not from "lcmp", which reads the current window's
- * buffer.
+ * point and corner of window "wp" rather than the current ones, and
+ * silent, as the display asks every window and having nothing to
+ * draw is not an error.  The order of the corners comes from the
+ * walk for the corner's line, not from "lcmp", which reads the
+ * current window's buffer.
  */
 int
 rectdrawbounds (EWINDOW *wp, LINE **first, LINE **last, int *s_col,
                 int *e_col)
 {
   LINE *lp;
+  LINE *corner_lp;		/* The corner opposite the point.	 */
+  int corner_col;
   int dot_first;
   int col;
 
-  if (rect_lp == NULL || wp->w_dot.p == wp->w_bufp->b_linep)
+  corner_lp = rect_lp;
+  corner_col = rect_col;
+  if (corner_lp == NULL)
+    {
+      /* Only while the C-X r prefix waits for its key does the
+         mark's rectangle show, as the command about to run would
+         take it: the mark stands until it is cleared, so an
+         always-on highlight would glow on after every move.  Not
+         while a mouse selection shows either, whose highlight would
+         paint the same cells. */
+      if (rectmarkshow == FALSE
+#ifdef MOUSE
+          || mouseselect
+#endif
+          || wp->w_mark.p == NULL)
+        return (FALSE);
+      corner_lp = wp->w_mark.p;
+      corner_col = wlcolumn (wp->w_mark.p, wp->w_mark.o);
+    }
+  if (wp->w_dot.p == wp->w_bufp->b_linep)
     return (FALSE);
-  /* Look for the anchor line, noting whether the point's line is
+  /* Look for the corner's line, noting whether the point's line is
      passed first: that gives the order of the corners. */
   dot_first = FALSE;
   for (lp = lforw (wp->w_bufp->b_linep); ; lp = lforw (lp))
     {
       if (lp == wp->w_dot.p)
         dot_first = TRUE;
-      if (lp == rect_lp)
+      if (lp == corner_lp)
         break;
       if (lp == wp->w_bufp->b_linep)
-        return (FALSE);		/* Not this buffer's anchor.	 */
+        return (FALSE);		/* Not this buffer's corner.	 */
     }
   if (dot_first)
     {
       *first = wp->w_dot.p;
-      *last = rect_lp;
+      *last = corner_lp;
     }
   else
     {
-      *first = rect_lp;
+      *first = corner_lp;
       *last = wp->w_dot.p;
     }
   col = wlcolumn (wp->w_dot.p, wp->w_dot.o);
-  *s_col = rect_col < col ? rect_col : col;
-  *e_col = rect_col > col ? rect_col : col;
+  *s_col = corner_col < col ? corner_col : col;
+  *e_col = corner_col > col ? corner_col : col;
   return (TRUE);
 }
 
@@ -685,8 +742,10 @@ abortrectangle (int f, int n, int k)
  * rectangle command it names.  The keys take the region verbs one
  * prefix deeper (C-W kill, M-W copy, C-y yank), with C-c clear,
  * C-o open, and C-t string from GNU Emacs's C-x r chords, and the
- * anchor sits on C-@, the set-mark key, as GNU's rectangles run
- * between point and mark.
+ * anchor sits on C-@, the set-mark key.  While the prefix waits for
+ * its key, the rectangle the command would use is highlighted: the
+ * anchor's when one is set, and otherwise the mark's, which only
+ * this window shows ("rectmarkshow" lets the display draw it).
  */
 int
 rectprefix (int f, int n, int k)
@@ -712,6 +771,12 @@ rectprefix (int f, int n, int k)
   int key;
 
   (void) k;
+  if (rect_lp == NULL && curwp->w_mark.p != NULL)
+    {
+      rectmarkshow = TRUE;
+      rectchanged ();		/* Nothing else may be dirty yet.	 */
+      update ();		/* Paint before the key is read.	 */
+    }
   if (kbdmop != NULL)
     key = *kbdmop++;
   else
@@ -720,7 +785,11 @@ rectprefix (int f, int n, int k)
       if (kbdmip != NULL)
         {
           if (kbdmip > &kbdm[NKBDM - 2])
-            return ABORT;
+            {
+              if (rectmarkshow != FALSE)
+                rectmarkend ();
+              return ABORT;
+            }
           *kbdmip++ = key;
         }
     }
@@ -728,7 +797,15 @@ rectprefix (int f, int n, int k)
   for (unsigned int index = 0;
        index < sizeof (rectkey) / sizeof (rectkey[0]); index++)
     if (rectkey[index].rk_key == key)
-      return rectkey[index].rk_funcp (f, n, key);
+      {
+        int status = rectkey[index].rk_funcp (f, n, key);
+
+        if (rectmarkshow != FALSE)
+          rectmarkend ();
+        return status;
+      }
+  if (rectmarkshow != FALSE)
+    rectmarkend ();
   eprintf ("Unknown C-X r command");
   return ABORT;
 }

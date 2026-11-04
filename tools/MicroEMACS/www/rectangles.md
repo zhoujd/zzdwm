@@ -5,9 +5,14 @@ grid*: the grid a line renders on, where a tab counts as the cells up
 to the next tab stop and a control character as two. Set the anchor on
 one corner with **C-X r C-@** (**C-Space** sends the same key), put
 dot on the opposite corner, and run a command; the corners work in any
-order, and each command drops the anchor once it has used it. While
-the anchor is set the rectangle between it and dot is highlighted,
-following dot, out past the end of a line that ends first. With the
+order, and each command drops the anchor once it has used it. Or mark
+the corner with plain **C-Space**, as in GNU Emacs: with no anchor
+set, the commands take the rectangle between mark and dot. While the
+anchor is set the rectangle between it and dot is highlighted,
+following dot, out past the end of a line that ends first, and while
+the **C-X r** prefix waits for its key the rectangle the command
+would take is highlighted the same way — the anchor's, or the mark's
+when no anchor is set. With the
 mouse on, a shifted or control drag selects the rectangle instead:
 the press anchors the cell under it, the drag sweeps the opposite
 corner, and the release leaves the anchor set for these commands;
@@ -68,7 +73,7 @@ what was the rectangle. One **C-X U** undoes the whole command.
 
 **C-X r M-W** (**copy-rectangle**)
 
-Copy the rectangle between the anchor and dot into the rectangle
+Copy the rectangle between the corners into the rectangle
 clipboard, leaving the buffer alone. A line of the rectangle that ends
 before the right edge contributes blanks.
 

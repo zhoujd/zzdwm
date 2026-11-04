@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Rectangle editing through the C-X r prefix: anchor one corner,
-put point on the other, and copy/kill/yank/clear/open the column
-range between them.  The rectangles are cut on the display-cell grid,
+"""Rectangle editing through the C-X r prefix: anchor one corner
+with C-X r C-@, or mark it with C-Space as GNU Emacs does, put point
+on the other, and copy/kill/yank/clear/open the column range between
+them; a set anchor is the corner the commands take first.  The
+rectangles are cut on the display-cell grid,
 so a tab counts as the cells it renders as: clearing replaces it with
 that many spaces, and a kill whose edge falls inside it expands it
 first.  Short lines read as blanks when text is copied and are padded
@@ -14,6 +16,7 @@ import tempfile
 from common import drain, kill, save_quit, spawn
 
 UP, DOWN, RIGHT, LEFT = b"\x1bOA", b"\x1bOB", b"\x1bOC", b"\x1bOD"
+SETMARK = b"\x00"                 # C-Space (C-@)
 ANCHOR = b"\x18r\x00"             # C-X r C-@ (C-Space sends the same NUL)
 COPY = b"\x18r\x1bW"             # C-X r M-W
 KILL = b"\x18r\x17"              # C-X r C-w
@@ -316,17 +319,91 @@ def main():
         expect(content == b"a   \nw   \n1   \n7   \n",
                "a right click extends the anchored rectangle (%r)" % content)
 
-        # A plain click supersedes the anchor: after one, the kill
-        # reports the lost anchor and changes nothing.
+        # A plain click supersedes the anchor, and its release puts
+        # the mark ring back with the selection: the kill has no
+        # corner to take, reports it, and changes nothing.
         content, terminal = run(
             directory, "rect_i5.txt", b"abcd\nwxyz\n",
             [sgr_mouse(16, 1, 0), sgr_mouse(16, 4, 1, b"m"),  # anchor set
              sgr_mouse(0, 2, 0), sgr_mouse(0, 2, 0, b"m"),    # plain click
              KILL], mouse=True)
-        expect(b"No rectangle anchor" in terminal,
-               "a plain click drops the rectangle anchor")
+        expect(b"No rectangle anchor or mark" in terminal,
+               "a plain click leaves the kill no corner")
         expect(content == b"abcd\nwxyz\n",
-               "the dropped anchor kills nothing (%r)" % content)
+               "the refused kill changed nothing (%r)" % content)
+
+        # The GNU Emacs rule: with no anchor set, the corners come
+        # from the mark and point.  C-Space marks (0,0), point moves
+        # to (1,2), and the kill takes cols [0,2) of both lines.
+        content, terminal = run(
+            directory, "rect_j1.txt", b"abcd\nwxyz\n",
+            [SETMARK, DOWN + RIGHT * 2, KILL])
+        expect(b"[Rectangle of 2 lines killed]" in terminal,
+               "the kill runs between mark and point")
+        expect(content == b"cd\nyz\n",
+               "the mark's rectangle is killed (%r)" % content)
+
+        # A plain mouse drag marks its corners the same way, and the
+        # keyboard kill takes them; the prefix shows no rectangle
+        # preview while the linear selection is still showing, whose
+        # highlight would otherwise repaint a longer run on the
+        # marked row.
+        path = os.path.join(directory, "rect_j2.txt")
+        with open(path, "wb") as output_file:
+            output_file.write(b"abcd\nwxyz\n")
+        process, fd = spawn(path, mouse=True)
+        try:
+            startup = send(fd, b"", 1.5)
+            send(fd, sgr_mouse(0, 0, 0))          # plain press (0,0)
+            dragged = send(fd, sgr_mouse(32, 2, 1))    # drag to (2,1)
+            dragged += send(fd, sgr_mouse(0, 2, 1, b"m"))
+            expect(b"48;5;24" in dragged,
+                   "the linear drag highlights the region")
+            prefix = send(fd, b"\x18r")           # the prefix waits
+            expect(b"48;5;24" not in prefix,
+                   "no rectangle preview over the region highlight")
+            killed = send(fd, b"\x17")            # C-w
+            expect(b"[Rectangle of 2 lines killed]" in killed,
+                   "the kill runs on the dragged corners")
+            save_quit(process, fd)
+        except BaseException:
+            kill(process, fd)
+            raise
+        with open(path, "rb") as fixture_file:
+            expect(fixture_file.read() == b"cd\nyz\n",
+                   "the dragged rectangle is killed")
+
+        # While the prefix waits for its key, the rectangle the
+        # command would take is highlighted: the mark's, when no
+        # anchor is set.  C-G aborts the prefix and drops the
+        # highlight with it.
+        path = os.path.join(directory, "rect_j3.txt")
+        with open(path, "wb") as output_file:
+            output_file.write(b"abcd\nwxyz\n")
+        process, fd = spawn(path)
+        try:
+            startup = send(fd, b"", 1.5)
+            send(fd, SETMARK)
+            send(fd, DOWN + RIGHT * 2)              # mark (0,0), point (1,2)
+            prefix = send(fd, b"\x18r")             # the prefix waits
+            expect(b"48;5;24" in prefix,
+                   "the prefix highlights the mark's rectangle")
+            aborted = send(fd, b"\x07")
+            redrawn = send(fd, b"\x0c")             # C-L refresh
+            expect(b"48;5;24" not in redrawn,
+                   "C-G drops the preview with the prefix")
+        finally:
+            kill(process, fd)
+
+        # With neither an anchor nor a mark, the kill reports it and
+        # changes nothing.
+        content, terminal = run(
+            directory, "rect_j4.txt", b"one\ntwo\n",
+            [KILL])
+        expect(b"No rectangle anchor or mark" in terminal,
+               "no corners to take is reported")
+        expect(content == b"one\ntwo\n",
+               "the refused kill changed nothing (%r)" % content)
 
     print("RESULT: all passed")
 
