@@ -931,6 +931,7 @@ int togglereadonly (int f, int n, int k);
                                         /* Toggle buffer readonly flag  */
 int filewrite (int f, int n, int k);    /* Write a file                 */
 int filesave (int f, int n, int k);     /* Save current file            */
+int filesaveall (int f, int n, int k);  /* Save changed files           */
 int filename (int f, int n, int k);     /* Adjust file name             */
 int setsavetabs (int f, int n, int k);  /* Set tab save flag            */
 int autonewline (int f, int n, int k);  /* Set auto newline flag        */

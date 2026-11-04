@@ -1926,6 +1926,19 @@ C-X C-S, M-T
     Z-29\index{Zenith Z-29} keyboard
     by pressing the `F2` key.  On PCs, this function is also bound to `F2`.
 
+C-X S
+
+:   **file-save-all**\index{C-X S}\index{file-save-all}\index{File, saving}
+
+    Save the changed buffers that are editing files, as GNU Emacs's
+    **C-x s** does. Each changed buffer with a file name is offered
+    in turn — the buffer list runs newest first — with a "Save file
+    (name) [y/n]?" prompt: answer **y** to write it out, **n** to
+    leave it changed, and **C-G** to stop the tour with the buffers
+    left as answered so far. Buffers with no file name are passed
+    over. A prefix argument saves every changed buffer without
+    asking. The current buffer is put back when the tour ends.
+
 C-X C-V
 
 :   **file-visit**\index{C-X C-V}\index{file-visit}\index{File, visiting}\index{Visiting a file}
@@ -3693,6 +3706,10 @@ M-T
 C-X C-S
 
 :   file-save
+
+C-X S
+
+:   file-save-all
 
 C-X C-F
 

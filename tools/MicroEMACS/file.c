@@ -904,6 +904,56 @@ filesave (int f, int n, int k)
 }
 
 /*
+ * Save the changed buffers that are editing files, as GNU Emacs's
+ * C-x s does: prompt once per buffer, answer y to save it or n to
+ * leave it changed, and C-G to stop the tour.  A prefix argument
+ * saves every changed buffer without a prompt.  Buffers with no
+ * file, as scratch buffers, are passed over, as "quickexit" passes
+ * them.  The current buffer is put back at the end.
+ */
+int
+filesaveall (int f, int n, int k)
+{
+  BUFFER *bp;
+  BUFFER *oldbp;
+  char prompt[NFILEN + 32];
+  int changed = 0;
+  int saved = 0;
+  int status;
+
+  (void) n;
+  oldbp = curbp;
+  ALLBUF (bp)
+    {
+      if ((bp->b_flag & BFCHG) == 0 || bp->b_fname[0] == 0)
+        continue;
+      ++changed;
+      if (f == FALSE)
+        {
+          snprintf (prompt, sizeof (prompt), "Save file %s", bp->b_fname);
+          status = eyesno (prompt);
+          if (status == ABORT)
+            return (status);
+          if (status == FALSE)
+            continue;
+        }
+      curbp = bp;		/* Save it, as "quickexit" does. */
+      status = filesave (f, n, k);
+      curbp = oldbp;
+      if (status != TRUE)
+        return (status);
+      ++saved;
+    }
+  if (changed == 0)
+    eprintf ("[No files need saving]");
+  else if (saved == 0)
+    eprintf ("[No files saved]");
+  else
+    eprintf ("[%d file%s saved]", saved, saved == 1 ? "" : "s");
+  return (TRUE);
+}
+
+/*
  * The command allows the user
  * to modify the file name associated with
  * the current buffer. It is like the "f" command

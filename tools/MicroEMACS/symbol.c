@@ -209,6 +209,7 @@ KEY key[] = {
   {KCTLX | 'N',         nextwind,            "forw-window"},
   {KCTLX | 'P',         prevwind,            "back-window"},
   {KCTLX | 'R',         rectprefix,          "prefix-rectangle"},
+  {KCTLX | 'S',         filesaveall,         "file-save-all"},
   {KCTLX | 'U',         undo,                "undo"},
   {KCTLX | 'V',         showversion,         "display-version"},
   {KCTLX | 'X',         nextbuffer,          "forw-buffer"},
