@@ -423,6 +423,8 @@ typedef struct BUFFER
 #endif
   char b_active;                /* Window activated flag        */
   char b_crlf;                  /* NewLine CRLF flag            */
+  int b_hexlgroup;              /* Hexl dump: bytes per group   */
+  int b_hexlendian;             /* Hexl dump: little-endian?    */
 }
 BUFFER;
 
@@ -434,6 +436,8 @@ BUFFER;
 #define BFBAK   0x02            /* Need to make a backup.       */
 #define BFRO    0x04            /* Read-only.                   */
 #define BFHEXL  0x08            /* Hexl dump buffer.            */
+#define HEXLBYTES 16            /* Bytes on a hexl dump line.   */
+#define HEXLDEFGROUP 8          /* Default group size, GNU's.   */
 
 /*
  * There is a window structure allocated for
@@ -935,6 +939,8 @@ int filesave (int f, int n, int k);     /* Save current file            */
 int filesaveall (int f, int n, int k);  /* Save changed files           */
 int hexlfind (int f, int n, int k);     /* Read a file as a hexl dump   */
 int hexlread (const char *fname);       /* Read a dump into cur. buffer */
+int hexlsetgroup (int f, int n, int k); /* Set dump group size          */
+int hexlsetendian (int f, int n, int k); /* Set dump byte order         */
 int hexlsave (int f, int n, int k);     /* Write a hexl dump to a file  */
 int hexlgoto (int f, int n, int k);     /* Go to a byte by its address  */
 int hexlself (int c);                   /* Self-insert in a hexl buffer */

@@ -23,6 +23,19 @@ dump is text, and undo, regions, and search work on it as text.
   are not hexl aware stops the save with the file as it was.
 - `hexl-goto-address` (M-X) moves dot to a byte by its offset, decimal or
   `0x` hex.
+- The layout changes at run time, per buffer, and also sets the session
+  defaults for dumps made later: `hexl-group-size` (M-X, or C-U n) takes
+  `1`, `2`, `4`, `8` or `16` bytes per group, `hexl-endian` (M-X, or C-U 0
+  for big, C-U 1 for little) the byte order within a group. Each re-lays
+  the dump out in place through `hexlchange`, which parses every line
+  under the old layout into a malloc'd byte array and rebuilds the lines
+  under the new one, so unsaved edits survive. The relaying kills the undo
+  history: undo records hold line contents, and they speak the old layout.
+  A short trailing group is never reversed, so the blank suffix that pads
+  the last line stays a suffix in either order. The hex area is typed over
+  by display slot — the dot steps to the slot on the right, which in
+  little-endian is the next lower byte — while the ASCII area keeps the
+  file order in any layout.
 - `file-read` into a hexl buffer clears the hexl flag and mode, as the
   text it reads makes the buffer a text buffer again.
 
@@ -35,3 +48,19 @@ Not carried over from GNU: no `exit-hexl-mode` conversion back to a text
 buffer (the buffer is the dump; kill it or read the file with `C-X C-F`
 to edit it as text), and no byte insertion or deletion — a file dumps and
 saves at the same length.
+
+# Big files
+
+`hexlfill` refuses a file over `HEXLLIMIT` (8 MB) before reading a byte:
+a dump of one would hold over half a million lines, more than an editor
+of this design is meant to move through. A file that will not seek (a
+pipe, a character device) is refused the same way, as the dump reads the
+whole file up front.
+
+The way out, when a big file must be edited, is to dump a window of it:
+give the buffer a base offset, dump `HEXLLIMIT` bytes from there, save
+by opening `r+b`, seeking to the base and writing without truncating,
+and page the window forward and back over the file with a pair of
+commands, with `hexl-goto-address` sliding the window when the address
+falls outside it. The offset column would carry the base, so addresses
+stay file-wide. Not built; the guard above holds the fort until it is.

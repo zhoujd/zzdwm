@@ -174,6 +174,8 @@ KEY key[] = {
   {KCTLX | KCTRL | 'F', findfile,            "find-file"},
   {KCTLX | KCTRL | 'H', hexlfind,            "hexl-find-file"},
   {-1,                  hexlsave,            "hexl-save"},
+  {-1,                  hexlsetgroup,        "hexl-group-size"},
+  {-1,                  hexlsetendian,       "hexl-endian"},
   {-1,                  hexlgoto,            "hexl-goto-address"},
   {KCTLX | KCTRL | 'I', fileinsert,          "file-insert"},
   {KCTLX | KCTRL | 'L', lowerregion,         "lower-region"},

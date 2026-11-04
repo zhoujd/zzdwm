@@ -19,13 +19,25 @@
  * file, refusing to save a line that is not a dump line, so damage
  * from commands that are not hexl aware cannot reach the file.
  *
+ * The layout of a dump is a property of its buffer: the bytes run in
+ * groups of 1, 2, 4, 8 or 16 with a space between groups, and a
+ * group reads either big-endian, the file order, or little-endian,
+ * its bytes reversed; the ASCII area always keeps the file order,
+ * and a group cut short by the end of the file keeps it too.  The
+ * "hexl-group-size" and "hexl-endian" commands change the layout of
+ * the dump in the current buffer at runtime, re-laying its lines out
+ * under the new one with the bytes, and any edits, kept.
+ *
  * The file is read and written with raw stdio, as the ffopen layer
  * is line oriented and a binary file is not lines.  Blank byte slots
  * pad the last line, so every line of a dump is the same width and a
  * column of the display is always the same byte.  The ASCII area is
- * display only; saving reads the hex.
+ * display only; saving reads the hex.  A dump holds the whole file
+ * as lines of text, so a file bigger than HEXLLIMIT bytes is
+ * refused; windowing a dump over a bigger file is a design note in
+ * TODO/hexl-mode.md.
  *
- * The dump line layout, in columns:
+ * The dump line layout, in columns, for a group size of eight:
  *   0- 7   offset, eight hex digits
  *   8      ':'
  *   9      ' '
@@ -34,10 +46,13 @@
  *  35-58   bytes 8-15, as "xx " each
  *  59     ' '
  *  60-75   the ASCII area, '.' for a byte that is not printable
+ * Other group sizes put a space after every group, and move the
+ * ASCII area to follow the hex.
  */
 
-#define HEXLBYTES       16      /* bytes on a dump line          */
-#define HEXLWIDTH       76      /* columns in a dump line        */
+#define HEXLMAXWIDTH    90      /* widest line, groups of one    */
+#define HEXLLIMIT       (8L * 1024L * 1024L)
+                                /* biggest file dumped whole     */
 
 static const char hexldigit[] = "0123456789abcdef";
 
@@ -45,22 +60,71 @@ static int hexlpend = -1;       /* High nibble typed, or -1.     */
 static LINE *hexlpend_lp;       /* Line the nibble was typed on. */
 static int hexlpend_k;          /* Byte it was typed for.        */
 
+static int hexldefgroup = HEXLDEFGROUP;
+                                /* Group size of new dumps.      */
+static int hexldefendian = FALSE;
+                                /* New dumps read big-endian.    */
+
+static int hexlwidth (int group);
+static int hexlascii (int group);
+static int hexlhexcol (int d, int group);
+static int hexldisp (int i, int n, int group, int endian);
+static int hexllinebytes (LINE *lp, int group);
 static void hexlmakeline (char *buf, unsigned long offset,
-                          const uchar *bytes, int n);
-static int hexlparseline (LINE *lp, uchar *bytes);
-static int hexlsetbyte (int k, int byte);
-static void hexlforward (int k, int ascii);
-static int hexlhexcol (int k);
+                          const uchar *bytes, int n,
+                          int group, int endian);
+static int hexlparseline (LINE *lp, uchar *bytes, int group, int endian);
+static int hexlsetbyte (int k, int byte, int n);
+static void hexlforward (int d, int k, int ascii);
 static int hexlhexval (int c);
-static int hexlfill (const char *fname);
+static int hexlchange (int group, int endian);
 
 /*
- * The column of the first hex digit of byte k on a dump line.
+ * The width of a dump line, and the column its ASCII area starts at,
+ * for a group size.
  */
 static int
-hexlhexcol (int k)
+hexlwidth (int group)
 {
-  return (10 + 3 * k + (k >= 8 ? 1 : 0));
+  return (74 + HEXLBYTES / group);
+}
+
+static int
+hexlascii (int group)
+{
+  return (58 + HEXLBYTES / group);
+}
+
+/*
+ * The column of the first hex digit of display slot d on a dump
+ * line.  A slot is where a byte appears on the display; a group
+ * reading little-endian shows its bytes in reverse, so the slot of a
+ * byte is not always the byte's index.
+ */
+static int
+hexlhexcol (int d, int group)
+{
+  return (10 + 3 * d + d / group);
+}
+
+/*
+ * The display slot of byte i of a line holding n bytes: the file
+ * order for a big-endian layout, or reversed within each group for a
+ * little-endian one.  A group cut short by the end of the file keeps
+ * the file order, so the blank slots still pad the line's end.  The
+ * mapping is its own inverse: given a slot it returns the byte.
+ */
+static int
+hexldisp (int i, int n, int group, int endian)
+{
+  int base = i - i % group;
+  int size = group;
+
+  if (base + size > n)
+    size = n - base;            /* A short group at the end. */
+  if (endian == FALSE || size < 2)
+    return (i);
+  return (base + size - 1 - (i - base));
 }
 
 /*
@@ -79,16 +143,34 @@ hexlhexval (int c)
 }
 
 /*
+ * The number of file bytes a dump line holds: its blank slots pad
+ * the file's end, so the first of them ends the count.
+ */
+static int
+hexllinebytes (LINE *lp, int group)
+{
+  int d;
+
+  for (d = 0; d < HEXLBYTES; ++d)
+    if (hexlhexval (lgetc (lp, hexlhexcol (d, group))) < 0)
+      break;
+  return (d);
+}
+
+/*
  * Write one dump line into buf, holding n bytes of the file at the
  * given offset.  Missing bytes leave blank slots, so the line keeps
  * the full width.
  */
 static void
-hexlmakeline (char *buf, unsigned long offset, const uchar *bytes, int n)
+hexlmakeline (char *buf, unsigned long offset, const uchar *bytes,
+              int n, int group, int endian)
 {
+  int width = hexlwidth (group);
+  int ascii = hexlascii (group);
   int i, col;
 
-  memset (buf, ' ', HEXLWIDTH);
+  memset (buf, ' ', width);
   for (i = 7; i >= 0; --i)
     {
       buf[i] = hexldigit[offset & 0xf];
@@ -97,10 +179,11 @@ hexlmakeline (char *buf, unsigned long offset, const uchar *bytes, int n)
   buf[8] = ':';
   for (i = 0; i < n; ++i)
     {
-      col = hexlhexcol (i);
+      col = hexlhexcol (hexldisp (i, n, group, endian), group);
       buf[col] = hexldigit[bytes[i] >> 4];
       buf[col + 1] = hexldigit[bytes[i] & 0xf];
-      buf[60 + i] = (bytes[i] >= 0x20 && bytes[i] < 0x7f) ? bytes[i] : '.';
+      buf[ascii + i] = (bytes[i] >= 0x20 && bytes[i] < 0x7f)
+                         ? bytes[i] : '.';
     }
 }
 
@@ -108,44 +191,56 @@ hexlmakeline (char *buf, unsigned long offset, const uchar *bytes, int n)
  * Read a dump line's bytes into bytes.  Return the number of bytes
  * on the line, or -1 if the line is not a dump line: the wrong
  * width, a broken layout, or a byte after the blank slots that end
- * the file.
+ * the file.  The line is rebuilt from its bytes and compared, so the
+ * layout apart from the ASCII area must be exact.
  */
 static int
-hexlparseline (LINE *lp, uchar *bytes)
+hexlparseline (LINE *lp, uchar *bytes, int group, int endian)
 {
+  char line[HEXLMAXWIDTH + 1];
   const char *text;
-  int k, col, hi, lo, n;
+  unsigned long offset;
+  int width = hexlwidth (group);
+  int ascii = hexlascii (group);
+  int d, col, n;
 
-  if (llength (lp) != HEXLWIDTH)
+  if (llength (lp) != width)
     return (-1);
   text = (const char *) lgets (lp);
-  if (text[8] != ':' || text[9] != ' ' || text[34] != ' '
-      || text[59] != ' ')
+  if (text[8] != ':' || text[9] != ' ')
     return (-1);
-  for (k = 0; k < 8; ++k)
-    if (hexlhexval (text[k]) < 0)
+  for (d = 0; d < 8; ++d)
+    if (hexlhexval (text[d]) < 0)
       return (-1);
-  n = HEXLBYTES;
-  for (k = 0; k < HEXLBYTES; ++k)
+  n = 0;
+  while (n < HEXLBYTES)
     {
-      col = hexlhexcol (k);
-      hi = hexlhexval (text[col]);
-      lo = hexlhexval (text[col + 1]);
-      if (hi >= 0 && lo >= 0)
-        {
-          if (n != HEXLBYTES)  /* A byte past the blanks. */
-            return (-1);
-          bytes[k] = (uchar) ((hi << 4) | lo);
-        }
-      else if (hi < 0 && lo < 0
-               && text[col] == ' ' && text[col + 1] == ' ')
-        {
-          if (n == HEXLBYTES)
-            n = k;             /* First blank slot.    */
-        }
+      col = hexlhexcol (n, group);
+      if (hexlhexval (text[col]) >= 0 && hexlhexval (text[col + 1]) >= 0)
+        ++n;
+      else if (text[col] == ' ' && text[col + 1] == ' ')
+        break;                  /* First blank slot.    */
       else
         return (-1);
     }
+  for (d = n; d < HEXLBYTES; ++d)
+    {
+      col = hexlhexcol (d, group);
+      if (text[col] != ' ' || text[col + 1] != ' ')
+        return (-1);            /* A byte past the blanks. */
+    }
+  for (d = 0; d < n; ++d)
+    {
+      col = hexlhexcol (d, group);
+      bytes[hexldisp (d, n, group, endian)]
+          = (uchar) ((hexlhexval (text[col]) << 4) | hexlhexval (text[col + 1]));
+    }
+  offset = 0;
+  for (d = 0; d < 8; ++d)
+    offset = offset * 16 + hexlhexval (text[d]);
+  hexlmakeline (line, offset, bytes, n, group, endian);
+  if (memcmp (line, text, (size_t) ascii) != 0)
+    return (-1);
   return (n);
 }
 
@@ -155,20 +250,23 @@ hexlparseline (LINE *lp, uchar *bytes)
  * linsert, so undo and the read-only flag hold as for text.
  */
 static int
-hexlsetbyte (int k, int byte)
+hexlsetbyte (int k, int byte, int n)
 {
   char buf[2];
+  int group = curbp->b_hexlgroup;
+  int endian = curbp->b_hexlendian;
+  int ascii = hexlascii (group);
 
-  curwp->w_dot.o = hexlhexcol (k);
+  curwp->w_dot.o = hexlhexcol (hexldisp (k, n, group, endian), group);
   buf[0] = hexldigit[byte >> 4];
   buf[1] = hexldigit[byte & 0xf];
   if (ldelete (2, FALSE) == FALSE)
     return (FALSE);
   linsert (2, 0, buf);
   buf[0] = (byte >= 0x20 && byte < 0x7f) ? byte : '.';
-  if (lgetc (curwp->w_dot.p, 60 + k) != buf[0])
+  if (lgetc (curwp->w_dot.p, ascii + k) != buf[0])
     {
-      curwp->w_dot.o = 60 + k;
+      curwp->w_dot.o = ascii + k;
       if (ldelete (1, FALSE) == FALSE)
         return (FALSE);
       linsert (1, 0, buf);
@@ -177,24 +275,42 @@ hexlsetbyte (int k, int byte)
 }
 
 /*
- * Step dot to byte k+1, in the area dot was edited in.
+ * Step dot past the byte just edited: display slot d+1 in the hex
+ * area, so the dot always moves right across the dump, or the next
+ * byte in the ASCII area.
  */
 static void
-hexlforward (int k, int ascii)
+hexlforward (int d, int k, int ascii)
 {
-  if (k + 1 < HEXLBYTES)
-    curwp->w_dot.o = ascii ? 61 + k : hexlhexcol (k + 1);
+  int group = curbp->b_hexlgroup;
+
+  if (ascii)
+    {
+      if (k + 1 < HEXLBYTES)
+        curwp->w_dot.o = hexlascii (group) + k + 1;
+      else
+        {
+          curwp->w_dot.p = lforw (curwp->w_dot.p);
+          curwp->w_dot.o = hexlascii (group);
+        }
+    }
   else
     {
-      curwp->w_dot.p = lforw (curwp->w_dot.p);
-      curwp->w_dot.o = ascii ? 60 : 10;
+      if (d + 1 < HEXLBYTES)
+        curwp->w_dot.o = hexlhexcol (d + 1, group);
+      else
+        {
+          curwp->w_dot.p = lforw (curwp->w_dot.p);
+          curwp->w_dot.o = 10;
+        }
     }
 }
 
 /*
  * Fill the current buffer, which "bclear" has emptied, with the dump
- * of the file "fname", and make the buffer a hexl buffer.  Shared by
- * the "hexl-find-file" command and the mainline "-H" option.
+ * of the file "fname", and make the buffer a hexl buffer with the
+ * layout new dumps take.  Shared by the "hexl-find-file" command and
+ * the mainline "-H" option.
  */
 static int
 hexlfill (const char *fname)
@@ -203,9 +319,10 @@ hexlfill (const char *fname)
   EWINDOW *wp;
   LINE *lp1, *lp2;
   FILE *fp;
-  char line[HEXLWIDTH + 1];
+  char line[HEXLMAXWIDTH + 1];
   uchar bytes[HEXLBYTES];
   unsigned long offset;
+  long len;
   size_t got;
 
   if ((fp = fopen (fname, "rb")) == NULL)
@@ -213,14 +330,31 @@ hexlfill (const char *fname)
       eprintf ("[No such file \"%s\"]", fname);
       return (FALSE);
     }
+  if (fseek (fp, 0, SEEK_END) != 0 || (len = ftell (fp)) < 0
+      || fseek (fp, 0, SEEK_SET) != 0)
+    {				/* A pipe, or worse.    */
+      fclose (fp);
+      eprintf ("[The file will not seek, so it cannot be dumped]");
+      return (FALSE);
+    }
+  if (len > HEXLLIMIT)
+    {				/* A dump holds the     */
+      fclose (fp);		/* whole file as text.  */
+      eprintf ("[File is %l bytes; a dump holds up to %l]", len,
+               HEXLLIMIT);
+      return (FALSE);
+    }
   bp = curbp;
+  bp->b_hexlgroup = hexldefgroup;
+  bp->b_hexlendian = hexldefendian;
   lp2 = firstline (bp);         /* The empty line bclear  */
                                 /* left, as in "readin".  */
   offset = 0;
   while ((got = fread (bytes, 1, HEXLBYTES, fp)) > 0)
     {
-      hexlmakeline (line, offset, bytes, (int) got);
-      if ((lp1 = lallocx (HEXLWIDTH)) == NULL)
+      hexlmakeline (line, offset, bytes, (int) got,
+                    bp->b_hexlgroup, bp->b_hexlendian);
+      if ((lp1 = lallocx (hexlwidth (bp->b_hexlgroup))) == NULL)
         {
           fclose (fp);
           return (FALSE);
@@ -229,7 +363,7 @@ hexlfill (const char *fname)
       lp1->l_fp = lp2;          /*  before lp2.         */
       lp2->l_bp->l_fp = lp1;
       lp2->l_bp = lp1;
-      lputs (lp1, line, HEXLWIDTH);
+      lputs (lp1, line, hexlwidth (bp->b_hexlgroup));
       offset += (unsigned long) got;
     }
   if (ferror (fp))
@@ -252,7 +386,7 @@ hexlfill (const char *fname)
         {
           wp->w_linep = lp1;
           wp->w_dot.p = lp1;
-          wp->w_dot.o = llength (lp1) == HEXLWIDTH ? hexlhexcol (0) : 0;
+          wp->w_dot.o = llength (lp1) == hexlwidth (bp->b_hexlgroup) ? 10 : 0;
           wp->w_flag |= WFMODE | WFHARD;
         }
     }
@@ -338,6 +472,186 @@ hexlread (const char *fname)
 }
 
 /*
+ * Change the layout of the dump in the current buffer - the group
+ * size, the byte order within a group, or both - by parsing its
+ * lines under the old layout and writing them under the new one.
+ * Bytes not yet saved are kept, but the undo history is not: its
+ * records speak the old layout.  The offsets are rewritten in step,
+ * as the save reads only the bytes.
+ */
+static int
+hexlchange (int group, int endian)
+{
+  BUFFER *bp;
+  EWINDOW *wp;
+  LINE *lp, *next, *newlp, *first;
+  uchar *bytes;		/* The dump's bytes, line by line. */
+  int *counts;		/* Bytes on each line.            */
+  char line[HEXLMAXWIDTH + 1];
+  unsigned long offset;
+  int lineno, count, i, n;
+
+  bp = curbp;
+  if ((bp->b_flag & BFHEXL) == 0)
+    {
+      eprintf ("[Not a hexl buffer]");
+      return (FALSE);
+    }
+
+  count = 0;
+  for (lp = firstline (bp); lp != bp->b_linep; lp = lforw (lp))
+    {
+      if (llength (lp) == 0 && lforw (lp) == bp->b_linep)
+        break;			/* The trailing empty line. */
+      ++count;
+    }
+  bytes = malloc ((size_t) count * HEXLBYTES + 1);
+  counts = malloc (((size_t) count + 1) * sizeof (int));
+  if (bytes == NULL || counts == NULL)
+    {
+      free (bytes);
+      free (counts);
+      eprintf ("Out of memory");
+      return (FALSE);
+    }
+
+  lineno = 0;
+  i = 0;
+  for (lp = firstline (bp); lp != bp->b_linep; lp = lforw (lp))
+    {
+      if (llength (lp) == 0 && lforw (lp) == bp->b_linep)
+        break;
+      ++lineno;
+      if ((n = hexlparseline (lp, bytes + i * HEXLBYTES,
+                              bp->b_hexlgroup, bp->b_hexlendian)) < 0)
+        {
+          free (bytes);
+          free (counts);
+          eprintf ("[Line %d is not a hexl dump line]", lineno);
+          return (FALSE);
+        }
+      counts[i++] = n;
+    }
+
+  bp->b_hexlgroup = group;
+  bp->b_hexlendian = endian;
+  killundo (bp);		/* Old records speak the old layout. */
+  hexlpend = -1;
+
+  first = NULL;
+  offset = 0;
+  for (lp = firstline (bp), i = 0; lp != bp->b_linep; lp = next, ++i)
+    {
+      if (llength (lp) == 0 && lforw (lp) == bp->b_linep)
+        break;
+      next = lforw (lp);
+      hexlmakeline (line, offset, bytes + i * HEXLBYTES, counts[i],
+                    group, endian);
+      if ((newlp = lallocx (hexlwidth (group))) == NULL)
+        {
+          free (bytes);		/* Half converted; the save  */
+          free (counts);	/* will refuse the mismatch. */
+          eprintf ("Out of memory");
+          return (FALSE);
+        }
+      lputs (newlp, line, hexlwidth (group));
+      newlp->l_bp = lp->l_bp;	/* Replace lp with newlp. */
+      newlp->l_fp = lp->l_fp;
+      lp->l_bp->l_fp = newlp;
+      lp->l_fp->l_bp = newlp;
+      free (lp);		/* As "bclear" frees one. */
+      if (first == NULL)
+        first = newlp;
+      offset += (unsigned long) counts[i];
+    }
+  free (bytes);
+  free (counts);
+
+  if (first != NULL)
+    {
+      ALLWIND (wp)
+        {
+          if (wp->w_bufp == bp)
+            {
+              wp->w_linep = first;
+              wp->w_dot.p = first;
+              wp->w_dot.o = 10;
+              wp->w_mark.p = NULL;
+              wp->w_mark.o = 0;
+              wp->w_flag |= WFMODE | WFHARD;
+            }
+        }
+      bp->b_dot.p = first;	/* If no window shows it. */
+      bp->b_mark.p = NULL;
+      bp->b_mark.o = 0;
+    }
+  eprintf ("[Dump relaid: groups of %d, %s-endian]", group,
+           endian != FALSE ? "little" : "big");
+  return (TRUE);
+}
+
+/*
+ * Set the group size of the dump - the bytes run in groups of 1, 2,
+ * 4, 8 or 16, with a space between groups.  A prefix argument is
+ * taken as the size; the dump in the current buffer is re-laid out
+ * under it, and new dumps take it.
+ */
+int
+hexlsetgroup (int f, int n, int k)
+{
+  char buf[NLINE];
+  int group;
+
+  (void) k;
+  if (f != FALSE)
+    group = n < 0 ? -n : n;
+  else
+    {
+      if ((n = ereply ("Group size (1/2/4/8/16): ", buf, sizeof (buf)))
+          != TRUE)
+        return (n);
+      if (buf[0] == 0)
+        return (TRUE);
+      group = atoi (buf);
+    }
+  if (group != 1 && group != 2 && group != 4 && group != 8
+      && group != 16)
+    {
+      eprintf ("[Group size is 1, 2, 4, 8 or 16]");
+      return (FALSE);
+    }
+  hexldefgroup = group;
+  if ((curbp->b_flag & BFHEXL) == 0 || group == curbp->b_hexlgroup)
+    return (TRUE);
+  return (hexlchange (group, curbp->b_hexlendian));
+}
+
+/*
+ * Switch the byte order the groups of a dump read in, big-endian
+ * (the file order) or little-endian (reversed within each group).
+ * A prefix argument of 0 reads big-endian and any other reads
+ * little-endian; without one, the order toggles.  The dump in the
+ * current buffer is re-laid out, and new dumps take the order.
+ */
+int
+hexlsetendian (int f, int n, int k)
+{
+  int endian;
+
+  (void) k;
+  if (f != FALSE)
+    endian = n != 0;
+  else if ((curbp->b_flag & BFHEXL) != 0)
+    endian = !curbp->b_hexlendian;
+  else
+    endian = !hexldefendian;
+  hexldefendian = endian;
+  if ((curbp->b_flag & BFHEXL) == 0 || endian == curbp->b_hexlendian)
+    return (TRUE);
+  return (hexlchange (curbp->b_hexlgroup, endian));
+}
+
+/*
  * Parse the hex out of the dump lines and write the file, as raw
  * bytes.  Every line is checked before the file is touched, so a
  * line damaged by a command that is not hexl aware stops the save
@@ -391,7 +705,8 @@ hexlsave (int f, int n, int k)
       if (llength (lp) == 0 && lforw (lp) == bp->b_linep)
         break;
       ++lineno;
-      if ((nb = hexlparseline (lp, bytes)) < 0)
+      if ((nb = hexlparseline (lp, bytes,
+                               bp->b_hexlgroup, bp->b_hexlendian)) < 0)
         {
           eprintf ("[Line %d is not a hexl dump line]", lineno);
           return (FALSE);
@@ -408,7 +723,7 @@ hexlsave (int f, int n, int k)
   lp = firstline (bp);
   while (lp != bp->b_linep && ferror (fp) == 0)
     {
-      nb = hexlparseline (lp, bytes);
+      nb = hexlparseline (lp, bytes, bp->b_hexlgroup, bp->b_hexlendian);
       if (nb > 0 && fwrite (bytes, 1, (size_t) nb, fp) != (size_t) nb)
         break;
       lp = lforw (lp);
@@ -436,7 +751,7 @@ hexlgoto (int f, int n, int k)
   LINE *lp;
   char buf[NLINE];
   unsigned long addr;
-  int i;
+  int group, endian, i;
 
   (void) k;
   if ((curbp->b_flag & BFHEXL) == 0)
@@ -454,6 +769,8 @@ hexlgoto (int f, int n, int k)
         return (TRUE);
       addr = strtoul (buf, NULL, 0);
     }
+  group = curbp->b_hexlgroup;
+  endian = curbp->b_hexlendian;
   hexlpend = -1;
   lp = firstline (curbp);
   for (i = (int) (addr / HEXLBYTES); i > 0; --i)
@@ -468,7 +785,9 @@ hexlgoto (int f, int n, int k)
       return (FALSE);
     }
   curwp->w_dot.p = lp;
-  curwp->w_dot.o = hexlhexcol ((int) (addr % HEXLBYTES));
+  curwp->w_dot.o = hexlhexcol
+      (hexldisp ((int) (addr % HEXLBYTES), hexllinebytes (lp, group),
+                 group, endian), group);
   curwp->w_flag |= WFMOVE;
   return (TRUE);
 }
@@ -486,41 +805,52 @@ hexlself (int c)
 {
   LINE *lp;
   char buf[2];
-  int col, k, v, ascii, byte;
+  int group, endian, ascii0, width;
+  int col, d, k, n, v, ascii, byte;
 
+  group = curbp->b_hexlgroup;
+  endian = curbp->b_hexlendian;
+  ascii0 = hexlascii (group);
+  width = hexlwidth (group);
   lp = curwp->w_dot.p;
-  if (lp == curbp->b_linep || llength (lp) != HEXLWIDTH
+  if (lp == curbp->b_linep || llength (lp) != width
       || lgetc (lp, 8) != ':')
     {
       eprintf ("[Not a hexl dump line]");
       return (FALSE);
     }
+  n = hexllinebytes (lp, group);
   col = curwp->w_dot.o;
-  if (col >= 60 && col < 76)
+  if (col >= ascii0 && col < ascii0 + HEXLBYTES)
     {
       ascii = TRUE;
-      k = col - 60;
-    }
-  else if (col >= 10 && col < 59)
-    {
-      ascii = FALSE;
-      k = col < 35 ? (col - 10) / 3 : 8 + (col - 35) / 3;
+      k = col - ascii0;
+      d = k;			/* The ASCII area keeps file order. */
     }
   else
     {
-      eprintf ("[Dot is not on a byte]");
-      return (FALSE);
+      ascii = FALSE;
+      for (d = 0; d < HEXLBYTES; ++d)
+        if (col == hexlhexcol (d, group)
+            || col == hexlhexcol (d, group) + 1)
+          break;
+      if (d >= HEXLBYTES)
+        {
+          eprintf ("[Dot is not on a byte]");
+          return (FALSE);
+        }
+      k = hexldisp (d, n, group, endian);
     }
 
   if (c == '\t')
     {
       hexlpend = -1;
-      hexlforward (k, ascii);
+      hexlforward (d, k, ascii);
       return (TRUE);
     }
 
   /* The byte must be one the file holds, not a padding blank. */
-  if (hexlhexval (lgetc (lp, hexlhexcol (k))) < 0)
+  if (k >= n)
     {
       eprintf ("[That byte is past the end of the file]");
       return (FALSE);
@@ -529,9 +859,9 @@ hexlself (int c)
   if (ascii != FALSE)
     {
       hexlpend = -1;
-      if (hexlsetbyte (k, c & 0xff) == FALSE)
+      if (hexlsetbyte (k, c & 0xff, n) == FALSE)
         return (FALSE);
-      hexlforward (k, ascii);
+      hexlforward (d, k, ascii);
       return (TRUE);
     }
 
@@ -544,7 +874,7 @@ hexlself (int c)
     {
       hexlpend = v;
       hexlpend_k = k;
-      curwp->w_dot.o = hexlhexcol (k);
+      curwp->w_dot.o = hexlhexcol (d, group);
       buf[0] = (char) c;
       if (ldelete (1, FALSE) == FALSE)
         return (FALSE);
@@ -555,8 +885,8 @@ hexlself (int c)
   /* The high nibble holds: the byte is written and dot steps on. */
   byte = (hexlpend << 4) | v;
   hexlpend = -1;
-  if (hexlsetbyte (k, byte) == FALSE)
+  if (hexlsetbyte (k, byte, n) == FALSE)
     return (FALSE);
-  hexlforward (k, ascii);
+  hexlforward (d, k, ascii);
   return (TRUE);
 }

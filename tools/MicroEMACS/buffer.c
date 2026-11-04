@@ -600,6 +600,8 @@ bcreate (const char *bname)
 #endif
   bp->b_active = FALSE;
   bp->b_crlf = dosmode ? TRUE : FALSE;
+  bp->b_hexlgroup = HEXLDEFGROUP;
+  bp->b_hexlendian = FALSE;
   return (bp);
 }
 

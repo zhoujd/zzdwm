@@ -3,8 +3,11 @@
 buffer holds the dump itself, C-X C-H reads a file into it (and "me
 -H" reads one on startup), two hex digits typed in the hex area write
 a byte, a character typed in the ASCII area writes its own value, and
-C-X C-S parses the hex back out and writes the file.  A line that is
-no longer a dump line stops the save with the file untouched."""
+C-X C-S parses the hex back out and writes the file.  The layout
+changes at runtime - the group size and the byte order within a
+group - and the dump is re-laid out with the bytes kept.  A line
+that is no longer a dump line stops the save with the file
+untouched."""
 
 
 import os
@@ -15,10 +18,13 @@ from common import drain, kill, save_quit, spawn
 HEXL = b"\x18\x08"                   # C-X C-H hexl-find-file
 SAVE = b"\x18\x13"                   # C-X C-S file-save
 GOTO = b"\x1bxhexl-goto-address\r"
+GROUP = b"\x1bxhexl-group-size\r"
+ENDIAN = b"\x1bxhexl-endian\r"
 BOL = b"\x01"                        # C-A
 RIGHT = b"\x1bOC"                    # application-mode arrow
 BACKSPACE = b"\x7f"
 UNDO = b"\x1f"                       # C-_
+REFRESH = b"\x0c"                    # C-L, a full redraw
 
 DATA = (b"Hello, World!\n\x00\x01"   # line 0: text, newline, two unprintables
         + b"\xfe\xffABCDEFGHIJKLMN"  # line 1: high bytes, then text
@@ -137,6 +143,62 @@ def main():
             out += send(fd, HEXL)
             out += send(fd, path.encode() + b"\r", 1.5)
             expect(b"[Old buffer]" in out, "the dump is revisited")
+
+            # The group size changes at runtime; the dump is re-laid
+            # out with gaps after every group.
+            out = send(fd, GROUP + b"4\r", 1.2)
+            expect(b"[Dump relaid: groups of 4, big-endian]" in out,
+                   "group size 4 relaid the dump")
+            out = send(fd, REFRESH)
+            expect(b"41 5a 6c 6c  59 2c 20 57  6f 72 6c 64" in out,
+                   "groups of 4 put a space after every group")
+            out = send(fd, GROUP + b"3\r")
+            expect(b"[Group size is 1, 2, 4, 8 or 16]" in out,
+                   "a group size other than 1/2/4/8/16 is refused")
+
+            # A byte typed before the relayout is kept by it.
+            send(fd, BOL + RIGHT * 10)       # display slot 0, byte 0
+            send(fd, b"77")                  # byte 0 -> 0x77, unsaved
+            model[0] = 0x77
+            out = send(fd, ENDIAN, 1.2)      # little-endian now
+            expect(b"[Dump relaid: groups of 4, little-endian]" in out,
+                   "the byte order switched to little-endian")
+            out = send(fd, REFRESH)
+            expect(b"6c 6c 5a 77" in out,
+                   "a little-endian group reads its bytes reversed")
+            out = send(fd, SAVE)
+            expect(b"[Wrote 37 bytes]" in out,
+                   "the relaid dump saves its bytes")
+            expect(content(path) == bytes(model),
+                   "the byte typed before the relayout was kept")
+
+            # Slot 0 of a little-endian group holds the group's LAST
+            # byte: typing there writes byte 3.
+            send(fd, BOL + RIGHT * 10)
+            send(fd, b"88")                  # byte 3 -> 0x88, unsaved
+            send(fd, ENDIAN)                 # back to big-endian
+            model[3] = 0x88
+            send(fd, SAVE)
+            expect(content(path) == bytes(model),
+                   "a little-endian slot wrote its own byte")
+
+            # The ASCII area keeps the file order in any layout; its
+            # column follows the group size (62 for groups of 4).
+            send(fd, GOTO + b"1\r")
+            send(fd, BOL + RIGHT * 62)       # the ASCII column of byte 0
+            send(fd, b"Q")
+            model[0] = 0x51
+            send(fd, SAVE)
+            expect(content(path) == bytes(model),
+                   "the ASCII area wrote its byte at group size 4")
+
+            # Back to the GNU layout, with the edits still in place.
+            out = send(fd, GROUP + b"8\r", 1.2)
+            expect(b"[Dump relaid: groups of 8, big-endian]" in out,
+                   "the dump returned to the GNU layout")
+            out = send(fd, REFRESH)
+            expect(b"51 5a 6c 88 59 2c 20 57" in out,
+                   "the edits came back in groups of 8")
         finally:
             save_quit(process, fd)
 
