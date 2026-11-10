@@ -2077,8 +2077,10 @@ pairs in two groups of eight; a group size packs each group into a single
 hex number, as `xxd`, Vim's hex dumper, packs its `-g` groups — a byte
 pair, a word, a doubleword, a quadword, an octaword — with the group's
 padding split to either side of it, so a group reads as the value it holds.
-The GNU layout is left once a group size is set; dumping the file anew
-opens in it again. The hex area gives each byte three columns whichever
+The GNU layout is left once a group size is set; the `hexl-packed` extended
+command\index{hexl-packed}\index{Packed groups, in a hexl buffer} returns
+to it, and dumping the file anew opens in it again. The hex area gives each
+byte three columns whichever
 group size is set, so the line width and the ASCII column never move. The
 `hexl-endian` extended
 command\index{hexl-endian}\index{Byte order, in a hexl buffer} switches the
@@ -2086,7 +2088,10 @@ byte order within a group: big-endian, where the bytes read in file order, is
 the default, and little-endian shows each group reversed, as a two byte or
 four byte integer reads on the machine. A prefix argument of zero asks for
 big-endian, any other value for little-endian, and without one the order is
-toggled. Each command re-lays the dump out in place, keeping every byte, so
+toggled. The `hexl-packed` extended command switches the groups between
+that packed form and the GNU layout: a prefix argument of zero asks for the
+GNU layout, any other value for the packed groups, and without one the
+layout toggles. Each command re-lays the dump out in place, keeping every byte, so
 edits survive the change; the ASCII area keeps the file order in any layout.
 A group cut short by the end of the file is never reversed, so its bytes read
 in file order either way. The settings hold per buffer and become the

@@ -281,6 +281,7 @@ KEY key[] = {
   {-1,                  hexlsave,            "hexl-save"},
   {-1,                  hexlsetgroup,        "hexl-group-size"},
   {-1,                  hexlsetendian,       "hexl-endian"},
+  {-1,                  hexlsetpacked,       "hexl-packed"},
   {-1,                  hexlgoto,            "hexl-goto-address"},
 #ifdef LISP
   {-1,                  lispeval,            "eval-lisp"},

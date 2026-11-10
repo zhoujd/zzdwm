@@ -23,10 +23,10 @@
  * groups of 1, 2, 4, 8 or 16, and a group reads either big-endian,
  * the file order, or little-endian, its bytes reversed; the ASCII
  * area always keeps the file order, and a group cut short by the end
- * of the file keeps it too.  The "hexl-group-size" and "hexl-endian"
- * commands change the layout of the dump in the current buffer at
- * runtime, re-laying its lines out under the new one with the bytes,
- * and any edits, kept.
+ * of the file keeps it too.  The "hexl-group-size", "hexl-endian" and
+ * "hexl-packed" commands change the layout of the dump in the current
+ * buffer at runtime, re-laying its lines out under the new one with
+ * the bytes, and any edits, kept.
  *
  * The file is read and written with raw stdio, as the ffopen layer
  * is line oriented and a binary file is not lines.  Blank byte slots
@@ -645,6 +645,42 @@ hexlsetendian (int f, int n, int k)
   if ((curbp->b_flag & BFHEXL) == 0 || endian == curbp->b_hexlendian)
     return (TRUE);
   return (hexlchange (curbp->b_hexlgroup, endian, curbp->b_hexlpacked));
+}
+
+/*
+ * Switch the layout the dump's groups read in: each group packed into
+ * one hex number, or the GNU layout the dump opens in, the bytes
+ * spaced as pairs in two groups of eight.  A prefix argument of zero
+ * asks for the GNU layout and any other asks for the packed groups;
+ * without one, the layout toggles.  The dump in the current buffer is
+ * re-laid out, and new dumps take the layout.
+ */
+int
+hexlsetpacked (int f, int n, int k)
+{
+  int packed;
+
+  (void) k;
+  if (f != FALSE)
+    packed = n != 0;
+  else if ((curbp->b_flag & BFHEXL) != 0)
+    packed = curbp->b_hexlpacked == FALSE;
+  else
+    packed = hexldefpacked == FALSE;
+  hexldefpacked = packed;
+  if (packed == FALSE)
+    hexldefgroup = HEXLDEFGROUP;
+  if ((curbp->b_flag & BFHEXL) == 0)
+    return (TRUE);
+  if (packed != FALSE)
+    {
+      if (curbp->b_hexlpacked != FALSE)
+        return (TRUE);
+      return (hexlchange (curbp->b_hexlgroup, curbp->b_hexlendian, TRUE));
+    }
+  if (curbp->b_hexlpacked == FALSE && curbp->b_hexlgroup == HEXLDEFGROUP)
+    return (TRUE);                 /* Already the GNU layout. */
+  return (hexlchange (HEXLDEFGROUP, curbp->b_hexlendian, FALSE));
 }
 
 /*

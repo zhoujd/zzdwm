@@ -942,6 +942,7 @@ int hexlfind (int f, int n, int k);     /* Read a file as a hexl dump   */
 int hexlread (const char *fname);       /* Read a dump into cur. buffer */
 int hexlsetgroup (int f, int n, int k); /* Set dump group size          */
 int hexlsetendian (int f, int n, int k); /* Set dump byte order         */
+int hexlsetpacked (int f, int n, int k); /* Set dump group packing      */
 int hexlsave (int f, int n, int k);     /* Write a hexl dump to a file  */
 int hexlgoto (int f, int n, int k);     /* Go to a byte by its address  */
 int hexlself (int c);                   /* Self-insert in a hexl buffer */

@@ -4,8 +4,9 @@ buffer holds the dump itself, C-X C-H reads a file into it (and "me
 -H" reads one on startup), two hex digits typed in the hex area write
 a byte, a character typed in the ASCII area writes its own value, and
 C-X C-S parses the hex back out and writes the file.  The layout
-changes at runtime - the group size and the byte order within a
-group - and the dump is re-laid out with the bytes kept.  A line
+changes at runtime - the group size, the byte order within a group,
+and the packing of the groups against the GNU layout - and the dump
+is re-laid out with the bytes kept.  A line
 that is no longer a dump line stops the save with the file
 untouched."""
 
@@ -20,6 +21,7 @@ SAVE = b"\x18\x13"                   # C-X C-S file-save
 GOTO = b"\x1bxhexl-goto-address\r"
 GROUP = b"\x1bxhexl-group-size\r"
 ENDIAN = b"\x1bxhexl-endian\r"
+PACKED = b"\x1bxhexl-packed\r"
 BOL = b"\x01"                        # C-A
 RIGHT = b"\x1bOC"                    # application-mode arrow
 BACKSPACE = b"\x7f"
@@ -206,6 +208,27 @@ def main():
             out += send(fd, REFRESH)
             expect(b"51 5a 6c 88 59 2c 20 57 6f" in out,
                    "groups of 1 space the pairs")
+
+            # The packed groups and the GNU layout switch at run time;
+            # a prefix argument picks the layout instead of toggling.
+            out = send(fd, PACKED, 1.2)  # toggle off: the GNU layout
+            expect(b"[Dump relaid: groups of 8, big-endian]" in out,
+                   "the dump relaid into the GNU layout")
+            out = send(fd, REFRESH)
+            expect(b"51 5a 6c 88 59 2c 20 57  6f 72 6c 64 21" in out,
+                   "the GNU layout spaces the pairs")
+            out = send(fd, b"\x150" + PACKED, 1.2)
+            expect(b"[Dump relaid:" not in out,
+                   "the GNU layout holds under a zero argument")
+            out = send(fd, b"\x151" + PACKED, 1.2)   # C-U 1: pack again
+            expect(b"[Dump relaid: groups of 8, big-endian]" in out,
+                   "a nonzero argument packs the groups")
+            out = send(fd, REFRESH)
+            expect(b"515a6c88592c2057" in out,
+                   "the packed groups came back")
+            send(fd, SAVE)
+            expect(content(path) == bytes(model),
+                   "the layout changes saved the same bytes")
         finally:
             save_quit(process, fd)
 

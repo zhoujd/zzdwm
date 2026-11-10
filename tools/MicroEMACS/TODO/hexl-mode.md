@@ -26,7 +26,10 @@ dump is text, and undo, regions, and search work on it as text.
 - The layout changes at run time, per buffer, and also sets the session
   defaults for dumps made later: `hexl-group-size` (M-X, or C-U n) takes
   `1`, `2`, `4`, `8` or `16` bytes per group, `hexl-endian` (M-X, or C-U 0
-  for big, C-U 1 for little) the byte order within a group. Each re-lays
+  for big, C-U 1 for little) the byte order within a group, and
+  `hexl-packed` (M-X, or C-U 0 for the GNU layout, C-U 1 for packed)
+  whether the groups pack into single hex numbers or the dump keeps the
+  GNU layout it opens in. Each re-lays
   the dump out in place through `hexlchange`, which parses every line
   under the old layout into a malloc'd byte array and rebuilds the lines
   under the new one, so unsaved edits survive. The relaying kills the undo
@@ -45,7 +48,7 @@ dump is text, and undo, regions, and search work on it as text.
   hex area stays 48 wide and the line width (76) and the ASCII column
   (60) never move, whichever size is set. The GNU layout the dump opens
   in — spaced pairs, two groups of eight — is left once a group size is
-  set, and no command returns to it; killing the buffer and dumping the
+  set; `hexl-packed` returns to it, as killing the buffer and dumping the
   file anew does.
 - `file-read` into a hexl buffer clears the hexl flag and mode, as the
   text it reads makes the buffer a text buffer again.
