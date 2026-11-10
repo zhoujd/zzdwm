@@ -1,7 +1,7 @@
 # File Handling
 
 Status: the native mode of [`hexl-mode.md`](hexl-mode.md) covers the
-editing half this proposal was reopened for, and its layout commands —
+Hexl mode editing original proposal, and its layout commands —
 `hexl-group-size`, `hexl-endian`, `hexl-packed` — give the dump the
 inspection views the shell filters below were kept for; the filters
 remain the path for files over the dump's 8 MB limit.
