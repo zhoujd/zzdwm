@@ -1,8 +1,10 @@
 # File Handling
 
-Status: the shell filters below remain the read-only inspection path;
-native Hexl editing has since been implemented, reopening this proposal
-for the editing half. See [`hexl-mode.md`](hexl-mode.md).
+Status: the native mode of [`hexl-mode.md`](hexl-mode.md) covers the
+editing half this proposal was reopened for, and its layout commands —
+`hexl-group-size`, `hexl-endian`, `hexl-packed` — give the dump the
+inspection views the shell filters below were kept for; the filters
+remain the path for files over the dump's 8 MB limit.
 
 ---
 
@@ -23,26 +25,14 @@ This covers byte, grouped-word, and little-endian-style viewing without adding
 binary-safe buffer editing, endian state, reverse hex parsing, or extra code
 to the editor.
 
-## Closed Proposal
+The implemented mode now gives these views on the editable dump itself:
+`hexl-group-size` sets the group, `hexl-endian` the byte order within it,
+and `hexl-packed` switches between the packed groups and the GNU layout
+the dump opens in, each re-laying the dump in place at run time. The
+filters keep their place for a file the dump refuses over 8 MB.
 
-The original proposal described an integrated C Hexl mode with display-only
-endianness switching and reverse reconstruction through `sscanf`. It was
-closed because:
+## Reference code
 
-- external `xxd` already supplies the requested read-only views;
-- text-oriented MicroEMACS buffers are not a safe editing representation for
-  arbitrary NUL-containing binary data;
-- reverse writing requires a strict canonical format and robust error
-  handling for arbitrary layouts and partial rows;
-- native support would increase the static executable despite the proposal's
-  footprint goal.
-
-The reopening came when direct binary patching from inside MicroEMACS
-became the requested workflow; the implemented mode answers the closure
-concerns by keeping the buffer as plain ASCII dump text (no NULs), one
-fixed-width canonical line format, and a save that validates every line
-before touching the file.
-
-Reference code:
 zzdwm/tools/utils/fileview/fileview.c
 zzdwm/tools/utils/liveview/liveview.c
+zzdwm/tools/utils/hexl/hexl.c (GNU's converter, source of the layout name)
