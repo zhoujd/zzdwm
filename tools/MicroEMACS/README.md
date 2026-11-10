@@ -7,9 +7,17 @@ and Windows while keeping the executable small and fast.
 ## Features
 
 * UTF-8 editing and Unicode-aware display.
-* Regular-expression search and replacement.
+* Incremental search on `C-S`/`C-R`, plus regular-expression search and
+  replacement.
+* Rectangle editing on the `C-X r` prefix: copy, kill, yank, clear, open,
+  and string rectangles, highlighted from anchor to dot.
+* Binary editing as hexl dumps through `C-X C-H` and the `-H` option, with
+  the group size, byte order, and packed or GNU layout changeable at run
+  time (files up to 8 MB).
 * Undo, keyboard macros, profiles, and buffer/window management.
 * Optional color and Vim-style line numbers.
+* Optional terminal mouse support: click to move dot, drags that select
+  text or sweep out rectangles, and wheel scrolling.
 * Syntax highlighting for C, C++, Bash, Python, Markdown, JSON, YAML,
   TOML, CMake, Makefile, Dockerfile, Lisp, Emacs Lisp, Scheme, and SQL.
 * Tiny Lisp extensions, editor command bridges, Lisp startup configuration,
@@ -39,9 +47,11 @@ Useful startup options include:
 ```sh
 ./me --help             # Show command-line options
 ./me file.c:123:4       # Open a file at line 123, column 4
+./me -H firmware.bin    # Open a binary file as an editable hex dump
 ./me -C file.c          # Disable color for this session
 ./me -n file.c          # Show line numbers
 ./me -2 file.c          # Use a two-page display
+./me -m file.c          # Enable mouse support (click, drag, and wheel)
 ./me -l startup.l       # Load a Lisp startup file
 ./me --script script.l  # Run a Lisp script without a terminal
 ./me -q file.c          # Skip default startup files
@@ -138,6 +148,17 @@ build `me.exe` and run the Wine smoke test from the repository root:
 ```sh
 ./build.sh -w
 ./docker/run.sh wine
+```
+
+End-to-end tests in [`test/python`](test/python) drive the built Linux
+binary through a pseudo-terminal, covering the tty layer: mouse reports
+and gestures, hexl editing, rectangles, incremental search, and save-all
+through `C-X S`. They are not part of `build.sh -b test`; see
+[`test/python/README.md`](test/python/README.md) and run them after a
+build:
+
+```sh
+for s in test/python/me_*.py; do python3 "$s" || break; done
 ```
 
 ## Documentation
