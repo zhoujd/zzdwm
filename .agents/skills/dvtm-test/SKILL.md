@@ -23,8 +23,22 @@ Use the `dvtm: ` prefix for dvtm commit subjects, for example:
 From `tools/dvtm`:
 
 ```sh
-make
+make            # quick iteration build, what the pty tests run
+./build.sh -p   # full static release build
 ```
+
+`build.sh -p` builds inside the `zhoujd/alpine` docker image with
+`LDFLAGS="-static -s -Os"`, stamping the git REV into the binary. It
+runs `make clean` first, which regenerates `config.h` from
+`config.def.h` — keep the two in step. Other actions: `-b` build,
+`-c` clean, `-d` debug, `-r` release, `-i` install.
+
+The deployed binaries live at `libexec/dvtm/`: `dvtm` and `dvtm-editor`
+(tracked in git, beside the `dvtm-cmd`, `dvtm-open`, `dvtm-pager`,
+`dvtm-status` and `dvtm-tree` helpers). `build.sh -p` only builds
+in-tree — copy the fresh `dvtm` and `dvtm-editor` to `libexec/dvtm/`
+and commit that separately from the source change, the
+`ME: update bin/me` pattern.
 
 A config change (`config.h`, `config.def.h`) needs a rebuild to take;
 `make` recompiles on the touched headers.
