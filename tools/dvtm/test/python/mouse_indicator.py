@@ -102,6 +102,14 @@ with tempfile.TemporaryDirectory(prefix="dvtm-mouse-") as directory:
               "MOD+M shows the global (M) indicator beside the layout")
         check(b"(m)" not in out, "the window is not marked as tracking")
 
+        os.write(fd, MOD + b"I")       # showinfo off: the mark stands alone
+        out = repaint(fd)
+        check(b" (M) " in out,
+              "the lone (M) keeps a space on each side of the mark")
+        check(b"[]=" not in out, "the layout symbol left with showinfo")
+        os.write(fd, MOD + b"I")       # showinfo back on
+        drain(fd, 0.5)
+
         os.write(fd, MX)               # me: mouse reporting on
         out = drain(fd, 1.5)
         check(b"[Mouse now ON]" in out, "me turned its reporting on")

@@ -16,7 +16,8 @@ symbol:
   fullscreen's symbol is `[M]` itself (`config.h`), so a `[M]` indicator
   would read as the fullscreen layout twice over.
 - `draw_border` composes the right side as one string — ` (M)` and
-  ` (m)` as each applies, the layout symbol when `showinfo` is on — and
+  ` (m)` as each applies, the layout symbol when `showinfo` is on —
+  pads its end to a space so a lone mark keeps one on each side, and
   prints it right-aligned one column from the border's end. With the
   mouse fully off the rendering is byte for byte what it was.
 - The border must follow both marks at run time. `togglemouse` redraws

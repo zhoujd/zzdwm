@@ -492,6 +492,9 @@ draw_border(Client *c) {
 		if (showinfo)
 			len += snprintf(right_info + len, sizeof(right_info) - len,
 			                " %s ", layout->symbol);
+		if (right_info[len - 1] != ' ') /* balance the leading space */
+			len += snprintf(right_info + len, sizeof(right_info) - len,
+			                " ");
 		mvwprintw(c->window, 0, c->w - len - 1, "%s", right_info);
 	}
 
