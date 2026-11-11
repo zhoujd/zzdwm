@@ -478,14 +478,21 @@ draw_border(Client *c) {
 	if (t)
 		c->title[maxlen] = t;
 
-	if (showinfo) {
-		bool is_info_active = (showinfo || (sel && !sel->next && bar.pos == BAR_OFF));
+	if (showinfo || mouse_events_enabled || vt_mousemode(c->term)) {
 		static char right_info[64];
-		snprintf(right_info, sizeof(right_info), " %s ",
-		         layout->symbol);
-		int len = strlen(right_info);
-		int offset = 1;
-		mvwprintw(c->window, 0, c->w - len - offset, "%s", right_info);
+		int len = 0;
+		/* round brackets: layout symbols, as fullscreen's "[M]",
+		 * own the square ones */
+		if (mouse_events_enabled)
+			len += snprintf(right_info + len, sizeof(right_info) - len,
+			                " (M)");
+		if (vt_mousemode(c->term))
+			len += snprintf(right_info + len, sizeof(right_info) - len,
+			                " (m)");
+		if (showinfo)
+			len += snprintf(right_info + len, sizeof(right_info) - len,
+			                " %s ", layout->symbol);
+		mvwprintw(c->window, 0, c->w - len - 1, "%s", right_info);
 	}
 
 	wmove(c->window, y, x);
@@ -1844,6 +1851,7 @@ static void
 togglemouse(const char *args[]) {
 	mouse_events_enabled = !mouse_events_enabled;
 	mouse_setup();
+	draw_all(); /* the border's (M) indicator follows the toggle */
 }
 
 static void
@@ -2112,6 +2120,7 @@ handle_editor(Client *c) {
 	c->editor = NULL;
 	c->term = c->app;
 	vt_dirty(c->term);
+	draw_border(c); /* the indicator tracks the app vt again */
 	draw_content(c);
 	wnoutrefresh(c->window);
 }
@@ -2349,6 +2358,7 @@ main(int argc, char *argv[]) {
 
 		for (Client *c = clients; c; c = c->next) {
 			if (FD_ISSET(vt_pty_get(c->term), &rd)) {
+				bool mousemode = vt_mousemode(c->term);
 				if (vt_process(c->term) < 0 && errno == EIO) {
 					if (c->editor)
 						c->editor_died = true;
@@ -2357,6 +2367,9 @@ main(int argc, char *argv[]) {
 					continue;
 				}
 				mouse_setup(); /* tracking may have changed */
+				if (vt_mousemode(c->term) != mousemode
+				    && (!isarrange(fullscreen) || sel == c))
+					draw_border(c); /* the mouse indicator changed */
 			}
 
 			if (c != sel && is_content_visible(c)) {

@@ -239,6 +239,16 @@ Alternatively you can disable mouse support at compile time, start dvtm with the
 flag or toggle mouse support during runtime with
 .Ic Mod-M .
 .
+.
+.Ic Mod-M
+lights a
+.Ic (M)
+indicator on every window border while dvtm's own mouse grabbing is on.
+An application which enables mouse tracking itself receives the mouse
+events of its window instead; such a window carries a lowercase
+.Ic (m)
+indicator beside it.
+.
 .Bl -tag -width 8
 .It Ic Button1 click
 Focus window.
