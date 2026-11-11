@@ -1,0 +1,4 @@
+interface:
+  display_name: "dvtm Testing"
+  short_description: "Build dvtm and run its pty tests"
+  default_prompt: "Use $dvtm-test to build dvtm and validate it through the pty end-to-end scripts."
