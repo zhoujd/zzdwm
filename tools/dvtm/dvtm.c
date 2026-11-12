@@ -1063,8 +1063,20 @@ mouse_setup(void) {
 		 * motion with no button held arrives as a phantom button 1
 		 * press. */
 		bool motion = mask & REPORT_MOUSE_POSITION;
+		bool was_motion = armed & REPORT_MOUSE_POSITION;
 		mouseinterval(motion ? 0 : click_interval);
-		putp(motion ? "\033[?1002h" : "\033[?1002l");
+		/* Dropping motion tracking with 1002l would undo the whole
+		 * arming: terminals of st's kind clear every mouse mode on
+		 * any of 1000/1002/1003, not just their own, so the 1000
+		 * ncurses just armed would go with it and the outer terminal
+		 * would report nothing at all.  Re-assert press reporting
+		 * instead - in those terminals 1000h also drops motion, all
+		 * by itself.  On a full disarm undo only the 1002 we added
+		 * ourselves: ncurses's own disarm covers what its XM armed. */
+		if (mask)
+			putp(motion ? "\033[?1002h" : "\033[?1000h");
+		else if (was_motion)
+			putp("\033[?1002l");
 		fflush(stdout);
 		armed = mask;
 	}
