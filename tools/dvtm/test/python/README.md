@@ -8,6 +8,7 @@ wire bytes — often fragments, as ncurses writes only the changed cells.
 | Script | Covers |
 | :--- | :--- |
 | `mouse_indicator.py` | the border's `(M)` and `(m)` mouse indicators — the global `MOD+M` grabbing and the window's own mouse tracking — beside the layout symbol and alone |
+| `mouse_bar.py` | a mouse report leaving the bar's key echo alone — the wheel's `KEY_MOUSE` used to linger there and print as `~Y` — while the wheel-up relay to a tracking `me` keeps scrolling |
 
 The scripts are self-contained: each builds its own scratch files and
 skips when a needed binary is absent. `mouse_indicator.py` also needs a

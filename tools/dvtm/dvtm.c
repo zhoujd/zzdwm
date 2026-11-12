@@ -2322,6 +2322,10 @@ main(int argc, char *argv[]) {
 				KeyBinding *binding = NULL;
 				if (code == KEY_MOUSE) {
 					key_index = 0;
+					/* a mouse report is not a keybinding prefix; left
+					 * in keys[] it would paint in the bar's key echo,
+					 * KEY_MOUSE printing as raw bytes there */
+					memset(keys, 0, sizeof(keys));
 					mod_key_pressed = false;
 					handle_mouse();
 				} else if ((binding = keybinding(keys, key_index))) {
