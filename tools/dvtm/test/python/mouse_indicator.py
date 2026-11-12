@@ -111,9 +111,10 @@ with tempfile.TemporaryDirectory(prefix="dvtm-mouse-") as directory:
         drain(fd, 0.5)
 
         os.write(fd, MX)               # me: mouse reporting on
-        out = drain(fd, 1.5)
-        check(b"[Mouse now ON]" in out, "me turned its reporting on")
-        out = repaint(fd)
+        drain(fd, 0.5)
+        out = repaint(fd)              # me's echo races the border's
+        check(b"[Mouse now ON]" in out,  # cell diffs, so assert on a
+              "me turned its reporting on")  # complete repaint
         check(b"(M) (m) []= " in out,
               "the tracking window gains (m) beside the global (M)")
 
@@ -124,9 +125,10 @@ with tempfile.TemporaryDirectory(prefix="dvtm-mouse-") as directory:
               "the tracking (m) holds with dvtm's grabbing off")
 
         os.write(fd, MX)               # me: mouse reporting off
-        out = drain(fd, 1.5)
-        check(b"[Mouse now OFF]" in out, "me turned its reporting off")
+        drain(fd, 0.5)
         out = repaint(fd)
+        check(b"[Mouse now OFF]" in out,
+              "me turned its reporting off")
         check(b"(m)" not in out and b"(M)" not in out,
               "both indicators are gone once the mouse is fully off")
     finally:
