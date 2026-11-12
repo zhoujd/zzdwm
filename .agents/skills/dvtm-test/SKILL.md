@@ -36,9 +36,12 @@ runs `make clean` first, which regenerates `config.h` from
 The deployed binaries live at `libexec/dvtm/`: `dvtm` and `dvtm-editor`
 (tracked in git, beside the `dvtm-cmd`, `dvtm-open`, `dvtm-pager`,
 `dvtm-status` and `dvtm-tree` helpers). `build.sh -p` only builds
-in-tree — copy the fresh `dvtm` and `dvtm-editor` to `libexec/dvtm/`
-and commit that separately from the source change, the
-`ME: update bin/me` pattern.
+in-tree — commit the source change first, then run `build.sh -p`,
+then copy the fresh `dvtm` and `dvtm-editor` to `libexec/dvtm/` and
+commit that separately from the source change, the
+`ME: update bin/me` pattern. The order matters: `dvtm -v` stamps the
+last commit touching the C sources, so a build before the commit
+names the old code.
 
 A config change (`config.h`, `config.def.h`) needs a rebuild to take;
 `make` recompiles on the touched headers.
