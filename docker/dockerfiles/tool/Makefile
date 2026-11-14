@@ -1,6 +1,6 @@
 ### Build in Docker
 
-TARGET: valgrind-base wine-base mingw-base docs-base autossh-base
+TARGET: valgrind-base wine-base mingw-base docs-base autossh-base claude-base
 
 CTN_USER ?= ${USER}
 IMG_NS ?= zhoujd
@@ -22,6 +22,9 @@ Docs_LATEST_TAG := $(IMG_NS)/docs:latest
 
 Autossh_BASE_TAG := $(IMG_NS)/autossh:base
 Autossh_LATEST_TAG := $(IMG_NS)/autossh:latest
+
+Claude_BASE_TAG := $(IMG_NS)/claude:base
+Claude_LATEST_TAG := $(IMG_NS)/claude:latest
 
 .PHONY: all
 all: $(TARGET)
@@ -46,12 +49,17 @@ autossh-base: autossh.dockerfile autossh-entrypoint.sh bin/autossh
 	docker build $(BUILD_ARG) -t $(Autossh_BASE_TAG) -f autossh.dockerfile .
 	docker tag $(Autossh_BASE_TAG) $(Autossh_LATEST_TAG)
 
+claude-base: claude.dockerfile claude-entrypoint.sh
+	docker build $(BUILD_ARG) -t $(Claude_BASE_TAG) -f claude.dockerfile .
+	docker tag $(Claude_BASE_TAG) $(Claude_LATEST_TAG)
+
 .PHONY: clean
 clean:
 	-docker rmi $(Valgrind_BASE_TAG) $(Valgrind_LATEST_TAG)
 	-docker rmi $(Mingw_BASE_TAG) $(Mingw_LATEST_TAG)
 	-docker rmi $(Docs_BASE_TAG) $(Docs_LATEST_TAG)
 	-docker rmi $(Autossh_BASE_TAG) $(Autossh_LATEST_TAG)
+	-docker rmi $(Claude_BASE_TAG) $(Claude_LATEST_TAG)
 
 .PHONY: help
 help:
@@ -64,3 +72,4 @@ help:
 	@echo "$$ make mingw-base"
 	@echo "$$ make docs-base"
 	@echo "$$ make autossh-base"
+	@echo "$$ make claude-base"
