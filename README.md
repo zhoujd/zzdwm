@@ -41,6 +41,26 @@ with `DEST`:
 $ DEST=~/.local ./init.sh install
 ```
 
+## AI agent
+
+The workspace includes a compact, static OpenAI-compatible agent with
+interactive approval, one-shot execution, file/stdin context, workspace
+scoping, skills, and live steering.
+
+```sh
+$ make -C tools/ai/agent ai
+$ tools/ai/agent/ai                          # interactive approval mode
+$ tools/ai/agent/ai tui                      # three-pane ncurses interface
+$ tools/ai/agent/ai -f main.c -e "review this code"
+$ printf 'build output\n' | tools/ai/agent/ai -e "find the failure"
+```
+
+The TUI separates AI/user thoughts, command activity/output, and prompt input.
+Set `AI_API_URL`, `AI_MODEL`, and optionally `AI_API_KEY` or `OPENAI_API_KEY`;
+set `NO_COLOR=1` to disable structural colors. See
+[tools/ai/agent/README.md](tools/ai/agent/README.md) for one-shot exit codes,
+security boundaries, configuration, skills, and live steering.
+
 ## URLs
 
 ```txt
