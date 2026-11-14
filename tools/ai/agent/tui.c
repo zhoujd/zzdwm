@@ -17,6 +17,8 @@
 
 #include "utf.h"
 
+#include "agent.h"
+
 #include "version.h"
 
 #define MAX_INPUT 8192
@@ -80,6 +82,9 @@ static PaneLayout pane_layout = PANE_LAYOUT_EQUAL;
 static InputMode input_mode = INPUT_MULTILINE;
 static int full_access;
 static const char *workspace_directory;
+static const char *model_override;
+static const char *attachment_paths[MAX_ATTACHMENTS];
+static int attachment_count;
 
 static void handle_agent_prompt (const char *line);
 
@@ -136,7 +141,15 @@ on_signal (int signal_number)
 static void
 usage (FILE *stream)
 {
-  fprintf (stream, "usage: ai-tui [-C dir] [--full-access] [--help] [--version]\n"
+  fprintf (stream, "usage: ai-tui [options]\n"
+                   "\n"
+                   "Options:\n"
+                   "  -C, --cwd <dir>    set the workspace directory\n"
+                   "  --full-access      run commands without approval\n"
+                   "  -f <file>          attach a text file to the first prompt\n"
+                   "  -m, --model <name> override AI_MODEL for this run\n"
+                   "  --help             show this help\n"
+                   "  --version          show version information\n"
                    "\n"
                    "Keys:\n"
                    "  F1                 quit\n"
@@ -175,6 +188,34 @@ parse_arguments (int argc, char **argv)
               return -1;
             }
           workspace_directory = argv[index];
+        }
+      else if (strcmp (argv[index], "-f") == 0)
+        {
+          if (++index >= argc || argv[index][0] == 0)
+            {
+              fprintf (stderr, "error: -f requires a file path\n");
+              return -1;
+            }
+          if (attachment_count == MAX_ATTACHMENTS)
+            {
+              fprintf (stderr, "error: at most %d files may be attached\n", MAX_ATTACHMENTS);
+              return -1;
+            }
+          attachment_paths[attachment_count++] = argv[index];
+        }
+      else if (strcmp (argv[index], "-m") == 0 || strcmp (argv[index], "--model") == 0)
+        {
+          if (++index >= argc || argv[index][0] == 0)
+            {
+              fprintf (stderr, "error: -m requires a model name\n");
+              return -1;
+            }
+          if (strlen (argv[index]) >= MAX_MODEL)
+            {
+              fprintf (stderr, "error: -m model name must be shorter than %d bytes\n", MAX_MODEL);
+              return -1;
+            }
+          model_override = argv[index];
         }
       else if (strcmp (argv[index], "--help") == 0)
         {
@@ -719,6 +760,10 @@ start_agent (const char *agent_path, int *agent_stdin, int *agent_stdout)
     }
   if (child == 0)
     {
+      int index;
+      char *arguments[6 + 2 * MAX_ATTACHMENTS];
+      int count = 0;
+
       dup2 (input_fds[0], STDIN_FILENO);
       dup2 (output_fds[1], STDOUT_FILENO);
       dup2 (output_fds[1], STDERR_FILENO);
@@ -726,14 +771,27 @@ start_agent (const char *agent_path, int *agent_stdin, int *agent_stdout)
       close (input_fds[1]);
       close (output_fds[0]);
       close (output_fds[1]);
-      if (workspace_directory == NULL && !full_access)
-        execl (agent_path, "ai", "--ui", (char *)NULL);
-      else if (workspace_directory == NULL && full_access)
-        execl (agent_path, "ai", "--ui", "--full-access", (char *)NULL);
-      else if (workspace_directory != NULL && !full_access)
-        execl (agent_path, "ai", "--ui", "-C", workspace_directory, (char *)NULL);
-      else
-        execl (agent_path, "ai", "--ui", "-C", workspace_directory, "--full-access", (char *)NULL);
+      arguments[count++] = "ai";
+      arguments[count++] = "--ui";
+      if (workspace_directory != NULL)
+        {
+          arguments[count++] = "-C";
+          arguments[count++] = (char *)workspace_directory;
+        }
+      if (full_access)
+        arguments[count++] = "--full-access";
+      for (index = 0; index < attachment_count; index++)
+        {
+          arguments[count++] = "-f";
+          arguments[count++] = (char *)attachment_paths[index];
+        }
+      if (model_override != NULL)
+        {
+          arguments[count++] = "-m";
+          arguments[count++] = (char *)model_override;
+        }
+      arguments[count++] = NULL;
+      execv (agent_path, arguments);
       _exit (127);
     }
   close (input_fds[0]);

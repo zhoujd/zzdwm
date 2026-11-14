@@ -18,7 +18,9 @@ make -C tools/ai/agent ai
 
 Run `tools/ai/agent/ai tui`. It launches the backend in `--ui` mode and
 renders three windows: shared AI/user thoughts, AI command status/output, and
-a keyboard input box. Pass `-C dir` to the TUI to start in a scoped workspace.
+a keyboard input box. Pass `-C dir` to the TUI to start in a scoped workspace,
+`-f <file>` to preload context into the first prompt, and `-m <name>` to
+override `AI_MODEL`.
 
 Press `PageUp`/`PageDown` to scroll the conversation history.
 
@@ -77,8 +79,9 @@ printf 'linker output\n' | tools/ai/agent/ai -e "diagnose this failure"
 ```
 
 One-shot context is assembled as escaped `<file path="...">...</file>` blocks,
-then escaped `<stdin>...</stdin>` content, then the prompt. Combined file and
-piped input is limited to 64 KiB and is rejected if it contains a NUL byte.
+then escaped `<stdin>...</stdin>` content, then the prompt. In interactive
+mode, attached files are prepended to the first submitted prompt. Combined file
+and piped input is limited to 64 KiB and is rejected if it contains a NUL byte.
 When stdin is piped, interactive command approval is read from `/dev/tty`;
 without an available terminal, approval fails safely unless `--full-access` is
 explicitly supplied.
@@ -94,7 +97,8 @@ Configuration is read from the environment:
 
 * `AI_API_URL`: HTTP endpoint or base URL. Default:
   `http://127.0.0.1:8090/v1/chat/completions`.
-* `AI_MODEL`: model name. Default: `glm-5.3-flash`.
+* `AI_MODEL`: model name. Default: `glm-5.3-flash`; `-m` / `--model`
+  overrides it for one run.
 * `AI_API_KEY` or `OPENAI_API_KEY`: optional bearer token.
 * `AI_TIMEOUT_SECONDS`: API timeout, 1--1800. Default: 300.
 * `AI_COMMAND_TIMEOUT_SECONDS`: shell timeout, 1--1800. Default: 120.

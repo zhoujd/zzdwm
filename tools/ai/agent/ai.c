@@ -28,6 +28,8 @@
 
 #include "version.h"
 
+#include "agent.h"
+
 #include "cJSON.h"
 
 #define VERSION "1.0"
@@ -47,7 +49,6 @@
 #define MAX_HOST 128
 #define MAX_PATH 384
 #define MAX_KEY 512
-#define MAX_MODEL 128
 #define MAX_LINE 8192
 #define MAX_COMMAND 8192
 #define MAX_ID 256
@@ -62,7 +63,6 @@
 #define MODEL_OUTPUT_SIZE 3072
 #define MAX_PROMPT_CONTEXT (64 * 1024)
 #define MAX_INITIAL_PROMPT (384 * 1024)
-#define MAX_ATTACHMENTS 8
 #define MAX_TIMEOUT 1800
 #define MAX_STEERING_LINES 64
 #define MAX_SKILLS 16
@@ -109,6 +109,7 @@ static char api_path[MAX_PATH] = "/v1/chat/completions";
 static int api_port = 8090;
 static char api_key[MAX_KEY];
 static char model[MAX_MODEL] = DEFAULT_MODEL;
+static const char *model_override;
 static int api_timeout = 300;
 static int command_timeout = 120;
 static const char *exec_prompt;
@@ -968,7 +969,7 @@ configure_environment (void)
   if (configure_endpoint (value) < 0)
     return -1;
   value = getenv ("AI_MODEL");
-  if (value != NULL)
+  if (value != NULL && model_override == NULL)
     {
       if (value[0] == 0 || strlen (value) >= sizeof (model))
         {
@@ -977,6 +978,8 @@ configure_environment (void)
         }
       strcpy (model, value);
     }
+  if (model_override != NULL)
+    strcpy (model, model_override);
   selected_key = getenv ("AI_API_KEY");
   if (selected_key == NULL)
     selected_key = getenv ("OPENAI_API_KEY");
@@ -1572,7 +1575,7 @@ append_piped_context (Buffer *buffer, size_t *context_length)
 }
 
 static int
-build_one_shot_prompt (const char *prompt, Buffer *buffer)
+append_attachment_context (Buffer *buffer)
 {
   size_t context_length = 0;
   int index;
@@ -1580,7 +1583,25 @@ build_one_shot_prompt (const char *prompt, Buffer *buffer)
   for (index = 0; index < attachment_count; index++)
     if (append_context_file (buffer, attachment_paths[index], &context_length) < 0)
       return -1;
+  return 0;
+}
+
+static int
+build_one_shot_prompt (const char *prompt, Buffer *buffer)
+{
+  size_t context_length = 0;
+
+  if (append_attachment_context (buffer) < 0)
+    return -1;
   if (append_piped_context (buffer, &context_length) < 0)
+    return -1;
+  return buffer_append_string (buffer, prompt);
+}
+
+static int
+build_prompt_with_attachments (const char *prompt, Buffer *buffer)
+{
+  if (append_attachment_context (buffer) < 0)
     return -1;
   return buffer_append_string (buffer, prompt);
 }
@@ -2355,6 +2376,7 @@ usage (FILE *stream)
                    "  --full-access      run commands without approval\n"
                    "  --ui               use the line-oriented UI protocol\n"
                    "  -f <file>          attach a text file (up to 8 times)\n"
+                   "  -m, --model <name> override AI_MODEL for this run\n"
                    "  -e, -exec <prompt> run one non-empty one-shot prompt\n"
                    "  --help             show this help\n"
                    "  --version          show version information\n"
@@ -2375,6 +2397,20 @@ parse_arguments (int argc, char **argv)
         full_access = 1;
       else if (strcmp (argv[index], "--ui") == 0)
         ui_mode = 1;
+      else if (strcmp (argv[index], "-m") == 0 || strcmp (argv[index], "--model") == 0)
+        {
+          if (++index >= argc || argv[index][0] == 0)
+            {
+              fprintf (stderr, "error: -m requires a model name\n");
+              return -1;
+            }
+          if (strlen (argv[index]) >= sizeof (model))
+            {
+              fprintf (stderr, "error: -m model name must be shorter than %zu bytes\n", sizeof (model));
+              return -1;
+            }
+          model_override = argv[index];
+        }
       else if (strcmp (argv[index], "-C") == 0 || strcmp (argv[index], "--cwd") == 0)
         {
           if (++index >= argc || argv[index][0] == 0)
@@ -2437,11 +2473,6 @@ parse_arguments (int argc, char **argv)
           usage (stderr);
           return -1;
         }
-    }
-  if (attachment_count != 0 && exec_prompt == NULL)
-    {
-      fprintf (stderr, "error: -f requires -e or -exec\n");
-      return -1;
     }
   return 0;
 }
@@ -2524,6 +2555,15 @@ ai_main (int argc, char **argv)
         break;
       if (prompt[0] == 0)
         continue;
+      if (!one_shot && attachment_count != 0)
+        {
+          char combined[MAX_INITIAL_PROMPT];
+          Buffer initial_prompt = { combined, sizeof (combined), 0 };
+
+          if (build_prompt_with_attachments (prompt, &initial_prompt) < 0)
+            break;
+          memcpy (prompt, combined, sizeof (prompt));
+        }
       if (!one_shot && (strcmp (prompt, "/exit") == 0 || strcmp (prompt, "/quit") == 0))
         break;
       if (!one_shot && strcmp (prompt, "/new") == 0)
@@ -2568,6 +2608,8 @@ ai_main (int argc, char **argv)
           print_formatted ("error: prompt cannot fit in the conversation\n");
           continue;
         }
+      if (!one_shot)
+        attachment_count = 0;
       response_start = NULL;
       if (call_endpoint_threaded (&response_start, response_storage) < 0)
         {

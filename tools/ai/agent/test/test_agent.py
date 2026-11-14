@@ -122,6 +122,7 @@ class AgentTests(unittest.TestCase):
         self, responses, stdin="", full_access=False, command_timeout="2",
         tool_rounds=None, delay=0, cwd=None, exec_prompt=None, files=(),
         workspace=None,
+        model=None,
     ):
         endpoint = Endpoint(responses, delay)
         self.addCleanup(endpoint.thread.join, timeout=2)
@@ -139,6 +140,8 @@ class AgentTests(unittest.TestCase):
             command.extend(["-C", workspace])
         if full_access:
             command.append("--full-access")
+        if model is not None:
+            command.extend(["-m", model])
         for source in files:
             command.extend(["-f", source])
         if exec_prompt is not None:
@@ -321,6 +324,31 @@ class AgentTests(unittest.TestCase):
                 endpoint.requests[1]["messages"][-1]["content"],
             )
 
+    def test_model_override_takes_precedence(self):
+        result, endpoint = self.run_agent(
+            [text_response("done")],
+            exec_prompt="diagnose",
+            model="cli-model",
+        )
+        self.assertEqual(endpoint.requests[0]["model"], "cli-model")
+
+    def test_interactive_attachment_preloads_first_prompt(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            source = os.path.join(workspace, "source.txt")
+            with open(source, "w", encoding="utf-8") as handle:
+                handle.write("attached <value>")
+            result, endpoint = self.run_agent(
+                [text_response("done")],
+                "diagnose\n\n/exit\n\n",
+                cwd=workspace,
+                files=("source.txt",),
+            )
+        content = endpoint.requests[0]["messages"][-1]["content"]
+        self.assertIn(
+            '<file path="source.txt">\nattached &lt;value&gt;\n</file>', content
+        )
+        self.assertTrue(content.endswith("diagnose"))
+
     def test_one_shot_full_access_executes_without_prompt(self):
         result, endpoint = self.run_agent(
             [tool_response("printf 'automatic\\n'"), text_response("done")],
@@ -331,7 +359,7 @@ class AgentTests(unittest.TestCase):
         self.assertIn("done", result.stdout)
         self.assertEqual(len(endpoint.requests), 2)
 
-    def test_attachment_requires_one_shot_prompt(self):
+    def test_attachment_without_prompt_exits(self):
         process = subprocess.run(
             [EXECUTABLE, "-f", "source.txt"],
             input="",
@@ -343,8 +371,7 @@ class AgentTests(unittest.TestCase):
                 "PATH": os.environ["PATH"],
             },
         )
-        self.assertEqual(process.returncode, 2)
-        self.assertIn("-f requires -e or -exec", process.stderr)
+        self.assertEqual(process.returncode, 0)
 
     def test_one_shot_requires_prompt(self):
         process = subprocess.run(
@@ -581,6 +608,53 @@ class AgentTests(unittest.TestCase):
         self.assertIn("AI endpoint returned HTTP 400", result.stdout)
         self.assertIn("[bye]", result.stdout)
         self.assertGreaterEqual(len(endpoint.requests), 1)
+
+    def test_tui_model_and_attachment_are_forwarded(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for TUI option forwarding")
+        with tempfile.TemporaryDirectory() as workspace:
+            source = os.path.join(workspace, "source.txt")
+            with open(source, "w", encoding="utf-8") as handle:
+                handle.write("attached <value>")
+            endpoint = Endpoint([text_response("done")])
+            self.addCleanup(endpoint.thread.join, timeout=2)
+            self.addCleanup(endpoint.close)
+            server = f"ai-tui-options-{os.getpid()}"
+            subprocess.run(["tmux", "kill-server"], check=False)
+            self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+            environment = os.environ.copy()
+            environment["AI_API_URL"] = f"http://127.0.0.1:{endpoint.port}/v1"
+            environment["AI_TIMEOUT_SECONDS"] = "2"
+            environment["AI_COMMAND_TIMEOUT_SECONDS"] = "2"
+            environment["AI_MODEL"] = "environment-model"
+            subprocess.run(
+                [
+                    "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "120", "-y", "30",
+                    "-n", server, TUI_EXECUTABLE, "tui", "-C", workspace,
+                    "-f", "source.txt", "-m", "tui-model",
+                ],
+                env=environment,
+                check=True,
+                timeout=5,
+            )
+            self.addCleanup(
+                subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+            )
+            time.sleep(0.5)
+            subprocess.run(["tmux", "send-keys", "-t", server, "explain"], check=True)
+            subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
+            deadline = time.monotonic() + 8
+            while time.monotonic() < deadline:
+                if endpoint.requests:
+                    break
+                time.sleep(0.1)
+            self.assertTrue(endpoint.requests, "TUI did not reach the endpoint")
+            request = endpoint.requests[0]
+            self.assertEqual(request["model"], "tui-model")
+            content = request["messages"][-1]["content"]
+            self.assertIn('<file path="source.txt">\nattached &lt;value&gt;\n</file>', content)
+            self.assertTrue(content.endswith("explain"))
+            subprocess.run(["tmux", "send-keys", "-t", server, "F1"], check=True)
 
     def test_tui_workspace_scope_is_forwarded(self):
         if shutil.which("tmux") is None:
