@@ -1,0 +1,15 @@
+model = "glm-5.3"
+model_provider = "litellm"
+model_reasoning_effort = "high"
+personality = "pragmatic"
+approvals_reviewer = "user"
+model_context_window = 202752 # 198 × 1024 tokens
+model_auto_compact_token_limit = 162201
+model_max_output_tokens = 8192
+
+[model_providers.litellm]
+name = "LiteLLM"
+base_url = "http://127.0.0.1:8090/v1"
+env_key = "OPENAI_API_KEY"
+wire_api = "responses"
+supports_websockets = false
