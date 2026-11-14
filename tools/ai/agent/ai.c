@@ -133,12 +133,36 @@ typedef struct
 } LiveInput;
 
 static LiveInput live_input;
+static struct termios original_terminal;
+static int terminal_state_saved;
+
+static void
+restore_terminal_state (void)
+{
+  if (terminal_state_saved)
+    tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
+}
 
 static void
 on_signal (int signal_number)
 {
   (void)signal_number;
   interrupted = 1;
+}
+
+static int
+hide_control_characters (void)
+{
+  struct termios terminal;
+
+  if (!isatty (STDIN_FILENO) || tcgetattr (STDIN_FILENO, &original_terminal) != 0)
+    return 0;
+  terminal = original_terminal;
+  terminal.c_lflag &= ~ECHOCTL;
+  if (tcsetattr (STDIN_FILENO, TCSANOW, &terminal) != 0)
+    return 0;
+  terminal_state_saved = 1;
+  return atexit (restore_terminal_state);
 }
 
 static int
@@ -2025,6 +2049,7 @@ ai_main (int argc, char **argv)
     return 2;
   if (configure_environment () < 0)
     return 2;
+  hide_control_characters ();
   memset (&action, 0, sizeof (action));
   action.sa_handler = on_signal;
   sigemptyset (&action.sa_mask);
