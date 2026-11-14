@@ -90,6 +90,10 @@ One-shot exit codes are `0` for success, `1` for runtime/API/file errors, `2`
 for usage errors, `124` for API or command timeout, and `130` for Ctrl+C
 cancellation.
 
+Structural labels such as user input, AI activity, commands, and errors are
+colorized in supported terminals. Set `NO_COLOR` to disable ANSI/ncurses
+semantic colors.
+
 Use `-C dir` or `--cwd dir` to resolve and enter a workspace before files,
 skills, or commands are handled. Commands that explicitly reference absolute
 paths outside that workspace are rejected, including in full-access mode. This

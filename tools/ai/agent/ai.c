@@ -123,6 +123,7 @@ static bool full_access = false; // Always default to secure mode
 static volatile sig_atomic_t interrupted;
 static volatile sig_atomic_t agent_exit_status;
 static int ui_mode;
+static int terminal_styling;
 static Skill skills[MAX_SKILLS];
 static int skill_count;
 
@@ -252,11 +253,32 @@ write_all (int fd, const char *data, size_t length)
   return 0;
 }
 
+static const char *
+terminal_style (const char *text)
+{
+  if (!terminal_styling)
+    return NULL;
+  while (*text == '\n' || *text == '\r')
+    text++;
+  if (strncmp (text, "error:", 6) == 0 || strncmp (text, "Error:", 6) == 0)
+    return "\033[1;31m";
+  if (strncmp (text, "[AI request", 12) == 0 || strncmp (text, "[live steering", 14) == 0
+      || strncmp (text, "[command", 8) == 0 || strncmp (text, "[context]", 9) == 0 || strncmp (text, "[skill]", 7) == 0
+      || strncmp (text, "[force mode", 11) == 0)
+    return "\033[1;35m";
+  if (strncmp (text, "[AI requests command]", 21) == 0 || strncmp (text, "[AI Response]", 13) == 0)
+    return "\033[1;36m";
+  if (strncmp (text, "[You]", 5) == 0)
+    return "\033[1;32m";
+  return NULL;
+}
+
 static void
 print_formatted (const char *format, ...)
 {
   char text[MAX_LINE];
   va_list arguments;
+  const char *style;
   int length;
 
   va_start (arguments, format);
@@ -264,10 +286,15 @@ print_formatted (const char *format, ...)
   va_end (arguments);
   if (length < 0)
     return;
+  style = terminal_style (text);
+  if (style != NULL)
+    write_all (STDOUT_FILENO, style, strlen (style));
   if (write_all (STDOUT_FILENO, text, (size_t)length) < 0)
     {
       /* Output failures are not recoverable in this compact tool. */
     }
+  if (style != NULL)
+    write_all (STDOUT_FILENO, "\033[0m", 4);
 }
 
 static void
@@ -2381,7 +2408,8 @@ process_response (const char *body)
   cJSON_Delete (response);
   if (call_count == 0)
     {
-      print_formatted ("\n[AI Response]:\n%s\n", content[0] != 0 ? content : "(empty response)");
+      print_formatted ("\n[AI Response]:\n");
+      print_formatted ("%s\n", content[0] != 0 ? content : "(empty response)");
       return 0;
     }
   if (process_tool_calls (calls, call_count) < 0)
@@ -2520,6 +2548,12 @@ ai_main (int argc, char **argv)
 
   if (parse_arguments (argc, argv) < 0)
     return 2;
+  {
+    const char *term = getenv ("TERM");
+
+    terminal_styling = !ui_mode && isatty (STDOUT_FILENO) && getenv ("NO_COLOR") == NULL && term != NULL && term[0] != 0
+                       && strcmp (term, "dumb") != 0;
+  }
   if (configure_environment () < 0)
     return 2;
   if (workspace_directory != NULL && realpath (workspace_directory, workspace_root) == NULL)

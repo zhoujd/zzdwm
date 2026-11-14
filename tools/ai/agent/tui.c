@@ -85,8 +85,41 @@ static const char *workspace_directory;
 static const char *model_override;
 static const char *attachment_paths[MAX_ATTACHMENTS];
 static int attachment_count;
+static int semantic_colors;
 
 static void handle_agent_prompt (const char *line);
+
+static void
+initialize_styling (void)
+{
+  if (getenv ("NO_COLOR") != NULL || !has_colors ())
+    return;
+  if (start_color () == ERR)
+    return;
+  use_default_colors ();
+  semantic_colors = init_pair (1, COLOR_CYAN, -1) != ERR && init_pair (3, COLOR_GREEN, -1) != ERR
+                    && init_pair (4, COLOR_MAGENTA, -1) != ERR && init_pair (5, COLOR_RED, -1) != ERR;
+}
+
+static chtype
+line_style (const char *line)
+{
+  if (!semantic_colors)
+    return strncmp (line, "error:", 6) == 0 || strncmp (line, "Error:", 6) == 0 || strncmp (line, "[error]", 7) == 0
+               ? A_BOLD
+               : 0;
+  if (strncmp (line, "error:", 6) == 0 || strncmp (line, "Error:", 6) == 0 || strncmp (line, "[error]", 7) == 0)
+    return COLOR_PAIR (5) | A_BOLD;
+  if (strncmp (line, "[AI Response]", 13) == 0 || strncmp (line, "[AI requests command]", 21) == 0)
+    return COLOR_PAIR (1) | A_BOLD;
+  if (strncmp (line, "[You]", 5) == 0 || strncmp (line, "[steer]", 7) == 0)
+    return COLOR_PAIR (3) | A_BOLD;
+  if (strncmp (line, "[AI request", 12) == 0 || strncmp (line, "[live steering", 14) == 0
+      || strncmp (line, "[command", 8) == 0 || strncmp (line, "[context]", 9) == 0 || strncmp (line, "[skill]", 7) == 0
+      || strncmp (line, "[force mode", 11) == 0)
+    return COLOR_PAIR (4) | A_BOLD;
+  return 0;
+}
 
 static void
 content_pane_geometry (PaneId pane_id, int *start_y, int *height)
@@ -440,7 +473,13 @@ append_pane_line (PaneId pane_id, const char *text, size_t length)
       pane->line_count = MAX_PANE_LINES - 1;
     }
   row = pane->line_count;
-  mvwaddnstr (pane->pad, row, 0, text, (int)length);
+  {
+    chtype style = line_style (text);
+
+    wattr_on (pane->pad, style, NULL);
+    mvwaddnstr (pane->pad, row, 0, text, (int)length);
+    wattr_off (pane->pad, style, NULL);
+  }
   pane->line_count++;
 }
 
@@ -694,7 +733,7 @@ submit_input (int agent_stdin, const char *line)
       || write_all (agent_stdin, input_mode == INPUT_MULTILINE ? "\n\n" : "\n", input_mode == INPUT_MULTILINE ? 2 : 1)
              < 0)
     {
-      write_line (PANE_THOUGHTS, "[error]: unable to send prompt to agent");
+      write_line (PANE_THOUGHTS, "error: unable to send prompt to agent");
       return;
     }
   if (length != 0)
@@ -1059,6 +1098,7 @@ tui_main (int argc, char **argv)
   sigaction (SIGTERM, &action, NULL);
   setlocale (LC_ALL, "");
   initscr ();
+  initialize_styling ();
   nonl ();
   cbreak ();
   noecho ();

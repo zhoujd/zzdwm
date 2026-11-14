@@ -1,5 +1,6 @@
 import json
 import os
+import pty
 import shutil
 import signal
 import socket
@@ -657,6 +658,49 @@ class AgentTests(unittest.TestCase):
             output, _ = process.communicate(timeout=5)
         self.assertEqual(process.returncode, 130)
         self.assertIn("request interrupted", output)
+
+    def run_terminal_one_shot(self, no_color=False):
+        endpoint = Endpoint([text_response("done")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        master, slave = pty.openpty()
+        environment = {
+            "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+            "AI_TIMEOUT_SECONDS": "2",
+            "TERM": "xterm",
+            "PATH": os.environ["PATH"],
+        }
+        if no_color:
+            environment["NO_COLOR"] = ""
+        process = subprocess.Popen(
+            [EXECUTABLE, "-e", "diagnose"],
+            stdin=subprocess.DEVNULL,
+            stdout=slave,
+            stderr=subprocess.STDOUT,
+            env=environment,
+        )
+        os.close(slave)
+        self.addCleanup(os.close, master)
+        process.wait(timeout=5)
+        output = b""
+        while True:
+            try:
+                chunk = os.read(master, 4096)
+            except OSError:
+                break
+            if not chunk:
+                break
+            output += chunk
+        return output
+
+    def test_terminal_structural_styling(self):
+        output = self.run_terminal_one_shot()
+        self.assertIn(b"\033[1;36m\r\n[AI Response]", output)
+        self.assertIn(b"\033[0m", output)
+
+    def test_no_color_disables_terminal_styling(self):
+        output = self.run_terminal_one_shot(no_color=True)
+        self.assertNotIn(b"\033[", output)
 
     def test_one_shot_api_timeout_exit_code(self):
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
