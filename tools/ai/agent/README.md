@@ -86,6 +86,10 @@ When stdin is piped, interactive command approval is read from `/dev/tty`;
 without an available terminal, approval fails safely unless `--full-access` is
 explicitly supplied.
 
+One-shot exit codes are `0` for success, `1` for runtime/API/file errors, `2`
+for usage errors, `124` for API or command timeout, and `130` for Ctrl+C
+cancellation.
+
 Use `-C dir` or `--cwd dir` to resolve and enter a workspace before files,
 skills, or commands are handled. Commands that explicitly reference absolute
 paths outside that workspace are rejected, including in full-access mode. This

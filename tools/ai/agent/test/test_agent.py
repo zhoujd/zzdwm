@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import signal
 import socket
 import subprocess
 import tempfile
@@ -250,7 +251,7 @@ class AgentTests(unittest.TestCase):
                     "PATH": os.environ["PATH"],
                 },
             )
-        self.assertEqual(process.returncode, 2)
+        self.assertEqual(process.returncode, 1)
         self.assertIn(b"contains a NUL byte", process.stdout + process.stderr)
 
     def test_piped_one_shot_never_reads_approval_from_stdin(self):
@@ -288,7 +289,7 @@ class AgentTests(unittest.TestCase):
                 "PATH": os.environ["PATH"],
             },
         )
-        self.assertEqual(process.returncode, 2)
+        self.assertEqual(process.returncode, 1)
         self.assertIn(
             b"one-shot context exceeds 65536 bytes", process.stdout + process.stderr
         )
@@ -587,6 +588,129 @@ class AgentTests(unittest.TestCase):
         self.assertIn(
             "malformed", endpoint.requests[1]["messages"][-1]["content"]
         )
+
+    def test_one_shot_exit_codes(self):
+        process = subprocess.run(
+            [EXECUTABLE, "--invalid"],
+            input="",
+            text=True,
+            capture_output=True,
+            timeout=5,
+            env={"AI_API_URL": "http://127.0.0.1:1/v1", "PATH": os.environ["PATH"]},
+        )
+        self.assertEqual(process.returncode, 2)
+
+        process = subprocess.run(
+            [EXECUTABLE, "-e", "diagnose"],
+            input="",
+            text=True,
+            capture_output=True,
+            timeout=5,
+            env={"AI_API_URL": "http://127.0.0.1:1/v1", "PATH": os.environ["PATH"]},
+        )
+        self.assertEqual(process.returncode, 1)
+
+        with tempfile.TemporaryDirectory() as workspace:
+            process = subprocess.run(
+                [EXECUTABLE, "-f", os.path.join(workspace, "missing"), "-e", "diagnose"],
+                input="",
+                text=True,
+                capture_output=True,
+                timeout=5,
+                env={"AI_API_URL": "http://127.0.0.1:1/v1", "PATH": os.environ["PATH"]},
+            )
+        self.assertEqual(process.returncode, 1)
+
+    def test_one_shot_sigint_exit_code(self):
+        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        listener.bind(("127.0.0.1", 0))
+        listener.listen(1)
+        client = None
+
+        def accept_client():
+            nonlocal client
+            client, _ = listener.accept()
+
+        thread = threading.Thread(target=accept_client)
+        thread.start()
+        self.addCleanup(lambda: client.close() if client else None)
+        self.addCleanup(listener.close)
+        self.addCleanup(thread.join, timeout=2)
+        with tempfile.TemporaryDirectory() as workspace:
+            self.write_dummy_skill(workspace)
+            process = subprocess.Popen(
+                [EXECUTABLE, "-e", "diagnose"],
+                cwd=workspace,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                env={
+                    "AI_API_URL": f"http://127.0.0.1:{listener.getsockname()[1]}/v1",
+                    "PATH": os.environ["PATH"],
+                },
+            )
+            self.addCleanup(process.kill)
+            self.assertIn("Skills: dummy", process.stdout.readline())
+            time.sleep(0.1)
+            process.send_signal(signal.SIGINT)
+            output, _ = process.communicate(timeout=5)
+        self.assertEqual(process.returncode, 130)
+        self.assertIn("request interrupted", output)
+
+    def test_one_shot_api_timeout_exit_code(self):
+        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        listener.bind(("127.0.0.1", 0))
+        listener.listen(1)
+        port = listener.getsockname()[1]
+        client = None
+
+        def accept_client():
+            nonlocal client
+            client, _ = listener.accept()
+
+        thread = threading.Thread(target=accept_client, daemon=True)
+        thread.start()
+        self.addCleanup(lambda: client.close() if client else None)
+        self.addCleanup(listener.close)
+        self.addCleanup(thread.join, timeout=2)
+        process = subprocess.Popen(
+            [EXECUTABLE, "-e", "diagnose"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            env={
+                "AI_API_URL": f"http://127.0.0.1:{port}/v1",
+                "AI_TIMEOUT_SECONDS": "1",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        output, _ = process.communicate(timeout=5)
+        thread.join(timeout=2)
+        self.assertIn("Connection timed out", output)
+        self.assertEqual(process.returncode, 124)
+
+    def test_one_shot_command_timeout_exit_code(self):
+        endpoint = Endpoint([tool_response("sleep 3"), text_response("done")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        process = subprocess.Popen(
+            [EXECUTABLE, "--full-access", "-exec", "diagnose"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            env={
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "2",
+                "AI_COMMAND_TIMEOUT_SECONDS": "1",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        output, _ = process.communicate(timeout=5)
+        self.assertIn("command timed out after 1 seconds", output)
+        self.assertEqual(process.returncode, 124)
 
     def test_command_timeout(self):
         result, _ = self.run_agent(

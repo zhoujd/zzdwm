@@ -121,6 +121,7 @@ static int attachment_count;
 static int max_tool_rounds = MAX_TOOL_ROUNDS;
 static bool full_access = false; // Always default to secure mode
 static volatile sig_atomic_t interrupted;
+static volatile sig_atomic_t agent_exit_status;
 static int ui_mode;
 static Skill skills[MAX_SKILLS];
 static int skill_count;
@@ -160,8 +161,9 @@ restore_terminal_state (void)
 static void
 on_signal (int signal_number)
 {
-  (void)signal_number;
   interrupted = 1;
+  if (agent_exit_status == EXIT_SUCCESS)
+    agent_exit_status = signal_number == SIGINT ? EXIT_CANCELLED : EXIT_FAILURE;
 }
 
 static int
@@ -1083,7 +1085,7 @@ receive_response (int socket_fd, char *response, size_t capacity, size_t *respon
       if (remaining <= 0)
         {
           *error_number = ETIMEDOUT;
-          return -1;
+          return -3;
         }
       {
         struct timeval timeout = { remaining, 0 };
@@ -1100,7 +1102,7 @@ receive_response (int socket_fd, char *response, size_t capacity, size_t *respon
       if (ready == 0)
         {
           *error_number = ETIMEDOUT;
-          return -1;
+          return -3;
         }
       received = recv (socket_fd, response + total, capacity - 1 - total, 0);
       if (received < 0)
@@ -1286,7 +1288,7 @@ connect_endpoint (void)
         {
           close (socket_fd);
           errno = result == 0 ? ETIMEDOUT : EINTR;
-          return -1;
+          return -3;
         }
       socklen_t error_size = sizeof (error);
 
@@ -1303,6 +1305,15 @@ connect_endpoint (void)
       close (socket_fd);
       return -1;
     }
+  {
+    struct timeval timeout = { api_timeout, 0 };
+
+    if (setsockopt (socket_fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof (timeout)) < 0)
+      {
+        close (socket_fd);
+        return -1;
+      }
+  }
   return socket_fd;
 }
 
@@ -1373,12 +1384,22 @@ call_endpoint (const char **response_body, char *response_storage)
   if (socket_fd < 0)
     {
       print_formatted ("error: connect %s:%d: %s\n", api_host, api_port, strerror (errno));
+      if (errno == ETIMEDOUT)
+        {
+          agent_exit_status = EXIT_TIMEOUT;
+          return -EXIT_TIMEOUT;
+        }
       return -1;
     }
   if (write_all (socket_fd, headers, (size_t)header_length) < 0 || write_all (socket_fd, request, request_length) < 0)
     {
       print_formatted ("error: send request: %s\n", strerror (errno));
       close (socket_fd);
+      if (errno == EAGAIN || errno == EWOULDBLOCK || errno == ETIMEDOUT)
+        {
+          agent_exit_status = EXIT_TIMEOUT;
+          return -EXIT_TIMEOUT;
+        }
       return -1;
     }
   receive_status
@@ -1392,7 +1413,9 @@ call_endpoint (const char **response_body, char *response_storage)
         print_formatted ("\n[request interrupted]\n");
       else
         print_formatted ("error: receive response: %s\n", strerror (receive_error));
-      return -1;
+      if (receive_status == -3)
+        agent_exit_status = EXIT_TIMEOUT;
+      return agent_exit_status == EXIT_SUCCESS ? -1 : -agent_exit_status;
     }
   (void)response_length;
   *response_body = body;
@@ -1474,7 +1497,7 @@ call_endpoint_threaded (const char **response_body, char *response_storage)
       print_formatted ("\n[request interrupted]\n");
       pthread_cond_destroy (&wait.completed_cond);
       pthread_mutex_destroy (&wait.mutex);
-      return -1;
+      return -agent_exit_status;
     }
   pthread_join (wait.worker, &thread_result);
   if (wait.request.result == 0)
@@ -1825,6 +1848,7 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
           waitpid (child, &status, 0);
           have_status = 1;
           print_formatted ("\n[command timed out after %d seconds]\n", command_timeout);
+          agent_exit_status = EXIT_TIMEOUT;
           break;
         }
     }
@@ -2362,6 +2386,8 @@ process_response (const char *body)
     }
   if (process_tool_calls (calls, call_count) < 0)
     return -1;
+  if (one_shot && agent_exit_status != EXIT_SUCCESS)
+    return -agent_exit_status;
   return 1;
 }
 
@@ -2380,6 +2406,13 @@ usage (FILE *stream)
                    "  -e, -exec <prompt> run one non-empty one-shot prompt\n"
                    "  --help             show this help\n"
                    "  --version          show version information\n"
+                   "\n"
+                   "Exit status:\n"
+                   "  0    success\n"
+                   "  1    runtime, API, or file error\n"
+                   "  2    usage error\n"
+                   "  124  API or command timeout\n"
+                   "  130  cancelled by SIGINT\n"
                    "\n"
                    "Environment configures AI_API_URL, AI_MODEL, AI_API_KEY or\n"
                    "OPENAI_API_KEY, AI_TIMEOUT_SECONDS and AI_COMMAND_TIMEOUT_SECONDS.\n"
@@ -2505,12 +2538,13 @@ ai_main (int argc, char **argv)
       Buffer initial_prompt = { prompt, sizeof (prompt), 0 };
 
       if (build_one_shot_prompt (exec_prompt, &initial_prompt) < 0)
-        return 2;
+        return 1;
     }
   hide_control_characters ();
   memset (&action, 0, sizeof (action));
   action.sa_handler = on_signal;
   sigemptyset (&action.sa_mask);
+  sigaddset (&action.sa_mask, SIGINT);
   sigaction (SIGINT, &action, NULL);
   sigaction (SIGTERM, &action, NULL);
   signal (SIGPIPE, SIG_IGN);
@@ -2616,8 +2650,12 @@ ai_main (int argc, char **argv)
           size_t old_count = message_count;
 
           drop_oldest_message ();
-          if (old_count == message_count)
-            return 1;
+          if (old_count == message_count || one_shot)
+            {
+              if (agent_exit_status == EXIT_SUCCESS)
+                return 1;
+              return one_shot ? agent_exit_status : 1;
+            }
           continue;
         }
       {
@@ -2627,7 +2665,11 @@ ai_main (int argc, char **argv)
 
         result = process_response (response_start);
         if (result < 0)
-          return 1;
+          {
+            if (agent_exit_status == EXIT_SUCCESS)
+              return 1;
+            return one_shot ? agent_exit_status : 1;
+          }
         pending_round = result;
         for (round = 1; result == 1; round++)
           {
@@ -2643,14 +2685,22 @@ ai_main (int argc, char **argv)
                 size_t old_count = message_count;
 
                 drop_oldest_message ();
-                if (old_count == message_count)
-                  return 1;
+                if (old_count == message_count || one_shot)
+                  {
+                    if (agent_exit_status == EXIT_SUCCESS)
+                      return 1;
+                    return one_shot ? agent_exit_status : 1;
+                  }
                 round--;
                 continue;
               }
             result = process_response (response_start);
             if (result < 0)
-              return 1;
+              {
+                if (agent_exit_status == EXIT_SUCCESS)
+                  return 1;
+                return one_shot ? agent_exit_status : 1;
+              }
           }
         if (pending_round == 0 && add_pending_request_steering () < 0)
           return 1;
