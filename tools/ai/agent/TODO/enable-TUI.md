@@ -1,32 +1,48 @@
 # AI Agent TUI [DONE]
 
-The final layout uses two windows, like the Claude Code CLI: one scrolling
-conversation transcript and one keyboard input box.
+The current TUI uses three stacked regions. The first two are scrollable
+content panes with equal heights by default; the third is the keyboard-driven
+input box.
 
+```text
 +-------------------------------------------------------------+
-| Conversation                                                |
-| [You]: help me fix the C code error listed above            |
-| > Invoking system tool: gcc -o test test.c                  |
-| > Compilation error: test.c:5:10: error...                  |
-| [AI Response]: I noticed your code is missing a semicolon.  |
-| I have fixed this bug for you.                              |
+| 1. AI & User Thoughts                                       |
+| [You]: help me fix the C compiler error                     |
+| [AI Response]: The missing semicolon is on line 5.          |
 +-------------------------------------------------------------+
-| Prompt (RET submit)                                         |
-| > Help me fix the C code error listed above                 |
+| 2. AI Command Status                                        |
+| [AI requests command]: gcc -o test test.c                   |
+| [command completed] exit status 1. Output: ...              |
 +-------------------------------------------------------------+
+| 3. Prompt (C-J newline, RET submit)                         |
+| > Fix the error and explain the change                      |
++-------------------------------------------------------------+
+```
 
-Requirements:
+Implemented behavior:
 
-- Use `ncursesw` so locale-aware UTF-8 rendering works.
-- Keep the dependency-free static `ai` CLI as the default build.
-- Build a separate `ai-tui` front-end that communicates with `ai --ui`.
-- Render two windows:
-  - Conversation (thoughts, status, and AI responses in one transcript)
-  - Keyboard Input / User Prompt
-- Support automatic tail-following and PageUp/PageDown history in the
-  conversation window.
-- Route keyboard input to normal prompts, tool decisions, and live steering.
-- Keep Ctrl+C cancellation and the existing allow/edit/steer/refuse/quit modes.
-- Preserve CLI behavior and the non-interactive Python integration tests.
+- Uses `ncursesw` for locale-aware UTF-8 rendering.
+- Runs as `ai tui` in the combined executable and communicates with the
+  agent backend through `ai --ui`.
+- Renders two content panes plus one input box:
+  - **1. AI & User Thoughts**: conversation transcript and user prompts.
+  - **2. AI Command Status**: requested commands, live output, and results.
+  - **3. Prompt / Decision**: multiline prompts and single-line decisions.
+- Splits the content area equally by default. `F2` maximizes the thoughts
+  pane and `F3` maximizes the command pane; pressing either key again restores
+  the equal split.
+- Switches the input title automatically between `Prompt` and `Decision`
+  modes according to the backend prompt.
+- Routes the same input box to normal prompts, tool decisions, and live
+  steering.
+- Supports automatic tail-following plus `PageUp`/`PageDown` scrolling in the
+  selected content pane.
+- Uses `Tab` to switch the selected content pane and `F1` to quit.
+- Supports terminal resizing with a minimum size of 60 columns by 18 rows.
+- Preserves Ctrl+C cancellation and the existing allow/edit/steer/refuse/quit
+  workflow.
+- Accepts `-C dir` and `--full-access` and forwards both options to the
+  backend.
+- Preserves the non-interactive CLI and Python integration tests.
 
 Origin refer to: tools/learn/ai/agent_tui.c
