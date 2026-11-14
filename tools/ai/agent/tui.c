@@ -222,6 +222,37 @@ draw_pane_status (PaneId pane_id, WINDOW *border, int height, int width)
   mvwprintw (border, height - 1, column, "%s", status);
 }
 
+static const char *
+input_title (void)
+{
+  return input_mode == INPUT_MULTILINE ? " 3. Prompt (C-J newline, RET submit) "
+                                       : " 3. Decision (RET submit) ";
+}
+
+static void
+redraw_input_title (void)
+{
+  int row;
+  int column;
+
+  if (input_window == NULL)
+    return;
+  getyx (input_window, row, column);
+  mvwhline (input_window, 0, 1, ACS_HLINE, terminal_width - 2);
+  mvwaddstr (input_window, 0, 2, input_title ());
+  wmove (input_window, row, column);
+  wrefresh (input_window);
+}
+
+static void
+set_input_mode (InputMode mode)
+{
+  if (input_mode == mode)
+    return;
+  input_mode = mode;
+  redraw_input_title ();
+}
+
 static void
 create_pane (PaneId pane_id, int height, int start_y, const char *title)
 {
@@ -335,8 +366,7 @@ redraw_layout (void)
   idlok (input_window, TRUE);
   wsetscrreg (input_window, 0, BOTTOM_HEIGHT - 1);
   box (input_window, 0, 0);
-  mvwprintw (input_window, 0, 2,
-             input_mode == INPUT_MULTILINE ? " 3. Prompt (C-J newline, RET submit) " : " 3. Decision (RET submit) ");
+  redraw_input_title ();
   keypad (input_window, TRUE);
   wmove (input_window, 1, 1);
   touchwin (input_window);
@@ -463,6 +493,7 @@ display_agent_line (const char *line)
   hint = agent_prompt_hint (line);
   if (strcmp (line, "[AI request active]") == 0)
     {
+      set_input_mode (INPUT_MULTILINE);
       set_pane_status (PANE_COMMANDS, 1);
       return;
     }
@@ -473,6 +504,7 @@ display_agent_line (const char *line)
     }
   if (strcmp (line, "[live steering active]") == 0)
     {
+      set_input_mode (INPUT_MULTILINE);
       set_pane_status (PANE_THOUGHTS, 1);
       return;
     }
@@ -542,8 +574,7 @@ draw_input (const InputBuffer *input)
       }
   werase (input_window);
   box (input_window, 0, 0);
-  mvwprintw (input_window, 0, 2,
-             input_mode == INPUT_MULTILINE ? " 3. Prompt (C-J newline, RET submit) " : " 3. Decision (RET submit) ");
+  redraw_input_title ();
   for (index = line_start; index <= input->length && visible_lines < visible_height;)
     {
       size_t end = index;
@@ -708,7 +739,7 @@ handle_agent_prompt (const char *line)
     multiline = 0;
   else
     return;
-  input_mode = multiline ? INPUT_MULTILINE : INPUT_SINGLE_LINE;
+  set_input_mode (multiline ? INPUT_MULTILINE : INPUT_SINGLE_LINE);
 }
 
 static void

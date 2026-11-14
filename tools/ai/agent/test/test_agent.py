@@ -426,7 +426,7 @@ class AgentTests(unittest.TestCase):
         environment.update(
             {
                 "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
-                "AI_TIMEOUT_SECONDS": "2",
+                "AI_TIMEOUT_SECONDS": "3",
                 "AI_COMMAND_TIMEOUT_SECONDS": "2",
             }
         )
@@ -443,7 +443,7 @@ class AgentTests(unittest.TestCase):
         time.sleep(0.5)
         subprocess.run(["tmux", "send-keys", "-t", server, "time?"], check=True)
         subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
-        time.sleep(1)
+        time.sleep(2)
         output = subprocess.run(
             ["tmux", "capture-pane", "-p", "-t", server],
             check=True,
@@ -454,6 +454,59 @@ class AgentTests(unittest.TestCase):
         self.assertIn("time?", output)
         self.assertIn("done", output)
         self.assertNotIn("time?", output[output.rfind("3. Prompt"):])
+
+    def test_tui_command_execution_switches_input_to_prompt(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for TUI input rendering")
+
+        endpoint = Endpoint([tool_response("sleep 1"), text_response("done")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        server = f"ai-tui-command-{os.getpid()}"
+        subprocess.run(["tmux", "kill-server"], check=False)
+        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "2",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "PATH": os.environ["PATH"],
+            }
+        )
+        subprocess.run(
+            [
+                "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "100", "-y", "24",
+                "-n", server, TUI_EXECUTABLE, "tui",
+            ],
+            env=environment,
+            check=True,
+            timeout=5,
+        )
+        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+        time.sleep(0.5)
+        subprocess.run(["tmux", "send-keys", "-t", server, "run command"], check=True)
+        subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
+        time.sleep(2)
+        output = subprocess.run(
+            ["tmux", "capture-pane", "-p", "-t", server],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        ).stdout
+        self.assertIn("3. Decision (RET submit)", output)
+        subprocess.run(["tmux", "send-keys", "-t", server, "a"], check=True)
+        subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
+        time.sleep(0.2)
+        output = subprocess.run(
+            ["tmux", "capture-pane", "-p", "-t", server],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        ).stdout
+        self.assertIn("3. Prompt (C-J newline, RET submit)", output)
 
     def test_tool_round_limit_is_configurable(self):
         result, _ = self.run_agent(

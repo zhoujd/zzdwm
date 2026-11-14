@@ -1562,6 +1562,7 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
   descriptor.fd = pipe_fds[0];
   descriptor.events = POLLIN;
   begin_live_input ();
+  print_formatted ("[live steering active]\n");
   print_formatted ("[command output]\n");
   for (;;)
     {
