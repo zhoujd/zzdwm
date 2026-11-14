@@ -2347,8 +2347,16 @@ process_response (const char *body)
 static void
 usage (FILE *stream)
 {
-  fprintf (stream, "usage: ai [-C dir] [--full-access] [--ui] [-f file] "
-                   "[-e prompt] [-exec prompt] [--help] [--version]\n"
+  fprintf (stream, "usage: ai [options]\n"
+                   "\n"
+                   "Options:\n"
+                   "  -C, --cwd <dir>    set the workspace directory\n"
+                   "  --full-access      run commands without approval\n"
+                   "  --ui               use the line-oriented UI protocol\n"
+                   "  -f <file>          attach a text file (up to 8 times)\n"
+                   "  -e, -exec <prompt> run one non-empty one-shot prompt\n"
+                   "  --help             show this help\n"
+                   "  --version          show version information\n"
                    "\n"
                    "Environment configures AI_API_URL, AI_MODEL, AI_API_KEY or\n"
                    "OPENAI_API_KEY, AI_TIMEOUT_SECONDS and AI_COMMAND_TIMEOUT_SECONDS.\n"
