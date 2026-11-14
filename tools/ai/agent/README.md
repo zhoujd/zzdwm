@@ -68,6 +68,21 @@ tools/ai/agent/ai -exec "summarize this repository"
 The prompt is sent verbatim, startup banners are omitted, and command approval
 remains enabled. Add `--full-access` for unattended one-shot execution.
 
+Attach up to eight text files and/or pipe context while keeping the instruction
+last:
+
+```sh
+tools/ai/agent/ai -f main.c -f Makefile -e "why won't this link"
+printf 'linker output\n' | tools/ai/agent/ai -e "diagnose this failure"
+```
+
+One-shot context is assembled as escaped `<file path="...">...</file>` blocks,
+then escaped `<stdin>...</stdin>` content, then the prompt. Combined file and
+piped input is limited to 64 KiB and is rejected if it contains a NUL byte.
+When stdin is piped, interactive command approval is read from `/dev/tty`;
+without an available terminal, approval fails safely unless `--full-access` is
+explicitly supplied.
+
 Configuration is read from the environment:
 
 * `AI_API_URL`: HTTP endpoint or base URL. Default:

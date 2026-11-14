@@ -120,7 +120,7 @@ def text_response(content):
 class AgentTests(unittest.TestCase):
     def run_agent(
         self, responses, stdin="", full_access=False, command_timeout="2",
-        tool_rounds=None, delay=0, cwd=None, exec_prompt=None
+        tool_rounds=None, delay=0, cwd=None, exec_prompt=None, files=()
     ):
         endpoint = Endpoint(responses, delay)
         self.addCleanup(endpoint.thread.join, timeout=2)
@@ -136,6 +136,8 @@ class AgentTests(unittest.TestCase):
         command = [EXECUTABLE]
         if full_access:
             command.append("--full-access")
+        for source in files:
+            command.extend(["-f", source])
         if exec_prompt is not None:
             command.extend(["-exec", exec_prompt])
         return subprocess.run(
@@ -195,7 +197,7 @@ class AgentTests(unittest.TestCase):
     def test_one_shot_sends_prompt_and_exits(self):
         result, endpoint = self.run_agent(
             [tool_response("printf 'one-shot\\n'"), text_response("done")],
-            "a\n",
+            full_access=True,
             exec_prompt="/exit should be sent verbatim",
         )
         self.assertIn("one-shot", result.stdout)
@@ -207,6 +209,84 @@ class AgentTests(unittest.TestCase):
             "/exit should be sent verbatim",
         )
 
+    def test_one_shot_assembles_files_stdin_and_prompt(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            source = os.path.join(workspace, "source.txt")
+            with open(source, "w", encoding="utf-8") as handle:
+                handle.write("file <value> & \"path\"")
+            result, endpoint = self.run_agent(
+                [text_response("done")],
+                "piped <input> & text\n",
+                cwd=workspace,
+                exec_prompt="final & <prompt>",
+                files=("source.txt",),
+            )
+        content = endpoint.requests[0]["messages"][-1]["content"]
+        self.assertIn(
+            '<file path="source.txt">\nfile &lt;value&gt; &amp; &quot;path&quot;\n</file>',
+            content,
+        )
+        self.assertIn("<stdin>\npiped &lt;input&gt; &amp; text\n\n</stdin>", content)
+        self.assertTrue(content.endswith("final & <prompt>"))
+
+    def test_one_shot_rejects_binary_context(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            source = os.path.join(workspace, "binary")
+            with open(source, "wb") as handle:
+                handle.write(b"text\x00file")
+            process = subprocess.run(
+                [EXECUTABLE, "-f", source, "-exec", "diagnose"],
+                input=b"",
+                capture_output=True,
+                timeout=5,
+                env={
+                    "AI_API_URL": "http://127.0.0.1:1/v1",
+                    "PATH": os.environ["PATH"],
+                },
+            )
+        self.assertEqual(process.returncode, 2)
+        self.assertIn(b"contains a NUL byte", process.stdout + process.stderr)
+
+    def test_piped_one_shot_never_reads_approval_from_stdin(self):
+        endpoint = Endpoint([tool_response("printf 'must-not-run\\n'"), text_response("done")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        process = subprocess.Popen(
+            [EXECUTABLE, "-exec", "diagnose"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            env={
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "2",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        process.stdin.write(b"approval collision\n")
+        process.stdin.flush()
+        output, _ = process.communicate(timeout=10)
+        self.assertEqual(process.returncode, 1)
+        self.assertIn(b"command approval needs /dev/tty", output)
+        self.assertNotIn(b"Command output:", output)
+        self.assertEqual(len(endpoint.requests), 1)
+
+    def test_one_shot_rejects_oversized_context(self):
+        process = subprocess.run(
+            [EXECUTABLE, "-exec", "diagnose"],
+            input=b"x" * (64 * 1024 + 1),
+            capture_output=True,
+            timeout=5,
+            env={
+                "AI_API_URL": "http://127.0.0.1:1/v1",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        self.assertEqual(process.returncode, 2)
+        self.assertIn(
+            b"one-shot context exceeds 65536 bytes", process.stdout + process.stderr
+        )
+
     def test_one_shot_full_access_executes_without_prompt(self):
         result, endpoint = self.run_agent(
             [tool_response("printf 'automatic\\n'"), text_response("done")],
@@ -216,6 +296,21 @@ class AgentTests(unittest.TestCase):
         self.assertIn("automatic", result.stdout)
         self.assertIn("done", result.stdout)
         self.assertEqual(len(endpoint.requests), 2)
+
+    def test_attachment_requires_one_shot_prompt(self):
+        process = subprocess.run(
+            [EXECUTABLE, "-f", "source.txt"],
+            input="",
+            text=True,
+            capture_output=True,
+            timeout=5,
+            env={
+                "AI_API_URL": "http://127.0.0.1:1/v1",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        self.assertEqual(process.returncode, 2)
+        self.assertIn("-f requires -e or -exec", process.stderr)
 
     def test_one_shot_requires_prompt(self):
         process = subprocess.run(

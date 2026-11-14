@@ -53,11 +53,14 @@
 #define MAX_TOOL_CALLS 8
 #define MAX_MESSAGES 24
 #define MAX_TOOL_ROUNDS 64
-#define MESSAGE_SIZE 12288
+#define MESSAGE_SIZE (512 * 1024)
 #define MAX_REQUEST (512 * 1024)
 #define MAX_RESPONSE (256 * 1024)
 #define CAPTURE_SIZE 16384
 #define MODEL_OUTPUT_SIZE 3072
+#define MAX_PROMPT_CONTEXT (64 * 1024)
+#define MAX_INITIAL_PROMPT (384 * 1024)
+#define MAX_ATTACHMENTS 8
 #define MAX_TIMEOUT 1800
 #define MAX_STEERING_LINES 64
 #define MAX_SKILLS 16
@@ -108,6 +111,8 @@ static int api_timeout = 300;
 static int command_timeout = 120;
 static const char *exec_prompt;
 static int one_shot;
+static const char *attachment_paths[MAX_ATTACHMENTS];
+static int attachment_count;
 static int max_tool_rounds = MAX_TOOL_ROUNDS;
 static bool full_access = false; // Always default to secure mode
 static volatile sig_atomic_t interrupted;
@@ -306,7 +311,7 @@ begin_live_input (void)
 
   live_input.line_length = 0;
   live_input.terminal_configured = 0;
-  if (one_shot)
+  if (one_shot && !isatty (STDIN_FILENO))
     {
       live_input.input_open = 0;
       return 0;
@@ -500,6 +505,49 @@ static int
 append_json_text (Buffer *buffer, const char *data)
 {
   return append_json_string (buffer, data, strlen (data));
+}
+
+static int
+append_xml_escaped (Buffer *buffer, const char *data, size_t length)
+{
+  size_t index;
+
+  for (index = 0; index < length; index++)
+    {
+      const char *replacement = NULL;
+
+      switch (data[index])
+        {
+        case '&':
+          replacement = "&amp;";
+          break;
+        case '<':
+          replacement = "&lt;";
+          break;
+        case '>':
+          replacement = "&gt;";
+          break;
+        case '\"':
+          replacement = "&quot;";
+          break;
+        case '\'':
+          replacement = "&apos;";
+          break;
+        default:
+          if (buffer_append (buffer, data + index, 1) < 0)
+            return -1;
+          continue;
+        }
+      if (buffer_append_string (buffer, replacement) < 0)
+        return -1;
+    }
+  return 0;
+}
+
+static int
+append_xml_text (Buffer *buffer, const char *data)
+{
+  return append_xml_escaped (buffer, data, strlen (data));
 }
 
 static void
@@ -1431,6 +1479,109 @@ call_endpoint_threaded (const char **response_body, char *response_storage)
 }
 
 static int
+read_context_chunk (FILE *source, Buffer *buffer, const char *description, size_t *context_length)
+{
+  char chunk[4096];
+  size_t read_length;
+  size_t total = 0;
+
+  while ((read_length = fread (chunk, 1, sizeof (chunk), source)) != 0)
+    {
+      if (memchr (chunk, 0, read_length) != NULL)
+        {
+          print_formatted ("error: %s contains a NUL byte\n", description);
+          return -1;
+        }
+      total += read_length;
+      if (*context_length + total > MAX_PROMPT_CONTEXT)
+        {
+          print_formatted ("error: one-shot context exceeds %d bytes\n", MAX_PROMPT_CONTEXT);
+          return -1;
+        }
+      if (append_xml_escaped (buffer, chunk, read_length) < 0)
+        return -1;
+    }
+  if (ferror (source))
+    {
+      print_formatted ("error: cannot read %s\n", description);
+      return -1;
+    }
+  return 0;
+}
+
+static int
+append_context_header (Buffer *buffer, const char *tag, const char *path)
+{
+  if (buffer_append_string (buffer, "<") < 0 || buffer_append_string (buffer, tag) < 0)
+    return -1;
+  if (path != NULL)
+    {
+      if (buffer_append_string (buffer, " path=\"") < 0 || append_xml_text (buffer, path) < 0
+          || buffer_append_string (buffer, "\"") < 0)
+        return -1;
+    }
+  return buffer_append_string (buffer, ">\n");
+}
+
+static int
+append_context_file (Buffer *buffer, const char *path, size_t *context_length)
+{
+  FILE *source;
+
+  if (strcmp (path, "-") == 0)
+    {
+      print_formatted ("error: '-' is not supported for -f; pipe stdin instead\n");
+      return -1;
+    }
+  source = fopen (path, "rb");
+  if (source == NULL)
+    {
+      print_formatted ("error: cannot open %s: %s\n", path, strerror (errno));
+      return -1;
+    }
+  if (append_context_header (buffer, "file", path) < 0 || read_context_chunk (source, buffer, path, context_length) < 0
+      || buffer_append_string (buffer, "\n</file>\n\n") < 0)
+    {
+      fclose (source);
+      return -1;
+    }
+  fclose (source);
+  return 0;
+}
+
+static int
+append_piped_context (Buffer *buffer, size_t *context_length)
+{
+  int first;
+
+  if (!one_shot || isatty (STDIN_FILENO))
+    return 0;
+  first = fgetc (stdin);
+  if (first == EOF)
+    return 0;
+  ungetc (first, stdin);
+  if (append_context_header (buffer, "stdin", NULL) < 0
+      || read_context_chunk (stdin, buffer, "piped stdin", context_length) < 0
+      || buffer_append_string (buffer, "\n</stdin>\n\n") < 0)
+    return -1;
+  return 0;
+}
+
+static int
+build_one_shot_prompt (const char *prompt, Buffer *buffer)
+{
+  size_t context_length = 0;
+  int index;
+
+  for (index = 0; index < attachment_count; index++)
+    if (append_context_file (buffer, attachment_paths[index], &context_length) < 0)
+      return -1;
+  if (append_piped_context (buffer, &context_length) < 0)
+    return -1;
+  return buffer_append_string (buffer, prompt);
+}
+
+static int
 read_line (const char *prompt, char *buffer, size_t capacity)
 {
   size_t length;
@@ -1669,6 +1820,89 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
 }
 
 static int
+read_interactive_line (const char *prompt, char *buffer, size_t capacity)
+{
+  size_t length;
+  FILE *terminal = stdin;
+  int from_tty = 0;
+
+  if (one_shot && !isatty (STDIN_FILENO))
+    {
+      terminal = fopen ("/dev/tty", "r");
+      if (terminal == NULL)
+        {
+          print_formatted ("error: command approval needs /dev/tty when stdin is piped\n");
+          return -1;
+        }
+      from_tty = 1;
+    }
+  print_formatted ("%s\n", prompt);
+  if (fgets (buffer, (int)capacity, terminal) == NULL)
+    {
+      if (from_tty)
+        fclose (terminal);
+      return -1;
+    }
+  if (from_tty)
+    fclose (terminal);
+  length = strlen (buffer);
+  if (length > 0 && buffer[length - 1] == '\n')
+    buffer[length - 1] = 0;
+  else
+    {
+      int character;
+
+      while ((character = getc (terminal)) != EOF && character != '\n')
+        ;
+    }
+  return 0;
+}
+
+static int
+read_interactive_multiline (const char *prompt, const char *continuation_prompt, char *buffer, size_t capacity)
+{
+  FILE *terminal;
+  size_t length = 0;
+
+  buffer[0] = 0;
+  if (isatty (STDIN_FILENO) || !one_shot)
+    return read_multiline (prompt, continuation_prompt, buffer, capacity);
+  terminal = fopen ("/dev/tty", "r");
+  if (terminal == NULL)
+    {
+      print_formatted ("error: interactive steering needs /dev/tty when stdin is piped\n");
+      return -1;
+    }
+  print_formatted ("%s\n", prompt);
+  for (;;)
+    {
+      char line[MAX_LINE];
+
+      if (fgets (line, sizeof (line), terminal) == NULL)
+        break;
+      line[strcspn (line, "\n")] = 0;
+      if (line[0] == 0)
+        {
+          fclose (terminal);
+          return 0;
+        }
+      if (length + strlen (line) + 2 >= capacity)
+        {
+          print_formatted ("error: input is too long\n");
+          fclose (terminal);
+          return -1;
+        }
+      if (length != 0)
+        buffer[length++] = '\n';
+      memcpy (buffer + length, line, strlen (line) + 1);
+      length += strlen (line);
+      print_formatted ("%s\n", continuation_prompt);
+    }
+  fclose (terminal);
+  return length == 0 ? -1 : 0;
+}
+
+static int
 command_decision (ToolCall *call, int *run, char *steer, size_t steer_capacity)
 {
   char choice[MAX_LINE];
@@ -1677,7 +1911,8 @@ command_decision (ToolCall *call, int *run, char *steer, size_t steer_capacity)
   steer[0] = 0;
   for (;;)
     {
-      if (read_line ("[a]llow, [e]dit, [s]teer without running, [n]o, [q]uit: ", choice, sizeof (choice)) < 0)
+      if (read_interactive_line ("[a]llow, [e]dit, [s]teer without running, [n]o, [q]uit: ", choice, sizeof (choice))
+          < 0)
         return -1;
       if (choice[0] == 'a' && choice[1] == 0)
         {
@@ -1686,7 +1921,8 @@ command_decision (ToolCall *call, int *run, char *steer, size_t steer_capacity)
         }
       if (choice[0] == 'e' && choice[1] == 0)
         {
-          if (read_line ("[edited command]: ", call->command, sizeof (call->command)) < 0 || call->command[0] == 0)
+          if (read_interactive_line ("[edited command]: ", call->command, sizeof (call->command)) < 0
+              || call->command[0] == 0)
             continue;
           print_formatted ("[AI command edited to]: %s\n", call->command);
           *run = 1;
@@ -1695,7 +1931,7 @@ command_decision (ToolCall *call, int *run, char *steer, size_t steer_capacity)
       if (choice[0] == 's' && choice[1] == 0)
         {
           print_formatted ("Steering ends with an empty line.\n");
-          if (read_multiline ("[steer]: ", "[.....]: ", steer, steer_capacity) < 0 || steer[0] == 0)
+          if (read_interactive_multiline ("[steer]: ", "[.....]: ", steer, steer_capacity) < 0 || steer[0] == 0)
             continue;
           return 0;
         }
@@ -1714,7 +1950,8 @@ post_execution_steer (char *steer, size_t capacity)
     {
       if (!steering_available () || full_access)
         return 0;
-      if (read_line ("[s]teer before next AI request, Enter to continue, q quit: ", answer, sizeof (answer)) < 0)
+      if (read_interactive_line ("[s]teer before next AI request, Enter to continue, q quit: ", answer, sizeof (answer))
+          < 0)
         return -1;
       if (answer[0] == 0)
         return 0;
@@ -1723,7 +1960,7 @@ post_execution_steer (char *steer, size_t capacity)
       if (answer[0] == 's' && answer[1] == 0)
         {
           print_formatted ("Steering ends with an empty line.\n");
-          if (read_multiline ("[steer]: ", "[.....]: ", steer, capacity) < 0 || steer[0] == 0)
+          if (read_interactive_multiline ("[steer]: ", "[.....]: ", steer, capacity) < 0 || steer[0] == 0)
             continue;
           return 0;
         }
@@ -2029,6 +2266,20 @@ parse_arguments (int argc, char **argv)
         full_access = 1;
       else if (strcmp (argv[index], "--ui") == 0)
         ui_mode = 1;
+      else if (strcmp (argv[index], "-f") == 0)
+        {
+          if (++index >= argc || argv[index][0] == 0)
+            {
+              fprintf (stderr, "error: -f requires a file path\n");
+              return -1;
+            }
+          if (attachment_count == MAX_ATTACHMENTS)
+            {
+              fprintf (stderr, "error: at most %d files may be attached\n", MAX_ATTACHMENTS);
+              return -1;
+            }
+          attachment_paths[attachment_count++] = argv[index];
+        }
       else if (strcmp (argv[index], "-exec") == 0 || strcmp (argv[index], "-e") == 0)
         {
           if (exec_prompt != NULL)
@@ -2039,6 +2290,11 @@ parse_arguments (int argc, char **argv)
           if (++index >= argc || argv[index][0] == 0)
             {
               fprintf (stderr, "error: -exec requires a non-empty prompt\n");
+              return -1;
+            }
+          if (strlen (argv[index]) >= MAX_COMMAND)
+            {
+              fprintf (stderr, "error: -exec prompt must be shorter than %d bytes\n", MAX_COMMAND);
               return -1;
             }
           exec_prompt = argv[index];
@@ -2059,6 +2315,11 @@ parse_arguments (int argc, char **argv)
           return -1;
         }
     }
+  if (attachment_count != 0 && exec_prompt == NULL)
+    {
+      fprintf (stderr, "error: -f requires -e or -exec\n");
+      return -1;
+    }
   return 0;
 }
 
@@ -2066,7 +2327,7 @@ int
 ai_main (int argc, char **argv)
 {
   static char response_storage[MAX_RESPONSE];
-  static char prompt[MAX_COMMAND];
+  static char prompt[MAX_INITIAL_PROMPT];
   const char *response_start = NULL;
   struct sigaction action;
 
@@ -2075,6 +2336,13 @@ ai_main (int argc, char **argv)
   if (configure_environment () < 0)
     return 2;
   one_shot = exec_prompt != NULL;
+  if (one_shot)
+    {
+      Buffer initial_prompt = { prompt, sizeof (prompt), 0 };
+
+      if (build_one_shot_prompt (exec_prompt, &initial_prompt) < 0)
+        return 2;
+    }
   hide_control_characters ();
   memset (&action, 0, sizeof (action));
   action.sa_handler = on_signal;
@@ -2118,14 +2386,7 @@ ai_main (int argc, char **argv)
   for (;;)
     {
       if (one_shot)
-        {
-          if (strlen (exec_prompt) >= sizeof (prompt))
-            {
-              print_formatted ("error: prompt cannot fit in the conversation\n");
-              return 1;
-            }
-          strcpy (prompt, exec_prompt);
-        }
+        ;
       else if (read_multiline ("\n[You]: ", "[...]: ", prompt, sizeof (prompt)) < 0)
         break;
       if (prompt[0] == 0)
