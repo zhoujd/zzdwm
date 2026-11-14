@@ -2348,6 +2348,7 @@ static void
 usage (FILE *stream)
 {
   fprintf (stream, "usage: ai [options]\n"
+                   "       <command> | ai -e <prompt>\n"
                    "\n"
                    "Options:\n"
                    "  -C, --cwd <dir>    set the workspace directory\n"
