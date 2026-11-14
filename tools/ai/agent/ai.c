@@ -1,9 +1,11 @@
 #define _GNU_SOURCE
 
 #include <dirent.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <libgen.h>
 #include <poll.h>
 #include <sys/select.h>
 #include <signal.h>
@@ -110,6 +112,8 @@ static char model[MAX_MODEL] = DEFAULT_MODEL;
 static int api_timeout = 300;
 static int command_timeout = 120;
 static const char *exec_prompt;
+static const char *workspace_directory;
+static char workspace_root[PATH_MAX];
 static int one_shot;
 static const char *attachment_paths[MAX_ATTACHMENTS];
 static int attachment_count;
@@ -1969,6 +1973,95 @@ post_execution_steer (char *steer, size_t capacity)
 }
 
 static int
+normalize_scoped_path (const char *path, char *resolved, size_t capacity)
+{
+  char normalized[PATH_MAX];
+
+  if (path[0] == '/')
+    {
+      if (realpath (path, resolved) != NULL)
+        return 0;
+      if (strlen (path) >= capacity)
+        return -1;
+      strcpy (resolved, path);
+      return 0;
+    }
+  if (snprintf (normalized, sizeof (normalized), "%s/%s", workspace_root, path) >= (int)sizeof (normalized))
+    return -1;
+  if (realpath (normalized, resolved) != NULL)
+    return 0;
+  if (strlen (normalized) >= capacity)
+    return -1;
+  strcpy (resolved, normalized);
+  return 0;
+}
+
+static int
+contains_outside_path (const char *command)
+{
+  const char *start = command;
+  char candidate[PATH_MAX];
+  char resolved[PATH_MAX];
+
+  while (*start != 0)
+    {
+      const char *end = start;
+      int absolute = *start == '/';
+      char first;
+      const char *slash;
+
+      while (*end != 0 && !isspace ((unsigned char)*end))
+        end++;
+      if (end > start)
+        {
+          size_t length = (size_t)(end - start);
+
+          if (absolute)
+            {
+              if (length >= sizeof (candidate))
+                return 1;
+              memcpy (candidate, start, length);
+              candidate[length] = 0;
+              if (normalize_scoped_path (candidate, resolved, sizeof (resolved)) == 0
+                  && (strncmp (resolved, workspace_root, strlen (workspace_root)) != 0
+                      || (resolved[strlen (workspace_root)] != 0 && resolved[strlen (workspace_root)] != '/')))
+                return 1;
+            }
+          else if (length >= 2 && strncmp (start, "..", 2) == 0)
+            {
+              if (snprintf (candidate, sizeof (candidate), "%s/%.*s", workspace_root, (int)length, start)
+                  >= (int)sizeof (candidate))
+                return 1;
+              if (realpath (candidate, resolved) != NULL)
+                {
+                  if (strncmp (resolved, workspace_root, strlen (workspace_root)) != 0
+                      || (resolved[strlen (workspace_root)] != 0 && resolved[strlen (workspace_root)] != '/'))
+                    return 1;
+                }
+              else
+                {
+                  slash = start + 2;
+                  first = slash != end ? *slash : '/';
+                  if (first == '/' || first == 0)
+                    return 1;
+                }
+            }
+        }
+      start = *end == 0 ? end : end + 1;
+    }
+  return 0;
+}
+
+static int
+validate_workspace_command (const char *command)
+{
+  if (workspace_directory == NULL || !contains_outside_path (command))
+    return 0;
+  print_formatted ("Command blocked: it references a path outside the workspace scope %s.\n", workspace_root);
+  return -1;
+}
+
+static int
 append_bounded_output (const ToolCall *call, const char *prefix, const char *output, size_t output_length)
 {
   char prefix_text[MAX_LINE];
@@ -2013,6 +2106,13 @@ process_tool_calls (ToolCall *calls, size_t call_count)
       if (calls[index].valid && calls[index].supported)
         {
           print_formatted ("\n[AI requests command]: %s\n", calls[index].command);
+          if (validate_workspace_command (calls[index].command) < 0)
+            {
+              if (append_tool_result (&calls[index], "Error: command references a path outside the workspace scope.")
+                  < 0)
+                return -1;
+              continue;
+            }
           if (steer[0] != 0)
             execute = 0;
           else if (full_access)
@@ -2247,8 +2347,8 @@ process_response (const char *body)
 static void
 usage (FILE *stream)
 {
-  fprintf (stream, "usage: ai [--full-access] [--ui] [-e prompt] [-exec prompt] "
-                   "[--help] [--version]\n"
+  fprintf (stream, "usage: ai [-C dir] [--full-access] [--ui] [-f file] "
+                   "[-e prompt] [-exec prompt] [--help] [--version]\n"
                    "\n"
                    "Environment configures AI_API_URL, AI_MODEL, AI_API_KEY or\n"
                    "OPENAI_API_KEY, AI_TIMEOUT_SECONDS and AI_COMMAND_TIMEOUT_SECONDS.\n"
@@ -2266,6 +2366,20 @@ parse_arguments (int argc, char **argv)
         full_access = 1;
       else if (strcmp (argv[index], "--ui") == 0)
         ui_mode = 1;
+      else if (strcmp (argv[index], "-C") == 0 || strcmp (argv[index], "--cwd") == 0)
+        {
+          if (++index >= argc || argv[index][0] == 0)
+            {
+              fprintf (stderr, "error: -C requires a directory\n");
+              return -1;
+            }
+          if (workspace_directory != NULL)
+            {
+              fprintf (stderr, "error: -C may only be supplied once\n");
+              return -1;
+            }
+          workspace_directory = argv[index];
+        }
       else if (strcmp (argv[index], "-f") == 0)
         {
           if (++index >= argc || argv[index][0] == 0)
@@ -2335,6 +2449,16 @@ ai_main (int argc, char **argv)
     return 2;
   if (configure_environment () < 0)
     return 2;
+  if (workspace_directory != NULL && realpath (workspace_directory, workspace_root) == NULL)
+    {
+      fprintf (stderr, "error: cannot resolve workspace directory: %s\n", strerror (errno));
+      return 2;
+    }
+  if (workspace_directory != NULL && chdir (workspace_root) < 0)
+    {
+      fprintf (stderr, "error: cannot enter %s: %s\n", workspace_directory, strerror (errno));
+      return 2;
+    }
   one_shot = exec_prompt != NULL;
   if (one_shot)
     {

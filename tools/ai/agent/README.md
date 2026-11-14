@@ -18,7 +18,7 @@ make -C tools/ai/agent ai
 
 Run `tools/ai/agent/ai tui`. It launches the backend in `--ui` mode and
 renders three windows: shared AI/user thoughts, AI command status/output, and
-a keyboard input box.
+a keyboard input box. Pass `-C dir` to the TUI to start in a scoped workspace.
 
 Press `PageUp`/`PageDown` to scroll the conversation history.
 
@@ -81,6 +81,13 @@ then escaped `<stdin>...</stdin>` content, then the prompt. Combined file and
 piped input is limited to 64 KiB and is rejected if it contains a NUL byte.
 When stdin is piped, interactive command approval is read from `/dev/tty`;
 without an available terminal, approval fails safely unless `--full-access` is
+explicitly supplied.
+
+Use `-C dir` or `--cwd dir` to resolve and enter a workspace before files,
+skills, or commands are handled. Commands that explicitly reference absolute
+paths outside that workspace are rejected, including in full-access mode. This
+is scope validation, not a sandbox: ambiguous shell constructs and indirect
+program actions still require normal approval unless `--full-access` is
 explicitly supplied.
 
 Configuration is read from the environment:

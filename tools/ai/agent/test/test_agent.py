@@ -120,7 +120,8 @@ def text_response(content):
 class AgentTests(unittest.TestCase):
     def run_agent(
         self, responses, stdin="", full_access=False, command_timeout="2",
-        tool_rounds=None, delay=0, cwd=None, exec_prompt=None, files=()
+        tool_rounds=None, delay=0, cwd=None, exec_prompt=None, files=(),
+        workspace=None,
     ):
         endpoint = Endpoint(responses, delay)
         self.addCleanup(endpoint.thread.join, timeout=2)
@@ -134,6 +135,8 @@ class AgentTests(unittest.TestCase):
         if tool_rounds is not None:
             settings["AI_TOOL_ROUNDS"] = tool_rounds
         command = [EXECUTABLE]
+        if workspace is not None:
+            command.extend(["-C", workspace])
         if full_access:
             command.append("--full-access")
         for source in files:
@@ -286,6 +289,37 @@ class AgentTests(unittest.TestCase):
         self.assertIn(
             b"one-shot context exceeds 65536 bytes", process.stdout + process.stderr
         )
+
+    def test_workspace_scope_changes_working_directory(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            marker = os.path.join(workspace, "marker")
+            result, endpoint = self.run_agent(
+                [tool_response("pwd"), text_response("done")],
+                full_access=True,
+                exec_prompt="where am I",
+                workspace=workspace,
+            )
+            self.assertIn(workspace, result.stdout)
+            self.assertIn(workspace, endpoint.requests[1]["messages"][-1]["content"])
+            self.assertFalse(os.path.exists(marker))
+
+    def test_workspace_scope_blocks_outside_absolute_path(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            result, endpoint = self.run_agent(
+                [
+                    tool_response(f"touch {workspace}/outside"),
+                    text_response("done"),
+                ],
+                full_access=True,
+                exec_prompt="write outside",
+                workspace=".",
+            )
+            self.assertIn("references a path outside the workspace scope", result.stdout)
+            self.assertFalse(os.path.exists(os.path.join(workspace, "outside")))
+            self.assertIn(
+                "outside the workspace scope",
+                endpoint.requests[1]["messages"][-1]["content"],
+            )
 
     def test_one_shot_full_access_executes_without_prompt(self):
         result, endpoint = self.run_agent(
@@ -547,6 +581,58 @@ class AgentTests(unittest.TestCase):
         self.assertIn("AI endpoint returned HTTP 400", result.stdout)
         self.assertIn("[bye]", result.stdout)
         self.assertGreaterEqual(len(endpoint.requests), 1)
+
+    def test_tui_workspace_scope_is_forwarded(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for TUI workspace forwarding")
+        with tempfile.TemporaryDirectory() as workspace:
+            endpoint = Endpoint([tool_response("pwd"), text_response("done")])
+            self.addCleanup(endpoint.thread.join, timeout=2)
+            self.addCleanup(endpoint.close)
+            server = f"ai-tui-workspace-{os.getpid()}"
+            subprocess.run(["tmux", "kill-server"], check=False)
+            self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+            environment = os.environ.copy()
+            environment.update(
+                {
+                    "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                    "AI_TIMEOUT_SECONDS": "2",
+                    "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                    "PATH": os.environ["PATH"],
+                }
+            )
+            subprocess.run(
+                [
+                    "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "100", "-y", "24",
+                    "-n", server, TUI_EXECUTABLE, "tui", "-C", workspace,
+                    "--full-access",
+                ],
+                env=environment,
+                check=True,
+                timeout=5,
+            )
+            self.addCleanup(
+                subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+            )
+            time.sleep(0.5)
+            subprocess.run(["tmux", "send-keys", "-t", server, "where"], check=True)
+            subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
+            time.sleep(0.5)
+            deadline = time.monotonic() + 5
+            found = False
+            while time.monotonic() < deadline:
+                output = subprocess.run(
+                    ["tmux", "capture-pane", "-p", "-t", server],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                ).stdout
+                if workspace in output:
+                    found = True
+                    break
+                time.sleep(0.2)
+            self.assertTrue(found, f"workspace path not shown in TUI:\n{output}")
 
     def test_tui_enter_submits_prompt_and_clears_input(self):
         if shutil.which("tmux") is None:

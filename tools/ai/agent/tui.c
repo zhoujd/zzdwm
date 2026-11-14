@@ -79,6 +79,7 @@ static PaneId selected_pane = PANE_THOUGHTS;
 static PaneLayout pane_layout = PANE_LAYOUT_EQUAL;
 static InputMode input_mode = INPUT_MULTILINE;
 static int full_access;
+static const char *workspace_directory;
 
 static void handle_agent_prompt (const char *line);
 
@@ -135,7 +136,7 @@ on_signal (int signal_number)
 static void
 usage (FILE *stream)
 {
-  fprintf (stream, "usage: ai-tui [--full-access] [--help] [--version]\n"
+  fprintf (stream, "usage: ai-tui [-C dir] [--full-access] [--help] [--version]\n"
                    "\n"
                    "Keys:\n"
                    "  F1                 quit\n"
@@ -161,6 +162,20 @@ parse_arguments (int argc, char **argv)
     {
       if (strcmp (argv[index], "--full-access") == 0)
         full_access = 1;
+      else if (strcmp (argv[index], "-C") == 0 || strcmp (argv[index], "--cwd") == 0)
+        {
+          if (++index >= argc || argv[index][0] == 0)
+            {
+              fprintf (stderr, "error: -C requires a directory\n");
+              return -1;
+            }
+          if (workspace_directory != NULL)
+            {
+              fprintf (stderr, "error: -C may only be supplied once\n");
+              return -1;
+            }
+          workspace_directory = argv[index];
+        }
       else if (strcmp (argv[index], "--help") == 0)
         {
           usage (stdout);
@@ -225,8 +240,7 @@ draw_pane_status (PaneId pane_id, WINDOW *border, int height, int width)
 static const char *
 input_title (void)
 {
-  return input_mode == INPUT_MULTILINE ? " 3. Prompt (C-J newline, RET submit) "
-                                       : " 3. Decision (RET submit) ";
+  return input_mode == INPUT_MULTILINE ? " 3. Prompt (C-J newline, RET submit) " : " 3. Decision (RET submit) ";
 }
 
 static void
@@ -712,10 +726,14 @@ start_agent (const char *agent_path, int *agent_stdin, int *agent_stdout)
       close (input_fds[1]);
       close (output_fds[0]);
       close (output_fds[1]);
-      if (full_access)
-        execl (agent_path, "ai", "--ui", "--full-access", (char *)NULL);
-      else
+      if (workspace_directory == NULL && !full_access)
         execl (agent_path, "ai", "--ui", (char *)NULL);
+      else if (workspace_directory == NULL && full_access)
+        execl (agent_path, "ai", "--ui", "--full-access", (char *)NULL);
+      else if (workspace_directory != NULL && !full_access)
+        execl (agent_path, "ai", "--ui", "-C", workspace_directory, (char *)NULL);
+      else
+        execl (agent_path, "ai", "--ui", "-C", workspace_directory, "--full-access", (char *)NULL);
       _exit (127);
     }
   close (input_fds[0]);
