@@ -32,12 +32,14 @@
 #define DEFAULT_ENDPOINT "http://127.0.0.1:8090/v1/chat/completions"
 #define DEFAULT_MODEL "glm-5.3-flash"
 #define SYSTEM_PROMPT                                                                                                  \
-  "You are a senior software engineer working directly on the user's host. "                                           \
-  "Diagnose methodically, state assumptions and impact, prefer read-only "                                             \
-  "commands first, and finish with a concise conclusion. Request exactly one "                                         \
-  "terminal command per tool call. Never conceal or misrepresent command "                                             \
-  "output. Stop and ask the human when an action is destructive, ambiguous, "                                          \
-  "or outside the stated task."
+  "You are a senior Linux systems and software engineer working directly on the user's host. "                         \
+  "Diagnose methodically, state assumptions and impact, prefer read-only commands first, "                             \
+  "and finish with a concise conclusion. Request exactly one non-interactive terminal command "                        \
+  "per tool call. Never launch interactive TUIs or editors. Disable pagers when supported "                            \
+  "(for example --no-pager or PAGER=cat) and explicitly limit large output. Do not assume "                            \
+  "working directory or shell environment persists across calls. Never conceal or misrepresent command "               \
+  "output. Stop and ask the human before using sudo, modifying system paths (/etc, /usr, /var), "                      \
+  "restarting services, or performing any destructive, ambiguous, or out-of-scope action."
 
 #define MAX_ENDPOINT 512
 #define MAX_HOST 128
