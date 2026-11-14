@@ -106,6 +106,8 @@ static char api_key[MAX_KEY];
 static char model[MAX_MODEL] = DEFAULT_MODEL;
 static int api_timeout = 300;
 static int command_timeout = 120;
+static const char *exec_prompt;
+static int one_shot;
 static int max_tool_rounds = MAX_TOOL_ROUNDS;
 static bool full_access = false; // Always default to secure mode
 static volatile sig_atomic_t interrupted;
@@ -304,6 +306,11 @@ begin_live_input (void)
 
   live_input.line_length = 0;
   live_input.terminal_configured = 0;
+  if (one_shot)
+    {
+      live_input.input_open = 0;
+      return 0;
+    }
   flags = fcntl (STDIN_FILENO, F_GETFL, 0);
   live_input.input_open = flags >= 0;
   if (!live_input.input_open)
@@ -1387,7 +1394,8 @@ call_endpoint_threaded (const char **response_body, char *response_storage)
       return call_endpoint (response_body, response_storage);
     }
   begin_live_input ();
-  live_steering_prompt ();
+  if (ui_mode || !one_shot)
+    live_steering_prompt ();
   for (;;)
     {
       int worker_done;
@@ -2002,7 +2010,8 @@ process_response (const char *body)
 static void
 usage (FILE *stream)
 {
-  fprintf (stream, "usage: ai [--full-access] [--ui] [--help] [--version]\n"
+  fprintf (stream, "usage: ai [--full-access] [--ui] [-e prompt] [-exec prompt] "
+                   "[--help] [--version]\n"
                    "\n"
                    "Environment configures AI_API_URL, AI_MODEL, AI_API_KEY or\n"
                    "OPENAI_API_KEY, AI_TIMEOUT_SECONDS and AI_COMMAND_TIMEOUT_SECONDS.\n"
@@ -2020,6 +2029,20 @@ parse_arguments (int argc, char **argv)
         full_access = 1;
       else if (strcmp (argv[index], "--ui") == 0)
         ui_mode = 1;
+      else if (strcmp (argv[index], "-exec") == 0 || strcmp (argv[index], "-e") == 0)
+        {
+          if (exec_prompt != NULL)
+            {
+              usage (stderr);
+              return -1;
+            }
+          if (++index >= argc || argv[index][0] == 0)
+            {
+              fprintf (stderr, "error: -exec requires a non-empty prompt\n");
+              return -1;
+            }
+          exec_prompt = argv[index];
+        }
       else if (strcmp (argv[index], "--help") == 0)
         {
           usage (stdout);
@@ -2051,6 +2074,7 @@ ai_main (int argc, char **argv)
     return 2;
   if (configure_environment () < 0)
     return 2;
+  one_shot = exec_prompt != NULL;
   hide_control_characters ();
   memset (&action, 0, sizeof (action));
   action.sa_handler = on_signal;
@@ -2060,10 +2084,13 @@ ai_main (int argc, char **argv)
   signal (SIGPIPE, SIG_IGN);
   load_skills ();
   conversation_reset ();
-  print_formatted ("ai %s %s %s interactive AI agent\n", VERSION, BUILD_DATE, BUILD_REVISION);
-  print_formatted ("Endpoint: http://%s:%d%s\n", api_host, api_port, api_path);
-  print_formatted ("Model: %s; API timeout: %ds; command timeout: %ds; tool rounds: %d\n", model, api_timeout,
-                   command_timeout, max_tool_rounds);
+  if (!one_shot)
+    {
+      print_formatted ("ai %s %s %s interactive AI agent\n", VERSION, BUILD_DATE, BUILD_REVISION);
+      print_formatted ("Endpoint: http://%s:%d%s\n", api_host, api_port, api_path);
+      print_formatted ("Model: %s; API timeout: %ds; command timeout: %ds; tool rounds: %d\n", model, api_timeout,
+                       command_timeout, max_tool_rounds);
+    }
   if (skill_count > 0)
     {
       char listing[MAX_SKILLS * (MAX_SKILL_NAME + 2) + 16];
@@ -2079,34 +2106,46 @@ ai_main (int argc, char **argv)
         listing[sizeof (listing) - 1] = 0;
       print_formatted ("Skills: %s\n", listing);
     }
-  print_formatted ("Multiline input ends with an empty line. /help shows commands.\n");
-  print_formatted ("Live steering: type lines while AI requests or commands run.\n");
-  if (full_access)
-    print_formatted ("Full access: commands run immediately; steering is offered after each one.\n");
-  else
-    print_formatted ("Every command is shown for allow/edit/steer/refuse before execution.\n");
+  if (!one_shot)
+    {
+      print_formatted ("Multiline input ends with an empty line. /help shows commands.\n");
+      print_formatted ("Live steering: type lines while AI requests or commands run.\n");
+      if (full_access)
+        print_formatted ("Full access: commands run immediately; steering is offered after each one.\n");
+      else
+        print_formatted ("Every command is shown for allow/edit/steer/refuse before execution.\n");
+    }
   for (;;)
     {
-      if (read_multiline ("\n[You]: ", "[...]: ", prompt, sizeof (prompt)) < 0)
+      if (one_shot)
+        {
+          if (strlen (exec_prompt) >= sizeof (prompt))
+            {
+              print_formatted ("error: prompt cannot fit in the conversation\n");
+              return 1;
+            }
+          strcpy (prompt, exec_prompt);
+        }
+      else if (read_multiline ("\n[You]: ", "[...]: ", prompt, sizeof (prompt)) < 0)
         break;
       if (prompt[0] == 0)
         continue;
-      if (strcmp (prompt, "/exit") == 0 || strcmp (prompt, "/quit") == 0)
+      if (!one_shot && (strcmp (prompt, "/exit") == 0 || strcmp (prompt, "/quit") == 0))
         break;
-      if (strcmp (prompt, "/new") == 0)
+      if (!one_shot && strcmp (prompt, "/new") == 0)
         {
           conversation_reset ();
           clear_steering ();
           print_formatted ("[context reset]\n");
           continue;
         }
-      if (strcmp (prompt, "/force") == 0)
+      if (!one_shot && strcmp (prompt, "/force") == 0)
         {
           full_access = !full_access;
           print_formatted ("[force mode is now %s]\n", full_access ? "ON; commands run without approval" : "OFF");
           continue;
         }
-      if (strcmp (prompt, "/skills") == 0)
+      if (!one_shot && strcmp (prompt, "/skills") == 0)
         {
           int index;
 
@@ -2116,7 +2155,7 @@ ai_main (int argc, char **argv)
             print_formatted ("%s: %s\n", skills[index].name, skills[index].description);
           continue;
         }
-      if (strncmp (prompt, "/skill", 6) == 0)
+      if (!one_shot && strncmp (prompt, "/skill", 6) == 0)
         {
           if (prompt[6] == ' ')
             handle_skill_command (prompt + 7);
@@ -2124,7 +2163,7 @@ ai_main (int argc, char **argv)
             print_formatted ("usage: /skill <name>; /skills lists them\n");
           continue;
         }
-      if (strcmp (prompt, "/help") == 0)
+      if (!one_shot && strcmp (prompt, "/help") == 0)
         {
           print_formatted ("/new reset context; /force no need allow; /skills list skills; "
                            "/skill <name> load a skill; /exit or /quit exit\n");
@@ -2180,7 +2219,10 @@ ai_main (int argc, char **argv)
         if (pending_round == 0 && add_pending_request_steering () < 0)
           return 1;
       }
+      if (one_shot)
+        break;
     }
-  print_formatted ("\n[bye]\n");
+  if (!one_shot)
+    print_formatted ("\n[bye]\n");
   return 0;
 }

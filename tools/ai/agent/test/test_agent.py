@@ -119,8 +119,8 @@ def text_response(content):
 
 class AgentTests(unittest.TestCase):
     def run_agent(
-        self, responses, stdin, full_access=False, command_timeout="2",
-        tool_rounds=None, delay=0, cwd=None
+        self, responses, stdin="", full_access=False, command_timeout="2",
+        tool_rounds=None, delay=0, cwd=None, exec_prompt=None
     ):
         endpoint = Endpoint(responses, delay)
         self.addCleanup(endpoint.thread.join, timeout=2)
@@ -136,6 +136,8 @@ class AgentTests(unittest.TestCase):
         command = [EXECUTABLE]
         if full_access:
             command.append("--full-access")
+        if exec_prompt is not None:
+            command.extend(["-exec", exec_prompt])
         return subprocess.run(
             command,
             input=stdin,
@@ -189,6 +191,45 @@ class AgentTests(unittest.TestCase):
         self.assertIn("hello", result.stdout)
         self.assertIn("final answer", result.stdout)
         self.assertEqual(len(endpoint.requests), 2)
+
+    def test_one_shot_sends_prompt_and_exits(self):
+        result, endpoint = self.run_agent(
+            [tool_response("printf 'one-shot\\n'"), text_response("done")],
+            "a\n",
+            exec_prompt="/exit should be sent verbatim",
+        )
+        self.assertIn("one-shot", result.stdout)
+        self.assertIn("done", result.stdout)
+        self.assertNotIn("[bye]", result.stdout)
+        self.assertEqual(len(endpoint.requests), 2)
+        self.assertEqual(
+            endpoint.requests[0]["messages"][-1]["content"],
+            "/exit should be sent verbatim",
+        )
+
+    def test_one_shot_full_access_executes_without_prompt(self):
+        result, endpoint = self.run_agent(
+            [tool_response("printf 'automatic\\n'"), text_response("done")],
+            full_access=True,
+            exec_prompt="diagnose",
+        )
+        self.assertIn("automatic", result.stdout)
+        self.assertIn("done", result.stdout)
+        self.assertEqual(len(endpoint.requests), 2)
+
+    def test_one_shot_requires_prompt(self):
+        process = subprocess.run(
+            [EXECUTABLE, "-exec"],
+            text=True,
+            capture_output=True,
+            timeout=5,
+            env={
+                "AI_API_URL": "http://127.0.0.1:1/v1",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        self.assertEqual(process.returncode, 2)
+        self.assertIn("-exec requires a non-empty prompt", process.stderr)
 
     def test_edit_command_before_execution(self):
         result, endpoint = self.run_agent(

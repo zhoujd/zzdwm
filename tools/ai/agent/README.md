@@ -59,6 +59,15 @@ make -C tools/ai/agent install DEST="$HOME/.local/bin"
 tools/ai/agent/ai
 ```
 
+For a single request, use one-shot mode:
+
+```sh
+tools/ai/agent/ai -exec "summarize this repository"
+```
+
+The prompt is sent verbatim, startup banners are omitted, and command approval
+remains enabled. Add `--full-access` for unattended one-shot execution.
+
 Configuration is read from the environment:
 
 * `AI_API_URL`: HTTP endpoint or base URL. Default:

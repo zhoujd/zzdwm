@@ -221,5 +221,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--full-access", action="store_true",
                         help="execute AI-requested commands without confirmation")
+    parser.add_argument("-e", "-exec", dest="exec_prompt", metavar="prompt",
+                        help="run one prompt and exit")
     args = parser.parse_args()
-    interactive_loop(args.full_access)
+    if args.exec_prompt is not None and not args.exec_prompt.strip():
+        parser.error("-e/-exec requires a non-empty prompt")
+    if args.exec_prompt is not None:
+        ask_ai_and_run(args.exec_prompt, full_access=args.full_access)
+    else:
+        interactive_loop(args.full_access)
