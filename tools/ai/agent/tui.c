@@ -196,7 +196,7 @@ usage (FILE *stream)
                    "\n"
                    "Environment configures AI_API_URL, AI_MODEL, AI_API_KEY or\n"
                    "OPENAI_API_KEY, AI_TIMEOUT_SECONDS and AI_COMMAND_TIMEOUT_SECONDS.\n"
-                   "AI_TOOL_ROUNDS is also supported.\n");
+                   "AI_TOOL_ROUNDS is also supported. Set NO_COLOR to disable styling.\n");
 }
 
 static int
