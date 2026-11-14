@@ -18,7 +18,10 @@ import json
 import shlex
 import subprocess
 import argparse
-import readline  # side effect: enables line editing and history for input()
+try:
+    import readline  # side effect: enables line editing and history for input()
+except ImportError:
+    pass
 import requests
 
 # Safely read integer from an environment variable
@@ -45,7 +48,7 @@ BLOCKED_COMMANDS = {"rm", "rmdir", "shred", "unlink", "dd", "mkfs"}
 def run_terminal_command(command: str, full_access: bool = False) -> str:
     """Executes a terminal command on the host environment and returns the output."""
     try:
-        argv = shlex.split(command, posix=True)
+        argv = shlex.split(command, posix=os.name != "nt")
     except ValueError:
         return "Error: Invalid shell command syntax."
     executable = os.path.basename(argv[0]) if argv else ""
