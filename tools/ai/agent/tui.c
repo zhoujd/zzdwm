@@ -336,7 +336,7 @@ redraw_layout (void)
   wsetscrreg (input_window, 0, BOTTOM_HEIGHT - 1);
   box (input_window, 0, 0);
   mvwprintw (input_window, 0, 2,
-             input_mode == INPUT_MULTILINE ? " 3. Prompt (RET submit) " : " 3. Decision (RET submit) ");
+             input_mode == INPUT_MULTILINE ? " 3. Prompt (C-J newline, RET submit) " : " 3. Decision (RET submit) ");
   keypad (input_window, TRUE);
   wmove (input_window, 1, 1);
   touchwin (input_window);
