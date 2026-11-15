@@ -33,7 +33,7 @@ RUN_PARAM=(
 check() {
     if ! docker image inspect $IMG >/dev/null 2>&1; then
         echo "Missing $IMG; build it first:" >&2
-        echo "    make -C $TOP/docker/dockerfiles ubuntu-claude" >&2
+        echo "    make -C $TOP/docker/dockerfiles/tool claude-base" >&2
         exit 1
     fi
     ## The image user is uid 1000; files created in the mounted workspace

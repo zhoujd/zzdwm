@@ -11,8 +11,8 @@ region-blocked api.anthropic.com preflight is skipped by the patched
 ## Build
 
 ```
-make -C ../dockerfiles claude-base
-make -C ../dockerfiles claude-base CLAUDE_VERSION=2.1.323   # pin a version
+make -C ../dockerfiles/tool claude-base
+make -C ../dockerfiles/tool claude-base CLAUDE_VERSION=2.1.323   # pin a version
 ```
 
 ## Run
