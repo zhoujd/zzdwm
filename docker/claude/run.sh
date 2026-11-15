@@ -11,10 +11,10 @@ MNT=/home/$CTN_USER/work
 WS=$MNT/$(basename $PWD)
 
 ## The host settings.json may not carry ANTHROPIC_API_KEY (the key is only
-## exported into the shell by ~/.claude/.env.sh on some hosts); pass it
+## exported into the shell by ~/.claude/.env on some hosts); pass it
 ## through explicitly so the container is always authenticated.
 API_KEY=$(sed -n 's/^export ANTHROPIC_API_KEY=//p' \
-            $HOME/.claude/.env.sh 2>/dev/null)
+            $HOME/.claude/.env 2>/dev/null)
 
 RUN_PARAM=(
     --rm

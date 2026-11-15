@@ -1,6 +1,6 @@
 ### Build in Docker
 
-TARGET: valgrind-base wine-base mingw-base docs-base autossh-base claude-base
+TARGET: valgrind-base wine-base mingw-base docs-base autossh-base claude-base codex-base
 
 CTN_USER ?= ${USER}
 IMG_NS ?= zhoujd
@@ -25,6 +25,9 @@ Autossh_LATEST_TAG := $(IMG_NS)/autossh:latest
 
 Claude_BASE_TAG := $(IMG_NS)/claude:base
 Claude_LATEST_TAG := $(IMG_NS)/claude:latest
+
+Codex_BASE_TAG := $(IMG_NS)/codex:base
+Codex_LATEST_TAG := $(IMG_NS)/codex:latest
 
 .PHONY: all
 all: $(TARGET)
@@ -53,6 +56,10 @@ claude-base: claude.dockerfile claude-entrypoint.sh
 	docker build $(BUILD_ARG) -t $(Claude_BASE_TAG) -f claude.dockerfile .
 	docker tag $(Claude_BASE_TAG) $(Claude_LATEST_TAG)
 
+codex-base: codex.dockerfile codex-entrypoint.sh
+	docker build $(BUILD_ARG) -t $(Codex_BASE_TAG) -f codex.dockerfile .
+	docker tag $(Codex_BASE_TAG) $(Codex_LATEST_TAG)
+
 .PHONY: clean
 clean:
 	-docker rmi $(Valgrind_BASE_TAG) $(Valgrind_LATEST_TAG)
@@ -60,6 +67,7 @@ clean:
 	-docker rmi $(Docs_BASE_TAG) $(Docs_LATEST_TAG)
 	-docker rmi $(Autossh_BASE_TAG) $(Autossh_LATEST_TAG)
 	-docker rmi $(Claude_BASE_TAG) $(Claude_LATEST_TAG)
+	-docker rmi $(Codex_BASE_TAG) $(Codex_LATEST_TAG)
 
 .PHONY: help
 help:
@@ -73,3 +81,4 @@ help:
 	@echo "$$ make docs-base"
 	@echo "$$ make autossh-base"
 	@echo "$$ make claude-base"
+	@echo "$$ make codex-base"

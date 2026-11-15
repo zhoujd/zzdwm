@@ -17,7 +17,7 @@ installer is used only when npm is absent.
 ## Configure
 
 ```
-# Set OPENAI_API_KEY in misc/vibe/codex/.env.sh.
+# Set OPENAI_API_KEY in misc/vibe/codex/.env.
 ./misc/vibe/install.sh config codex
 ./misc/vibe/install.sh config claude
 ```
@@ -26,7 +26,7 @@ Pass `all` instead of `codex` or `claude` to run a command for both tools.
 
 The codex `.env` is intentionally untracked; create it from `.env.example`.
 The tracked files — codex `config.toml` and `rules/default.rules`, claude
-`settings.json` and `.env.sh` — can have their history reviewed and restored
+`settings.json` and `.env` — can have their history reviewed and restored
 with Git.
 
 ## Recover
@@ -45,11 +45,11 @@ otherwise preflights api.anthropic.com and exits on region-blocked networks.
 ## Run
 
 ```
-$ source misc/vibe/codex/.env.sh
+$ source misc/vibe/codex/.env
 $ codex
 
 $ claude
 ```
 
 Claude needs no sourcing: `settings.json` carries the API key in its `env`
-block, and `.env.sh` remains for shells that want the key exported.
+block, and `.env` remains for shells that want the key exported.

@@ -52,9 +52,9 @@ patch_claude_state() {
     ## never finish onboarding. Mark onboarding done and pre-approve the custom
     ## API key, keyed on the last 20 chars of the key.
     local key fingerprint
-    key=$(sed -n 's/^export ANTHROPIC_API_KEY=//p' "$HOME/.claude/.env.sh")
+    key=$(sed -n 's/^export ANTHROPIC_API_KEY=//p' "$HOME/.claude/.env")
     if [ -z "$key" ]; then
-        echo "No ANTHROPIC_API_KEY in $HOME/.claude/.env.sh; skip state patch" >&2
+        echo "No ANTHROPIC_API_KEY in $HOME/.claude/.env; skip state patch" >&2
         return 1
     fi
     fingerprint=${key: -20}
@@ -81,7 +81,7 @@ config_claude() {
     echo "Install claude configure files"
     mkdir -p ~/.claude
     cp -rv "$SCRIPT_ROOT/claude/settings.json" ~/.claude/
-    cp -rv "$SCRIPT_ROOT/claude/.env.sh" ~/.claude/
+    cp -rv "$SCRIPT_ROOT/claude/.env" ~/.claude/
     patch_claude_state
     echo "Config claude done"
 }
@@ -137,7 +137,7 @@ recover_claude() {
     mkdir -p "$HOME/.claude"
 
     recover_file "$SCRIPT_ROOT/claude/settings.json" "$HOME/.claude/settings.json" "$timestamp" &&
-        recover_file "$SCRIPT_ROOT/claude/.env.sh" "$HOME/.claude/.env.sh" "$timestamp" || return 1
+        recover_file "$SCRIPT_ROOT/claude/.env" "$HOME/.claude/.env" "$timestamp" || return 1
     patch_claude_state
 
     command -v claude >/dev/null || {
@@ -150,7 +150,7 @@ recover_claude() {
 
 install_codex() {
     DEST=~/Downloads
-    VER=v0.145.0     ## v0.136.0
+    VER=v0.169.0
     mkdir -p $DEST
     pushd $DEST
     if [ ! -f codex-x86_64-unknown-linux-musl.tar.gz ]; then
