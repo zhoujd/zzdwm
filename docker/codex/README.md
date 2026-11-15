@@ -18,7 +18,7 @@ cd <any project>
 ../codex/run.sh             # interactive TUI, cwd mounted as the workspace
 ../codex/run.sh exec "..."  # non-interactive execution
 ../codex/run.sh shell       # bash via docker exec into the running container,
-                             # or a fresh container when none is running
+                            # or a fresh container when none is running
 ```
 
 The container runs as user `zach` (uid 1000) with host networking; files it

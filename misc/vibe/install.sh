@@ -181,6 +181,12 @@ ensure_node() {
     "$HOME/.local/bin/node" --version
 }
 
+latest_codex_tag() {
+    curl -fsSL https://api.github.com/repos/openai/codex/releases/latest | \
+        python3 -c 'import json, sys; print(json.load(sys.stdin)["tag_name"])' | \
+        sed 's/^rust-//'
+}
+
 install_codex() {
     ensure_node || return 1
     export PATH="$HOME/.local/bin:$PATH"
@@ -197,12 +203,18 @@ install_codex() {
     else
         echo "npm not found, fall back to the GitHub binary"
         local DEST=~/Downloads
-        local VER=v0.169.0
+        local VER=$(latest_codex_tag)
+        local PKG=codex-x86_64-unknown-linux-musl.tar.gz
+        if [ -z "$VER" ]; then
+            echo "Cannot detect the latest Codex release from GitHub" >&2
+            return 1
+        fi
+        echo "Latest Codex release is ${VER}"
         mkdir -p $DEST
         pushd $DEST
         if [ ! -f codex-x86_64-unknown-linux-musl.tar.gz ]; then
             echo "Download codex binary"
-            wget https://github.com/openai/codex/releases/download/rust-${VER}/codex-x86_64-unknown-linux-musl.tar.gz
+            wget https://github.com/openai/codex/releases/download/rust-${VER}/${PKG}
         fi
         tar xfv codex-x86_64-unknown-linux-musl.tar.gz
         sudo cp -vf codex-x86_64-unknown-linux-musl /usr/local/bin/codex
