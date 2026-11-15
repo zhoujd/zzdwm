@@ -148,26 +148,10 @@ recover_claude() {
     echo "Recovery complete. Start Claude Code manually when you are ready."
 }
 
-install_codex() {
-    DEST=~/Downloads
-    VER=v0.169.0
-    mkdir -p $DEST
-    pushd $DEST
-    if [ ! -f codex-x86_64-unknown-linux-musl.tar.gz ]; then
-	echo "Download codex binary"
-        wget https://github.com/openai/codex/releases/download/rust-${VER}/codex-x86_64-unknown-linux-musl.tar.gz
-    fi
-    tar xfv codex-x86_64-unknown-linux-musl.tar.gz
-    sudo cp -vf codex-x86_64-unknown-linux-musl /usr/local/bin/codex
-    codex -V
-    popd
-    echo "Install codex done"
-}
-
 ensure_node() {
-    ## Claude Code needs node >= 18; distro node is often older (Ubuntu 22.04
-    ## apt ships 12.x). Install a user-local Node 22 tarball into ~/.local,
-    ## which is also where claude itself goes.
+    ## Claude Code and Codex need a modern node; distro node is often older
+    ## (Ubuntu 22.04 apt ships 12.x). Install a user-local Node 22 tarball
+    ## into ~/.local, which is also where their npm launchers go.
     local major
     major=$(node --version 2>/dev/null | sed 's/^v\([0-9]*\).*/\1/')
     if [ -n "$major" ] && [ "$major" -ge 18 ] && command -v npm >/dev/null 2>&1; then
@@ -195,6 +179,37 @@ ensure_node() {
         && tar -xJf "$tarball" -C "$HOME/.local" --strip-components=1 ) || { rm -rf "$tmp"; return 1; }
     rm -rf "$tmp"
     "$HOME/.local/bin/node" --version
+}
+
+install_codex() {
+    ensure_node || return 1
+    export PATH="$HOME/.local/bin:$PATH"
+    if command -v npm >/dev/null 2>&1; then
+        local prefix
+        prefix=$(npm config get prefix)
+        if [ ! -w "$prefix" ]; then
+            npm config set prefix "$HOME/.local"
+            echo "Set npm prefix to $HOME/.local (was $prefix, not writable)"
+        fi
+        echo "Install codex via npm"
+        npm install -g @openai/codex
+        "$HOME/.local/bin/codex" --version
+    else
+        echo "npm not found, fall back to the GitHub binary"
+        local DEST=~/Downloads
+        local VER=v0.169.0
+        mkdir -p $DEST
+        pushd $DEST
+        if [ ! -f codex-x86_64-unknown-linux-musl.tar.gz ]; then
+            echo "Download codex binary"
+            wget https://github.com/openai/codex/releases/download/rust-${VER}/codex-x86_64-unknown-linux-musl.tar.gz
+        fi
+        tar xfv codex-x86_64-unknown-linux-musl.tar.gz
+        sudo cp -vf codex-x86_64-unknown-linux-musl /usr/local/bin/codex
+        codex -V
+        popd
+    fi
+    echo "Install codex done"
 }
 
 install_claude() {

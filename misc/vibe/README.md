@@ -8,11 +8,10 @@ README
 ./install.sh install claude
 ```
 
-Claude installs via npm into `~/.local` (the native installer at
-claude.ai/install.sh is region-blocked on some networks). Node >= 18 and npm
-are required; if the system node is older (Ubuntu 22.04 apt ships 12.x), a
-user-local Node 22 tarball is installed into `~/.local` first. The native
-installer is used only when npm is absent.
+Codex and Claude install via npm into `~/.local`. If the system Node.js is too
+old (Ubuntu 22.04 apt ships 12.x), a user-local Node 22 tarball is installed
+into `~/.local` first. Claude falls back to its native installer and Codex to
+its GitHub binary only when npm is absent.
 
 ## Configure
 
