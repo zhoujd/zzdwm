@@ -8,8 +8,16 @@ USER root
 # Install base toolchain & clean up cache layers
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        bubblewrap \
+        ca-certificates \
         curl \
-        ca-certificates && \
+        file \
+        git \
+        jq \
+        ripgrep \
+        tar \
+        unzip \
+        wget && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/*
 
