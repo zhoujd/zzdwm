@@ -18,8 +18,8 @@ RUN apk update --no-cache \
     python3 py3-pip \
     && rm -rf /var/cache/apk/*
 
-# Install tools
-COPY tools /usr/local/bin
+# Install bin to system path
+COPY bin /usr/local/bin
 
 # Create directory and utmp file
 RUN if [ -L /var/run ]; then rm -f /var/run; fi \

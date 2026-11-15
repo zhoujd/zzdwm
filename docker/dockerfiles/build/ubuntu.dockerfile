@@ -21,8 +21,8 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/*
 
-# Copy tools to system path
-COPY tools /usr/local/bin
+# Copy bin to system path
+COPY bin /usr/local/bin
 
 # Resolve /var/run symlink and setup utmp logging
 RUN rm -rf /var/run && \
