@@ -2422,7 +2422,7 @@ process_response (const char *body)
 static void
 usage (FILE *stream)
 {
-  fprintf (stream, "usage: ai [options]\n"
+  fprintf (stream, "Usage: ai [options]\n"
                    "       <command> | ai [options] -e <prompt>\n"
                    "\n"
                    "Options:\n"

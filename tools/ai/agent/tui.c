@@ -174,7 +174,7 @@ on_signal (int signal_number)
 static void
 usage (FILE *stream)
 {
-  fprintf (stream, "usage: ai-tui [options]\n"
+  fprintf (stream, "Usage: ai-tui [options]\n"
                    "\n"
                    "Options:\n"
                    "  -C, --cwd <dir>    set the workspace directory\n"
