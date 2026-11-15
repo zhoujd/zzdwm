@@ -1,6 +1,5 @@
 ARG VARIANT=22.04
-ARG PLATFORM=linux/amd64
-FROM --platform=$PLATFORM ubuntu:$VARIANT
+FROM ubuntu:$VARIANT
 
 # Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive

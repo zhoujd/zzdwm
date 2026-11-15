@@ -1,10 +1,16 @@
 ARG VARIANT=22.04
-ARG PLATFORM=linux/amd64
-FROM --platform=$PLATFORM ubuntu:$VARIANT
+FROM ubuntu:$VARIANT
 
 ARG MIRROR=mirrors.aliyun.com
 RUN sed -i "s/archive.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list && \
     sed -i "s/security.ubuntu.com/${MIRROR}/g" /etc/apt/sources.list
+
+# Install curl and ca-certificates, add NodeSource repo (e.g., Node 22 or 24), and install Node.js
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 ARG NODE_VERSION=v22.23.5
 ARG CLAUDE_VERSION=latest
@@ -28,8 +34,7 @@ RUN useradd -d "$USER_HOME" -s "$USER_SHELL" -m "$USER_NAME" \
     && adduser "$USER_NAME" sudo \
     && echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/$USER_NAME"
 
-COPY claude-entrypoint.sh /app/entrypoint.sh
-RUN chmod 0755 /app/entrypoint.sh
+COPY claude-entrypoint.sh /entrypoint.sh
 
 WORKDIR $USER_HOME
 USER $USER_NAME
@@ -39,5 +44,5 @@ ENV HOME=$USER_HOME \
     PATH=$USER_HOME/.local/bin:$PATH \
     TERM=xterm-256color
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["claude"]

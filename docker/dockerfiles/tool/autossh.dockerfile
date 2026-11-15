@@ -9,6 +9,6 @@ RUN addgroup -g 1000 tunnel \
     && adduser -D -h /home/tunnel -s /bin/sh -u 1000 -G tunnel tunnel
 
 COPY bin/autossh /usr/local/bin/autossh
-COPY autossh-entrypoint.sh /usr/local/bin/autossh-entrypoint
+COPY autossh-entrypoint.sh /entrypoint.sh
 
-ENTRYPOINT ["/usr/local/bin/autossh-entrypoint"]
+ENTRYPOINT ["/entrypoint.sh"]
