@@ -41,7 +41,6 @@ echo "=== Compressing into final deployment bundle ==="
 cd "${ROOTFS_DIR}"
 sudo tar --numeric-owner --absolute-names -czpf "../../${OUTPUT_TAR}" .
 
-echo "Run: cat output/rootfs.tar.gz | docker import - custom-ai-agent:latest"
-echo "Run: docker run -it --rm custom-ai-agent:latest ai --version"
+echo "=== Test ${OUTPUT_TAR} with test.sh ==="
 
 echo "=== Complete! Target created at: ${OUTPUT_TAR} ==="
