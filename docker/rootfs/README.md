@@ -114,7 +114,7 @@ into your target virtualization or container standard: 
 
 ```bash
 cat output/rootfs.tar.gz | docker import - custom-ai-agent:latest
-docker run -it --rm custom-ai-agent:latest ai
+docker run -it --rm custom-ai-agent:latest ai --version
 ```
 
 ### Windows Subsystem for Linux (WSL)
