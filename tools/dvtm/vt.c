@@ -192,6 +192,7 @@ struct Vt {
 	int srow, scol;          /* last known offset to display start row, start column */
 	char title[256];         /* xterm style window title */
 	vt_title_handler_t title_handler; /* hook which is called when title changes */
+	vt_osc52_handler_t osc52_handler; /* hook which is called on an OSC 52 clipboard set */
 	vt_urgent_handler_t urgent_handler; /* hook which is called upon bell */
 	void *data;              /* user supplied data */
 };
@@ -1162,6 +1163,17 @@ static void interpret_osc(Vt *t)
 			break;
 		case 1: /* icon name */
 			break;
+		case 52: /* clipboard selection set - hand to the host terminal */
+			if (t->osc52_handler) {
+				/* data+1 is "selections;base64".  A '?' payload asks
+				 * the host for its clipboard instead of setting it:
+				 * relaying a query would have the answer arrive as
+				 * input, so only a set goes through. */
+				const char *payload = strchr(data + 1, ';');
+				if (payload && payload[1] && payload[1] != '?')
+					t->osc52_handler(t, data + 1);
+			}
+			break;
 		default:
 #ifndef NDEBUG
 			fprintf(stderr, "unknown OSC command: %d\n", command);
@@ -1884,6 +1896,11 @@ void vt_shutdown(void)
 void vt_title_handler_set(Vt *t, vt_title_handler_t handler)
 {
 	t->title_handler = handler;
+}
+
+void vt_osc52_handler_set(Vt *t, vt_osc52_handler_t handler)
+{
+	t->osc52_handler = handler;
 }
 
 void vt_urgent_handler_set(Vt *t, vt_urgent_handler_t handler)

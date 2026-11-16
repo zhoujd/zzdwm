@@ -736,6 +736,28 @@ term_title_handler(Vt *term, const char *title) {
 }
 
 static void
+term_osc52_handler(Vt *term, const char *data) {
+	/* A client sets the host's clipboard - me's M-w does - with an
+	 * OSC 52 sequence, which vt consumes.  Write it through to the
+	 * outer terminal, which owns the clipboard.  An OSC carries no
+	 * display, so it leaves the curses screen alone. */
+	const char *parts[] = { "\033]52;", data, "\a" };
+	(void) term;
+	for (unsigned int i = 0; i < LENGTH(parts); i++) {
+		size_t len = strlen(parts[i]), off = 0;
+		while (off < len) {
+			ssize_t res = write(STDOUT_FILENO, parts[i] + off, len - off);
+			if (res < 0) {
+				if (errno == EINTR)
+					continue;
+				return;
+			}
+			off += res;
+		}
+	}
+}
+
+static void
 term_urgent_handler(Vt *term) {
 	Client *c = (Client *)vt_data_get(term);
 	c->urgent = true;
@@ -1334,6 +1356,7 @@ create(const char *args[]) {
 		free(cwd);
 	vt_data_set(c->term, c);
 	vt_title_handler_set(c->term, term_title_handler);
+	vt_osc52_handler_set(c->term, term_osc52_handler);
 	vt_urgent_handler_set(c->term, term_urgent_handler);
 	applycolorrules(c);
 	c->x = wax;
@@ -1400,6 +1423,7 @@ copymode(const char *args[]) {
 	}
 
 	sel->term = sel->editor;
+	vt_osc52_handler_set(sel->editor, term_osc52_handler);
 
 	if (sel->editor_fds[0] != -1) {
 		char *buf = NULL;
