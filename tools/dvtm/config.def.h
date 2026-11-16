@@ -122,10 +122,10 @@ static KeyBinding bindings[] = {
 	{ { MOD, 't',            }, { setlayout,      { "[]=" }                   } },
 	{ { MOD, 'g',            }, { setlayout,      { "+++" }                   } },
 	{ { MOD, 'b',            }, { setlayout,      { "TTT" }                   } },
-	{ { MOD, CTRL('b'),      }, { setlayout,      { "===" }                   } },
+	{ { MOD, 'B',            }, { setlayout,      { "===" }                   } },
 	{ { MOD, 'm',            }, { setlayout,      { "[M]" }                   } },
-	{ { MOD, CTRL('d'),      }, { setlayout,      { "[D]" }                   } },
-	{ { MOD, CTRL('z'),      }, { setlayout,      { "[Z]" }                   } },
+	{ { MOD, 'z',            }, { setlayout,      { "[D]" }                   } },
+	{ { MOD, 'Z',            }, { setlayout,      { "[Z]" }                   } },
 	{ { MOD, ',',            }, { setlayout,      { "-1" }                    } },
 	{ { MOD, '.',            }, { setlayout,      { "+1" }                    } },
 	{ { MOD, ' ',            }, { togglelayout,   { NULL }                    } },
@@ -135,8 +135,8 @@ static KeyBinding bindings[] = {
 	{ { MOD, '=',            }, { setmfact,       { "+0.05" }                 } },
 	{ { MOD, '_',            }, { setmfact,       { "-0.25" }                 } },
 	{ { MOD, '+',            }, { setmfact,       { "+0.25" }                 } },
-	{ { MOD, 'z',            }, { setmfact,       { "0.25" }                  } },
-	{ { MOD, 'Z',            }, { setmfact,       { "0.50" }                  } },
+	{ { MOD, '\'',           }, { setmfact,       { "0.25" }                  } },
+	{ { MOD, '\"',           }, { setmfact,       { "0.50" }                  } },
 	{ { MOD, 'n',            }, { toggleminimize, { NULL }                    } },
 	{ { MOD, 'N',            }, { unminimizeall,  { NULL }                    } },
 	{ { MOD, 'o',            }, { minimizeothers, { NULL }                    } },
@@ -172,8 +172,8 @@ static KeyBinding bindings[] = {
 	{ { MOD, 'y',            }, { paste,          { NULL }                    } },
 	{ { MOD, KEY_PPAGE,      }, { scrollback,     { "-10" }                   } },
 	{ { MOD, KEY_NPAGE,      }, { scrollback,     { "+10" }                   } },
-	{ { MOD, '\'', 'p'       }, { scrollback,     { "-10" }                   } },
-	{ { MOD, '\'', 'n'       }, { scrollback,     { "+10" }                   } },
+	{ { MOD, '`', 'p'        }, { scrollback,     { "-10" }                   } },
+	{ { MOD, '`', 'n'        }, { scrollback,     { "+10" }                   } },
 	{ { MOD, '?',            }, { create,         { "man dvtm", "dvtm help" } } },
 	{ { MOD, MOD,            }, { send,           { (const char []){MOD, 0} } } },
 	{ { KEY_SPREVIOUS,       }, { scrollback,     { "-10" }                   } },
@@ -262,6 +262,8 @@ static Cmd commands[] = {
 	{ "setmfact",  { setmfact,  { NULL } } },
 	/* setlayout [symbol]: set layout mode ([]=, [M], etc.) */
 	{ "setlayout", { setlayout, { NULL } } },
+	/* send [cmd]: send keys */
+	{ "send",      { send,      { NULL } } },
 };
 
 /* gets executed when dvtm is started */
