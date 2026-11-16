@@ -321,6 +321,31 @@ nextvisible(Client *c) {
 	return c;
 }
 
+/* Deck layouts pile windows on one rect, as fullscreen piles them all.
+ * Among a pile only the window focused most recently - the top of the
+ * pile - shows its content; the windows buried below keep their vt and
+ * border out of the shared rect. */
+static bool
+is_pile_top(Client *c) {
+	for (Client *p = stack; p; p = p->snext)
+		if (isvisible(p) && p->x == c->x && p->y == c->y
+		    && p->w == c->w && p->h == c->h) {
+			if (p->minimized)
+				continue; /* the minimized strips never pile up */
+			return p == c;
+		}
+	return true;
+}
+
+static bool
+is_piled(Client *c) {
+	for (Client *p = nextvisible(clients); p; p = nextvisible(p->next))
+		if (p != c && !p->minimized
+		    && p->x == c->x && p->y == c->y && p->w == c->w && p->h == c->h)
+			return true;
+	return false;
+}
+
 static void
 updatebarpos(void) {
 	bar.y = 0;
@@ -508,6 +533,8 @@ draw_content(Client *c) {
 
 static void
 draw(Client *c) {
+	if (!is_pile_top(c))
+		return; /* a buried pile member owns nothing on screen */
 	if (is_content_visible(c)) {
 		redrawwin(c->window);
 		draw_content(c);
@@ -668,7 +695,8 @@ focus(Client *c) {
 		attachstack(c);
 		settitle(c);
 		c->urgent = false;
-		if (isarrange(fullscreen)) {
+		if (isarrange(fullscreen) || is_piled(c)) {
+			/* switching piles: the new top has to cover the old */
 			draw(c);
 		} else {
 			draw_border(c);
@@ -771,7 +799,9 @@ get_client_by_coord(unsigned int x, unsigned int y) {
 	for (Client *c = nextvisible(clients); c; c = nextvisible(c->next)) {
 		if (x >= c->x && x < c->x + c->w && y >= c->y && y < c->y + c->h) {
 			debug("mouse event, x: %d y: %d client: %d\n", x, y, c->order);
-			return c;
+			/* a piled rect answers with its top: the window seen there */
+			if (is_pile_top(c))
+				return c;
 		}
 	}
 	return NULL;
@@ -1603,8 +1633,10 @@ redraw(const char *args[]) {
 	for (Client *c = clients; c; c = c->next) {
 		if (!c->minimized) {
 			vt_dirty(c->term);
-			redrawwin(c->window);
-			wnoutrefresh(c->window);
+			if (is_content_visible(c) && is_pile_top(c)) {
+				redrawwin(c->window);
+				wnoutrefresh(c->window);
+			}
 		}
 	}
 	resize_screen();
@@ -2391,7 +2423,7 @@ main(int argc, char *argv[]) {
 					draw_border(c); /* the mouse indicator changed */
 			}
 
-			if (c != sel && is_content_visible(c)) {
+			if (c != sel && is_content_visible(c) && is_pile_top(c)) {
 				draw_content(c);
 				wnoutrefresh(c->window);
 			}
