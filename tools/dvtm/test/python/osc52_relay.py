@@ -5,6 +5,10 @@ sequence as an unknown OSC, so the selection never reached the outer
 terminal.  dvtm now writes sets through to the host, and keeps queries
 (a '?' payload, which would have the answer arrive as input) to itself.
 
+The sequence rides a buffer of its own, sized to me's OSC52_MAX_BYTES:
+a whole-file selection past ebuf's 8KB still relays, while base64
+beyond me's 1MB cap is dropped.
+
 Driven through a pty, where the "host terminal" is the test itself:
 the relay shows as dvtm emitting the sequence.  A shell printf builds
 its ESC at runtime, so the tty's echo of the command line carries
@@ -125,6 +129,40 @@ with tempfile.TemporaryDirectory(prefix="dvtm-osc52-") as directory:
         text = copy_region(out, "me as a client sets the clipboard")
         check(b"line00" in text and b"line01" in text,
               "the relayed clipboard holds the file's selected lines")
+
+        os.write(fd, QUITEME)
+        drain(fd, 1.0)
+        os.write(fd, MOD + b"c")       # a file big enough to pass ebuf
+        drain(fd, 1.0)
+        path = os.path.join(directory, "big.txt")
+        with open(path, "w") as output_file:
+            output_file.write("".join("bigline%04d wxyz\n" % i for i in range(2000)))
+        os.write(fd, ME.encode() + b" " + path.encode() + b"\r")
+        drain(fd, 3.0)
+        os.write(fd, b"\x1b<")         # top of the buffer
+        drain(fd, 0.3)
+        os.write(fd, MARK)
+        drain(fd, 0.3)
+        os.write(fd, b"\x1b>")         # bottom: mark to end selects all
+        drain(fd, 0.3)
+        os.write(fd, MW)
+        out = drain(fd, 3.0)
+        i = out.find(b"\x1b]52;c;")
+        check(i != -1, "a selection past ebuf's size still relays")
+        j = out.find(b"\a", i)
+        check(j != -1 and j - i > 8192, "the base64 crossed the old limit")
+        text = base64.b64decode(out[i + len(b"\x1b]52;c;"):j])
+        check(b"bigline0000" in text and b"bigline1999" in text,
+              "the relayed clipboard holds the whole file")
+        os.write(fd, QUITEME)
+        drain(fd, 1.0)
+
+        # 1,333,400 base64 chars: past me's 1MB cap, dropped not relayed
+        os.write(fd, b"python3 -c \"import sys;"
+                      b"sys.stdout.write('\\033]52;c;'+('A'*1333400)+'\\a')\"\r")
+        out = drain(fd, 4.0)
+        check(b"\x1b]52;c;" not in out,
+              "base64 past me's cap is dropped, not relayed")
     finally:
         os.kill(pid, 15)
         os.waitpid(pid, 0)

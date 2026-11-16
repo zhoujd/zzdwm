@@ -12,7 +12,7 @@ wire bytes — often fragments, as ncurses writes only the changed cells.
 | `mouse_modes.py` | the mouse modes asked of the outer terminal at each toggle — a `1002l` dropping motion tracking after `1000h` used to clear every mode on st-kind terminals, killing click and wheel even with `MOD+M` on, which report injection cannot see |
 | `deck_layouts.py` | the deck layouts — `"[D]"` piling master and stack windows in a left/right split, `"[Z]"` top/bottom — read off the cursor positioning of a full repaint, the pile hiding the second border once nmaster covers all |
 | `deck_switch.py` | switching cards within a pile — focusing another slave used to leave the old card's pixels under the new card's border; the top of the pile now owns the rect, and switching replays the new top's whole buffer, which marker echoes then catch with no new shell output |
-| `osc52_relay.py` | the OSC 52 clipboard relay — a client's `ESC]52;c;<base64>BEL` used to die in vt as an unknown OSC, so me's `M-w` selection never reached the outer terminal; sets now pass through to the host and clipboard queries are kept back |
+| `osc52_relay.py` | the OSC 52 clipboard relay — a client's `ESC]52;c;<base64>BEL` used to die in vt as an unknown OSC, so me's `M-w` selection never reached the outer terminal; sets now pass through to the host while clipboard queries stay back, the sequence riding a buffer sized to me's 1MB `OSC52_MAX_BYTES`: a whole-file selection past ebuf still relays, base64 beyond the cap drops |
 
 The scripts are self-contained: each builds its own scratch files and
 skips when a needed binary is absent. `mouse_indicator.py` also needs a

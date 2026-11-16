@@ -189,6 +189,10 @@ struct Vt {
 	char rbuf[BUFSIZ];
 	char ebuf[BUFSIZ];
 	unsigned int rlen, elen;
+	char *osc52;              /* an OSC 52 clipboard selection is base64
+	                           * big enough to outgrow ebuf, so it gets
+	                           * a buffer of its own, grown on demand */
+	size_t osc52len, osc52cap;
 	int srow, scol;          /* last known offset to display start row, start column */
 	char title[256];         /* xterm style window title */
 	vt_title_handler_t title_handler; /* hook which is called when title changes */
@@ -615,6 +619,33 @@ static void cancel_escape_sequence(Vt *t)
 	t->escaped = false;
 	t->elen = 0;
 	t->ebuf[0] = '\0';
+	t->osc52len = 0;
+}
+
+/* me, the OSC 52 writer to size against, caps a selection at
+ * OSC52_MAX_BYTES (1,000,000) bytes of text - 1,333,336 base64
+ * characters - so a clipboard sequence grows to the base64 of that,
+ * plus the "]52;c;" head and the terminator, and is dropped beyond.
+ * Keep this in step with me's osc52.c. */
+#define OSC52_MAX (4 * ((1000000 + 2) / 3) + 16)
+
+static bool osc52_append(Vt *t, char c)
+{
+	if (t->osc52len + 1 >= t->osc52cap) {
+		size_t cap = t->osc52cap ? t->osc52cap * 2 : BUFSIZ;
+		if (cap > OSC52_MAX)
+			cap = OSC52_MAX;
+		if (t->osc52len + 1 >= cap)
+			return false;
+		char *grown = realloc(t->osc52, cap);
+		if (!grown)
+			return false;
+		t->osc52 = grown;
+		t->osc52cap = cap;
+	}
+	t->osc52[t->osc52len++] = c;
+	t->osc52[t->osc52len] = '\0';
+	return true;
 }
 
 static bool is_valid_csi_ender(int c)
@@ -1163,17 +1194,6 @@ static void interpret_osc(Vt *t)
 			break;
 		case 1: /* icon name */
 			break;
-		case 52: /* clipboard selection set - hand to the host terminal */
-			if (t->osc52_handler) {
-				/* data+1 is "selections;base64".  A '?' payload asks
-				 * the host for its clipboard instead of setting it:
-				 * relaying a query would have the answer arrive as
-				 * input, so only a set goes through. */
-				const char *payload = strchr(data + 1, ';');
-				if (payload && payload[1] && payload[1] != '?')
-					t->osc52_handler(t, data + 1);
-			}
-			break;
 		default:
 #ifndef NDEBUG
 			fprintf(stderr, "unknown OSC command: %d\n", command);
@@ -1181,6 +1201,22 @@ static void interpret_osc(Vt *t)
 			break;
 		}
 	}
+}
+
+/* An OSC 52 accumulated in t->osc52, as "]52;selections;base64" with
+ * the terminator stripped: a set goes to the host terminal through the
+ * handler, while a query - a '?' payload, whose answer would arrive as
+ * input - and the empty clear stay behind. */
+static void interpret_osc52(Vt *t)
+{
+	char *data = NULL;
+	int command = strtoul(t->osc52 + 1, &data, 10);
+	const char *payload;
+	if (command != 52 || !data || *data != ';' || !t->osc52_handler)
+		return;
+	payload = strchr(data + 1, ';');
+	if (payload && payload[1] && payload[1] != '?')
+		t->osc52_handler(t, data + 1);
 }
 
 static void try_interpret_escape_seq(Vt *t)
@@ -1363,7 +1399,27 @@ static void put_wc(Vt *t, wchar_t wc)
 	}
 
 	if (t->escaped) {
-		if (t->elen + 1 < sizeof(t->ebuf)) {
+		if (t->osc52len || (t->elen == 3 && wc == ';' &&
+		    t->ebuf[0] == ']' && t->ebuf[1] == '5' && t->ebuf[2] == '2')) {
+			/* from "]52;" on the clipboard sequence accumulates
+			 * in its own buffer: base64 that me can stretch to
+			 * OSC52_MAX bytes does not fit ebuf */
+			if (!t->osc52len) { /* carry the "]52" over */
+				osc52_append(t, ']');
+				osc52_append(t, '5');
+				osc52_append(t, '2');
+			}
+			if (!osc52_append(t, wc)) {
+				cancel_escape_sequence(t); /* past the cap */
+			} else if (wc == '\a' ||
+			           (wc == '\\' && t->osc52len >= 3 &&
+			            t->osc52[t->osc52len - 2] == '\e')) {
+				t->osc52len -= wc == '\a' ? 1 : 2; /* strip it */
+				t->osc52[t->osc52len] = '\0';
+				interpret_osc52(t);
+				cancel_escape_sequence(t);
+			}
+		} else if (t->elen + 1 < sizeof(t->ebuf)) {
 			t->ebuf[t->elen] = wc;
 			t->ebuf[++t->elen] = '\0';
 			try_interpret_escape_seq(t);
@@ -1503,6 +1559,7 @@ void vt_destroy(Vt *t)
 	buffer_free(&t->buffer_normal);
 	buffer_free(&t->buffer_alternate);
 	close(t->pty);
+	free(t->osc52);
 	free(t);
 }
 

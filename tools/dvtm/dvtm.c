@@ -740,7 +740,8 @@ term_osc52_handler(Vt *term, const char *data) {
 	/* A client sets the host's clipboard - me's M-w does - with an
 	 * OSC 52 sequence, which vt consumes.  Write it through to the
 	 * outer terminal, which owns the clipboard.  An OSC carries no
-	 * display, so it leaves the curses screen alone. */
+	 * display, so it leaves the curses screen alone; the payload can
+	 * reach me's full 1MB selection, so it goes out in chunks. */
 	const char *parts[] = { "\033]52;", data, "\a" };
 	(void) term;
 	for (unsigned int i = 0; i < LENGTH(parts); i++) {
