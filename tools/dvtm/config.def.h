@@ -74,6 +74,8 @@ const int taglayouts[] = { 4, 4, 0, 0, 0 };
 #include "bstack.c"
 #include "vstack.c"
 #include "fullscreen.c"
+#include "doubledeck.c"
+#include "zetadeck.c"
 
 /* by default the first layout entry is used */
 static Layout layouts[] = {
@@ -82,6 +84,8 @@ static Layout layouts[] = {
 	{ "TTT", bstack },
 	{ "===", vstack },
 	{ "[M]", fullscreen },
+	{ "[D]", doubledeck },
+	{ "[Z]", zetadeck },
 };
 
 /* default C-g */
