@@ -2026,7 +2026,8 @@ command_decision (ToolCall *call, int *run, char *steer, size_t steer_capacity)
   steer[0] = 0;
   for (;;)
     {
-      if (read_interactive_line ("[a]llow, [e]dit, [s]teer without running, [n]o, [q]uit: ", choice, sizeof (choice))
+      if (read_interactive_line ("[a]llow, [e]dit, [s]teer without running, [n]o, [f]orce, [q]uit: ", choice,
+                                 sizeof (choice))
           < 0)
         return -1;
       if (choice[0] == 'a' && choice[1] == 0)
@@ -2043,6 +2044,13 @@ command_decision (ToolCall *call, int *run, char *steer, size_t steer_capacity)
           *run = 1;
           return 0;
         }
+      if (choice[0] == 'f' && choice[1] == 0)
+        {
+          full_access = 1;
+          print_formatted ("[force mode is now ON; commands run without approval]\n");
+          *run = 1;
+          return 0;
+        }
       if (choice[0] == 's' && choice[1] == 0)
         {
           print_formatted ("Steering ends with an empty line.\n");
@@ -2052,7 +2060,7 @@ command_decision (ToolCall *call, int *run, char *steer, size_t steer_capacity)
         }
       if ((choice[0] == 'n' || choice[0] == 'q') && choice[1] == 0)
         return choice[0] == 'q' ? -1 : 0;
-      print_formatted ("Please answer a, e, s, n, or q.\n");
+      print_formatted ("Please answer a, e, s, n, f, or q.\n");
     }
 }
 
@@ -2652,7 +2660,7 @@ ai_main (int argc, char **argv)
       if (full_access)
         print_formatted ("Full access: commands run immediately; steering is offered after each one.\n");
       else
-        print_formatted ("Every command is shown for allow/edit/steer/refuse before execution.\n");
+        print_formatted ("Every command is shown for allow/edit/steer/force/refuse before execution.\n");
     }
   for (;;)
     {

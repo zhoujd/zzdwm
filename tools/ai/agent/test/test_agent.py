@@ -203,6 +203,21 @@ class AgentTests(unittest.TestCase):
         self.assertIn("final answer", result.stdout)
         self.assertEqual(len(endpoint.requests), 2)
 
+    def test_force_choice_enables_full_access_at_runtime(self):
+        result, endpoint = self.run_agent(
+            [
+                tool_response("printf 'first\\n'"),
+                tool_response("printf 'second\\n'"),
+                text_response("done"),
+            ],
+            "diagnose\n\nf\n/exit\n\n",
+        )
+        self.assertIn("[force mode is now ON; commands run without approval]", result.stdout)
+        self.assertIn("first", result.stdout)
+        self.assertIn("second", result.stdout)
+        self.assertEqual(result.stdout.count("[a]llow"), 1)
+        self.assertEqual(len(endpoint.requests), 3)
+
     def test_one_shot_sends_prompt_and_exits(self):
         result, endpoint = self.run_agent(
             [tool_response("printf 'one-shot\\n'"), text_response("done")],

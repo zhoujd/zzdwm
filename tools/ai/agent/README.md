@@ -118,7 +118,8 @@ require a TLS implementation and violate the zero-runtime-dependency design;
 use a local gateway or a trusted loopback proxy when encryption is required.
 
 At each requested command, choose `a` to allow, `e` to edit it, `s` to supply a
-steering instruction without running it, or `n` to refuse it. With
+steering instruction without running it, `n` to refuse it, or `f` to allow it
+and enable full access for the rest of the session. With
 `--full-access`, commands run immediately, but a steer/continue prompt still
 appears after every command before the next model request. Commands execute
 through `/bin/sh -c` with the current process privileges. All output is shown

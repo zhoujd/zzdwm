@@ -547,7 +547,7 @@ is_agent_prompt (const char *line)
 {
   return strcmp (line, "[You]: ") == 0 || strcmp (line, "[...]: ") == 0 || strcmp (line, "[steer]: ") == 0
          || strcmp (line, "[.....]: ") == 0
-         || strcmp (line, "[a]llow, [e]dit, [s]teer without running, [n]o, [q]uit: ") == 0
+         || strcmp (line, "[a]llow, [e]dit, [s]teer without running, [n]o, [f]orce, [q]uit: ") == 0
          || strcmp (line, "[edited command]: ") == 0
          || strcmp (line, "[s]teer before next AI request, Enter to continue, q quit: ") == 0;
 }
@@ -555,8 +555,8 @@ is_agent_prompt (const char *line)
 static const char *
 agent_prompt_hint (const char *line)
 {
-  if (strcmp (line, "[a]llow, [e]dit, [s]teer without running, [n]o, [q]uit: ") == 0)
-    return "Command decision: a allow, e edit, s steer, n no, q quit";
+  if (strcmp (line, "[a]llow, [e]dit, [s]teer without running, [n]o, [f]orce, [q]uit: ") == 0)
+    return "Command decision: a allow, e edit, s steer, n no, f force all, q quit";
   if (strcmp (line, "[edited command]: ") == 0)
     return "Edited command: enter the replacement command";
   if (strcmp (line, "[s]teer before next AI request, Enter to continue, q quit: ") == 0)
@@ -848,7 +848,7 @@ handle_agent_prompt (const char *line)
   if (strcmp (line, "[You]: ") == 0 || strcmp (line, "[...]: ") == 0 || strcmp (line, "[steer]: ") == 0
       || strcmp (line, "[.....]: ") == 0)
     multiline = 1;
-  else if (strcmp (line, "[a]llow, [e]dit, [s]teer without running, [n]o, [q]uit: ") == 0
+  else if (strcmp (line, "[a]llow, [e]dit, [s]teer without running, [n]o, [f]orce, [q]uit: ") == 0
            || strcmp (line, "[edited command]: ") == 0
            || strcmp (line, "[s]teer before next AI request, Enter to continue, q quit: ") == 0)
     multiline = 0;
