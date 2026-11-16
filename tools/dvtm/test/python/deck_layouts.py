@@ -29,6 +29,7 @@ MOD = b"\x1c"                          # CTRL('\') — dvtm's MOD key
 REDRAW = MOD + b"\x0c"                 # MOD+CTRL('L'): full repaint
 DOUBLEDECK = MOD + b"\x04"             # MOD+CTRL('d')
 ZETADECK = MOD + b"\x1a"               # MOD+CTRL('z')
+VSTACK = MOD + b"\x02"                 # MOD+CTRL('b')
 
 
 def drain(fd, timeout=1.0):
@@ -111,6 +112,12 @@ try:
           "[Z] stacks its decks' borders on separate rows")
     check(re.search(rb"\x1b\[16d", out) and b"\x1b[17;1H" in out,
           "[Z] splits at mfact 0.50: stack border at row 16, content at 17")
+
+    os.write(fd, MOD + b"I")           # border info on: it shows the symbol
+    drain(fd, 0.5)
+    os.write(fd, VSTACK)               # MOD+CTRL('b') selects ====
+    out = repaint(fd)
+    check(b" === " in out, "MOD+CTRL('b') selects the vstack layout")
 finally:
     os.kill(pid, 15)
     os.waitpid(pid, 0)

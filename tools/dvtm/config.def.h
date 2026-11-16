@@ -122,7 +122,7 @@ static KeyBinding bindings[] = {
 	{ { MOD, 't',            }, { setlayout,      { "[]=" }                   } },
 	{ { MOD, 'g',            }, { setlayout,      { "+++" }                   } },
 	{ { MOD, 'b',            }, { setlayout,      { "TTT" }                   } },
-	{ { MOD, ';',            }, { setlayout,      { "===" }                   } },
+	{ { MOD, CTRL('b'),      }, { setlayout,      { "===" }                   } },
 	{ { MOD, 'm',            }, { setlayout,      { "[M]" }                   } },
 	{ { MOD, CTRL('d'),      }, { setlayout,      { "[D]" }                   } },
 	{ { MOD, CTRL('z'),      }, { setlayout,      { "[Z]" }                   } },
