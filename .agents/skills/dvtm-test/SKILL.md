@@ -103,4 +103,7 @@ Running dvtm itself under `DVTM_TERM` or without its terminfo shows the
   markers must not collide with them.
 - `config.h` is the live config, `config.def.h` the template — keep
   both in step for anything meant as a default.
+- `OSC52_MAX` in `vt.c` sizes the OSC 52 clipboard relay to me's
+  selection cap — keep it in step with `OSC52_MAX_BYTES` in
+  `tools/MicroEMACS/osc52.c`; `osc52_relay.py` covers the relay.
 - Check `git diff --check` before reporting validation results.
