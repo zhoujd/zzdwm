@@ -152,6 +152,7 @@ typedef struct
   struct termios original_terminal;
   char line[MAX_COMMAND];
   size_t line_length;
+  size_t line_start;
   int input_flags;
   int terminal_configured;
   int input_open;
@@ -337,13 +338,16 @@ queue_live_line (const char *text, size_t length)
 static void
 erase_live_input (size_t length)
 {
-  if (live_input.terminal_configured)
-    print_formatted ("\r\33[K%s", live_input.line);
-  if (length == 0 || length > live_input.line_length)
+  /* Only the text after the last newline is on screen; erase and redraw
+     that current line instead of the whole multi-line buffer. */
+  if (length > live_input.line_length - live_input.line_start)
+    length = live_input.line_length - live_input.line_start;
+  if (length == 0)
     return;
   live_input.line_length -= length;
   live_input.line[live_input.line_length] = 0;
-  print_formatted ("\r\33[K%s", live_input.line);
+  if (live_input.terminal_configured)
+    print_formatted ("\r\33[K%s", live_input.line + live_input.line_start);
 }
 
 static int
@@ -353,6 +357,7 @@ begin_live_input (void)
   int flags;
 
   live_input.line_length = 0;
+  live_input.line_start = 0;
   live_input.terminal_configured = 0;
   if (one_shot && !isatty (STDIN_FILENO))
     {
@@ -372,7 +377,9 @@ begin_live_input (void)
   if (tcgetattr (STDIN_FILENO, &live_input.original_terminal) != 0)
     return 0;
   terminal = live_input.original_terminal;
-  terminal.c_lflag &= ~ICANON;
+  /* The line is echoed by poll_live_input itself; keep the terminal
+     driver from echoing every character a second time. */
+  terminal.c_lflag &= ~(ICANON | ECHO | ECHONL);
   terminal.c_cc[VMIN] = 0;
   terminal.c_cc[VTIME] = 0;
   if (tcsetattr (STDIN_FILENO, TCSANOW, &terminal) != 0)
@@ -404,8 +411,9 @@ poll_live_input (void)
                 live_input.line[live_input.line_length++] = '\n';
               live_input.line[live_input.line_length] = 0;
               queued_input = 1;
+              live_input.line_start = live_input.line_length;
               if (live_input.terminal_configured)
-                print_formatted ("\r\33[K%s", live_input.line);
+                print_formatted ("\r\n");
             }
         }
       else if (character == 127 || character == 8)
@@ -416,9 +424,12 @@ poll_live_input (void)
         {
           size_t start = live_input.line_length;
 
-          while (start != 0 && live_input.line[start - 1] == ' ')
+          while (start != live_input.line_start
+                 && live_input.line[start - 1] == ' ')
             start--;
-          while (start != 0 && live_input.line[start - 1] != ' ')
+          while (start != live_input.line_start
+                 && live_input.line[start - 1] != ' '
+                 && live_input.line[start - 1] != '\n')
             start--;
           erase_live_input (live_input.line_length - start);
         }
@@ -427,7 +438,11 @@ poll_live_input (void)
       else if (live_input.terminal_configured && character == 6)
         ;
       else if (live_input.line_length < sizeof (live_input.line) - 1)
-        live_input.line[live_input.line_length++] = character;
+        {
+          live_input.line[live_input.line_length++] = character;
+          if (live_input.terminal_configured)
+            write_all (STDOUT_FILENO, &character, 1);
+        }
     }
 }
 
@@ -437,9 +452,15 @@ end_live_input (void)
   if (live_input.line_length != 0)
     {
       live_input.line[live_input.line_length] = 0;
+      /* A partial line is still on screen; move below it before the
+         queued notice reprints it. */
+      if (live_input.terminal_configured
+          && live_input.line_length != live_input.line_start)
+        print_formatted ("\r\n");
       queue_live_line (live_input.line, live_input.line_length);
       live_input.line_length = 0;
     }
+  live_input.line_start = 0;
   if (live_input.terminal_configured)
     tcsetattr (STDIN_FILENO, TCSANOW, &live_input.original_terminal);
   fcntl (STDIN_FILENO, F_SETFL, live_input.input_flags);
@@ -1550,7 +1571,7 @@ call_endpoint_threaded (const char **response_body, char *response_storage)
       if (worker_done || interrupted)
         break;
       poll_live_input ();
-      sleep (1);
+      usleep (100 * 1000);
     }
   poll_live_input ();
   end_live_input ();

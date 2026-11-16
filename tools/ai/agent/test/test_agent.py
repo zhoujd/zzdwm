@@ -1,6 +1,7 @@
 import json
 import os
 import pty
+import select
 import shutil
 import signal
 import socket
@@ -453,7 +454,10 @@ class AgentTests(unittest.TestCase):
             "stop here\n\n",
             "/exit\n\n",
             full_access=True,
+            api_timeout="5",
+            delay=1.5,
             live_delay=1.0,
+            wait=4.5,
         )
         self.assertIn("auto", result)
         self.assertIn(
@@ -555,6 +559,65 @@ class AgentTests(unittest.TestCase):
             "HUMAN STEERING DURING AI REQUEST: prioritize read-only diagnosis",
             steering["content"],
         )
+
+    def test_live_steering_tty_echoes_the_typed_line_once(self):
+        endpoint = Endpoint([text_response("done")], delay=2)
+        self.addCleanup(endpoint.close)
+        master, slave = pty.openpty()
+        process = subprocess.Popen(
+            [EXECUTABLE],
+            stdin=slave,
+            stdout=slave,
+            stderr=subprocess.STDOUT,
+            env={
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "8",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "NO_COLOR": "1",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        os.close(slave)
+
+        def cleanup():
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5)
+            os.close(master)
+
+        self.addCleanup(cleanup)
+
+        def read_until(marker, timeout):
+            data = b""
+            deadline = time.time() + timeout
+            while time.time() < deadline and marker not in data:
+                ready, _, _ = select.select([master], [], [], 0.05)
+                if not ready:
+                    continue
+                try:
+                    chunk = os.read(master, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                data += chunk
+            return data
+
+        output = b""
+        os.write(master, b"diagnose\n\n")
+        output += read_until(b"[live steering active]", 10)
+        os.write(master, b"single echo please\n")
+        output += read_until(b"single echo please", 5)
+        os.write(master, b"\n")
+        output += read_until(b"[live steering queued]", 10)
+        os.write(master, b"/exit\n\n")
+        output += read_until(b"[bye]", 5)
+        self.assertIn(b"[AI Response]", output)
+        self.assertIn(b"done", output)
+        # Exactly two renderings: the agent's own character echo and the
+        # "[live steering queued]" notice. A tty-driver echo or a
+        # whole-buffer redraw would add a third copy.
+        self.assertEqual(output.count(b"single echo please"), 2)
 
     def test_live_steering_during_request_preserves_multiple_lines(self):
         result, endpoint = self.run_agent_later(
