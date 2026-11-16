@@ -27,6 +27,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DVTM = os.path.join(HERE, "..", "..", "dvtm")
 MOD = b"\x1c"                          # CTRL('\') — dvtm's MOD key
 REDRAW = MOD + b"\x0c"                 # MOD+CTRL('L'): full repaint
+DOUBLEDECK = MOD + b"\x04"             # MOD+CTRL('d')
+ZETADECK = MOD + b"\x1a"               # MOD+CTRL('z')
 
 
 def drain(fd, timeout=1.0):
@@ -73,7 +75,7 @@ try:
     drain(fd, 2.0)
     os.write(fd, MOD + b"c")           # second window
     drain(fd, 1.0)
-    os.write(fd, MOD + b".")           # tag 1 starts in [M]: next is [D]
+    os.write(fd, DOUBLEDECK)           # MOD+CTRL('d') selects [D]
     drain(fd, 1.0)
 
     out = repaint(fd)
@@ -99,7 +101,7 @@ try:
     os.write(fd, MOD + b"d")           # nmaster 1
     os.write(fd, MOD + b"Z")           # mfact back to 0.50
     drain(fd, 0.5)
-    os.write(fd, MOD + b".")           # [D] -> [Z]
+    os.write(fd, ZETADECK)             # MOD+CTRL('z') selects [Z]
     drain(fd, 1.0)
 
     out = repaint(fd)
