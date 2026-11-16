@@ -7,7 +7,7 @@ wire bytes — often fragments, as ncurses writes only the changed cells.
 
 | Script | Covers |
 | :--- | :--- |
-| `mouse_indicator.py` | the border's `(M)` and `(m)` mouse indicators — the global `MOD+M` grabbing and the window's own mouse tracking — beside the layout symbol and alone |
+| `mouse_indicator.py` | the border's `(M)` and `(m)` mouse indicators — the global `MOD+M` grabbing and the window's own mouse tracking — beside the layout symbol, only while border info is on: `showinfo` off keeps the border clean |
 | `mouse_bar.py` | a mouse report leaving the bar's key echo alone — the wheel's `KEY_MOUSE` used to linger there and print as `~Y` — while the wheel-up relay to a tracking `me` keeps scrolling |
 | `mouse_modes.py` | the mouse modes asked of the outer terminal at each toggle — a `1002l` dropping motion tracking after `1000h` used to clear every mode on st-kind terminals, killing click and wheel even with `MOD+M` on, which report injection cannot see |
 | `deck_layouts.py` | the deck layouts — `"[D]"` piling master and stack windows in a left/right split, `"[Z]"` top/bottom — read off the cursor positioning of a full repaint, the pile hiding the second border once nmaster covers all |

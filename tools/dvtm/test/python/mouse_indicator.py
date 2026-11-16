@@ -3,8 +3,9 @@
 is on - the global MOD+M toggle - and (m) on a window whose application
 enables mouse tracking (DECSET 1000), taking the events itself.  Round
 brackets, as the layout symbols - fullscreen's is "[M]" - own the square
-ones.  Driven through a pty with me inside, whose toggle-mouse command
-flips the tracking at run time.
+ones.  They ride the border's info line: showinfo off keeps the border
+clean, mouse or no mouse.  Driven through a pty with me inside, whose
+toggle-mouse command flips the tracking at run time.
 
 Assertions run on whole lines: MOD+CTRL('L'), dvtm's redraw, makes the
 terminal repaint completely, so a border's full text streams - ncurses
@@ -102,11 +103,10 @@ with tempfile.TemporaryDirectory(prefix="dvtm-mouse-") as directory:
               "MOD+M shows the global (M) indicator beside the layout")
         check(b"(m)" not in out, "the window is not marked as tracking")
 
-        os.write(fd, MOD + b"I")       # showinfo off: the mark stands alone
+        os.write(fd, MOD + b"I")       # showinfo off: the border stays clean
         out = repaint(fd)
-        check(b" (M) " in out,
-              "the lone (M) keeps a space on each side of the mark")
-        check(b"[]=" not in out, "the layout symbol left with showinfo")
+        check(b"(M)" not in out and b"[]=" not in out,
+              "with showinfo off even a grabbed mouse leaves no mark")
         os.write(fd, MOD + b"I")       # showinfo back on
         drain(fd, 0.5)
 

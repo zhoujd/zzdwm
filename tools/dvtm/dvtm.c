@@ -503,7 +503,7 @@ draw_border(Client *c) {
 	if (t)
 		c->title[maxlen] = t;
 
-	if (showinfo || mouse_events_enabled || vt_mousemode(c->term)) {
+	if (showinfo) {
 		static char right_info[64];
 		int len = 0;
 		/* round brackets: layout symbols, as fullscreen's "[M]",
@@ -514,12 +514,8 @@ draw_border(Client *c) {
 		if (vt_mousemode(c->term))
 			len += snprintf(right_info + len, sizeof(right_info) - len,
 			                " (m)");
-		if (showinfo)
-			len += snprintf(right_info + len, sizeof(right_info) - len,
-			                " %s ", layout->symbol);
-		if (right_info[len - 1] != ' ') /* balance the leading space */
-			len += snprintf(right_info + len, sizeof(right_info) - len,
-			                " ");
+		len += snprintf(right_info + len, sizeof(right_info) - len,
+		                " %s ", layout->symbol);
 		mvwprintw(c->window, 0, c->w - len - 1, "%s", right_info);
 	}
 
