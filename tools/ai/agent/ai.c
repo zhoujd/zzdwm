@@ -71,11 +71,20 @@
 #define MAX_SKILL_BODY 4096
 #define SKILLS_DIR ".agents/skills"
 
+typedef enum
+{
+  ROLE_SYSTEM,
+  ROLE_USER,
+  ROLE_ASSISTANT,
+  ROLE_ASSISTANT_TOOLS,
+  ROLE_TOOL
+} MessageRole;
+
 typedef struct
 {
   char json[MESSAGE_SIZE];
   size_t length;
-  int system;
+  MessageRole role;
 } Message;
 
 typedef struct
@@ -588,19 +597,33 @@ static void
 drop_oldest_message (void)
 {
   size_t index;
+  size_t user_count = 0;
 
-  for (index = 1; index < message_count; index++)
-    if (!messages[index].system)
-      break;
-  if (index == message_count)
-    return;
-  memmove (messages + index, messages + index + 1, (message_count - index - 1) * sizeof (messages[0]));
-  message_count--;
-  print_formatted ("[context] Dropped the oldest non-system message.\n");
+  for (index = 0; index < message_count; index++)
+    if (messages[index].role == ROLE_USER)
+      user_count++;
+  /* The endpoint rejects a conversation without any user message (HTTP
+     400), so keep the last one; drop an assistant tool call together
+     with its tool replies so no reply is left orphaned. */
+  for (index = 0; index < message_count; index++)
+    {
+      MessageRole role = messages[index].role;
+      size_t end = index + 1;
+
+      if (role == ROLE_SYSTEM || (role == ROLE_USER && user_count == 1))
+        continue;
+      if (role == ROLE_ASSISTANT_TOOLS)
+        while (end < message_count && messages[end].role == ROLE_TOOL)
+          end++;
+      memmove (messages + index, messages + end, (message_count - end) * sizeof (messages[0]));
+      message_count -= end - index;
+      print_formatted ("[context] Dropped the oldest non-system message.\n");
+      return;
+    }
 }
 
 static int
-add_message (const char *json, size_t length, int system)
+add_message (const char *json, size_t length, MessageRole role)
 {
   while (message_count == MAX_MESSAGES || length > MESSAGE_SIZE)
     {
@@ -611,7 +634,7 @@ add_message (const char *json, size_t length, int system)
     }
   memcpy (messages[message_count].json, json, length);
   messages[message_count].length = length;
-  messages[message_count].system = system;
+  messages[message_count].role = role;
   message_count++;
   return 0;
 }
@@ -626,7 +649,7 @@ add_text_message (const char *role, const char *content, int system)
       || buffer_append_string (&buffer, ",\"content\":") < 0 || append_json_text (&buffer, content) < 0
       || buffer_append_string (&buffer, "}") < 0)
     return -1;
-  return add_message (json, buffer.length, system);
+  return add_message (json, buffer.length, system ? ROLE_SYSTEM : ROLE_USER);
 }
 
 static void
@@ -1211,7 +1234,23 @@ receive_response (int socket_fd, char *response, size_t capacity, size_t *respon
     }
   if (status < 200 || status >= 300)
     {
-      print_formatted ("error: AI endpoint returned HTTP %d\n", status);
+      cJSON *payload = cJSON_Parse (*body);
+      const cJSON *detail = NULL;
+
+      if (payload != NULL)
+        {
+          const cJSON *error = cJSON_GetObjectItemCaseSensitive (payload, "error");
+
+          if (cJSON_IsObject (error))
+            detail = cJSON_GetObjectItemCaseSensitive (error, "message");
+          if (!cJSON_IsString (detail))
+            detail = cJSON_GetObjectItemCaseSensitive (payload, "message");
+        }
+      if (cJSON_IsString (detail))
+        print_formatted ("error: AI endpoint returned HTTP %d: %.200s\n", status, cJSON_GetStringValue (detail));
+      else
+        print_formatted ("error: AI endpoint returned HTTP %d\n", status);
+      cJSON_Delete (payload);
       return -2;
     }
   if (chunked)
@@ -1714,7 +1753,7 @@ append_tool_result (const ToolCall *call, const char *content)
       || append_json_text (&buffer, call->name) < 0 || buffer_append_string (&buffer, ",\"content\":") < 0
       || append_json_text (&buffer, content) < 0 || buffer_append_string (&buffer, "}") < 0)
     return -1;
-  return add_message (json, buffer.length, 0);
+  return add_message (json, buffer.length, ROLE_TOOL);
 }
 
 static int
@@ -1738,7 +1777,7 @@ append_tool_output (const ToolCall *call, const char *prefix, const char *output
       || append_json_string (&buffer, content, content_length + output_length) < 0
       || buffer_append_string (&buffer, "}") < 0)
     return -1;
-  return add_message (json, buffer.length, 0);
+  return add_message (json, buffer.length, ROLE_TOOL);
 }
 
 static int
@@ -1776,7 +1815,7 @@ add_assistant_response (const char *content, const ToolCall *calls, size_t call_
     }
   if (buffer_append_string (&buffer, "}") < 0)
     return -1;
-  return add_message (json, buffer.length, 0);
+  return add_message (json, buffer.length, call_count != 0 ? ROLE_ASSISTANT_TOOLS : ROLE_ASSISTANT);
 }
 
 static int
@@ -2682,9 +2721,18 @@ ai_main (int argc, char **argv)
       if (call_endpoint_threaded (&response_start, response_storage) < 0)
         {
           size_t old_count = message_count;
+          int shed_prompt = 0;
 
           drop_oldest_message ();
-          if (old_count == message_count || one_shot)
+          if (old_count == message_count && message_count > 0
+              && messages[message_count - 1].role == ROLE_USER)
+            {
+              /* Nothing older can go; forget this unsent prompt so the
+                 conversation stays sendable for the next turn. */
+              message_count--;
+              shed_prompt = 1;
+            }
+          if ((old_count == message_count && !shed_prompt) || one_shot)
             {
               if (agent_exit_status == EXIT_SUCCESS)
                 return 1;

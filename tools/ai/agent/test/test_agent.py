@@ -125,6 +125,7 @@ class AgentTests(unittest.TestCase):
         tool_rounds=None, delay=0, cwd=None, exec_prompt=None, files=(),
         workspace=None,
         model=None,
+        timeout=10,
     ):
         endpoint = Endpoint(responses, delay)
         self.addCleanup(endpoint.thread.join, timeout=2)
@@ -155,7 +156,7 @@ class AgentTests(unittest.TestCase):
             capture_output=True,
             env=settings,
             cwd=cwd,
-            timeout=10,
+            timeout=timeout,
             check=True,
         ), endpoint
 
@@ -732,7 +733,8 @@ class AgentTests(unittest.TestCase):
         )
         output, _ = process.communicate(timeout=5)
         thread.join(timeout=2)
-        self.assertIn("Connection timed out", output)
+        # glibc says "Connection timed out", musl "Operation timed out".
+        self.assertIn("timed out", output)
         self.assertEqual(process.returncode, 124)
 
     def test_one_shot_command_timeout_exit_code(self):
@@ -776,6 +778,51 @@ class AgentTests(unittest.TestCase):
         self.assertIn("AI endpoint returned HTTP 400", result.stdout)
         self.assertIn("[bye]", result.stdout)
         self.assertGreaterEqual(len(endpoint.requests), 1)
+
+    def test_endpoint_http_error_reports_detail(self):
+        body = json.dumps(
+            {"error": {"code": "1214", "message": "messages 参数非法"}}
+        ).encode()
+        result, endpoint = self.run_agent(
+            [
+                b"HTTP/1.1 400 Bad Request\r\n"
+                b"Content-Type: application/json\r\n"
+                b"Content-Length: %d\r\n" % len(body)
+                + b"Connection: close\r\n\r\n"
+                + body,
+                text_response("recovered"),
+            ],
+            "first\n\nsecond\n\n/exit\n\n",
+        )
+        self.assertIn("AI endpoint returned HTTP 400: messages 参数非法", result.stdout)
+        self.assertIn("recovered", result.stdout)
+        self.assertIn("[bye]", result.stdout)
+        self.assertEqual(len(endpoint.requests), 2)
+
+    def test_context_drop_keeps_a_user_message(self):
+        # MAX_MESSAGES forces a drop while the single user prompt is still
+        # the only user message; every request must keep one.
+        responses = [tool_response("true") for _ in range(12)]
+        responses.append(text_response("done"))
+        result, endpoint = self.run_agent(
+            responses,
+            full_access=True,
+            exec_prompt="diagnose",
+            timeout=60,
+        )
+        self.assertIn("done", result.stdout)
+        self.assertIn("[context] Dropped", result.stdout)
+        self.assertGreaterEqual(len(endpoint.requests), 13)
+        for request in endpoint.requests:
+            roles = [message["role"] for message in request["messages"]]
+            self.assertIn("user", roles)
+            for index, message in enumerate(request["messages"]):
+                if message.get("role") != "tool":
+                    continue
+                previous = request["messages"][index - 1]
+                self.assertIn("tool_calls", previous)
+                ids = {call["id"] for call in previous["tool_calls"]}
+                self.assertIn(message["tool_call_id"], ids)
 
     def test_tui_model_and_attachment_are_forwarded(self):
         if shutil.which("tmux") is None:
