@@ -1387,7 +1387,9 @@ copymode(const char *args[]) {
 	const char *argv[3] = { args[0], NULL, NULL };
 	char argline[32];
 	int line = vt_content_start(sel->app);
-	snprintf(argline, sizeof(argline), "+%d", line);
+	/* editors count lines from 1: the top of the capture is "+1", and
+	 * the "+0" of an unscrolled window parks me past the buffer end */
+	snprintf(argline, sizeof(argline), "+%d", line + 1);
 	argv[1] = argline;
 
 	char *cwd = getcwd_by_pid(sel);
