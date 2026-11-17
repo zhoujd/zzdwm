@@ -62,14 +62,14 @@ sudo apt update && sudo apt install -y build-essential wget tar
 
 ### 2. Prepare the Core Binaries
 
-Compile the single-target C AI application and the editor, then install them
-into the workspace binary directory (the same place `me` lives):
+Compile the single-target C AI application and the editor, then refresh their
+tracked workspace homes (`libexec/ai/ai` and `bin/me`):
 
 ```bash
-cp tools/ai/agent/ai ../../bin/ai
+cp tools/ai/agent/ai ../../libexec/ai/ai
 ```
 
-`build.sh` picks up `bin/ai` and `bin/me` automatically on every run, so the
+`build.sh` picks up `libexec/ai/ai` and `bin/me` automatically on every run, so the
 overlay folder never needs manual binary copies; it only carries static
 configuration files layered over the rootfs tree.
 

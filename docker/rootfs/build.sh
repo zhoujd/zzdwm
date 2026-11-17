@@ -3,7 +3,8 @@
 set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
-WS_BIN="${SCRIPT_DIR}/../../bin"
+WS=$(cd "${SCRIPT_DIR}/../.." && pwd)
+
 ROOTFS_DIR="build/rootfs"
 OUTPUT_DIR="output"
 OUTPUT_TAR="${OUTPUT_DIR}/rootfs.tar.gz"
@@ -36,17 +37,20 @@ if [ -d "overlay" ]; then
 fi
 
 echo "=== Installing Core Binaries from the Workspace ==="
-# The core binaries always come from the workspace bin/ directory, so a
-# rebuild only needs the fresh copies there; the overlay folder is for
-# static configuration files and never needs manual binary copies.
-CORE_BINS="ai me"
-for name in ${CORE_BINS}; do
-    if [ ! -x "${WS_BIN}/${name}" ]; then
-        echo "error: workspace bin/${name} is missing or not executable" >&2
-        echo "       build it and install it into ${WS_BIN} first" >&2
+# The core binaries always come from their tracked workspace homes
+# (bin/me, libexec/ai/ai), so a rebuild only needs fresh copies there;
+# the overlay folder is for static configuration files and never needs
+# manual binary copies.
+CORE_BINS=(
+    "$WS/bin/me"
+    "$WS/libexec/ai/ai"
+)
+for name in "${CORE_BINS[@]}"; do
+    if [ ! -x "${name}" ]; then
+        echo "error: workspace ${name} is missing or not executable" >&2
         exit 1
     fi
-    sudo install -m 0755 "${WS_BIN}/${name}" "${ROOTFS_DIR}/usr/local/bin/${name}"
+    sudo install -m 0755 "${name}" "${ROOTFS_DIR}/usr/local/bin/$(basename "${name}")"
 done
 
 if [ -d "config" ]; then
