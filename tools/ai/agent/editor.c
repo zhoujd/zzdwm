@@ -707,7 +707,7 @@ editor_main (int argc, char **argv)
   sigaction (SIGINT, &action, NULL);
   sigaction (SIGTERM, &action, NULL);
   editor_interrupted = 0;
-  if (editor_read ("\n[Edit]: ", "[...]: ", buffer, sizeof (buffer)) < 0)
+  if (editor_read ("\n[Edit]: ", "[....]: ", buffer, sizeof (buffer)) < 0)
     return 130;
   if (editor_interrupted)
     return 130;
