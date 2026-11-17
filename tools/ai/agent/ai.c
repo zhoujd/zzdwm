@@ -44,7 +44,9 @@
   "per tool call. Never launch interactive TUIs or editors. Disable pagers when supported "                            \
   "(for example --no-pager or PAGER=cat) and explicitly limit large output. Do not assume "                            \
   "working directory or shell environment persists across calls. Never conceal or misrepresent command "               \
-  "output. Stop and ask the human before using sudo, modifying system paths (/etc, /usr, /var), "                      \
+  "output. For any multi-step task, first record a checklist with the plan tool and keep it current "                  \
+  "as steps complete; the latest plan stays pinned in every later request. "                                           \
+  "Stop and ask the human before using sudo, modifying system paths (/etc, /usr, /var), "                              \
   "restarting services, or performing any destructive, ambiguous, or out-of-scope action."
 
 #define MAX_ENDPOINT 512
@@ -53,6 +55,7 @@
 #define MAX_KEY 512
 #define MAX_LINE 8192
 #define MAX_COMMAND 8192
+#define MAX_PLAN 4096
 #define MAX_ID 256
 #define MAX_NAME 128
 #define MAX_TOOL_CALLS 8
@@ -102,6 +105,8 @@ typedef struct
   char id[MAX_ID];
   char name[MAX_NAME];
   char command[MAX_COMMAND];
+  char checklist[MAX_PLAN];
+  int plan;
   int supported;
   int valid;
 } ToolCall;
@@ -115,6 +120,11 @@ typedef struct
 
 static Message messages[MAX_MESSAGES];
 static size_t message_count;
+static char current_plan[MAX_PLAN];
+static int plan_active;
+static const char plan_header[] = "CURRENT TASK PLAN (recorded with the plan tool; follow it, "
+                                  "tick steps only once command output confirms them, and "
+                                  "rewrite it when the approach changes):\n";
 static char endpoint[MAX_ENDPOINT] = DEFAULT_ENDPOINT;
 static char api_host[MAX_HOST] = "127.0.0.1";
 static char api_path[MAX_PATH] = "/v1/chat/completions";
@@ -277,7 +287,7 @@ terminal_style (const char *text)
     return "\033[1;31m";
   if (strncmp (text, "[AI request", 12) == 0 || strncmp (text, "[live steering", 14) == 0
       || strncmp (text, "[command", 8) == 0 || strncmp (text, "[context]", 9) == 0 || strncmp (text, "[skill]", 7) == 0
-      || strncmp (text, "[force mode", 11) == 0)
+      || strncmp (text, "[Plan", 5) == 0 || strncmp (text, "[force mode", 11) == 0)
     return "\033[1;35m";
   if (strncmp (text, "[AI requests command]", 21) == 0 || strncmp (text, "[AI Response]", 13) == 0)
     return "\033[1;36m";
@@ -875,6 +885,8 @@ static void
 conversation_reset (void)
 {
   message_count = 0;
+  plan_active = 0;
+  current_plan[0] = 0;
   if (add_text_message ("system", SYSTEM_PROMPT, 1) < 0 || add_skills_message () < 0)
     {
       print_formatted ("error: unable to initialize conversation\n");
@@ -1431,13 +1443,39 @@ build_request (char *request, size_t capacity, size_t *length)
       if (buffer_append (&buffer, messages[index].json, messages[index].length) < 0)
         return -1;
     }
+  /* The plan rides as a fresh trailing system message so it never goes
+     stale and survives context pruning of older turns. */
+  if (plan_active)
+    {
+      char plan_json[2 * MAX_PLAN + 256];
+      Buffer plan_buffer = { plan_json, sizeof (plan_json), 0 };
+
+      if (buffer_append_string (&plan_buffer, "{\"role\":\"system\",\"content\":\"") < 0
+          || append_json_string_body (&plan_buffer, plan_header, sizeof (plan_header) - 1) < 0
+          || append_json_string_body (&plan_buffer, current_plan, strlen (current_plan)) < 0
+          || buffer_append_string (&plan_buffer, "\"}") < 0)
+        return -1;
+      if (message_count != 0 && buffer_append_string (&buffer, ",") < 0)
+        return -1;
+      if (buffer_append (&buffer, plan_json, plan_buffer.length) < 0)
+        return -1;
+    }
   if (buffer_append_string (&buffer, "],\"tools\":[{\"type\":\"function\",\"function\":{"
                                      "\"name\":\"run_terminal_command\",\"description\":"
                                      "\"Execute one shell command on the user's host and return bounded live output.\","
                                      "\"parameters\":{\"type\":\"object\",\"properties\":{"
                                      "\"command\":{\"type\":\"string\",\"description\":"
                                      "\"The complete shell command to execute.\"}},"
-                                     "\"required\":[\"command\"]}}}],\"tool_choice\":\"auto\"}")
+                                     "\"required\":[\"command\"]}}},"
+                                     "{\"type\":\"function\",\"function\":{"
+                                     "\"name\":\"plan\",\"description\":"
+                                     "\"Record the full current task checklist. The latest plan is pinned into every "
+                                     "later request, so it survives context pruning. Send the complete checklist each "
+                                     "time, not a delta; an empty checklist clears the plan.\","
+                                     "\"parameters\":{\"type\":\"object\",\"properties\":{"
+                                     "\"checklist\":{\"type\":\"string\",\"description\":"
+                                     "\"The complete checklist text.\"}},"
+                                     "\"required\":[\"checklist\"]}}}],\"tool_choice\":\"auto\"}")
       < 0)
     return -1;
   *length = buffer.length;
@@ -1824,6 +1862,28 @@ append_tool_output (const ToolCall *call, const char *prefix, const char *output
 }
 
 static int
+append_tool_call_arguments (Buffer *buffer, const ToolCall *call)
+{
+  const char *key = call->plan ? "checklist" : "command";
+  const char *value = call->plan ? call->checklist : call->command;
+  char arguments[6 * MAX_COMMAND + 32];
+  Buffer inner = { arguments, sizeof (arguments), 0 };
+
+  /* Re-encode the one argument key each built-in tool understands. The
+     arguments are a JSON string nested inside the message JSON, so the
+     value is escaped for the argument object and the whole argument text
+     is escaped again for the enclosing message string. */
+  if (buffer_append_string (&inner, "{\"") < 0 || buffer_append_string (&inner, key) < 0
+      || buffer_append_string (&inner, "\":\"") < 0
+      || append_json_string_body (&inner, value, strlen (value)) < 0
+      || buffer_append_string (&inner, "\"}") < 0)
+    return -1;
+  return buffer_append_string (buffer, "\"") < 0
+         || append_json_string_body (buffer, arguments, inner.length) < 0
+         || buffer_append_string (buffer, "\"") < 0;
+}
+
+static int
 add_assistant_response (const char *content, const ToolCall *calls, size_t call_count)
 {
   char json[MESSAGE_SIZE];
@@ -1846,10 +1906,8 @@ add_assistant_response (const char *content, const ToolCall *calls, size_t call_
               || append_json_text (&buffer, calls[index].id) < 0
               || buffer_append_string (&buffer, ",\"function\":{\"name\":") < 0
               || append_json_text (&buffer, calls[index].name) < 0
-              || buffer_append_string (&buffer, ",\"arguments\":") < 0 || buffer_append_string (&buffer, "\"{") < 0
-              || buffer_append_string (&buffer, "\\\"command\\\":") < 0 || buffer_append_string (&buffer, "\\\"") < 0
-              || append_json_string_body (&buffer, calls[index].command, strlen (calls[index].command)) < 0
-              || buffer_append_string (&buffer, "\\\"}") < 0 || buffer_append_string (&buffer, "\"") < 0
+              || buffer_append_string (&buffer, ",\"arguments\":") < 0
+              || append_tool_call_arguments (&buffer, &calls[index]) < 0
               || buffer_append_string (&buffer, "}}") < 0)
             return -1;
         }
@@ -2260,6 +2318,28 @@ append_bounded_output (const ToolCall *call, const char *prefix, const char *out
 }
 
 
+/* The plan tool only moves agent-held state, so it needs no command
+   approval; printing the new plan keeps the human watching. */
+static void
+record_plan (const char *checklist)
+{
+  char trimmed[MAX_PLAN];
+
+  snprintf (trimmed, sizeof (trimmed), "%s", checklist);
+  trim_spaces (trimmed);
+  if (trimmed[0] == 0)
+    {
+      plan_active = 0;
+      current_plan[0] = 0;
+      print_formatted ("[Plan cleared]\n");
+      return;
+    }
+  snprintf (current_plan, sizeof (current_plan), "%s", trimmed);
+  plan_active = 1;
+  print_formatted ("[Plan updated]:\n");
+  print_formatted ("%s\n", current_plan);
+}
+
 static int
 process_tool_calls (ToolCall *calls, size_t call_count)
 {
@@ -2275,6 +2355,16 @@ process_tool_calls (ToolCall *calls, size_t call_count)
       size_t output_length = 0;
       char result[MAX_LINE];
 
+      if (calls[index].valid && calls[index].plan)
+        {
+          record_plan (calls[index].checklist);
+          if (append_tool_result (&calls[index],
+                                  plan_active ? "Plan recorded; it stays pinned in every later request."
+                                              : "Plan cleared.")
+              < 0)
+            return -1;
+          continue;
+        }
       if (calls[index].valid && calls[index].supported)
         {
           print_formatted ("\n[AI requests command]: %s\n", calls[index].command);
@@ -2309,13 +2399,15 @@ process_tool_calls (ToolCall *calls, size_t call_count)
         }
       else if (!calls[index].valid)
         {
-          print_formatted ("Error: malformed or missing command arguments.\n");
-          if (append_tool_result (&calls[index], "Error: malformed or missing command arguments.") < 0)
+          print_formatted ("Error: malformed or missing tool arguments.\n");
+          if (append_tool_result (&calls[index], "Error: malformed or missing tool arguments.") < 0)
             return -1;
         }
       else if (!calls[index].supported)
         {
-          if (append_tool_result (&calls[index], "Error: unsupported tool; use run_terminal_command.") < 0)
+          if (append_tool_result (&calls[index],
+                                  "Error: unsupported tool; use run_terminal_command or plan.")
+              < 0)
             return -1;
         }
       else
@@ -2387,7 +2479,8 @@ parse_tool_call (const cJSON *tool_call, ToolCall *call)
   name = cJSON_GetObjectItemCaseSensitive (function, "name");
   if (copy_json_string (name, call->name, sizeof (call->name)) < 0)
     return -1;
-  call->supported = strcmp (call->name, "run_terminal_command") == 0;
+  call->plan = strcmp (call->name, "plan") == 0;
+  call->supported = call->plan || strcmp (call->name, "run_terminal_command") == 0;
 
   arguments = cJSON_GetObjectItemCaseSensitive (function, "arguments");
   if (!cJSON_IsString (arguments))
@@ -2395,6 +2488,17 @@ parse_tool_call (const cJSON *tool_call, ToolCall *call)
   argument_object = cJSON_Parse (cJSON_GetStringValue (arguments));
   if (argument_object == NULL)
     return -1;
+
+  if (call->plan)
+    {
+      const cJSON *checklist = cJSON_GetObjectItemCaseSensitive (argument_object, "checklist");
+
+      /* A missing or oversized checklist stays visible as a rejected plan
+         call instead of being replaced by a shell tool call. */
+      call->valid = copy_json_string (checklist, call->checklist, sizeof (call->checklist)) == 0;
+      cJSON_Delete (argument_object);
+      return 0;
+    }
 
   command = cJSON_GetObjectItemCaseSensitive (argument_object, "command");
   if (copy_json_string (command, call->command, sizeof (call->command)) < 0)

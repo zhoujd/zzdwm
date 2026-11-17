@@ -120,6 +120,29 @@ def text_response(content):
     return {"choices": [{"message": {"role": "assistant", "content": content}}]}
 
 
+def plan_response(checklist, call_id="call-plan"):
+    return {
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "type": "function",
+                            "id": call_id,
+                            "function": {
+                                "name": "plan",
+                                "arguments": json.dumps({"checklist": checklist}),
+                            },
+                        }
+                    ],
+                }
+            }
+        ]
+    }
+
+
 class AgentTests(unittest.TestCase):
     def run_agent(
         self, responses, stdin="", full_access=False, command_timeout="2",
@@ -1269,10 +1292,84 @@ class AgentTests(unittest.TestCase):
             [response, text_response("done")],
             "diagnose\n\n\n/exit\n\n",
         )
-        self.assertIn("malformed or missing command arguments", result.stdout)
+        self.assertIn("malformed or missing tool arguments", result.stdout)
         self.assertIn(
             "malformed", endpoint.requests[1]["messages"][-1]["content"]
         )
+
+    def test_plan_tool_records_and_pins_checklist(self):
+        checklist = "goal: fix the build\n1. [ ] reproduce\n2. [ ] patch"
+        result, endpoint = self.run_agent(
+            [plan_response(checklist), text_response("done")],
+            "diagnose\n\n\n/exit\n\n",
+        )
+        self.assertIn("[Plan updated]:", result.stdout)
+        self.assertIn("2. [ ] patch", result.stdout)
+        self.assertNotIn("[AI requests command]", result.stdout)  # no approval boundary
+        tool_names = {tool["function"]["name"] for tool in endpoint.requests[0]["tools"]}
+        self.assertEqual(tool_names, {"run_terminal_command", "plan"})
+        pinned = [
+            message for message in endpoint.requests[1]["messages"]
+            if message["role"] == "system" and message["content"].startswith("CURRENT TASK PLAN")
+        ]
+        self.assertEqual(len(pinned), 1)
+        self.assertIn("1. [ ] reproduce", pinned[0]["content"])
+        calls = [
+            call
+            for message in endpoint.requests[1]["messages"]
+            if message.get("tool_calls")
+            for call in message["tool_calls"]
+        ]
+        self.assertEqual(calls[0]["function"]["name"], "plan")
+        self.assertEqual(json.loads(calls[0]["function"]["arguments"])["checklist"], checklist)
+        replies = [
+            message for message in endpoint.requests[1]["messages"]
+            if message["role"] == "tool"
+        ]
+        self.assertIn("Plan recorded", replies[0]["content"])
+
+    def test_plan_tool_clears_with_empty_checklist(self):
+        result, endpoint = self.run_agent(
+            [plan_response("1. [ ] only step"), plan_response(""), text_response("done")],
+            "diagnose\n\n\n/exit\n\n",
+        )
+        self.assertIn("[Plan updated]:", result.stdout)
+        self.assertIn("[Plan cleared]", result.stdout)
+        self.assertNotIn(
+            "CURRENT TASK PLAN",
+            json.dumps(endpoint.requests[2]["messages"]),
+        )
+
+    def test_plan_without_checklist_is_rejected_visibly(self):
+        response = {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "type": "function",
+                                "id": "call-plan",
+                                "function": {"name": "plan", "arguments": "{}"},
+                            }
+                        ],
+                    }
+                }
+            ]
+        }
+        result, endpoint = self.run_agent(
+            [response, text_response("done")],
+            "diagnose\n\n\n/exit\n\n",
+        )
+        self.assertIn("malformed or missing tool arguments", result.stdout)
+        self.assertNotIn("CURRENT TASK PLAN", json.dumps(endpoint.requests[1]["messages"]))
+        replies = [
+            message for message in endpoint.requests[1]["messages"]
+            if message["role"] == "tool"
+        ]
+        self.assertEqual(replies[0]["name"], "plan")
+        self.assertIn("malformed", replies[0]["content"])
 
     def test_one_shot_exit_codes(self):
         process = subprocess.run(

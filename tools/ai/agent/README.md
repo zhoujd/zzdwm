@@ -2,7 +2,8 @@
 
 `ai` is a compact, static Linux agent for OpenAI-compatible chat
 completion endpoints. It keeps a multi-turn conversation, exposes one shell
-tool to the model, and keeps a human at every tool boundary.
+tool and one plan tool to the model, and keeps a human at every command
+boundary.
 
 ## Build
 
@@ -136,6 +137,13 @@ through `/bin/sh -c` with the current process privileges. All output is shown
 live and a bounded tail is returned to the model.
 `/force` toggles full access while the agent is running; the startup mode
 remains the safer approval-based default.
+
+The `plan` tool records the current task checklist. Each update prints
+`[Plan updated]:` with the new plan, and the latest plan is pinned into
+every later request as a system message, so long tasks survive context
+pruning without re-reading a file. Recording or clearing a plan runs
+nothing and touches no files, so it needs no approval; an empty checklist
+clears the plan, as does `/new`.
 
 While an AI request or command is running, input is accepted as live steering.
 Use one line per steering line and a blank line to queue the completed

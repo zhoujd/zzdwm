@@ -116,7 +116,7 @@ line_style (const char *line)
     return COLOR_PAIR (3) | A_BOLD;
   if (strncmp (line, "[AI request", 12) == 0 || strncmp (line, "[live steering", 14) == 0
       || strncmp (line, "[command", 8) == 0 || strncmp (line, "[context]", 9) == 0 || strncmp (line, "[skill]", 7) == 0
-      || strncmp (line, "[force mode", 11) == 0)
+      || strncmp (line, "[Plan", 5) == 0 || strncmp (line, "[force mode", 11) == 0)
     return COLOR_PAIR (4) | A_BOLD;
   return 0;
 }
@@ -585,7 +585,7 @@ display_agent_line (const char *line)
   else if (strncmp (line, "[You]", 5) == 0 || strncmp (line, "[live steering", 14) == 0
            || strncmp (line, "[a]llow", 7) == 0 || strncmp (line, "[edited command]", 16) == 0
            || strncmp (line, "[steer]", 7) == 0 || strncmp (line, "[s]teer", 7) == 0
-           || strncmp (line, "[force mode", 11) == 0)
+           || strncmp (line, "[Plan", 5) == 0 || strncmp (line, "[force mode", 11) == 0)
     output_mode = PANE_THOUGHTS;
   hint = agent_prompt_hint (line);
   if (strcmp (line, "[AI request active]") == 0)

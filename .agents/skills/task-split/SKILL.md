@@ -1,41 +1,38 @@
 ---
 name: task-split
-description: Break multi-step tasks into a written checklist before executing. Use when a task needs three or more steps, touches multiple files, or will span many command rounds.
+description: Break multi-step tasks into a checklist tracked with the plan tool before executing. Use when a task needs three or more steps, touches multiple files, or will span many command rounds.
 ---
 
 # Task Split
 
-Work from a checklist file so long tasks survive context loss and stay
-reviewable by the human.
+Work from a checklist held in the plan tool so long tasks stay on track
+and reviewable by the human.
 
-1. Before executing anything multi-step, write the plan to
-   `.ai-plan.md` in the workspace root:
+1. Before executing anything multi-step, call the `plan` tool with the
+   full checklist:
 
-   ```sh
-   cat > .ai-plan.md <<'EOF'
+   ```text
    goal: <one line>
    1. [ ] step one
    2. [ ] step two
    3. [ ] step three
-   EOF
    ```
 
-   The write passes the normal approval boundary, so the human sees the
-   plan before work starts.
+   Send the complete checklist every time, never a delta. The human sees
+   each update as `[Plan updated]:`.
 
-2. Execute one step at a time: one command per tool call, then tick the
-   finished step by rewriting the file with `[x]`. Only mark `[x]` after
+2. Execute one step at a time: one command per tool call, then re-send
+   the plan with the finished step ticked `[x]`. Only mark `[x]` after
    command output confirms the step; never pre-mark.
 
-3. Re-read the plan with `cat .ai-plan.md` whenever continuing after a
-   long stretch of output. The conversation may have dropped earlier
-   turns; the file never drops.
+3. The pinned plan reappears in every later request even when the
+   conversation drops old turns, so there is no need to re-read it.
 
 4. If a step proves wrong, rewrite the plan with corrected steps instead
    of drifting silently.
 
-5. Finish by showing the final checklist, summarizing each step's
-   outcome, then remove the file with `rm .ai-plan.md`.
+5. Finish with the final all-`[x]` checklist, a one-line outcome per
+   step, then clear the plan by sending an empty checklist.
 
 Keep steps small enough that each is a single verifiable command or
 edit. When a step needs sub-steps, split it while rewriting the plan.
