@@ -563,6 +563,8 @@ agent_prompt_hint (const char *line)
     return "Next request: s steer, Enter continue, q quit (after command output)";
   if (strcmp (line, "[live steering active]: type one line per direction") == 0)
     return "Live steering: type one line per direction";
+  if (strcmp (line, "Multiline input ends with an empty line. /help shows commands.") == 0)
+    return "Multiline: C-J newline, Enter submit. /help shows commands.";
   if (strcmp (line, "Steering ends with an empty line.") == 0)
     return "Steering: C-J newline, Enter submit";
   return NULL;

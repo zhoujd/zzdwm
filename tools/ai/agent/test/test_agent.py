@@ -1097,6 +1097,36 @@ class AgentTests(unittest.TestCase):
         ).stdout
         self.assertIn("3. Prompt (C-J newline, RET submit)", output)
 
+    def test_tui_multiline_banner_matches_input_keys(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for TUI input rendering")
+
+        server = f"ai-tui-banner-{os.getpid()}"
+        subprocess.run(["tmux", "kill-server"], check=False)
+        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        environment = os.environ.copy()
+        environment["AI_API_URL"] = "http://127.0.0.1:1/v1"
+        subprocess.run(
+            [
+                "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "100", "-y", "24",
+                "-n", server, TUI_EXECUTABLE, "tui",
+            ],
+            env=environment,
+            check=True,
+            timeout=5,
+        )
+        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+        time.sleep(0.5)
+        output = subprocess.run(
+            ["tmux", "capture-pane", "-p", "-t", server],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        ).stdout
+        self.assertIn("Multiline: C-J newline, Enter submit", output)
+        self.assertNotIn("Multiline input ends with an empty line", output)
+
     def test_tool_round_limit_is_configurable(self):
         result, _ = self.run_agent(
             [text_response("done")],
