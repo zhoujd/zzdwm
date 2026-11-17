@@ -735,6 +735,84 @@ class AgentTests(unittest.TestCase):
         self.assertIn(b"[q]uit: n", output)
         self.assertNotIn(b"[q]uit: \r\n", output)
 
+    def test_tty_editing_keys_move_and_kill_within_the_line(self):
+        endpoint = Endpoint(
+            [text_response("one"), text_response("two"), text_response("three")]
+        )
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        master, slave = pty.openpty()
+        process = subprocess.Popen(
+            [EXECUTABLE],
+            stdin=slave,
+            stdout=slave,
+            stderr=subprocess.STDOUT,
+            env={
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "8",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "NO_COLOR": "1",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        os.close(slave)
+
+        def cleanup():
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5)
+            os.close(master)
+
+        self.addCleanup(cleanup)
+
+        def read_until(marker, timeout):
+            data = b""
+            deadline = time.time() + timeout
+            while time.time() < deadline and marker not in data:
+                ready, _, _ = select.select([master], [], [], 0.05)
+                if not ready:
+                    continue
+                try:
+                    chunk = os.read(master, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                data += chunk
+            return data
+
+        output = read_until(b"[You]: ", 10)
+        os.write(master, b"world")           # "world"
+        os.write(master, b"\x01")            # C-A to the start
+        os.write(master, b"hello ")          # insert mid-line -> "hello world"
+        os.write(master, b"\x05")            # C-E to the end
+        os.write(master, b"!")
+        os.write(master, b"\r")
+        output += read_until(b"[You]: ", 10)
+        os.write(master, b"abc")
+        os.write(master, b"\x02")            # C-B onto 'c'
+        os.write(master, b"\x04")            # C-D deletes 'c' -> "ab"
+        os.write(master, b"\r")
+        output += read_until(b"[You]: ", 10)
+        os.write(master, b"nope")
+        os.write(master, b"\x01")            # C-A
+        os.write(master, b"\x0b")            # C-K kills to the end -> ""
+        os.write(master, b"ok")
+        os.write(master, b"\r")
+        output += read_until(b"[You]: ", 10)
+        os.write(master, b"/exit\r")
+        output += read_until(b"[bye]", 5)
+        contents = [
+            next(
+                m["content"] for m in reversed(endpoint.requests[index]["messages"])
+                if m["role"] == "user"
+            )
+            for index in range(3)
+        ]
+        self.assertEqual(contents[0], "hello world!")
+        self.assertEqual(contents[1], "ab")
+        self.assertEqual(contents[2], "ok")
+
     def test_live_steering_during_request_preserves_multiple_lines(self):
         result, endpoint = self.run_agent_later(
             [text_response("first"), text_response("done")],

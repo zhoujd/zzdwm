@@ -1746,6 +1746,32 @@ multiline_keys_active (void)
   return isatty (STDIN_FILENO);
 }
 
+static void
+write_repeated (const char *data, size_t count)
+{
+  while (count-- != 0)
+    write_all (STDOUT_FILENO, data, 1);
+}
+
+/* Blank `count` screen cells at the cursor and return to the first one. */
+static void
+erase_cells (size_t count)
+{
+  write_repeated (" ", count);
+  write_repeated ("\b", count);
+}
+
+/* After an edit shifted the text left of the cursor, reprint the tail,
+   blank the cells the removed chars still occupy, and park the cursor
+   back at the edit point. */
+static void
+redraw_line_tail (const char *buffer, size_t cursor, size_t length, size_t removed)
+{
+  write_all (STDOUT_FILENO, buffer + cursor, length - cursor);
+  erase_cells (removed);
+  write_repeated ("\b", length - cursor);
+}
+
 static int
 read_multiline_keys (const char *prompt, const char *continuation_prompt, char *buffer, size_t capacity)
 {
@@ -1753,6 +1779,7 @@ read_multiline_keys (const char *prompt, const char *continuation_prompt, char *
   struct termios raw_terminal;
   size_t length = 0;
   size_t line_start = 0;
+  size_t cursor = 0;
   int escape_state = 0;
 
   if (tcgetattr (STDIN_FILENO, &original_terminal) != 0)
@@ -1792,19 +1819,36 @@ read_multiline_keys (const char *prompt, const char *continuation_prompt, char *
             escape_state = 0;
           continue;
         }
-      if (character == '\r' || (character == 4 && length != 0))
+      if (character == 4)
         {
-          /* Enter submits; C-D submits what is typed, as in a shell. */
+          /* C-D deletes forward like the TUI; at the end of the line it
+             submits what is typed, as in a shell, and ends an empty
+             conversation like EOF. */
+          if (cursor < length)
+            {
+              memmove (buffer + cursor, buffer + cursor + 1, length - cursor - 1);
+              length--;
+              buffer[length] = 0;
+              redraw_line_tail (buffer, cursor, length, 1);
+              continue;
+            }
+          if (length == 0)
+            {
+              tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
+              return -1;
+            }
           buffer[length] = 0;
           tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
           print_formatted ("\n");
           return 0;
         }
-      if (character == 4)
+      if (character == '\r')
         {
-          /* C-D on empty input ends the conversation like EOF. */
+          /* Enter submits. */
+          buffer[length] = 0;
           tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
-          return -1;
+          print_formatted ("\n");
+          return 0;
         }
       if (character == '\n')
         {
@@ -1818,23 +1862,72 @@ read_multiline_keys (const char *prompt, const char *continuation_prompt, char *
           buffer[length++] = '\n';
           buffer[length] = 0;
           line_start = length;
+          cursor = length;
           print_formatted ("\r\n%s", continuation_prompt != NULL ? continuation_prompt : "");
           continue;
         }
       if (character == 127 || character == 8)
         {
-          if (length > line_start)
+          if (cursor > line_start)
             {
+              memmove (buffer + cursor - 1, buffer + cursor, length - cursor);
+              cursor--;
               length--;
               buffer[length] = 0;
-              write_all (STDOUT_FILENO, "\b \b", 3);
+              write_all (STDOUT_FILENO, "\b", 1);
+              redraw_line_tail (buffer, cursor, length, 1);
             }
           continue;
         }
-      if (character == 21 || character == 23)
+      if (character == 1 || character == 2 || character == 5 || character == 6)
         {
-          size_t start = length;
+          /* C-A/C-E move to the line ends, C-B/C-F one char back/forward;
+             moving right reprints the char under the cursor, which the
+             terminal renders identically. */
+          if (character == 1)
+            {
+              write_repeated ("\b", cursor - line_start);
+              cursor = line_start;
+            }
+          else if (character == 2)
+            {
+              if (cursor > line_start)
+                {
+                  cursor--;
+                  write_all (STDOUT_FILENO, "\b", 1);
+                }
+            }
+          else if (character == 5)
+            {
+              write_all (STDOUT_FILENO, buffer + cursor, length - cursor);
+              cursor = length;
+            }
+          else
+            {
+              if (cursor < length)
+                {
+                  write_all (STDOUT_FILENO, buffer + cursor, 1);
+                  cursor++;
+                }
+            }
+          continue;
+        }
+      if (character == 11 || character == 21 || character == 23)
+        {
+          /* C-K kills to the end of the line, C-U back to its start,
+             and C-W back to the start of the word before the cursor. */
+          size_t start = cursor;
 
+          if (character == 11)
+            {
+              if (cursor < length)
+                {
+                  erase_cells (length - cursor);
+                  length = cursor;
+                  buffer[length] = 0;
+                }
+              continue;
+            }
           if (character == 21)
             start = line_start;
           else
@@ -1844,12 +1937,17 @@ read_multiline_keys (const char *prompt, const char *continuation_prompt, char *
               while (start > line_start && buffer[start - 1] != ' ')
                 start--;
             }
-          while (length > start)
+          if (start < cursor)
             {
-              length--;
-              write_all (STDOUT_FILENO, "\b \b", 3);
+              size_t removed = cursor - start;
+
+              memmove (buffer + start, buffer + cursor, length - cursor);
+              length -= removed;
+              buffer[length] = 0;
+              write_repeated ("\b", removed);
+              redraw_line_tail (buffer, start, length, removed);
+              cursor = start;
             }
-          buffer[length] = 0;
           continue;
         }
       if (character == 27)
@@ -1865,9 +1963,12 @@ read_multiline_keys (const char *prompt, const char *continuation_prompt, char *
           tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
           return -1;
         }
-      buffer[length++] = character;
+      memmove (buffer + cursor + 1, buffer + cursor, length - cursor);
+      buffer[cursor++] = character;
+      length++;
       buffer[length] = 0;
       write_all (STDOUT_FILENO, &character, 1);
+      redraw_line_tail (buffer, cursor, length, 0);
     }
 }
 
