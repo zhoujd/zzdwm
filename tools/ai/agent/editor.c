@@ -656,6 +656,27 @@ editor_on_signal (int signal_number)
   editor_interrupted = 1;
 }
 
+static void
+editor_usage (FILE *stream)
+{
+  fprintf (stream, "Usage: ai editor [--help]\n"
+                   "\n"
+                   "Edit one multiline input and print it to standard output.\n"
+                   "\n"
+                   "Keys:\n"
+                   "C-J                  open a new line; Enter submits\n"
+                   "C-A / C-E            move to the start or end of the line\n"
+                   "C-B / C-F            move one rune back or forward\n"
+                   "C-P / C-N            move one line up or down\n"
+                   "backspace / C-D      delete the rune before or after the cursor\n"
+                   "C-K                  kill to the end of the line\n"
+                   "C-W                  kill back to the start of the word\n"
+                   "C-U                  clear every line of the input\n"
+                   "\n"
+                   "Enter prints the edited text and exits with status 0; C-C,\n"
+                   "C-D on an empty input, or EOF cancels with status 130.\n");
+}
+
 /* Edit one multiline input on the terminal with the shared key bindings
    and print it to standard output. Enter submits (status 0); C-C, EOF,
    or C-D on an empty input cancels (status 130). */
@@ -665,10 +686,14 @@ editor_main (int argc, char **argv)
   static char buffer[EDITOR_STANDALONE_SIZE];
   struct sigaction action;
 
-  (void)argv;
+  if (argc > 1 && (strcmp (argv[1], "--help") == 0 || strcmp (argv[1], "-h") == 0))
+    {
+      editor_usage (stdout);
+      return 0;
+    }
   if (argc > 1)
     {
-      fprintf (stderr, "usage: editor\n");
+      editor_usage (stderr);
       return 2;
     }
   if (!isatty (STDIN_FILENO))

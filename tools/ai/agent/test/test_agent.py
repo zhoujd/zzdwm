@@ -818,6 +818,28 @@ class AgentTests(unittest.TestCase):
         os.close(master)
         self.assertEqual(process.wait(timeout=5), 130)
 
+    def test_editor_help_lists_keys(self):
+        result = subprocess.run(
+            [EXECUTABLE, "editor", "--help"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stderr, "")
+        for keys in ("C-J", "C-A / C-E", "C-B / C-F", "C-P / C-N", "C-K", "C-W", "C-U"):
+            self.assertIn(keys, result.stdout)
+        self.assertIn("status 130", result.stdout)
+
+        rejected = subprocess.run(
+            [EXECUTABLE, "editor", "bogus"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        self.assertEqual(rejected.returncode, 2)
+        self.assertIn("Usage: ai editor", rejected.stderr)
+
     def test_tty_prompt_labels_are_colorized(self):
         endpoint = Endpoint([text_response("done")])
         self.addCleanup(endpoint.thread.join, timeout=2)
