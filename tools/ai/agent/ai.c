@@ -2108,7 +2108,12 @@ read_interactive_line (const char *prompt, char *buffer, size_t capacity)
         }
       from_tty = 1;
     }
-  print_formatted ("%s\n", prompt);
+  /* Terminal answers type on the prompt line like the multiline reader;
+     piped consumers (the TUI) match whole prompt lines instead. */
+  if (isatty (STDIN_FILENO) || (from_tty && isatty (STDOUT_FILENO)))
+    print_formatted ("%s", prompt);
+  else
+    print_formatted ("%s\n", prompt);
   if (fgets (buffer, (int)capacity, terminal) == NULL)
     {
       if (from_tty)
@@ -2145,7 +2150,10 @@ read_interactive_multiline (const char *prompt, const char *continuation_prompt,
       print_formatted ("error: interactive steering needs /dev/tty when stdin is piped\n");
       return -1;
     }
-  print_formatted ("%s\n", prompt);
+  if (isatty (STDOUT_FILENO))
+    print_formatted ("%s", prompt);
+  else
+    print_formatted ("%s\n", prompt);
   for (;;)
     {
       char line[MAX_LINE];

@@ -680,6 +680,61 @@ class AgentTests(unittest.TestCase):
         user = next(m for m in messages if m["role"] == "user")
         self.assertIn("first line\nsecond line", user["content"])
 
+    def test_tty_decision_prompts_take_answers_on_the_prompt_line(self):
+        endpoint = Endpoint([tool_response("true"), text_response("done")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        master, slave = pty.openpty()
+        process = subprocess.Popen(
+            [EXECUTABLE],
+            stdin=slave,
+            stdout=slave,
+            stderr=subprocess.STDOUT,
+            env={
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "8",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "NO_COLOR": "1",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        os.close(slave)
+
+        def cleanup():
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5)
+            os.close(master)
+
+        self.addCleanup(cleanup)
+
+        def read_until(marker, timeout):
+            data = b""
+            deadline = time.time() + timeout
+            while time.time() < deadline and marker not in data:
+                ready, _, _ = select.select([master], [], [], 0.05)
+                if not ready:
+                    continue
+                try:
+                    chunk = os.read(master, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                data += chunk
+            return data
+
+        output = read_until(b"[You]: ", 10)
+        os.write(master, b"run command\r")
+        output += read_until(b"[q]uit: ", 10)
+        os.write(master, b"n\r")
+        output += read_until(b"[AI Response]", 10)
+        os.write(master, b"/exit\r")
+        output += read_until(b"[bye]", 5)
+        self.assertIn(b"[You]: run command", output)
+        self.assertIn(b"[q]uit: n", output)
+        self.assertNotIn(b"[q]uit: \r\n", output)
+
     def test_live_steering_during_request_preserves_multiple_lines(self):
         result, endpoint = self.run_agent_later(
             [text_response("first"), text_response("done")],
