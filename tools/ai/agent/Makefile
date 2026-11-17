@@ -17,6 +17,11 @@ LDLIBS += $(shell pkg-config --libs ncursesw)
 # The \# escape keeps make from treating the include as a comment.
 NCURSES_PROBE = printf '%s\n' '\#include <ncurses.h>' 'int main(void) { return 0; }' | \
                   $(1) -x c -o /dev/null - >/dev/null 2>&1
+# One binary holds both the agent and the ncurses TUI, so any toolchain
+# used for it must link ncursesw too; probe the full static link because
+# headers alone do not guarantee the archives exist.
+STATIC_LINK_PROBE = printf '%s\n' '\#include <ncurses.h>' 'int main(void) { return 0; }' | \
+                      $(1) -x c $(LDFLAGS) -o /dev/null - $(LDLIBS) >/dev/null 2>&1
 
 release:
 	@if [ -n "$$INSIDE_DOCKER" ]; then \
@@ -26,17 +31,19 @@ release:
 		&& $(call NCURSES_PROBE,musl-gcc); then \
 		$(MAKE) clean; \
 		$(MAKE) CC=musl-gcc all; \
-	elif $(call NCURSES_PROBE,$(CC)); then \
+	elif $(call STATIC_LINK_PROBE,$(CC)); then \
 		$(MAKE) clean; \
 		if command -v musl-gcc >/dev/null 2>&1; then \
-			echo "Building ai with musl-gcc; ai-tui with $(CC) because musl-gcc lacks ncursesw"; \
-			$(MAKE) CC=musl-gcc $(TARGET); \
-		else \
-			$(MAKE) $(TARGET); \
+			echo "Building static ai with $(CC) because musl-gcc lacks ncursesw"; \
 		fi; \
-	else \
-		$(MAKE) clean; \
 		$(MAKE) $(TARGET); \
+	elif $(call NCURSES_PROBE,$(CC)); then \
+		echo "No toolchain links ncursesw statically; building dynamically linked ai" >&2; \
+		$(MAKE) clean; \
+		$(MAKE) $(TARGET) LDFLAGS='-s -Wl,-z,relro,-z,now,-z,noexecstack'; \
+	else \
+		echo "error: ai needs ncurses headers; install libncursesw-dev or run build.sh -p" >&2; \
+		exit 1; \
 	fi
 
 all: $(TARGET)
