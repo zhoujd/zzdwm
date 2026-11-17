@@ -707,10 +707,12 @@ editor_main (int argc, char **argv)
   sigaction (SIGINT, &action, NULL);
   sigaction (SIGTERM, &action, NULL);
   editor_interrupted = 0;
-  if (editor_read ("\n[Edit]: ", "[....]: ", buffer, sizeof (buffer)) < 0)
-    return 130;
-  if (editor_interrupted)
-    return 130;
+  if (editor_read ("\n[Edit]: ", "[....]: ", buffer, sizeof (buffer)) < 0
+      || editor_interrupted)
+    {
+      fprintf (stderr, "\nbye\n");
+      return 130;
+    }
   write_all (STDOUT_FILENO, buffer, strlen (buffer));
   write_all (STDOUT_FILENO, "\n", 1);
   return 0;
