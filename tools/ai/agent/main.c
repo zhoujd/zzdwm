@@ -42,11 +42,10 @@ main (int argc, char *argv[])
           return editor_main (argc - 1, argv + 1);
         }
     }
-  // Notify user of TUI and editor availability
+  // Notify user of TUI availability; --help lists the subcommands
   if (argc < 2)
     {
       printf ("Run `%s tui` to launch the terminal user interface\n", argv[0]);
-      printf ("Run `%s editor` to launch the standalone multiline editor\n", argv[0]);
     }
   return run_backend (argc, argv);
 }
