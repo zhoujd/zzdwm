@@ -120,7 +120,7 @@ static char api_key[MAX_KEY];
 static char model[MAX_MODEL] = DEFAULT_MODEL;
 static const char *model_override;
 static int api_timeout = 300;
-static int command_timeout = 120;
+static int command_timeout = 600;
 static const char *exec_prompt;
 static const char *workspace_directory;
 static char workspace_root[PATH_MAX];

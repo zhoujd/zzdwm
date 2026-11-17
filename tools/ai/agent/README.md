@@ -109,7 +109,7 @@ Configuration is read from the environment:
   overrides it for one run.
 * `AI_API_KEY` or `OPENAI_API_KEY`: optional bearer token.
 * `AI_TIMEOUT_SECONDS`: API timeout, 1--1800. Default: 300.
-* `AI_COMMAND_TIMEOUT_SECONDS`: shell timeout, 1--1800. Default: 120.
+* `AI_COMMAND_TIMEOUT_SECONDS`: shell timeout, 1--1800. Default: 600.
 * `AI_TOOL_ROUNDS`: maximum consecutive tool/model rounds per user task,
   1--64. Default: 64.
 
