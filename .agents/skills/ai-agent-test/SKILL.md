@@ -19,14 +19,17 @@ Use the `AI: ` prefix for AI agent commit subjects, for example:
 
 1. Keep implementation and generated output inside `tools/ai/agent` unless the
    user explicitly asks for integration elsewhere.
-2. Build the release artifact:
+2. Build the release artifact with the publish build:
 
    ```sh
-   tools/ai/agent/build.sh -r
+   ./tools/ai/agent/build.sh -p
    ```
 
-   The release builds with local toolchains; `build.sh -p` publishes via
-   `MUSL_IMG` or `zhoujd/alpine`.
+   The publish build compiles a stripped, statically linked musl binary in
+   the `zhoujd/alpine` Docker image (override with `MUSL_IMG`) and needs
+   Docker; run it from the repository root. `build.sh -r` is the
+   local-toolchain fallback when Docker is unavailable, not the release
+   path.
 
 3. Run the complete agent suite:
 
@@ -49,6 +52,11 @@ Use the `AI: ` prefix for AI agent commit subjects, for example:
    ```sh
    git diff --check
    ```
+
+6. After committing source changes, refresh the tracked binary: rerun
+   `./tools/ai/agent/build.sh -p`, copy `tools/ai/agent/ai` over
+   `libexec/ai/ai`, and commit it as `Update libexec/ai/ai`. Never commit
+   `tools/ai/agent/ai` itself.
 
 ## Environment and Endpoint Checks
 
