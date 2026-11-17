@@ -9,6 +9,7 @@
 .Sh SYNOPSIS
 .
 .Nm
+.Op Fl v
 ARGS...
 .
 .
@@ -27,6 +28,14 @@ the file modification time remains unchanged,
 .Nm
 does not output anything.  Otherwise, it outputs the content of the modified temporary
 file to stdout.
+.Pp
+.
+.Sh OPTIONS
+.
+.Bl -tag -width 8
+.It Fl v , Fl Fl version
+Print version information and exit.
+.El
 .Pp
 All command line arguments are forwarded verbatim.
 .Xr dvtm 1

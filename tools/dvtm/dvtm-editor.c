@@ -38,6 +38,11 @@ static void error(const char *msg, ...) {
 
 int main(int argc, char *argv[])
 {
+	if (argc == 2 && (!strcmp(argv[1], "-v") || !strcmp(argv[1], "--version"))) {
+		puts("dvtm-editor" " " VERSION " " DATE " " REV);
+		return EXIT_SUCCESS;
+	}
+
 	int exit_status = EXIT_FAILURE, tmp_write = -1;
 
 	const char *editor = getenv("DVTM_EDITOR");
