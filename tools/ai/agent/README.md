@@ -22,6 +22,16 @@ a keyboard input box. Pass `-C dir` to the TUI to start in a scoped workspace,
 `-f <file>` to preload context into the first prompt, and `-m <name>` to
 override `AI_MODEL`.
 
+Run the same multiline editor standalone with:
+
+```sh
+tools/ai/agent/ai editor
+```
+
+Enter prints the edited text to standard output and exits with status 0;
+`C-C`, `C-D` on an empty input, or EOF cancels with status 130, so it can
+back shell prompts and capture scripts. An `ai-editor` symlink works too.
+
 Press `PageUp`/`PageDown` to scroll the conversation history.
 
 Run the integration and binary checks with:

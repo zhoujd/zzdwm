@@ -680,6 +680,196 @@ class AgentTests(unittest.TestCase):
         user = next(m for m in messages if m["role"] == "user")
         self.assertIn("first line\nsecond line", user["content"])
 
+    def test_tty_backspace_removes_full_runes(self):
+        endpoint = Endpoint([text_response("done")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        master, slave = pty.openpty()
+        process = subprocess.Popen(
+            [EXECUTABLE],
+            stdin=slave,
+            stdout=slave,
+            stderr=subprocess.STDOUT,
+            env={
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "8",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "NO_COLOR": "1",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        os.close(slave)
+
+        def cleanup():
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5)
+            os.close(master)
+
+        self.addCleanup(cleanup)
+
+        def read_until(marker, timeout):
+            data = b""
+            deadline = time.time() + timeout
+            while time.time() < deadline and marker not in data:
+                ready, _, _ = select.select([master], [], [], 0.05)
+                if not ready:
+                    continue
+                try:
+                    chunk = os.read(master, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                data += chunk
+            return data
+
+        output = read_until(b"[You]: ", 10)
+        os.write(master, "你好".encode())
+        output += read_until("你好".encode(), 5)
+        os.write(master, b"\x7f")
+        os.write(master, b"\r")
+        output += read_until(b"[AI Response]", 10)
+        os.write(master, b"/exit\r")
+        read_until(b"[bye]", 5)
+        messages = endpoint.requests[0]["messages"]
+        user = next(m for m in messages if m["role"] == "user")
+        self.assertEqual(user["content"], "你")
+
+    def test_editor_command_prints_edited_text(self):
+        master, slave = pty.openpty()
+        process = subprocess.Popen(
+            [EXECUTABLE, "editor"],
+            stdin=slave,
+            stdout=slave,
+            stderr=subprocess.STDOUT,
+            env={"PATH": os.environ["PATH"]},
+        )
+        os.close(slave)
+
+        def cleanup():
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5)
+            try:
+                os.close(master)
+            except OSError:
+                pass
+
+        self.addCleanup(cleanup)
+
+        def read_until(marker, timeout):
+            data = b""
+            deadline = time.time() + timeout
+            while time.time() < deadline and marker not in data:
+                ready, _, _ = select.select([master], [], [], 0.05)
+                if not ready:
+                    continue
+                try:
+                    chunk = os.read(master, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                data += chunk
+            return data
+
+        output = read_until(b"[Edit]: ", 10)
+        os.write(master, "你好".encode())
+        output += read_until("你好".encode(), 5)
+        os.write(master, b"\x7f")
+        os.write(master, b"\r")
+        deadline = time.time() + 5
+        while time.time() < deadline and process.poll() is None:
+            output += read_until(b"\n", 0.2)
+        self.assertEqual(process.poll(), 0)
+        self.assertEqual(output.count("好".encode()), 1)
+        self.assertTrue(output.rstrip().endswith("你".encode()))
+
+    def test_editor_command_eof_cancels_with_status_130(self):
+        master, slave = pty.openpty()
+        process = subprocess.Popen(
+            [EXECUTABLE, "editor"],
+            stdin=slave,
+            stdout=slave,
+            stderr=subprocess.STDOUT,
+            env={"PATH": os.environ["PATH"]},
+        )
+        os.close(slave)
+        self.addCleanup(process.wait, timeout=5)
+
+        def read_until(marker, timeout):
+            data = b""
+            deadline = time.time() + timeout
+            while time.time() < deadline and marker not in data:
+                ready, _, _ = select.select([master], [], [], 0.05)
+                if not ready:
+                    continue
+                try:
+                    chunk = os.read(master, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                data += chunk
+            return data
+
+        read_until(b"[Edit]: ", 10)
+        os.close(master)
+        self.assertEqual(process.wait(timeout=5), 130)
+
+    def test_tty_prompt_labels_are_colorized(self):
+        endpoint = Endpoint([text_response("done")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        master, slave = pty.openpty()
+        process = subprocess.Popen(
+            [EXECUTABLE],
+            stdin=slave,
+            stdout=slave,
+            stderr=subprocess.STDOUT,
+            env={
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "8",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "TERM": "xterm",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        os.close(slave)
+
+        def cleanup():
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5)
+            os.close(master)
+
+        self.addCleanup(cleanup)
+
+        def read_until(marker, timeout):
+            data = b""
+            deadline = time.time() + timeout
+            while time.time() < deadline and marker not in data:
+                ready, _, _ = select.select([master], [], [], 0.05)
+                if not ready:
+                    continue
+                try:
+                    chunk = os.read(master, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                data += chunk
+            return data
+
+        output = read_until(b"[You]: ", 10)
+        self.assertIn(b"\x1b[1;32m", output)
+        os.write(master, b"hi\r")
+        output += read_until(b"[AI Response]", 10)
+        self.assertIn(b"\x1b[1;36m", output)
+        os.write(master, b"/exit\r")
+        read_until(b"[bye]", 5)
+
     def test_tty_decision_prompts_take_answers_on_the_prompt_line(self):
         endpoint = Endpoint([tool_response("true"), text_response("done")])
         self.addCleanup(endpoint.thread.join, timeout=2)
@@ -1543,6 +1733,67 @@ class AgentTests(unittest.TestCase):
         self.assertTrue(endpoint.requests, "TUI did not reach the endpoint")
         content = endpoint.requests[0]["messages"][-1]["content"]
         self.assertEqual(content, "one two\nthree four")
+
+    def test_tui_control_p_lands_on_rune_boundaries(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for TUI input editing")
+
+        def cursor_position(server):
+            result = subprocess.run(
+                ["tmux", "display-message", "-p", "-t", server, "#{cursor_y} #{cursor_x}"],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            ).stdout
+            row, column = result.split()
+            return int(row), int(column)
+
+        endpoint = Endpoint([text_response("done")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        server = f"ai-tui-rune-{os.getpid()}"
+        subprocess.run(["tmux", "kill-server"], check=False)
+        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "3",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+            }
+        )
+        subprocess.run(
+            [
+                "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "100", "-y", "24",
+                "-n", server, TUI_EXECUTABLE, "tui",
+            ],
+            env=environment,
+            check=True,
+            timeout=5,
+        )
+        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+        time.sleep(0.5)
+        subprocess.run(["tmux", "send-keys", "-t", server, "你好"], check=True)
+        subprocess.run(["tmux", "send-keys", "-t", server, "C-j"], check=True)
+        subprocess.run(["tmux", "send-keys", "-t", server, "abcdef"], check=True)
+        time.sleep(0.3)
+        self.assertEqual(cursor_position(server), (21, 7))
+        subprocess.run(["tmux", "send-keys", "-t", server, "C-p"], check=True)
+        time.sleep(0.3)
+        # Byte column 6 of "你好" is display column 4: the cursor sits at
+        # the end of the second rune, not past it or inside it.
+        self.assertEqual(cursor_position(server), (20, 5))
+        subprocess.run(["tmux", "send-keys", "-t", server, "z"], check=True)
+        subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
+        deadline = time.monotonic() + 8
+        while time.monotonic() < deadline:
+            if endpoint.requests:
+                break
+            time.sleep(0.1)
+        self.assertTrue(endpoint.requests, "TUI did not reach the endpoint")
+        content = endpoint.requests[0]["messages"][-1]["content"]
+        self.assertEqual(content, "你好z\nabcdef")
 
     def test_tui_command_execution_switches_input_to_prompt(self):
         if shutil.which("tmux") is None:

@@ -1,3 +1,4 @@
+#include <locale.h>
 #include <stdio.h>
 #include <string.h>
 #include <libgen.h>
@@ -5,6 +6,7 @@
 // Extern declarations
 extern int ai_main (int argc, char **argv);
 extern int tui_main (int argc, char **argv);
+extern int editor_main (int argc, char **argv);
 
 // Forward declarations
 static int run_backend (int argc, char *argv[]);
@@ -16,10 +18,17 @@ main (int argc, char *argv[])
   // Extract the base executable filename from argv[0]
   char *prog_name = basename (argv[0]);
 
+  // Wide-character widths (CJK input editing) need the environment locale
+  setlocale (LC_ALL, "");
+
   // Symlink Name Detection
   if (strcmp (prog_name, "ai-tui") == 0)
     {
       return run_tui (argc, argv);
+    }
+  if (strcmp (prog_name, "ai-editor") == 0)
+    {
+      return editor_main (argc, argv);
     }
   // Explicit CLI Subcommand Fallback
   if (argc > 1)
@@ -28,11 +37,16 @@ main (int argc, char *argv[])
         {
           return run_tui (argc - 1, argv + 1);
         }
+      if (strcmp (argv[1], "editor") == 0)
+        {
+          return editor_main (argc - 1, argv + 1);
+        }
     }
-  // Notify user of TUI availability
+  // Notify user of TUI and editor availability
   if (argc < 2)
     {
       printf ("Run `%s tui` to launch the terminal user interface\n", argv[0]);
+      printf ("Run `%s editor` to launch the standalone multiline editor\n", argv[0]);
     }
   return run_backend (argc, argv);
 }

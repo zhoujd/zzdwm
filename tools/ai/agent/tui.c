@@ -19,6 +19,8 @@
 
 #include "agent.h"
 
+#include "editor.h"
+
 #include "version.h"
 
 #define MAX_INPUT 8192
@@ -61,9 +63,7 @@ typedef struct
 
 typedef struct
 {
-  char text[MAX_INPUT];
-  size_t length;
-  size_t cursor;
+  EditorBuffer editor;
   unsigned char pending[UTFmax];
   size_t pending_length;
 } InputBuffer;
@@ -621,28 +621,8 @@ display_agent_line (const char *line)
   handle_agent_prompt (line);
 }
 
-static int
-measure_input_width (const char *buffer, size_t length)
-{
-  size_t index = 0;
-  int width = 0;
-
-  while (index < length)
-    {
-      Rune rune;
-      int rune_length = chartorune (&rune, (char *)buffer + index);
-      int rune_width = wcwidth ((wchar_t)rune);
-
-      if (rune_width < 0)
-        rune_width = 1;
-      width += rune_width;
-      index += (size_t)(rune_length > 0 ? rune_length : 1);
-    }
-  return width;
-}
-
 static void
-draw_input (const InputBuffer *input)
+draw_input (const EditorBuffer *input)
 {
   size_t line_start = 0;
   size_t cursor_line_start = 0;
@@ -695,7 +675,7 @@ draw_input (const InputBuffer *input)
       if (visible_lines + first_visible_line == cursor_row)
         {
           cursor_visible_row = visible_lines;
-          cursor_column = measure_input_width (input->text + cursor_line_start, input->cursor - cursor_line_start);
+          cursor_column = editor_span_width (input->text + cursor_line_start, input->cursor - cursor_line_start);
 
           if (cursor_column > terminal_width - 3)
             cursor_column = terminal_width - 3;
@@ -922,170 +902,6 @@ read_agent_output (int agent_stdout, int *agent_exited)
   refresh_content_panes ();
 }
 
-static size_t
-previous_rune_start (const InputBuffer *input, size_t cursor)
-{
-  size_t index = 0;
-  size_t last_start = 0;
-
-  while (index < cursor)
-    {
-      Rune rune;
-      int rune_length = chartorune (&rune, (char *)input->text + index);
-
-      last_start = index;
-      index += (size_t)(rune_length > 0 ? rune_length : 1);
-    }
-  return last_start;
-}
-
-static size_t
-input_line_start (const InputBuffer *input, size_t position)
-{
-  size_t start = position;
-
-  while (start > 0 && input->text[start - 1] != '\n')
-    start--;
-  return start;
-}
-
-static size_t
-input_line_end (const InputBuffer *input, size_t position)
-{
-  size_t end = position;
-
-  while (end < input->length && input->text[end] != '\n')
-    end++;
-  return end;
-}
-
-static void
-move_cursor_backward (InputBuffer *input)
-{
-  if (input->cursor != 0)
-    input->cursor = previous_rune_start (input, input->cursor);
-}
-
-static void
-move_cursor_forward (InputBuffer *input)
-{
-  if (input->cursor < input->length)
-    {
-      Rune rune;
-      int rune_length = chartorune (&rune, input->text + input->cursor);
-
-      input->cursor += (size_t)(rune_length > 0 ? rune_length : 1);
-    }
-}
-
-static void
-move_cursor_up (InputBuffer *input)
-{
-  size_t start;
-  size_t end;
-  size_t target;
-
-  if (input_line_start (input, input->cursor) == 0)
-    return;
-  end = input_line_start (input, input->cursor) - 1;
-  start = input_line_start (input, end);
-  target = input->cursor - end - 1;
-  if (target > end - start)
-    target = end - start;
-  input->cursor = start + target;
-}
-
-static void
-move_cursor_down (InputBuffer *input)
-{
-  size_t end = input_line_end (input, input->cursor);
-  size_t next_end;
-  size_t target;
-
-  if (end >= input->length)
-    return;
-  next_end = input_line_end (input, end + 1);
-  target = input->cursor - input_line_start (input, input->cursor);
-  if (target > next_end - end - 1)
-    target = next_end - end - 1;
-  input->cursor = end + 1 + target;
-}
-
-static void
-insert_input_rune (InputBuffer *input, const unsigned char *bytes, size_t length)
-{
-  if (input->length + length >= sizeof (input->text))
-    {
-      beep ();
-      return;
-    }
-  memmove (input->text + input->cursor + length, input->text + input->cursor, input->length - input->cursor);
-  memcpy (input->text + input->cursor, bytes, length);
-  input->cursor += length;
-  input->length += length;
-  input->text[input->length] = 0;
-}
-
-static void
-delete_input_backward (InputBuffer *input)
-{
-  size_t start;
-
-  if (input->pending_length != 0)
-    {
-      input->pending_length = 0;
-      return;
-    }
-  if (input->cursor == 0)
-    return;
-  start = previous_rune_start (input, input->cursor);
-  memmove (input->text + start, input->text + input->cursor, input->length - input->cursor);
-  input->length -= input->cursor - start;
-  input->cursor = start;
-  input->text[input->length] = 0;
-}
-
-static void
-delete_input_forward (InputBuffer *input)
-{
-  size_t next;
-  size_t end;
-  InputBuffer temporary;
-
-  if (input->cursor >= input->length)
-    return;
-  next = input->cursor;
-  temporary = *input;
-  move_cursor_forward (&temporary);
-  end = temporary.cursor;
-  memmove (input->text + next, input->text + end, input->length - end);
-  input->length -= end - next;
-  input->cursor = next;
-  input->text[input->length] = 0;
-}
-
-static void
-delete_input_word (InputBuffer *input)
-{
-  size_t start;
-  size_t line_start = input_line_start (input, input->cursor);
-
-  if (input->pending_length != 0)
-    {
-      input->pending_length = 0;
-      return;
-    }
-  start = input->cursor;
-  while (start > line_start && input->text[start - 1] == ' ')
-    start = previous_rune_start (input, start);
-  while (start > line_start && input->text[start - 1] != ' ')
-    start = previous_rune_start (input, start);
-  memmove (input->text + start, input->text + input->cursor, input->length - input->cursor);
-  input->length -= input->cursor - start;
-  input->cursor = start;
-  input->text[input->length] = 0;
-}
-
 static const char *
 agent_executable_path (char *buffer, size_t capacity)
 {
@@ -1106,7 +922,8 @@ int
 tui_main (int argc, char **argv)
 {
   char executable_path[4096];
-  InputBuffer input = { { 0 }, 0, 0, { 0 }, 0 };
+  static char input_text[MAX_INPUT];
+  InputBuffer input = { { NULL, 0, 0, 0 }, { 0 }, 0 };
   struct sigaction action;
   const char *agent_path;
   int agent_stdin = -1;
@@ -1116,6 +933,7 @@ tui_main (int argc, char **argv)
 
   if (parse_arguments (argc, argv) < 0)
     return 2;
+  editor_init (&input.editor, input_text, sizeof (input_text));
   agent_path = agent_executable_path (executable_path, sizeof (executable_path));
   if (agent_path == NULL)
     {
@@ -1146,7 +964,7 @@ tui_main (int argc, char **argv)
   wtimeout (input_window, 100);
   write_line (PANE_THOUGHTS, "F1 quit; F2/F3 max; Tab pane; PgUp/Dn scroll");
   refresh_content_panes ();
-  draw_input (&input);
+  draw_input (&input.editor);
   while (!interrupted && !agent_exited)
     {
       int key = wgetch (input_window);
@@ -1162,7 +980,7 @@ tui_main (int argc, char **argv)
           if (terminal_height < MIN_TERMINAL_HEIGHT || terminal_width < MIN_TERMINAL_WIDTH)
             break;
           redraw_layout ();
-          draw_input (&input);
+          draw_input (&input.editor);
           continue;
         }
       if (key == '\t')
@@ -1172,7 +990,7 @@ tui_main (int argc, char **argv)
           panes[PANE_THOUGHTS].view_offset = 0;
           panes[PANE_COMMANDS].view_offset = 0;
           redraw_layout ();
-          draw_input (&input);
+          draw_input (&input.editor);
           continue;
         }
       if (key == KEY_F (2))
@@ -1180,7 +998,7 @@ tui_main (int argc, char **argv)
           selected_pane = PANE_THOUGHTS;
           pane_layout = pane_layout == PANE_LAYOUT_MAX_THOUGHTS ? PANE_LAYOUT_EQUAL : PANE_LAYOUT_MAX_THOUGHTS;
           redraw_layout ();
-          draw_input (&input);
+          draw_input (&input.editor);
           continue;
         }
       if (key == KEY_F (3))
@@ -1188,7 +1006,7 @@ tui_main (int argc, char **argv)
           selected_pane = PANE_COMMANDS;
           pane_layout = pane_layout == PANE_LAYOUT_MAX_COMMANDS ? PANE_LAYOUT_EQUAL : PANE_LAYOUT_MAX_COMMANDS;
           redraw_layout ();
-          draw_input (&input);
+          draw_input (&input.editor);
           continue;
         }
       if (key == KEY_PPAGE)
@@ -1202,43 +1020,49 @@ tui_main (int argc, char **argv)
           continue;
         }
       if (key == 1 || key == KEY_HOME)
-        input.cursor = input_line_start (&input, input.cursor);
+        input.editor.cursor = editor_line_start (&input.editor, input.editor.cursor);
       else if (key == 5 || key == KEY_END)
-        input.cursor = input_line_end (&input, input.cursor);
+        input.editor.cursor = editor_line_end (&input.editor, input.editor.cursor);
       else if (key == 2 || key == KEY_LEFT)
-        move_cursor_backward (&input);
+        editor_move_backward (&input.editor);
       else if (key == 6 || key == KEY_RIGHT)
-        move_cursor_forward (&input);
+        editor_move_forward (&input.editor);
       else if (key == 16 || key == KEY_UP)
-        move_cursor_up (&input);
+        editor_move_line_up (&input.editor);
       else if (key == 14 || key == KEY_DOWN)
-        move_cursor_down (&input);
+        editor_move_line_down (&input.editor);
       else if (key == KEY_BACKSPACE || key == 127 || key == 8)
-        delete_input_backward (&input);
+        {
+          if (input.pending_length != 0)
+            input.pending_length = 0;
+          else
+            editor_delete_backward (&input.editor);
+        }
       else if (key == 4)
-        delete_input_forward (&input);
+        editor_delete_forward (&input.editor);
       else if (key == 21)
         {
-          input.length = 0;
-          input.cursor = 0;
+          editor_clear (&input.editor);
           input.pending_length = 0;
-          input.text[input.length] = 0;
         }
       else if (key == 11)
-        {
-          input.length = input_line_end (&input, input.cursor);
-          input.text[input.length] = 0;
-        }
+        editor_kill_line_end (&input.editor);
       else if (key == 23)
-        delete_input_word (&input);
+        {
+          if (input.pending_length != 0)
+            input.pending_length = 0;
+          else
+            editor_delete_word (&input.editor);
+        }
       else if (key == 10 && input_mode == INPUT_MULTILINE)
-        insert_input_rune (&input, (const unsigned char *)"\n", 1);
+        {
+          if (editor_insert (&input.editor, "\n", 1) < 0)
+            beep ();
+        }
       else if (key == '\n' || key == KEY_ENTER || key == 13)
         {
-          input.text[input.length] = 0;
-          submit_input (agent_stdin, input.text);
-          input.length = 0;
-          input.cursor = 0;
+          submit_input (agent_stdin, input.editor.text);
+          editor_clear (&input.editor);
           input.pending_length = 0;
         }
       else if (key >= 32 && key != 127)
@@ -1247,17 +1071,18 @@ tui_main (int argc, char **argv)
             {
               beep ();
               input.pending_length = 0;
-              draw_input (&input);
+              draw_input (&input.editor);
               continue;
             }
           input.pending[input.pending_length++] = (unsigned char)key;
           if (fullrune ((char *)input.pending, (int)input.pending_length))
             {
-              insert_input_rune (&input, input.pending, input.pending_length);
+              if (editor_insert (&input.editor, (const char *)input.pending, input.pending_length) < 0)
+                beep ();
               input.pending_length = 0;
             }
         }
-      draw_input (&input);
+      draw_input (&input.editor);
     }
   if (agent_pid > 0)
     {
