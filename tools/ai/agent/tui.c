@@ -189,7 +189,8 @@ usage (FILE *stream)
                    "F2/F3                maximize pane 1/2\n"
                    "Tab                  switch pane\n"
                    "PgUp/PgDn            scroll\n"
-                   "C-A/E/B/F/D/K/U      edit\n"
+                   "C-A/E/B/F/D/K/U/W    edit\n"
+                   "C-P/N, Up/Dn         move lines\n"
                    "C-J                  newline\n"
                    "Enter                submit\n"
                    "Ctrl+C               cancel\n"
@@ -650,6 +651,8 @@ draw_input (const InputBuffer *input)
   size_t logical_line = 0;
   size_t index;
   size_t cursor_row = 0;
+  size_t cursor_visible_row = (size_t)-1;
+  int cursor_column = 0;
   size_t visible_height = (size_t)(BOTTOM_HEIGHT - 2);
 
   for (index = 0; index <= input->length; index++)
@@ -691,19 +694,23 @@ draw_input (const InputBuffer *input)
         }
       if (visible_lines + first_visible_line == cursor_row)
         {
-          int cursor_column = measure_input_width (input->text + cursor_line_start, input->cursor - cursor_line_start);
+          cursor_visible_row = visible_lines;
+          cursor_column = measure_input_width (input->text + cursor_line_start, input->cursor - cursor_line_start);
 
           if (cursor_column > terminal_width - 3)
             cursor_column = terminal_width - 3;
-          wmove (input_window, (int)visible_lines + 1, cursor_column + 1);
         }
       visible_lines++;
       if (end < input->length)
         end++;
       index = end;
     }
+  /* Place the cursor after the line loop: mvwaddnstr resets the window
+     cursor, so an in-loop wmove would only stick on the last line. */
   if (input->length == 0)
     wmove (input_window, 1, 1);
+  else if (cursor_visible_row != (size_t)-1)
+    wmove (input_window, (int)cursor_visible_row + 1, cursor_column + 1);
   wrefresh (input_window);
 }
 
@@ -1057,6 +1064,28 @@ delete_input_forward (InputBuffer *input)
   input->text[input->length] = 0;
 }
 
+static void
+delete_input_word (InputBuffer *input)
+{
+  size_t start;
+  size_t line_start = input_line_start (input, input->cursor);
+
+  if (input->pending_length != 0)
+    {
+      input->pending_length = 0;
+      return;
+    }
+  start = input->cursor;
+  while (start > line_start && input->text[start - 1] == ' ')
+    start = previous_rune_start (input, start);
+  while (start > line_start && input->text[start - 1] != ' ')
+    start = previous_rune_start (input, start);
+  memmove (input->text + start, input->text + input->cursor, input->length - input->cursor);
+  input->length -= input->cursor - start;
+  input->cursor = start;
+  input->text[input->length] = 0;
+}
+
 static const char *
 agent_executable_path (char *buffer, size_t capacity)
 {
@@ -1200,6 +1229,8 @@ tui_main (int argc, char **argv)
           input.length = input_line_end (&input, input.cursor);
           input.text[input.length] = 0;
         }
+      else if (key == 23)
+        delete_input_word (&input);
       else if (key == 10 && input_mode == INPUT_MULTILINE)
         insert_input_rune (&input, (const unsigned char *)"\n", 1);
       else if (key == '\n' || key == KEY_ENTER || key == 13)

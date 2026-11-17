@@ -813,6 +813,205 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(contents[1], "ab")
         self.assertEqual(contents[2], "ok")
 
+    def test_tty_control_u_clears_all_multiline_input(self):
+        endpoint = Endpoint([text_response("done")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        master, slave = pty.openpty()
+        process = subprocess.Popen(
+            [EXECUTABLE],
+            stdin=slave,
+            stdout=slave,
+            stderr=subprocess.STDOUT,
+            env={
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "8",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "NO_COLOR": "1",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        os.close(slave)
+
+        def cleanup():
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5)
+            os.close(master)
+
+        self.addCleanup(cleanup)
+
+        def read_until(marker, timeout):
+            data = b""
+            deadline = time.time() + timeout
+            while time.time() < deadline and marker not in data:
+                ready, _, _ = select.select([master], [], [], 0.05)
+                if not ready:
+                    continue
+                try:
+                    chunk = os.read(master, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                data += chunk
+            return data
+
+        output = read_until(b"[You]: ", 10)
+        os.write(master, b"first")
+        os.write(master, b"\n")            # C-J starts a second line
+        os.write(master, b"second")
+        os.write(master, b"\x15")          # C-U clears every line like the TUI
+        os.write(master, b"fresh")
+        os.write(master, b"\r")
+        output += read_until(b"[You]: ", 10)
+        os.write(master, b"/exit\r")
+        output += read_until(b"[bye]", 5)
+        self.assertIn(b"\x1b[A", output)   # continuation lines erased via cursor-up
+        content = next(
+            m["content"] for m in reversed(endpoint.requests[0]["messages"])
+            if m["role"] == "user"
+        )
+        self.assertEqual(content, "fresh")
+
+    def test_tty_control_p_n_move_between_input_lines(self):
+        endpoint = Endpoint([text_response("one"), text_response("two")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        master, slave = pty.openpty()
+        process = subprocess.Popen(
+            [EXECUTABLE],
+            stdin=slave,
+            stdout=slave,
+            stderr=subprocess.STDOUT,
+            env={
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "8",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "NO_COLOR": "1",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        os.close(slave)
+
+        def cleanup():
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5)
+            os.close(master)
+
+        self.addCleanup(cleanup)
+
+        def read_until(marker, timeout):
+            data = b""
+            deadline = time.time() + timeout
+            while time.time() < deadline and marker not in data:
+                ready, _, _ = select.select([master], [], [], 0.05)
+                if not ready:
+                    continue
+                try:
+                    chunk = os.read(master, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                data += chunk
+            return data
+
+        output = read_until(b"[You]: ", 10)
+        os.write(master, b"one two")
+        os.write(master, b"\n")            # C-J starts a second line
+        os.write(master, b"three four")
+        os.write(master, b"\x10")          # C-P up to line one (column clamps)
+        os.write(master, b"\x7f")          # backspace trims "one two" -> "one tw"
+        os.write(master, b"\x0e")          # C-N down, same column
+        os.write(master, b"\x05")          # C-E to the end of the second line
+        os.write(master, b"!")
+        os.write(master, b"\r")
+        # C-P reprints the "[You]: " prompt, so wait for the response marker.
+        output += read_until(b"[AI Response]", 10)
+        os.write(master, b"aa")
+        os.write(master, b"\n")            # C-J
+        os.write(master, b"bb")
+        os.write(master, b"\x10")          # C-P up, then C-J appends below "bb"
+        os.write(master, b"\n")
+        os.write(master, b"cc")
+        os.write(master, b"\r")
+        output += read_until(b"[AI Response]", 10)
+        os.write(master, b"/exit\r")
+        output += read_until(b"[bye]", 5)
+        self.assertIn(b"\x1b[A", output)   # C-P stepped up a row
+        self.assertIn(b"\x1b[B", output)   # C-N / C-J stepped down a row
+        contents = [
+            next(
+                m["content"] for m in reversed(endpoint.requests[index]["messages"])
+                if m["role"] == "user"
+            )
+            for index in range(2)
+        ]
+        self.assertEqual(contents[0], "one tw\nthree four!")
+        self.assertEqual(contents[1], "aa\nbb\ncc")
+
+    def test_tty_prompt_redraw_keeps_the_screen_clean(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for tty rendering")
+
+        endpoint = Endpoint([text_response("ok")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        server = f"ai-tty-clean-{os.getpid()}"
+        subprocess.run(["tmux", "kill-server"], check=False)
+        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "5",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "NO_COLOR": "1",
+            }
+        )
+        subprocess.run(
+            [
+                "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "100", "-y", "24",
+                "-n", server, EXECUTABLE,
+            ],
+            env=environment,
+            check=True,
+            timeout=5,
+        )
+        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+
+        def pane():
+            time.sleep(0.3)
+            return subprocess.run(
+                ["tmux", "capture-pane", "-p", "-t", server],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            ).stdout
+
+        time.sleep(1.0)
+        subprocess.run(["tmux", "send-keys", "-t", server, "one two"], check=True)
+        subprocess.run(["tmux", "send-keys", "-t", server, "C-j"], check=True)
+        subprocess.run(["tmux", "send-keys", "-t", server, "three four"], check=True)
+        screen = pane()
+        self.assertEqual(screen.count("[You]:"), 1)
+        self.assertIn("[...]: three four", screen)
+        subprocess.run(["tmux", "send-keys", "-t", server, "C-p"], check=True)
+        screen = pane()
+        self.assertEqual(screen.count("[You]:"), 1)  # the reprint stays on its row
+        self.assertIn("[...]: three four", screen)    # the second row is untouched
+        subprocess.run(["tmux", "send-keys", "-t", server, "C-u"], check=True)
+        screen = pane()
+        self.assertEqual(screen.count("[You]:"), 1)
+        self.assertNotIn("[...]:", screen)            # continuation row erased too
+        subprocess.run(["tmux", "send-keys", "-t", server, "ok"], check=True)
+        subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
+        time.sleep(2)
+        self.assertIn("ok", pane())
+
     def test_live_steering_during_request_preserves_multiple_lines(self):
         result, endpoint = self.run_agent_later(
             [text_response("first"), text_response("done")],
@@ -1237,6 +1436,113 @@ class AgentTests(unittest.TestCase):
         self.assertIn("time?", output)
         self.assertIn("done", output)
         self.assertNotIn("time?", output[output.rfind("3. Prompt"):])
+
+    def test_tui_control_w_kills_the_previous_word(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for TUI input editing")
+
+        endpoint = Endpoint([text_response("done")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        server = f"ai-tui-kill-word-{os.getpid()}"
+        subprocess.run(["tmux", "kill-server"], check=False)
+        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "3",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+            }
+        )
+        subprocess.run(
+            [
+                "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "100", "-y", "24",
+                "-n", server, TUI_EXECUTABLE, "tui",
+            ],
+            env=environment,
+            check=True,
+            timeout=5,
+        )
+        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+        time.sleep(0.5)
+        subprocess.run(["tmux", "send-keys", "-t", server, "one two three"], check=True)
+        subprocess.run(["tmux", "send-keys", "-t", server, "C-w"], check=True)
+        subprocess.run(["tmux", "send-keys", "-t", server, "C-w"], check=True)
+        subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
+        deadline = time.monotonic() + 8
+        while time.monotonic() < deadline:
+            if endpoint.requests:
+                break
+            time.sleep(0.1)
+        self.assertTrue(endpoint.requests, "TUI did not reach the endpoint")
+        content = endpoint.requests[0]["messages"][-1]["content"]
+        self.assertEqual(content, "one ")
+
+    def test_tui_control_p_n_move_the_visible_cursor(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for TUI input editing")
+
+        def cursor_position(server):
+            result = subprocess.run(
+                ["tmux", "display-message", "-p", "-t", server, "#{cursor_y} #{cursor_x}"],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            ).stdout
+            row, column = result.split()
+            return int(row), int(column)
+
+        endpoint = Endpoint([text_response("done")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        server = f"ai-tui-cursor-{os.getpid()}"
+        subprocess.run(["tmux", "kill-server"], check=False)
+        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "3",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+            }
+        )
+        subprocess.run(
+            [
+                "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "100", "-y", "24",
+                "-n", server, TUI_EXECUTABLE, "tui",
+            ],
+            env=environment,
+            check=True,
+            timeout=5,
+        )
+        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+        time.sleep(0.5)
+        subprocess.run(["tmux", "send-keys", "-t", server, "one two"], check=True)
+        subprocess.run(["tmux", "send-keys", "-t", server, "C-j"], check=True)
+        subprocess.run(["tmux", "send-keys", "-t", server, "three four"], check=True)
+        time.sleep(0.3)
+        # Bottom window: row 19 is the border, the input lines follow.
+        self.assertEqual(cursor_position(server), (21, 11))
+        subprocess.run(["tmux", "send-keys", "-t", server, "C-p"], check=True)
+        time.sleep(0.3)
+        self.assertEqual(cursor_position(server), (20, 8))
+        subprocess.run(["tmux", "send-keys", "-t", server, "C-p"], check=True)
+        time.sleep(0.3)
+        self.assertEqual(cursor_position(server), (20, 8))
+        subprocess.run(["tmux", "send-keys", "-t", server, "C-n"], check=True)
+        time.sleep(0.3)
+        self.assertEqual(cursor_position(server), (21, 8))
+        subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
+        deadline = time.monotonic() + 8
+        while time.monotonic() < deadline:
+            if endpoint.requests:
+                break
+            time.sleep(0.1)
+        self.assertTrue(endpoint.requests, "TUI did not reach the endpoint")
+        content = endpoint.requests[0]["messages"][-1]["content"]
+        self.assertEqual(content, "one two\nthree four")
 
     def test_tui_command_execution_switches_input_to_prompt(self):
         if shutil.which("tmux") is None:

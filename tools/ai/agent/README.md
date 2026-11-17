@@ -134,11 +134,11 @@ steering typed during a command is sent with the command result before the next
 request. Live steering cannot alter a request already submitted, but it can
 guide the next turn.
 
-On a terminal, the interactive editor takes multiline input with `C-J` for a
-newline and Enter to submit, and edits the current line with the Emacs-style
-keys `C-A`/`C-E` (line ends), `C-B`/`C-F` (char moves), backspace/`C-D`
-(deletes), and `C-K`/`C-U`/`C-W` (kill to line end, line start, or word
-start). With piped input (and in the TUI, which drives
+In the TUI and on a terminal, the interactive editor takes multiline input
+with `C-J` for a newline and Enter to submit, and edits with the Emacs-style
+keys `C-A`/`C-E` (line ends), `C-B`/`C-F` (char moves), `C-P`/`C-N`
+(line moves, as Up/Down), backspace/`C-D` (deletes), `C-K`/`C-W` (kill to
+line end or word start), and `C-U`, which clears every line of the input. With piped input (and in the TUI, which drives
 `ai` through a pipe), input ends with an empty line instead. `/new`
 starts a fresh conversation, while `/exit` and `/quit` leave the program.
 

@@ -1772,6 +1772,51 @@ redraw_line_tail (const char *buffer, size_t cursor, size_t length, size_t remov
   write_repeated ("\b", length - cursor);
 }
 
+/* End of the line holding `index`: its '\n' or the end of the buffer. */
+static size_t
+line_end_index (const char *buffer, size_t index, size_t length)
+{
+  while (index < length && buffer[index] != '\n')
+    index++;
+  return index;
+}
+
+/* Start of the line holding `index`. */
+static size_t
+line_start_index (const char *buffer, size_t index)
+{
+  while (index > 0 && buffer[index - 1] != '\n')
+    index--;
+  return index;
+}
+
+/* The prompt as rendered on screen: separators like the leading newline
+   of "\n[You]: " belong to the surrounding output, not to a reprint. */
+static const char *
+prompt_display (const char *prompt)
+{
+  if (prompt == NULL)
+    return "";
+  while (prompt[0] == '\n')
+    prompt++;
+  return prompt;
+}
+
+/* Step the cursor down to the last input row before printing below the
+   input again (submitting, or opening a new line from an upper line). */
+static void
+move_to_last_row (const char *buffer, size_t cursor, size_t length)
+{
+  size_t rows = 0;
+  size_t index;
+
+  for (index = cursor; index < length; index++)
+    if (buffer[index] == '\n')
+      rows++;
+  while (rows-- != 0)
+    write_all (STDOUT_FILENO, "\033[B", 3);
+}
+
 static int
 read_multiline_keys (const char *prompt, const char *continuation_prompt, char *buffer, size_t capacity)
 {
@@ -1821,44 +1866,57 @@ read_multiline_keys (const char *prompt, const char *continuation_prompt, char *
         }
       if (character == 4)
         {
-          /* C-D deletes forward like the TUI; at the end of the line it
-             submits what is typed, as in a shell, and ends an empty
-             conversation like EOF. */
-          if (cursor < length)
+          /* C-D deletes forward like the TUI, staying on the current
+             line; at the end of the whole input it submits what is
+             typed, as in a shell, and ends an empty conversation like
+             EOF. */
+          size_t end = line_end_index (buffer, cursor, length);
+
+          if (cursor < end)
             {
               memmove (buffer + cursor, buffer + cursor + 1, length - cursor - 1);
               length--;
               buffer[length] = 0;
-              redraw_line_tail (buffer, cursor, length, 1);
+              redraw_line_tail (buffer, cursor, end - 1, 1);
               continue;
             }
-          if (length == 0)
+          if (cursor == length)
             {
+              if (length == 0)
+                {
+                  tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
+                  return -1;
+                }
+              buffer[length] = 0;
               tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
-              return -1;
+              move_to_last_row (buffer, cursor, length);
+              print_formatted ("\n");
+              return 0;
             }
-          buffer[length] = 0;
-          tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
-          print_formatted ("\n");
-          return 0;
+          continue;
         }
       if (character == '\r')
         {
-          /* Enter submits. */
+          /* Enter submits from the last input row so nothing above it
+             is left dangling beside the response. */
           buffer[length] = 0;
           tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
+          move_to_last_row (buffer, cursor, length);
           print_formatted ("\n");
           return 0;
         }
       if (character == '\n')
         {
-          /* C-J starts a new line within the prompt. */
+          /* C-J starts a new line within the prompt; when the cursor
+             sits on an earlier line it steps down to the last one
+             first. */
           if (length + 2 >= capacity)
             {
               print_formatted ("\r\nerror: input is too long\n");
               tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
               return -1;
             }
+          move_to_last_row (buffer, cursor, length);
           buffer[length++] = '\n';
           buffer[length] = 0;
           line_start = length;
@@ -1870,12 +1928,14 @@ read_multiline_keys (const char *prompt, const char *continuation_prompt, char *
         {
           if (cursor > line_start)
             {
+              size_t end = line_end_index (buffer, line_start, length);
+
               memmove (buffer + cursor - 1, buffer + cursor, length - cursor);
               cursor--;
               length--;
               buffer[length] = 0;
               write_all (STDOUT_FILENO, "\b", 1);
-              redraw_line_tail (buffer, cursor, length, 1);
+              redraw_line_tail (buffer, cursor, end - 1, 1);
             }
           continue;
         }
@@ -1899,12 +1959,14 @@ read_multiline_keys (const char *prompt, const char *continuation_prompt, char *
             }
           else if (character == 5)
             {
-              write_all (STDOUT_FILENO, buffer + cursor, length - cursor);
-              cursor = length;
+              size_t end = line_end_index (buffer, cursor, length);
+
+              write_all (STDOUT_FILENO, buffer + cursor, end - cursor);
+              cursor = end;
             }
           else
             {
-              if (cursor < length)
+              if (cursor < length && buffer[cursor] != '\n')
                 {
                   write_all (STDOUT_FILENO, buffer + cursor, 1);
                   cursor++;
@@ -1912,42 +1974,130 @@ read_multiline_keys (const char *prompt, const char *continuation_prompt, char *
             }
           continue;
         }
-      if (character == 11 || character == 21 || character == 23)
+      if (character == 16 || character == 14)
         {
-          /* C-K kills to the end of the line, C-U back to its start,
-             and C-W back to the start of the word before the cursor. */
+          /* C-P/C-N move the cursor between input lines like the TUI,
+             keeping the column when the target line is long enough. */
+          size_t column = cursor - line_start;
+          size_t target;
+          size_t target_end;
+          const char *target_prompt;
+
+          if (character == 16)
+            {
+              if (line_start == 0)
+                continue;
+              target_end = line_start - 1;
+              target = line_start_index (buffer, target_end);
+              write_all (STDOUT_FILENO, "\033[A\r", 4);
+            }
+          else
+            {
+              size_t end = line_end_index (buffer, cursor, length);
+
+              if (end >= length)
+                continue;
+              target = end + 1;
+              target_end = line_end_index (buffer, target, length);
+              write_all (STDOUT_FILENO, "\033[B\r", 4);
+            }
+          if (column > target_end - target)
+            column = target_end - target;
+          while (column > 0 && ((unsigned char)buffer[target + column] & 0xc0) == 0x80)
+            column--;
+          line_start = target;
+          cursor = target + column;
+          target_prompt = prompt_display (target == 0 ? prompt : continuation_prompt);
+          print_formatted ("%s", target_prompt);
+          write_all (STDOUT_FILENO, buffer + target, column);
+          continue;
+        }
+      if (character == 21)
+        {
+          /* C-U discards the whole input like the TUI: every row is
+             blanked, including its prompt, and the first-line prompt is
+             reprinted at the top. The cursor may sit on any row, so the
+             pass starts by stepping down to the last one. */
+          size_t line = 0;
+          size_t total = 1;
+          size_t index;
+          size_t row;
+
+          for (index = 0; index < length; index++)
+            if (buffer[index] == '\n')
+              total++;
+          for (index = 0; index < line_start; index++)
+            if (buffer[index] == '\n')
+              line++;
+          for (row = line; row + 1 < total; row++)
+            write_all (STDOUT_FILENO, "\033[B", 3);
+          for (row = total; row-- > 0; )
+            {
+              size_t span_start = 0;
+              size_t span_end;
+              size_t skip;
+
+              for (skip = 0; skip < row; skip++)
+                {
+                  while (span_start < length && buffer[span_start] != '\n')
+                    span_start++;
+                  span_start++;
+                }
+              span_end = span_start;
+              while (span_end < length && buffer[span_end] != '\n')
+                span_end++;
+              if (row + 1 < total)
+                write_all (STDOUT_FILENO, "\033[A", 3);
+              write_all (STDOUT_FILENO, "\r", 1);
+              erase_cells (strlen (row == 0 ? prompt_display (prompt)
+                             : prompt_display (continuation_prompt))
+                           + (span_end - span_start));
+            }
+          length = 0;
+          cursor = 0;
+          line_start = 0;
+          buffer[0] = 0;
+          print_formatted ("%s", prompt_display (prompt));
+          continue;
+        }
+      if (character == 11 || character == 23)
+        {
+          /* C-K kills to the end of the current line and C-W back to the
+             start of the word before the cursor; lines below are kept. */
           size_t start = cursor;
 
           if (character == 11)
             {
-              if (cursor < length)
+              size_t end = line_end_index (buffer, cursor, length);
+
+              if (cursor < end)
                 {
-                  erase_cells (length - cursor);
-                  length = cursor;
+                  erase_cells (end - cursor);
+                  memmove (buffer + cursor, buffer + end, length - end);
+                  length -= end - cursor;
                   buffer[length] = 0;
                 }
               continue;
             }
-          if (character == 21)
-            start = line_start;
-          else
-            {
-              while (start > line_start && buffer[start - 1] == ' ')
-                start--;
-              while (start > line_start && buffer[start - 1] != ' ')
-                start--;
-            }
-          if (start < cursor)
-            {
-              size_t removed = cursor - start;
+          {
+            size_t end = line_end_index (buffer, line_start, length);
 
-              memmove (buffer + start, buffer + cursor, length - cursor);
-              length -= removed;
-              buffer[length] = 0;
-              write_repeated ("\b", removed);
-              redraw_line_tail (buffer, start, length, removed);
-              cursor = start;
-            }
+            while (start > line_start && buffer[start - 1] == ' ')
+              start--;
+            while (start > line_start && buffer[start - 1] != ' ')
+              start--;
+            if (start < cursor)
+              {
+                size_t removed = cursor - start;
+
+                memmove (buffer + start, buffer + cursor, length - cursor);
+                length -= removed;
+                buffer[length] = 0;
+                write_repeated ("\b", removed);
+                redraw_line_tail (buffer, start, end - removed, removed);
+                cursor = start;
+              }
+          }
           continue;
         }
       if (character == 27)
@@ -1963,12 +2113,16 @@ read_multiline_keys (const char *prompt, const char *continuation_prompt, char *
           tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
           return -1;
         }
-      memmove (buffer + cursor + 1, buffer + cursor, length - cursor);
-      buffer[cursor++] = character;
-      length++;
-      buffer[length] = 0;
-      write_all (STDOUT_FILENO, &character, 1);
-      redraw_line_tail (buffer, cursor, length, 0);
+      {
+        size_t end = line_end_index (buffer, cursor, length);
+
+        memmove (buffer + cursor + 1, buffer + cursor, length - cursor);
+        buffer[cursor++] = character;
+        length++;
+        buffer[length] = 0;
+        write_all (STDOUT_FILENO, &character, 1);
+        redraw_line_tail (buffer, cursor, end + 1, 0);
+      }
     }
 }
 
