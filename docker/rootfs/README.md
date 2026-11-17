@@ -45,8 +45,8 @@ The system bundles a unified C-based binary executing a **BusyBox routing patter
 ├── config/                 # Static configuration files
 │   ├── hosts               # Local network routing template
 │   └── resolv.conf         # System DNS initialization specs
-└── overlay/                # Files dropped natively into the filesystem
-    └── usr/local/bin/      # Installation path for the core 'ai' machine binary
+└── overlay/                # Static files dropped natively into the filesystem
+                            # (core ai/me binaries come from ../../bin at build time)
 ```
 
 ### Quick Start
@@ -60,14 +60,18 @@ utilities and superuser tools installed: 
 sudo apt update && sudo apt install -y build-essential wget tar
 ```
 
-### 2. Prepare the Core Binary
+### 2. Prepare the Core Binaries
 
-Compile your single-target C AI application and copy the executable into the
-tracking overlay folder: 
+Compile the single-target C AI application and the editor, then install them
+into the workspace binary directory (the same place `me` lives):
 
 ```bash
-cp /path/to/compiled/ai overlay/usr/local/bin/ai
+cp tools/ai/agent/ai ../../bin/ai
 ```
+
+`build.sh` picks up `bin/ai` and `bin/me` automatically on every run, so the
+overlay folder never needs manual binary copies; it only carries static
+configuration files layered over the rootfs tree.
 
 ### 3. Build the Image Bundle
 

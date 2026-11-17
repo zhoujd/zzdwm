@@ -2,6 +2,8 @@
 # build.sh
 set -euo pipefail
 
+SCRIPT_DIR=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
+WS_BIN="${SCRIPT_DIR}/../../bin"
 ROOTFS_DIR="build/rootfs"
 OUTPUT_DIR="output"
 OUTPUT_TAR="${OUTPUT_DIR}/rootfs.tar.gz"
@@ -32,6 +34,20 @@ echo "=== Layering Custom Git Configurations and Binaries ==="
 if [ -d "overlay" ]; then
     sudo cp -rp overlay/* "${ROOTFS_DIR}/"
 fi
+
+echo "=== Installing Core Binaries from the Workspace ==="
+# The core binaries always come from the workspace bin/ directory, so a
+# rebuild only needs the fresh copies there; the overlay folder is for
+# static configuration files and never needs manual binary copies.
+CORE_BINS="ai me"
+for name in ${CORE_BINS}; do
+    if [ ! -x "${WS_BIN}/${name}" ]; then
+        echo "error: workspace bin/${name} is missing or not executable" >&2
+        echo "       build it and install it into ${WS_BIN} first" >&2
+        exit 1
+    fi
+    sudo install -m 0755 "${WS_BIN}/${name}" "${ROOTFS_DIR}/usr/local/bin/${name}"
+done
 
 if [ -d "config" ]; then
     sudo cp -p config/hosts "${ROOTFS_DIR}/etc/hosts"

@@ -3,3 +3,6 @@ build/
 output/
 *.tar.gz
 *.log
+
+# Core binaries come from the workspace bin/ at build time
+overlay/usr/local/bin/
