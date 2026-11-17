@@ -707,6 +707,7 @@ editor_main (int argc, char **argv)
   sigaction (SIGINT, &action, NULL);
   sigaction (SIGTERM, &action, NULL);
   editor_interrupted = 0;
+  fprintf (stderr, "Multiline: C-J newline, Enter submit.\n");
   if (editor_read ("\n[Edit]: ", "[....]: ", buffer, sizeof (buffer)) < 0
       || editor_interrupted)
     {
