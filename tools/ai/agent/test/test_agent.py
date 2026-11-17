@@ -604,13 +604,14 @@ class AgentTests(unittest.TestCase):
             return data
 
         output = b""
-        os.write(master, b"diagnose\n\n")
+        output += read_until(b"[You]: ", 10)
+        os.write(master, b"diagnose\r")
         output += read_until(b"[live steering active]", 10)
         os.write(master, b"single echo please\n")
         output += read_until(b"single echo please", 5)
         os.write(master, b"\n")
         output += read_until(b"[live steering queued]", 10)
-        os.write(master, b"/exit\n\n")
+        os.write(master, b"/exit\r")
         output += read_until(b"[bye]", 5)
         self.assertIn(b"[AI Response]", output)
         self.assertIn(b"done", output)
@@ -618,6 +619,66 @@ class AgentTests(unittest.TestCase):
         # "[live steering queued]" notice. A tty-driver echo or a
         # whole-buffer redraw would add a third copy.
         self.assertEqual(output.count(b"single echo please"), 2)
+
+    def test_tty_multiline_cj_newline_enter_submit(self):
+        endpoint = Endpoint([text_response("done")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        master, slave = pty.openpty()
+        process = subprocess.Popen(
+            [EXECUTABLE],
+            stdin=slave,
+            stdout=slave,
+            stderr=subprocess.STDOUT,
+            env={
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "8",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "NO_COLOR": "1",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        os.close(slave)
+
+        def cleanup():
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5)
+            os.close(master)
+
+        self.addCleanup(cleanup)
+
+        def read_until(marker, timeout):
+            data = b""
+            deadline = time.time() + timeout
+            while time.time() < deadline and marker not in data:
+                ready, _, _ = select.select([master], [], [], 0.05)
+                if not ready:
+                    continue
+                try:
+                    chunk = os.read(master, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                data += chunk
+            return data
+
+        output = read_until(b"[You]: ", 10)
+        self.assertIn(b"Multiline: C-J newline, Enter submit", output)
+        self.assertNotIn(b"Multiline input ends with an empty line", output)
+        os.write(master, b"first line")
+        os.write(master, b"\n")
+        output += read_until(b"[...]: ", 5)
+        os.write(master, b"second line")
+        os.write(master, b"\r")
+        output += read_until(b"[AI Response]", 10)
+        os.write(master, b"/exit\r")
+        output += read_until(b"[bye]", 5)
+        self.assertIn(b"second line", output)
+        messages = endpoint.requests[0]["messages"]
+        user = next(m for m in messages if m["role"] == "user")
+        self.assertIn("first line\nsecond line", user["content"])
 
     def test_live_steering_during_request_preserves_multiple_lines(self):
         result, endpoint = self.run_agent_later(

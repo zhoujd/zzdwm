@@ -1738,11 +1738,147 @@ read_line (const char *prompt, char *buffer, size_t capacity)
 }
 
 static int
+multiline_keys_active (void)
+{
+  /* The TUI drives ai through a pipe and piped prompts keep the
+     empty-line convention; only a real terminal can tell C-J (newline)
+     apart from Enter (submit). */
+  return isatty (STDIN_FILENO);
+}
+
+static int
+read_multiline_keys (const char *prompt, const char *continuation_prompt, char *buffer, size_t capacity)
+{
+  struct termios original_terminal;
+  struct termios raw_terminal;
+  size_t length = 0;
+  size_t line_start = 0;
+  int escape_state = 0;
+
+  if (tcgetattr (STDIN_FILENO, &original_terminal) != 0)
+    return -1;
+  raw_terminal = original_terminal;
+  /* Clearing ICRNL keeps Enter (CR) distinct from C-J (NL); clearing
+     ICANON and ECHO hands line editing and echo to this function. */
+  raw_terminal.c_lflag &= ~(ICANON | ECHO | ECHONL);
+  raw_terminal.c_iflag &= ~(ICRNL | INLCR | IGNCR);
+  raw_terminal.c_cc[VMIN] = 1;
+  raw_terminal.c_cc[VTIME] = 0;
+  if (tcsetattr (STDIN_FILENO, TCSANOW, &raw_terminal) != 0)
+    return -1;
+  /* The prompt is printed after the switch so its appearance means the
+     keyboard protocol is already in effect. */
+  if (prompt != NULL && prompt[0] != 0)
+    print_formatted ("%s", prompt);
+  for (;;)
+    {
+      char character;
+      ssize_t received = read (STDIN_FILENO, &character, 1);
+
+      if (received != 1)
+        {
+          buffer[length] = 0;
+          tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
+          return received == 0 && length != 0 ? 0 : -1;
+        }
+      if (escape_state == 1)
+        {
+          escape_state = character == '[' || character == 'O' ? 2 : 0;
+          continue;
+        }
+      if (escape_state == 2)
+        {
+          if ((unsigned char)character >= 0x40)
+            escape_state = 0;
+          continue;
+        }
+      if (character == '\r' || (character == 4 && length != 0))
+        {
+          /* Enter submits; C-D submits what is typed, as in a shell. */
+          buffer[length] = 0;
+          tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
+          print_formatted ("\n");
+          return 0;
+        }
+      if (character == 4)
+        {
+          /* C-D on empty input ends the conversation like EOF. */
+          tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
+          return -1;
+        }
+      if (character == '\n')
+        {
+          /* C-J starts a new line within the prompt. */
+          if (length + 2 >= capacity)
+            {
+              print_formatted ("\r\nerror: input is too long\n");
+              tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
+              return -1;
+            }
+          buffer[length++] = '\n';
+          buffer[length] = 0;
+          line_start = length;
+          print_formatted ("\r\n%s", continuation_prompt != NULL ? continuation_prompt : "");
+          continue;
+        }
+      if (character == 127 || character == 8)
+        {
+          if (length > line_start)
+            {
+              length--;
+              buffer[length] = 0;
+              write_all (STDOUT_FILENO, "\b \b", 3);
+            }
+          continue;
+        }
+      if (character == 21 || character == 23)
+        {
+          size_t start = length;
+
+          if (character == 21)
+            start = line_start;
+          else
+            {
+              while (start > line_start && buffer[start - 1] == ' ')
+                start--;
+              while (start > line_start && buffer[start - 1] != ' ')
+                start--;
+            }
+          while (length > start)
+            {
+              length--;
+              write_all (STDOUT_FILENO, "\b \b", 3);
+            }
+          buffer[length] = 0;
+          continue;
+        }
+      if (character == 27)
+        {
+          escape_state = 1;
+          continue;
+        }
+      if ((unsigned char)character < 0x20)
+        continue;
+      if (length + 1 >= capacity)
+        {
+          print_formatted ("\r\nerror: input is too long\n");
+          tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
+          return -1;
+        }
+      buffer[length++] = character;
+      buffer[length] = 0;
+      write_all (STDOUT_FILENO, &character, 1);
+    }
+}
+
+static int
 read_multiline (const char *prompt, const char *continuation_prompt, char *buffer, size_t capacity)
 {
   char line[MAX_LINE];
   size_t length = 0;
 
+  if (multiline_keys_active ())
+    return read_multiline_keys (prompt, continuation_prompt, buffer, capacity);
   buffer[0] = 0;
   for (;;)
     {
@@ -2074,7 +2210,8 @@ command_decision (ToolCall *call, int *run, char *steer, size_t steer_capacity)
         }
       if (choice[0] == 's' && choice[1] == 0)
         {
-          print_formatted ("Steering ends with an empty line.\n");
+          print_formatted (multiline_keys_active () ? "Steering: C-J newline, Enter submit.\n"
+                                                    : "Steering ends with an empty line.\n");
           if (read_interactive_multiline ("[steer]: ", "[.....]: ", steer, steer_capacity) < 0 || steer[0] == 0)
             continue;
           return 0;
@@ -2103,7 +2240,8 @@ post_execution_steer (char *steer, size_t capacity)
         return -1;
       if (answer[0] == 's' && answer[1] == 0)
         {
-          print_formatted ("Steering ends with an empty line.\n");
+          print_formatted (multiline_keys_active () ? "Steering: C-J newline, Enter submit.\n"
+                                                    : "Steering ends with an empty line.\n");
           if (read_interactive_multiline ("[steer]: ", "[.....]: ", steer, capacity) < 0 || steer[0] == 0)
             continue;
           return 0;
@@ -2676,7 +2814,9 @@ ai_main (int argc, char **argv)
     }
   if (!one_shot)
     {
-      print_formatted ("Multiline input ends with an empty line. /help shows commands.\n");
+      print_formatted (multiline_keys_active ()
+                          ? "Multiline: C-J newline, Enter submit. /help shows commands.\n"
+                          : "Multiline input ends with an empty line. /help shows commands.\n");
       print_formatted ("Live steering: type lines while AI requests or commands run.\n");
       if (full_access)
         print_formatted ("Full access: commands run immediately; steering is offered after each one.\n");

@@ -134,7 +134,9 @@ steering typed during a command is sent with the command result before the next
 request. Live steering cannot alter a request already submitted, but it can
 guide the next turn.
 
-Commands in the interactive editor are terminated by an empty line. `/new`
+On a terminal, the interactive editor takes multiline input with `C-J` for a
+newline and Enter to submit. With piped input (and in the TUI, which drives
+`ai` through a pipe), input ends with an empty line instead. `/new`
 starts a fresh conversation, while `/exit` and `/quit` leave the program.
 
 At startup the agent reads the frontmatter of `.agents/skills/*/SKILL.md`
