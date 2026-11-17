@@ -27,9 +27,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DVTM = os.path.join(HERE, "..", "..", "dvtm")
 MOD = b"\x1c"                          # CTRL('\') — dvtm's MOD key
 REDRAW = MOD + b"\x0c"                 # MOD+CTRL('L'): full repaint
-DOUBLEDECK = MOD + b"\x04"             # MOD+CTRL('d')
-ZETADECK = MOD + b"\x1a"               # MOD+CTRL('z')
-VSTACK = MOD + b"\x02"                 # MOD+CTRL('b')
+DOUBLEDECK = MOD + b"z"                # MOD+'z'
+ZETADECK = MOD + b"Z"                  # MOD+'Z'
+VSTACK = MOD + b"B"                    # MOD+'B'
 
 
 def drain(fd, timeout=1.0):
@@ -76,7 +76,7 @@ try:
     drain(fd, 2.0)
     os.write(fd, MOD + b"c")           # second window
     drain(fd, 1.0)
-    os.write(fd, DOUBLEDECK)           # MOD+CTRL('d') selects [D]
+    os.write(fd, DOUBLEDECK)           # MOD+'z' selects [D]
     drain(fd, 1.0)
 
     out = repaint(fd)
@@ -100,9 +100,9 @@ try:
           "[D] with nmaster covering all piles the second border under")
 
     os.write(fd, MOD + b"d")           # nmaster 1
-    os.write(fd, MOD + b"Z")           # mfact back to 0.50
+    os.write(fd, MOD + b"\"")          # MOD+'"': mfact back to 0.50
     drain(fd, 0.5)
-    os.write(fd, ZETADECK)             # MOD+CTRL('z') selects [Z]
+    os.write(fd, ZETADECK)             # MOD+'Z' selects [Z]
     drain(fd, 1.0)
 
     out = repaint(fd)
@@ -115,9 +115,9 @@ try:
 
     os.write(fd, MOD + b"I")           # border info on: it shows the symbol
     drain(fd, 0.5)
-    os.write(fd, VSTACK)               # MOD+CTRL('b') selects ====
+    os.write(fd, VSTACK)               # MOD+'B' selects ====
     out = repaint(fd)
-    check(b" === " in out, "MOD+CTRL('b') selects the vstack layout")
+    check(b" === " in out, "MOD+'B' selects the vstack layout")
 finally:
     os.kill(pid, 15)
     os.waitpid(pid, 0)

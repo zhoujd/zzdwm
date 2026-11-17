@@ -25,7 +25,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DVTM = os.path.join(HERE, "..", "..", "dvtm")
 MOD = b"\x1c"                          # CTRL('\') — dvtm's MOD key
 REDRAW = MOD + b"\x0c"                 # MOD+CTRL('L'): full repaint
-DOUBLEDECK = MOD + b"\x04"             # MOD+CTRL('d')
+DOUBLEDECK = MOD + b"z"                # MOD+'z'
 
 
 def drain(fd, timeout=1.0):
@@ -67,7 +67,7 @@ try:
     os.write(fd, MOD + b"c")           # second window
     os.write(fd, MOD + b"c")           # third window: one master, two slaves
     drain(fd, 1.0)
-    os.write(fd, DOUBLEDECK)           # MOD+CTRL('d') selects [D]
+    os.write(fd, DOUBLEDECK)           # MOD+'z' selects [D]
     drain(fd, 1.0)
 
     os.write(fd, MOD + b"j")           # first slave, the top of its pile
