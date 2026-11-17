@@ -57,7 +57,8 @@
 #define MAX_NAME 128
 #define MAX_TOOL_CALLS 8
 #define MAX_MESSAGES 24
-#define MAX_TOOL_ROUNDS 64
+#define DEFAULT_TOOL_ROUNDS 128
+#define MAX_TOOL_ROUNDS 1024
 #define MESSAGE_SIZE (512 * 1024)
 #define MAX_REQUEST (512 * 1024)
 #define MAX_RESPONSE (256 * 1024)
@@ -129,7 +130,7 @@ static char workspace_root[PATH_MAX];
 static int one_shot;
 static const char *attachment_paths[MAX_ATTACHMENTS];
 static int attachment_count;
-static int max_tool_rounds = MAX_TOOL_ROUNDS;
+static int max_tool_rounds = DEFAULT_TOOL_ROUNDS;
 static bool full_access = false; // Always default to secure mode
 static volatile sig_atomic_t interrupted;
 static volatile sig_atomic_t agent_exit_status;
@@ -2824,7 +2825,8 @@ ai_main (int argc, char **argv)
           {
             if (round == max_tool_rounds)
               {
-                print_formatted ("\n[AI Response]: Stopped after %d tool rounds.\n", max_tool_rounds);
+                print_formatted ("\n[AI Response]: Stopped after %d tool rounds; raise AI_TOOL_ROUNDS for longer tasks.\n",
+                                 max_tool_rounds);
                 result = 0;
                 break;
               }

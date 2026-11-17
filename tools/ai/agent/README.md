@@ -121,7 +121,7 @@ Configuration is read from the environment:
 * `AI_TIMEOUT_SECONDS`: API timeout, 1--1800. Default: 300.
 * `AI_COMMAND_TIMEOUT_SECONDS`: shell timeout, 1--1800. Default: 600.
 * `AI_TOOL_ROUNDS`: maximum consecutive tool/model rounds per user task,
-  1--64. Default: 64.
+  1--1024. Default: 128.
 
 Only HTTP IPv4 endpoints (including `localhost`) are supported. HTTPS would
 require a TLS implementation and violate the zero-runtime-dependency design;

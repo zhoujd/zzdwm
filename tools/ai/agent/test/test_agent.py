@@ -1916,12 +1916,20 @@ class AgentTests(unittest.TestCase):
             capture_output=True,
             env={
                 "AI_API_URL": "http://127.0.0.1:1/v1",
-                "AI_TOOL_ROUNDS": "65",
+                "AI_TOOL_ROUNDS": "1025",
             },
             timeout=5,
         )
         self.assertEqual(process.returncode, 2)
         self.assertIn("AI_TOOL_ROUNDS is invalid", process.stdout + process.stderr)
+
+    def test_tool_round_limit_accepts_long_tasks(self):
+        result, _ = self.run_agent(
+            [text_response("done")],
+            "diagnose\n\n/exit\n\n",
+            tool_rounds="512",
+        )
+        self.assertIn("tool rounds: 512", result.stdout)
 
     def write_dummy_skill(self, workspace):
         skill_dir = os.path.join(workspace, ".agents", "skills", "dummy")
