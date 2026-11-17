@@ -286,7 +286,7 @@ terminal_style (const char *text)
   if (strncmp (text, "error:", 6) == 0 || strncmp (text, "Error:", 6) == 0)
     return "\033[1;31m";
   if (strncmp (text, "[AI request", 12) == 0 || strncmp (text, "[live steering", 14) == 0
-      || strncmp (text, "[command", 8) == 0 || strncmp (text, "[context]", 9) == 0 || strncmp (text, "[skill]", 7) == 0
+      || strncmp (text, "[command", 8) == 0 || strncmp (text, "[context", 8) == 0 || strncmp (text, "[skill]", 7) == 0
       || strncmp (text, "[Plan", 5) == 0 || strncmp (text, "[force mode", 11) == 0)
     return "\033[1;35m";
   if (strncmp (text, "[AI requests command]", 21) == 0 || strncmp (text, "[AI Response]", 13) == 0)

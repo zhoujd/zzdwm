@@ -77,6 +77,11 @@ static int terminal_width;
 static volatile sig_atomic_t interrupted;
 static pid_t agent_pid;
 static PaneId output_mode = PANE_THOUGHTS;
+/* The latest plan replaces its predecessor in the thoughts pane; these
+   track where the recorded block starts and how many pad rows it spans. */
+static int plan_capture;
+static int plan_start;
+static int plan_rows;
 static PaneId selected_pane = PANE_THOUGHTS;
 static PaneLayout pane_layout = PANE_LAYOUT_EQUAL;
 static InputMode input_mode = INPUT_MULTILINE;
@@ -115,7 +120,7 @@ line_style (const char *line)
   if (strncmp (line, "[You]", 5) == 0 || strncmp (line, "[steer]", 7) == 0)
     return COLOR_PAIR (3) | A_BOLD;
   if (strncmp (line, "[AI request", 12) == 0 || strncmp (line, "[live steering", 14) == 0
-      || strncmp (line, "[command", 8) == 0 || strncmp (line, "[context]", 9) == 0 || strncmp (line, "[skill]", 7) == 0
+      || strncmp (line, "[command", 8) == 0 || strncmp (line, "[context", 8) == 0 || strncmp (line, "[skill]", 7) == 0
       || strncmp (line, "[Plan", 5) == 0 || strncmp (line, "[force mode", 11) == 0)
     return COLOR_PAIR (4) | A_BOLD;
   return 0;
@@ -472,6 +477,15 @@ append_pane_line (PaneId pane_id, const char *text, size_t length)
     {
       wscrl (pane->pad, 1);
       pane->line_count = MAX_PANE_LINES - 1;
+      /* The scroll shifts every row up; keep the recorded plan block
+         covering the same text. */
+      if (pane_id == PANE_THOUGHTS && plan_rows > 0)
+        {
+          if (plan_start > 0)
+            plan_start--;
+          else
+            plan_rows--;
+        }
     }
   row = pane->line_count;
   {
@@ -572,30 +586,92 @@ agent_prompt_hint (const char *line)
 }
 
 static void
+drop_plan_block (void)
+{
+  Pane *pane = &panes[PANE_THOUGHTS];
+  int index;
+
+  plan_capture = 0;
+  if (plan_rows <= 0)
+    return;
+  wmove (pane->pad, plan_start, 0);
+  for (index = 0; index < plan_rows; index++)
+    wdeleteln (pane->pad);
+  pane->line_count -= plan_rows;
+  pane->view_offset = 0;
+  plan_rows = 0;
+}
+
+static void
+replace_plan_block (const char *line)
+{
+  Pane *pane = &panes[PANE_THOUGHTS];
+
+  drop_plan_block ();
+  if (strcmp (line, "[Plan cleared]") == 0)
+    {
+      write_line (PANE_THOUGHTS, line);
+      return;
+    }
+  plan_start = pane->line_count;
+  write_line (PANE_THOUGHTS, line);
+  plan_rows = pane->line_count - plan_start;
+  plan_capture = 1;
+}
+
+static void
 display_agent_line (const char *line)
 {
   const char *hint;
+  int routed = 0;
 
+  if (strncmp (line, "[Plan", 5) == 0)
+    {
+      output_mode = PANE_THOUGHTS;
+      replace_plan_block (line);
+      return;
+    }
+  if (strcmp (line, "[context reset]") == 0)
+    {
+      output_mode = PANE_THOUGHTS;
+      drop_plan_block ();
+      write_line (PANE_THOUGHTS, line);
+      return;
+    }
   if (strncmp (line, "[AI Response]", 13) == 0)
-    output_mode = PANE_THOUGHTS;
+    {
+      output_mode = PANE_THOUGHTS;
+      routed = 1;
+    }
   else if (strncmp (line, "[AI requests command]", 21) == 0 || strncmp (line, "[command]", 9) == 0
            || strncmp (line, "[command output]", 16) == 0 || strncmp (line, "Command output:", 15) == 0
            || strncmp (line, "[command timed out after", 24) == 0 || strncmp (line, "[command completed]", 19) == 0)
-    output_mode = PANE_COMMANDS;
+    {
+      output_mode = PANE_COMMANDS;
+      routed = 1;
+    }
   else if (strncmp (line, "[You]", 5) == 0 || strncmp (line, "[live steering", 14) == 0
            || strncmp (line, "[a]llow", 7) == 0 || strncmp (line, "[edited command]", 16) == 0
            || strncmp (line, "[steer]", 7) == 0 || strncmp (line, "[s]teer", 7) == 0
-           || strncmp (line, "[Plan", 5) == 0 || strncmp (line, "[force mode", 11) == 0)
-    output_mode = PANE_THOUGHTS;
+           || strncmp (line, "[force mode", 11) == 0)
+    {
+      output_mode = PANE_THOUGHTS;
+      routed = 1;
+    }
   hint = agent_prompt_hint (line);
+  if (routed || hint != NULL || is_agent_prompt (line) || strncmp (line, "[context]", 9) == 0
+      || strncmp (line, "error:", 6) == 0 || strncmp (line, "Error:", 6) == 0)
+    plan_capture = 0;
   if (strcmp (line, "[AI request active]") == 0)
     {
+      plan_capture = 0;
       set_input_mode (INPUT_MULTILINE);
       set_pane_status (PANE_COMMANDS, 1);
       return;
     }
   if (strcmp (line, "[AI request inactive]") == 0)
     {
+      plan_capture = 0;
       set_pane_status (PANE_COMMANDS, 0);
       return;
     }
@@ -615,6 +691,14 @@ display_agent_line (const char *line)
       if (hint != NULL)
         write_line (PANE_THOUGHTS, hint);
       handle_agent_prompt (line);
+      return;
+    }
+  if (plan_capture)
+    {
+      int before = panes[PANE_THOUGHTS].line_count;
+
+      write_line (PANE_THOUGHTS, line);
+      plan_rows += panes[PANE_THOUGHTS].line_count - before;
       return;
     }
   write_line (output_mode, line);

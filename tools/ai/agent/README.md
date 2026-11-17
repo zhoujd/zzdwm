@@ -143,7 +143,9 @@ The `plan` tool records the current task checklist. Each update prints
 every later request as a system message, so long tasks survive context
 pruning without re-reading a file. Recording or clearing a plan runs
 nothing and touches no files, so it needs no approval; an empty checklist
-clears the plan, as does `/new`.
+clears the plan, as does `/new`. In the TUI a new plan block replaces the
+previous one in the thoughts pane, so the pane shows only the latest
+checklist; the tty still echoes every update.
 
 While an AI request or command is running, input is accepted as live steering.
 Use one line per steering line and a blank line to queue the completed

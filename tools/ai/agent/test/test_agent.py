@@ -1703,6 +1703,97 @@ class AgentTests(unittest.TestCase):
                 time.sleep(0.2)
             self.assertTrue(found, f"workspace path not shown in TUI:\n{output}")
 
+    def test_tui_plan_updates_replace_previous_block(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for TUI plan rendering")
+
+        first = "goal: two steps\n1. [ ] echo alpha\n2. [ ] echo beta"
+        second = "goal: two steps\n1. [x] echo alpha\n2. [ ] echo beta"
+        endpoint = Endpoint([plan_response(first), plan_response(second), text_response("done")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        server = f"ai-tui-plan-{os.getpid()}"
+        subprocess.run(["tmux", "kill-server"], check=False)
+        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "3",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+            }
+        )
+        subprocess.run(
+            [
+                "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "100", "-y", "24",
+                "-n", server, TUI_EXECUTABLE, "tui",
+            ],
+            env=environment,
+            check=True,
+            timeout=5,
+        )
+        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+        time.sleep(0.5)
+        subprocess.run(["tmux", "send-keys", "-t", server, "run it"], check=True)
+        subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
+        time.sleep(4)
+        output = subprocess.run(
+            ["tmux", "capture-pane", "-p", "-t", server],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        ).stdout
+        thoughts = output.split("2. AI Command Status")[0]
+        self.assertEqual(thoughts.count("[Plan updated]:"), 1)
+        self.assertIn("1. [x] echo alpha", thoughts)   # the latest checklist is shown
+        self.assertIn("done", thoughts)
+
+    def test_tui_plan_cleared_removes_block(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for TUI plan rendering")
+
+        checklist = "goal: one step\n1. [ ] echo alpha"
+        endpoint = Endpoint([plan_response(checklist), plan_response(""), text_response("done")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        server = f"ai-tui-plan-clear-{os.getpid()}"
+        subprocess.run(["tmux", "kill-server"], check=False)
+        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "3",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+            }
+        )
+        subprocess.run(
+            [
+                "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "100", "-y", "24",
+                "-n", server, TUI_EXECUTABLE, "tui",
+            ],
+            env=environment,
+            check=True,
+            timeout=5,
+        )
+        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+        time.sleep(0.5)
+        subprocess.run(["tmux", "send-keys", "-t", server, "run it"], check=True)
+        subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
+        time.sleep(4)
+        output = subprocess.run(
+            ["tmux", "capture-pane", "-p", "-t", server],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        ).stdout
+        thoughts = output.split("2. AI Command Status")[0]
+        self.assertIn("[Plan cleared]", thoughts)
+        self.assertNotIn("[Plan updated]:", thoughts)
+        self.assertNotIn("goal: one step", thoughts)
+
     def test_tui_enter_submits_prompt_and_clears_input(self):
         if shutil.which("tmux") is None:
             self.skipTest("tmux is required for TUI input rendering")

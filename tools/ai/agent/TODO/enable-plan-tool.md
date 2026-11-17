@@ -41,7 +41,12 @@ Implementation notes:
   inside any tool argument produced invalid request JSON.
 - The `task-split` skill now tracks its checklist with the plan tool
   instead of `.ai-plan.md`; the TUI routes `[Plan` lines to the thoughts
-  pane with the magenta label style.
+  pane with the magenta label style. A new plan block replaces its
+  predecessor there (`wdeleteln` on the recorded pad rows, with the
+  block start/row count shifted on pad scroll), `[Plan cleared]` and
+  `[context reset]` drop the recorded block, and plan body rows are
+  captured until the next structural line so the whole block is replaced
+  as one unit. The tty keeps echoing every update.
 
 Manual test examples:
 
