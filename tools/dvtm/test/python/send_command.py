@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """The `send` fifo command: `dvtm-cmd send 'keys'` types keys straight
 into the focused window, no focus change, no new window.  The fifo
-parser's `case '\\n'` sits inside `if (!quote)` (dvtm.c), so a raw
-newline ends the command even inside quotes and cannot be delivered —
-Enter rides along as a raw CR instead, which the parser leaves in the
-argument.  That is the command's main use, typing a command line and
-running it, so both halves get asserted here."""
+parser once ended a command at any newline — its `case '\\n'` label
+sat inside `if (!quote)` (dvtm.c) — so Enter could only ride along as
+a raw CR; a quoted newline now stays in the argument, and unquoted
+arguments join into one line with the spaces between them."""
 
 
 import fcntl
@@ -88,6 +87,21 @@ with tempfile.TemporaryDirectory() as tmp:
         check(b"ZZT1" in out and b"echo ZZT1" not in out,
               "the raw CR presses Enter: the pending line runs, "
               "only its output streams")
+
+        check(cmd_send("echo ZZT2\n") == 0, "a quoted newline goes through")
+        out = drain(fd, 1.0)
+        check(out.count(b"ZZT2") >= 2,
+              "the quoted newline presses Enter too: "
+              "the line types and then runs")
+
+        wfd = os.open(fifo, os.O_WRONLY)
+        os.write(wfd, b"send echo ZZT3\n")
+        os.close(wfd)
+        check(b"echo ZZT3" in drain(fd, 1.0),
+              "unquoted arguments join into one typed line, space and all")
+        cmd_send("\r")
+        check(b"ZZT3" in drain(fd, 1.0),
+              "the joined line runs once Enter follows")
     finally:
         os.kill(pid, 15)
         os.waitpid(pid, 0)

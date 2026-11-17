@@ -1679,8 +1679,12 @@ scrollback(const char *args[]) {
 
 static void
 send(const char *args[]) {
-	if (sel && args && args[0])
-		vt_write(sel->term, args[0], strlen(args[0]));
+	if (sel && args)
+		for (int i = 0; args[i]; i++) {
+			if (i)
+				vt_write(sel->term, " ", 1);
+			vt_write(sel->term, args[i], strlen(args[i]));
+		}
 }
 
 static void
@@ -2063,26 +2067,26 @@ handle_cmdfifo(void) {
 					quote = !quote;
 					break;
 				case ' ':
-					if (!quote) {
 				case '\n':
-						/* remove trailing quote if there is one */
-						if (*(p - 1) == '\'' || *(p - 1) == '\"')
-							*(p - 1) = '\0';
-						*p++ = '\0';
-						/* remove leading quote if there is one */
-						if (*arg == '\'' || *arg == '\"')
-							arg++;
-						if (argc < MAX_ARGS)
-							args[argc++] = arg;
+					if (quote)
+						break;
+					/* remove trailing quote if there is one */
+					if (*(p - 1) == '\'' || *(p - 1) == '\"')
+						*(p - 1) = '\0';
+					*p++ = '\0';
+					/* remove leading quote if there is one */
+					if (*arg == '\'' || *arg == '\"')
+						arg++;
+					if (argc < MAX_ARGS)
+						args[argc++] = arg;
 
-						while (*p == ' ')
-							++p;
-						arg = p--;
-					}
+					while (*p == ' ')
+						++p;
+					arg = p--;
 					break;
 				}
 
-				if (c == '\n' || *p == '\n') {
+				if (!quote && (c == '\n' || *p == '\n')) {
 					if (!*p)
 						p++;
 					debug("execute %s", s);
