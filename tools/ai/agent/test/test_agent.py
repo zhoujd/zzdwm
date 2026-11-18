@@ -207,6 +207,7 @@ class AgentTests(unittest.TestCase):
         flags=(),
         timeout=10,
         extra_env=None,
+        url_host="127.0.0.1",
     ):
         endpoint = Endpoint(responses, delay)
         self.addCleanup(endpoint.thread.join, timeout=2)
@@ -219,7 +220,7 @@ class AgentTests(unittest.TestCase):
             self.addCleanup(scratch.cleanup)
             cwd = scratch.name
         settings = {
-            "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+            "AI_API_URL": f"http://{url_host}:{endpoint.port}/v1",
             "AI_TIMEOUT_SECONDS": "2",
             "AI_COMMAND_TIMEOUT_SECONDS": command_timeout,
             "PATH": os.environ["PATH"],
@@ -2142,6 +2143,29 @@ class AgentTests(unittest.TestCase):
         self.assertIn("recovered", result.stdout)
         self.assertIn("[bye]", result.stdout)
         self.assertEqual(len(endpoint.requests), 2)
+
+    def test_hostname_endpoint_url_resolves(self):
+        result, endpoint = self.run_agent(
+            [text_response("hello over a hostname")],
+            "go\n\n/exit\n\n",
+            url_host="localhost",
+        )
+        self.assertIn("hello over a hostname", result.stdout)
+        self.assertEqual(len(endpoint.requests), 1)
+
+    def test_unresolvable_endpoint_host_fails_without_retry(self):
+        result, _ = self.run_agent(
+            [],
+            "go\n\n/exit\n\n",
+            extra_env={
+                "AI_API_URL": "http://no-such-host-zz.invalid:8090/v1/chat/completions"
+            },
+        )
+        self.assertEqual(
+            result.stdout.count("error: resolve no-such-host-zz.invalid"), 1
+        )
+        self.assertNotIn("[retrying", result.stdout)
+        self.assertIn("[bye]", result.stdout)
 
     def test_http_429_is_retried_with_retry_after(self):
         result, endpoint = self.run_agent(

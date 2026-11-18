@@ -139,7 +139,7 @@ output was captured, so it can react instead of stalling the loop.
 
 Conversations persist as they run: non-system messages (including bounded
 tool results and plan updates) are appended to `<workspace>/.ai/session.jsonl`
-one JSON object per line, flushed per message. `--continue` replays the
+one JSON object per line, flushed and synced per message. `--continue` replays the
 latest saved session before the first request, and `--resume <file>` resumes
 a specific transcript; both work in one-shot mode and are forwarded by the
 TUI. Replayed messages re-enter the conversation verbatim through the usual
@@ -166,9 +166,11 @@ Configuration is read from the environment:
   commands under `-C`. Default: on; set `AI_LANDLOCK=0` to rely on the
   lexical path filter alone.
 
-Only HTTP IPv4 endpoints (including `localhost`) are supported. HTTPS would
-require a TLS implementation and violate the zero-runtime-dependency design;
-use a local gateway or a trusted loopback proxy when encryption is required.
+Endpoints are plain HTTP over IPv4; `AI_API_URL` hosts may be dotted quads or
+hostnames (resolved per request with `getaddrinfo`, first IPv4 address wins).
+HTTPS would require a TLS implementation and violate the zero-runtime-dependency
+design; use a local gateway or a trusted loopback proxy when encryption is
+required.
 
 Transient endpoint failures are retried automatically, in interactive and
 one-shot mode alike: HTTP 429 and 5xx responses, and connections that are

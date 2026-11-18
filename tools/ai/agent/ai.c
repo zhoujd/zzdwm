@@ -19,6 +19,7 @@
 #include <pthread.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -177,6 +178,7 @@ static int max_tool_rounds = DEFAULT_TOOL_ROUNDS;
 static int streaming_enabled = 1;
 static int stream_printed_content;
 static int landlock_enabled = 1;
+static int resolve_transient;
 static bool full_access = false; // Always default to secure mode
 static volatile sig_atomic_t interrupted;
 static volatile sig_atomic_t agent_exit_status;
@@ -760,7 +762,7 @@ session_write_line (const char *line, size_t length)
   if (session_file == NULL)
     return;
   if (fwrite (line, 1, length, session_file) != length || fputc ('\n', session_file) == EOF
-      || fflush (session_file) != 0)
+      || fflush (session_file) != 0 || fdatasync (fileno (session_file)) < 0)
     {
       print_formatted ("[session] write failed; saving disabled: %s\n", strerror (errno));
       fclose (session_file);
@@ -1061,38 +1063,16 @@ parse_timeout_seconds (const char *text, int maximum)
 }
 
 static int
-valid_ipv4 (const char *host, size_t length)
+valid_host (const char *host, size_t length)
 {
-  char copy[MAX_HOST];
-  unsigned int parts[4];
-  char *cursor;
-  char *part;
-  int index;
+  size_t index;
 
-  if (length == 0 || length >= sizeof (copy))
+  if (length == 0 || length >= MAX_HOST)
     return 0;
-  memcpy (copy, host, length);
-  copy[length] = 0;
-  cursor = copy;
-  for (index = 0; index < 4; index++)
-    {
-      char *end;
-      unsigned long value;
-      int conversion_error;
-
-      part = strtok (index == 0 ? cursor : NULL, ".");
-      if (part == NULL || part[strspn (part, "0123456789")] != 0)
-        return 0;
-      errno = 0;
-      value = strtoul (part, &end, 10);
-      conversion_error = errno == ERANGE;
-      if (conversion_error || *end != 0 || value > 255 || (part[0] == '0' && part[1] != 0))
-        return 0;
-      parts[index] = (unsigned int)value;
-    }
-  if (strtok (NULL, ".") != NULL)
-    return 0;
-  return parts[0] != 0;
+  for (index = 0; index < length; index++)
+    if (!isalnum ((unsigned char)host[index]) && host[index] != '.' && host[index] != '-')
+      return 0;
+  return 1;
 }
 
 static int
@@ -1110,7 +1090,7 @@ configure_endpoint (const char *value)
 
   if (value == NULL || strncmp (value, "http://", 7) != 0)
     {
-      print_formatted ("error: AI_API_URL must be an http:// IPv4 URL\n");
+      print_formatted ("error: AI_API_URL must be an http:// URL\n");
       return -1;
     }
   host = value + 7;
@@ -1143,13 +1123,11 @@ configure_endpoint (const char *value)
     }
   memcpy (api_host, host, host_length);
   api_host[host_length] = 0;
-  if (strcmp (api_host, "localhost") != 0 && !valid_ipv4 (api_host, host_length))
+  if (!valid_host (api_host, host_length))
     {
-      print_formatted ("error: endpoint host must be an IPv4 address or localhost\n");
+      print_formatted ("error: endpoint host must be an IPv4 address or hostname\n");
       return -1;
     }
-  if (strcmp (api_host, "localhost") == 0)
-    strcpy (api_host, "127.0.0.1");
   path_length = slash != NULL ? strlen (slash) : 0;
   if (path_length == 0)
     strcpy (api_path, "/v1/chat/completions");
@@ -2132,8 +2110,26 @@ connect_endpoint (void)
   address.sin_port = htons ((uint16_t)api_port);
   if (inet_pton (AF_INET, api_host, &address.sin_addr) != 1)
     {
-      errno = EINVAL;
-      return -1;
+      struct addrinfo hints;
+      struct addrinfo *result;
+      int status;
+
+      memset (&hints, 0, sizeof (hints));
+      hints.ai_family = AF_INET;
+      hints.ai_socktype = SOCK_STREAM;
+      status = getaddrinfo (api_host, NULL, &hints, &result);
+      if (status != 0)
+        {
+          /* EAI_AGAIN is a resolver hiccup worth one retry; a name that
+             does not exist cannot start existing within the backoff. */
+          print_formatted ("error: resolve %s: %s\n", api_host, gai_strerror (status));
+          resolve_transient = status == EAI_AGAIN;
+          errno = ENOENT;
+          return -2;
+        }
+      memcpy (&address.sin_addr, &((struct sockaddr_in *)result->ai_addr)->sin_addr,
+              sizeof (address.sin_addr));
+      freeaddrinfo (result);
     }
   socket_fd = socket (AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
   if (socket_fd < 0)
@@ -2302,6 +2298,7 @@ call_endpoint_once (const char **response_body, char *response_storage, int *tra
   body = NULL;
   stream_printed_content = 0;
   stream_active = 0;
+  resolve_transient = 0;
   if (build_request (request, sizeof (request), &request_length) < 0)
     {
       print_formatted ("error: conversation exceeds the request limit\n");
@@ -2324,13 +2321,15 @@ call_endpoint_once (const char **response_body, char *response_storage, int *tra
   socket_fd = connect_endpoint ();
   if (socket_fd < 0)
     {
-      print_formatted ("error: connect %s:%d: %s\n", api_host, api_port, strerror (errno));
+      /* A resolve failure already printed its own line. */
+      if (socket_fd != -2)
+        print_formatted ("error: connect %s:%d: %s\n", api_host, api_port, strerror (errno));
       if (errno == ETIMEDOUT)
         {
           agent_exit_status = EXIT_TIMEOUT;
           return -EXIT_TIMEOUT;
         }
-      if (transient_network_error (errno))
+      if (resolve_transient || transient_network_error (errno))
         *transient = 1;
       return -1;
     }

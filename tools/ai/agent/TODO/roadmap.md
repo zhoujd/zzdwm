@@ -6,10 +6,9 @@ Proposals for the next features. Grounded in the current set: tools =
 
 ## Tier 1 — high value, small diffs
 
-Proposed: add-hostname-endpoints.md (getaddrinfo for `AI_API_URL`
-hostnames plus `fdatasync` on session appends).
-
-Done: add-workspace-banner.md (banner line + working-directory system message);
+Done: add-hostname-endpoints.md (getaddrinfo for `AI_API_URL` hostnames
+plus `fdatasync` on session appends); add-workspace-banner.md (banner
+line + working-directory system message);
 add-command-timeout.md (`-t` override, 64 KiB tail-truncated capture);
 add-http-retry.md (3 attempts, backoff, `Retry-After`);
 add-usage-stats.md (`[usage]` line, cumulative tokens + rounds + context);
