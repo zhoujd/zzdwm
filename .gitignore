@@ -22,3 +22,6 @@ TAGS
 GPATH
 GRTAGS
 GTAGS
+
+# ai agent local session transcripts
+.ai/

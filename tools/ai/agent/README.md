@@ -123,6 +123,17 @@ group receives SIGTERM, then SIGKILL after a grace second, the session
 continues, and the model receives `[command timed out ...]` plus whatever
 output was captured, so it can react instead of stalling the loop.
 
+Conversations persist as they run: non-system messages (including bounded
+tool results and plan updates) are appended to `<workspace>/.ai/session.jsonl`
+one JSON object per line, flushed per message. `--continue` replays the
+latest saved session before the first request, and `--resume <file>` resumes
+a specific transcript; both work in one-shot mode and are forwarded by the
+TUI. Replayed messages re-enter the conversation verbatim through the usual
+`MAX_MESSAGES` pruning window, the active plan is restored, a torn final
+line from a crash is skipped rather than fatal, and `--continue` with no
+saved session starts fresh. `/new` restarts the transcript, so a later
+`--continue` replays what was on screen rather than replaced context.
+
 Configuration is read from the environment:
 
 * `AI_API_URL`: HTTP endpoint or base URL. Default:

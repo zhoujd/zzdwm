@@ -89,6 +89,8 @@ static int full_access;
 static const char *workspace_directory;
 static const char *model_override;
 static const char *timeout_override;
+static int session_continue;
+static const char *session_resume_path;
 static const char *attachment_paths[MAX_ATTACHMENTS];
 static int attachment_count;
 static int semantic_colors;
@@ -185,6 +187,8 @@ usage (FILE *stream)
                    "Options:\n"
                    "-C, --cwd <dir>      set the workspace directory\n"
                    "--full-access        run commands without approval\n"
+                   "--continue           resume the latest saved session\n"
+                   "--resume <file>      resume a specific session file\n"
                    "-f <file>            attach a text file to the first prompt\n"
                    "-m, --model <name>   override AI_MODEL for this run\n"
                    "-t, --timeout <sec>  per-command timeout; 0 is unlimited\n"
@@ -216,6 +220,29 @@ parse_arguments (int argc, char **argv)
     {
       if (strcmp (argv[index], "--full-access") == 0)
         full_access = 1;
+      else if (strcmp (argv[index], "--continue") == 0)
+        {
+          if (session_continue || session_resume_path != NULL)
+            {
+              fprintf (stderr, "error: --continue may only be supplied once and excludes --resume\n");
+              return -1;
+            }
+          session_continue = 1;
+        }
+      else if (strcmp (argv[index], "--resume") == 0)
+        {
+          if (++index >= argc || argv[index][0] == 0)
+            {
+              fprintf (stderr, "error: --resume requires a session file\n");
+              return -1;
+            }
+          if (session_resume_path != NULL || session_continue)
+            {
+              fprintf (stderr, "error: --resume may only be supplied once and excludes --continue\n");
+              return -1;
+            }
+          session_resume_path = argv[index];
+        }
       else if (strcmp (argv[index], "-C") == 0 || strcmp (argv[index], "--cwd") == 0)
         {
           if (++index >= argc || argv[index][0] == 0)
@@ -889,7 +916,7 @@ start_agent (const char *agent_path, int *agent_stdin, int *agent_stdout)
   if (child == 0)
     {
       int index;
-      char *arguments[10 + 2 * MAX_ATTACHMENTS];
+      char *arguments[13 + 2 * MAX_ATTACHMENTS];
       int count = 0;
 
       dup2 (input_fds[0], STDIN_FILENO);
@@ -908,6 +935,13 @@ start_agent (const char *agent_path, int *agent_stdin, int *agent_stdout)
         }
       if (full_access)
         arguments[count++] = "--full-access";
+      if (session_continue)
+        arguments[count++] = "--continue";
+      if (session_resume_path != NULL)
+        {
+          arguments[count++] = "--resume";
+          arguments[count++] = (char *)session_resume_path;
+        }
       for (index = 0; index < attachment_count; index++)
         {
           arguments[count++] = "-f";

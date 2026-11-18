@@ -1,6 +1,12 @@
-# Add Session Save/Resume
+# Add Session Save/Resume [DONE]
 
-Status: proposal (Tier 1)
+Status: complete and validated. Non-system messages, tool results, and plan
+updates append to `<workspace>/.ai/session.jsonl` one JSON object per line,
+flushed per message; `--continue` replays the latest session and
+`--resume <file>` a specific one, in interactive, one-shot, and TUI modes.
+Replay re-adds stored messages verbatim through the normal MAX_MESSAGES
+window, restores the active plan, skips torn or malformed lines, and
+`/new` restarts the transcript so `--continue` resumes what was on screen.
 
 Goal:
 
@@ -17,3 +23,5 @@ Implementation sketch:
   model request; respect MAX_MESSAGES pruning as usual.
 - File lives inside the workspace so `-C` scoping contains it naturally.
 - Open question: include tool results verbatim (fat) or summarized?
+  Resolved: store the already-bounded versions the conversation holds, so
+  replay costs no more context than the live session did.

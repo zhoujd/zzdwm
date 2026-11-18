@@ -145,6 +145,12 @@ static long total_prompt_tokens;
 static long total_completion_tokens;
 static long last_prompt_tokens;
 static long response_rounds;
+static FILE *session_file;
+static int session_save_failed;
+static int session_replaying;
+static int session_continue;
+static const char *session_resume_path;
+static char session_path[MAX_PATH];
 static int one_shot;
 static const char *attachment_paths[MAX_ATTACHMENTS];
 static int attachment_count;
@@ -296,7 +302,8 @@ terminal_style (const char *text)
   if (strncmp (text, "[AI request", 12) == 0 || strncmp (text, "[live steering", 14) == 0
       || strncmp (text, "[command", 8) == 0 || strncmp (text, "[context", 8) == 0 || strncmp (text, "[skill]", 7) == 0
       || strncmp (text, "[Plan", 5) == 0 || strncmp (text, "[force mode", 11) == 0
-      || strncmp (text, "[retrying", 9) == 0 || strncmp (text, "[usage]", 7) == 0)
+      || strncmp (text, "[retrying", 9) == 0 || strncmp (text, "[usage]", 7) == 0
+      || strncmp (text, "[session]", 9) == 0)
     return "\033[1;35m";
   if (strncmp (text, "[AI requests command]", 21) == 0 || strncmp (text, "[AI Response]", 13) == 0)
     return "\033[1;36m";
@@ -673,6 +680,84 @@ drop_oldest_message (void)
     }
 }
 
+/* Session persistence: every non-system message is appended, one JSON
+   object per line, so a restart can replay the conversation. The file is
+   opened lazily on the first logged message and flushed per line, which
+   keeps a kill from losing more than the in-flight line. */
+static void
+session_open (const char *mode)
+{
+  int needs_separator = 0;
+
+  if (session_file != NULL || session_save_failed)
+    return;
+  mkdir (".ai", 0777);
+  if (mode[0] == 'a')
+    {
+      /* A kill can leave a half-written final line; appending straight
+         after it would glue two records together. */
+      FILE *probe = fopen (session_path, "rb");
+
+      if (probe != NULL)
+        {
+          if (fseek (probe, -1, SEEK_END) == 0 && fgetc (probe) != '\n')
+            needs_separator = 1;
+          fclose (probe);
+        }
+    }
+  session_file = fopen (session_path, mode);
+  if (session_file == NULL)
+    {
+      session_save_failed = 1;
+      print_formatted ("[session] cannot open %s for saving: %s\n", session_path, strerror (errno));
+      return;
+    }
+  if (needs_separator)
+    fputc ('\n', session_file);
+}
+
+/* /new starts a fresh conversation, so the transcript restarts too;
+   --continue then replays what was on screen, not replaced context. */
+static void
+session_restart (void)
+{
+  if (session_file != NULL)
+    fclose (session_file);
+  session_file = NULL;
+  session_save_failed = 0;
+  session_open ("w");
+}
+
+static void
+session_write_line (const char *line, size_t length)
+{
+  session_open ("a");
+  if (session_file == NULL)
+    return;
+  if (fwrite (line, 1, length, session_file) != length || fputc ('\n', session_file) == EOF
+      || fflush (session_file) != 0)
+    {
+      print_formatted ("[session] write failed; saving disabled: %s\n", strerror (errno));
+      fclose (session_file);
+      session_file = NULL;
+      session_save_failed = 1;
+    }
+}
+
+static void
+session_log_plan (const char *checklist)
+{
+  char line[2 * MAX_PLAN + 32];
+  Buffer buffer = { line, sizeof (line), 0 };
+
+  if (session_replaying || session_save_failed)
+    return;
+  if (buffer_append_string (&buffer, "{\"role\":\"_plan\",\"content\":") < 0
+      || append_json_text (&buffer, checklist) < 0 || buffer_append_string (&buffer, "}") < 0)
+    return;
+  session_write_line (line, buffer.length);
+}
+
 static int
 add_message (const char *json, size_t length, MessageRole role)
 {
@@ -687,6 +772,8 @@ add_message (const char *json, size_t length, MessageRole role)
   messages[message_count].length = length;
   messages[message_count].role = role;
   message_count++;
+  if (role != ROLE_SYSTEM && !session_replaying)
+    session_write_line (json, length);
   return 0;
 }
 
@@ -1185,6 +1272,69 @@ header_equal (const char *line, size_t length, const char *name)
   size_t name_length = strlen (name);
 
   return length > name_length && strncasecmp (line, name, name_length) == 0 && line[name_length] == ':';
+}
+
+/* Replay a saved session into the live conversation. Stored lines are the
+   exact message objects previously sent, so they are re-added verbatim;
+   system lines are skipped because conversation_reset rebuilds that context
+   fresh each run, and a torn or malformed line from a kill is skipped rather
+   than fatal. add_message applies the MAX_MESSAGES drop-oldest window as
+   usual, so an oversized log still replays its newest tail. */
+static int
+resume_session (const char *path)
+{
+  static char line[MESSAGE_SIZE + 8];
+  size_t restored = 0;
+  size_t skipped = 0;
+  FILE *file;
+
+  file = fopen (path, "r");
+  if (file == NULL)
+    return -1;
+  session_replaying = 1;
+  while (fgets (line, sizeof (line), file) != NULL)
+    {
+      size_t length = strlen (line);
+      cJSON *item;
+      const char *role;
+      MessageRole message_role;
+
+      while (length > 0 && (line[length - 1] == '\n' || line[length - 1] == '\r'))
+        line[--length] = 0;
+      if (length == 0)
+        continue;
+      item = cJSON_Parse (line);
+      role = cJSON_GetStringValue (cJSON_GetObjectItemCaseSensitive (item, "role"));
+      if (role == NULL)
+        skipped++;
+      else if (strcmp (role, "_plan") == 0)
+        {
+          if (copy_json_string (cJSON_GetObjectItemCaseSensitive (item, "content"), current_plan,
+                                sizeof (current_plan))
+              == 0)
+            plan_active = current_plan[0] != 0;
+        }
+      else
+        {
+          if (strcmp (role, "user") == 0)
+            message_role = ROLE_USER;
+          else if (strcmp (role, "assistant") == 0)
+            message_role = strstr (line, "\"tool_calls\"") != NULL ? ROLE_ASSISTANT_TOOLS : ROLE_ASSISTANT;
+          else if (strcmp (role, "tool") == 0)
+            message_role = ROLE_TOOL;
+          else
+            message_role = ROLE_SYSTEM;
+          if (message_role == ROLE_SYSTEM || add_message (line, length, message_role) < 0)
+            skipped++;
+          else
+            restored++;
+        }
+      cJSON_Delete (item);
+    }
+  session_replaying = 0;
+  fclose (file);
+  print_formatted ("[session] resumed %zu messages from %s\n", restored, path);
+  return 0;
 }
 
 static int
@@ -2466,11 +2616,13 @@ record_plan (const char *checklist)
     {
       plan_active = 0;
       current_plan[0] = 0;
+      session_log_plan ("");
       print_formatted ("[Plan cleared]\n");
       return;
     }
   snprintf (current_plan, sizeof (current_plan), "%s", trimmed);
   plan_active = 1;
+  session_log_plan (current_plan);
   print_formatted ("[Plan updated]:\n");
   print_formatted ("%s\n", current_plan);
 }
@@ -2825,6 +2977,8 @@ usage (FILE *stream)
                    "Options:\n"
                    "-C, --cwd <dir>      set the workspace directory\n"
                    "--full-access        run commands without approval\n"
+                   "--continue           resume the latest saved session\n"
+                   "--resume <file>      resume a specific session file\n"
                    "--ui                 use the line-oriented UI protocol\n"
                    "-f <file>            attach a text file (up to 8 times)\n"
                    "-m, --model <name>   override AI_MODEL for this run\n"
@@ -2858,6 +3012,34 @@ parse_arguments (int argc, char **argv)
     {
       if (strcmp (argv[index], "--full-access") == 0)
         full_access = 1;
+      else if (strcmp (argv[index], "--continue") == 0)
+        {
+          if (session_continue || session_resume_path != NULL)
+            {
+              fprintf (stderr, "error: --continue may only be supplied once and excludes --resume\n");
+              return -1;
+            }
+          session_continue = 1;
+        }
+      else if (strcmp (argv[index], "--resume") == 0)
+        {
+          if (++index >= argc || argv[index][0] == 0)
+            {
+              fprintf (stderr, "error: --resume requires a session file\n");
+              return -1;
+            }
+          if (session_resume_path != NULL || session_continue)
+            {
+              fprintf (stderr, "error: --resume may only be supplied once and excludes --continue\n");
+              return -1;
+            }
+          if (strlen (argv[index]) >= sizeof (session_path))
+            {
+              fprintf (stderr, "error: --resume path must be shorter than %zu bytes\n", sizeof (session_path));
+              return -1;
+            }
+          session_resume_path = argv[index];
+        }
       else if (strcmp (argv[index], "--ui") == 0)
         ui_mode = 1;
       else if (strcmp (argv[index], "-m") == 0 || strcmp (argv[index], "--model") == 0)
@@ -3048,6 +3230,21 @@ ai_main (int argc, char **argv)
       else
         print_formatted ("Every command is shown for allow/edit/steer/force/refuse before execution.\n");
     }
+  snprintf (session_path, sizeof (session_path), "%s", ".ai/session.jsonl");
+  if (session_resume_path != NULL)
+    snprintf (session_path, sizeof (session_path), "%s", session_resume_path);
+  if (session_continue || session_resume_path != NULL)
+    {
+      if (resume_session (session_path) < 0)
+        {
+          if (session_resume_path != NULL)
+            {
+              fprintf (stderr, "error: cannot read session %s: %s\n", session_resume_path, strerror (errno));
+              return 2;
+            }
+          print_formatted ("[session] no previous session in %s; starting fresh\n", session_path);
+        }
+    }
   for (;;)
     {
       if (one_shot)
@@ -3071,6 +3268,7 @@ ai_main (int argc, char **argv)
         {
           conversation_reset ();
           clear_steering ();
+          session_restart ();
           print_formatted ("[context reset]\n");
           continue;
         }

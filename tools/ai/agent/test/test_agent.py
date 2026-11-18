@@ -157,11 +157,19 @@ class AgentTests(unittest.TestCase):
         workspace=None,
         model=None,
         timeout_flag=None,
+        flags=(),
         timeout=10,
     ):
         endpoint = Endpoint(responses, delay)
         self.addCleanup(endpoint.thread.join, timeout=2)
         self.addCleanup(endpoint.close)
+        if cwd is None:
+            # Session transcripts land in <cwd>/.ai, so runs without an
+            # explicit workspace get a scratch directory to keep the tree
+            # clean and tests independent of each other's sessions.
+            scratch = tempfile.TemporaryDirectory()
+            self.addCleanup(scratch.cleanup)
+            cwd = scratch.name
         settings = {
             "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
             "AI_TIMEOUT_SECONDS": "2",
@@ -179,6 +187,7 @@ class AgentTests(unittest.TestCase):
             command.extend(["-m", model])
         if timeout_flag is not None:
             command.extend(["-t", timeout_flag])
+        command.extend(flags)
         for source in files:
             command.extend(["-f", source])
         if exec_prompt is not None:
@@ -208,6 +217,8 @@ class AgentTests(unittest.TestCase):
         command = [EXECUTABLE]
         if kwargs.pop("full_access", False):
             command.append("--full-access")
+        scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(scratch.cleanup)
         process = subprocess.Popen(
             command,
             stdin=subprocess.PIPE,
@@ -215,6 +226,7 @@ class AgentTests(unittest.TestCase):
             stderr=subprocess.STDOUT,
             text=True,
             env=settings,
+            cwd=scratch.name,
         )
         process.stdin.write("diagnose\n\n")
         process.stdin.flush()
@@ -391,13 +403,16 @@ class AgentTests(unittest.TestCase):
         self.assertIn("scoped", self.system_content(endpoint))
 
     def test_startup_banner_reports_unrestricted_workspace(self):
-        result, endpoint = self.run_agent(
-            [text_response("done")],
-            "diagnose\n\n/exit\n\n",
-        )
-        self.assertIn(f"Workspace: {os.getcwd()} (unrestricted)", result.stdout)
+        with tempfile.TemporaryDirectory() as workspace:
+            resolved = os.path.realpath(workspace)
+            result, endpoint = self.run_agent(
+                [text_response("done")],
+                "diagnose\n\n/exit\n\n",
+                cwd=workspace,
+            )
+        self.assertIn(f"Workspace: {resolved} (unrestricted)", result.stdout)
         self.assertIn(
-            f"Working directory: {os.getcwd()}", self.system_content(endpoint)
+            f"Working directory: {resolved}", self.system_content(endpoint)
         )
 
     def test_one_shot_omits_banner_but_states_working_directory(self):
@@ -1210,6 +1225,7 @@ class AgentTests(unittest.TestCase):
         os.write(master, b"\r")
         # C-P reprints the "[You]: " prompt, so wait for the response marker.
         output += read_until(b"[AI Response]", 10)
+        output += read_until(b"[You]: ", 10)
         os.write(master, b"aa")
         os.write(master, b"\n")            # C-J
         os.write(master, b"bb")
@@ -1218,6 +1234,7 @@ class AgentTests(unittest.TestCase):
         os.write(master, b"cc")
         os.write(master, b"\r")
         output += read_until(b"[AI Response]", 10)
+        output += read_until(b"[You]: ", 10)
         os.write(master, b"/exit\r")
         output += read_until(b"[bye]", 5)
         self.assertIn(b"\x1b[A", output)   # C-P stepped up a row
@@ -1637,6 +1654,7 @@ class AgentTests(unittest.TestCase):
             ],
             full_access=True,
             exec_prompt="dump",
+            command_timeout="30",
         )
         self.assertIn("HEADMARK", result.stdout)
         self.assertIn("TAILMARK", result.stdout)
@@ -2466,6 +2484,246 @@ class AgentTests(unittest.TestCase):
         self.assertIn("[skill] dummy added to the context", result.stdout)
         system = self.system_content(endpoint)
         self.assertIn("Follow the dummy plan.", system)
+
+    def read_session(self, workspace, name="session.jsonl"):
+        path = os.path.join(workspace, ".ai", name)
+        with open(path, encoding="utf-8") as handle:
+            return [json.loads(line) for line in handle if line.strip()]
+
+    def test_session_file_records_transcript(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            result, endpoint = self.run_agent(
+                [text_response("hi there")],
+                "hello\n\n/exit\n\n",
+                cwd=workspace,
+            )
+            self.assertIn("hi there", result.stdout)
+            lines = self.read_session(workspace)
+        self.assertEqual([line["role"] for line in lines], ["user", "assistant"])
+        self.assertEqual(lines[0]["content"], "hello")
+        self.assertEqual(lines[1]["content"], "hi there")
+
+    def test_session_file_excludes_system_messages(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            self.run_agent(
+                [text_response("done")],
+                "hello\n\n/exit\n\n",
+                cwd=workspace,
+            )
+            lines = self.read_session(workspace)
+        self.assertTrue(lines)
+        self.assertTrue(all(line["role"] != "system" for line in lines))
+
+    def test_continue_resumes_previous_conversation(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            self.run_agent(
+                [text_response("earlier reply")],
+                "hello\n\n/exit\n\n",
+                cwd=workspace,
+            )
+            result, endpoint = self.run_agent(
+                [text_response("fresh reply")],
+                "again\n\n/exit\n\n",
+                cwd=workspace,
+                flags=("--continue",),
+            )
+        self.assertIn("[session] resumed 2 messages from .ai/session.jsonl", result.stdout)
+        self.assertIn("fresh reply", result.stdout)
+        messages = endpoint.requests[0]["messages"]
+        self.assertEqual(
+            [message["content"] for message in messages if message["role"] == "user"],
+            ["hello", "again"],
+        )
+        self.assertIn("earlier reply", "".join(m.get("content") or "" for m in messages))
+
+    def test_continue_without_session_starts_fresh(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            result, endpoint = self.run_agent(
+                [text_response("ok")],
+                "hello\n\n/exit\n\n",
+                cwd=workspace,
+                flags=("--continue",),
+            )
+        self.assertIn("[session] no previous session in .ai/session.jsonl", result.stdout)
+        self.assertIn("starting fresh", result.stdout)
+        self.assertEqual(len(endpoint.requests), 1)
+
+    def test_resume_replays_tools_plan_and_skips_torn_line(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            path = os.path.join(workspace, "custom.jsonl")
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(
+                    '{"role":"user","content":"list files"}\n'
+                    '{"role":"assistant","content":null,"tool_calls":[{"id":"c1",'
+                    '"type":"function","function":{"name":"run_terminal_command",'
+                    '"arguments":"{\\"command\\":\\"ls\\"}"}}]}\n'
+                    '{"role":"tool","tool_call_id":"c1","content":"file1\\nfile2"}\n'
+                    '{"role":"_plan","content":"1. list files\\n2. done"}\n'
+                    '{"role":"user","content":"torn line no newline'
+                )
+            result, endpoint = self.run_agent(
+                [text_response("done")],
+                "next\n\n/exit\n\n",
+                cwd=workspace,
+                flags=("--resume", "custom.jsonl"),
+            )
+            self.assertIn("[session] resumed 3 messages from custom.jsonl", result.stdout)
+            messages = endpoint.requests[0]["messages"]
+            users = [message for message in messages if message["role"] == "user"]
+            self.assertEqual(users[-1]["content"], "next")
+            tool = next(m for m in messages if m["role"] == "tool")
+            self.assertEqual(tool["content"], "file1\nfile2")
+            self.assertTrue(any(m.get("tool_calls") for m in messages))
+            system = self.system_content(endpoint)
+            self.assertIn("CURRENT TASK PLAN", system)
+            self.assertIn("1. list files", system)
+            with open(path, encoding="utf-8") as handle:
+                saved = handle.read()
+        self.assertTrue(saved.endswith('{"role":"assistant","content":"done"}\n'))
+        self.assertIn('\n{"role":"user","content":"next"}\n', saved)
+        self.assertNotIn("torn line no newline{", saved)
+
+    def test_resume_missing_file_is_usage_error(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            process = subprocess.run(
+                [EXECUTABLE, "--resume", "absent.jsonl", "-exec", "hi"],
+                input="",
+                text=True,
+                capture_output=True,
+                timeout=5,
+                env={"AI_API_URL": "http://127.0.0.1:9/v1", "PATH": os.environ["PATH"]},
+                cwd=workspace,
+            )
+        self.assertEqual(process.returncode, 2)
+        self.assertIn("cannot read session absent.jsonl", process.stdout + process.stderr)
+
+    def test_continue_and_resume_conflict_is_usage_error(self):
+        process = subprocess.run(
+            [EXECUTABLE, "--continue", "--resume", "x.jsonl"],
+            input="",
+            text=True,
+            capture_output=True,
+            timeout=5,
+            env={"AI_API_URL": "http://127.0.0.1:9/v1", "PATH": os.environ["PATH"]},
+        )
+        self.assertEqual(process.returncode, 2)
+        self.assertIn("excludes", process.stderr)
+
+    def test_new_restarts_the_session_transcript(self):
+        endpoint = Endpoint([text_response("first reply"), text_response("second reply")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        workspace = tempfile.TemporaryDirectory()
+        self.addCleanup(workspace.cleanup)
+        master, slave = pty.openpty()
+        process = subprocess.Popen(
+            [EXECUTABLE],
+            stdin=slave,
+            stdout=slave,
+            stderr=subprocess.STDOUT,
+            cwd=workspace.name,
+            env={
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "8",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "NO_COLOR": "1",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        os.close(slave)
+
+        def cleanup():
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5)
+            os.close(master)
+
+        self.addCleanup(cleanup)
+
+        def read_until(marker, timeout):
+            data = b""
+            deadline = time.time() + timeout
+            while time.time() < deadline and marker not in data:
+                ready, _, _ = select.select([master], [], [], 0.05)
+                if not ready:
+                    continue
+                try:
+                    chunk = os.read(master, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                data += chunk
+            return data
+
+        read_until(b"[You]: ", 10)
+        os.write(master, b"hello\r")
+        read_until(b"first reply", 10)
+        read_until(b"[You]: ", 10)
+        os.write(master, b"/new\r")
+        read_until(b"[context reset]", 5)
+        read_until(b"[You]: ", 10)
+        os.write(master, b"after\r")
+        read_until(b"second reply", 10)
+        read_until(b"[You]: ", 10)
+        os.write(master, b"/exit\r")
+        read_until(b"[bye]", 5)
+        lines = self.read_session(workspace.name)
+        self.assertEqual([line["role"] for line in lines], ["user", "assistant"])
+        self.assertEqual(lines[0]["content"], "after")
+        self.assertEqual(lines[1]["content"], "second reply")
+
+    def test_tui_continue_flag_is_forwarded(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for TUI resume forwarding")
+        workspace = tempfile.TemporaryDirectory()
+        self.addCleanup(workspace.cleanup)
+        os.makedirs(os.path.join(workspace.name, ".ai"))
+        with open(
+            os.path.join(workspace.name, ".ai", "session.jsonl"), "w", encoding="utf-8"
+        ) as handle:
+            handle.write('{"role":"user","content":"saved question"}\n')
+        endpoint = Endpoint([text_response("done")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        server = f"ai-tui-continue-{os.getpid()}"
+        subprocess.run(["tmux", "kill-server"], check=False)
+        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "5",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "PATH": os.environ["PATH"],
+            }
+        )
+        subprocess.run(
+            [
+                "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "100", "-y", "24",
+                "-c", workspace.name, "-n", server, TUI_EXECUTABLE, "tui", "--continue",
+            ],
+            env=environment,
+            check=True,
+            timeout=5,
+        )
+        self.addCleanup(
+            subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+        )
+        deadline = time.monotonic() + 8
+        output = ""
+        while time.monotonic() < deadline:
+            output = subprocess.run(
+                ["tmux", "capture-pane", "-p", "-t", server],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            ).stdout
+            if "resumed 1 messages" in output:
+                break
+            time.sleep(0.2)
+        self.assertIn("resumed 1 messages from .ai/session.jsonl", output)
 
 
 class BinaryTests(unittest.TestCase):
