@@ -1672,6 +1672,77 @@ class AgentTests(unittest.TestCase):
         self.assertIn("[bye]", result.stdout)
         self.assertEqual(len(endpoint.requests), 2)
 
+    def test_http_429_is_retried_with_retry_after(self):
+        result, endpoint = self.run_agent(
+            [
+                b"HTTP/1.1 429 Too Many Requests\r\n"
+                b"Retry-After: 2\r\n"
+                b"Content-Length: 0\r\n"
+                b"Connection: close\r\n\r\n",
+                text_response("recovered"),
+            ],
+            "go\n\n/exit\n\n",
+        )
+        self.assertIn("AI endpoint returned HTTP 429", result.stdout)
+        self.assertIn("[retrying in 2s (attempt 2/3)]", result.stdout)
+        self.assertIn("recovered", result.stdout)
+        self.assertEqual(len(endpoint.requests), 2)
+        self.assertEqual(endpoint.requests[0], endpoint.requests[1])
+
+    def test_http_500_is_retried_until_exhausted(self):
+        refused = (
+            b"HTTP/1.1 500 Internal Server Error\r\n"
+            b"Content-Length: 0\r\n"
+            b"Connection: close\r\n\r\n"
+        )
+        result, endpoint = self.run_agent(
+            [refused, refused, refused],
+            "go\n\n/exit\n\n",
+        )
+        self.assertIn("AI endpoint returned HTTP 500", result.stdout)
+        self.assertIn("[retrying in 1s (attempt 2/3)]", result.stdout)
+        self.assertIn("[retrying in 2s (attempt 3/3)]", result.stdout)
+        self.assertNotIn("attempt 4/3", result.stdout)
+        self.assertEqual(len(endpoint.requests), 3)
+
+    def test_http_400_is_not_retried(self):
+        result, endpoint = self.run_agent(
+            [
+                b"HTTP/1.1 400 Bad Request\r\n"
+                b"Content-Length: 0\r\n"
+                b"Connection: close\r\n\r\n",
+                text_response("recovered"),
+            ],
+            "first\n\nsecond\n\n/exit\n\n",
+        )
+        self.assertIn("AI endpoint returned HTTP 400", result.stdout)
+        self.assertNotIn("retrying", result.stdout)
+        self.assertEqual(len(endpoint.requests), 2)
+
+    def test_connection_refused_is_retried(self):
+        probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        probe.bind(("127.0.0.1", 0))
+        port = probe.getsockname()[1]
+        probe.close()
+        process = subprocess.run(
+            [EXECUTABLE, "-e", "diagnose"],
+            input="",
+            text=True,
+            capture_output=True,
+            timeout=30,
+            env={
+                "AI_API_URL": f"http://127.0.0.1:{port}/v1",
+                "AI_TIMEOUT_SECONDS": "2",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        self.assertEqual(process.returncode, 1)
+        combined = process.stdout + process.stderr
+        self.assertIn("[retrying in 1s (attempt 2/3)]", combined)
+        self.assertIn("[retrying in 2s (attempt 3/3)]", combined)
+        self.assertIn("connect", combined)
+
     def test_context_drop_keeps_a_user_message(self):
         # MAX_MESSAGES forces a drop while the single user prompt is still
         # the only user message; every request must keep one.

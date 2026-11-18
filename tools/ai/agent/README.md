@@ -140,6 +140,15 @@ Only HTTP IPv4 endpoints (including `localhost`) are supported. HTTPS would
 require a TLS implementation and violate the zero-runtime-dependency design;
 use a local gateway or a trusted loopback proxy when encryption is required.
 
+Transient endpoint failures are retried automatically, in interactive and
+one-shot mode alike: HTTP 429 and 5xx responses, and connections that are
+refused or reset mid-request, are retried up to 3 attempts with exponential
+backoff (1s, then 2s), honoring an integer `Retry-After` header when the
+endpoint supplies one (capped at 60s). Other 4xx responses are never retried —
+a retry cannot fix a protocol or request error — and a failed attempt mutates
+nothing, so the conversation stays intact. Each retry prints
+`[retrying in Ns (attempt N/3)]` so the stall stays visible.
+
 At each requested command, choose `a` to allow, `e` to edit it, `s` to supply a
 steering instruction without running it, `n` to refuse it, or `f` to allow it
 and enable full access for the rest of the session. With

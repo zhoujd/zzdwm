@@ -62,6 +62,8 @@
 #define MAX_MESSAGES 24
 #define DEFAULT_TOOL_ROUNDS 128
 #define MAX_TOOL_ROUNDS 1024
+#define MAX_HTTP_ATTEMPTS 3
+#define MAX_RETRY_AFTER 60
 #define MESSAGE_SIZE (512 * 1024)
 #define MAX_REQUEST (512 * 1024)
 #define MAX_RESPONSE (256 * 1024)
@@ -289,7 +291,8 @@ terminal_style (const char *text)
     return "\033[1;31m";
   if (strncmp (text, "[AI request", 12) == 0 || strncmp (text, "[live steering", 14) == 0
       || strncmp (text, "[command", 8) == 0 || strncmp (text, "[context", 8) == 0 || strncmp (text, "[skill]", 7) == 0
-      || strncmp (text, "[Plan", 5) == 0 || strncmp (text, "[force mode", 11) == 0)
+      || strncmp (text, "[Plan", 5) == 0 || strncmp (text, "[force mode", 11) == 0
+      || strncmp (text, "[retrying", 9) == 0)
     return "\033[1;35m";
   if (strncmp (text, "[AI requests command]", 21) == 0 || strncmp (text, "[AI Response]", 13) == 0)
     return "\033[1;36m";
@@ -1182,7 +1185,7 @@ header_equal (const char *line, size_t length, const char *name)
 
 static int
 receive_response (int socket_fd, char *response, size_t capacity, size_t *response_length, char **body,
-                  int *error_number)
+                  int *error_number, int *http_status, int *retry_after)
 {
   time_t deadline;
   fd_set read_set;
@@ -1195,6 +1198,8 @@ receive_response (int socket_fd, char *response, size_t capacity, size_t *respon
   char *line;
 
   *error_number = EIO;
+  *http_status = 0;
+  *retry_after = 0;
   deadline = time (NULL) + api_timeout;
   while (total < capacity - 1)
     {
@@ -1257,6 +1262,7 @@ receive_response (int socket_fd, char *response, size_t capacity, size_t *respon
                   return -1;
                 }
               status = code;
+              *http_status = code;
               *body = header_end + 4;
             }
         }
@@ -1296,6 +1302,22 @@ receive_response (int socket_fd, char *response, size_t capacity, size_t *respon
               else if (header_equal (line, length, "Transfer-Encoding") && length > 19
                        && strncasecmp (line + 18, " chunked", 8) == 0)
                 chunked = 1;
+              else if (header_equal (line, length, "Retry-After"))
+                {
+                  char *end;
+                  const char *value_start;
+                  unsigned long value;
+
+                  value_start = line + 12;
+                  while (value_start < next && (*value_start == ' ' || *value_start == '\t'))
+                    value_start++;
+                  errno = 0;
+                  value = strtoul (value_start, &end, 10);
+                  /* Only the integer-seconds form is honored; an HTTP date
+                     or junk is ignored and the exponential backoff applies. */
+                  if (errno != ERANGE && end == next && value <= MAX_TIMEOUT)
+                    *retry_after = (int)value;
+                }
               line = next + 2;
             }
           if (have_content_length && total >= (size_t)(*body - response) + content_length)
@@ -1517,7 +1539,14 @@ build_request (char *request, size_t capacity, size_t *length)
 }
 
 static int
-call_endpoint (const char **response_body, char *response_storage)
+transient_network_error (int error)
+{
+  return error == ECONNRESET || error == ECONNABORTED || error == EPIPE || error == ECONNREFUSED
+         || error == EHOSTUNREACH || error == ENETUNREACH;
+}
+
+static int
+call_endpoint_once (const char **response_body, char *response_storage, int *transient, int *retry_after)
 {
   static char request[MAX_REQUEST];
   size_t request_length;
@@ -1526,9 +1555,12 @@ call_endpoint (const char **response_body, char *response_storage)
   int socket_fd;
   int receive_status;
   int receive_error;
+  int http_status;
   size_t response_length;
   char *body;
 
+  *transient = 0;
+  *retry_after = 0;
   response_length = 0;
   body = NULL;
   if (build_request (request, sizeof (request), &request_length) < 0)
@@ -1559,6 +1591,8 @@ call_endpoint (const char **response_body, char *response_storage)
           agent_exit_status = EXIT_TIMEOUT;
           return -EXIT_TIMEOUT;
         }
+      if (transient_network_error (errno))
+        *transient = 1;
       return -1;
     }
   if (write_all (socket_fd, headers, (size_t)header_length) < 0 || write_all (socket_fd, request, request_length) < 0)
@@ -1570,13 +1604,19 @@ call_endpoint (const char **response_body, char *response_storage)
           agent_exit_status = EXIT_TIMEOUT;
           return -EXIT_TIMEOUT;
         }
+      if (transient_network_error (errno))
+        *transient = 1;
       return -1;
     }
-  receive_status
-      = receive_response (socket_fd, response_storage, MAX_RESPONSE, &response_length, &body, &receive_error);
+  receive_status = receive_response (socket_fd, response_storage, MAX_RESPONSE, &response_length, &body,
+                                     &receive_error, &http_status, retry_after);
   close (socket_fd);
   if (receive_status == -2)
-    return -1;
+    {
+      if (http_status == 429 || http_status >= 500)
+        *transient = 1;
+      return -1;
+    }
   if (receive_status < 0)
     {
       if (interrupted)
@@ -1585,11 +1625,51 @@ call_endpoint (const char **response_body, char *response_storage)
         print_formatted ("error: receive response: %s\n", strerror (receive_error));
       if (receive_status == -3)
         agent_exit_status = EXIT_TIMEOUT;
+      else if (!interrupted && transient_network_error (receive_error))
+        *transient = 1;
       return agent_exit_status == EXIT_SUCCESS ? -1 : -agent_exit_status;
     }
   (void)response_length;
   *response_body = body;
   return 0;
+}
+
+/* Sleep in slices so Ctrl+C and the interrupted flag stay responsive. */
+static int
+sleep_slices (int seconds)
+{
+  time_t deadline = time (NULL) + seconds;
+
+  while (time (NULL) < deadline)
+    {
+      if (interrupted)
+        return -1;
+      usleep (100 * 1000);
+    }
+  return 0;
+}
+
+static int
+call_endpoint (const char **response_body, char *response_storage)
+{
+  int attempt;
+
+  for (attempt = 1;; attempt++)
+    {
+      int transient = 0;
+      int retry_after = 0;
+      int result = call_endpoint_once (response_body, response_storage, &transient, &retry_after);
+      int delay;
+
+      if (result == 0 || !transient || attempt >= MAX_HTTP_ATTEMPTS || interrupted)
+        return result;
+      delay = retry_after > 0 ? retry_after : 1 << (attempt - 1);
+      if (delay > MAX_RETRY_AFTER)
+        delay = MAX_RETRY_AFTER;
+      print_formatted ("[retrying in %ds (attempt %d/%d)]\n", delay, attempt + 1, MAX_HTTP_ATTEMPTS);
+      if (sleep_slices (delay) < 0)
+        return result;
+    }
 }
 
 typedef struct

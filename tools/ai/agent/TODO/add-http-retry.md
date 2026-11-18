@@ -1,6 +1,6 @@
-# Add HTTP Retry with Backoff
+# Add HTTP Retry with Backoff [DONE]
 
-Status: proposal (Tier 1)
+Status: complete and validated. `call_endpoint` is now a retry loop around `call_endpoint_once`: HTTP 429 and 5xx responses plus refused/reset connections are retried up to 3 attempts with exponential backoff (1s, 2s), an integer `Retry-After` header overrides the delay (capped at 60s), and every retry prints `[retrying in Ns (attempt N/3)]`. Other 4xx, timeouts, and interruptions are never retried; a failed attempt mutates nothing.
 
 Goal:
 
