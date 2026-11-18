@@ -88,6 +88,7 @@ static InputMode input_mode = INPUT_MULTILINE;
 static int full_access;
 static const char *workspace_directory;
 static const char *model_override;
+static const char *timeout_override;
 static const char *attachment_paths[MAX_ATTACHMENTS];
 static int attachment_count;
 static int semantic_colors;
@@ -186,6 +187,7 @@ usage (FILE *stream)
                    "--full-access        run commands without approval\n"
                    "-f <file>            attach a text file to the first prompt\n"
                    "-m, --model <name>   override AI_MODEL for this run\n"
+                   "-t, --timeout <sec>  per-command timeout; 0 is unlimited\n"
                    "--help               show this help\n"
                    "--version            show version information\n"
                    "\n"
@@ -255,6 +257,20 @@ parse_arguments (int argc, char **argv)
               return -1;
             }
           model_override = argv[index];
+        }
+      else if (strcmp (argv[index], "-t") == 0 || strcmp (argv[index], "--timeout") == 0)
+        {
+          if (++index >= argc || argv[index][0] == 0)
+            {
+              fprintf (stderr, "error: -t requires a timeout in seconds\n");
+              return -1;
+            }
+          if (timeout_override != NULL)
+            {
+              fprintf (stderr, "error: -t may only be supplied once\n");
+              return -1;
+            }
+          timeout_override = argv[index];
         }
       else if (strcmp (argv[index], "--help") == 0)
         {
@@ -873,7 +889,7 @@ start_agent (const char *agent_path, int *agent_stdin, int *agent_stdout)
   if (child == 0)
     {
       int index;
-      char *arguments[6 + 2 * MAX_ATTACHMENTS];
+      char *arguments[10 + 2 * MAX_ATTACHMENTS];
       int count = 0;
 
       dup2 (input_fds[0], STDIN_FILENO);
@@ -901,6 +917,11 @@ start_agent (const char *agent_path, int *agent_stdin, int *agent_stdout)
         {
           arguments[count++] = "-m";
           arguments[count++] = (char *)model_override;
+        }
+      if (timeout_override != NULL)
+        {
+          arguments[count++] = "-t";
+          arguments[count++] = (char *)timeout_override;
         }
       arguments[count++] = NULL;
       execv (agent_path, arguments);

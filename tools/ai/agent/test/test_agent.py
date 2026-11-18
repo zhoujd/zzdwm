@@ -149,6 +149,7 @@ class AgentTests(unittest.TestCase):
         tool_rounds=None, delay=0, cwd=None, exec_prompt=None, files=(),
         workspace=None,
         model=None,
+        timeout_flag=None,
         timeout=10,
     ):
         endpoint = Endpoint(responses, delay)
@@ -169,6 +170,8 @@ class AgentTests(unittest.TestCase):
             command.append("--full-access")
         if model is not None:
             command.extend(["-m", model])
+        if timeout_flag is not None:
+            command.extend(["-t", timeout_flag])
         for source in files:
             command.extend(["-f", source])
         if exec_prompt is not None:
@@ -1581,6 +1584,61 @@ class AgentTests(unittest.TestCase):
         )
         self.assertIn("command timed out after 1 seconds", result.stdout)
 
+    def test_timeout_flag_overrides_env(self):
+        result, endpoint = self.run_agent(
+            [tool_response("sleep 3"), text_response("done")],
+            "diagnose\n\na\n\n\n/exit\n\n",
+            command_timeout="600",
+            timeout_flag="1",
+        )
+        self.assertIn("command timeout: 1s", result.stdout)
+        self.assertIn("command timed out after 1 seconds", result.stdout)
+        self.assertIn(
+            "[command timed out after 1 seconds] exit status",
+            endpoint.requests[1]["messages"][-1]["content"],
+        )
+
+    def test_timeout_flag_zero_disables_timeout(self):
+        result, _ = self.run_agent(
+            [tool_response("sleep 2; echo slept-well"), text_response("done")],
+            "diagnose\n\na\n\n\n/exit\n\n",
+            command_timeout="1",
+            timeout_flag="0",
+        )
+        self.assertIn("slept-well", result.stdout)
+        self.assertNotIn("command timed out", result.stdout)
+        self.assertIn("command timeout: none", result.stdout)
+
+    def test_timeout_flag_rejects_invalid_values(self):
+        invalid = (["-t", "abc"], ["-t", "-1"], ["-t", "1801"], ["-t", ""], ["-t", "1", "-t", "2"])
+        for args in invalid:
+            with self.subTest(args=args):
+                process = subprocess.run(
+                    [EXECUTABLE, *args, "-e", "x"],
+                    input="",
+                    text=True,
+                    capture_output=True,
+                    env={"PATH": os.environ["PATH"]},
+                )
+                self.assertEqual(process.returncode, 2)
+
+    def test_command_output_is_tail_truncated(self):
+        result, endpoint = self.run_agent(
+            [
+                tool_response("(echo HEADMARK; seq 2 22000; echo TAILMARK)"),
+                text_response("done"),
+            ],
+            full_access=True,
+            exec_prompt="dump",
+        )
+        self.assertIn("HEADMARK", result.stdout)
+        self.assertIn("TAILMARK", result.stdout)
+        content = endpoint.requests[1]["messages"][-1]["content"]
+        self.assertIn("bytes dropped]", content)
+        self.assertIn("[output tail]", content)
+        self.assertIn("TAILMARK", content)
+        self.assertNotIn("HEADMARK", content)
+
     def test_endpoint_http_error_keeps_agent_alive(self):
         result, endpoint = self.run_agent(
             [
@@ -1737,6 +1795,53 @@ class AgentTests(unittest.TestCase):
                     break
                 time.sleep(0.2)
             self.assertTrue(found, f"workspace path not shown in TUI:\n{output}")
+
+    def test_tui_timeout_flag_is_forwarded(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for TUI timeout forwarding")
+        endpoint = Endpoint([text_response("done")])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        server = f"ai-tui-timeout-{os.getpid()}"
+        subprocess.run(["tmux", "kill-server"], check=False)
+        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "2",
+                "AI_COMMAND_TIMEOUT_SECONDS": "600",
+                "PATH": os.environ["PATH"],
+            }
+        )
+        subprocess.run(
+            [
+                "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "100", "-y", "24",
+                "-n", server, TUI_EXECUTABLE, "tui", "-t", "17",
+            ],
+            env=environment,
+            check=True,
+            timeout=5,
+        )
+        self.addCleanup(
+            subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+        )
+        found = False
+        output = ""
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            output = subprocess.run(
+                ["tmux", "capture-pane", "-p", "-t", server],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            ).stdout
+            if "command timeout: 17s" in output:
+                found = True
+                break
+            time.sleep(0.2)
+        self.assertTrue(found, f"timeout banner not shown in TUI:\n{output}")
 
     def test_tui_plan_updates_replace_previous_block(self):
         if shutil.which("tmux") is None:

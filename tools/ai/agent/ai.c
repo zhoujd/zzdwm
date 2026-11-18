@@ -65,7 +65,7 @@
 #define MESSAGE_SIZE (512 * 1024)
 #define MAX_REQUEST (512 * 1024)
 #define MAX_RESPONSE (256 * 1024)
-#define CAPTURE_SIZE 16384
+#define CAPTURE_SIZE 65536
 #define MODEL_OUTPUT_SIZE 3072
 #define MAX_PROMPT_CONTEXT (64 * 1024)
 #define MAX_INITIAL_PROMPT (384 * 1024)
@@ -134,6 +134,7 @@ static char model[MAX_MODEL] = DEFAULT_MODEL;
 static const char *model_override;
 static int api_timeout = 300;
 static int command_timeout = 600;
+static int timeout_override = -1;
 static const char *exec_prompt;
 static const char *workspace_directory;
 static char workspace_root[PATH_MAX];
@@ -926,6 +927,20 @@ parse_positive_integer (const char *text, int maximum)
   return (int)value;
 }
 
+/* Like parse_positive_integer, but 0 is accepted and means unlimited. */
+static int
+parse_timeout_seconds (const char *text, int maximum)
+{
+  char *end;
+  long value;
+
+  errno = 0;
+  value = strtol (text, &end, 10);
+  if (errno == ERANGE || end == text || *end != 0 || value < 0 || value > maximum)
+    return -1;
+  return (int)value;
+}
+
 static int
 valid_ipv4 (const char *host, size_t length)
 {
@@ -1127,6 +1142,8 @@ configure_environment (void)
         }
       command_timeout = timeout;
     }
+  if (timeout_override >= 0)
+    command_timeout = timeout_override;
   value = getenv ("AI_TOOL_ROUNDS");
   if (value != NULL)
     {
@@ -1937,15 +1954,19 @@ add_assistant_response (const char *content, const ToolCall *calls, size_t call_
 }
 
 static int
-run_command (const char *command, char *output, size_t capacity, size_t *output_length, int *exit_status)
+run_command (const char *command, char *output, size_t capacity, size_t *output_length, size_t *dropped_length,
+             int *exit_status, int *timed_out)
 {
   int pipe_fds[2];
   pid_t child;
-  time_t deadline = time (NULL) + command_timeout;
+  time_t deadline = command_timeout > 0 ? time (NULL) + command_timeout : 0;
   size_t captured = 0;
+  size_t dropped = 0;
   int status = 0;
   int have_status = 0;
   struct pollfd descriptor;
+
+  *timed_out = 0;
 
   if (pipe2 (pipe_fds, O_CLOEXEC | O_NONBLOCK) < 0)
     return -1;
@@ -2002,17 +2023,25 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
           received = read (pipe_fds[0], chunk, sizeof (chunk));
           if (received > 0)
             {
+              size_t amount = (size_t)received;
+
               if (write_all (STDOUT_FILENO, chunk, (size_t)received) < 0)
                 break;
-              if (captured < capacity)
+              /* Keep the tail: once the buffer fills, slide it so the model
+                 sees the end of the output, where errors usually are. A
+                 single read never exceeds sizeof(chunk), far below capacity. */
+              if (amount > capacity)
+                amount = capacity;
+              if (captured + amount > capacity)
                 {
-                  size_t amount = capacity - captured;
+                  size_t shift = captured + amount - capacity;
 
-                  if ((size_t)received < amount)
-                    amount = (size_t)received;
-                  memcpy (output + captured, chunk, amount);
-                  captured += amount;
+                  dropped += shift;
+                  memmove (output, output + shift, captured - shift);
+                  captured -= shift;
                 }
+              memcpy (output + captured, chunk, amount);
+              captured += amount;
             }
           else if (received == 0)
             break;
@@ -2024,13 +2053,14 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
           have_status = 1;
           break;
         }
-      if (time (NULL) >= deadline)
+      if (command_timeout > 0 && time (NULL) >= deadline)
         {
           kill (-child, SIGTERM);
           sleep (1);
           kill (-child, SIGKILL);
           waitpid (child, &status, 0);
           have_status = 1;
+          *timed_out = 1;
           print_formatted ("\n[command timed out after %d seconds]\n", command_timeout);
           agent_exit_status = EXIT_TIMEOUT;
           break;
@@ -2048,6 +2078,7 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
   else
     *exit_status = 1;
   *output_length = captured;
+  *dropped_length = dropped;
   output[captured] = 0;
   return 0;
 }
@@ -2309,23 +2340,26 @@ validate_workspace_command (const char *command)
 }
 
 static int
-append_bounded_output (const ToolCall *call, const char *prefix, const char *output, size_t output_length)
+append_bounded_output (const ToolCall *call, const char *prefix, const char *output, size_t output_length,
+                       size_t dropped)
 {
   char prefix_text[MAX_LINE];
+  char drop_text[64];
   size_t tail = MODEL_OUTPUT_SIZE;
   size_t start;
   size_t prefix_length;
 
+  if (dropped > 0)
+    snprintf (drop_text, sizeof (drop_text), "[... first %zu bytes dropped]\n", dropped);
+  else
+    drop_text[0] = 0;
   for (;;)
     {
       start = output_length > tail ? output_length - tail : 0;
-      prefix_length = (size_t)snprintf (prefix_text, sizeof (prefix_text), "%s\n", prefix);
+      prefix_length = (size_t)snprintf (prefix_text, sizeof (prefix_text), "%s\n%s%s", prefix, drop_text,
+                                        start != 0 ? "[output tail]\n" : "");
       if (prefix_length >= sizeof (prefix_text))
         return -1;
-      if (start != 0 && prefix_length + strlen ("[output tail]\n") >= sizeof (prefix_text))
-        return -1;
-      if (start != 0)
-        strcat (prefix_text, "[output tail]\n");
       if (append_tool_output (call, prefix_text, output + start, output_length - start) == 0)
         return 0;
       if (tail <= 256)
@@ -2369,7 +2403,9 @@ process_tool_calls (ToolCall *calls, size_t call_count)
     {
       int execute = 0;
       int status;
+      int timed_out = 0;
       size_t output_length = 0;
+      size_t dropped_length = 0;
       char result[MAX_LINE];
 
       if (calls[index].valid && calls[index].plan)
@@ -2401,15 +2437,21 @@ process_tool_calls (ToolCall *calls, size_t call_count)
         }
       if (execute && calls[index].valid && calls[index].supported)
         {
-          if (run_command (calls[index].command, output, CAPTURE_SIZE, &output_length, &status) < 0)
+          if (run_command (calls[index].command, output, CAPTURE_SIZE, &output_length, &dropped_length, &status,
+                           &timed_out)
+              < 0)
             {
               snprintf (result, sizeof (result), "Execution error: %s", strerror (errno));
               if (append_tool_result (&calls[index], result) < 0)
                 return -1;
               continue;
             }
-          snprintf (result, sizeof (result), "[command completed] exit status %d. Output:", status);
-          if (append_bounded_output (&calls[index], result, output, output_length) < 0)
+          if (timed_out)
+            snprintf (result, sizeof (result), "[command timed out after %d seconds] exit status %d. Output:",
+                      command_timeout, status);
+          else
+            snprintf (result, sizeof (result), "[command completed] exit status %d. Output:", status);
+          if (append_bounded_output (&calls[index], result, output, output_length, dropped_length) < 0)
             return -1;
           if (post_execution_steer (steer, sizeof (steer)) < 0)
             return -1;
@@ -2652,6 +2694,7 @@ usage (FILE *stream)
                    "--ui                 use the line-oriented UI protocol\n"
                    "-f <file>            attach a text file (up to 8 times)\n"
                    "-m, --model <name>   override AI_MODEL for this run\n"
+                   "-t, --timeout <sec>  per-command timeout; 0 is unlimited\n"
                    "-e, -exec <prompt>   run one non-empty one-shot prompt\n"
                    "--help               show this help\n"
                    "--version            show version information\n"
@@ -2696,6 +2739,25 @@ parse_arguments (int argc, char **argv)
               return -1;
             }
           model_override = argv[index];
+        }
+      else if (strcmp (argv[index], "-t") == 0 || strcmp (argv[index], "--timeout") == 0)
+        {
+          if (++index >= argc || argv[index][0] == 0)
+            {
+              fprintf (stderr, "error: -t requires a timeout in seconds\n");
+              return -1;
+            }
+          if (timeout_override >= 0)
+            {
+              fprintf (stderr, "error: -t may only be supplied once\n");
+              return -1;
+            }
+          timeout_override = parse_timeout_seconds (argv[index], MAX_TIMEOUT);
+          if (timeout_override < 0)
+            {
+              fprintf (stderr, "error: -t must be 0 (unlimited) or at most %d seconds\n", MAX_TIMEOUT);
+              return -1;
+            }
         }
       else if (strcmp (argv[index], "-C") == 0 || strcmp (argv[index], "--cwd") == 0)
         {
@@ -2816,8 +2878,13 @@ ai_main (int argc, char **argv)
     {
       print_formatted ("ai %s %s %s interactive AI agent\n", VERSION, BUILD_DATE, BUILD_REVISION);
       print_formatted ("Endpoint: http://%s:%d%s\n", api_host, api_port, api_path);
-      print_formatted ("Model: %s; API timeout: %ds; command timeout: %ds; tool rounds: %d\n", model, api_timeout,
-                       command_timeout, max_tool_rounds);
+      {
+        char timeout_text[16];
+
+        snprintf (timeout_text, sizeof (timeout_text), "%ds", command_timeout);
+        print_formatted ("Model: %s; API timeout: %ds; command timeout: %s; tool rounds: %d\n", model, api_timeout,
+                         command_timeout > 0 ? timeout_text : "none", max_tool_rounds);
+      }
       print_formatted ("Workspace: %s (%s)\n", workspace_directory != NULL ? workspace_root : current_directory,
                        workspace_directory != NULL ? "scoped" : "unrestricted");
     }

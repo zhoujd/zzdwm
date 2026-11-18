@@ -116,6 +116,13 @@ directory stays unrestricted, and only `-C` scopes. The working directory is
 also announced to the model in a system message, so relative paths resolve
 against a known location.
 
+Use `-t <seconds>` or `--timeout <seconds>` to bound every terminal command
+for one run; `0` disables the limit. It overrides
+`AI_COMMAND_TIMEOUT_SECONDS` (default 600). On expiry the command's process
+group receives SIGTERM, then SIGKILL after a grace second, the session
+continues, and the model receives `[command timed out ...]` plus whatever
+output was captured, so it can react instead of stalling the loop.
+
 Configuration is read from the environment:
 
 * `AI_API_URL`: HTTP endpoint or base URL. Default:
@@ -124,7 +131,8 @@ Configuration is read from the environment:
   overrides it for one run.
 * `AI_API_KEY` or `OPENAI_API_KEY`: optional bearer token.
 * `AI_TIMEOUT_SECONDS`: API timeout, 1--1800. Default: 300.
-* `AI_COMMAND_TIMEOUT_SECONDS`: shell timeout, 1--1800. Default: 600.
+* `AI_COMMAND_TIMEOUT_SECONDS`: shell timeout, 1--1800. Default: 600;
+  `-t` / `--timeout` overrides it for one run (`0` = unlimited).
 * `AI_TOOL_ROUNDS`: maximum consecutive tool/model rounds per user task,
   1--1024. Default: 128.
 
@@ -138,7 +146,9 @@ and enable full access for the rest of the session. With
 `--full-access`, commands run immediately, but a steer/continue prompt still
 appears after every command before the next model request. Commands execute
 through `/bin/sh -c` with the current process privileges. All output is shown
-live and a bounded tail is returned to the model.
+live; the agent keeps the last 64 KiB (earlier bytes are dropped and noted in
+the tool result) and returns a bounded tail to the model, so a huge `cat`
+cannot blow the context window.
 `/force` toggles full access while the agent is running; the startup mode
 remains the safer approval-based default.
 

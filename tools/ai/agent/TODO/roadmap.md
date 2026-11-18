@@ -6,12 +6,12 @@ Proposals for the next features. Grounded in the current set: tools =
 
 ## Tier 1 — high value, small diffs
 
-- add-command-timeout.md — per-command timeout + output cap (`-t`)
 - add-http-retry.md — retry with backoff on 429/5xx
 - add-usage-stats.md — token usage / rounds at exit
 - add-session-resume.md — `--continue` / session.jsonl save + resume
 
-Done: add-workspace-banner.md (banner line + working-directory system message).
+Done: add-workspace-banner.md (banner line + working-directory system message);
+add-command-timeout.md (`-t` override, 64 KiB tail-truncated capture).
 
 ## Tier 2 — bigger bets
 

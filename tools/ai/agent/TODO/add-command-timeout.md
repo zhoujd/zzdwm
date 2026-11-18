@@ -1,6 +1,6 @@
-# Add Command Timeout and Output Cap
+# Add Command Timeout and Output Cap [DONE]
 
-Status: proposal (Tier 1)
+Status: complete and validated. `AI_COMMAND_TIMEOUT_SECONDS` (default 600) already bounded commands; this added the `-t`/`--timeout <sec>` per-run override (`0` = unlimited, 0--1800, wins over the env var, forwarded by the TUI), raised the capture to a 64 KiB tail-truncated window (dropped bytes are marked in the tool result), and reports expiry to the model as `[command timed out after Ns] exit status ...` with the captured output.
 
 Goal:
 
