@@ -2695,7 +2695,9 @@ print_usage_summary (void)
   format_token_count (in_text, sizeof (in_text), total_prompt_tokens);
   format_token_count (out_text, sizeof (out_text), total_completion_tokens);
   format_token_count (context_text, sizeof (context_text), last_prompt_tokens);
-  print_formatted ("[usage] tokens: %s in / %s out, %ld rounds, context %s\n", in_text, out_text, response_rounds,
+  /* The leading newline keeps the summary off a partial line, such as the
+     prompt label left behind by Ctrl+C at an idle prompt. */
+  print_formatted ("\n[usage] tokens: %s in / %s out, %ld rounds, context %s\n", in_text, out_text, response_rounds,
                    context_text);
 }
 

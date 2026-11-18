@@ -1680,6 +1680,58 @@ class AgentTests(unittest.TestCase):
             result.stdout,
         )
 
+    def test_tty_usage_line_starts_after_interrupt(self):
+        endpoint = Endpoint([text_response("ok", 100, 10)])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        master, slave = pty.openpty()
+        process = subprocess.Popen(
+            [EXECUTABLE],
+            stdin=slave,
+            stdout=slave,
+            stderr=subprocess.STDOUT,
+            env={
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "8",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "NO_COLOR": "1",
+                "PATH": os.environ["PATH"],
+            },
+        )
+        os.close(slave)
+
+        def cleanup():
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5)
+            os.close(master)
+
+        self.addCleanup(cleanup)
+
+        def read_until(marker, timeout):
+            data = b""
+            deadline = time.time() + timeout
+            while time.time() < deadline and marker not in data:
+                ready, _, _ = select.select([master], [], [], 0.05)
+                if not ready:
+                    continue
+                try:
+                    chunk = os.read(master, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                data += chunk
+            return data
+
+        output = read_until(b"[You]: ", 10)
+        os.write(master, b"hi\r")
+        output += read_until(b"[You]: ", 10)
+        process.send_signal(signal.SIGINT)
+        output += read_until(b"[bye]", 5)
+        self.assertIn(b"[usage] tokens: 100 in / 10 out, 1 rounds, context 100", output)
+        self.assertNotIn(b"[You]: [usage]", output)
+
     def test_endpoint_http_error_keeps_agent_alive(self):
         result, endpoint = self.run_agent(
             [
