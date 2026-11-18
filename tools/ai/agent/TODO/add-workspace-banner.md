@@ -1,6 +1,6 @@
-# Add Workspace Banner
+# Add Workspace Banner [DONE]
 
-Status: proposal (Tier 1)
+Status: complete and validated. Banner prints `Workspace: <dir> (scoped|unrestricted)`; the working directory also reaches the model as a system message (`Working directory: ...`, with the scope rule when `-C` is given). One-shot output stays banner-free; plain `ai` remains unrestricted.
 
 Goal:
 

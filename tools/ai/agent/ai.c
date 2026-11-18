@@ -137,6 +137,7 @@ static int command_timeout = 600;
 static const char *exec_prompt;
 static const char *workspace_directory;
 static char workspace_root[PATH_MAX];
+static char current_directory[PATH_MAX];
 static int one_shot;
 static const char *attachment_paths[MAX_ATTACHMENTS];
 static int attachment_count;
@@ -881,13 +882,29 @@ handle_skill_command (char *name)
   print_formatted ("[skill] %s added to the context\n", skill->name);
 }
 
+static int
+add_workspace_message (void)
+{
+  const char *directory = workspace_directory != NULL ? workspace_root : current_directory;
+  char content[PATH_MAX + 128];
+
+  if (workspace_directory != NULL)
+    snprintf (content, sizeof (content),
+              "Working directory: %s. The workspace is scoped; commands that reference paths outside it are rejected.\n",
+              directory);
+  else
+    snprintf (content, sizeof (content), "Working directory: %s. Commands run from this directory.\n", directory);
+  return add_text_message ("system", content, 1);
+}
+
 static void
 conversation_reset (void)
 {
   message_count = 0;
   plan_active = 0;
   current_plan[0] = 0;
-  if (add_text_message ("system", SYSTEM_PROMPT, 1) < 0 || add_skills_message () < 0)
+  if (add_text_message ("system", SYSTEM_PROMPT, 1) < 0 || add_workspace_message () < 0
+      || add_skills_message () < 0)
     {
       print_formatted ("error: unable to initialize conversation\n");
       exit (1);
@@ -2775,6 +2792,8 @@ ai_main (int argc, char **argv)
       fprintf (stderr, "error: cannot enter %s: %s\n", workspace_directory, strerror (errno));
       return 2;
     }
+  if (getcwd (current_directory, sizeof (current_directory)) == NULL)
+    snprintf (current_directory, sizeof (current_directory), ".");
   one_shot = exec_prompt != NULL;
   if (one_shot)
     {
@@ -2799,6 +2818,8 @@ ai_main (int argc, char **argv)
       print_formatted ("Endpoint: http://%s:%d%s\n", api_host, api_port, api_path);
       print_formatted ("Model: %s; API timeout: %ds; command timeout: %ds; tool rounds: %d\n", model, api_timeout,
                        command_timeout, max_tool_rounds);
+      print_formatted ("Workspace: %s (%s)\n", workspace_directory != NULL ? workspace_root : current_directory,
+                       workspace_directory != NULL ? "scoped" : "unrestricted");
     }
   if (skill_count > 0)
     {

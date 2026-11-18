@@ -366,6 +366,41 @@ class AgentTests(unittest.TestCase):
                 endpoint.requests[1]["messages"][-1]["content"],
             )
 
+    def test_startup_banner_reports_scoped_workspace(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            resolved = os.path.realpath(workspace)
+            result, endpoint = self.run_agent(
+                [text_response("done")],
+                "diagnose\n\n/exit\n\n",
+                workspace=workspace,
+            )
+        self.assertIn(f"Workspace: {resolved} (scoped)", result.stdout)
+        self.assertIn(
+            f"Working directory: {resolved}", self.system_content(endpoint)
+        )
+        self.assertIn("scoped", self.system_content(endpoint))
+
+    def test_startup_banner_reports_unrestricted_workspace(self):
+        result, endpoint = self.run_agent(
+            [text_response("done")],
+            "diagnose\n\n/exit\n\n",
+        )
+        self.assertIn(f"Workspace: {os.getcwd()} (unrestricted)", result.stdout)
+        self.assertIn(
+            f"Working directory: {os.getcwd()}", self.system_content(endpoint)
+        )
+
+    def test_one_shot_omits_banner_but_states_working_directory(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            resolved = os.path.realpath(workspace)
+            result, endpoint = self.run_agent(
+                [text_response("done")], exec_prompt="diagnose", workspace=workspace
+            )
+        self.assertNotIn("Workspace:", result.stdout)
+        self.assertIn(
+            f"Working directory: {resolved}", self.system_content(endpoint)
+        )
+
     def test_model_override_takes_precedence(self):
         result, endpoint = self.run_agent(
             [text_response("done")],

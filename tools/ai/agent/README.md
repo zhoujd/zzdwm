@@ -110,7 +110,11 @@ skills, or commands are handled. Commands that explicitly reference absolute
 paths outside that workspace are rejected, including in full-access mode. This
 is scope validation, not a sandbox: ambiguous shell constructs and indirect
 program actions still require normal approval unless `--full-access` is
-explicitly supplied.
+explicitly supplied. The startup banner prints `Workspace: <dir>` tagged
+`scoped` or `unrestricted` so the mode is visible at a glance; plain `ai` in a
+directory stays unrestricted, and only `-C` scopes. The working directory is
+also announced to the model in a system message, so relative paths resolve
+against a known location.
 
 Configuration is read from the environment:
 
