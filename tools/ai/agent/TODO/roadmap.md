@@ -11,11 +11,12 @@ add-command-timeout.md (`-t` override, 64 KiB tail-truncated capture);
 add-http-retry.md (3 attempts, backoff, `Retry-After`);
 add-usage-stats.md (`[usage]` line, cumulative tokens + rounds + context);
 add-session-resume.md (`.ai/session.jsonl` transcript, `--continue` /
-`--resume`, plan restore, torn-line tolerance).
+`--resume`, plan restore, torn-line tolerance);
+add-file-tools.md (read_file / list_dir / apply_patch in tool.c, workspace
+confinement with symlink resolution, approval prompt for patches).
 
 ## Tier 2 — bigger bets
 
-- add-file-tools.md — read_file / list_dir / apply_patch tools
 - add-landlock.md — OS-level enforcement for `-C` (kernel 5.13+)
 - add-sse-streaming.md — token-by-token streaming output
 

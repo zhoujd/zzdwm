@@ -116,6 +116,26 @@ def tool_response(command, call_id="call-1", name="run_terminal_command"):
     }
 
 
+def named_tool_response(name, arguments, call_id="call-tool"):
+    return {
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "type": "function",
+                            "id": call_id,
+                            "function": {"name": name, "arguments": json.dumps(arguments)},
+                        }
+                    ],
+                }
+            }
+        ]
+    }
+
+
 def text_response(content, prompt_tokens=None, completion_tokens=None):
     response = {"choices": [{"message": {"role": "assistant", "content": content}}]}
     if prompt_tokens is not None:
@@ -202,6 +222,26 @@ class AgentTests(unittest.TestCase):
             timeout=timeout,
             check=True,
         ), endpoint
+
+    def make_workspace(self, entries):
+        workspace = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, workspace, ignore_errors=True)
+        for name, content in entries.items():
+            path = os.path.join(workspace, name)
+            if content is None:
+                os.makedirs(path, exist_ok=True)
+                continue
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w") as handle:
+                handle.write(content)
+        return workspace
+
+    def tool_replies(self, endpoint, request_index=1):
+        return [
+            message
+            for message in endpoint.requests[request_index]["messages"]
+            if message["role"] == "tool"
+        ]
 
     def run_agent_later(self, responses, live, tail, **kwargs):
         endpoint = Endpoint(responses, kwargs.pop("delay", 0))
@@ -1369,7 +1409,10 @@ class AgentTests(unittest.TestCase):
         self.assertIn("2. [ ] patch", result.stdout)
         self.assertNotIn("[AI requests command]", result.stdout)  # no approval boundary
         tool_names = {tool["function"]["name"] for tool in endpoint.requests[0]["tools"]}
-        self.assertEqual(tool_names, {"run_terminal_command", "plan"})
+        self.assertEqual(
+            tool_names,
+            {"run_terminal_command", "read_file", "list_dir", "apply_patch", "plan"},
+        )
         pinned = [
             message for message in endpoint.requests[1]["messages"]
             if message["role"] == "system" and message["content"].startswith("CURRENT TASK PLAN")
@@ -1400,6 +1443,293 @@ class AgentTests(unittest.TestCase):
         self.assertNotIn(
             "CURRENT TASK PLAN",
             json.dumps(endpoint.requests[2]["messages"]),
+        )
+
+    def test_read_file_returns_numbered_lines_without_approval(self):
+        workspace = self.make_workspace({"notes.txt": "alpha\nbeta\ngamma\n"})
+        result, endpoint = self.run_agent(
+            [named_tool_response("read_file", {"path": "notes.txt"}), text_response("done")],
+            "diagnose\n\n\n/exit\n\n",
+            workspace=workspace,
+        )
+        self.assertIn("[AI reads file]: notes.txt", result.stdout)
+        self.assertIn("1\talpha", result.stdout)
+        self.assertIn("3\tgamma", result.stdout)
+        self.assertNotIn("[a]llow", result.stdout)
+        replies = self.tool_replies(endpoint)
+        self.assertIn("1\talpha", replies[0]["content"])
+        self.assertIn("[file read: notes.txt, 3 lines]", replies[0]["content"])
+
+    def test_read_file_honors_offset_and_limit(self):
+        workspace = self.make_workspace({"lines.txt": "one\ntwo\nthree\nfour\nfive\n"})
+        result, endpoint = self.run_agent(
+            [
+                named_tool_response(
+                    "read_file", {"path": "lines.txt", "offset": 2, "limit": 2}
+                ),
+                text_response("done"),
+            ],
+            "diagnose\n\n\n/exit\n\n",
+            workspace=workspace,
+        )
+        replies = self.tool_replies(endpoint)
+        self.assertIn("2\ttwo", replies[0]["content"])
+        self.assertIn("3\tthree", replies[0]["content"])
+        self.assertNotIn("1\tone", replies[0]["content"])
+        self.assertNotIn("4\tfour", replies[0]["content"])
+        self.assertIn("[file read: lines.txt, lines 2-3 of 5]", replies[0]["content"])
+
+    def test_read_file_reports_missing_file(self):
+        result, endpoint = self.run_agent(
+            [named_tool_response("read_file", {"path": "absent.txt"}), text_response("done")],
+            "diagnose\n\n\n/exit\n\n",
+        )
+        replies = self.tool_replies(endpoint)
+        self.assertIn("Error: cannot read absent.txt", replies[0]["content"])
+
+    def test_read_file_refuses_paths_outside_workspace(self):
+        workspace = self.make_workspace({"inside.txt": "data\n"})
+        result, endpoint = self.run_agent(
+            [
+                named_tool_response("read_file", {"path": "../../etc/passwd"}),
+                text_response("done"),
+            ],
+            "diagnose\n\n\n/exit\n\n",
+            workspace=workspace,
+        )
+        replies = self.tool_replies(endpoint)
+        self.assertIn(
+            "resolves outside the workspace scope", replies[0]["content"]
+        )
+        self.assertNotIn("root:", replies[0]["content"])
+
+    def test_list_dir_reports_sorted_entries(self):
+        workspace = self.make_workspace(
+            {"zebra.txt": "0123456789\n", "apple": None, "mango.md": "x\n"}
+        )
+        result, endpoint = self.run_agent(
+            [named_tool_response("list_dir", {"path": "."}), text_response("done")],
+            "diagnose\n\n\n/exit\n\n",
+            workspace=workspace,
+        )
+        self.assertIn("[AI lists dir]: .", result.stdout)
+        replies = self.tool_replies(endpoint)
+        # The session transcript directory .ai/ lives in the workspace too.
+        self.assertIn("dir  -  apple/", replies[0]["content"])
+        self.assertIn("file 11 zebra.txt", replies[0]["content"])
+        self.assertIn("file 2 mango.md", replies[0]["content"])
+        self.assertLess(
+            replies[0]["content"].index("apple/"),
+            replies[0]["content"].index("mango.md"),
+        )
+        self.assertLess(
+            replies[0]["content"].index("mango.md"),
+            replies[0]["content"].index("zebra.txt"),
+        )
+        self.assertIn("[dir listing: ., 4 entries]", replies[0]["content"])
+
+    def test_apply_patch_edits_file_after_approval(self):
+        workspace = self.make_workspace({"app.txt": "keep\nold line\nkeep too\n"})
+        patch = (
+            "app.txt\n"
+            "<<<<<<< SEARCH\n"
+            "old line\n"
+            "=======\n"
+            "new line\n"
+            ">>>>>>> REPLACE\n"
+        )
+        result, endpoint = self.run_agent(
+            [named_tool_response("apply_patch", {"patch": patch}), text_response("done")],
+            "diagnose\n\na\n\n\n/exit\n\n",
+            workspace=workspace,
+        )
+        self.assertIn("[AI requests patch]", result.stdout)
+        self.assertIn("old line", result.stdout)
+        self.assertIn(
+            "[patch applied: 1 hunk, +1 -1 lines] to app.txt", result.stdout
+        )
+        with open(os.path.join(workspace, "app.txt")) as handle:
+            self.assertEqual(handle.read(), "keep\nnew line\nkeep too\n")
+        replies = self.tool_replies(endpoint)
+        self.assertIn("[patch applied: 1 hunk, +1 -1 lines] to app.txt", replies[0]["content"])
+
+    def test_apply_patch_creates_file_with_empty_search(self):
+        workspace = self.make_workspace({})
+        patch = (
+            "new.txt\n"
+            "<<<<<<< SEARCH\n"
+            "=======\n"
+            "created line\n"
+            ">>>>>>> REPLACE\n"
+        )
+        result, endpoint = self.run_agent(
+            [named_tool_response("apply_patch", {"patch": patch}), text_response("done")],
+            "diagnose\n\na\n\n\n/exit\n\n",
+            workspace=workspace,
+        )
+        self.assertIn("[patch applied: 1 hunk, +1 -0 lines] to new.txt", result.stdout)
+        with open(os.path.join(workspace, "new.txt")) as handle:
+            self.assertEqual(handle.read(), "created line\n")
+
+    def test_apply_patch_refusal_leaves_file_untouched(self):
+        workspace = self.make_workspace({"app.txt": "original\n"})
+        patch = (
+            "app.txt\n"
+            "<<<<<<< SEARCH\n"
+            "original\n"
+            "=======\n"
+            "rewritten\n"
+            ">>>>>>> REPLACE\n"
+        )
+        result, endpoint = self.run_agent(
+            [named_tool_response("apply_patch", {"patch": patch}), text_response("done")],
+            "diagnose\n\nn\n/exit\n\n",
+            workspace=workspace,
+        )
+        self.assertIn("Patch refused by the human.", self.tool_replies(endpoint)[0]["content"])
+        with open(os.path.join(workspace, "app.txt")) as handle:
+            self.assertEqual(handle.read(), "original\n")
+
+    def test_apply_patch_reports_missing_search_text(self):
+        workspace = self.make_workspace({"app.txt": "alpha\nbeta\n"})
+        patch = (
+            "app.txt\n"
+            "<<<<<<< SEARCH\n"
+            "missing line\n"
+            "=======\n"
+            "anything\n"
+            ">>>>>>> REPLACE\n"
+        )
+        result, endpoint = self.run_agent(
+            [named_tool_response("apply_patch", {"patch": patch}), text_response("done")],
+            "diagnose\n\na\n\n\n/exit\n\n",
+            workspace=workspace,
+        )
+        replies = self.tool_replies(endpoint)
+        self.assertIn(
+            "SEARCH text of hunk 1 not found in app.txt", replies[0]["content"]
+        )
+        with open(os.path.join(workspace, "app.txt")) as handle:
+            self.assertEqual(handle.read(), "alpha\nbeta\n")
+
+    def test_apply_patch_reports_ambiguous_search_text(self):
+        workspace = self.make_workspace({"dup.txt": "same\nsame\n"})
+        patch = (
+            "dup.txt\n"
+            "<<<<<<< SEARCH\n"
+            "same\n"
+            "=======\n"
+            "other\n"
+            ">>>>>>> REPLACE\n"
+        )
+        result, endpoint = self.run_agent(
+            [named_tool_response("apply_patch", {"patch": patch}), text_response("done")],
+            "diagnose\n\na\n\n\n/exit\n\n",
+            workspace=workspace,
+        )
+        replies = self.tool_replies(endpoint)
+        self.assertIn(
+            "matches 2 locations in dup.txt", replies[0]["content"]
+        )
+        with open(os.path.join(workspace, "dup.txt")) as handle:
+            self.assertEqual(handle.read(), "same\nsame\n")
+
+    def test_apply_patch_blocks_outside_workspace_even_with_full_access(self):
+        outer = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, outer, ignore_errors=True)
+        workspace = os.path.join(outer, "ws")
+        os.makedirs(workspace)
+        with open(os.path.join(outer, "outside.txt"), "w") as handle:
+            handle.write("untouched\n")
+        patch = (
+            "../outside.txt\n"
+            "<<<<<<< SEARCH\n"
+            "=======\n"
+            "escaped\n"
+            ">>>>>>> REPLACE\n"
+        )
+        result, endpoint = self.run_agent(
+            [named_tool_response("apply_patch", {"patch": patch}), text_response("done")],
+            "diagnose\n\n/exit\n\n",
+            workspace=workspace,
+            full_access=True,
+        )
+        self.assertIn("Patch blocked:", result.stdout)
+        replies = self.tool_replies(endpoint)
+        self.assertIn(
+            "patch references a path outside the workspace scope", replies[0]["content"]
+        )
+        with open(os.path.join(outer, "outside.txt")) as handle:
+            self.assertEqual(handle.read(), "untouched\n")
+
+    def test_apply_patch_auto_applies_with_full_access(self):
+        workspace = self.make_workspace({"app.txt": "before\n"})
+        patch = (
+            "app.txt\n"
+            "<<<<<<< SEARCH\n"
+            "before\n"
+            "=======\n"
+            "after\n"
+            ">>>>>>> REPLACE\n"
+        )
+        result, endpoint = self.run_agent(
+            [named_tool_response("apply_patch", {"patch": patch}), text_response("done")],
+            "diagnose\n\n/exit\n\n",
+            workspace=workspace,
+            full_access=True,
+        )
+        self.assertEqual(result.stdout.count("[a]llow"), 0)
+        self.assertIn("[patch applied: 1 hunk, +1 -1 lines] to app.txt", result.stdout)
+        with open(os.path.join(workspace, "app.txt")) as handle:
+            self.assertEqual(handle.read(), "after\n")
+
+    def test_file_tools_do_not_follow_symlinks_outside_workspace(self):
+        outer = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, outer, ignore_errors=True)
+        workspace = os.path.join(outer, "ws")
+        os.makedirs(workspace)
+        secret = os.path.join(outer, "secret.txt")
+        with open(secret, "w") as handle:
+            handle.write("classified\n")
+        os.symlink(secret, os.path.join(workspace, "leak.txt"))
+        result, endpoint = self.run_agent(
+            [named_tool_response("read_file", {"path": "leak.txt"}), text_response("done")],
+            "diagnose\n\n\n/exit\n\n",
+            workspace=workspace,
+        )
+        replies = self.tool_replies(endpoint)
+        self.assertIn(
+            "leak.txt resolves outside the workspace scope", replies[0]["content"]
+        )
+        self.assertNotIn("classified", replies[0]["content"])
+        patch = (
+            "leak.txt\n"
+            "<<<<<<< SEARCH\n"
+            "classified\n"
+            "=======\n"
+            "leaked\n"
+            ">>>>>>> REPLACE\n"
+        )
+        result, endpoint = self.run_agent(
+            [named_tool_response("apply_patch", {"patch": patch}), text_response("done")],
+            "diagnose\n\n/exit\n\n",
+            workspace=workspace,
+            full_access=True,
+        )
+        self.assertIn("Patch blocked: leak.txt", result.stdout)
+        with open(secret) as handle:
+            self.assertEqual(handle.read(), "classified\n")
+
+    def test_unsupported_tool_error_lists_available_tools(self):
+        result, endpoint = self.run_agent(
+            [named_tool_response("run_command", {"command": "ls"}), text_response("done")],
+            "diagnose\n\n\n/exit\n\n",
+        )
+        replies = self.tool_replies(endpoint)
+        self.assertIn(
+            "Error: unsupported tool; use run_terminal_command, read_file, list_dir, "
+            "apply_patch, or plan.",
+            replies[0]["content"],
         )
 
     def test_plan_without_checklist_is_rejected_visibly(self):
@@ -2380,6 +2710,94 @@ class AgentTests(unittest.TestCase):
         ).stdout
         self.assertIn("3. Prompt (C-J newline, RET submit)", output)
 
+    def test_tui_patch_approval_routes_and_applies(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for TUI patch forwarding")
+        with tempfile.TemporaryDirectory() as workspace:
+            target = os.path.join(workspace, "app.txt")
+            with open(target, "w") as handle:
+                handle.write("before\n")
+            patch = (
+                "app.txt\n"
+                "<<<<<<< SEARCH\n"
+                "before\n"
+                "=======\n"
+                "after\n"
+                ">>>>>>> REPLACE\n"
+            )
+            endpoint = Endpoint(
+                [
+                    named_tool_response("apply_patch", {"patch": patch}),
+                    text_response("done"),
+                ]
+            )
+            self.addCleanup(endpoint.thread.join, timeout=2)
+            self.addCleanup(endpoint.close)
+            server = f"ai-tui-patch-{os.getpid()}"
+            subprocess.run(["tmux", "kill-server"], check=False)
+            self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+            environment = os.environ.copy()
+            environment.update(
+                {
+                    "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                    "AI_TIMEOUT_SECONDS": "2",
+                    "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                    "PATH": os.environ["PATH"],
+                }
+            )
+            subprocess.run(
+                [
+                    "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "100", "-y", "24",
+                    "-n", server, TUI_EXECUTABLE, "tui", "-C", workspace,
+                ],
+                env=environment,
+                check=True,
+                timeout=5,
+            )
+            self.addCleanup(
+                subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+            )
+            time.sleep(0.5)
+            subprocess.run(["tmux", "send-keys", "-t", server, "patch it"], check=True)
+            subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
+            deadline = time.monotonic() + 8
+            decision = ""
+            output = ""
+            while time.monotonic() < deadline:
+                output = subprocess.run(
+                    ["tmux", "capture-pane", "-p", "-t", server],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                ).stdout
+                if "3. Decision (RET submit)" in output:
+                    decision = output
+                    break
+                time.sleep(0.2)
+            self.assertTrue(decision, f"patch decision prompt not shown in TUI:\n{output}")
+            self.assertIn("Patch decision: a allow", decision)
+            subprocess.run(["tmux", "send-keys", "-t", server, "a"], check=True)
+            subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
+            deadline = time.monotonic() + 8
+            applied = ""
+            while time.monotonic() < deadline:
+                output = subprocess.run(
+                    ["tmux", "capture-pane", "-p", "-t", server],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                ).stdout
+                if "patch applied" in output:
+                    applied = output
+                    break
+                time.sleep(0.2)
+            self.assertTrue(applied, f"patch result not shown in TUI:\n{output}")
+            with open(target) as handle:
+                self.assertEqual(handle.read(), "after\n")
+            self.assertEqual(len(endpoint.requests), 2)
+
     def test_tui_multiline_banner_matches_input_keys(self):
         if shutil.which("tmux") is None:
             self.skipTest("tmux is required for TUI input rendering")
@@ -2513,6 +2931,44 @@ class AgentTests(unittest.TestCase):
             lines = self.read_session(workspace)
         self.assertTrue(lines)
         self.assertTrue(all(line["role"] != "system" for line in lines))
+
+    def test_session_log_round_trips_file_tool_calls(self):
+        workspace = self.make_workspace({"notes.txt": "hello\n"})
+        self.run_agent(
+            [
+                named_tool_response("read_file", {"path": "notes.txt"}),
+                text_response("done"),
+            ],
+            "read the notes\n\n\n/exit\n\n",
+            cwd=workspace,
+        )
+        lines = self.read_session(workspace)
+        tool_messages = [line for line in lines if line.get("tool_calls")]
+        self.assertEqual(len(tool_messages), 1)
+        self.assertEqual(
+            tool_messages[0]["tool_calls"][0]["function"]["name"], "read_file"
+        )
+        self.assertEqual(
+            json.loads(tool_messages[0]["tool_calls"][0]["function"]["arguments"]),
+            {"path": "notes.txt", "offset": 1, "limit": 0},
+        )
+        result, endpoint = self.run_agent(
+            [text_response("ok")],
+            "again\n\n/exit\n\n",
+            cwd=workspace,
+            flags=("--continue",),
+        )
+        self.assertIn("[session] resumed", result.stdout)
+        replayed = [
+            call
+            for message in endpoint.requests[0]["messages"]
+            if message.get("tool_calls")
+            for call in message["tool_calls"]
+        ]
+        self.assertEqual(replayed[0]["function"]["name"], "read_file")
+        self.assertEqual(
+            json.loads(replayed[0]["function"]["arguments"])["path"], "notes.txt"
+        )
 
     def test_continue_resumes_previous_conversation(self):
         with tempfile.TemporaryDirectory() as workspace:

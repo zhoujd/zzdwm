@@ -29,6 +29,7 @@
 #include "version.h"
 
 #include "agent.h"
+#include "tool.h"
 
 #include "cJSON.h"
 
@@ -44,7 +45,10 @@
   "per tool call. Never launch interactive TUIs or editors. Disable pagers when supported "                            \
   "(for example --no-pager or PAGER=cat) and explicitly limit large output. Do not assume "                            \
   "working directory or shell environment persists across calls. Never conceal or misrepresent command "               \
-  "output. For any multi-step task, first record a checklist with the plan tool and keep it current "                  \
+  "output. Prefer the purpose-built file tools over shell equivalents: read_file for viewing file "                    \
+  "contents, list_dir for inspecting directories, and apply_patch with unique exact SEARCH/REPLACE "                   \
+  "blocks for creating, editing, or deleting files; use terminal commands for builds, searches, and "                  \
+  "everything else. For any multi-step task, first record a checklist with the plan tool and keep it current "         \
   "as steps complete; the latest plan stays pinned in every later request. "                                           \
   "Stop and ask the human before using sudo, modifying system paths (/etc, /usr, /var), "                              \
   "restarting services, or performing any destructive, ambiguous, or out-of-scope action."
@@ -102,13 +106,27 @@ typedef struct
   size_t length;
 } Buffer;
 
+typedef enum
+{
+  TOOL_UNKNOWN,
+  TOOL_TERMINAL,
+  TOOL_PLAN,
+  TOOL_READ_FILE,
+  TOOL_LIST_DIR,
+  TOOL_APPLY_PATCH,
+} ToolKind;
+
 typedef struct
 {
   char id[MAX_ID];
   char name[MAX_NAME];
   char command[MAX_COMMAND];
   char checklist[MAX_PLAN];
-  int plan;
+  char path[PATH_MAX];
+  char patch[MAX_PATCH];
+  long offset;
+  long limit;
+  ToolKind kind;
   int supported;
   int valid;
 } ToolCall;
@@ -303,9 +321,12 @@ terminal_style (const char *text)
       || strncmp (text, "[command", 8) == 0 || strncmp (text, "[context", 8) == 0 || strncmp (text, "[skill]", 7) == 0
       || strncmp (text, "[Plan", 5) == 0 || strncmp (text, "[force mode", 11) == 0
       || strncmp (text, "[retrying", 9) == 0 || strncmp (text, "[usage]", 7) == 0
-      || strncmp (text, "[session]", 9) == 0)
+      || strncmp (text, "[session]", 9) == 0 || strncmp (text, "[file read", 10) == 0
+      || strncmp (text, "[dir listing", 12) == 0 || strncmp (text, "[patch applied", 14) == 0)
     return "\033[1;35m";
-  if (strncmp (text, "[AI requests command]", 21) == 0 || strncmp (text, "[AI Response]", 13) == 0)
+  if (strncmp (text, "[AI requests command]", 21) == 0 || strncmp (text, "[AI Response]", 13) == 0
+      || strncmp (text, "[AI reads file]", 15) == 0 || strncmp (text, "[AI lists dir]", 14) == 0
+      || strncmp (text, "[AI requests patch]", 19) == 0)
     return "\033[1;36m";
   if (strncmp (text, "[You]", 5) == 0)
     return "\033[1;32m";
@@ -1678,6 +1699,37 @@ build_request (char *request, size_t capacity, size_t *length)
                                      "\"The complete shell command to execute.\"}},"
                                      "\"required\":[\"command\"]}}},"
                                      "{\"type\":\"function\",\"function\":{"
+                                     "\"name\":\"read_file\",\"description\":"
+                                     "\"Read one text file inside the workspace and return numbered lines. "
+                                     "Cheaper and safer than cat: no shell quoting and no approval needed.\","
+                                     "\"parameters\":{\"type\":\"object\",\"properties\":{"
+                                     "\"path\":{\"type\":\"string\",\"description\":"
+                                     "\"File path relative to the workspace, or absolute inside it.\"},"
+                                     "\"offset\":{\"type\":\"integer\",\"description\":"
+                                     "\"First line to return, 1-based; default 1.\"},"
+                                     "\"limit\":{\"type\":\"integer\",\"description\":"
+                                     "\"Maximum number of lines to return; default unlimited.\"}},"
+                                     "\"required\":[\"path\"]}}},"
+                                     "{\"type\":\"function\",\"function\":{"
+                                     "\"name\":\"list_dir\",\"description\":"
+                                     "\"List one directory inside the workspace: sorted entries with type and size. "
+                                     "Cheaper and safer than ls: no approval needed.\","
+                                     "\"parameters\":{\"type\":\"object\",\"properties\":{"
+                                     "\"path\":{\"type\":\"string\",\"description\":"
+                                     "\"Directory path relative to the workspace, or absolute inside it.\"}},"
+                                     "\"required\":[\"path\"]}}},"
+                                     "{\"type\":\"function\",\"function\":{"
+                                     "\"name\":\"apply_patch\",\"description\":"
+                                     "\"Edit files with whole-line SEARCH/REPLACE hunks. Provide the file path on its "
+                                     "own line, then blocks of '<<<<<<< SEARCH', the exact existing lines, '=======', "
+                                     "the replacement lines, '>>>>>>> REPLACE'. SEARCH must match exactly one "
+                                     "location; an empty SEARCH block creates a new file; an empty REPLACE block "
+                                     "deletes the matched lines. Several hunks and several files per call are fine.\","
+                                     "\"parameters\":{\"type\":\"object\",\"properties\":{"
+                                     "\"patch\":{\"type\":\"string\",\"description\":"
+                                     "\"The full SEARCH/REPLACE patch text.\"}},"
+                                     "\"required\":[\"patch\"]}}},"
+                                     "{\"type\":\"function\",\"function\":{"
                                      "\"name\":\"plan\",\"description\":"
                                      "\"Record the full current task checklist. The latest plan is pinned into every "
                                      "later request, so it survives context pruning. Send the complete checklist each "
@@ -2132,19 +2184,51 @@ append_tool_output (const ToolCall *call, const char *prefix, const char *output
 static int
 append_tool_call_arguments (Buffer *buffer, const ToolCall *call)
 {
-  const char *key = call->plan ? "checklist" : "command";
-  const char *value = call->plan ? call->checklist : call->command;
-  char arguments[6 * MAX_COMMAND + 32];
+  static char arguments[6 * MAX_PATCH + 96];
+  const char *key;
+  const char *value;
   Buffer inner = { arguments, sizeof (arguments), 0 };
 
-  /* Re-encode the one argument key each built-in tool understands. The
-     arguments are a JSON string nested inside the message JSON, so the
-     value is escaped for the argument object and the whole argument text
-     is escaped again for the enclosing message string. */
+  /* Re-encode the argument keys of the called built-in tool. The arguments
+     are a JSON string nested inside the message JSON, so each value is
+     escaped for the argument object and the whole argument text is escaped
+     again for the enclosing message string. */
+  if (call->kind == TOOL_PLAN)
+    {
+      key = "checklist";
+      value = call->checklist;
+    }
+  else if (call->kind == TOOL_READ_FILE || call->kind == TOOL_LIST_DIR)
+    {
+      key = "path";
+      value = call->path;
+    }
+  else if (call->kind == TOOL_APPLY_PATCH)
+    {
+      key = "patch";
+      value = call->patch;
+    }
+  else
+    {
+      key = "command";
+      value = call->command;
+    }
   if (buffer_append_string (&inner, "{\"") < 0 || buffer_append_string (&inner, key) < 0
       || buffer_append_string (&inner, "\":\"") < 0
       || append_json_string_body (&inner, value, strlen (value)) < 0
-      || buffer_append_string (&inner, "\"}") < 0)
+      || buffer_append_string (&inner, "\"") < 0)
+    return -1;
+  if (call->kind == TOOL_READ_FILE)
+    {
+      char optionals[96];
+
+      if (snprintf (optionals, sizeof (optionals), ",\"offset\":%ld,\"limit\":%ld", call->offset, call->limit)
+          >= (int)sizeof (optionals))
+        return -1;
+      if (buffer_append_string (&inner, optionals) < 0)
+        return -1;
+    }
+  if (buffer_append_string (&inner, "}") < 0)
     return -1;
   return buffer_append_string (buffer, "\"") < 0
          || append_json_string_body (buffer, arguments, inner.length) < 0
@@ -2457,6 +2541,45 @@ command_decision (ToolCall *call, int *run, char *steer, size_t steer_capacity)
 }
 
 static int
+patch_decision (int *run, char *steer, size_t steer_capacity)
+{
+  char choice[MAX_LINE];
+
+  *run = 0;
+  steer[0] = 0;
+  for (;;)
+    {
+      if (read_interactive_line ("[a]llow, [s]teer without applying, [n]o, [f]orce, [q]uit: ", choice,
+                                 sizeof (choice))
+          < 0)
+        return -1;
+      if (choice[0] == 'a' && choice[1] == 0)
+        {
+          *run = 1;
+          return 0;
+        }
+      if (choice[0] == 'f' && choice[1] == 0)
+        {
+          full_access = 1;
+          print_formatted ("[force mode is now ON; patches apply without approval]\n");
+          *run = 1;
+          return 0;
+        }
+      if (choice[0] == 's' && choice[1] == 0)
+        {
+          print_formatted (multiline_keys_active () ? "Steering: C-J newline, Enter submit.\n"
+                                                    : "Steering ends with an empty line.\n");
+          if (read_interactive_multiline ("[steer]: ", "[.....]: ", steer, steer_capacity) < 0 || steer[0] == 0)
+            continue;
+          return 0;
+        }
+      if ((choice[0] == 'n' || choice[0] == 'q') && choice[1] == 0)
+        return choice[0] == 'q' ? -1 : 0;
+      print_formatted ("Please answer a, s, n, f, or q.\n");
+    }
+}
+
+static int
 post_execution_steer (char *steer, size_t capacity)
 {
   char answer[MAX_LINE];
@@ -2602,7 +2725,6 @@ append_bounded_output (const ToolCall *call, const char *prefix, const char *out
     }
 }
 
-
 /* The plan tool only moves agent-held state, so it needs no command
    approval; printing the new plan keeps the human watching. */
 static void
@@ -2627,11 +2749,31 @@ record_plan (const char *checklist)
   print_formatted ("%s\n", current_plan);
 }
 
+/* Echo the raw patch text so the human can review the exact hunks before
+   deciding; print_formatted handles the pager-style flow control. */
+static void
+print_patch_text (const char *patch)
+{
+  const char *line = patch;
+
+  while (*line != 0)
+    {
+      const char *end = strchr (line, '\n');
+      size_t length = end != NULL ? (size_t) (end - line) : strlen (line);
+
+      print_formatted ("%.*s\n", (int) length, line);
+      if (end == NULL)
+        break;
+      line = end + 1;
+    }
+}
+
 static int
 process_tool_calls (ToolCall *calls, size_t call_count)
 {
   static char output[CAPTURE_SIZE + 1];
   char steer[MAX_COMMAND];
+  const char *scope_root = workspace_directory != NULL ? workspace_root : current_directory;
   size_t index;
 
   steer[0] = 0;
@@ -2643,8 +2785,9 @@ process_tool_calls (ToolCall *calls, size_t call_count)
       size_t output_length = 0;
       size_t dropped_length = 0;
       char result[MAX_LINE];
+      ToolResult tool;
 
-      if (calls[index].valid && calls[index].plan)
+      if (calls[index].valid && calls[index].kind == TOOL_PLAN)
         {
           record_plan (calls[index].checklist);
           if (append_tool_result (&calls[index],
@@ -2652,6 +2795,87 @@ process_tool_calls (ToolCall *calls, size_t call_count)
                                               : "Plan cleared.")
               < 0)
             return -1;
+          continue;
+        }
+      if (calls[index].valid && calls[index].kind == TOOL_READ_FILE)
+        {
+          print_formatted ("\n[AI reads file]: %s\n", calls[index].path);
+          if (tool_read_file (scope_root, calls[index].path, calls[index].offset, calls[index].limit, &tool) < 0
+              || tool.failed)
+            {
+              print_formatted ("%s\n", tool.status);
+              if (append_tool_result (&calls[index], tool.status) < 0)
+                return -1;
+              continue;
+            }
+          /* The human watches the same numbered lines the model receives,
+             written raw like live command output so nothing is concealed. */
+          write_all (STDOUT_FILENO, tool.body, tool.body_length);
+          if (append_bounded_output (&calls[index], tool.status, tool.body, tool.body_length, 0) < 0)
+            return -1;
+          continue;
+        }
+      if (calls[index].valid && calls[index].kind == TOOL_LIST_DIR)
+        {
+          print_formatted ("\n[AI lists dir]: %s\n", calls[index].path);
+          if (tool_list_dir (scope_root, calls[index].path, &tool) < 0 || tool.failed)
+            {
+              print_formatted ("%s\n", tool.status);
+              if (append_tool_result (&calls[index], tool.status) < 0)
+                return -1;
+              continue;
+            }
+          write_all (STDOUT_FILENO, tool.body, tool.body_length);
+          if (append_bounded_output (&calls[index], tool.status, tool.body, tool.body_length, 0) < 0)
+            return -1;
+          continue;
+        }
+      if (calls[index].valid && calls[index].kind == TOOL_APPLY_PATCH)
+        {
+          char offender[PATH_MAX];
+
+          print_formatted ("\n[AI requests patch]\n");
+          print_patch_text (calls[index].patch);
+          if (tool_patch_confined (scope_root, calls[index].patch, offender, sizeof (offender)) < 0)
+            {
+              print_formatted ("Patch blocked: %s resolves outside the workspace scope %s.\n", offender, scope_root);
+              if (append_tool_result (&calls[index],
+                                      "Error: the patch references a path outside the workspace scope.")
+                  < 0)
+                return -1;
+              continue;
+            }
+          if (steer[0] != 0)
+            execute = 0;
+          else if (full_access)
+            execute = 1;
+          else if (patch_decision (&execute, steer, sizeof (steer)) < 0)
+            return -1;
+          if (execute)
+            {
+              if (tool_apply_patch (scope_root, calls[index].patch, &tool) < 0 || tool.failed)
+                {
+                  print_formatted ("%s\n", tool.status);
+                  if (append_tool_result (&calls[index], tool.status) < 0)
+                    return -1;
+                  if (post_execution_steer (steer, sizeof (steer)) < 0)
+                    return -1;
+                  continue;
+                }
+              print_formatted ("%s\n", tool.status);
+              if (append_tool_result (&calls[index], tool.status) < 0)
+                return -1;
+              if (post_execution_steer (steer, sizeof (steer)) < 0)
+                return -1;
+            }
+          else
+            {
+              snprintf (result, sizeof (result), "%s",
+                        steer[0] != 0 ? "Patch skipped because the human supplied a new direction."
+                                      : "Patch refused by the human.");
+              if (append_tool_result (&calls[index], result) < 0)
+                return -1;
+            }
           continue;
         }
       if (calls[index].valid && calls[index].supported)
@@ -2701,7 +2925,8 @@ process_tool_calls (ToolCall *calls, size_t call_count)
       else if (!calls[index].supported)
         {
           if (append_tool_result (&calls[index],
-                                  "Error: unsupported tool; use run_terminal_command or plan.")
+                                  "Error: unsupported tool; use run_terminal_command, read_file, list_dir, "
+                                  "apply_patch, or plan.")
               < 0)
             return -1;
         }
@@ -2774,8 +2999,19 @@ parse_tool_call (const cJSON *tool_call, ToolCall *call)
   name = cJSON_GetObjectItemCaseSensitive (function, "name");
   if (copy_json_string (name, call->name, sizeof (call->name)) < 0)
     return -1;
-  call->plan = strcmp (call->name, "plan") == 0;
-  call->supported = call->plan || strcmp (call->name, "run_terminal_command") == 0;
+  if (strcmp (call->name, "plan") == 0)
+    call->kind = TOOL_PLAN;
+  else if (strcmp (call->name, "run_terminal_command") == 0)
+    call->kind = TOOL_TERMINAL;
+  else if (strcmp (call->name, "read_file") == 0)
+    call->kind = TOOL_READ_FILE;
+  else if (strcmp (call->name, "list_dir") == 0)
+    call->kind = TOOL_LIST_DIR;
+  else if (strcmp (call->name, "apply_patch") == 0)
+    call->kind = TOOL_APPLY_PATCH;
+  else
+    call->kind = TOOL_UNKNOWN;
+  call->supported = call->kind != TOOL_UNKNOWN;
 
   arguments = cJSON_GetObjectItemCaseSensitive (function, "arguments");
   if (!cJSON_IsString (arguments))
@@ -2784,7 +3020,7 @@ parse_tool_call (const cJSON *tool_call, ToolCall *call)
   if (argument_object == NULL)
     return -1;
 
-  if (call->plan)
+  if (call->kind == TOOL_PLAN)
     {
       const cJSON *checklist = cJSON_GetObjectItemCaseSensitive (argument_object, "checklist");
 
@@ -2792,6 +3028,50 @@ parse_tool_call (const cJSON *tool_call, ToolCall *call)
          call instead of being replaced by a shell tool call. */
       call->valid = copy_json_string (checklist, call->checklist, sizeof (call->checklist)) == 0;
       cJSON_Delete (argument_object);
+      return 0;
+    }
+
+  if (call->kind == TOOL_READ_FILE || call->kind == TOOL_LIST_DIR)
+    {
+      const cJSON *path = cJSON_GetObjectItemCaseSensitive (argument_object, "path");
+
+      if (copy_json_string (path, call->path, sizeof (call->path)) < 0)
+        {
+          cJSON_Delete (argument_object);
+          return -1;
+        }
+      call->offset = 1;
+      call->limit = 0;
+      if (call->kind == TOOL_READ_FILE)
+        {
+          const cJSON *offset = cJSON_GetObjectItemCaseSensitive (argument_object, "offset");
+          const cJSON *limit = cJSON_GetObjectItemCaseSensitive (argument_object, "limit");
+
+          if (cJSON_IsNumber (offset))
+            call->offset = (long) offset->valuedouble;
+          if (call->offset < 1)
+            call->offset = 1;
+          if (cJSON_IsNumber (limit))
+            call->limit = (long) limit->valuedouble;
+          if (call->limit < 0)
+            call->limit = 0;
+        }
+      cJSON_Delete (argument_object);
+      call->valid = call->path[0] != 0;
+      return 0;
+    }
+
+  if (call->kind == TOOL_APPLY_PATCH)
+    {
+      const cJSON *patch = cJSON_GetObjectItemCaseSensitive (argument_object, "patch");
+
+      if (copy_json_string (patch, call->patch, sizeof (call->patch)) < 0)
+        {
+          cJSON_Delete (argument_object);
+          return -1;
+        }
+      cJSON_Delete (argument_object);
+      call->valid = call->patch[0] != 0;
       return 0;
     }
 

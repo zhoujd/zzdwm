@@ -1,9 +1,9 @@
 # ai
 
 `ai` is a compact, static Linux agent for OpenAI-compatible chat
-completion endpoints. It keeps a multi-turn conversation, exposes one shell
-tool and one plan tool to the model, and keeps a human at every command
-boundary.
+completion endpoints. It keeps a multi-turn conversation, exposes a shell
+tool, file tools, and a plan tool to the model, and keeps a human at every
+command boundary.
 
 ## Build
 
@@ -179,6 +179,27 @@ the tool result) and returns a bounded tail to the model, so a huge `cat`
 cannot blow the context window.
 `/force` toggles full access while the agent is running; the startup mode
 remains the safer approval-based default.
+
+The file tools work directly on paths instead of shell strings.
+`read_file path [offset] [limit]` returns tab-numbered lines from one
+workspace file (the same lines stream to your terminal, so nothing is
+concealed), `list_dir path` returns sorted entries with type and size, and
+both run without approval. `apply_patch` edits files with whole-line
+SEARCH/REPLACE hunks: the file path on its own line, then
+`<<<<<<< SEARCH`, the exact existing lines, `=======`, the replacement
+lines, and `>>>>>>> REPLACE`. Each SEARCH block must match exactly one
+location (add surrounding lines to disambiguate), an empty SEARCH block
+creates the file, and an empty REPLACE block deletes the matched lines;
+several hunks and several files fit in one call. The patch is shown before
+anything runs, then the choice is `a` allow, `s` steer without applying,
+`n` refuse, or `f` allow and enable full access for the rest of the session
+(`--full-access` skips the prompt). Every file-tool path — reads included —
+is resolved against the workspace root with symlinks followed and must stay
+inside it, regardless of `--full-access`; a patch is scope-checked before
+the approval prompt, so a violating patch is never half-applied. When a
+later hunk fails, earlier files in the same call are already patched and
+the error says so, alongside guidance to re-read the file and copy the
+lines exactly.
 
 The `plan` tool records the current task checklist. Each update prints
 `[Plan updated]:` with the new plan, and the latest plan is pinned into

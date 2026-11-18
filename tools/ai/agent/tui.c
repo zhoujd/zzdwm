@@ -118,13 +118,17 @@ line_style (const char *line)
                : 0;
   if (strncmp (line, "error:", 6) == 0 || strncmp (line, "Error:", 6) == 0 || strncmp (line, "[error]", 7) == 0)
     return COLOR_PAIR (5) | A_BOLD;
-  if (strncmp (line, "[AI Response]", 13) == 0 || strncmp (line, "[AI requests command]", 21) == 0)
+  if (strncmp (line, "[AI Response]", 13) == 0 || strncmp (line, "[AI requests command]", 21) == 0
+      || strncmp (line, "[AI reads file]", 15) == 0 || strncmp (line, "[AI lists dir]", 14) == 0
+      || strncmp (line, "[AI requests patch]", 19) == 0)
     return COLOR_PAIR (1) | A_BOLD;
   if (strncmp (line, "[You]", 5) == 0 || strncmp (line, "[steer]", 7) == 0)
     return COLOR_PAIR (3) | A_BOLD;
   if (strncmp (line, "[AI request", 12) == 0 || strncmp (line, "[live steering", 14) == 0
       || strncmp (line, "[command", 8) == 0 || strncmp (line, "[context", 8) == 0 || strncmp (line, "[skill]", 7) == 0
-      || strncmp (line, "[Plan", 5) == 0 || strncmp (line, "[force mode", 11) == 0)
+      || strncmp (line, "[Plan", 5) == 0 || strncmp (line, "[force mode", 11) == 0
+      || strncmp (line, "[file read", 10) == 0 || strncmp (line, "[dir listing", 12) == 0
+      || strncmp (line, "[patch applied", 14) == 0)
     return COLOR_PAIR (4) | A_BOLD;
   return 0;
 }
@@ -606,6 +610,7 @@ is_agent_prompt (const char *line)
   return strcmp (line, "[You]: ") == 0 || strcmp (line, "[...]: ") == 0 || strcmp (line, "[steer]: ") == 0
          || strcmp (line, "[.....]: ") == 0
          || strcmp (line, "[a]llow, [e]dit, [s]teer without running, [n]o, [f]orce, [q]uit: ") == 0
+         || strcmp (line, "[a]llow, [s]teer without applying, [n]o, [f]orce, [q]uit: ") == 0
          || strcmp (line, "[edited command]: ") == 0
          || strcmp (line, "[s]teer before next AI request, Enter to continue, q quit: ") == 0;
 }
@@ -615,6 +620,8 @@ agent_prompt_hint (const char *line)
 {
   if (strcmp (line, "[a]llow, [e]dit, [s]teer without running, [n]o, [f]orce, [q]uit: ") == 0)
     return "Command decision: a allow, e edit, s steer, n no, f force all, q quit";
+  if (strcmp (line, "[a]llow, [s]teer without applying, [n]o, [f]orce, [q]uit: ") == 0)
+    return "Patch decision: a allow, s steer, n no, f force all, q quit";
   if (strcmp (line, "[edited command]: ") == 0)
     return "Edited command: enter the replacement command";
   if (strcmp (line, "[s]teer before next AI request, Enter to continue, q quit: ") == 0)
@@ -688,7 +695,11 @@ display_agent_line (const char *line)
     }
   else if (strncmp (line, "[AI requests command]", 21) == 0 || strncmp (line, "[command]", 9) == 0
            || strncmp (line, "[command output]", 16) == 0 || strncmp (line, "Command output:", 15) == 0
-           || strncmp (line, "[command timed out after", 24) == 0 || strncmp (line, "[command completed]", 19) == 0)
+           || strncmp (line, "[command timed out after", 24) == 0 || strncmp (line, "[command completed]", 19) == 0
+           || strncmp (line, "[AI reads file]", 15) == 0 || strncmp (line, "[AI lists dir]", 14) == 0
+           || strncmp (line, "[AI requests patch]", 19) == 0 || strncmp (line, "[file read", 10) == 0
+           || strncmp (line, "[dir listing", 12) == 0 || strncmp (line, "[patch applied", 14) == 0
+           || strncmp (line, "Patch blocked:", 14) == 0)
     {
       output_mode = PANE_COMMANDS;
       routed = 1;
@@ -977,6 +988,7 @@ handle_agent_prompt (const char *line)
       || strcmp (line, "[.....]: ") == 0)
     multiline = 1;
   else if (strcmp (line, "[a]llow, [e]dit, [s]teer without running, [n]o, [f]orce, [q]uit: ") == 0
+           || strcmp (line, "[a]llow, [s]teer without applying, [n]o, [f]orce, [q]uit: ") == 0
            || strcmp (line, "[edited command]: ") == 0
            || strcmp (line, "[s]teer before next AI request, Enter to continue, q quit: ") == 0)
     multiline = 0;
