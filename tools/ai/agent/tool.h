@@ -4,6 +4,12 @@
 #include <limits.h>
 #include <stddef.h>
 
+/* The Makefile hands every header to the compiler on its own, where musl
+   hides PATH_MAX from a bare -std=c11 unit; glibc always defines it. */
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
+
 #define MAX_PATCH (64 * 1024)
 #define MAX_PATCHABLE_FILE (1024 * 1024)
 #define TOOL_OUTPUT_SIZE (64 * 1024)

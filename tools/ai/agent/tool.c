@@ -6,6 +6,8 @@
    libc: results come back through ToolResult and the caller owns the
    approval boundary and the conversation. */
 
+#define _GNU_SOURCE
+
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
