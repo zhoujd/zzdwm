@@ -177,6 +177,7 @@ static int attachment_count;
 static int max_tool_rounds = DEFAULT_TOOL_ROUNDS;
 static int streaming_enabled = 1;
 static int stream_printed_content;
+static int stream_terminated;
 static int landlock_enabled = 1;
 static int resolve_transient;
 static bool full_access = false; // Always default to secure mode
@@ -339,6 +340,9 @@ terminal_style (const char *text)
   return NULL;
 }
 
+/* True when the last byte written to stdout left the cursor mid-line. */
+static int output_partial_line;
+
 static void
 print_formatted (const char *format, ...)
 {
@@ -352,6 +356,9 @@ print_formatted (const char *format, ...)
   va_end (arguments);
   if (length < 0)
     return;
+  /* vsnprintf reports the untruncated length; clamp to what text holds. */
+  if (length >= (int)sizeof (text))
+    length = (int)sizeof (text) - 1;
   style = terminal_style (text);
   if (style != NULL)
     write_all (STDOUT_FILENO, style, strlen (style));
@@ -359,8 +366,19 @@ print_formatted (const char *format, ...)
     {
       /* Output failures are not recoverable in this compact tool. */
     }
+  else if (length > 0)
+    output_partial_line = text[length - 1] != '\n';
   if (style != NULL)
     write_all (STDOUT_FILENO, "\033[0m", 4);
+}
+
+/* Status markers must start on their own line; streamed deltas or command
+   output can leave the cursor mid-line, so step below that first. */
+static void
+print_line_break (void)
+{
+  if (output_partial_line)
+    print_formatted ("\n");
 }
 
 static void
@@ -1690,9 +1708,16 @@ stream_flush_output (int final)
         }
       write_all (STDOUT_FILENO, stream_content + stream_flushed, pending);
       stream_flushed = available;
+      output_partial_line = stream_content[stream_flushed - 1] != '\n';
     }
-  if (final && stream_printed_content)
-    write_all (STDOUT_FILENO, "\n", 1);
+  /* The request thread and the main loop both finish the stream; emit the
+     terminating newline only once. */
+  if (final && stream_printed_content && !stream_terminated)
+    {
+      write_all (STDOUT_FILENO, "\n", 1);
+      output_partial_line = 0;
+      stream_terminated = 1;
+    }
 }
 
 /* Reassemble the accumulated deltas into the buffered response shape. */
@@ -1770,6 +1795,7 @@ receive_stream (int socket_fd, char *response, size_t capacity, size_t total,
   stream_content[0] = 0;
   stream_available = 0;
   stream_flushed = 0;
+  stream_terminated = 0;
   stream_active = 1;
   stream_feed_bytes (&state, *body, total - body_offset);
   /* A streaming reply can run long, so the timeout is per quiet period. */
@@ -2358,7 +2384,10 @@ call_endpoint_once (const char **response_body, char *response_storage, int *tra
   if (receive_status < 0)
     {
       if (interrupted)
-        print_formatted ("\n[request interrupted]\n");
+        {
+          print_line_break ();
+          print_formatted ("[request interrupted]\n");
+        }
       else
         print_formatted ("error: receive response: %s\n", strerror (receive_error));
       if (receive_status == -3)
@@ -2410,6 +2439,7 @@ call_endpoint (const char **response_body, char *response_storage)
       delay = retry_after > 0 ? retry_after : 1 << (attempt - 1);
       if (delay > MAX_RETRY_AFTER)
         delay = MAX_RETRY_AFTER;
+      print_line_break ();
       print_formatted ("[retrying in %ds (attempt %d/%d)]\n", delay, attempt + 1, MAX_HTTP_ATTEMPTS);
       if (sleep_slices (delay) < 0)
         return result;
@@ -2484,20 +2514,26 @@ call_endpoint_threaded (const char **response_body, char *response_storage)
     }
   poll_live_input ();
   end_live_input ();
-  print_formatted ("[AI request inactive]\n");
-  print_formatted ("[live steering inactive]\n");
   if (!wait.done)
     {
       pthread_cancel (wait.worker);
       pthread_join (wait.worker, &thread_result);
       stream_flush_output (0);
-      print_formatted ("\n[request interrupted]\n");
+      print_line_break ();
+      print_formatted ("[AI request inactive]\n");
+      print_formatted ("[live steering inactive]\n");
+      print_formatted ("[request interrupted]\n");
       pthread_cond_destroy (&wait.completed_cond);
       pthread_mutex_destroy (&wait.mutex);
       return -agent_exit_status;
     }
   pthread_join (wait.worker, &thread_result);
+  /* Finish the response before the markers so a partial tail cannot glue
+     onto them or land after them. */
   stream_flush_output (wait.request.result == 0);
+  print_line_break ();
+  print_formatted ("[AI request inactive]\n");
+  print_formatted ("[live steering inactive]\n");
   if (wait.request.result == 0)
     *response_body = wait.request.response_body;
   create_error = wait.request.result;
@@ -2893,6 +2929,7 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
 
               if (write_all (STDOUT_FILENO, chunk, (size_t)received) < 0)
                 break;
+              output_partial_line = chunk[received - 1] != '\n';
               /* Keep the tail: once the buffer fills, slide it so the model
                  sees the end of the output, where errors usually are. A
                  single read never exceeds sizeof(chunk), far below capacity. */
@@ -2927,7 +2964,8 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
           waitpid (child, &status, 0);
           have_status = 1;
           *timed_out = 1;
-          print_formatted ("\n[command timed out after %d seconds]\n", command_timeout);
+          print_line_break ();
+          print_formatted ("[command timed out after %d seconds]\n", command_timeout);
           agent_exit_status = EXIT_TIMEOUT;
           break;
         }
@@ -2935,6 +2973,7 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
   while (!have_status && waitpid (child, &status, 0) < 0 && errno == EINTR)
     ;
   end_live_input ();
+  print_line_break ();
   print_formatted ("[live steering inactive]\n");
   close (pipe_fds[0]);
   if (WIFEXITED (status))
@@ -3675,9 +3714,10 @@ print_usage_summary (void)
   format_token_count (in_text, sizeof (in_text), total_prompt_tokens);
   format_token_count (out_text, sizeof (out_text), total_completion_tokens);
   format_token_count (context_text, sizeof (context_text), last_prompt_tokens);
-  /* The leading newline keeps the summary off a partial line, such as the
-     prompt label left behind by Ctrl+C at an idle prompt. */
-  print_formatted ("\n[usage] tokens: %s in / %s out, %ld rounds, context %s\n", in_text, out_text, response_rounds,
+  /* Keep the summary off a partial line, such as the prompt label left
+     behind by Ctrl+C at an idle prompt. */
+  print_line_break ();
+  print_formatted ("[usage] tokens: %s in / %s out, %ld rounds, context %s\n", in_text, out_text, response_rounds,
                    context_text);
 }
 
