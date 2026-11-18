@@ -116,8 +116,15 @@ def tool_response(command, call_id="call-1", name="run_terminal_command"):
     }
 
 
-def text_response(content):
-    return {"choices": [{"message": {"role": "assistant", "content": content}}]}
+def text_response(content, prompt_tokens=None, completion_tokens=None):
+    response = {"choices": [{"message": {"role": "assistant", "content": content}}]}
+    if prompt_tokens is not None:
+        response["usage"] = {
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens or 0,
+            "total_tokens": prompt_tokens + (completion_tokens or 0),
+        }
+    return response
 
 
 def plan_response(checklist, call_id="call-plan"):
@@ -1638,6 +1645,40 @@ class AgentTests(unittest.TestCase):
         self.assertIn("[output tail]", content)
         self.assertIn("TAILMARK", content)
         self.assertNotIn("HEADMARK", content)
+
+    def test_usage_stats_printed_at_interactive_exit(self):
+        result, _ = self.run_agent(
+            [text_response("ok", prompt_tokens=12400, completion_tokens=3100)],
+            "go\n\n/exit\n\n",
+        )
+        self.assertIn(
+            "[usage] tokens: 12.4k in / 3.1k out, 1 rounds, context 12.4k",
+            result.stdout,
+        )
+
+    def test_usage_stats_survive_new_conversation(self):
+        result, _ = self.run_agent(
+            [text_response("a", 1000, 10), text_response("b", 1100, 20)],
+            "go\n\n/new\n\nagain\n\n/exit\n\n",
+        )
+        self.assertIn(
+            "[usage] tokens: 2.1k in / 30 out, 2 rounds, context 1.1k",
+            result.stdout,
+        )
+
+    def test_usage_stats_printed_after_each_one_shot_round(self):
+        result, _ = self.run_agent(
+            [tool_response("printf 'x\\n'"), text_response("done", 500, 25)],
+            full_access=True,
+            exec_prompt="do",
+        )
+        self.assertIn(
+            "[usage] tokens: 0 in / 0 out, 1 rounds, context 0", result.stdout
+        )
+        self.assertIn(
+            "[usage] tokens: 500 in / 25 out, 2 rounds, context 500",
+            result.stdout,
+        )
 
     def test_endpoint_http_error_keeps_agent_alive(self):
         result, endpoint = self.run_agent(

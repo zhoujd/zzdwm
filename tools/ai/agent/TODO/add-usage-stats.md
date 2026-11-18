@@ -1,6 +1,6 @@
-# Add Usage Stats
+# Add Usage Stats [DONE]
 
-Status: proposal (Tier 1)
+Status: complete and validated. `record_usage` sums `usage.prompt_tokens` / `usage.completion_tokens` per round and keeps the latest prompt size; the interactive agent prints `[usage] tokens: 12.4k in / 3.1k out, 7 rounds, context 3.2k` at exit, one-shot mode prints it after each round, and totals survive `/new`.
 
 Goal:
 

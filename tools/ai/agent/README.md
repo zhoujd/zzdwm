@@ -149,6 +149,14 @@ a retry cannot fix a protocol or request error — and a failed attempt mutates
 nothing, so the conversation stays intact. Each retry prints
 `[retrying in Ns (attempt N/3)]` so the stall stays visible.
 
+Token usage is reported from the endpoint's `usage` object. The interactive
+agent prints one line at exit, and one-shot mode prints it after each round:
+`[usage] tokens: 12.4k in / 3.1k out, 7 rounds, context 3.2k` — cumulative
+billed prompt and completion tokens summed per round, the model round count,
+and the latest request's context size, so prompt growth and the
+`MAX_MESSAGES` drop-oldest pruning become visible. Totals accumulate across
+`/new` and are omitted when no round succeeded.
+
 At each requested command, choose `a` to allow, `e` to edit it, `s` to supply a
 steering instruction without running it, `n` to refuse it, or `f` to allow it
 and enable full access for the rest of the session. With

@@ -141,6 +141,10 @@ static const char *exec_prompt;
 static const char *workspace_directory;
 static char workspace_root[PATH_MAX];
 static char current_directory[PATH_MAX];
+static long total_prompt_tokens;
+static long total_completion_tokens;
+static long last_prompt_tokens;
+static long response_rounds;
 static int one_shot;
 static const char *attachment_paths[MAX_ATTACHMENTS];
 static int attachment_count;
@@ -292,7 +296,7 @@ terminal_style (const char *text)
   if (strncmp (text, "[AI request", 12) == 0 || strncmp (text, "[live steering", 14) == 0
       || strncmp (text, "[command", 8) == 0 || strncmp (text, "[context", 8) == 0 || strncmp (text, "[skill]", 7) == 0
       || strncmp (text, "[Plan", 5) == 0 || strncmp (text, "[force mode", 11) == 0
-      || strncmp (text, "[retrying", 9) == 0)
+      || strncmp (text, "[retrying", 9) == 0 || strncmp (text, "[usage]", 7) == 0)
     return "\033[1;35m";
   if (strncmp (text, "[AI requests command]", 21) == 0 || strncmp (text, "[AI Response]", 13) == 0)
     return "\033[1;36m";
@@ -2650,6 +2654,51 @@ parse_tool_call (const cJSON *tool_call, ToolCall *call)
   return 0;
 }
 
+static void
+record_usage (const cJSON *response)
+{
+  const cJSON *stats = cJSON_GetObjectItemCaseSensitive (response, "usage");
+  const cJSON *item;
+
+  response_rounds++;
+  if (!cJSON_IsObject (stats))
+    return;
+  item = cJSON_GetObjectItemCaseSensitive (stats, "prompt_tokens");
+  if (cJSON_IsNumber (item))
+    {
+      last_prompt_tokens = (long)item->valuedouble;
+      total_prompt_tokens += last_prompt_tokens;
+    }
+  item = cJSON_GetObjectItemCaseSensitive (stats, "completion_tokens");
+  if (cJSON_IsNumber (item))
+    total_completion_tokens += (long)item->valuedouble;
+}
+
+static void
+format_token_count (char *buffer, size_t capacity, long tokens)
+{
+  if (tokens < 1000)
+    snprintf (buffer, capacity, "%ld", tokens);
+  else
+    snprintf (buffer, capacity, "%.1fk", (double)tokens / 1000.0);
+}
+
+static void
+print_usage_summary (void)
+{
+  char in_text[24];
+  char out_text[24];
+  char context_text[24];
+
+  if (response_rounds == 0)
+    return;
+  format_token_count (in_text, sizeof (in_text), total_prompt_tokens);
+  format_token_count (out_text, sizeof (out_text), total_completion_tokens);
+  format_token_count (context_text, sizeof (context_text), last_prompt_tokens);
+  print_formatted ("[usage] tokens: %s in / %s out, %ld rounds, context %s\n", in_text, out_text, response_rounds,
+                   context_text);
+}
+
 static int
 process_response (const char *body)
 {
@@ -2700,6 +2749,7 @@ process_response (const char *body)
       cJSON_Delete (response);
       return -1;
     }
+  record_usage (response);
 
   content[0] = 0;
   content_item = cJSON_GetObjectItemCaseSensitive (message, "content");
@@ -2749,6 +2799,8 @@ process_response (const char *body)
       return -1;
     }
   cJSON_Delete (response);
+  if (one_shot)
+    print_usage_summary ();
   if (call_count == 0)
     {
       print_formatted ("\n[AI Response]:\n");
@@ -3132,6 +3184,9 @@ ai_main (int argc, char **argv)
         break;
     }
   if (!one_shot)
-    print_formatted ("\n[bye]\n");
+    {
+      print_usage_summary ();
+      print_formatted ("\n[bye]\n");
+    }
   return 0;
 }
