@@ -13,12 +13,14 @@ add-usage-stats.md (`[usage]` line, cumulative tokens + rounds + context);
 add-session-resume.md (`.ai/session.jsonl` transcript, `--continue` /
 `--resume`, plan restore, torn-line tolerance);
 add-file-tools.md (read_file / list_dir / apply_patch in tool.c, workspace
-confinement with symlink resolution, approval prompt for patches).
+confinement with symlink resolution, approval prompt for patches);
+add-sse-streaming.md (`"stream":true` + `text/event-stream` handling in
+receive_stream, deltas reassembled into the buffered response shape,
+`AI_STREAM=0` opt-out, main-thread-only output).
 
 ## Tier 2 — bigger bets
 
 - add-landlock.md — OS-level enforcement for `-C` (kernel 5.13+)
-- add-sse-streaming.md — token-by-token streaming output
 
 ## Deliberately out of scope
 

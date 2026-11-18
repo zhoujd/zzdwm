@@ -146,6 +146,8 @@ Configuration is read from the environment:
   `-t` / `--timeout` overrides it for one run (`0` = unlimited).
 * `AI_TOOL_ROUNDS`: maximum consecutive tool/model rounds per user task,
   1--1024. Default: 128.
+* `AI_STREAM`: stream responses token-by-token over SSE instead of buffering
+  them. Default: on; set `AI_STREAM=0` to buffer.
 
 Only HTTP IPv4 endpoints (including `localhost`) are supported. HTTPS would
 require a TLS implementation and violate the zero-runtime-dependency design;
@@ -158,7 +160,19 @@ backoff (1s, then 2s), honoring an integer `Retry-After` header when the
 endpoint supplies one (capped at 60s). Other 4xx responses are never retried —
 a retry cannot fix a protocol or request error — and a failed attempt mutates
 nothing, so the conversation stays intact. Each retry prints
-`[retrying in Ns (attempt N/3)]` so the stall stays visible.
+`[retrying in Ns (attempt N/3)]` so the stall stays visible. A stream whose
+tokens already reached the screen is never replayed: once any output is
+visible, the attempt is final.
+
+Responses stream token-by-token when the endpoint answers with
+`text/event-stream`: the request asks for `stream`, content deltas print
+under `[AI Response]:` as they arrive, and the first text appears in about one
+round-trip instead of after the whole reply buffers. Deltas are reassembled
+into the same message the buffered path parses, so tool calls, session logs,
+and conversation state are byte-identical; keep-alive comments, `event:` and
+`id:` fields are ignored, and a plain JSON reply (streaming declined) falls
+back to buffering automatically. The API timeout acts as a per-quiet-period
+limit while streaming — every received chunk resets it.
 
 Token usage is reported from the endpoint's `usage` object. The interactive
 agent prints one line at exit, and one-shot mode prints it after each round:

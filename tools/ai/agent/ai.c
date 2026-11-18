@@ -173,6 +173,8 @@ static int one_shot;
 static const char *attachment_paths[MAX_ATTACHMENTS];
 static int attachment_count;
 static int max_tool_rounds = DEFAULT_TOOL_ROUNDS;
+static int streaming_enabled = 1;
+static int stream_printed_content;
 static bool full_access = false; // Always default to secure mode
 static volatile sig_atomic_t interrupted;
 static volatile sig_atomic_t agent_exit_status;
@@ -1270,6 +1272,9 @@ configure_environment (void)
         }
       max_tool_rounds = timeout;
     }
+  value = getenv ("AI_STREAM");
+  if (value != NULL)
+    streaming_enabled = strcmp (value, "0") != 0;
   return 0;
 }
 
@@ -1358,6 +1363,511 @@ resume_session (const char *path)
   return 0;
 }
 
+/* Streaming (SSE) response handling. When the endpoint answers with
+   "text/event-stream" the deltas are printed as they arrive and the final
+   message is reassembled into the same JSON shape the buffered path parses,
+   so conversation state, session logs, and tool dispatch stay identical.
+   Output discipline: the worker thread only accumulates bytes; the main
+   thread is the sole writer to stdout, flushing new deltas between input
+   polls and once more after the worker joins. */
+
+#define MAX_SSE_EVENT (128 * 1024)
+#define MAX_STREAM_ARGUMENTS (MAX_PATCH + MAX_COMMAND + 1024)
+
+static char stream_content[MAX_LINE];
+static volatile size_t stream_available;
+static volatile size_t stream_flushed;
+static volatile sig_atomic_t stream_active;
+
+typedef struct
+{
+  int chunked;
+  size_t chunk_remaining;
+  int chunk_header;
+  int chunk_terminator;
+  char line[MAX_SSE_EVENT];
+  size_t line_length;
+  char size[32];
+  size_t size_length;
+  char event[MAX_SSE_EVENT];
+  size_t event_length;
+} StreamScan;
+
+typedef struct
+{
+  char id[MAX_ID];
+  char name[MAX_NAME];
+  size_t name_length;
+  char arguments[MAX_STREAM_ARGUMENTS];
+  size_t arguments_length;
+} StreamToolCall;
+
+typedef struct
+{
+  StreamScan scan;
+  StreamToolCall calls[MAX_TOOL_CALLS];
+  size_t call_count;
+  size_t content_length;
+  long prompt_tokens;
+  long completion_tokens;
+  int have_usage;
+  int done;
+  int failed;
+} StreamState;
+
+static int
+stream_append_data (char *buffer, size_t *length, size_t capacity, const char *data, size_t data_length)
+{
+  if (*length >= capacity || data_length >= capacity - *length)
+    return -1;
+  memcpy (buffer + *length, data, data_length);
+  *length += data_length;
+  buffer[*length] = 0;
+  return 0;
+}
+
+/* Handle one complete SSE event: the accumulated `data:` payload. */
+static void
+stream_dispatch (StreamState *state)
+{
+  StreamScan *scan = &state->scan;
+  cJSON *event;
+  const cJSON *choices;
+  const cJSON *choice;
+  const cJSON *delta;
+  const cJSON *item;
+  const cJSON *usage;
+  char *text;
+
+  if (scan->event_length == 0)
+    return;
+  if (scan->event[scan->event_length - 1] == '\n')
+    scan->event_length--;
+  scan->event[scan->event_length] = 0;
+  if (strcmp (scan->event, "[DONE]") == 0)
+    {
+      state->done = 1;
+      return;
+    }
+  event = cJSON_Parse (scan->event);
+  if (event == NULL)
+    return; /* Not JSON (a keep-alive ping); resync at the next event. */
+  item = cJSON_GetObjectItemCaseSensitive (event, "error");
+  if (cJSON_IsObject (item))
+    {
+      char message[MAX_LINE];
+      const cJSON *detail = cJSON_GetObjectItemCaseSensitive (item, "message");
+
+      if (copy_json_string (detail, message, sizeof (message)) == 0)
+        print_formatted ("error: AI endpoint: %s\n", message);
+      else
+        print_formatted ("error: AI endpoint returned an error response\n");
+      cJSON_Delete (event);
+      state->failed = 1;
+      return;
+    }
+  choices = cJSON_GetObjectItemCaseSensitive (event, "choices");
+  choice = cJSON_IsArray (choices) ? cJSON_GetArrayItem (choices, 0) : NULL;
+  delta = choice != NULL ? cJSON_GetObjectItemCaseSensitive (choice, "delta") : NULL;
+  if (delta != NULL)
+    {
+      item = cJSON_GetObjectItemCaseSensitive (delta, "content");
+      if (cJSON_IsString (item))
+        {
+          text = cJSON_GetStringValue (item);
+          if (text[0] != 0
+              && stream_append_data (stream_content, &state->content_length, sizeof (stream_content), text,
+                                     strlen (text)) == 0)
+            stream_available = state->content_length;
+          else if (text[0] != 0)
+            {
+              print_formatted ("error: assistant content is too long or malformed\n");
+              cJSON_Delete (event);
+              state->failed = 1;
+              return;
+            }
+        }
+      item = cJSON_GetObjectItemCaseSensitive (delta, "tool_calls");
+      if (cJSON_IsArray (item))
+        {
+          const cJSON *entry;
+
+          cJSON_ArrayForEach (entry, item)
+          {
+            const cJSON *index_item = cJSON_GetObjectItemCaseSensitive (entry, "index");
+            const cJSON *id_item;
+            const cJSON *function;
+            StreamToolCall *call;
+            int index = 0;
+
+            if (cJSON_IsNumber (index_item))
+              index = (int)index_item->valuedouble;
+            if (index < 0 || index >= MAX_TOOL_CALLS)
+              continue;
+            if ((size_t)index >= state->call_count)
+              state->call_count = (size_t)index + 1;
+            call = &state->calls[index];
+            id_item = cJSON_GetObjectItemCaseSensitive (entry, "id");
+            if (cJSON_IsString (id_item))
+              {
+                text = cJSON_GetStringValue (id_item);
+                if (text[0] != 0)
+                  snprintf (call->id, sizeof (call->id), "%s", text);
+              }
+            function = cJSON_GetObjectItemCaseSensitive (entry, "function");
+            if (cJSON_IsObject (function))
+              {
+                const cJSON *fragment = cJSON_GetObjectItemCaseSensitive (function, "name");
+
+                if (cJSON_IsString (fragment))
+                  {
+                    text = cJSON_GetStringValue (fragment);
+                    if (text[0] != 0
+                        && stream_append_data (call->name, &call->name_length, sizeof (call->name), text,
+                                               strlen (text)) < 0)
+                      {
+                        print_formatted ("error: AI stream tool name is too long\n");
+                        cJSON_Delete (event);
+                        state->failed = 1;
+                        return;
+                      }
+                  }
+                fragment = cJSON_GetObjectItemCaseSensitive (function, "arguments");
+                if (cJSON_IsString (fragment))
+                  {
+                    text = cJSON_GetStringValue (fragment);
+                    if (text[0] != 0
+                        && stream_append_data (call->arguments, &call->arguments_length, sizeof (call->arguments),
+                                               text, strlen (text)) < 0)
+                      {
+                        print_formatted ("error: AI stream tool arguments exceed limit\n");
+                        cJSON_Delete (event);
+                        state->failed = 1;
+                        return;
+                      }
+                  }
+              }
+          }
+        }
+    }
+  usage = cJSON_GetObjectItemCaseSensitive (event, "usage");
+  if (cJSON_IsObject (usage))
+    {
+      const cJSON *number;
+
+      number = cJSON_GetObjectItemCaseSensitive (usage, "prompt_tokens");
+      if (cJSON_IsNumber (number))
+        state->prompt_tokens = (long)number->valuedouble;
+      number = cJSON_GetObjectItemCaseSensitive (usage, "completion_tokens");
+      if (cJSON_IsNumber (number))
+        state->completion_tokens = (long)number->valuedouble;
+      state->have_usage = 1;
+    }
+  cJSON_Delete (event);
+}
+
+/* Handle one completed SSE line (newline consumed, CR not yet stripped). */
+static void
+stream_feed_line (StreamState *state, const char *line, size_t length)
+{
+  StreamScan *scan = &state->scan;
+
+  if (length > 0 && line[length - 1] == '\r')
+    length--;
+  if (length == 0)
+    {
+      if (scan->event_length > 0)
+        {
+          stream_dispatch (state);
+          scan->event_length = 0;
+        }
+      return;
+    }
+  if (line[0] == ':')
+    return; /* Comment, e.g. a keep-alive ping. */
+  if (length > 5 && memcmp (line, "data:", 5) == 0)
+    {
+      size_t skip = line[5] == ' ' ? 6 : 5;
+
+      if (stream_append_data (scan->event, &scan->event_length, sizeof (scan->event), line + skip,
+                             length - skip) < 0
+          || stream_append_data (scan->event, &scan->event_length, sizeof (scan->event), "\n", 1) < 0)
+        {
+          print_formatted ("error: AI stream event exceeds limit\n");
+          state->failed = 1;
+        }
+      return;
+    }
+  /* event:, id:, and retry: fields carry nothing this client needs. */
+}
+
+/* Dechunk (when needed) and split raw body bytes into SSE lines. */
+static void
+stream_feed_bytes (StreamState *state, const char *data, size_t length)
+{
+  StreamScan *scan = &state->scan;
+  size_t index;
+
+  for (index = 0; index < length && !state->done && !state->failed; index++)
+    {
+      char byte = data[index];
+
+      if (!scan->chunked)
+        {
+          if (byte == '\n')
+            {
+              stream_feed_line (state, scan->line, scan->line_length);
+              scan->line_length = 0;
+            }
+          else if (scan->line_length + 1 >= sizeof (scan->line))
+            {
+              print_formatted ("error: AI stream line exceeds limit\n");
+              state->failed = 1;
+              return;
+            }
+          else
+            scan->line[scan->line_length++] = byte;
+        }
+      else if (scan->chunk_terminator > 0)
+        {
+          /* Swallow the CRLF that follows every chunk's data. */
+          scan->chunk_terminator--;
+          if (scan->chunk_terminator == 0)
+            scan->chunk_header = 1;
+        }
+      else if (scan->chunk_header)
+        {
+          if (byte == '\n')
+            {
+              char *end;
+              unsigned long chunk;
+
+              errno = 0;
+              scan->size[scan->size_length] = 0;
+              chunk = strtoul (scan->size, &end, 16);
+              if (errno == ERANGE || end == scan->size || chunk > MAX_RESPONSE)
+                {
+                  print_formatted ("error: AI stream chunk header is malformed\n");
+                  state->failed = 1;
+                  return;
+                }
+              scan->size_length = 0;
+              scan->chunk_remaining = (size_t)chunk;
+              scan->chunk_header = 0;
+              if (chunk == 0)
+                state->done = 1;
+            }
+          else if (scan->size_length + 1 >= sizeof (scan->size))
+            {
+              print_formatted ("error: AI stream chunk header is malformed\n");
+              state->failed = 1;
+              return;
+            }
+          else
+            scan->size[scan->size_length++] = byte;
+        }
+      else
+        {
+          if (byte == '\n')
+            {
+              stream_feed_line (state, scan->line, scan->line_length);
+              scan->line_length = 0;
+            }
+          else if (scan->line_length + 1 >= sizeof (scan->line))
+            {
+              print_formatted ("error: AI stream line exceeds limit\n");
+              state->failed = 1;
+              return;
+            }
+          else
+            scan->line[scan->line_length++] = byte;
+          if (scan->chunk_remaining > 0 && --scan->chunk_remaining == 0)
+            scan->chunk_terminator = 2;
+        }
+    }
+}
+
+/* Main-thread only: write any newly accumulated deltas to stdout. */
+static void
+stream_flush_output (int final)
+{
+  size_t available = stream_available;
+  size_t pending;
+
+  if (stream_flushed >= available)
+    pending = 0;
+  else
+    pending = available - stream_flushed;
+  if (pending > 0)
+    {
+      if (!stream_printed_content)
+        {
+          print_formatted ("\n[AI Response]:\n");
+          stream_printed_content = 1;
+        }
+      write_all (STDOUT_FILENO, stream_content + stream_flushed, pending);
+      stream_flushed = available;
+    }
+  if (final && stream_printed_content)
+    write_all (STDOUT_FILENO, "\n", 1);
+}
+
+/* Reassemble the accumulated deltas into the buffered response shape. */
+static int
+stream_finish (StreamState *state, char *body, size_t capacity, size_t *response_length)
+{
+  Buffer buffer = { body, capacity > 0 ? capacity - 1 : 0, 0 };
+  size_t index;
+  char id_text[MAX_ID];
+  int ok;
+
+  ok = buffer_append_string (&buffer, "{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"") >= 0
+       && append_json_string_body (&buffer, stream_content, state->content_length) >= 0
+       && buffer_append_string (&buffer, "\"") >= 0;
+  if (ok && state->call_count > 0)
+    {
+      int emitted = 0;
+
+      ok = buffer_append_string (&buffer, ",\"tool_calls\":[") >= 0;
+      for (index = 0; ok && index < state->call_count; index++)
+        {
+          StreamToolCall *call = &state->calls[index];
+
+          if (call->name[0] == 0)
+            continue;
+          if (call->id[0] != 0)
+            snprintf (id_text, sizeof (id_text), "%s", call->id);
+          else
+            snprintf (id_text, sizeof (id_text), "tool-%zu", index);
+          ok = (emitted == 0 || buffer_append_string (&buffer, ",") >= 0)
+               && buffer_append_string (&buffer, "{\"id\":\"") >= 0
+               && append_json_string_body (&buffer, id_text, strlen (id_text)) >= 0
+               && buffer_append_string (&buffer, "\",\"type\":\"function\",\"function\":{\"name\":\"") >= 0
+               && append_json_string_body (&buffer, call->name, call->name_length) >= 0
+               && buffer_append_string (&buffer, "\",\"arguments\":\"") >= 0
+               && append_json_string_body (&buffer, call->arguments, call->arguments_length) >= 0
+               && buffer_append_string (&buffer, "\"}}") >= 0;
+          emitted = 1;
+        }
+      if (ok)
+        ok = buffer_append_string (&buffer, "]") >= 0;
+    }
+  if (ok)
+    ok = buffer_append_string (&buffer, "}}]") >= 0;
+  if (ok && state->have_usage)
+    {
+      char usage_text[160];
+
+      snprintf (usage_text, sizeof (usage_text),
+                ",\"usage\":{\"prompt_tokens\":%ld,\"completion_tokens\":%ld,\"total_tokens\":%ld}",
+                state->prompt_tokens, state->completion_tokens, state->prompt_tokens + state->completion_tokens);
+      ok = buffer_append_string (&buffer, usage_text) >= 0;
+    }
+  if (ok)
+    ok = buffer_append_string (&buffer, "}") >= 0;
+  if (!ok)
+    return -1;
+  body[buffer.length] = 0;
+  *response_length = buffer.length;
+  return 0;
+}
+
+static int
+receive_stream (int socket_fd, char *response, size_t capacity, size_t total,
+                size_t *response_length, char **body, int chunked, int *error_number)
+{
+  static StreamState state;
+  time_t deadline;
+  fd_set read_set;
+  size_t body_offset = (size_t)(*body - response);
+
+  memset (&state, 0, sizeof (state));
+  state.scan.chunked = chunked;
+  state.scan.chunk_header = chunked;
+  stream_content[0] = 0;
+  stream_available = 0;
+  stream_flushed = 0;
+  stream_active = 1;
+  stream_feed_bytes (&state, *body, total - body_offset);
+  /* A streaming reply can run long, so the timeout is per quiet period. */
+  deadline = time (NULL) + api_timeout;
+  while (!state.done && !state.failed && total < capacity - 1)
+    {
+      ssize_t received;
+      int ready;
+      time_t remaining;
+
+      if (interrupted)
+        {
+          *error_number = EINTR;
+          return -1;
+        }
+      FD_ZERO (&read_set);
+      FD_SET (socket_fd, &read_set);
+      remaining = deadline - time (NULL);
+      if (remaining <= 0)
+        {
+          *error_number = ETIMEDOUT;
+          return -3;
+        }
+      {
+        struct timeval timeout = { remaining, 0 };
+
+        ready = select (socket_fd + 1, &read_set, NULL, NULL, &timeout);
+      }
+      if (ready < 0)
+        {
+          if (errno == EINTR && !interrupted)
+            continue;
+          *error_number = errno;
+          return -1;
+        }
+      if (ready == 0)
+        {
+          *error_number = ETIMEDOUT;
+          return -3;
+        }
+      received = recv (socket_fd, response + total, capacity - 1 - total, 0);
+      if (received < 0)
+        {
+          if (errno == EINTR && !interrupted)
+            continue;
+          *error_number = errno;
+          return -1;
+        }
+      if (received == 0)
+        break;
+      total += (size_t)received;
+      response[total] = 0;
+      deadline = time (NULL) + api_timeout;
+      stream_feed_bytes (&state, response + total - (size_t)received, (size_t)received);
+    }
+  stream_active = 0;
+  if (state.failed)
+    {
+      *error_number = EPROTO;
+      return -1;
+    }
+  if (interrupted)
+    {
+      *error_number = EINTR;
+      return -1;
+    }
+  if (!state.done && state.content_length == 0 && state.call_count == 0)
+    {
+      print_formatted ("error: AI stream ended without content\n");
+      *error_number = EPROTO;
+      return -1;
+    }
+  if (stream_finish (&state, *body, capacity - body_offset, response_length) < 0)
+    {
+      print_formatted ("error: AI response exceeds conversation limit\n");
+      *error_number = EOVERFLOW;
+      return -1;
+    }
+  return 0;
+}
+
 static int
 receive_response (int socket_fd, char *response, size_t capacity, size_t *response_length, char **body,
                   int *error_number, int *http_status, int *retry_after)
@@ -1369,7 +1879,8 @@ receive_response (int socket_fd, char *response, size_t capacity, size_t *respon
   size_t content_length = 0;
   int have_content_length = 0;
   int chunked = 0;
-  int status;
+  int event_stream = 0;
+  int status = 0;
   char *line;
 
   *error_number = EIO;
@@ -1477,6 +1988,16 @@ receive_response (int socket_fd, char *response, size_t capacity, size_t *respon
               else if (header_equal (line, length, "Transfer-Encoding") && length > 19
                        && strncasecmp (line + 18, " chunked", 8) == 0)
                 chunked = 1;
+              else if (header_equal (line, length, "Content-Type"))
+                {
+                  const char *value_start = line + 13;
+
+                  while (value_start < next && (*value_start == ' ' || *value_start == '\t'))
+                    value_start++;
+                  if ((size_t)(next - value_start) >= 17
+                      && strncasecmp (value_start, "text/event-stream", 17) == 0)
+                    event_stream = 1;
+                }
               else if (header_equal (line, length, "Retry-After"))
                 {
                   char *end;
@@ -1495,6 +2016,9 @@ receive_response (int socket_fd, char *response, size_t capacity, size_t *respon
                 }
               line = next + 2;
             }
+          if (event_stream && status >= 200 && status < 300)
+            return receive_stream (socket_fd, response, capacity, total, response_length, body, chunked,
+                                   error_number);
           if (have_content_length && total >= (size_t)(*body - response) + content_length)
             break;
           if (chunked && strstr (response, "\r\n0\r\n") != NULL)
@@ -1737,8 +2261,10 @@ build_request (char *request, size_t capacity, size_t *length)
                                      "\"parameters\":{\"type\":\"object\",\"properties\":{"
                                      "\"checklist\":{\"type\":\"string\",\"description\":"
                                      "\"The complete checklist text.\"}},"
-                                     "\"required\":[\"checklist\"]}}}],\"tool_choice\":\"auto\"}")
+                                     "\"required\":[\"checklist\"]}}}],\"tool_choice\":\"auto\"")
       < 0)
+    return -1;
+  if (buffer_append_string (&buffer, streaming_enabled ? ",\"stream\":true}" : "}") < 0)
     return -1;
   *length = buffer.length;
   return 0;
@@ -1769,6 +2295,8 @@ call_endpoint_once (const char **response_body, char *response_storage, int *tra
   *retry_after = 0;
   response_length = 0;
   body = NULL;
+  stream_printed_content = 0;
+  stream_active = 0;
   if (build_request (request, sizeof (request), &request_length) < 0)
     {
       print_formatted ("error: conversation exceeds the request limit\n");
@@ -1833,6 +2361,9 @@ call_endpoint_once (const char **response_body, char *response_storage, int *tra
         agent_exit_status = EXIT_TIMEOUT;
       else if (!interrupted && transient_network_error (receive_error))
         *transient = 1;
+      /* Never replay a request whose output is already on screen. */
+      if (stream_printed_content)
+        *transient = 0;
       return agent_exit_status == EXIT_SUCCESS ? -1 : -agent_exit_status;
     }
   (void)response_length;
@@ -1868,7 +2399,10 @@ call_endpoint (const char **response_body, char *response_storage)
       int delay;
 
       if (result == 0 || !transient || attempt >= MAX_HTTP_ATTEMPTS || interrupted)
-        return result;
+        {
+          stream_flush_output (result == 0);
+          return result;
+        }
       delay = retry_after > 0 ? retry_after : 1 << (attempt - 1);
       if (delay > MAX_RETRY_AFTER)
         delay = MAX_RETRY_AFTER;
@@ -1940,6 +2474,8 @@ call_endpoint_threaded (const char **response_body, char *response_storage)
       if (worker_done || interrupted)
         break;
       poll_live_input ();
+      if (stream_active)
+        stream_flush_output (0);
       usleep (100 * 1000);
     }
   poll_live_input ();
@@ -1950,12 +2486,14 @@ call_endpoint_threaded (const char **response_body, char *response_storage)
     {
       pthread_cancel (wait.worker);
       pthread_join (wait.worker, &thread_result);
+      stream_flush_output (0);
       print_formatted ("\n[request interrupted]\n");
       pthread_cond_destroy (&wait.completed_cond);
       pthread_mutex_destroy (&wait.mutex);
       return -agent_exit_status;
     }
   pthread_join (wait.worker, &thread_result);
+  stream_flush_output (wait.request.result == 0);
   if (wait.request.result == 0)
     *response_body = wait.request.response_body;
   create_error = wait.request.result;
@@ -3237,8 +3775,11 @@ process_response (const char *body)
     print_usage_summary ();
   if (call_count == 0)
     {
-      print_formatted ("\n[AI Response]:\n");
-      print_formatted ("%s\n", content[0] != 0 ? content : "(empty response)");
+      if (!stream_printed_content)
+        {
+          print_formatted ("\n[AI Response]:\n");
+          print_formatted ("%s\n", content[0] != 0 ? content : "(empty response)");
+        }
       return 0;
     }
   if (process_tool_calls (calls, call_count) < 0)
@@ -3280,7 +3821,8 @@ usage (FILE *stream)
                    "\n"
                    "Environment configures AI_API_URL, AI_MODEL, AI_API_KEY or\n"
                    "OPENAI_API_KEY, AI_TIMEOUT_SECONDS and AI_COMMAND_TIMEOUT_SECONDS.\n"
-                   "AI_TOOL_ROUNDS is also supported. Set NO_COLOR to disable styling.\n");
+                   "AI_TOOL_ROUNDS is also supported. Set AI_STREAM=0 to buffer responses\n"
+                   "instead of streaming them, and NO_COLOR to disable styling.\n");
 }
 
 static int

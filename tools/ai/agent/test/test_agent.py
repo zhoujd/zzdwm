@@ -147,6 +147,33 @@ def text_response(content, prompt_tokens=None, completion_tokens=None):
     return response
 
 
+def sse_response(deltas=None, tool_call_deltas=None, usage=None, done=True, extra_lines=()):
+    """Raw chunked SSE reply assembled from content or tool-call deltas."""
+    events = []
+    for delta in deltas or []:
+        events.append({"choices": [{"index": 0, "delta": {"content": delta}}]})
+    for delta in tool_call_deltas or []:
+        events.append({"choices": [{"index": 0, "delta": {"tool_calls": [delta]}}]})
+    if usage is not None:
+        events.append({"choices": [], "usage": usage})
+    lines = list(extra_lines)
+    for event in events:
+        lines.append("data: " + json.dumps(event, separators=(",", ":")))
+    if done:
+        lines.append("data: [DONE]")
+    body = "".join(line + "\n\n" for line in lines).encode()
+    chunks = b""
+    while body:
+        piece, body = body[:40], body[40:]
+        chunks += f"{len(piece):x}".encode() + b"\r\n" + piece + b"\r\n"
+    return (
+        b"HTTP/1.1 200 OK\r\n"
+        b"Content-Type: text/event-stream\r\n"
+        b"Transfer-Encoding: chunked\r\n"
+        b"Connection: close\r\n\r\n" + chunks + b"0\r\n\r\n"
+    )
+
+
 def plan_response(checklist, call_id="call-plan"):
     return {
         "choices": [
@@ -179,6 +206,7 @@ class AgentTests(unittest.TestCase):
         timeout_flag=None,
         flags=(),
         timeout=10,
+        extra_env=None,
     ):
         endpoint = Endpoint(responses, delay)
         self.addCleanup(endpoint.thread.join, timeout=2)
@@ -198,6 +226,8 @@ class AgentTests(unittest.TestCase):
         }
         if tool_rounds is not None:
             settings["AI_TOOL_ROUNDS"] = tool_rounds
+        if extra_env is not None:
+            settings.update(extra_env)
         command = [EXECUTABLE]
         if workspace is not None:
             command.extend(["-C", workspace])
@@ -3180,6 +3210,165 @@ class AgentTests(unittest.TestCase):
                 break
             time.sleep(0.2)
         self.assertIn("resumed 1 messages from .ai/session.jsonl", output)
+
+    def test_streamed_text_prints_once_with_header(self):
+        result, endpoint = self.run_agent(
+            [sse_response(deltas=["Hello", " streamed", " world"])],
+            "go\n\n/exit\n\n",
+        )
+        self.assertEqual(result.stdout.count("[AI Response]:"), 1)
+        self.assertIn("Hello streamed world", result.stdout)
+        self.assertIs(endpoint.requests[0].get("stream"), True)
+
+    def test_streamed_tool_call_arguments_assemble_across_deltas(self):
+        result, endpoint = self.run_agent(
+            [
+                sse_response(
+                    tool_call_deltas=[
+                        {
+                            "index": 0,
+                            "id": "call-1",
+                            "type": "function",
+                            "function": {
+                                "name": "run_terminal_command",
+                                "arguments": '{"comm',
+                            },
+                        },
+                        {"index": 0, "function": {"arguments": 'and": "echo hi"}'}},
+                    ]
+                ),
+                text_response("done"),
+            ],
+            "diagnose\n\na\n\n\n/exit\n\n",
+        )
+        self.assertIn("[AI requests command]: echo hi", result.stdout)
+        self.assertIn("hi", result.stdout)
+        replies = self.tool_replies(endpoint)
+        self.assertIn("hi", replies[0]["content"])
+
+    def test_stream_falls_back_to_buffered_json(self):
+        result, endpoint = self.run_agent(
+            [text_response("buffered")],
+            "go\n\n/exit\n\n",
+        )
+        self.assertEqual(result.stdout.count("[AI Response]:"), 1)
+        self.assertIn("buffered", result.stdout)
+        self.assertIs(endpoint.requests[0].get("stream"), True)
+
+    def test_stream_ignores_comments_and_metadata_fields(self):
+        result, _ = self.run_agent(
+            [
+                sse_response(
+                    deltas=["alpha", "beta"],
+                    extra_lines=[": keep-alive", "event: delta", "id: 42", "retry: 100"],
+                )
+            ],
+            "go\n\n/exit\n\n",
+        )
+        self.assertIn("alphabeta", result.stdout)
+        self.assertNotIn("keep-alive", result.stdout)
+        self.assertNotIn("retry", result.stdout)
+        self.assertNotIn("event", result.stdout)
+
+    def test_stream_reports_midstream_error(self):
+        result, _ = self.run_agent(
+            [
+                sse_response(
+                    deltas=["partial"],
+                    extra_lines=[
+                        "data: " + json.dumps({"error": {"message": "boom"}})
+                    ],
+                )
+            ],
+            "go\n\n/exit\n\n",
+        )
+        self.assertIn("error: AI endpoint: boom", result.stdout)
+        self.assertNotIn("Hello", result.stdout)
+
+    def test_stream_completes_without_done_marker(self):
+        result, _ = self.run_agent(
+            [sse_response(deltas=["tail-less"], done=False)],
+            "go\n\n/exit\n\n",
+        )
+        self.assertIn("tail-less", result.stdout)
+        self.assertEqual(result.stdout.count("[AI Response]:"), 1)
+
+    def test_streamed_usage_feeds_exit_summary(self):
+        result, _ = self.run_agent(
+            [
+                sse_response(
+                    deltas=["ok"],
+                    usage={
+                        "prompt_tokens": 12400,
+                        "completion_tokens": 3100,
+                        "total_tokens": 15500,
+                    },
+                )
+            ],
+            "go\n\n/exit\n\n",
+        )
+        self.assertIn(
+            "[usage] tokens: 12.4k in / 3.1k out, 1 rounds, context 12.4k",
+            result.stdout,
+        )
+
+    def test_ai_stream_zero_sends_no_stream_flag(self):
+        result, endpoint = self.run_agent(
+            [text_response("plain")],
+            "go\n\n/exit\n\n",
+            extra_env={"AI_STREAM": "0"},
+        )
+        self.assertNotIn("stream", endpoint.requests[0])
+        self.assertEqual(result.stdout.count("[AI Response]:"), 1)
+        self.assertIn("plain", result.stdout)
+
+    def test_tui_renders_streamed_text(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for TUI streaming output")
+        endpoint = Endpoint([sse_response(deltas=["counting", " to ", "ten"])])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        server = f"ai-tui-stream-{os.getpid()}"
+        subprocess.run(["tmux", "kill-server"], check=False)
+        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "2",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "PATH": os.environ["PATH"],
+            }
+        )
+        subprocess.run(
+            [
+                "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "100", "-y", "24",
+                "-n", server, TUI_EXECUTABLE, "tui",
+            ],
+            env=environment,
+            check=True,
+            timeout=5,
+        )
+        self.addCleanup(
+            subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+        )
+        subprocess.run(
+            ["tmux", "send-keys", "-t", server, "count", "Enter"], check=True, timeout=5
+        )
+        deadline = time.monotonic() + 8
+        output = ""
+        while time.monotonic() < deadline:
+            output = subprocess.run(
+                ["tmux", "capture-pane", "-p", "-t", server],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            ).stdout
+            if "counting to ten" in output:
+                break
+            time.sleep(0.2)
+        self.assertIn("counting to ten", output)
 
 
 class BinaryTests(unittest.TestCase):
