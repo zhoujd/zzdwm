@@ -16,11 +16,14 @@ add-file-tools.md (read_file / list_dir / apply_patch in tool.c, workspace
 confinement with symlink resolution, approval prompt for patches);
 add-sse-streaming.md (`"stream":true` + `text/event-stream` handling in
 receive_stream, deltas reassembled into the buffered response shape,
-`AI_STREAM=0` opt-out, main-thread-only output).
+`AI_STREAM=0` opt-out, main-thread-only output);
+add-landlock.md (landlock.c direct-syscall ruleset in the exec child:
+workspace rw, /tmp scratch, system trees ro, `AI_LANDLOCK=0` opt-out,
+graceful degradation to the lexical filter).
 
 ## Tier 2 — bigger bets
 
-- add-landlock.md — OS-level enforcement for `-C` (kernel 5.13+)
+(none proposed; see "Deliberately out of scope" for the boundaries)
 
 ## Deliberately out of scope
 
@@ -29,8 +32,8 @@ Plugins, embeddings/RAG, GUI, config-file formats beyond the existing
 
 ## Sandbox status note
 
-`-C` is a lexical path filter (validate_workspace_command, ai.c ~2286),
-not OS isolation: no seccomp/landlock/chroot/setuid anywhere. Known
-bypasses: variable expansion, command substitution, encoded commands,
-symlinks pointing outside the workspace. add-file-tools.md and
-add-landlock.md are the two complementary fixes.
+`-C` now layers three boundaries: the lexical path filter on command
+strings, realpath-based confinement in the file tools, and Landlock
+filesystem rules on every approved exec (5.13+; degrades to the lexical
+filter with a warning on older kernels, `AI_LANDLOCK=0` opts out).
+Still out of scope: seccomp, network restrictions, chroot, setuid.

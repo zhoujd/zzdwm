@@ -3370,6 +3370,85 @@ class AgentTests(unittest.TestCase):
             time.sleep(0.2)
         self.assertIn("counting to ten", output)
 
+    def landlock_ready(self, result):
+        if "landlock rules + lexical path filter" not in result.stdout:
+            self.skipTest("kernel has no Landlock support")
+        return result
+
+    def scoped_home(self):
+        # A writable directory outside any workspace AND outside /tmp (the
+        # landlock ruleset deliberately keeps /tmp writable as scratch), so
+        # writes there must be denied; $HOME is explicit because run_agent
+        # settings do not carry it by default.
+        home = tempfile.mkdtemp(prefix=".ai-landlock-", dir=os.path.expanduser("~"))
+        self.addCleanup(shutil.rmtree, home, True)
+        return home, {"HOME": home}
+
+    def test_landlock_blocks_writes_outside_workspace(self):
+        workspace = self.make_workspace({"keep.txt": "data\n"})
+        home, env = self.scoped_home()
+        # The path is spelled through $HOME so the lexical filter passes it;
+        # only the OS-level rules can stop the write.
+        result, _ = self.run_agent(
+            [tool_response('echo x > $HOME/probe; printf RC_%s\\n "$?"'),
+             text_response("done")],
+            "go\n\na\n/exit\n\n",
+            workspace=workspace,
+            extra_env=env,
+        )
+        self.landlock_ready(result)
+        self.assertIn("Permission denied", result.stdout)
+        self.assertFalse(os.path.exists(os.path.join(home, "probe")))
+
+    def test_landlock_keeps_workspace_writable(self):
+        workspace = self.make_workspace({"src.txt": "one\n"})
+        home, env = self.scoped_home()
+        result, _ = self.run_agent(
+            [tool_response("printf works > src.txt; cat src.txt"), text_response("done")],
+            "go\n\na\n/exit\n\n",
+            workspace=workspace,
+            extra_env=env,
+        )
+        self.landlock_ready(result)
+        self.assertIn("works", result.stdout)
+        with open(os.path.join(workspace, "src.txt")) as handle:
+            self.assertEqual(handle.read(), "works")
+
+    def test_landlock_allows_tmp_scratch(self):
+        workspace = self.make_workspace({})
+        result, _ = self.run_agent(
+            [tool_response('T=$(mktemp) && printf made > "$T" && rm -f "$T" && echo TMP-OK'),
+             text_response("done")],
+            "go\n\na\n/exit\n\n",
+            workspace=workspace,
+        )
+        self.landlock_ready(result)
+        self.assertIn("TMP-OK", result.stdout)
+
+    def test_ai_landlock_zero_disables_enforcement(self):
+        workspace = self.make_workspace({})
+        home, env = self.scoped_home()
+        env["AI_LANDLOCK"] = "0"
+        result, _ = self.run_agent(
+            [tool_response('printf x > $HOME/probe && echo OPT-OUT-WROTE'),
+             text_response("done")],
+            "go\n\na\n/exit\n\n",
+            workspace=workspace,
+            extra_env=env,
+        )
+        self.assertIn("Sandbox: lexical path filter (landlock disabled)", result.stdout)
+        self.assertIn("OPT-OUT-WROTE", result.stdout)
+        self.assertNotIn("Permission denied", result.stdout)
+        self.assertTrue(os.path.exists(os.path.join(home, "probe")))
+
+    def test_unscoped_runs_have_no_sandbox_banner(self):
+        result, _ = self.run_agent(
+            [tool_response("echo plain"), text_response("done")],
+            "go\n\na\n/exit\n\n",
+        )
+        self.assertIn("unrestricted", result.stdout)
+        self.assertNotIn("Sandbox:", result.stdout)
+
 
 class BinaryTests(unittest.TestCase):
     def test_version_includes_build_metadata(self):

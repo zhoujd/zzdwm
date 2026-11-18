@@ -213,7 +213,8 @@ usage (FILE *stream)
                    "Environment configures AI_API_URL, AI_MODEL, AI_API_KEY or\n"
                    "OPENAI_API_KEY, AI_TIMEOUT_SECONDS and AI_COMMAND_TIMEOUT_SECONDS.\n"
                    "AI_TOOL_ROUNDS is also supported. Set AI_STREAM=0 to buffer responses\n"
-                   "instead of streaming them, and NO_COLOR to disable styling.\n");
+                   "instead of streaming them, AI_LANDLOCK=0 to drop the OS-level workspace\n"
+                   "sandbox, and NO_COLOR to disable styling.\n");
 }
 
 static int

@@ -30,6 +30,7 @@
 
 #include "agent.h"
 #include "tool.h"
+#include "landlock.h"
 
 #include "cJSON.h"
 
@@ -175,6 +176,7 @@ static int attachment_count;
 static int max_tool_rounds = DEFAULT_TOOL_ROUNDS;
 static int streaming_enabled = 1;
 static int stream_printed_content;
+static int landlock_enabled = 1;
 static bool full_access = false; // Always default to secure mode
 static volatile sig_atomic_t interrupted;
 static volatile sig_atomic_t agent_exit_status;
@@ -1275,6 +1277,9 @@ configure_environment (void)
   value = getenv ("AI_STREAM");
   if (value != NULL)
     streaming_enabled = strcmp (value, "0") != 0;
+  value = getenv ("AI_LANDLOCK");
+  if (value != NULL)
+    landlock_enabled = strcmp (value, "0") != 0;
   return 0;
 }
 
@@ -2848,6 +2853,12 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
       dup2 (pipe_fds[1], STDERR_FILENO);
       if (pipe_fds[1] != STDOUT_FILENO && pipe_fds[1] != STDERR_FILENO)
         close (pipe_fds[1]);
+      /* The lexical filter only inspected the command string; Landlock
+         bounds what the executed tree can actually touch. A failure here
+         already printed a warning and the command still runs scoped by
+         the lexical filter alone. */
+      if (workspace_directory != NULL && !full_access && landlock_enabled)
+        landlock_apply (workspace_root);
       execl ("/bin/sh", "sh", "-c", command, (char *)NULL);
       _exit (127);
     }
@@ -3822,7 +3833,8 @@ usage (FILE *stream)
                    "Environment configures AI_API_URL, AI_MODEL, AI_API_KEY or\n"
                    "OPENAI_API_KEY, AI_TIMEOUT_SECONDS and AI_COMMAND_TIMEOUT_SECONDS.\n"
                    "AI_TOOL_ROUNDS is also supported. Set AI_STREAM=0 to buffer responses\n"
-                   "instead of streaming them, and NO_COLOR to disable styling.\n");
+                   "instead of streaming them, AI_LANDLOCK=0 to drop the OS-level workspace\n"
+                   "sandbox, and NO_COLOR to disable styling.\n");
 }
 
 static int
@@ -4025,6 +4037,15 @@ ai_main (int argc, char **argv)
       }
       print_formatted ("Workspace: %s (%s)\n", workspace_directory != NULL ? workspace_root : current_directory,
                        workspace_directory != NULL ? "scoped" : "unrestricted");
+      if (workspace_directory != NULL && !full_access)
+        {
+          if (!landlock_enabled)
+            print_formatted ("Sandbox: lexical path filter (landlock disabled)\n");
+          else if (landlock_supported () > 0)
+            print_formatted ("Sandbox: landlock rules + lexical path filter\n");
+          else
+            print_formatted ("Sandbox: lexical path filter (landlock unavailable on this kernel)\n");
+        }
     }
   if (skill_count > 0)
     {

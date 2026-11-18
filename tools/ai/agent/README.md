@@ -116,6 +116,20 @@ directory stays unrestricted, and only `-C` scopes. The working directory is
 also announced to the model in a system message, so relative paths resolve
 against a known location.
 
+On kernels with Landlock (5.13+) every approved command under `-C` is
+additionally confined by filesystem rules applied after fork and before exec,
+so variable expansion, command substitution, and symlinks can no longer reach
+outside the workspace even though the command string looked clean. The ruleset
+grants the workspace read-write, `/tmp` scratch (no execution or device nodes,
+so `mktemp` and compiler temporaries keep working), read-execute on `/usr`,
+`/bin`, `/sbin`, `/lib`, `/lib64`, `/etc`, `/proc`, and `/dev` (plus write on
+`/dev/null`); everything else — including `$HOME` — is inaccessible. The
+banner prints `Sandbox: landlock rules + lexical path filter` to confirm
+enforcement; on unsupported kernels it degrades to the lexical filter with a
+one-time warning, and `AI_LANDLOCK=0` opts out entirely. Approval of each
+command is still required as usual: Landlock bounds what runs, the human
+still decides whether it runs.
+
 Use `-t <seconds>` or `--timeout <seconds>` to bound every terminal command
 for one run; `0` disables the limit. It overrides
 `AI_COMMAND_TIMEOUT_SECONDS` (default 600). On expiry the command's process
@@ -148,6 +162,9 @@ Configuration is read from the environment:
   1--1024. Default: 128.
 * `AI_STREAM`: stream responses token-by-token over SSE instead of buffering
   them. Default: on; set `AI_STREAM=0` to buffer.
+* `AI_LANDLOCK`: enforce OS-level workspace rules (Landlock) on approved
+  commands under `-C`. Default: on; set `AI_LANDLOCK=0` to rely on the
+  lexical path filter alone.
 
 Only HTTP IPv4 endpoints (including `localhost`) are supported. HTTPS would
 require a TLS implementation and violate the zero-runtime-dependency design;
