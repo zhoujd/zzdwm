@@ -21,7 +21,9 @@ Run `tools/ai/agent/ai tui`. It launches the backend in `--ui` mode and
 renders three windows: shared AI/user thoughts, AI command status/output, and
 a keyboard input box. Pass `-C dir` to the TUI to start in a scoped workspace,
 `-f <file>` to preload context into the first prompt, and `-m <name>` to
-override `AI_MODEL`.
+override `AI_MODEL`. Streamed response text paints into the thoughts pane as
+the deltas arrive — including the still-incomplete last line — instead of
+waiting for each line to finish.
 
 Run the same multiline editor standalone with:
 

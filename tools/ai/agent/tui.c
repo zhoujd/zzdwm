@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
-#include <time.h>
 #include <unistd.h>
 #include <wchar.h>
 
@@ -84,6 +83,13 @@ static int plan_start;
 static int plan_rows;
 static PaneId selected_pane = PANE_THOUGHTS;
 static PaneLayout pane_layout = PANE_LAYOUT_EQUAL;
+/* The line currently streaming from the agent is painted into its pane as it
+   grows so response text appears mid-line; the paint is replaced on every
+   chunk and erased once the finished line reaches display_agent_line. */
+static int partial_row;      /* first pad row the paint occupies */
+static int partial_rows;     /* pad rows the paint currently spans */
+static int partial_pane = -1; /* pane holding the paint; -1 when there is none */
+static int partial_in_plan;  /* the paint sits inside the plan block */
 static InputMode input_mode = INPUT_MULTILINE;
 static int full_access;
 static const char *workspace_directory;
@@ -521,6 +527,14 @@ redraw_layout (void)
 }
 
 static void
+discard_partial_line (void)
+{
+  partial_rows = 0;
+  partial_pane = -1;
+  partial_in_plan = 0;
+}
+
+static void
 append_pane_line (PaneId pane_id, const char *text, size_t length)
 {
   Pane *pane = &panes[pane_id];
@@ -538,6 +552,16 @@ append_pane_line (PaneId pane_id, const char *text, size_t length)
             plan_start--;
           else
             plan_rows--;
+        }
+      /* ...and the live paint covering the same text. */
+      if (partial_rows > 0 && partial_pane == (int)pane_id)
+        {
+          if (partial_row > 0)
+            partial_row--;
+          else
+            partial_rows--;
+          if (partial_rows == 0)
+            discard_partial_line ();
         }
     }
   row = pane->line_count;
@@ -610,6 +634,43 @@ write_line (PaneId pane_id, const char *text)
   panes[pane_id].view_offset = 0;
 }
 
+/* Remove the live paint so the pane holds only finished lines again. */
+static void
+erase_partial_line (void)
+{
+  Pane *pane;
+  int index;
+
+  if (partial_rows <= 0)
+    return;
+  pane = &panes[partial_pane];
+  wmove (pane->pad, partial_row, 0);
+  for (index = 0; index < partial_rows; index++)
+    wdeleteln (pane->pad);
+  pane->line_count -= partial_rows;
+  if (partial_in_plan)
+    plan_rows -= partial_rows;
+  discard_partial_line ();
+}
+
+/* Paint the still-incomplete line into the pane streamed text belongs to.
+   Marker routing, prompts, and plan replacement wait for the finished line,
+   so they still run exactly once per line. */
+static void
+paint_partial_line (const char *text)
+{
+  PaneId pane_id = output_mode;
+
+  erase_partial_line ();
+  partial_pane = (int)pane_id;
+  partial_in_plan = pane_id == PANE_THOUGHTS && plan_capture;
+  partial_row = panes[pane_id].line_count;
+  write_line (pane_id, text);
+  partial_rows = panes[pane_id].line_count - partial_row;
+  if (partial_in_plan)
+    plan_rows += partial_rows;
+}
+
 static int
 is_agent_prompt (const char *line)
 {
@@ -656,6 +717,9 @@ drop_plan_block (void)
   pane->line_count -= plan_rows;
   pane->view_offset = 0;
   plan_rows = 0;
+  /* A live paint always sat inside the block it was captured under. */
+  if (partial_in_plan)
+    discard_partial_line ();
 }
 
 static void
@@ -1014,32 +1078,25 @@ handle_agent_prompt (const char *line)
   set_input_mode (multiline ? INPUT_MULTILINE : INPUT_SINGLE_LINE);
 }
 
+/* Drain one chunk of agent output. Complete lines go through
+   display_agent_line; the trailing partial line is painted into its pane as
+   it grows, so streamed response text appears mid-line instead of waiting
+   for the newline. */
 static void
 read_agent_output (int agent_stdout, int *agent_exited)
 {
   static char pending[MAX_LINE];
   static size_t pending_length;
-  static time_t pending_time;
   char chunk[1024];
   struct pollfd descriptor = { agent_stdout, POLLIN, 0 };
   ssize_t received;
-  time_t now;
 
   if (poll (&descriptor, 1, 0) < 0 && errno != EINTR)
     return;
   if (descriptor.revents & (POLLHUP | POLLERR))
     *agent_exited = 1;
   if (!(descriptor.revents & POLLIN))
-    {
-      if (pending_length != 0 && time (&now) != (time_t)-1 && now - pending_time >= 1)
-        {
-          pending[pending_length] = 0;
-          display_agent_line (pending);
-          pending_length = 0;
-          refresh_content_panes ();
-        }
-      return;
-    }
+    return;
   received = read (agent_stdout, chunk, sizeof (chunk));
   if (received == 0)
     {
@@ -1053,19 +1110,25 @@ read_agent_output (int agent_stdout, int *agent_exited)
       *agent_exited = 1;
       return;
     }
-  if (pending_length == 0)
-    pending_time = time (NULL);
   for (size_t index = 0; index < (size_t)received; index++)
     {
       if (pending_length == sizeof (pending) - 1 || chunk[index] == '\n' || chunk[index] == '\r')
         {
           pending[pending_length] = 0;
+          /* The finished line replaces its live paint; marker routing and
+             prompt handling still run exactly once, here. */
+          erase_partial_line ();
           if (pending_length != 0)
             display_agent_line (pending);
           pending_length = 0;
         }
       else
         pending[pending_length++] = chunk[index];
+    }
+  if (pending_length > 0)
+    {
+      pending[pending_length] = 0;
+      paint_partial_line (pending);
     }
   refresh_content_panes ();
 }

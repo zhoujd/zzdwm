@@ -3580,6 +3580,70 @@ class AgentTests(unittest.TestCase):
             time.sleep(0.2)
         self.assertIn("trickle-line-50", output)
 
+    def test_tui_paints_streamed_partial_line(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for TUI streaming output")
+        # Deltas trickle in without newlines; only the last one ends the line.
+        endpoint = Endpoint(
+            [
+                SlowResponse(
+                    ["mid-line-alpha ", "mid-line-beta ", "mid-line-gamma", " done\n"],
+                    interval=0.4,
+                )
+            ]
+        )
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        server = f"ai-tui-partial-{os.getpid()}"
+        subprocess.run(["tmux", "kill-server"], check=False)
+        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "10",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "PATH": os.environ["PATH"],
+            }
+        )
+        subprocess.run(
+            [
+                "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "100", "-y", "24",
+                "-n", server, TUI_EXECUTABLE, "tui",
+            ],
+            env=environment,
+            check=True,
+            timeout=5,
+        )
+        self.addCleanup(
+            subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+        )
+        # Keys injected before the TUI takes over the tty can be dropped.
+        time.sleep(0.3)
+        subprocess.run(
+            ["tmux", "send-keys", "-t", server, "go", "Enter"], check=True, timeout=5
+        )
+        # The growing line must appear before its newline arrives; holding it
+        # back until a quiet second passes would leave the pane empty here.
+        deadline = time.monotonic() + 10
+        output = ""
+        while time.monotonic() < deadline:
+            output = self.capture_tui(server)
+            if "mid-line-alpha mid-line-beta" in output and "done" not in output:
+                break
+            time.sleep(0.1)
+        self.assertIn("mid-line-alpha mid-line-beta", output)
+        self.assertNotIn("done", output)
+        # The finished line replaces its paint instead of duplicating it.
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            output = self.capture_tui(server)
+            if "mid-line-gamma done" in output:
+                break
+            time.sleep(0.2)
+        self.assertIn("mid-line-alpha mid-line-beta mid-line-gamma done", output)
+        self.assertEqual(output.count("mid-line-alpha"), 1)
+
     def landlock_ready(self, result):
         if "landlock rules + lexical path filter" not in result.stdout:
             self.skipTest("kernel has no Landlock support")
