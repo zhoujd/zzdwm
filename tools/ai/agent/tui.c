@@ -396,6 +396,18 @@ set_input_mode (InputMode mode)
   redraw_input_title ();
 }
 
+static int
+visible_pane_start (const Pane *pane, int pane_height)
+{
+  int visible_start;
+
+  if (pane->line_count > pane_height)
+    visible_start = pane->line_count - pane_height - pane->view_offset;
+  else
+    visible_start = 0;
+  return visible_start < 0 ? 0 : visible_start;
+}
+
 static void
 create_pane (PaneId pane_id, int height, int start_y, const char *title)
 {
@@ -420,19 +432,8 @@ create_pane (PaneId pane_id, int height, int start_y, const char *title)
   mvwprintw (pane->border, 0, 2, " %s%s ", title, marker);
   draw_pane_status (pane_id, pane->border, height, terminal_width);
   wnoutrefresh (pane->border);
-  prefresh (pane->pad, 0, 0, start_y + 1, 1, start_y + height - 2, terminal_width - 2);
-}
-
-static int
-visible_pane_start (const Pane *pane, int pane_height)
-{
-  int visible_start;
-
-  if (pane->line_count > pane_height)
-    visible_start = pane->line_count - pane_height - pane->view_offset;
-  else
-    visible_start = 0;
-  return visible_start < 0 ? 0 : visible_start;
+  prefresh (pane->pad, visible_pane_start (pane, height - 2), 0, start_y + 1, 1,
+            start_y + height - 2, terminal_width - 2);
 }
 
 static void
@@ -894,6 +895,17 @@ scroll_pane (PaneId pane_id, int amount)
   wrefresh (input_window);
 }
 
+/* Giving a pane the [*] focus marker also drops its scroll view, so the
+   focused pane always shows the bottom of its output. */
+static void
+select_pane (PaneId pane_id)
+{
+  if (selected_pane == pane_id)
+    return;
+  selected_pane = pane_id;
+  panes[pane_id].view_offset = 0;
+}
+
 static void
 start_agent (const char *agent_path, int *agent_stdin, int *agent_stdout)
 {
@@ -1138,17 +1150,15 @@ tui_main (int argc, char **argv)
         }
       if (key == '\t')
         {
-          selected_pane = selected_pane == PANE_THOUGHTS ? PANE_COMMANDS : PANE_THOUGHTS;
+          select_pane (selected_pane == PANE_THOUGHTS ? PANE_COMMANDS : PANE_THOUGHTS);
           pane_layout = PANE_LAYOUT_EQUAL;
-          panes[PANE_THOUGHTS].view_offset = 0;
-          panes[PANE_COMMANDS].view_offset = 0;
           redraw_layout ();
           draw_input (&input.editor);
           continue;
         }
       if (key == KEY_F (2))
         {
-          selected_pane = PANE_THOUGHTS;
+          select_pane (PANE_THOUGHTS);
           pane_layout = pane_layout == PANE_LAYOUT_MAX_THOUGHTS ? PANE_LAYOUT_EQUAL : PANE_LAYOUT_MAX_THOUGHTS;
           redraw_layout ();
           draw_input (&input.editor);
@@ -1156,7 +1166,7 @@ tui_main (int argc, char **argv)
         }
       if (key == KEY_F (3))
         {
-          selected_pane = PANE_COMMANDS;
+          select_pane (PANE_COMMANDS);
           pane_layout = pane_layout == PANE_LAYOUT_MAX_COMMANDS ? PANE_LAYOUT_EQUAL : PANE_LAYOUT_MAX_COMMANDS;
           redraw_layout ();
           draw_input (&input.editor);

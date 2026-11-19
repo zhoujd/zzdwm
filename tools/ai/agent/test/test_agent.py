@@ -3376,6 +3376,8 @@ class AgentTests(unittest.TestCase):
         self.addCleanup(
             subprocess.run, ["tmux", "kill-session", "-t", server], check=False
         )
+        # Keys injected before the TUI takes over the tty can be dropped.
+        time.sleep(0.3)
         subprocess.run(
             ["tmux", "send-keys", "-t", server, "count", "Enter"], check=True, timeout=5
         )
@@ -3393,6 +3395,102 @@ class AgentTests(unittest.TestCase):
                 break
             time.sleep(0.2)
         self.assertIn("counting to ten", output)
+
+    def capture_tui(self, server):
+        return subprocess.run(
+            ["tmux", "capture-pane", "-p", "-t", server],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        ).stdout
+
+    def test_tui_focus_scrolls_pane_to_bottom(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for TUI pane focus")
+        lines = "\n".join(f"scroll-line-{i}" for i in range(1, 41))
+        endpoint = Endpoint(
+            [sse_response(deltas=[lines]), sse_response(deltas=["pushed-after-scroll"])]
+        )
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        server = f"ai-tui-focus-{os.getpid()}"
+        subprocess.run(["tmux", "kill-server"], check=False)
+        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "2",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "PATH": os.environ["PATH"],
+            }
+        )
+        subprocess.run(
+            [
+                "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "100", "-y", "24",
+                "-n", server, TUI_EXECUTABLE, "tui",
+            ],
+            env=environment,
+            check=True,
+            timeout=5,
+        )
+        self.addCleanup(
+            subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+        )
+        # Keys injected before the TUI takes over the tty can be dropped.
+        time.sleep(0.3)
+        subprocess.run(
+            ["tmux", "send-keys", "-t", server, "go", "Enter"], check=True, timeout=5
+        )
+        deadline = time.monotonic() + 8
+        output = ""
+        while time.monotonic() < deadline:
+            output = self.capture_tui(server)
+            if "scroll-line-40" in output:
+                break
+            time.sleep(0.2)
+        self.assertIn("scroll-line-40", output)
+
+        def wait_for(predicate, timeout=4):
+            end = time.monotonic() + timeout
+            captured = self.capture_tui(server)
+            while time.monotonic() < end:
+                if predicate(captured):
+                    return captured
+                time.sleep(0.2)
+                captured = self.capture_tui(server)
+            return captured
+
+        def press(key):
+            subprocess.run(
+                ["tmux", "send-keys", "-t", server, key], check=True, timeout=5
+            )
+
+        # PageUp leaves the bottom of pane 1 behind.
+        press("PageUp")
+        output = wait_for(lambda text: "scroll-line-40" not in text)
+        self.assertNotIn("scroll-line-40", output)
+
+        # New content pushed to the pane snaps the view back to the bottom
+        # without any pane switch.
+        subprocess.run(
+            ["tmux", "send-keys", "-t", server, "more", "Enter"], check=True, timeout=5
+        )
+        output = wait_for(lambda text: "pushed-after-scroll" in text)
+        self.assertIn("pushed-after-scroll", output)
+
+        # Tab moves the [*] focus to pane 2, and back to pane 1, whose view
+        # must have snapped to the bottom again.
+        press("PageUp")
+        output = wait_for(lambda text: "pushed-after-scroll" not in text)
+        self.assertNotIn("pushed-after-scroll", output)
+        press("Tab")
+        output = wait_for(lambda text: "2. AI Command Status [*]" in text)
+        self.assertIn("2. AI Command Status [*]", output)
+        press("Tab")
+        output = wait_for(lambda text: "pushed-after-scroll" in text)
+        self.assertIn("pushed-after-scroll", output)
 
     def landlock_ready(self, result):
         if "landlock rules + lexical path filter" not in result.stdout:
