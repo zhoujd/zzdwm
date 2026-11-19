@@ -77,6 +77,7 @@ usage (FILE *stream)
 
   fputs ("\nFile handling:\n", stream);
   usage_option (stream, "FILE:LINE:COLUMN", "open a file at a line and column");
+  usage_option (stream, "+", "start at the end of file");
   usage_option (stream, "+LINE", "open the first file at a line");
   usage_option (stream, "-g LINE", "go to a line in the first file");
   usage_option (stream, "-H", "open files as hexl dumps");
