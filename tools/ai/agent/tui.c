@@ -512,6 +512,9 @@ redraw_layout (void)
   box (input_window, 0, 0);
   redraw_input_title ();
   keypad (input_window, TRUE);
+  /* The window is recreated here, so the polling timeout must be reapplied
+     or wgetch blocks and agent output stops rendering until a key arrives. */
+  wtimeout (input_window, 100);
   wmove (input_window, 1, 1);
   touchwin (input_window);
   wrefresh (input_window);

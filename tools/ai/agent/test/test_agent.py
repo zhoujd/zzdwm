@@ -77,6 +77,9 @@ class Endpoint:
             if isinstance(response, bytes):
                 client.sendall(response)
                 return
+            if isinstance(response, SlowResponse):
+                response.send(client)
+                return
             payload = json.dumps(response, separators=(",", ":")).encode()
             client.sendall(
                 b"HTTP/1.1 200 OK\r\n"
@@ -172,6 +175,34 @@ def sse_response(deltas=None, tool_call_deltas=None, usage=None, done=True, extr
         b"Transfer-Encoding: chunked\r\n"
         b"Connection: close\r\n\r\n" + chunks + b"0\r\n\r\n"
     )
+
+
+class SlowResponse:
+    """SSE reply whose content events trickle out one per interval."""
+
+    def __init__(self, events, interval=0.15):
+        self.events = events
+        self.interval = interval
+
+    def send(self, client):
+        client.sendall(
+            b"HTTP/1.1 200 OK\r\n"
+            b"Content-Type: text/event-stream\r\n"
+            b"Transfer-Encoding: chunked\r\n"
+            b"Connection: close\r\n\r\n"
+        )
+        for event in self.events:
+            time.sleep(self.interval)
+            piece = (
+                "data: "
+                + json.dumps(
+                    {"choices": [{"index": 0, "delta": {"content": event}}]},
+                    separators=(",", ":"),
+                )
+                + "\n\n"
+            ).encode()
+            client.sendall(f"{len(piece):x}".encode() + b"\r\n" + piece + b"\r\n")
+        client.sendall(b"0\r\n\r\n")
 
 
 def plan_response(checklist, call_id="call-plan"):
@@ -3491,6 +3522,63 @@ class AgentTests(unittest.TestCase):
         press("Tab")
         output = wait_for(lambda text: "pushed-after-scroll" in text)
         self.assertIn("pushed-after-scroll", output)
+
+    def test_tui_streaming_keeps_rendering_after_pane_switch(self):
+        if shutil.which("tmux") is None:
+            self.skipTest("tmux is required for TUI streaming output")
+        endpoint = Endpoint([SlowResponse([f"trickle-line-{i}\n" for i in range(1, 51)])])
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        server = f"ai-tui-trickle-{os.getpid()}"
+        subprocess.run(["tmux", "kill-server"], check=False)
+        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+                "AI_TIMEOUT_SECONDS": "10",
+                "AI_COMMAND_TIMEOUT_SECONDS": "2",
+                "PATH": os.environ["PATH"],
+            }
+        )
+        subprocess.run(
+            [
+                "tmux", "-f", "/dev/null", "new-session", "-d", "-x", "100", "-y", "24",
+                "-n", server, TUI_EXECUTABLE, "tui",
+            ],
+            env=environment,
+            check=True,
+            timeout=5,
+        )
+        self.addCleanup(
+            subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+        )
+        # Keys injected before the TUI takes over the tty can be dropped.
+        time.sleep(0.3)
+        subprocess.run(
+            ["tmux", "send-keys", "-t", server, "go", "Enter"], check=True, timeout=5
+        )
+        # Wait until the stream is underway, then switch panes twice; the
+        # input window is recreated by every layout redraw.
+        deadline = time.monotonic() + 8
+        output = ""
+        while time.monotonic() < deadline:
+            output = self.capture_tui(server)
+            if "trickle-line-5" in output:
+                break
+            time.sleep(0.2)
+        self.assertIn("trickle-line-5", output)
+        subprocess.run(["tmux", "send-keys", "-t", server, "Tab"], check=True, timeout=5)
+        subprocess.run(["tmux", "send-keys", "-t", server, "Tab"], check=True, timeout=5)
+        # With no further keys the pane must keep following the stream; a
+        # blocking wgetch after the redraw would freeze it partway.
+        deadline = time.monotonic() + 15
+        while time.monotonic() < deadline:
+            output = self.capture_tui(server)
+            if "trickle-line-50" in output:
+                break
+            time.sleep(0.2)
+        self.assertIn("trickle-line-50", output)
 
     def landlock_ready(self, result):
         if "landlock rules + lexical path filter" not in result.stdout:
