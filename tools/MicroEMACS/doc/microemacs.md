@@ -612,7 +612,8 @@ meanings:
 
 :   Tells MicroEMACS to move to the specified line number in the first file
     specified on the command line. The `+line` form is provided for
-    compatibility with other editors.
+    compatibility with other editors. A bare `+` moves to the end of the
+    first file.
 
 -l *lisp*
 
