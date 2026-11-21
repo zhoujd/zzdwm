@@ -147,8 +147,8 @@ spawn (char *program, const char *args[])
 {
   register int pid;
   register int wpid;
-  register void (*oqsig) ();
-  register void (*oisig) ();
+  register void (*oqsig) (int);
+  register void (*oisig) (int);
   int status;
   int jobcontrol = FALSE;
   const char *shellp = NULL;
