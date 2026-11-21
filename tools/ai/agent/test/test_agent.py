@@ -26,6 +26,9 @@ class ProgressTestResult(unittest.TextTestResult):
         self.completed = 0
         self.next_percent = self.interval_percent
 
+    def addSuccess(self, test):
+        pass
+
     def stopTest(self, test):
         super().stopTest(test)
         self.completed += 1
