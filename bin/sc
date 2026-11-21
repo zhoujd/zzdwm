@@ -1,17 +1,7 @@
 #!/bin/bash
 
-usage() {
-    cat <<EOF
-Usage: $(basename "$0") [screen-options] [command [args]]
-       $(basename "$0") -r [session]
-       $(basename "$0") -dmS name command [args]
-EOF
-}
-
-if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    usage
-    exit 0
-fi
+## Reattach: -r [session]
+## Start as daemon: -dmS name command [args]
 
 tmpfile=$(mktemp /tmp/screen-pipe.XXXXXX)
 trap 'rm -f "$tmpfile"' 0 1 2 15
