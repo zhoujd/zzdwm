@@ -51,8 +51,10 @@ jobs:
       - name: Build MicroEMACS helper
         run: make -C ../MicroEMACS clean all
 
-      - name: Install dvtm terminfo
-        run: tic -s dvtm.info
+      - name: Install test terminfo
+        run: |
+          tic -s dvtm.info
+          tic -s ../../misc/term/st/st-256color.ti
 
       - name: Build release dvtm
         run: make clean all
