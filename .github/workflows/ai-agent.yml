@@ -1,0 +1,51 @@
+name: AI Agent CI
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - ".github/workflows/ai-agent.yml"
+      - "tools/ai/agent/**"
+  pull_request:
+    branches: [master]
+    paths:
+      - ".github/workflows/ai-agent.yml"
+      - "tools/ai/agent/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: tools/ai/agent
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install build and test tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential pkg-config libncurses-dev \
+            python3 tmux file binutils
+
+      - name: Build and test static agent
+        run: |
+          make clean
+          make test LDFLAGS='-static -s -Wl,-z,relro,-z,now,-z,noexecstack'
+
+      - name: Smoke-test agent
+        run: |
+          ./ai --version
+          ./ai --help >/dev/null
