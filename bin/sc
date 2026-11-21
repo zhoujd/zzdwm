@@ -14,7 +14,7 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
 fi
 
 tmpfile=$(mktemp /tmp/screen-pipe.XXXXXX)
-trap 'rm -f "$tmpfile"' 0 1 15
+trap 'rm -f "$tmpfile"' 0 1 2 15
 cat > "$tmpfile" <<EOF
 escape \`\`
 startup_message off
@@ -52,7 +52,10 @@ hardstatus string "%n %t"
 windowlist string "%4n %t %h%=%f"
 EOF
 if [ -n "$STY" ]; then
-   exec screen "${@:-1}"
+   screen "${@:-1}"
 else
-   exec screen -c "$tmpfile" "$@"
+   screen -c "$tmpfile" "$@"
 fi
+ret=$?
+rm -f "$tmpfile"
+exit $ret
