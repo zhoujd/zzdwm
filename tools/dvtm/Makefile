@@ -9,7 +9,7 @@ MANUALS = dvtm.1 dvtm-editor.1 dvtm-pager.1
 REV = $(shell git log -1 --abbrev=7 --pretty=format:%h -- *.c *.h 2>/dev/null || echo "unknown")
 DATE = $(shell date +%Y-%m-%d 2>/dev/null || echo "unknown")
 CFLAGS += -DREV=\"git-${REV}\" -DDATE=\"${DATE}\"
-DEBUG_CFLAGS = ${CFLAGS} -UNDEBUG -O0 -g -ggdb -Wall -Wextra
+DEBUG_CFLAGS = ${CFLAGS} -UNDEBUG -O0 -g -ggdb -Wall -Wextra -Wno-unused-parameter -Wno-unused-function
 
 all: dvtm dvtm-editor
 

@@ -419,7 +419,7 @@ drawbar(void) {
 		}
 		addch(' ');
 	} else {
-		if (sel && sel->title) {
+		if (sel) {
 			printw(" %s ", sel->title);
 		}
 	}
@@ -828,6 +828,7 @@ get_client_by_coord(unsigned int x, unsigned int y) {
 
 static void
 sigchld_handler(int sig) {
+	(void) sig;
 	int errsv = errno;
 	int status;
 	pid_t pid;
@@ -861,11 +862,13 @@ sigchld_handler(int sig) {
 
 static void
 sigwinch_handler(int sig) {
+	(void) sig;
 	screen.need_resize = true;
 }
 
 static void
 sigterm_handler(int sig) {
+	(void) sig;
 	running = false;
 }
 
@@ -1003,7 +1006,7 @@ toggleview(const char *args[]) {
 
 static void
 view(const char *args[]) {
-	int i;
+	unsigned int i;
 
 	unsigned int newtagset = bitoftag(args[0]) & TAGMASK;
 	if (tagset[seltags] != newtagset && newtagset) {
@@ -1024,6 +1027,7 @@ view(const char *args[]) {
 
 static void
 viewprevtag(const char *args[]) {
+	(void) args;
 	unsigned int tmptag;
 
 	seltags ^= 1;
@@ -1134,7 +1138,7 @@ mouse_setup(void) {
 
 static void
 initpertag(void) {
-	int i;
+	unsigned int i;
 
 	pertag.curtag = pertag.prevtag = 1;
 	for(i=0; i <= LENGTH(tags); i++) {
@@ -1294,7 +1298,7 @@ static char *getcwd_by_pid(Client *c) {
 static void
 create(const char *args[]) {
 	const char *pargs[5] = { shell, NULL };
-	int i = 0;
+	unsigned int i = 0;
 	char buf[8], *cwd = NULL;
 	const char *env[] = {
 		"DVTM_WINDOW_ID", buf,
@@ -1366,14 +1370,14 @@ static void
 recreate(const char *args[]) {
 	if (!sel)
 		return;
-	bool is_stack = (sel->order > screen.nmaster) ? true : false;
+	bool is_stack = (sel->order > (int) screen.nmaster) ? true : false;
 	killclient((const char* []){ NULL });
 	char *cwd = getcwd_by_pid(sel);
 	const char *pargs[3] = { NULL, NULL, cwd };
 	create(pargs);
 	free(cwd);
 	if (args && args[0] && !strcmp(args[0], "1")) {
-		int nshift = is_stack ? screen.nmaster : screen.nmaster + 1;
+		int nshift = is_stack ? (int) screen.nmaster : (int) screen.nmaster + 1;
 		for (int i = 0; i < nshift; i++) {
 			swapnext(NULL);
 		}
@@ -1383,7 +1387,7 @@ recreate(const char *args[]) {
 static void
 cstack(const char *args[]) {
 	create(args);
-	for (int i = 0; i < screen.nmaster; i++) {
+	for (unsigned int i = 0; i < screen.nmaster; i++) {
 		swapnext(NULL);
 	}
 }
@@ -1489,7 +1493,7 @@ focusnext(const char *args[]) {
 
 static void
 swapnext(const char *args[]) {
-	Client *c, *t;
+	Client *c;
 
 	if (!sel)
 		return;
@@ -1507,7 +1511,7 @@ swapnext(const char *args[]) {
 
 static void
 swapprev(const char *args[]) {
-	Client *c, *t;
+	Client *c;
 
 	if (!sel)
 		return;
@@ -1884,7 +1888,7 @@ static void
 minimizeslaves(const char *args[]) {
 	Client *c;
 	bool any_slave_open = false;
-	int master_count = 0;
+	unsigned int master_count = 0;
 
 	for (c = clients; c; c = c->next) {
 		if (c->minimized || !is_content_visible(c))

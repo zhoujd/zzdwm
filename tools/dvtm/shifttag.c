@@ -92,7 +92,7 @@ shifttag_with_filter(const char *args[], bool skip_unoccupied, bool skip_occupie
 	unsigned int nextseltags = rotate_tags(current_tags, direction, skip_unoccupied, skip_occupied);
 
 	if (nextseltags != current_tags) {
-		int i;
+		unsigned int i;
 		for (i = 0; i < LENGTH(tags); i++) {
 			if (nextseltags & (1 << i)) {
 				const char *newargs[] = { tags[i], NULL };
