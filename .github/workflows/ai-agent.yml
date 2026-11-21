@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-test:
+  linux-test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -49,3 +49,41 @@ jobs:
         run: |
           ./ai --version
           ./ai --help >/dev/null
+
+  linux-static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: ghcr.io/linuxcontainers/alpine:3.20
+    defaults:
+      run:
+        shell: sh
+        working-directory: tools/ai/agent
+
+    steps:
+      - name: Install build tools
+        working-directory: .
+        run: apk add --no-cache file gcc git make musl-dev ncurses-dev ncurses-static
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Trust checkout ownership
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Build publish-style static agent
+        run: |
+          make clean
+          make
+          file ./ai | grep -q 'statically linked'
+          ./ai --version
+          ./ai --help >/dev/null
+
+      - name: Upload static binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-agent-linux-static
+          path: tools/ai/agent/ai
+          if-no-files-found: error
+          retention-days: 7

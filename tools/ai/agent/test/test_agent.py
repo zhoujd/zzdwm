@@ -16,6 +16,23 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXECUTABLE = os.path.join(ROOT, "ai")
 TUI_EXECUTABLE = EXECUTABLE
 
+def quiet_tmux_kill_session(server):
+    subprocess.run(
+        ["tmux", "kill-session", "-t", server],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
+def quiet_tmux_kill_server():
+    subprocess.run(
+        ["tmux", "kill-server"],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
 
 class Endpoint:
     def __init__(self, responses, delay=0):
@@ -1359,8 +1376,8 @@ class AgentTests(unittest.TestCase):
         self.addCleanup(endpoint.thread.join, timeout=2)
         self.addCleanup(endpoint.close)
         server = f"ai-tty-clean-{os.getpid()}"
-        subprocess.run(["tmux", "kill-server"], check=False)
-        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        quiet_tmux_kill_server()
+        self.addCleanup(quiet_tmux_kill_server)
         environment = os.environ.copy()
         environment.update(
             {
@@ -1379,7 +1396,7 @@ class AgentTests(unittest.TestCase):
             check=True,
             timeout=5,
         )
-        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+        self.addCleanup(quiet_tmux_kill_session, server)
 
         def pane():
             time.sleep(0.3)
@@ -2305,8 +2322,8 @@ class AgentTests(unittest.TestCase):
             self.addCleanup(endpoint.thread.join, timeout=2)
             self.addCleanup(endpoint.close)
             server = f"ai-tui-options-{os.getpid()}"
-            subprocess.run(["tmux", "kill-server"], check=False)
-            self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+            quiet_tmux_kill_server()
+            self.addCleanup(quiet_tmux_kill_server)
             environment = os.environ.copy()
             environment["AI_API_URL"] = f"http://127.0.0.1:{endpoint.port}/v1"
             environment["AI_TIMEOUT_SECONDS"] = "2"
@@ -2323,7 +2340,7 @@ class AgentTests(unittest.TestCase):
                 timeout=5,
             )
             self.addCleanup(
-                subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+                quiet_tmux_kill_session, server
             )
             time.sleep(0.5)
             subprocess.run(["tmux", "send-keys", "-t", server, "explain"], check=True)
@@ -2349,8 +2366,8 @@ class AgentTests(unittest.TestCase):
             self.addCleanup(endpoint.thread.join, timeout=2)
             self.addCleanup(endpoint.close)
             server = f"ai-tui-workspace-{os.getpid()}"
-            subprocess.run(["tmux", "kill-server"], check=False)
-            self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+            quiet_tmux_kill_server()
+            self.addCleanup(quiet_tmux_kill_server)
             environment = os.environ.copy()
             environment.update(
                 {
@@ -2371,7 +2388,7 @@ class AgentTests(unittest.TestCase):
                 timeout=5,
             )
             self.addCleanup(
-                subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+                quiet_tmux_kill_session, server
             )
             time.sleep(0.5)
             subprocess.run(["tmux", "send-keys", "-t", server, "where"], check=True)
@@ -2400,8 +2417,8 @@ class AgentTests(unittest.TestCase):
         self.addCleanup(endpoint.thread.join, timeout=2)
         self.addCleanup(endpoint.close)
         server = f"ai-tui-timeout-{os.getpid()}"
-        subprocess.run(["tmux", "kill-server"], check=False)
-        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        quiet_tmux_kill_server()
+        self.addCleanup(quiet_tmux_kill_server)
         environment = os.environ.copy()
         environment.update(
             {
@@ -2421,7 +2438,7 @@ class AgentTests(unittest.TestCase):
             timeout=5,
         )
         self.addCleanup(
-            subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+            quiet_tmux_kill_session, server
         )
         found = False
         output = ""
@@ -2450,8 +2467,8 @@ class AgentTests(unittest.TestCase):
         self.addCleanup(endpoint.thread.join, timeout=2)
         self.addCleanup(endpoint.close)
         server = f"ai-tui-plan-{os.getpid()}"
-        subprocess.run(["tmux", "kill-server"], check=False)
-        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        quiet_tmux_kill_server()
+        self.addCleanup(quiet_tmux_kill_server)
         environment = os.environ.copy()
         environment.update(
             {
@@ -2469,7 +2486,7 @@ class AgentTests(unittest.TestCase):
             check=True,
             timeout=5,
         )
-        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+        self.addCleanup(quiet_tmux_kill_session, server)
         time.sleep(0.5)
         subprocess.run(["tmux", "send-keys", "-t", server, "run it"], check=True)
         subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
@@ -2495,8 +2512,8 @@ class AgentTests(unittest.TestCase):
         self.addCleanup(endpoint.thread.join, timeout=2)
         self.addCleanup(endpoint.close)
         server = f"ai-tui-plan-clear-{os.getpid()}"
-        subprocess.run(["tmux", "kill-server"], check=False)
-        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        quiet_tmux_kill_server()
+        self.addCleanup(quiet_tmux_kill_server)
         environment = os.environ.copy()
         environment.update(
             {
@@ -2514,7 +2531,7 @@ class AgentTests(unittest.TestCase):
             check=True,
             timeout=5,
         )
-        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+        self.addCleanup(quiet_tmux_kill_session, server)
         time.sleep(0.5)
         subprocess.run(["tmux", "send-keys", "-t", server, "run it"], check=True)
         subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
@@ -2539,8 +2556,8 @@ class AgentTests(unittest.TestCase):
         self.addCleanup(endpoint.thread.join, timeout=2)
         self.addCleanup(endpoint.close)
         server = f"ai-tui-test-{os.getpid()}"
-        subprocess.run(["tmux", "kill-server"], check=False)
-        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        quiet_tmux_kill_server()
+        self.addCleanup(quiet_tmux_kill_server)
         environment = os.environ.copy()
         environment.update(
             {
@@ -2558,7 +2575,7 @@ class AgentTests(unittest.TestCase):
             check=True,
             timeout=5,
         )
-        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+        self.addCleanup(quiet_tmux_kill_session, server)
         time.sleep(0.5)
         subprocess.run(["tmux", "send-keys", "-t", server, "time?"], check=True)
         subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
@@ -2582,8 +2599,8 @@ class AgentTests(unittest.TestCase):
         self.addCleanup(endpoint.thread.join, timeout=2)
         self.addCleanup(endpoint.close)
         server = f"ai-tui-kill-word-{os.getpid()}"
-        subprocess.run(["tmux", "kill-server"], check=False)
-        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        quiet_tmux_kill_server()
+        self.addCleanup(quiet_tmux_kill_server)
         environment = os.environ.copy()
         environment.update(
             {
@@ -2601,7 +2618,7 @@ class AgentTests(unittest.TestCase):
             check=True,
             timeout=5,
         )
-        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+        self.addCleanup(quiet_tmux_kill_session, server)
         time.sleep(0.5)
         subprocess.run(["tmux", "send-keys", "-t", server, "one two three"], check=True)
         subprocess.run(["tmux", "send-keys", "-t", server, "C-w"], check=True)
@@ -2635,8 +2652,8 @@ class AgentTests(unittest.TestCase):
         self.addCleanup(endpoint.thread.join, timeout=2)
         self.addCleanup(endpoint.close)
         server = f"ai-tui-cursor-{os.getpid()}"
-        subprocess.run(["tmux", "kill-server"], check=False)
-        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        quiet_tmux_kill_server()
+        self.addCleanup(quiet_tmux_kill_server)
         environment = os.environ.copy()
         environment.update(
             {
@@ -2654,7 +2671,7 @@ class AgentTests(unittest.TestCase):
             check=True,
             timeout=5,
         )
-        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+        self.addCleanup(quiet_tmux_kill_session, server)
         time.sleep(0.5)
         subprocess.run(["tmux", "send-keys", "-t", server, "one two"], check=True)
         subprocess.run(["tmux", "send-keys", "-t", server, "C-j"], check=True)
@@ -2700,8 +2717,8 @@ class AgentTests(unittest.TestCase):
         self.addCleanup(endpoint.thread.join, timeout=2)
         self.addCleanup(endpoint.close)
         server = f"ai-tui-rune-{os.getpid()}"
-        subprocess.run(["tmux", "kill-server"], check=False)
-        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        quiet_tmux_kill_server()
+        self.addCleanup(quiet_tmux_kill_server)
         environment = os.environ.copy()
         environment.update(
             {
@@ -2719,7 +2736,7 @@ class AgentTests(unittest.TestCase):
             check=True,
             timeout=5,
         )
-        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+        self.addCleanup(quiet_tmux_kill_session, server)
         time.sleep(0.5)
         subprocess.run(["tmux", "send-keys", "-t", server, "你好"], check=True)
         subprocess.run(["tmux", "send-keys", "-t", server, "C-j"], check=True)
@@ -2750,8 +2767,8 @@ class AgentTests(unittest.TestCase):
         self.addCleanup(endpoint.thread.join, timeout=2)
         self.addCleanup(endpoint.close)
         server = f"ai-tui-command-{os.getpid()}"
-        subprocess.run(["tmux", "kill-server"], check=False)
-        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        quiet_tmux_kill_server()
+        self.addCleanup(quiet_tmux_kill_server)
         environment = os.environ.copy()
         environment.update(
             {
@@ -2770,7 +2787,7 @@ class AgentTests(unittest.TestCase):
             check=True,
             timeout=5,
         )
-        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+        self.addCleanup(quiet_tmux_kill_session, server)
         time.sleep(0.5)
         subprocess.run(["tmux", "send-keys", "-t", server, "run command"], check=True)
         subprocess.run(["tmux", "send-keys", "-t", server, "Enter"], check=True)
@@ -2819,8 +2836,8 @@ class AgentTests(unittest.TestCase):
             self.addCleanup(endpoint.thread.join, timeout=2)
             self.addCleanup(endpoint.close)
             server = f"ai-tui-patch-{os.getpid()}"
-            subprocess.run(["tmux", "kill-server"], check=False)
-            self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+            quiet_tmux_kill_server()
+            self.addCleanup(quiet_tmux_kill_server)
             environment = os.environ.copy()
             environment.update(
                 {
@@ -2840,7 +2857,7 @@ class AgentTests(unittest.TestCase):
                 timeout=5,
             )
             self.addCleanup(
-                subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+                quiet_tmux_kill_session, server
             )
             time.sleep(0.5)
             subprocess.run(["tmux", "send-keys", "-t", server, "patch it"], check=True)
@@ -2888,8 +2905,8 @@ class AgentTests(unittest.TestCase):
             self.skipTest("tmux is required for TUI input rendering")
 
         server = f"ai-tui-banner-{os.getpid()}"
-        subprocess.run(["tmux", "kill-server"], check=False)
-        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        quiet_tmux_kill_server()
+        self.addCleanup(quiet_tmux_kill_server)
         environment = os.environ.copy()
         environment["AI_API_URL"] = "http://127.0.0.1:1/v1"
         subprocess.run(
@@ -2901,7 +2918,7 @@ class AgentTests(unittest.TestCase):
             check=True,
             timeout=5,
         )
-        self.addCleanup(subprocess.run, ["tmux", "kill-session", "-t", server], check=False)
+        self.addCleanup(quiet_tmux_kill_session, server)
         time.sleep(0.5)
         output = subprocess.run(
             ["tmux", "capture-pane", "-p", "-t", server],
@@ -3228,8 +3245,8 @@ class AgentTests(unittest.TestCase):
         self.addCleanup(endpoint.thread.join, timeout=2)
         self.addCleanup(endpoint.close)
         server = f"ai-tui-continue-{os.getpid()}"
-        subprocess.run(["tmux", "kill-server"], check=False)
-        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        quiet_tmux_kill_server()
+        self.addCleanup(quiet_tmux_kill_server)
         environment = os.environ.copy()
         environment.update(
             {
@@ -3249,7 +3266,7 @@ class AgentTests(unittest.TestCase):
             timeout=5,
         )
         self.addCleanup(
-            subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+            quiet_tmux_kill_session, server
         )
         deadline = time.monotonic() + 8
         output = ""
@@ -3384,8 +3401,8 @@ class AgentTests(unittest.TestCase):
         self.addCleanup(endpoint.thread.join, timeout=2)
         self.addCleanup(endpoint.close)
         server = f"ai-tui-stream-{os.getpid()}"
-        subprocess.run(["tmux", "kill-server"], check=False)
-        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        quiet_tmux_kill_server()
+        self.addCleanup(quiet_tmux_kill_server)
         environment = os.environ.copy()
         environment.update(
             {
@@ -3405,7 +3422,7 @@ class AgentTests(unittest.TestCase):
             timeout=5,
         )
         self.addCleanup(
-            subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+            quiet_tmux_kill_session, server
         )
         # Keys injected before the TUI takes over the tty can be dropped.
         time.sleep(0.3)
@@ -3446,8 +3463,8 @@ class AgentTests(unittest.TestCase):
         self.addCleanup(endpoint.thread.join, timeout=2)
         self.addCleanup(endpoint.close)
         server = f"ai-tui-focus-{os.getpid()}"
-        subprocess.run(["tmux", "kill-server"], check=False)
-        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        quiet_tmux_kill_server()
+        self.addCleanup(quiet_tmux_kill_server)
         environment = os.environ.copy()
         environment.update(
             {
@@ -3467,7 +3484,7 @@ class AgentTests(unittest.TestCase):
             timeout=5,
         )
         self.addCleanup(
-            subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+            quiet_tmux_kill_session, server
         )
         # Keys injected before the TUI takes over the tty can be dropped.
         time.sleep(0.3)
@@ -3530,8 +3547,8 @@ class AgentTests(unittest.TestCase):
         self.addCleanup(endpoint.thread.join, timeout=2)
         self.addCleanup(endpoint.close)
         server = f"ai-tui-trickle-{os.getpid()}"
-        subprocess.run(["tmux", "kill-server"], check=False)
-        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        quiet_tmux_kill_server()
+        self.addCleanup(quiet_tmux_kill_server)
         environment = os.environ.copy()
         environment.update(
             {
@@ -3551,7 +3568,7 @@ class AgentTests(unittest.TestCase):
             timeout=5,
         )
         self.addCleanup(
-            subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+            quiet_tmux_kill_session, server
         )
         # Keys injected before the TUI takes over the tty can be dropped.
         time.sleep(0.3)
@@ -3595,8 +3612,8 @@ class AgentTests(unittest.TestCase):
         self.addCleanup(endpoint.thread.join, timeout=2)
         self.addCleanup(endpoint.close)
         server = f"ai-tui-partial-{os.getpid()}"
-        subprocess.run(["tmux", "kill-server"], check=False)
-        self.addCleanup(subprocess.run, ["tmux", "kill-server"], check=False)
+        quiet_tmux_kill_server()
+        self.addCleanup(quiet_tmux_kill_server)
         environment = os.environ.copy()
         environment.update(
             {
@@ -3616,7 +3633,7 @@ class AgentTests(unittest.TestCase):
             timeout=5,
         )
         self.addCleanup(
-            subprocess.run, ["tmux", "kill-session", "-t", server], check=False
+            quiet_tmux_kill_session, server
         )
         # Keys injected before the TUI takes over the tty can be dropped.
         time.sleep(0.3)
