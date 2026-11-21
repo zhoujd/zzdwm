@@ -68,9 +68,10 @@ jobs:
           set -e
           for test in test/python/*.py; do
             echo "::group::${test}"
-            output="$(python3 "$test")"
+            output="$(python3 "$test" 2>&1)"
             status=$?
             printf '%s\n' "$output"
+            echo "::endgroup::"
             if [ "$status" -ne 0 ]; then
               exit "$status"
             fi
@@ -78,5 +79,4 @@ jobs:
               echo "Test was skipped: $test" >&2
               exit 1
             fi
-            echo "::endgroup::"
           done
