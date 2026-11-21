@@ -70,8 +70,11 @@ jobs:
           set -e
           for test in test/python/*.py; do
             echo "::group::${test}"
-            output="$(python3 "$test" 2>&1)"
-            status=$?
+            if output="$(python3 "$test" 2>&1)"; then
+              status=0
+            else
+              status=$?
+            fi
             printf '%s\n' "$output"
             echo "::endgroup::"
             if [ "$status" -ne 0 ]; then
