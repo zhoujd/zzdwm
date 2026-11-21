@@ -627,8 +627,13 @@ tool_apply_patch (const char *root, const char *patch, ToolResult *result)
   if (failed)
     {
       if (touched_length != 0)
-        snprintf (result->status + strlen (result->status),
-                  sizeof (result->status) - strlen (result->status), " Files already patched: %s.", touched);
+        {
+          char suffix[4 * PATH_MAX + 32];
+
+          snprintf (suffix, sizeof (suffix), " Files already patched: %s.", touched);
+          copy_status_text (suffix, result->status + strlen (result->status),
+                            sizeof (result->status) - strlen (result->status));
+        }
       result->failed = 1;
       return 0;
     }
