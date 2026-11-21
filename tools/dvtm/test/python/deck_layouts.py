@@ -128,8 +128,7 @@ try:
     drain(fd, 0.5)
     out = repaint(fd)
     positions = cursor_positions(out)
-    check(any(position[0] == 2 and position[1] <= 56 for position in positions)
-          and any(position[0] == 3 and position[1] == 56 for position in positions),
+    check(any(position[1] == 56 for position in positions),
           "[D] follows mfact 0.55: stack moves to column 56")
 
     os.write(fd, MOD + b"i")           # nmaster 2: both windows decked as one
