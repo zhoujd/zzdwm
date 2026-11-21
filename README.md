@@ -4,7 +4,7 @@ A self-contained, dwm-centric Linux desktop workspace: window manager sources
 (dwm, cwm), a heavily extended MicroEMACS editor, a static OpenAI-compatible
 agent, suckless companion tools, terminal multiplexers, and Docker dev
 environments — all built and installed by a single `init.sh` bootstrap
-script. Per-tool notes live in `doc/`.
+script.
 
 ## Build dependence
 
