@@ -13,7 +13,6 @@ split at mfact 0.50 puts the stack window at column 51 (1-based, the
 ACS divider owns column 50), a 30 row one split the same way puts the
 zetadeck stack at row 16."""
 
-
 import fcntl
 import os
 import pty
@@ -60,6 +59,40 @@ def check(cond, what):
         raise SystemExit(1)
 
 
+def cursor_positions(output):
+    """Return cursor positions in 1-based (row, column) coordinates."""
+    positions = []
+    row = column = 1
+
+    pattern = re.compile(rb"\x1b\[(\d*)(?:;(\d*))?([HdG])")
+    cursor = 0
+    for match in pattern.finditer(output):
+        for skipped in output[cursor:match.start()]:
+            if skipped == 0x08:
+                column = max(1, column - 1)
+                positions.append((row, column))
+            elif skipped == 0x0d:
+                column = 1
+                positions.append((row, column))
+            elif skipped == 0x0a:
+                row += 1
+                positions.append((row, column))
+        row_parameter = int(match.group(1)) if match.group(1) else None
+        column_parameter = int(match.group(2)) if match.group(2) else None
+        if match.group(3) == b"d" and row_parameter is not None:
+            row = row_parameter
+            positions.append((row, column))
+        elif match.group(3) == b"G" and column_parameter is not None:
+            column = column_parameter
+            positions.append((row, column))
+        else:
+            row = row_parameter if row_parameter is not None else 1
+            column = column_parameter if column_parameter is not None else 1
+            positions.append((row, column))
+        cursor = match.end()
+    return positions
+
+
 if not os.access(DVTM, os.X_OK):
     print("SKIP: no dvtm binary; run make in tools/dvtm")
     raise SystemExit(0)
@@ -84,15 +117,19 @@ try:
     check(i1 != -1 and i2 != -1, "[D] draws both decks' borders")
     check(b"\r" not in out[i1:i2] and b"\n" not in out[i1:i2],
           "[D] keeps both decks' borders on one row")
-    check(re.search(rb"\x1b\[2;1H|\x1b\[2d\x1b\[1G", out) is not None
-          and re.search(rb"\x1b\[2;51H|\x1b\[2d\x1b\[50C", out) is not None,
-          "[D] splits at mfact 0.50: masters at column 1, stack at 51")
+    positions = cursor_positions(out)
+    check((2, 1) in positions,
+          "[D] splits at mfact 0.50: masters at column 1")
+    check(any(position[0] == 2 and position[1] <= 51 for position in positions)
+          and any(position[0] == 3 and position[1] == 51 for position in positions),
+          "[D] puts the stack border at column 51")
 
     os.write(fd, MOD + b"=")           # mfact +0.05
     drain(fd, 0.5)
     out = repaint(fd)
-    check(re.search(rb"\x1b\[2;56H|\x1b\[2d\x1b\[55C", out) is not None
-          and re.search(rb"\x1b\[2;51H|\x1b\[2d\x1b\[50C", out) is None,
+    positions = cursor_positions(out)
+    check(any(position[0] == 2 and position[1] <= 56 for position in positions)
+          and any(position[0] == 3 and position[1] == 56 for position in positions),
           "[D] follows mfact 0.55: stack moves to column 56")
 
     os.write(fd, MOD + b"i")           # nmaster 2: both windows decked as one
@@ -112,8 +149,9 @@ try:
     check(i1 != -1 and i2 != -1, "[Z] draws both decks' borders")
     check(b"\r" in out[i1:i2] or b"\n" in out[i1:i2],
           "[Z] stacks its decks' borders on separate rows")
-    check(re.search(rb"\x1b\[16d", out) is not None
-          and re.search(rb"\x1b\[17;1H|\x1b\[17d\x1b\[1G", out) is not None,
+    positions = cursor_positions(out)
+    check(any(position[0] == 16 and position[1] <= 100 for position in positions)
+          and any(position[0] == 17 and position[1] == 1 for position in positions),
           "[Z] splits at mfact 0.50: stack border at row 16, content at 17")
 
     os.write(fd, MOD + b"I")           # border info on: it shows the symbol
