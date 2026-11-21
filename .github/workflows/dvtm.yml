@@ -49,7 +49,9 @@ jobs:
         run: make clean debug
 
       - name: Build MicroEMACS helper
-        run: make -C ../MicroEMACS clean all
+        run: |
+          make -C ../MicroEMACS clean
+          make -C ../MicroEMACS
 
       - name: Install test terminfo
         run: |
