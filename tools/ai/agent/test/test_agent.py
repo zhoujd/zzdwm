@@ -6,6 +6,7 @@ import shutil
 import signal
 import socket
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -15,6 +16,36 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXECUTABLE = os.path.join(ROOT, "ai")
 TUI_EXECUTABLE = EXECUTABLE
+
+
+class ProgressTestResult(unittest.TextTestResult):
+    interval_percent = 10
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.completed = 0
+        self.next_percent = self.interval_percent
+
+    def stopTest(self, test):
+        super().stopTest(test)
+        self.completed += 1
+        while self.completed * 100 >= self.next_percent * self.total:
+            print(
+                f"[progress] {self.completed}/{self.total} tests "
+                f"({self.next_percent}%)",
+                file=sys.stderr,
+                flush=True,
+            )
+            self.next_percent += self.interval_percent
+
+
+class ProgressTestRunner(unittest.TextTestRunner):
+    resultclass = ProgressTestResult
+
+    def run(self, test):
+        self.resultclass.total = test.countTestCases()
+        return super().run(test)
+
 
 def quiet_tmux_kill_session(server):
     subprocess.run(
@@ -3764,4 +3795,4 @@ class BinaryTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(testRunner=ProgressTestRunner)
