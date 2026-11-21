@@ -43,7 +43,7 @@ jobs:
       - name: Build and test static agent
         run: |
           make clean
-          make test LDFLAGS='-static -s -Wl,-z,relro,-z,now,-z,noexecstack'
+          make test LDFLAGS='-static -s -Wl,-w -Wl,-z,relro,-z,now,-z,noexecstack'
 
       - name: Smoke-test agent
         run: |
