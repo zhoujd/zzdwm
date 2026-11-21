@@ -84,13 +84,15 @@ try:
     check(i1 != -1 and i2 != -1, "[D] draws both decks' borders")
     check(b"\r" not in out[i1:i2] and b"\n" not in out[i1:i2],
           "[D] keeps both decks' borders on one row")
-    check(b"\x1b[2;1H" in out and b"\x1b[2;51H" in out,
+    check(re.search(rb"\x1b\[2;1H|\x1b\[2d\x1b\[1G", out) is not None
+          and re.search(rb"\x1b\[2;51H|\x1b\[2d\x1b\[50C", out) is not None,
           "[D] splits at mfact 0.50: masters at column 1, stack at 51")
 
     os.write(fd, MOD + b"=")           # mfact +0.05
     drain(fd, 0.5)
     out = repaint(fd)
-    check(b"\x1b[2;56H" in out and b"\x1b[2;51H" not in out,
+    check(re.search(rb"\x1b\[2;56H|\x1b\[2d\x1b\[55C", out) is not None
+          and re.search(rb"\x1b\[2;51H|\x1b\[2d\x1b\[50C", out) is None,
           "[D] follows mfact 0.55: stack moves to column 56")
 
     os.write(fd, MOD + b"i")           # nmaster 2: both windows decked as one
@@ -110,7 +112,8 @@ try:
     check(i1 != -1 and i2 != -1, "[Z] draws both decks' borders")
     check(b"\r" in out[i1:i2] or b"\n" in out[i1:i2],
           "[Z] stacks its decks' borders on separate rows")
-    check(re.search(rb"\x1b\[16d", out) and b"\x1b[17;1H" in out,
+    check(re.search(rb"\x1b\[16d", out) is not None
+          and re.search(rb"\x1b\[17;1H|\x1b\[17d\x1b\[1G", out) is not None,
           "[Z] splits at mfact 0.50: stack border at row 16, content at 17")
 
     os.write(fd, MOD + b"I")           # border info on: it shows the symbol
