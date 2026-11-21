@@ -108,9 +108,9 @@
  */
 typedef struct KEY
 {
-  int k_key;                    /* Key to bind.                 */
-  int (*k_funcp) ();            /* Function.                    */
-  char *k_name;                 /* Function name string.        */
+  int k_key;                            /* Key to bind.          */
+  int (*k_funcp) (int f, int n, int k); /* Function.             */
+  char *k_name;                         /* Function name string. */
 } KEY;
 
 /*
@@ -646,7 +646,7 @@ addsym (SYMBOL *sp)
 void
 keyadd (
      int new,
-     int (*funcp) (),
+     int (*funcp) (int f, int n, int k),
      const char *name)
 {
   register SYMBOL *sp;

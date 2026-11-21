@@ -869,7 +869,7 @@ int textmode (int f, int n, int k);
  */
 int readmsg (void);                     /* Read next line of message.   */
 int writemsg (const char *sp);          /* Send string to message line. */
-int eecho (void);                       /* Echo text on status line.    */
+int eecho (int f, int n, int k);        /* Echo text on status line.    */
 int ereply (const char *fp, char *buf, int nbuf, ...);
 int ereplyf (const char *fp, char *buf, int nbuf, int flag, ...);
 void eformat (const char *fp, va_list ap);
@@ -1205,7 +1205,7 @@ int symdefmacro (const char *name,      /* Define a named macro         */
 
 void keymapinit ();
 void keyadd (int new,                   /* Add a function, bind to key  */
-             int (*funcp) (),
+             int (*funcp) (int f, int n, int k),
              const char *name);
 void keydup (int new,                   /* Bind key to existing func.   */
              const char *name);

@@ -277,7 +277,7 @@ readmsg (void)
  */
 
 int
-eecho (void)
+eecho (int f, int n, int k)
 {
   register int s;
   char echoline[NCOL];
