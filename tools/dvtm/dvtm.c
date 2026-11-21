@@ -1271,12 +1271,6 @@ cleanup(void) {
 	while (clients)
 		destroy(clients);
 	vt_shutdown();
-#ifdef CONFIG_MOUSE
-	/* mouse_setup arms button-event tracking (1002) beyond what
-	 * endwin turns off */
-	putp("\033[?1002l");
-	fflush(stdout);
-#endif /* CONFIG_MOUSE */
 	endwin();
 	free(copyreg.data);
 	if (bar.fd > 0)
