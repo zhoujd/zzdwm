@@ -1,0 +1,82 @@
+name: dvtm CI
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - ".github/workflows/dvtm.yml"
+      - "tools/dvtm/**"
+      - "tools/MicroEMACS/**"
+      - "docker/dockerfiles/tool/**"
+  pull_request:
+    branches: [master]
+    paths:
+      - ".github/workflows/dvtm.yml"
+      - "tools/dvtm/**"
+      - "tools/MicroEMACS/**"
+      - "docker/dockerfiles/tool/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: tools/dvtm
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential libncurses-dev ncurses-term python3
+
+      - name: Build debug dvtm
+        env:
+          TERM: xterm-256color
+        run: make clean debug
+
+      - name: Build MicroEMACS helper
+        run: make -C ../MicroEMACS clean all
+
+      - name: Install dvtm terminfo
+        run: tic -s dvtm.info
+
+      - name: Build release dvtm
+        run: make clean all
+
+      - name: Smoke-test dvtm
+        run: ./dvtm -v
+
+      - name: Run PTY tests
+        env:
+          TERM: st-256color
+          LANG: C.UTF-8
+        run: |
+          set -e
+          for test in test/python/*.py; do
+            echo "::group::${test}"
+            output="$(python3 "$test")"
+            status=$?
+            printf '%s\n' "$output"
+            if [ "$status" -ne 0 ]; then
+              exit "$status"
+            fi
+            if printf '%s\n' "$output" | grep -q '^SKIP:'; then
+              echo "Test was skipped: $test" >&2
+              exit 1
+            fi
+            echo "::endgroup::"
+          done
