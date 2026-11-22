@@ -11,6 +11,7 @@ extern int editor_main (int argc, char **argv);
 // Forward declarations
 static int run_backend (int argc, char *argv[]);
 static int run_tui (int argc, char *argv[]);
+static int run_editor (int argc, char *argv[]);
 
 int
 main (int argc, char *argv[])
@@ -28,7 +29,7 @@ main (int argc, char *argv[])
     }
   if (strcmp (prog_name, "ai-editor") == 0)
     {
-      return editor_main (argc, argv);
+      return run_editor (argc, argv);
     }
   // Explicit CLI Subcommand Fallback
   if (argc > 1)
@@ -39,7 +40,7 @@ main (int argc, char *argv[])
         }
       if (strcmp (argv[1], "editor") == 0)
         {
-          return editor_main (argc - 1, argv + 1);
+          return run_editor (argc - 1, argv + 1);
         }
     }
   // Notify user of TUI availability; --help lists the subcommands
@@ -60,4 +61,10 @@ int
 run_tui (int argc, char *argv[])
 {
   return tui_main (argc, argv);
+}
+
+int
+run_editor (int argc, char *argv[])
+{
+  return editor_main (argc, argv);
 }
