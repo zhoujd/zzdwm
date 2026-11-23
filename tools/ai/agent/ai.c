@@ -123,6 +123,7 @@ typedef enum
   TOOL_START_JOB,
   TOOL_JOB_STATUS,
   TOOL_STOP_JOB,
+  TOOL_TASK,
 } ToolKind;
 
 typedef struct
@@ -200,6 +201,14 @@ static int stream_terminated;
 static int landlock_enabled = 1;
 static int resolve_transient;
 static bool full_access = false; // Always default to secure mode
+/* --no-shell analyst mode: no terminal or job tools, file tools and plan
+   only. Also forced onto TUI-mode subagents, whose approvals cannot be
+   routed anywhere safe. */
+static int no_shell;
+/* Set in a delegated subagent (AI_SUBAGENT=1 in the environment): the
+   task tool is not registered and transcripts stay off, so delegation
+   never nests and never writes a second session file. */
+static int subagent_depth;
 /* Set while a shell-mode `!` command runs: the human typed it directly, so
    workspace scoping must not confine it. */
 static int shell_direct;
@@ -444,6 +453,14 @@ static void
 print_editor_prompt (const char *text)
 {
   print_formatted ("%s", text);
+}
+
+/* Handed to the editor so its blocking read aborts on a SIGINT that
+   landed before the read instead of waiting for the next keypress. */
+static int
+interrupt_is_pending (void)
+{
+  return interrupted;
 }
 
 static void
@@ -800,7 +817,10 @@ session_open (const char *mode)
 {
   int needs_separator = 0;
 
-  if (session_file != NULL || session_save_failed)
+  /* A subagent's transcript is the task tool result in the parent's
+     session; a second writer appending to the same file is corruption
+     risk for no benefit. */
+  if (session_file != NULL || session_save_failed || subagent_depth)
     return;
   mkdir (".ai", 0777);
   if (mode[0] == 'a')
@@ -879,7 +899,7 @@ session_rewrite_compacted (void)
   Buffer summary_buffer = { summary_line, sizeof (summary_line), 0 };
   size_t index;
 
-  if (session_save_failed)
+  if (session_save_failed || subagent_depth)
     return;
   if (session_file != NULL)
     fclose (session_file);
@@ -1396,6 +1416,7 @@ configure_environment (void)
   value = getenv ("AI_LANDLOCK");
   if (value != NULL)
     landlock_enabled = strcmp (value, "0") != 0;
+  subagent_depth = getenv ("AI_SUBAGENT") != NULL;
   return 0;
 }
 
@@ -2387,13 +2408,6 @@ build_request (char *request, size_t capacity, size_t *length)
         return -1;
     }
   if (buffer_append_string (&buffer, "],\"tools\":[{\"type\":\"function\",\"function\":{"
-                                     "\"name\":\"run_terminal_command\",\"description\":"
-                                     "\"Execute one shell command on the user's host and return bounded live output.\","
-                                     "\"parameters\":{\"type\":\"object\",\"properties\":{"
-                                     "\"command\":{\"type\":\"string\",\"description\":"
-                                     "\"The complete shell command to execute.\"}},"
-                                     "\"required\":[\"command\"]}}},"
-                                     "{\"type\":\"function\",\"function\":{"
                                      "\"name\":\"read_file\",\"description\":"
                                      "\"Read one text file inside the workspace and return numbered lines. "
                                      "Cheaper and safer than cat: no shell quoting and no approval needed.\","
@@ -2432,34 +2446,63 @@ build_request (char *request, size_t capacity, size_t *length)
                                      "\"parameters\":{\"type\":\"object\",\"properties\":{"
                                      "\"checklist\":{\"type\":\"string\",\"description\":"
                                      "\"The complete checklist text.\"}},"
-                                     "\"required\":[\"checklist\"]}}},"
-                                     "{\"type\":\"function\",\"function\":{"
-                                     "\"name\":\"start_job\",\"description\":"
-                                     "\"Start one long-running command (test suite, build) as a background job "
-                                     "and return immediately as job:N started. Output appends to the job log; "
-                                     "poll with job_status. Jobs are exempt from the command timeout and keep "
-                                     "the same approval and workspace rules as foreground commands.\","
-                                     "\"parameters\":{\"type\":\"object\",\"properties\":{"
-                                     "\"command\":{\"type\":\"string\",\"description\":"
-                                     "\"The complete shell command to run in the background.\"}},"
-                                     "\"required\":[\"command\"]}}},"
-                                     "{\"type\":\"function\",\"function\":{"
-                                     "\"name\":\"job_status\",\"description\":"
-                                     "\"Report background jobs: with no id a one-line-per-job summary, with id "
-                                     "the state, elapsed time, and the bounded tail of its log. Read-only, no "
-                                     "approval needed.\","
-                                     "\"parameters\":{\"type\":\"object\",\"properties\":{"
-                                     "\"id\":{\"type\":\"integer\",\"description\":"
-                                     "\"Job id returned by start_job; omit to list all jobs.\"}}}}},"
-                                     "{\"type\":\"function\",\"function\":{"
-                                     "\"name\":\"stop_job\",\"description\":"
-                                     "\"Stop one background job: SIGTERM to its process group, SIGKILL after a "
-                                     "grace second. Needs approval, like running a command.\","
-                                     "\"parameters\":{\"type\":\"object\",\"properties\":{"
-                                     "\"id\":{\"type\":\"integer\",\"description\":"
-                                     "\"Job id returned by start_job.\"}},"
-                                     "\"required\":[\"id\"]}}}],\"tool_choice\":\"auto\"")
+                                     "\"required\":[\"checklist\"]}}}")
       < 0)
+    return -1;
+  /* The shell-touching tools disappear under --no-shell, leaving the
+     read-only analyst set. */
+  if (!no_shell
+      && buffer_append_string (&buffer, ",{\"type\":\"function\",\"function\":{"
+                                        "\"name\":\"run_terminal_command\",\"description\":"
+                                        "\"Execute one shell command on the user's host and return bounded live output.\","
+                                        "\"parameters\":{\"type\":\"object\",\"properties\":{"
+                                        "\"command\":{\"type\":\"string\",\"description\":"
+                                        "\"The complete shell command to execute.\"}},"
+                                        "\"required\":[\"command\"]}}},"
+                                        "{\"type\":\"function\",\"function\":{"
+                                        "\"name\":\"start_job\",\"description\":"
+                                        "\"Start one long-running command (test suite, build) as a background job "
+                                        "and return immediately as job:N started. Output appends to the job log; "
+                                        "poll with job_status. Jobs are exempt from the command timeout and keep "
+                                        "the same approval and workspace rules as foreground commands.\","
+                                        "\"parameters\":{\"type\":\"object\",\"properties\":{"
+                                        "\"command\":{\"type\":\"string\",\"description\":"
+                                        "\"The complete shell command to run in the background.\"}},"
+                                        "\"required\":[\"command\"]}}},"
+                                        "{\"type\":\"function\",\"function\":{"
+                                        "\"name\":\"job_status\",\"description\":"
+                                        "\"Report background jobs: with no id a one-line-per-job summary, with id "
+                                        "the state, elapsed time, and the bounded tail of its log. Read-only, no "
+                                        "approval needed.\","
+                                        "\"parameters\":{\"type\":\"object\",\"properties\":{"
+                                        "\"id\":{\"type\":\"integer\",\"description\":"
+                                        "\"Job id returned by start_job; omit to list all jobs.\"}}}}},"
+                                        "{\"type\":\"function\",\"function\":{"
+                                        "\"name\":\"stop_job\",\"description\":"
+                                        "\"Stop one background job: SIGTERM to its process group, SIGKILL after a "
+                                        "grace second. Needs approval, like running a command.\","
+                                        "\"parameters\":{\"type\":\"object\",\"properties\":{"
+                                        "\"id\":{\"type\":\"integer\",\"description\":"
+                                        "\"Job id returned by start_job.\"}},"
+                                        "\"required\":[\"id\"]}}}")
+      < 0)
+    return -1;
+  /* Delegation never nests: subagents do not see the task tool. */
+  if (!subagent_depth
+      && buffer_append_string (&buffer, ",{\"type\":\"function\",\"function\":{"
+                                        "\"name\":\"task\",\"description\":"
+                                        "\"Delegate one self-contained subtask to a fresh nested agent with its own "
+                                        "empty context. Write the complete brief: goal, constraints, and exactly "
+                                        "what to report back; the subagent cannot see this conversation and its "
+                                        "whole output tail becomes the tool result. Depth is limited to one level "
+                                        "and a delegation costs a full agent run.\","
+                                        "\"parameters\":{\"type\":\"object\",\"properties\":{"
+                                        "\"prompt\":{\"type\":\"string\",\"description\":"
+                                        "\"The complete, self-contained subtask prompt.\"}},"
+                                        "\"required\":[\"prompt\"]}}}")
+      < 0)
+    return -1;
+  if (buffer_append_string (&buffer, "],\"tool_choice\":\"auto\"") < 0)
     return -1;
   if (buffer_append_string (&buffer, streaming_enabled ? ",\"stream\":true}" : "}") < 0)
     return -1;
@@ -3192,6 +3235,188 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
   end_live_input ();
   print_line_break ();
   print_formatted ("[live steering inactive]\n");
+  close (pipe_fds[0]);
+  if (WIFEXITED (status))
+    *exit_status = WEXITSTATUS (status);
+  else if (WIFSIGNALED (status))
+    *exit_status = 128 + WTERMSIG (status);
+  else
+    *exit_status = 1;
+  *output_length = captured;
+  *dropped_length = dropped;
+  output[captured] = 0;
+  return 0;
+}
+
+/* Resolve this executable once, so a task tool can re-exec the same static
+   binary as a fresh subagent. */
+static const char *
+self_executable (void)
+{
+  static char path[PATH_MAX];
+  static int resolved;
+
+  if (!resolved)
+    {
+      ssize_t length = readlink ("/proc/self/exe", path, sizeof (path) - 1);
+
+      if (length > 0)
+        path[length] = 0;
+      else
+        path[0] = 0;
+      resolved = 1;
+    }
+  return path[0] != 0 ? path : NULL;
+}
+
+/* Subagent delegation: fork and re-exec this binary with the task prompt as
+   a one-shot run. The child gets an empty context and the inherited AI_*
+   environment plus AI_SUBAGENT=1 (no task tool, no transcript). Its stdout
+   is captured tail-bounded like command output and also streamed live, so
+   the human watches the run and — in terminal mode — sees the child's own
+   approval prompts, which it reads from /dev/tty. Under the TUI no safe
+   approval routing exists, so the child is dropped to --no-shell unless
+   full access was granted. Unlike run_command, a timeout never sets the
+   parent's exit status: a slow subtask is the model's problem, not a
+   session failure. */
+static int
+task_run (const char *prompt, char *output, size_t capacity, size_t *output_length, size_t *dropped_length,
+          int *exit_status, int *timed_out)
+{
+  const char *self = self_executable ();
+  int pipe_fds[2];
+  int null_fd;
+  pid_t child;
+  time_t deadline = command_timeout > 0 ? time (NULL) + command_timeout : 0;
+  size_t captured = 0;
+  size_t dropped = 0;
+  int status = 0;
+  int have_status = 0;
+  struct pollfd descriptor;
+
+  *timed_out = 0;
+  if (self == NULL)
+    return -1;
+  if (pipe2 (pipe_fds, O_CLOEXEC) < 0)
+    return -1;
+  if (fcntl (pipe_fds[0], F_SETFL, O_NONBLOCK) < 0)
+    {
+      close (pipe_fds[0]);
+      close (pipe_fds[1]);
+      return -1;
+    }
+  interrupted = 0;
+  child = fork ();
+  if (child < 0)
+    {
+      close (pipe_fds[0]);
+      close (pipe_fds[1]);
+      return -1;
+    }
+  if (child == 0)
+    {
+      char *arguments[8];
+      int count = 0;
+
+      arguments[count++] = (char *) self;
+      if (workspace_directory != NULL)
+        {
+          arguments[count++] = (char *) "-C";
+          arguments[count++] = workspace_root;
+        }
+      if (full_access)
+        arguments[count++] = (char *) "--full-access";
+      else if (ui_mode)
+        arguments[count++] = (char *) "--no-shell";
+      arguments[count++] = (char *) "-exec";
+      arguments[count++] = (char *) prompt;
+      arguments[count] = NULL;
+      setpgid (0, 0);
+      null_fd = open ("/dev/null", O_RDONLY);
+      if (null_fd >= 0)
+        {
+          dup2 (null_fd, STDIN_FILENO);
+          if (null_fd != STDIN_FILENO)
+            close (null_fd);
+        }
+      close (pipe_fds[0]);
+      dup2 (pipe_fds[1], STDOUT_FILENO);
+      dup2 (pipe_fds[1], STDERR_FILENO);
+      if (pipe_fds[1] != STDOUT_FILENO && pipe_fds[1] != STDERR_FILENO)
+        close (pipe_fds[1]);
+      setenv ("AI_SUBAGENT", "1", 1);
+      execv (self, arguments);
+      _exit (127);
+    }
+  setpgid (child, child);
+  close (pipe_fds[1]);
+  descriptor.fd = pipe_fds[0];
+  descriptor.events = POLLIN;
+  print_formatted ("[task output]\n");
+  for (;;)
+    {
+      char chunk[2048];
+      ssize_t received;
+      int poll_result;
+
+      if (interrupted)
+        kill (-child, SIGINT);
+      poll_result = poll (&descriptor, 1, 100);
+      if (poll_result < 0)
+        {
+          if (errno == EINTR)
+            continue;
+          break;
+        }
+      if (poll_result > 0 && (descriptor.revents & (POLLIN | POLLHUP)))
+        {
+          received = read (pipe_fds[0], chunk, sizeof (chunk));
+          if (received > 0)
+            {
+              write_all (STDOUT_FILENO, chunk, (size_t) received);
+              if (capture_chunk (chunk, received, output, capacity, &captured, &dropped) < 0)
+                break;
+            }
+          else if (received == 0)
+            break;
+          else if (errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR)
+            break;
+        }
+      if (waitpid (child, &status, WNOHANG) == child)
+        {
+          /* Drain buffered last writes, like run_command's reaped pipe. */
+          int rounds = 256;
+
+          while (rounds-- > 0)
+            {
+              received = read (pipe_fds[0], chunk, sizeof (chunk));
+              if (received < 0 && errno == EINTR)
+                continue;
+              if (received <= 0)
+                break;
+              write_all (STDOUT_FILENO, chunk, (size_t) received);
+              if (capture_chunk (chunk, received, output, capacity, &captured, &dropped) < 0)
+                break;
+            }
+          have_status = 1;
+          break;
+        }
+      if (command_timeout > 0 && time (NULL) >= deadline)
+        {
+          kill (-child, SIGTERM);
+          sleep (1);
+          kill (-child, SIGKILL);
+          waitpid (child, &status, 0);
+          have_status = 1;
+          *timed_out = 1;
+          print_line_break ();
+          print_formatted ("[task timed out after %d seconds]\n", command_timeout);
+          break;
+        }
+    }
+  while (!have_status && waitpid (child, &status, 0) < 0 && errno == EINTR)
+    ;
+  print_line_break ();
   close (pipe_fds[0]);
   if (WIFEXITED (status))
     *exit_status = WEXITSTATUS (status);
@@ -4035,6 +4260,12 @@ process_tool_calls (ToolCall *calls, size_t call_count)
           int job_id = 0;
 
           print_formatted ("\n[AI starts job]: %s\n", calls[index].command);
+          if (no_shell)
+            {
+              if (append_tool_result (&calls[index], "Error: background jobs are disabled by --no-shell.") < 0)
+                return -1;
+              continue;
+            }
           if (validate_workspace_command (calls[index].command) < 0)
             {
               if (append_tool_result (&calls[index], "Error: command references a path outside the workspace scope.")
@@ -4166,6 +4397,12 @@ process_tool_calls (ToolCall *calls, size_t call_count)
           Job *job;
 
           print_formatted ("\n[AI stops job]: %d\n", calls[index].job_id);
+          if (no_shell)
+            {
+              if (append_tool_result (&calls[index], "Error: background jobs are disabled by --no-shell.") < 0)
+                return -1;
+              continue;
+            }
           if (steer[0] != 0)
             execute = 0;
           else if (full_access)
@@ -4212,9 +4449,72 @@ process_tool_calls (ToolCall *calls, size_t call_count)
             return -1;
           continue;
         }
+      if (calls[index].valid && calls[index].kind == TOOL_TASK)
+        {
+          print_formatted ("\n[AI delegates task]:\n");
+          print_formatted ("%s\n", calls[index].command);
+          if (subagent_depth)
+            {
+              if (append_tool_result (&calls[index],
+                                      "Error: delegation is disabled inside subagents; handle the subtask yourself.")
+                  < 0)
+                return -1;
+              continue;
+            }
+          /* Terminal mode needs no gate here: the child's own command
+             approvals reach the human through /dev/tty. Under the TUI they
+             cannot, so an `a` runs the child --no-shell and only `f` (or
+             prior full access) grants it commands without approval. */
+          if (steer[0] != 0)
+            execute = 0;
+          else if (full_access)
+            execute = 1;
+          else if (command_decision (&calls[index], &execute, steer, sizeof (steer)) < 0)
+            return -1;
+          if (execute)
+            {
+              if (task_run (calls[index].command, output, CAPTURE_SIZE, &output_length, &dropped_length, &status,
+                            &timed_out)
+                  < 0)
+                {
+                  if (append_tool_result (&calls[index],
+                                          "Error: cannot start the subagent; fork or /proc/self/exe failed.")
+                      < 0)
+                    return -1;
+                  continue;
+                }
+              if (timed_out)
+                snprintf (result, sizeof (result), "Subagent timed out after %d seconds. Output tail:",
+                          command_timeout);
+              else
+                snprintf (result, sizeof (result), "Subagent finished, exit status %d. Output tail:", status);
+              if (append_bounded_output (&calls[index], result, output, output_length, dropped_length) < 0)
+                return -1;
+              if (post_execution_steer (steer, sizeof (steer)) < 0)
+                return -1;
+            }
+          else
+            {
+              snprintf (result, sizeof (result), "%s",
+                        steer[0] != 0 ? "Task skipped because the human supplied a new direction."
+                                      : "Task refused by the human.");
+              if (append_tool_result (&calls[index], result) < 0)
+                return -1;
+            }
+          continue;
+        }
       if (calls[index].valid && calls[index].supported)
         {
           print_formatted ("\n[AI requests command]: %s\n", calls[index].command);
+          if (no_shell)
+            {
+              if (append_tool_result (&calls[index],
+                                      "Error: the terminal tool is disabled by --no-shell; use read_file, list_dir, "
+                                      "or apply_patch.")
+                  < 0)
+                return -1;
+              continue;
+            }
           if (validate_workspace_command (calls[index].command) < 0)
             {
               if (append_tool_result (&calls[index], "Error: command references a path outside the workspace scope.")
@@ -4260,7 +4560,7 @@ process_tool_calls (ToolCall *calls, size_t call_count)
         {
           if (append_tool_result (&calls[index],
                                   "Error: unsupported tool; use run_terminal_command, read_file, list_dir, "
-                                  "apply_patch, plan, start_job, job_status, or stop_job.")
+                                  "apply_patch, plan, task, start_job, job_status, or stop_job.")
               < 0)
             return -1;
         }
@@ -4349,6 +4649,8 @@ parse_tool_call (const cJSON *tool_call, ToolCall *call)
     call->kind = TOOL_JOB_STATUS;
   else if (strcmp (call->name, "stop_job") == 0)
     call->kind = TOOL_STOP_JOB;
+  else if (strcmp (call->name, "task") == 0)
+    call->kind = TOOL_TASK;
   else
     call->kind = TOOL_UNKNOWN;
   call->supported = call->kind != TOOL_UNKNOWN;
@@ -4425,6 +4727,21 @@ parse_tool_call (const cJSON *tool_call, ToolCall *call)
       cJSON_Delete (argument_object);
       /* job_status without an id lists every job; stop_job needs one. */
       call->valid = call->kind == TOOL_JOB_STATUS || call->job_id >= 1;
+      return 0;
+    }
+
+  if (call->kind == TOOL_TASK)
+    {
+      const cJSON *prompt = cJSON_GetObjectItemCaseSensitive (argument_object, "prompt");
+
+      /* The prompt rides in call->command, bounded like an -exec prompt. */
+      if (copy_json_string (prompt, call->command, sizeof (call->command)) < 0)
+        {
+          cJSON_Delete (argument_object);
+          return -1;
+        }
+      cJSON_Delete (argument_object);
+      call->valid = call->command[0] != 0;
       return 0;
     }
 
@@ -4700,6 +5017,7 @@ usage (FILE *stream)
                    "Options:\n"
                    "-C, --cwd <dir>      set the workspace directory\n"
                    "--full-access        run commands without approval\n"
+                   "--no-shell           file tools and plan only; no terminal or job tools\n"
                    "--continue           resume the latest saved session\n"
                    "--resume <file>      resume a specific session file\n"
                    "--ui                 use the line-oriented UI protocol\n"
@@ -4737,6 +5055,8 @@ parse_arguments (int argc, char **argv)
     {
       if (strcmp (argv[index], "--full-access") == 0)
         full_access = 1;
+      else if (strcmp (argv[index], "--no-shell") == 0)
+        no_shell = 1;
       else if (strcmp (argv[index], "--continue") == 0)
         {
           if (session_continue || session_resume_path != NULL)
@@ -4883,6 +5203,7 @@ ai_main (int argc, char **argv)
                        && strcmp (term, "dumb") != 0;
   }
   editor_set_prompt_printer (print_editor_prompt);
+  editor_set_interrupt_checker (interrupt_is_pending);
   if (configure_environment () < 0)
     return 2;
   if (workspace_directory != NULL && realpath (workspace_directory, workspace_root) == NULL)
@@ -4962,7 +5283,10 @@ ai_main (int argc, char **argv)
                           ? "Multiline: C-J newline, Enter submit. /help shows commands.\n"
                           : "Multiline input ends with an empty line. /help shows commands.\n");
       print_formatted ("Live steering: type lines while AI requests or commands run.\n");
-      print_formatted ("Shell mode: ! <command> runs it here; its output joins the conversation.\n");
+      if (no_shell)
+        print_formatted ("Shell tools disabled by --no-shell: file tools and plan only.\n");
+      else
+        print_formatted ("Shell mode: ! <command> runs it here; its output joins the conversation.\n");
       if (full_access)
         print_formatted ("Full access: commands run immediately; steering is offered after each one.\n");
       else
@@ -4985,6 +5309,10 @@ ai_main (int argc, char **argv)
     }
   for (;;)
     {
+      /* A signal that lands between the prompt draw and the blocking read
+         would otherwise be swallowed; Ctrl+C at an idle prompt still exits. */
+      if (!one_shot && interrupted)
+        break;
       if (one_shot)
         ;
       else if (read_multiline ("\n[You]: ", "[...]: ", prompt, sizeof (prompt)) < 0)
@@ -5002,7 +5330,10 @@ ai_main (int argc, char **argv)
         }
       if (!one_shot && prompt[0] == '!')
         {
-          run_shell_prompt (prompt + 1);
+          if (no_shell)
+            print_formatted ("error: shell commands are disabled by --no-shell\n");
+          else
+            run_shell_prompt (prompt + 1);
           continue;
         }
       if (!one_shot && (strcmp (prompt, "/exit") == 0 || strcmp (prompt, "/quit") == 0))

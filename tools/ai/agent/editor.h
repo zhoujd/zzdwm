@@ -39,6 +39,7 @@ size_t editor_kill_line_end (EditorBuffer *editor);
 void editor_clear (EditorBuffer *editor);
 int editor_read (const char *prompt, const char *continuation_prompt, char *buffer, size_t capacity);
 void editor_set_prompt_printer (void (*printer) (const char *text));
+void editor_set_interrupt_checker (int (*checker) (void));
 int editor_main (int argc, char **argv);
 
 #endif

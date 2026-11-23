@@ -1718,6 +1718,7 @@ class AgentTests(unittest.TestCase):
                 "list_dir",
                 "apply_patch",
                 "plan",
+                "task",
                 "start_job",
                 "job_status",
                 "stop_job",
@@ -2038,7 +2039,7 @@ class AgentTests(unittest.TestCase):
         replies = self.tool_replies(endpoint)
         self.assertIn(
             "Error: unsupported tool; use run_terminal_command, read_file, list_dir, "
-            "apply_patch, plan, start_job, job_status, or stop_job.",
+            "apply_patch, plan, task, start_job, job_status, or stop_job.",
             replies[0]["content"],
         )
 
@@ -2702,6 +2703,121 @@ class AgentTests(unittest.TestCase):
                 if message["role"] == "user"
             ]
             self.assertEqual(users, ["turn-02", "turn-03", "turn-04"])
+
+    def test_task_tool_delegates_to_subagent(self):
+        prompt = "Count the lines in notes.txt and report only the number."
+        result, endpoint = self.run_agent(
+            [
+                named_tool_response("task", {"prompt": prompt}),
+                text_response("notes.txt has 3 lines"),
+                text_response("delegation complete"),
+            ],
+            full_access=True,
+            exec_prompt="delegate the count",
+            timeout=30,
+        )
+        self.assertIn("[AI delegates task]:", result.stdout)
+        # The child's output streams live to the human...
+        self.assertIn("notes.txt has 3 lines", result.stdout)
+        # ...parent request, child request, parent follow-up.
+        self.assertEqual(len(endpoint.requests), 3)
+        child_users = [
+            message
+            for message in endpoint.requests[1]["messages"]
+            if message["role"] == "user"
+        ]
+        self.assertIn(prompt, child_users[-1]["content"])
+        # The child is a subagent: no task tool, transcripts off.
+        child_tools = {
+            tool["function"]["name"] for tool in endpoint.requests[1]["tools"]
+        }
+        self.assertNotIn("task", child_tools)
+        self.assertIn("run_terminal_command", child_tools)
+        tool_reply = self.tool_replies(endpoint, 2)[-1]
+        self.assertIn("notes.txt has 3 lines", tool_reply["content"])
+        self.assertIn("exit status 0", tool_reply["content"])
+
+    def test_task_tool_disabled_inside_subagents(self):
+        result, endpoint = self.run_agent(
+            [
+                named_tool_response("task", {"prompt": "nested work"}),
+                text_response("handled it myself"),
+            ],
+            exec_prompt="delegate",
+            extra_env={"AI_SUBAGENT": "1"},
+            timeout=30,
+        )
+        self.assertIn("[AI delegates task]:", result.stdout)
+        tool_names = {tool["function"]["name"] for tool in endpoint.requests[0]["tools"]}
+        self.assertNotIn("task", tool_names)
+        tool_reply = self.tool_replies(endpoint, 1)[-1]
+        self.assertIn("delegation is disabled", tool_reply["content"])
+        self.assertIn("handled it myself", result.stdout)
+
+    def test_no_shell_disables_terminal_and_job_tools(self):
+        result, endpoint = self.run_agent(
+            [
+                tool_response("true"),
+                text_response("done"),
+            ],
+            exec_prompt="run something",
+            flags=("--no-shell",),
+            timeout=30,
+        )
+        tool_names = {tool["function"]["name"] for tool in endpoint.requests[0]["tools"]}
+        self.assertNotIn("run_terminal_command", tool_names)
+        self.assertNotIn("start_job", tool_names)
+        self.assertNotIn("stop_job", tool_names)
+        self.assertIn("read_file", tool_names)
+        self.assertIn("apply_patch", tool_names)
+        self.assertIn("plan", tool_names)
+        tool_reply = self.tool_replies(endpoint, 1)[-1]
+        self.assertIn("disabled by --no-shell", tool_reply["content"])
+        self.assertIn("done", result.stdout)
+
+    def test_task_output_tail_is_bounded(self):
+        result, endpoint = self.run_agent(
+            [
+                named_tool_response("task", {"prompt": "print a numbered dump"}),
+                tool_response("(echo HEADMARK; seq 2 30000; echo TAILMARK)"),
+                text_response("dumped"),
+                text_response("wrapped up"),
+            ],
+            full_access=True,
+            exec_prompt="delegate the dump",
+            timeout=60,
+        )
+        self.assertEqual(len(endpoint.requests), 4)
+        tool_reply = self.tool_replies(endpoint, 3)[-1]
+        self.assertIn("exit status 0", tool_reply["content"])
+        self.assertIn("bytes dropped]", tool_reply["content"])
+        self.assertIn("TAILMARK", tool_reply["content"])
+        self.assertNotIn("HEADMARK", tool_reply["content"])
+
+    def test_subagent_leaves_no_transcript(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            self.run_agent(
+                [
+                    named_tool_response("task", {"prompt": "inspect the workspace"}),
+                    text_response("all quiet"),
+                    text_response("done"),
+                ],
+                full_access=True,
+                exec_prompt="delegate",
+                cwd=workspace,
+                timeout=30,
+            )
+            lines = self.read_session(workspace)
+        roles = [line.get("role") for line in lines]
+        self.assertIn("user", roles)
+        self.assertIn("assistant", roles)
+        # The child never wrote its own conversation to the shared session.
+        child_records = [
+            line
+            for line in lines
+            if line.get("role") == "assistant" and line.get("content") == "all quiet"
+        ]
+        self.assertEqual(child_records, [])
 
     def test_tui_model_and_attachment_are_forwarded(self):
         if shutil.which("tmux") is None:

@@ -6,6 +6,7 @@
 #define _XOPEN_SOURCE 600
 
 #include <errno.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
@@ -273,6 +274,17 @@ editor_set_prompt_printer (void (*printer) (const char *text))
   prompt_printer = printer;
 }
 
+/* The host sets this so a pending SIGINT aborts the blocking read
+   instead of being swallowed when it lands between the prompt draw and
+   the input wait. */
+static int (*interrupt_pending) (void);
+
+void
+editor_set_interrupt_checker (int (*checker) (void))
+{
+  interrupt_pending = checker;
+}
+
 static void
 print_prompt (const char *text)
 {
@@ -383,8 +395,30 @@ editor_read (const char *prompt, const char *continuation_prompt, char *buffer, 
   for (;;)
     {
       char character;
-      ssize_t received = read (STDIN_FILENO, &character, 1);
-      size_t line_start = editor_line_start (&editor, editor.cursor);
+      ssize_t received = -1;
+      size_t line_start;
+
+      while (received == -1)
+        {
+          struct pollfd descriptor = { STDIN_FILENO, POLLIN, 0 };
+
+          /* A signal can land between the prompt draw and the blocking
+             read; polling in slices rechecks the interrupt flag instead
+             of blocking past a swallowed Ctrl+C. Only EINTR retries, so
+             EOF (0) and real errors fall through unchanged. */
+          if (interrupt_pending != NULL && interrupt_pending ())
+            {
+              tcsetattr (STDIN_FILENO, TCSANOW, &original_terminal);
+              return -1;
+            }
+          if (poll (&descriptor, 1, 100) == 1)
+            {
+              received = read (STDIN_FILENO, &character, 1);
+              if (received == -1 && errno != EINTR)
+                break;
+            }
+        }
+      line_start = editor_line_start (&editor, editor.cursor);
 
       if (received != 1)
         {
@@ -656,6 +690,12 @@ editor_on_signal (int signal_number)
   editor_interrupted = 1;
 }
 
+static int
+editor_interrupt_is_pending (void)
+{
+  return editor_interrupted;
+}
+
 static void
 editor_usage (FILE *stream)
 {
@@ -707,6 +747,7 @@ editor_main (int argc, char **argv)
   sigaction (SIGINT, &action, NULL);
   sigaction (SIGTERM, &action, NULL);
   editor_interrupted = 0;
+  editor_set_interrupt_checker (editor_interrupt_is_pending);
   fprintf (stderr, "Multiline: C-J newline, Enter submit.\n");
   if (editor_read ("\n[Edit]: ", "[....]: ", buffer, sizeof (buffer)) < 0
       || editor_interrupted)

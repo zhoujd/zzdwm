@@ -296,6 +296,26 @@ rounds and before each model request, and leaving the agent stops every live
 job. In the TUI the command pane border shows `jobs: N running (longest Xs)`
 while any are live.
 
+The `task` tool delegates a self-contained subtask to a fresh nested agent:
+the parent re-execs its own binary as `ai -C <workspace> -exec <prompt>` with
+the inherited `AI_*` environment plus `AI_SUBAGENT=1`, an empty context, and
+the same 24-message window. The child's whole stdout — final answer plus its
+`[usage]` line, so the delegation cost is visible — streams live to the
+terminal and becomes the tool result, tail-bounded like command output, so the
+parent's window keeps only the answer. On a terminal the child's own approval
+prompts reach the human through `/dev/tty` (output interleaves on screen);
+under the TUI no safe routing exists, so an allowed task runs the child with
+`--no-shell` unless full access was granted with `f`. Depth is limited to one
+level — subagents get no `task` tool — and the child writes no transcript:
+the tool result in the parent's session is the record. A delegation obeys the
+command timeout like a foreground command, but a timeout or crash is reported
+in the tool result rather than failing the parent session.
+
+`--no-shell` is a flag in its own right, not just the TUI fallback: it
+registers no terminal or job tools (file tools and `plan` only) and refuses
+`!` shell mode, giving a read-only analyst agent that can read, list, and
+patch inside the workspace but never spawn a shell.
+
 At startup the agent reads the frontmatter of `.agents/skills/*/SKILL.md`
 and adds one system message listing each skill's name and description. When
 a task matches a skill, the model reads the full `SKILL.md` with a read-only
