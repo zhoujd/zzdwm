@@ -2853,6 +2853,35 @@ add_assistant_response (const char *content, const ToolCall *calls, size_t call_
   return add_message (json, buffer.length, call_count != 0 ? ROLE_ASSISTANT_TOOLS : ROLE_ASSISTANT);
 }
 
+/* Echo one chunk to the terminal and keep its tail in the capture
+   buffer, sliding earlier bytes out once it fills. */
+static int
+capture_chunk (const char *chunk, ssize_t received, char *output, size_t capacity, size_t *captured,
+               size_t *dropped)
+{
+  size_t amount = (size_t)received;
+
+  if (write_all (STDOUT_FILENO, chunk, (size_t)received) < 0)
+    return -1;
+  output_partial_line = chunk[received - 1] != '\n';
+  /* Keep the tail: once the buffer fills, slide it so the model sees the
+     end of the output, where errors usually are. A single read never
+     exceeds sizeof(chunk), far below capacity. */
+  if (amount > capacity)
+    amount = capacity;
+  if (*captured + amount > capacity)
+    {
+      size_t shift = *captured + amount - capacity;
+
+      *dropped += shift;
+      memmove (output, output + shift, *captured - shift);
+      *captured -= shift;
+    }
+  memcpy (output + *captured, chunk, amount);
+  *captured += amount;
+  return 0;
+}
+
 static int
 run_command (const char *command, char *output, size_t capacity, size_t *output_length, size_t *dropped_length,
              int *exit_status, int *timed_out)
@@ -2868,8 +2897,17 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
 
   *timed_out = 0;
 
-  if (pipe2 (pipe_fds, O_CLOEXEC | O_NONBLOCK) < 0)
+  if (pipe2 (pipe_fds, O_CLOEXEC) < 0)
     return -1;
+  /* Only the parent's read end polls; the child's dup2'd stdout stays
+     blocking, so a full pipe applies backpressure instead of failing
+     the command's writes mid-stream. */
+  if (fcntl (pipe_fds[0], F_SETFL, O_NONBLOCK) < 0)
+    {
+      close (pipe_fds[0]);
+      close (pipe_fds[1]);
+      return -1;
+    }
   interrupted = 0;
   child = fork ();
   if (child < 0)
@@ -2930,26 +2968,8 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
           received = read (pipe_fds[0], chunk, sizeof (chunk));
           if (received > 0)
             {
-              size_t amount = (size_t)received;
-
-              if (write_all (STDOUT_FILENO, chunk, (size_t)received) < 0)
+              if (capture_chunk (chunk, received, output, capacity, &captured, &dropped) < 0)
                 break;
-              output_partial_line = chunk[received - 1] != '\n';
-              /* Keep the tail: once the buffer fills, slide it so the model
-                 sees the end of the output, where errors usually are. A
-                 single read never exceeds sizeof(chunk), far below capacity. */
-              if (amount > capacity)
-                amount = capacity;
-              if (captured + amount > capacity)
-                {
-                  size_t shift = captured + amount - capacity;
-
-                  dropped += shift;
-                  memmove (output, output + shift, captured - shift);
-                  captured -= shift;
-                }
-              memcpy (output + captured, chunk, amount);
-              captured += amount;
             }
           else if (received == 0)
             break;
@@ -2958,6 +2978,25 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
         }
       if (waitpid (child, &status, WNOHANG) == child)
         {
+          /* The child is gone, but its last writes can still be buffered
+             in the pipe; drain them so the captured tail keeps the true
+             end of the output. The pipe's read end is non-blocking, and a
+             detached descendant may keep the write end open, so stop at
+             the first dry read instead of waiting for EOF — and cap the
+             effort, so a descendant that floods the pipe cannot pin
+             the loop. */
+          int rounds = 256;
+
+          while (rounds-- > 0)
+            {
+              received = read (pipe_fds[0], chunk, sizeof (chunk));
+              if (received < 0 && errno == EINTR)
+                continue;
+              if (received <= 0)
+                break;
+              if (capture_chunk (chunk, received, output, capacity, &captured, &dropped) < 0)
+                break;
+            }
           have_status = 1;
           break;
         }
