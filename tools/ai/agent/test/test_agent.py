@@ -521,6 +521,28 @@ class AgentTests(unittest.TestCase):
         self.assertIn("[output tail]", status_reply)
         self.assertIn("50000", status_reply)
 
+    def test_status_notices_start_on_fresh_line_after_log_tail(self):
+        # A log tail without a trailing newline (pytest dots are the real
+        # case) leaves the cursor mid-line; the next notice must step below
+        # it instead of gluing to the tail.
+        responses = [
+            named_tool_response("start_job", {"command": "printf abcdef"}),
+            named_tool_response("job_status", {"id": 1}),
+        ]
+        responses.extend(tool_response("true") for _ in range(11))
+        responses.append(text_response("done"))
+        result, endpoint = self.run_agent(
+            responses,
+            "fill the window\n\n/exit\n\n",
+            full_access=True,
+            timeout=30,
+        )
+        # The raw tail updates the partial-line flag, so the very next
+        # notice steps to a fresh line (pre-fix it glued as
+        # "abcdef[AI request active]").
+        self.assertNotIn("abcdef[AI request active]", result.stdout)
+        self.assertIn("abcdef\n[AI request active]", result.stdout)
+
     def test_start_job_requires_approval(self):
         result, endpoint = self.run_agent(
             [

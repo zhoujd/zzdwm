@@ -805,6 +805,9 @@ drop_oldest_message (void)
     return;
   memmove (messages + start, messages + end, (message_count - end) * sizeof (messages[0]));
   message_count -= end - start;
+  /* The drop can fire right after raw mid-line output, like a job_status
+     log tail; status markers start on their own line. */
+  print_line_break ();
   print_formatted ("[context] Dropped the oldest non-system message.\n");
 }
 
@@ -4383,8 +4386,11 @@ process_tool_calls (ToolCall *calls, size_t call_count)
                           (long)(job->finished - job->started), job->exit_status);
               output_length = read_log_tail (job->log_path, output, CAPTURE_SIZE, &dropped_length);
               /* The human watches the same log tail the model receives,
-                 written raw like live command output so nothing is concealed. */
+                 written raw like live command output so nothing is concealed.
+                 The raw write skips print_formatted's bookkeeping, so track
+                 the partial line here or later notices would glue to it. */
               write_all (STDOUT_FILENO, output, output_length);
+              output_partial_line = output_length > 0 && output[output_length - 1] != '\n';
               print_line_break ();
               if (append_bounded_output (&calls[index], result, output, output_length, dropped_length) < 0)
                 return -1;
@@ -4886,6 +4892,9 @@ compact_messages (size_t start, size_t end)
   memmove (messages + start, messages + end, (message_count - end) * sizeof (messages[0]));
   message_count -= end - start;
   session_rewrite_compacted ();
+  /* Same mid-line hazard as the plain drop: compaction can fire right
+     after streamed output or a raw log tail. */
+  print_line_break ();
   print_formatted ("[context] Compacted %zu message(s) into the running summary.\n", end - start);
   return (int) (end - start);
 }
@@ -5423,14 +5432,14 @@ ai_main (int argc, char **argv)
       if (!one_shot && strcmp (prompt, "/help") == 0)
         {
           print_formatted ("Commands:\n"
-                           "  /new            reset context\n"
-                           "  /compact        fold old context into a summary\n"
-                           "  /force          no need allow\n"
-                           "  /model <name>   switch model\n"
-                           "  /skills         list skills\n"
-                           "  /skill <name>   load a skill\n"
-                           "  ! <command>     run shell command\n"
-                           "  /exit, /quit    exit\n");
+                           "/new            reset context\n"
+                           "/compact        fold old context into a summary\n"
+                           "/force          no need allow\n"
+                           "/model <name>   switch model\n"
+                           "/skills         list skills\n"
+                           "/skill <name>   load a skill\n"
+                           "! <command>     run shell command\n"
+                           "/exit, /quit    exit\n");
           continue;
         }
       if (add_text_message ("user", prompt, 0) < 0)
