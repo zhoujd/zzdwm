@@ -2517,10 +2517,13 @@ class AgentTests(unittest.TestCase):
         self.assertIn("[retrying in 2s (attempt 3/3)]", combined)
         self.assertIn("connect", combined)
 
-    def test_context_drop_keeps_a_user_message(self):
-        # MAX_MESSAGES forces a drop while the single user prompt is still
-        # the only user message; every request must keep one.
-        responses = [tool_response("true") for _ in range(12)]
+    def test_context_compaction_keeps_a_user_message(self):
+        # MAX_MESSAGES forces a fold while the single user prompt is still
+        # the only user message; every request must keep one. Two system
+        # messages plus the prompt and eleven tool rounds fill the window,
+        # so the tool reply of round eleven triggers the fold.
+        responses = [tool_response("true") for _ in range(11)]
+        responses.append(text_response("running summary of the diagnosis"))
         responses.append(text_response("done"))
         result, endpoint = self.run_agent(
             responses,
@@ -2529,8 +2532,9 @@ class AgentTests(unittest.TestCase):
             timeout=60,
         )
         self.assertIn("done", result.stdout)
-        self.assertIn("[context] Dropped", result.stdout)
-        self.assertGreaterEqual(len(endpoint.requests), 13)
+        self.assertIn("[context] Compacted 2 message(s)", result.stdout)
+        self.assertIn(", compacted ×1", result.stdout)
+        self.assertEqual(len(endpoint.requests), 13)
         for request in endpoint.requests:
             roles = [message["role"] for message in request["messages"]]
             self.assertIn("user", roles)
@@ -2541,6 +2545,163 @@ class AgentTests(unittest.TestCase):
                 self.assertIn("tool_calls", previous)
                 ids = {call["id"] for call in previous["tool_calls"]}
                 self.assertIn(message["tool_call_id"], ids)
+
+    def summarize_request(self, endpoint):
+        for request in endpoint.requests:
+            messages = request.get("messages", [])
+            if (
+                messages
+                and messages[0]["role"] == "system"
+                and "running summary" in messages[0]["content"]
+            ):
+                return request
+        return None
+
+    def pinned_summary(self, request):
+        for message in request["messages"]:
+            if (
+                message.get("role") == "system"
+                and "CONVERSATION SUMMARY" in (message.get("content") or "")
+            ):
+                return message
+        return None
+
+    def test_auto_compaction_folds_oldest_turn_into_summary(self):
+        responses = [text_response(f"answer-{index:02d}") for index in range(1, 12)]
+        responses.append(text_response("folded everything so far"))
+        responses.append(text_response("answer-12"))
+        responses.append(text_response("answer-13"))
+        stdin = "".join(f"turn-{index:02d}\n\n" for index in range(1, 14)) + "/exit\n\n"
+        result, endpoint = self.run_agent(responses, stdin, timeout=30)
+        self.assertIn("[context] Compacted 1 message(s)", result.stdout)
+        # The summarize request is buffered and single-shot.
+        summarize = self.summarize_request(endpoint)
+        self.assertIsNotNone(summarize)
+        self.assertNotIn("stream", summarize)
+        payload = summarize["messages"][1]["content"]
+        self.assertIn("Existing summary:\n(none)", payload)
+        self.assertIn("turn-01", payload)
+        # The fold is pinned as a system message in the next chat request.
+        followup = endpoint.requests[-1]
+        pinned = self.pinned_summary(followup)
+        self.assertIsNotNone(pinned)
+        self.assertIn("folded everything so far", pinned["content"])
+        contents = [m.get("content") or "" for m in followup["messages"]]
+        self.assertNotIn("turn-01", contents)
+        self.assertIn("turn-03", contents)
+        self.assertIn("turn-12", contents)
+        self.assertIn(", compacted ×1", result.stdout)
+
+    def test_auto_compaction_is_rate_limited(self):
+        responses = [text_response(f"answer-{index:02d}") for index in range(1, 12)]
+        responses.append(text_response("folded everything so far"))
+        responses.extend(text_response(f"answer-{index:02d}") for index in range(12, 14))
+        stdin = "".join(f"turn-{index:02d}\n\n" for index in range(1, 14)) + "/exit\n\n"
+        result, endpoint = self.run_agent(responses, stdin, timeout=30)
+        self.assertEqual(result.stdout.count("[context] Compacted"), 1)
+        # Overflows within the rate-limit window drop instead of
+        # re-querying the endpoint for a fresh fold.
+        summarize_count = sum(
+            1
+            for request in endpoint.requests
+            if request.get("messages")
+            and request["messages"][0]["role"] == "system"
+            and "running summary" in request["messages"][0]["content"]
+        )
+        self.assertEqual(summarize_count, 1)
+        self.assertIn("[context] Dropped the oldest non-system message.", result.stdout)
+        self.assertIn(", compacted ×1", result.stdout)
+        followup = endpoint.requests[-1]
+        self.assertIsNotNone(self.pinned_summary(followup))
+        contents = [m.get("content") or "" for m in followup["messages"]]
+        self.assertNotIn("turn-01", contents)
+        self.assertNotIn("turn-02", contents)
+        self.assertIn("turn-03", contents)
+
+    def test_compaction_failure_falls_back_to_plain_drop(self):
+        responses = [text_response(f"answer-{index:02d}") for index in range(1, 12)]
+        responses.append(text_response(""))  # broken summarize reply
+        responses.extend(text_response(f"answer-{index:02d}") for index in range(12, 14))
+        stdin = "".join(f"turn-{index:02d}\n\n" for index in range(1, 14)) + "/exit\n\n"
+        result, endpoint = self.run_agent(responses, stdin, timeout=30)
+        self.assertNotIn("[context] Compacted", result.stdout)
+        self.assertIn("[context] Dropped the oldest non-system message.", result.stdout)
+        self.assertIn("answer-13", result.stdout)
+        followup = endpoint.requests[-1]
+        self.assertIsNone(self.pinned_summary(followup))
+        contents = [m.get("content") or "" for m in followup["messages"]]
+        self.assertNotIn("turn-01", contents)
+        self.assertIn("turn-03", contents)
+        self.assertNotIn(", compacted", result.stdout)
+
+    def test_compact_command_folds_older_half(self):
+        result, endpoint = self.run_agent(
+            [
+                text_response("answer-01"),
+                text_response("answer-02"),
+                text_response("folded: goal and decisions"),
+                text_response("answer-03"),
+            ],
+            "turn-01\n\nturn-02\n\n/compact\n\nturn-03\n\n/exit\n\n",
+            timeout=30,
+        )
+        self.assertIn("[context] Compacted 2 message(s)", result.stdout)
+        summarize = self.summarize_request(endpoint)
+        self.assertIsNotNone(summarize)
+        self.assertIn("Existing summary:\n(none)", summarize["messages"][1]["content"])
+        followup = endpoint.requests[-1]
+        pinned = self.pinned_summary(followup)
+        self.assertIsNotNone(pinned)
+        self.assertIn("folded: goal and decisions", pinned["content"])
+        contents = [m.get("content") or "" for m in followup["messages"]]
+        self.assertNotIn("turn-01", contents)
+        self.assertIn("turn-02", contents)
+        self.assertIn(", compacted ×1", result.stdout)
+
+    def test_compact_command_with_little_conversation_refuses(self):
+        result, endpoint = self.run_agent(
+            [text_response("answer-01")],
+            "turn-01\n\n/compact\n\n/exit\n\n",
+        )
+        self.assertIn("[context] Too little conversation to compact safely yet.", result.stdout)
+        self.assertNotIn("[context] Compacted", result.stdout)
+        self.assertEqual(len(endpoint.requests), 1)
+
+    def test_session_records_summary_and_continue_resumes_it(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            self.run_agent(
+                [
+                    text_response("answer-01"),
+                    text_response("answer-02"),
+                    text_response("folded state"),
+                    text_response("answer-03"),
+                ],
+                "turn-01\n\nturn-02\n\n/compact\n\nturn-03\n\n/exit\n\n",
+                cwd=workspace,
+                timeout=30,
+            )
+            lines = self.read_session(workspace)
+            self.assertEqual(
+                [line.get("role") for line in lines],
+                ["_summary", "user", "assistant", "user", "assistant"],
+            )
+            self.assertEqual(lines[0]["content"], "folded state")
+            result, endpoint = self.run_agent(
+                [text_response("fresh reply")],
+                "turn-04\n\n/exit\n\n",
+                cwd=workspace,
+                flags=("--continue",),
+            )
+            self.assertIn("[session] resumed 4 messages", result.stdout)
+            pinned = self.pinned_summary(endpoint.requests[0])
+            self.assertIsNotNone(pinned)
+            self.assertIn("folded state", pinned["content"])
+            users = [
+                message["content"]
+                for message in endpoint.requests[0]["messages"]
+                if message["role"] == "user"
+            ]
+            self.assertEqual(users, ["turn-02", "turn-03", "turn-04"])
 
     def test_tui_model_and_attachment_are_forwarded(self):
         if shutil.which("tmux") is None:

@@ -67,6 +67,9 @@
 #define MAX_TOOL_CALLS 8
 #define MAX_JOBS 16
 #define MAX_MESSAGES 24
+#define MAX_SUMMARY (8 * 1024)
+#define MAX_SUMMARY_REQUEST (192 * 1024)
+#define COMPACTION_MIN_ROUNDS 4
 #define DEFAULT_TOOL_ROUNDS 128
 #define MAX_TOOL_ROUNDS 1024
 #define MAX_HTTP_ATTEMPTS 3
@@ -152,6 +155,17 @@ static int plan_active;
 static const char plan_header[] = "CURRENT TASK PLAN (recorded with the plan tool; follow it, "
                                   "tick steps only once command output confirms them, and "
                                   "rewrite it when the approach changes):\n";
+static char context_summary[MAX_SUMMARY];
+static int summary_active;
+static long compaction_round = -COMPACTION_MIN_ROUNDS;
+static int compaction_count;
+static const char summary_header[] = "CONVERSATION SUMMARY (context compacted from earlier messages of "
+                                     "this session; treat it as reliable):\n";
+static const char summarize_prompt[] =
+    "You maintain the running summary of an AI coding agent's session. Fold the appended "
+    "conversation fragments into the existing summary. Keep the task goal, decisions made, "
+    "files touched, commands with their outcomes, and open threads; drop settled detail. "
+    "Reply with only the updated summary, plain text.";
 static char endpoint[MAX_ENDPOINT] = DEFAULT_ENDPOINT;
 static char api_host[MAX_HOST] = "127.0.0.1";
 static char api_path[MAX_PATH] = "/v1/chat/completions";
@@ -733,8 +747,13 @@ append_xml_text (Buffer *buffer, const char *data)
   return append_xml_escaped (buffer, data, strlen (data));
 }
 
-static void
-drop_oldest_message (void)
+/* Index range of the oldest prunable message unit: system messages stay,
+   the last user message stays (the endpoint rejects a conversation without
+   any user message, HTTP 400), and an assistant tool call is taken together
+   with its tool replies so no reply is left orphaned. Returns 0 when
+   nothing can be dropped. */
+static int
+oldest_drop_range (size_t *start_out, size_t *end_out)
 {
   size_t index;
   size_t user_count = 0;
@@ -742,9 +761,6 @@ drop_oldest_message (void)
   for (index = 0; index < message_count; index++)
     if (messages[index].role == ROLE_USER)
       user_count++;
-  /* The endpoint rejects a conversation without any user message (HTTP
-     400), so keep the last one; drop an assistant tool call together
-     with its tool replies so no reply is left orphaned. */
   for (index = 0; index < message_count; index++)
     {
       MessageRole role = messages[index].role;
@@ -755,11 +771,24 @@ drop_oldest_message (void)
       if (role == ROLE_ASSISTANT_TOOLS)
         while (end < message_count && messages[end].role == ROLE_TOOL)
           end++;
-      memmove (messages + index, messages + end, (message_count - end) * sizeof (messages[0]));
-      message_count -= end - index;
-      print_formatted ("[context] Dropped the oldest non-system message.\n");
-      return;
+      *start_out = index;
+      *end_out = end;
+      return 1;
     }
+  return 0;
+}
+
+static void
+drop_oldest_message (void)
+{
+  size_t start;
+  size_t end;
+
+  if (!oldest_drop_range (&start, &end))
+    return;
+  memmove (messages + start, messages + end, (message_count - end) * sizeof (messages[0]));
+  message_count -= end - start;
+  print_formatted ("[context] Dropped the oldest non-system message.\n");
 }
 
 /* Session persistence: every non-system message is appended, one JSON
@@ -840,9 +869,61 @@ session_log_plan (const char *checklist)
   session_write_line (line, buffer.length);
 }
 
+/* Compaction rewrote history, so the transcript is rebuilt from the live
+   conversation: --continue then resumes the compacted session instead of
+   resurrecting the pruned bloat. */
+static void
+session_rewrite_compacted (void)
+{
+  char summary_line[2 * MAX_SUMMARY + 32];
+  Buffer summary_buffer = { summary_line, sizeof (summary_line), 0 };
+  size_t index;
+
+  if (session_save_failed)
+    return;
+  if (session_file != NULL)
+    fclose (session_file);
+  session_file = NULL;
+  session_open ("w");
+  if (session_file == NULL)
+    return;
+  if (summary_active)
+    {
+      if (buffer_append_string (&summary_buffer, "{\"role\":\"_summary\",\"content\":") < 0
+          || append_json_text (&summary_buffer, context_summary) < 0
+          || buffer_append_string (&summary_buffer, "}") < 0)
+        return;
+      session_write_line (summary_line, summary_buffer.length);
+    }
+  if (plan_active)
+    session_log_plan (current_plan);
+  for (index = 0; index < message_count; index++)
+    if (messages[index].role != ROLE_SYSTEM)
+      session_write_line (messages[index].json, messages[index].length);
+}
+
+static int compact_messages (size_t start, size_t end);
+
 static int
 add_message (const char *json, size_t length, MessageRole role)
 {
+  /* Pruning would delete the oldest turn outright; try to fold it into the
+     pinned summary first so the task thread survives the window. Failure
+     falls through to the plain drop below — compaction must never cost the
+     session. Rate-limited: one summarize attempt per few rounds, success or
+     not, so a failing endpoint is not re-queried on every later message. */
+  if (message_count == MAX_MESSAGES && !session_replaying
+      && response_rounds - compaction_round >= COMPACTION_MIN_ROUNDS)
+    {
+      size_t start;
+      size_t end;
+
+      if (oldest_drop_range (&start, &end))
+        {
+          compaction_round = response_rounds;
+          compact_messages (start, end);
+        }
+    }
   while (message_count == MAX_MESSAGES || length > MESSAGE_SIZE)
     {
       size_t old_count = message_count;
@@ -1080,6 +1161,8 @@ conversation_reset (void)
   message_count = 0;
   plan_active = 0;
   current_plan[0] = 0;
+  summary_active = 0;
+  context_summary[0] = 0;
   if (add_text_message ("system", SYSTEM_PROMPT, 1) < 0 || add_workspace_message () < 0
       || add_skills_message () < 0)
     {
@@ -1377,6 +1460,13 @@ resume_session (const char *path)
                                 sizeof (current_plan))
               == 0)
             plan_active = current_plan[0] != 0;
+        }
+      else if (strcmp (role, "_summary") == 0)
+        {
+          if (copy_json_string (cJSON_GetObjectItemCaseSensitive (item, "content"), context_summary,
+                                sizeof (context_summary))
+              == 0)
+            summary_active = context_summary[0] != 0;
         }
       else
         {
@@ -2262,6 +2352,23 @@ build_request (char *request, size_t capacity, size_t *length)
       if (buffer_append (&buffer, messages[index].json, messages[index].length) < 0)
         return -1;
     }
+  /* The compacted summary rides ahead of the plan so the folded turns
+     outlive pruning, exactly like the plan itself. */
+  if (summary_active)
+    {
+      char summary_json[2 * MAX_SUMMARY + 256];
+      Buffer summary_buffer = { summary_json, sizeof (summary_json), 0 };
+
+      if (buffer_append_string (&summary_buffer, "{\"role\":\"system\",\"content\":\"") < 0
+          || append_json_string_body (&summary_buffer, summary_header, sizeof (summary_header) - 1) < 0
+          || append_json_string_body (&summary_buffer, context_summary, strlen (context_summary)) < 0
+          || buffer_append_string (&summary_buffer, "\"}") < 0)
+        return -1;
+      if (message_count != 0 && buffer_append_string (&buffer, ",") < 0)
+        return -1;
+      if (buffer_append (&buffer, summary_json, summary_buffer.length) < 0)
+        return -1;
+    }
   /* The plan rides as a fresh trailing system message so it never goes
      stale and survives context pruning of older turns. */
   if (plan_active)
@@ -2368,10 +2475,9 @@ transient_network_error (int error)
 }
 
 static int
-call_endpoint_once (const char **response_body, char *response_storage, int *transient, int *retry_after)
+post_endpoint_once (const char *request, size_t request_length, const char **response_body, char *response_storage,
+                    int *transient, int *retry_after)
 {
-  static char request[MAX_REQUEST];
-  size_t request_length;
   char headers[1024];
   int header_length;
   int socket_fd;
@@ -2388,11 +2494,6 @@ call_endpoint_once (const char **response_body, char *response_storage, int *tra
   stream_printed_content = 0;
   stream_active = 0;
   resolve_transient = 0;
-  if (build_request (request, sizeof (request), &request_length) < 0)
-    {
-      print_formatted ("error: conversation exceeds the request limit\n");
-      return -1;
-    }
   if (api_key[0] != 0)
     header_length = snprintf (headers, sizeof (headers),
                               "POST %s HTTP/1.1\r\nHost: %s:%d\r\n"
@@ -2465,6 +2566,20 @@ call_endpoint_once (const char **response_body, char *response_storage, int *tra
   (void)response_length;
   *response_body = body;
   return 0;
+}
+
+static int
+call_endpoint_once (const char **response_body, char *response_storage, int *transient, int *retry_after)
+{
+  static char request[MAX_REQUEST];
+  size_t request_length;
+
+  if (build_request (request, sizeof (request), &request_length) < 0)
+    {
+      print_formatted ("error: conversation exceeds the request limit\n");
+      return -1;
+    }
+  return post_endpoint_once (request, request_length, response_body, response_storage, transient, retry_after);
 }
 
 /* Sleep in slices so Ctrl+C and the interrupted flag stay responsive. */
@@ -4359,17 +4474,103 @@ print_usage_summary (void)
   char in_text[24];
   char out_text[24];
   char context_text[24];
+  char compact_text[32];
 
   if (response_rounds == 0)
     return;
   format_token_count (in_text, sizeof (in_text), total_prompt_tokens);
   format_token_count (out_text, sizeof (out_text), total_completion_tokens);
   format_token_count (context_text, sizeof (context_text), last_prompt_tokens);
+  if (compaction_count > 0)
+    snprintf (compact_text, sizeof (compact_text), ", compacted ×%d", compaction_count);
+  else
+    compact_text[0] = 0;
   /* Keep the summary off a partial line, such as the prompt label left
      behind by Ctrl+C at an idle prompt. */
   print_line_break ();
-  print_formatted ("[usage] tokens: %s in / %s out, %ld rounds, context %s\n", in_text, out_text, response_rounds,
-                   context_text);
+  print_formatted ("[usage] tokens: %s in / %s out, %ld rounds, context %s%s\n", in_text, out_text, response_rounds,
+                   context_text, compact_text);
+}
+
+/* Context compaction: fold messages[start..end) into the pinned summary
+   with one buffered summarize request, so pruning keeps the task thread
+   instead of deleting it. Any failure returns -1 and the caller falls back
+   to plain pruning; success returns the number of messages removed. */
+static int
+compact_messages (size_t start, size_t end)
+{
+  static char body[MAX_SUMMARY_REQUEST];
+  static char reply[MAX_RESPONSE];
+  static const char fragment_prefix[] = "\n\nConversation fragments to fold (JSON messages):\n";
+  const char *response = NULL;
+  cJSON *parsed;
+  const cJSON *choices;
+  const cJSON *message;
+  const cJSON *content;
+  Buffer buffer = { body, sizeof (body), 0 };
+  size_t index;
+  size_t summary_length;
+  int transient = 0;
+  int retry_after = 0;
+
+  if (end <= start || end > message_count)
+    return -1;
+  if (buffer_append_string (&buffer, "{\"model\":") < 0 || append_json_text (&buffer, model) < 0
+      || buffer_append_string (&buffer, ",\"messages\":[{\"role\":\"system\",\"content\":") < 0
+      || append_json_text (&buffer, summarize_prompt) < 0
+      || buffer_append_string (&buffer, "},{\"role\":\"user\",\"content\":\"") < 0
+      || append_json_string_body (&buffer, "Existing summary:\n", strlen ("Existing summary:\n")) < 0)
+    return -1;
+  if (summary_active)
+    {
+      if (append_json_string_body (&buffer, context_summary, strlen (context_summary)) < 0)
+        return -1;
+    }
+  else if (append_json_string_body (&buffer, "(none)", strlen ("(none)")) < 0)
+    return -1;
+  if (append_json_string_body (&buffer, fragment_prefix, sizeof (fragment_prefix) - 1) < 0)
+    return -1;
+  for (index = start; index < end; index++)
+    {
+      if (append_json_string_body (&buffer, messages[index].json, messages[index].length) < 0
+          || append_json_string_body (&buffer, "\n", 1) < 0)
+        return -1;
+    }
+  if (buffer_append_string (&buffer, "\"}]}") < 0)
+    return -1;
+  /* Buffered, single-shot, nothing streamed: this is internal bookkeeping,
+     and a failure simply falls back to plain pruning. */
+  if (post_endpoint_once (body, buffer.length, &response, reply, &transient, &retry_after) < 0)
+    return -1;
+  parsed = cJSON_Parse (response);
+  if (parsed == NULL)
+    return -1;
+  record_usage (parsed);
+  choices = cJSON_GetObjectItemCaseSensitive (parsed, "choices");
+  message = cJSON_GetObjectItemCaseSensitive (cJSON_GetArrayItem (choices, 0), "message");
+  content = cJSON_GetObjectItemCaseSensitive (message, "content");
+  if (!cJSON_IsString (content) || content->valuestring[0] == 0)
+    {
+      cJSON_Delete (parsed);
+      return -1;
+    }
+  summary_length = strlen (content->valuestring);
+  if (summary_length >= sizeof (context_summary) - strlen ("\n[summary truncated]"))
+    {
+      summary_length = sizeof (context_summary) - strlen ("\n[summary truncated]") - 1;
+      memcpy (context_summary, content->valuestring, summary_length);
+      memcpy (context_summary + summary_length, "\n[summary truncated]", strlen ("\n[summary truncated]") + 1);
+    }
+  else
+    memcpy (context_summary, content->valuestring, summary_length + 1);
+  cJSON_Delete (parsed);
+  summary_active = 1;
+  compaction_count++;
+  memmove (messages + start, messages + end, (message_count - end) * sizeof (messages[0]));
+  message_count -= end - start;
+  session_rewrite_compacted ();
+  print_formatted ("[context] Compacted %zu message(s) into the running summary.\n", end - start);
+  return (int) (end - start);
 }
 
 static int
@@ -4838,10 +5039,45 @@ ai_main (int argc, char **argv)
             print_formatted ("usage: /skill <name>; /skills lists them\n");
           continue;
         }
+      if (!one_shot && strcmp (prompt, "/compact") == 0)
+        {
+          size_t start = 0;
+          size_t end;
+
+          /* Fold the older half of the conversation, between subtasks:
+             system messages stay, groups stay whole, and enough recent
+             context remains that the next request still has a user turn. */
+          while (start < message_count && messages[start].role == ROLE_SYSTEM)
+            start++;
+          end = start + (message_count - start) / 2;
+          while (end < message_count && messages[end].role == ROLE_TOOL)
+            end++;
+          {
+            int kept_user = 0;
+            size_t index;
+
+            for (index = end; index < message_count; index++)
+              if (messages[index].role == ROLE_USER)
+                kept_user = 1;
+            if (!kept_user)
+              end = start;
+          }
+          if (end <= start)
+            print_formatted ("[context] Too little conversation to compact safely yet.\n");
+          else if (compact_messages (start, end) > 0)
+            compaction_round = response_rounds;
+          continue;
+        }
       if (!one_shot && strcmp (prompt, "/help") == 0)
         {
-          print_formatted ("/new reset context; /force no need allow; /skills list skills; "
-                           "/skill <name> load a skill; ! <command> run shell command; /exit or /quit exit\n");
+          print_formatted ("Commands:\n"
+                           "  /new            reset context\n"
+                           "  /compact        fold old context into a summary\n"
+                           "  /force          no need allow\n"
+                           "  /skills         list skills\n"
+                           "  /skill <name>   load a skill\n"
+                           "  ! <command>     run shell command\n"
+                           "  /exit, /quit    exit\n");
           continue;
         }
       if (add_text_message ("user", prompt, 0) < 0)

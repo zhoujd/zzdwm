@@ -145,7 +145,8 @@ one JSON object per line, flushed and synced per message. `--continue` replays t
 latest saved session before the first request, and `--resume <file>` resumes
 a specific transcript; both work in one-shot mode and are forwarded by the
 TUI. Replayed messages re-enter the conversation verbatim through the usual
-`MAX_MESSAGES` pruning window, the active plan is restored, a torn final
+`MAX_MESSAGES` pruning window, the active plan and a compacted summary are
+restored, a torn final
 line from a crash is skipped rather than fatal, and `--continue` with no
 saved session starts fresh. `/new` restarts the transcript, so a later
 `--continue` replays what was on screen rather than replaced context.
@@ -202,6 +203,17 @@ billed prompt and completion tokens summed per round, the model round count,
 and the latest request's context size, so prompt growth and the
 `MAX_MESSAGES` drop-oldest pruning become visible. Totals accumulate across
 `/new` and are omitted when no round succeeded.
+
+Before pruning would delete the oldest message, the agent tries to fold it
+into a running summary instead: one buffered, non-streamed summarize request
+to the same endpoint, whose reply is pinned as a system message ahead of the
+plan so the task thread survives the window. Tool-call pairs still fold and
+drop whole. The attempt is rate-limited to roughly once per few rounds, its
+tokens join the usage totals, the exit line notes `compacted ×N`, and any
+failure falls back to the plain drop-with-a-note — compaction never costs
+the session. `/compact` folds the older half of the conversation on demand,
+and the summary itself is recorded in `.ai/session.jsonl` (role `_summary`)
+so `--continue` resumes the compacted conversation instead of the bloat.
 
 At each requested command, choose `a` to allow, `e` to edit it, `s` to supply a
 steering instruction without running it, `n` to refuse it, or `f` to allow it

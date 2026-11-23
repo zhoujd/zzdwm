@@ -1,6 +1,6 @@
 # Add Context Compaction
 
-Status: proposed (2026-11-18)
+Status: done (2026-11-23)
 
 Goal:
 
