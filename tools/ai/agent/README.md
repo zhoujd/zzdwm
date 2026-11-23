@@ -225,7 +225,10 @@ live; the agent keeps the last 64 KiB (earlier bytes are dropped and noted in
 the tool result) and returns a bounded tail to the model, so a huge `cat`
 cannot blow the context window.
 `/force` toggles full access while the agent is running; the startup mode
-remains the safer approval-based default.
+remains the safer approval-based default. `/model <name>` switches models
+from the next request on — the conversation history stays, only the request
+header changes — and bare `/model` names the current one. Like `-m`, it does
+not persist: a new run starts from `AI_MODEL`/`DEFAULT_MODEL`.
 
 The file tools work directly on paths instead of shell strings.
 `read_file path [offset] [limit]` returns tab-numbered lines from one

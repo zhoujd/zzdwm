@@ -914,6 +914,33 @@ class AgentTests(unittest.TestCase):
         )
         self.assertEqual(len(endpoint.requests), 4)
 
+    def test_model_command_switches_model_for_next_request(self):
+        result, endpoint = self.run_agent(
+            [text_response("hi reply")],
+            "/model other-model\n\nsay hi\n\n/exit\n\n",
+            model="starting-model",
+        )
+        self.assertIn("[model is now other-model]", result.stdout)
+        self.assertEqual(endpoint.requests[0]["model"], "other-model")
+
+    def test_bare_model_command_reports_current_model(self):
+        result, endpoint = self.run_agent(
+            [text_response("unused")],
+            "/model\n\n/exit\n\n",
+            model="starting-model",
+        )
+        self.assertIn("[model: starting-model]", result.stdout)
+        self.assertEqual(endpoint.requests, [])
+
+    def test_model_command_rejects_over_long_name(self):
+        result, endpoint = self.run_agent(
+            [text_response("hi reply")],
+            "/model " + "x" * 200 + "\n\nsay hi\n\n/exit\n\n",
+            model="starting-model",
+        )
+        self.assertIn("model name must be shorter than", result.stdout)
+        self.assertEqual(endpoint.requests[0]["model"], "starting-model")
+
     def test_live_steering_during_command(self):
         result, endpoint = self.run_agent_later(
             [tool_response("sleep 1"), text_response("done")],

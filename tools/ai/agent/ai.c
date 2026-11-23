@@ -5399,12 +5399,34 @@ ai_main (int argc, char **argv)
             compaction_round = response_rounds;
           continue;
         }
+      if (!one_shot && strncmp (prompt, "/model", 6) == 0 && (prompt[6] == 0 || prompt[6] == ' '))
+        {
+          char *name = prompt + 6;
+          size_t name_length;
+
+          /* Bare /model reports; a name switches from the next request on.
+             The conversation keeps its history: only the request header
+             changes, so a mid-session model swap costs no context. */
+          trim_spaces (name);
+          name_length = strlen (name);
+          if (name_length == 0)
+            print_formatted ("[model: %s]\n", model);
+          else if (name_length >= sizeof (model))
+            print_formatted ("error: model name must be shorter than %zu bytes\n", sizeof (model));
+          else
+            {
+              memcpy (model, name, name_length + 1);
+              print_formatted ("[model is now %s]\n", model);
+            }
+          continue;
+        }
       if (!one_shot && strcmp (prompt, "/help") == 0)
         {
           print_formatted ("Commands:\n"
                            "  /new            reset context\n"
                            "  /compact        fold old context into a summary\n"
                            "  /force          no need allow\n"
+                           "  /model <name>   switch model\n"
                            "  /skills         list skills\n"
                            "  /skill <name>   load a skill\n"
                            "  ! <command>     run shell command\n"
