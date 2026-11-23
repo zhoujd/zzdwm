@@ -417,6 +417,58 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(result.stdout.count("[a]llow"), 1)
         self.assertEqual(len(endpoint.requests), 3)
 
+    def test_shell_mode_runs_command_and_records_context(self):
+        result, endpoint = self.run_agent(
+            [text_response("noted")],
+            "!echo shell-ok\n\n!exit 3\n\nwhat happened\n\n/exit\n\n",
+        )
+        self.assertIn("[shell command]: echo shell-ok", result.stdout)
+        self.assertIn("shell-ok", result.stdout)
+        self.assertIn("[shell command completed] exit status 0", result.stdout)
+        self.assertIn("[shell command completed] exit status 3", result.stdout)
+        self.assertEqual(len(endpoint.requests), 1)
+        shell_messages = [
+            message
+            for message in endpoint.requests[0]["messages"]
+            if message["role"] == "user" and "<bash-input>" in message["content"]
+        ]
+        self.assertEqual(len(shell_messages), 2)
+        first = shell_messages[0]["content"]
+        self.assertIn("HUMAN SHELL COMMAND", first)
+        self.assertIn("<bash-input>echo shell-ok</bash-input>", first)
+        self.assertIn("shell-ok", first)
+        self.assertIn("[exit status: 0]", first)
+        self.assertEqual(
+            endpoint.requests[0]["messages"][-1]["content"],
+            "what happened",
+        )
+
+    def test_shell_mode_escapes_output_for_context(self):
+        result, endpoint = self.run_agent(
+            [text_response("ok")],
+            "!echo '<tag> & text'\n\nnext\n\n/exit\n\n",
+        )
+        self.assertIn("<tag> & text", result.stdout)
+        shell_messages = [
+            message
+            for message in endpoint.requests[0]["messages"]
+            if message["role"] == "user" and "<bash-input>" in message["content"]
+        ]
+        self.assertEqual(len(shell_messages), 1)
+        content = shell_messages[0]["content"]
+        self.assertIn(
+            "<bash-input>echo &apos;&lt;tag&gt; &amp; text&apos;</bash-input>", content
+        )
+        self.assertIn("&lt;tag&gt; &amp; text", content)
+
+    def test_shell_mode_usage_hint_without_command(self):
+        result, endpoint = self.run_agent(
+            [text_response("unused")],
+            "!\n\n/exit\n\n",
+        )
+        self.assertIn("usage: ! <command>", result.stdout)
+        self.assertEqual(len(endpoint.requests), 0)
+
     def test_one_shot_sends_prompt_and_exits(self):
         result, endpoint = self.run_agent(
             [tool_response("printf 'one-shot\\n'"), text_response("done")],

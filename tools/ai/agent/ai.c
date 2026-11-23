@@ -181,6 +181,9 @@ static int stream_terminated;
 static int landlock_enabled = 1;
 static int resolve_transient;
 static bool full_access = false; // Always default to secure mode
+/* Set while a shell-mode `!` command runs: the human typed it directly, so
+   workspace scoping must not confine it. */
+static int shell_direct;
 static volatile sig_atomic_t interrupted;
 static volatile sig_atomic_t agent_exit_status;
 static int ui_mode;
@@ -326,6 +329,7 @@ terminal_style (const char *text)
     return "\033[1;31m";
   if (strncmp (text, "[AI request", 12) == 0 || strncmp (text, "[live steering", 14) == 0
       || strncmp (text, "[command", 8) == 0 || strncmp (text, "[context", 8) == 0 || strncmp (text, "[skill]", 7) == 0
+      || strncmp (text, "[shell", 6) == 0
       || strncmp (text, "[Plan", 5) == 0 || strncmp (text, "[force mode", 11) == 0
       || strncmp (text, "[retrying", 9) == 0 || strncmp (text, "[usage]", 7) == 0
       || strncmp (text, "[session]", 9) == 0 || strncmp (text, "[file read", 10) == 0
@@ -2891,8 +2895,9 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
       /* The lexical filter only inspected the command string; Landlock
          bounds what the executed tree can actually touch. A failure here
          already printed a warning and the command still runs scoped by
-         the lexical filter alone. */
-      if (workspace_directory != NULL && !full_access && landlock_enabled)
+         the lexical filter alone. Shell-mode commands skip both filters:
+         the human typed them, exactly like --full-access. */
+      if (workspace_directory != NULL && !full_access && !shell_direct && landlock_enabled)
         landlock_apply (workspace_root);
       execl ("/bin/sh", "sh", "-c", command, (char *)NULL);
       _exit (127);
@@ -2986,6 +2991,82 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
   *dropped_length = dropped;
   output[captured] = 0;
   return 0;
+}
+
+/* Assemble the conversation record of a shell-mode command: what the human
+   ran, the bounded output tail, and the exit status, tagged so the model can
+   tell prompt-issued commands from its own tool calls. */
+static int
+build_shell_message (char *message, size_t capacity, const char *command, const char *output,
+                     size_t output_length, size_t dropped, int timed_out, int status)
+{
+  Buffer body = { message, capacity, 0 };
+  size_t tail = MODEL_OUTPUT_SIZE;
+  size_t start = output_length > tail ? output_length - tail : 0;
+
+  if (buffer_append_string (&body,
+                            "HUMAN SHELL COMMAND (typed at the prompt with !, not a tool call):\n<bash-input>")
+      < 0
+      || append_xml_text (&body, command) < 0
+      || buffer_append_string (&body, "</bash-input>\n<bash-output>\n") < 0)
+    return -1;
+  if (timed_out
+      && buffer_append_formatted (&body, "[command timed out after %d seconds]\n", command_timeout) < 0)
+    return -1;
+  if (dropped > 0 && buffer_append_formatted (&body, "[... first %zu bytes dropped]\n", dropped) < 0)
+    return -1;
+  if (start != 0 && buffer_append_string (&body, "[output tail]\n") < 0)
+    return -1;
+  if (append_xml_escaped (&body, output + start, output_length - start) < 0
+      || buffer_append_formatted (&body, "</bash-output>\n[exit status: %d]\n", status) < 0)
+    return -1;
+  message[body.length < capacity ? body.length : capacity - 1] = 0;
+  return 0;
+}
+
+/* Shell mode: a submitted line starting with `!` runs the rest directly
+   through the shell. The human typed it, so it needs no approval and no
+   workspace scoping; the streamed output and exit status land in the
+   conversation as context for the next request. */
+static void
+run_shell_prompt (char *command)
+{
+  static char output[CAPTURE_SIZE + 1];
+  static char message[MAX_COMMAND * 6 + MODEL_OUTPUT_SIZE * 6 + 256];
+  size_t output_length = 0;
+  size_t dropped_length = 0;
+  int status = 0;
+  int timed_out = 0;
+
+  while (*command == ' ' || *command == '\t')
+    command++;
+  if (*command == 0)
+    {
+      print_formatted ("usage: ! <command> runs it here; its output joins the conversation\n");
+      return;
+    }
+  print_formatted ("\n[shell command]: %s\n", command);
+  shell_direct = 1;
+  if (run_command (command, output, CAPTURE_SIZE, &output_length, &dropped_length, &status, &timed_out) < 0)
+    {
+      shell_direct = 0;
+      print_formatted ("error: cannot run command: %s\n", strerror (errno));
+      return;
+    }
+  shell_direct = 0;
+  if (timed_out)
+    print_formatted ("[shell command timed out] exit status %d\n", status);
+  else
+    print_formatted ("[shell command completed] exit status %d\n", status);
+  if (build_shell_message (message, sizeof (message), command, output, output_length, dropped_length,
+                           timed_out, status)
+      < 0)
+    {
+      print_formatted ("error: shell output cannot be represented within the bounded context\n");
+      return;
+    }
+  if (add_text_message ("user", message, 0) < 0)
+    print_formatted ("error: shell output cannot fit in the conversation\n");
 }
 
 static int
@@ -4107,6 +4188,7 @@ ai_main (int argc, char **argv)
                           ? "Multiline: C-J newline, Enter submit. /help shows commands.\n"
                           : "Multiline input ends with an empty line. /help shows commands.\n");
       print_formatted ("Live steering: type lines while AI requests or commands run.\n");
+      print_formatted ("Shell mode: ! <command> runs it here; its output joins the conversation.\n");
       if (full_access)
         print_formatted ("Full access: commands run immediately; steering is offered after each one.\n");
       else
@@ -4143,6 +4225,11 @@ ai_main (int argc, char **argv)
           if (build_prompt_with_attachments (prompt, &initial_prompt) < 0)
             break;
           memcpy (prompt, combined, sizeof (prompt));
+        }
+      if (!one_shot && prompt[0] == '!')
+        {
+          run_shell_prompt (prompt + 1);
+          continue;
         }
       if (!one_shot && (strcmp (prompt, "/exit") == 0 || strcmp (prompt, "/quit") == 0))
         break;
@@ -4181,7 +4268,7 @@ ai_main (int argc, char **argv)
       if (!one_shot && strcmp (prompt, "/help") == 0)
         {
           print_formatted ("/new reset context; /force no need allow; /skills list skills; "
-                           "/skill <name> load a skill; /exit or /quit exit\n");
+                           "/skill <name> load a skill; ! <command> run shell command; /exit or /quit exit\n");
           continue;
         }
       if (add_text_message ("user", prompt, 0) < 0)

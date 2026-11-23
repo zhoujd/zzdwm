@@ -260,6 +260,17 @@ line end or word start), and `C-U`, which clears every line of the input. With p
 `ai` through a pipe), input ends with an empty line instead. `/new`
 starts a fresh conversation, while `/exit` and `/quit` leave the program.
 
+Shell mode runs a command on demand: submit a line starting with `!` —
+`! make test` — and the rest of the line executes immediately through
+`/bin/sh -c` with no approval prompt (you typed it yourself), with live
+output streaming to the terminal and the usual command timeout. The command,
+the bounded output tail, and the exit status then join the conversation as a
+`<bash-input>`/`<bash-output>` context message, so the next request sees what
+happened without an extra round-trip; the session transcript records it like
+any other message. Because the human issued it directly, `-C` workspace
+scoping and Landlock do not confine `!` commands. `!` alone prints a usage
+hint.
+
 At startup the agent reads the frontmatter of `.agents/skills/*/SKILL.md`
 and adds one system message listing each skill's name and description. When
 a task matches a skill, the model reads the full `SKILL.md` with a read-only

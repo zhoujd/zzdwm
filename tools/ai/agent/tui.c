@@ -132,6 +132,7 @@ line_style (const char *line)
     return COLOR_PAIR (3) | A_BOLD;
   if (strncmp (line, "[AI request", 12) == 0 || strncmp (line, "[live steering", 14) == 0
       || strncmp (line, "[command", 8) == 0 || strncmp (line, "[context", 8) == 0 || strncmp (line, "[skill]", 7) == 0
+      || strncmp (line, "[shell", 6) == 0
       || strncmp (line, "[Plan", 5) == 0 || strncmp (line, "[force mode", 11) == 0
       || strncmp (line, "[file read", 10) == 0 || strncmp (line, "[dir listing", 12) == 0
       || strncmp (line, "[patch applied", 14) == 0)
@@ -765,6 +766,7 @@ display_agent_line (const char *line)
     }
   else if (strncmp (line, "[AI requests command]", 21) == 0 || strncmp (line, "[command]", 9) == 0
            || strncmp (line, "[command output]", 16) == 0 || strncmp (line, "Command output:", 15) == 0
+           || strncmp (line, "[shell", 6) == 0
            || strncmp (line, "[command timed out after", 24) == 0 || strncmp (line, "[command completed]", 19) == 0
            || strncmp (line, "[AI reads file]", 15) == 0 || strncmp (line, "[AI lists dir]", 14) == 0
            || strncmp (line, "[AI requests patch]", 19) == 0 || strncmp (line, "[file read", 10) == 0
