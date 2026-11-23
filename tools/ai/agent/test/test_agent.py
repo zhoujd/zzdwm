@@ -190,6 +190,14 @@ def named_tool_response(name, arguments, call_id="call-tool"):
     }
 
 
+def landlock_supported():
+    try:
+        major, minor = os.uname().release.split(".")[:2]
+        return (int(major), int(minor)) >= (5, 13)
+    except ValueError:
+        return False
+
+
 def text_response(content, prompt_tokens=None, completion_tokens=None):
     response = {"choices": [{"message": {"role": "assistant", "content": content}}]}
     if prompt_tokens is not None:
@@ -468,6 +476,134 @@ class AgentTests(unittest.TestCase):
         )
         self.assertIn("usage: ! <command>", result.stdout)
         self.assertEqual(len(endpoint.requests), 0)
+
+    def test_start_job_status_and_stop_round_trip(self):
+        result, endpoint = self.run_agent(
+            [
+                named_tool_response("start_job", {"command": "echo job-output; sleep 30"}),
+                named_tool_response("job_status", {"id": 1}),
+                named_tool_response("stop_job", {"id": 1}),
+                text_response("done"),
+            ],
+            "watch the suite\n\n/exit\n\n",
+            full_access=True,
+            delay=0.3,
+        )
+        self.assertIn("[AI starts job]: echo job-output; sleep 30", result.stdout)
+        self.assertIn("[job 1 started] log:", result.stdout)
+        self.assertIn("[jobs] 1 running (longest", result.stdout)
+        self.assertIn("[job 1] running", result.stdout)
+        self.assertIn("job-output", result.stdout)
+        self.assertIn("[job 1 stopped] status", result.stdout)
+        self.assertIn("[jobs] none", result.stdout)
+        status_reply = self.tool_replies(endpoint, 2)[-1]["content"]
+        self.assertIn("job 1: running", status_reply)
+        self.assertIn("job-output", status_reply)
+        stop_reply = self.tool_replies(endpoint, 3)[-1]["content"]
+        self.assertIn("[job 1 stopped] exit status 143", stop_reply)
+        self.assertIn("Log tail:", stop_reply)
+
+    def test_job_log_tail_drops_older_bytes(self):
+        result, endpoint = self.run_agent(
+            [
+                named_tool_response("start_job", {"command": "seq 1 50000; sleep 30"}),
+                named_tool_response("job_status", {"id": 1}),
+                named_tool_response("stop_job", {"id": 1}),
+                text_response("done"),
+            ],
+            "watch\n\n/exit\n\n",
+            full_access=True,
+            delay=0.5,
+        )
+        status_reply = self.tool_replies(endpoint, 2)[-1]["content"]
+        self.assertIn("first", status_reply)
+        self.assertIn("bytes dropped]", status_reply)
+        self.assertIn("[output tail]", status_reply)
+        self.assertIn("50000", status_reply)
+
+    def test_start_job_requires_approval(self):
+        result, endpoint = self.run_agent(
+            [
+                named_tool_response("start_job", {"command": "sleep 30"}),
+                text_response("done"),
+            ],
+            "go\n\nn\n/exit\n\n",
+        )
+        self.assertIn("[AI starts job]: sleep 30", result.stdout)
+        self.assertNotIn("[job 1 started]", result.stdout)
+        self.assertNotIn("[jobs] 1 running", result.stdout)
+        self.assertIn("Job refused by the human.", self.tool_replies(endpoint, 1)[0]["content"])
+
+    def test_stop_job_escalates_to_sigkill(self):
+        result, endpoint = self.run_agent(
+            [
+                named_tool_response("start_job", {"command": "trap '' TERM; while :; do sleep 1; done"}),
+                named_tool_response("stop_job", {"id": 1}),
+                text_response("done"),
+            ],
+            "go\n\n/exit\n\n",
+            full_access=True,
+            delay=0.3,
+        )
+        stop_reply = self.tool_replies(endpoint, 2)[-1]["content"]
+        self.assertIn("[job 1 stopped] exit status 137", stop_reply)
+
+    def test_agent_exit_stops_running_jobs(self):
+        result, endpoint = self.run_agent(
+            [
+                named_tool_response("start_job", {"command": "sleep 30"}),
+                text_response("done"),
+            ],
+            "go\n\n/exit\n\n",
+            full_access=True,
+        )
+        self.assertIn("[1 job stopped]", result.stdout)
+        self.assertIn("[bye]", result.stdout)
+
+    def test_job_status_without_jobs(self):
+        result, endpoint = self.run_agent(
+            [
+                named_tool_response("job_status", {}),
+                text_response("done"),
+            ],
+            "go\n\n/exit\n\n",
+            full_access=True,
+        )
+        self.assertIn("[job status] no jobs", result.stdout)
+        self.assertIn("No jobs have been started.", self.tool_replies(endpoint, 1)[0]["content"])
+
+    def test_job_status_unknown_id(self):
+        result, endpoint = self.run_agent(
+            [
+                named_tool_response("job_status", {"id": 9}),
+                text_response("done"),
+            ],
+            "go\n\n/exit\n\n",
+            full_access=True,
+        )
+        self.assertIn("no job with id 9", self.tool_replies(endpoint, 1)[0]["content"])
+
+    @unittest.skipUnless(landlock_supported(), "kernel predates Landlock")
+    def test_start_job_landlock_confines_home_write(self):
+        probe = os.path.join(os.environ["HOME"], "ai-landlock-probe")
+        if os.path.exists(probe):
+            os.unlink(probe)
+        workspace = self.make_workspace({"keep": "x"})
+        result, endpoint = self.run_agent(
+            [
+                named_tool_response("start_job", {"command": "echo probe > $HOME/ai-landlock-probe; sleep 30"}),
+                named_tool_response("job_status", {"id": 1}),
+                named_tool_response("stop_job", {"id": 1}),
+                text_response("done"),
+            ],
+            "go\n\na\n\na\n\n/exit\n\n",
+            workspace=workspace,
+            delay=0.5,
+            extra_env={"HOME": os.environ["HOME"]},
+        )
+        status_reply = self.tool_replies(endpoint, 2)[-1]["content"]
+        self.assertIn("Permission denied", status_reply)
+        self.assertFalse(os.path.exists(probe), "job wrote outside the workspace despite Landlock")
 
     def test_one_shot_sends_prompt_and_exits(self):
         result, endpoint = self.run_agent(
@@ -1576,7 +1712,16 @@ class AgentTests(unittest.TestCase):
         tool_names = {tool["function"]["name"] for tool in endpoint.requests[0]["tools"]}
         self.assertEqual(
             tool_names,
-            {"run_terminal_command", "read_file", "list_dir", "apply_patch", "plan"},
+            {
+                "run_terminal_command",
+                "read_file",
+                "list_dir",
+                "apply_patch",
+                "plan",
+                "start_job",
+                "job_status",
+                "stop_job",
+            },
         )
         pinned = [
             message for message in endpoint.requests[1]["messages"]
@@ -1893,7 +2038,7 @@ class AgentTests(unittest.TestCase):
         replies = self.tool_replies(endpoint)
         self.assertIn(
             "Error: unsupported tool; use run_terminal_command, read_file, list_dir, "
-            "apply_patch, or plan.",
+            "apply_patch, plan, start_job, job_status, or stop_job.",
             replies[0]["content"],
         )
 

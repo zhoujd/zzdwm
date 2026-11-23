@@ -65,6 +65,7 @@
 #define MAX_ID 256
 #define MAX_NAME 128
 #define MAX_TOOL_CALLS 8
+#define MAX_JOBS 16
 #define MAX_MESSAGES 24
 #define DEFAULT_TOOL_ROUNDS 128
 #define MAX_TOOL_ROUNDS 1024
@@ -116,6 +117,9 @@ typedef enum
   TOOL_READ_FILE,
   TOOL_LIST_DIR,
   TOOL_APPLY_PATCH,
+  TOOL_START_JOB,
+  TOOL_JOB_STATUS,
+  TOOL_STOP_JOB,
 } ToolKind;
 
 typedef struct
@@ -128,6 +132,7 @@ typedef struct
   char patch[MAX_PATCH];
   long offset;
   long limit;
+  int job_id;
   ToolKind kind;
   int supported;
   int valid;
@@ -190,6 +195,32 @@ static int ui_mode;
 static int terminal_styling;
 static Skill skills[MAX_SKILLS];
 static int skill_count;
+
+/* Background jobs: run_command children without the foreground wait.
+   Exited entries stay pollable until the table fills, then the oldest
+   finished one is evicted for a new job. */
+typedef enum
+{
+  JOB_RUNNING,
+  JOB_EXITED,
+  JOB_STOPPED
+} JobState;
+
+typedef struct
+{
+  int used;
+  int id;
+  pid_t pid;
+  char command[MAX_COMMAND];
+  char log_path[PATH_MAX + 32];
+  time_t started;
+  time_t finished;
+  JobState state;
+  int exit_status;
+} Job;
+
+static Job jobs[MAX_JOBS];
+static int job_sequence;
 
 typedef struct
 {
@@ -330,6 +361,7 @@ terminal_style (const char *text)
   if (strncmp (text, "[AI request", 12) == 0 || strncmp (text, "[live steering", 14) == 0
       || strncmp (text, "[command", 8) == 0 || strncmp (text, "[context", 8) == 0 || strncmp (text, "[skill]", 7) == 0
       || strncmp (text, "[shell", 6) == 0
+      || strncmp (text, "[job", 4) == 0
       || strncmp (text, "[Plan", 5) == 0 || strncmp (text, "[force mode", 11) == 0
       || strncmp (text, "[retrying", 9) == 0 || strncmp (text, "[usage]", 7) == 0
       || strncmp (text, "[session]", 9) == 0 || strncmp (text, "[file read", 10) == 0
@@ -337,6 +369,7 @@ terminal_style (const char *text)
     return "\033[1;35m";
   if (strncmp (text, "[AI requests command]", 21) == 0 || strncmp (text, "[AI Response]", 13) == 0
       || strncmp (text, "[AI reads file]", 15) == 0 || strncmp (text, "[AI lists dir]", 14) == 0
+      || strncmp (text, "[AI starts job]", 15) == 0 || strncmp (text, "[AI stops job]", 14) == 0
       || strncmp (text, "[AI requests patch]", 19) == 0)
     return "\033[1;36m";
   if (strncmp (text, "[You]", 5) == 0)
@@ -2292,7 +2325,33 @@ build_request (char *request, size_t capacity, size_t *length)
                                      "\"parameters\":{\"type\":\"object\",\"properties\":{"
                                      "\"checklist\":{\"type\":\"string\",\"description\":"
                                      "\"The complete checklist text.\"}},"
-                                     "\"required\":[\"checklist\"]}}}],\"tool_choice\":\"auto\"")
+                                     "\"required\":[\"checklist\"]}}},"
+                                     "{\"type\":\"function\",\"function\":{"
+                                     "\"name\":\"start_job\",\"description\":"
+                                     "\"Start one long-running command (test suite, build) as a background job "
+                                     "and return immediately as job:N started. Output appends to the job log; "
+                                     "poll with job_status. Jobs are exempt from the command timeout and keep "
+                                     "the same approval and workspace rules as foreground commands.\","
+                                     "\"parameters\":{\"type\":\"object\",\"properties\":{"
+                                     "\"command\":{\"type\":\"string\",\"description\":"
+                                     "\"The complete shell command to run in the background.\"}},"
+                                     "\"required\":[\"command\"]}}},"
+                                     "{\"type\":\"function\",\"function\":{"
+                                     "\"name\":\"job_status\",\"description\":"
+                                     "\"Report background jobs: with no id a one-line-per-job summary, with id "
+                                     "the state, elapsed time, and the bounded tail of its log. Read-only, no "
+                                     "approval needed.\","
+                                     "\"parameters\":{\"type\":\"object\",\"properties\":{"
+                                     "\"id\":{\"type\":\"integer\",\"description\":"
+                                     "\"Job id returned by start_job; omit to list all jobs.\"}}}}},"
+                                     "{\"type\":\"function\",\"function\":{"
+                                     "\"name\":\"stop_job\",\"description\":"
+                                     "\"Stop one background job: SIGTERM to its process group, SIGKILL after a "
+                                     "grace second. Needs approval, like running a command.\","
+                                     "\"parameters\":{\"type\":\"object\",\"properties\":{"
+                                     "\"id\":{\"type\":\"integer\",\"description\":"
+                                     "\"Job id returned by start_job.\"}},"
+                                     "\"required\":[\"id\"]}}}],\"tool_choice\":\"auto\"")
       < 0)
     return -1;
   if (buffer_append_string (&buffer, streaming_enabled ? ",\"stream\":true}" : "}") < 0)
@@ -2980,11 +3039,10 @@ run_command (const char *command, char *output, size_t capacity, size_t *output_
         {
           /* The child is gone, but its last writes can still be buffered
              in the pipe; drain them so the captured tail keeps the true
-             end of the output. The pipe's read end is non-blocking, and a
-             detached descendant may keep the write end open, so stop at
-             the first dry read instead of waiting for EOF — and cap the
-             effort, so a descendant that floods the pipe cannot pin
-             the loop. */
+             end of the output. The pipe is non-blocking, and a detached
+             descendant may keep the write end open, so stop at the first
+             dry read instead of waiting for EOF — and cap the effort, so
+             a descendant that floods the pipe cannot pin the loop. */
           int rounds = 256;
 
           while (rounds-- > 0)
@@ -3106,6 +3164,236 @@ run_shell_prompt (char *command)
     }
   if (add_text_message ("user", message, 0) < 0)
     print_formatted ("error: shell output cannot fit in the conversation\n");
+}
+
+static Job *
+job_by_id (int id)
+{
+  size_t index;
+
+  for (index = 0; index < MAX_JOBS; index++)
+    if (jobs[index].used && jobs[index].id == id)
+      return &jobs[index];
+  return NULL;
+}
+
+static const char *
+job_state_name (const Job *job)
+{
+  return job->state == JOB_RUNNING   ? "running"
+         : job->state == JOB_STOPPED ? "stopped"
+                                     : "exited";
+}
+
+/* The [jobs] marker rides regular output so the TUI status line and the
+   plain terminal both see the live-job picture whenever it changes. */
+static void
+print_jobs_status (void)
+{
+  size_t index;
+  int running = 0;
+  long longest = 0;
+
+  for (index = 0; index < MAX_JOBS; index++)
+    if (jobs[index].used && jobs[index].state == JOB_RUNNING)
+      {
+        long elapsed = (long)(time (NULL) - jobs[index].started);
+
+        running++;
+        if (elapsed > longest)
+          longest = elapsed;
+      }
+  if (running > 0)
+    print_formatted ("[jobs] %d running (longest %lds)\n", running, longest);
+  else
+    print_formatted ("[jobs] none\n");
+}
+
+/* Harvest finished job children without blocking; statuses are fresh
+   whenever the model can ask, which is whenever a round begins. */
+static void
+reap_jobs (void)
+{
+  size_t index;
+  int changed = 0;
+
+  for (index = 0; index < MAX_JOBS; index++)
+    {
+      int status;
+
+      if (!jobs[index].used || jobs[index].state != JOB_RUNNING)
+        continue;
+      if (waitpid (jobs[index].pid, &status, WNOHANG) != jobs[index].pid)
+        continue;
+      if (WIFEXITED (status))
+        jobs[index].exit_status = WEXITSTATUS (status);
+      else if (WIFSIGNALED (status))
+        jobs[index].exit_status = 128 + WTERMSIG (status);
+      else
+        jobs[index].exit_status = 1;
+      jobs[index].finished = time (NULL);
+      jobs[index].state = JOB_EXITED;
+      print_formatted ("[job %d exited] status %d after %lds: %s\n", jobs[index].id, jobs[index].exit_status,
+                       (long)(jobs[index].finished - jobs[index].started), jobs[index].command);
+      changed = 1;
+    }
+  if (changed)
+    print_jobs_status ();
+}
+
+/* Same escalation as command-timeout expiry: SIGTERM to the process
+   group, a grace second, then SIGKILL. */
+static void
+job_terminate (Job *job)
+{
+  int status = 0;
+  time_t deadline = time (NULL) + 1;
+
+  kill (-job->pid, SIGTERM);
+  while (time (NULL) < deadline)
+    {
+      if (waitpid (job->pid, &status, WNOHANG) == job->pid)
+        goto finished;
+      usleep (50000);
+    }
+  kill (-job->pid, SIGKILL);
+  while (waitpid (job->pid, &status, 0) < 0 && errno == EINTR)
+    ;
+finished:
+  if (WIFEXITED (status))
+    job->exit_status = WEXITSTATUS (status);
+  else if (WIFSIGNALED (status))
+    job->exit_status = 128 + WTERMSIG (status);
+  job->finished = time (NULL);
+  job->state = JOB_STOPPED;
+}
+
+/* Jobs never outlive the agent silently: normal exit paths run this via
+   atexit, terminate every live job, and say how many. */
+static void
+jobs_shutdown (void)
+{
+  size_t index;
+  int stopped = 0;
+
+  for (index = 0; index < MAX_JOBS; index++)
+    if (jobs[index].used && jobs[index].state == JOB_RUNNING)
+      {
+        job_terminate (&jobs[index]);
+        stopped++;
+      }
+  if (stopped > 0)
+    print_formatted ("[%d job%s stopped]\n", stopped, stopped == 1 ? "" : "s");
+}
+
+/* Fork a run_command-style child with two changes: stdout and stderr
+   append to <scope>/.ai/jobs/<id>.log and nobody waits. Returns 0 with
+   *id_result set, -1 on system error, -2 when no slot is free. */
+static int
+job_spawn (const char *command, int *id_result)
+{
+  char log_directory[PATH_MAX + 16];
+  char log_path[PATH_MAX + 32];
+  const char *root = workspace_directory != NULL ? workspace_root : current_directory;
+  int log_fd;
+  pid_t child;
+  size_t index;
+  Job *slot = NULL;
+  Job *oldest_finished = NULL;
+
+  for (index = 0; index < MAX_JOBS; index++)
+    {
+      if (!jobs[index].used)
+        {
+          slot = &jobs[index];
+          break;
+        }
+      if (jobs[index].state != JOB_RUNNING
+          && (oldest_finished == NULL || jobs[index].finished < oldest_finished->finished))
+        oldest_finished = &jobs[index];
+    }
+  if (slot == NULL)
+    {
+      if (oldest_finished == NULL)
+        return -2;
+      slot = oldest_finished;
+    }
+  snprintf (log_directory, sizeof (log_directory), "%s/.ai/jobs", root);
+  mkdir (root, 0777);
+  snprintf (log_path, sizeof (log_path), "%s/.ai", root);
+  mkdir (log_path, 0777);
+  mkdir (log_directory, 0777);
+  slot->id = ++job_sequence;
+  snprintf (log_path, sizeof (log_path), "%s/%d.log", log_directory, slot->id);
+  log_fd = open (log_path, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, 0644);
+  if (log_fd < 0)
+    return -1;
+  child = fork ();
+  if (child < 0)
+    {
+      close (log_fd);
+      return -1;
+    }
+  if (child == 0)
+    {
+      struct sigaction action;
+
+      memset (&action, 0, sizeof (action));
+      action.sa_handler = SIG_DFL;
+      sigaction (SIGINT, &action, NULL);
+      sigaction (SIGTERM, &action, NULL);
+      setpgid (0, 0);
+      dup2 (log_fd, STDOUT_FILENO);
+      dup2 (log_fd, STDERR_FILENO);
+      if (log_fd != STDOUT_FILENO && log_fd != STDERR_FILENO)
+        close (log_fd);
+      /* Same rule as run_command children: scoped workspaces confine the
+         executed tree; the human-approved start does not lift it. */
+      if (workspace_directory != NULL && !full_access && !shell_direct && landlock_enabled)
+        landlock_apply (workspace_root);
+      execl ("/bin/sh", "sh", "-c", command, (char *)NULL);
+      _exit (127);
+    }
+  setpgid (child, child);
+  close (log_fd);
+  memset (slot, 0, sizeof (*slot));
+  slot->used = 1;
+  slot->id = job_sequence;
+  slot->pid = child;
+  snprintf (slot->command, sizeof (slot->command), "%s", command);
+  snprintf (slot->log_path, sizeof (slot->log_path), "%s", log_path);
+  slot->started = time (NULL);
+  slot->state = JOB_RUNNING;
+  *id_result = slot->id;
+  return 0;
+}
+
+/* Read the last `capacity` bytes of a job log for job_status; bytes
+   before that are counted as dropped so the model knows the tail rule. */
+static size_t
+read_log_tail (const char *path, char *buffer, size_t capacity, size_t *dropped)
+{
+  FILE *log = fopen (path, "rb");
+  long size;
+  size_t got = 0;
+
+  *dropped = 0;
+  if (log == NULL)
+    return 0;
+  if (fseek (log, 0, SEEK_END) == 0)
+    {
+      size = ftell (log);
+      if (size > (long)capacity)
+        {
+          *dropped = (size_t)size - capacity;
+          fseek (log, - (long)capacity, SEEK_END);
+        }
+      else
+        fseek (log, 0, SEEK_SET);
+      got = fread (buffer, 1, capacity, log);
+    }
+  fclose (log);
+  return got;
 }
 
 static int
@@ -3269,6 +3557,47 @@ patch_decision (int *run, char *steer, size_t steer_capacity)
         {
           full_access = 1;
           print_formatted ("[force mode is now ON; patches apply without approval]\n");
+          *run = 1;
+          return 0;
+        }
+      if (choice[0] == 's' && choice[1] == 0)
+        {
+          print_formatted (multiline_keys_active () ? "Steering: C-J newline, Enter submit.\n"
+                                                    : "Steering ends with an empty line.\n");
+          if (read_interactive_multiline ("[steer]: ", "[.....]: ", steer, steer_capacity) < 0 || steer[0] == 0)
+            continue;
+          return 0;
+        }
+      if ((choice[0] == 'n' || choice[0] == 'q') && choice[1] == 0)
+        return choice[0] == 'q' ? -1 : 0;
+      print_formatted ("Please answer a, s, n, f, or q.\n");
+    }
+}
+
+/* Stopping a job the human wanted running is also a decision, so it gets
+   the same boundary as a patch: no edit option, the command is fixed. */
+static int
+stop_decision (int *run, char *steer, size_t steer_capacity)
+{
+  char choice[MAX_LINE];
+
+  *run = 0;
+  steer[0] = 0;
+  for (;;)
+    {
+      if (read_interactive_line ("[a]llow, [s]teer without stopping, [n]o, [f]orce, [q]uit: ", choice,
+                                 sizeof (choice))
+          < 0)
+        return -1;
+      if (choice[0] == 'a' && choice[1] == 0)
+        {
+          *run = 1;
+          return 0;
+        }
+      if (choice[0] == 'f' && choice[1] == 0)
+        {
+          full_access = 1;
+          print_formatted ("[force mode is now ON; jobs stop without approval]\n");
           *run = 1;
           return 0;
         }
@@ -3484,6 +3813,7 @@ process_tool_calls (ToolCall *calls, size_t call_count)
   size_t index;
 
   steer[0] = 0;
+  reap_jobs ();
   for (index = 0; index < call_count; index++)
     {
       int execute = 0;
@@ -3585,6 +3915,188 @@ process_tool_calls (ToolCall *calls, size_t call_count)
             }
           continue;
         }
+      if (calls[index].valid && calls[index].kind == TOOL_START_JOB)
+        {
+          int job_id = 0;
+
+          print_formatted ("\n[AI starts job]: %s\n", calls[index].command);
+          if (validate_workspace_command (calls[index].command) < 0)
+            {
+              if (append_tool_result (&calls[index], "Error: command references a path outside the workspace scope.")
+                  < 0)
+                return -1;
+              continue;
+            }
+          if (steer[0] != 0)
+            execute = 0;
+          else if (full_access)
+            execute = 1;
+          else if (command_decision (&calls[index], &execute, steer, sizeof (steer)) < 0)
+            return -1;
+          if (execute)
+            {
+              int spawned = job_spawn (calls[index].command, &job_id);
+
+              if (spawned < 0)
+                {
+                  snprintf (result, sizeof (result), "%s", spawned == -2
+                              ? "Error: too many jobs are running; stop one with stop_job before starting another."
+                              : "Execution error: cannot start the job.");
+                  if (append_tool_result (&calls[index], result) < 0)
+                    return -1;
+                  continue;
+                }
+              print_formatted ("[job %d started] log: %s\n", job_id, job_by_id (job_id)->log_path);
+              print_jobs_status ();
+              snprintf (result, sizeof (result),
+                        "[job %d started] Output appends to the job log; it is exempt from the command timeout. "
+                        "Poll with job_status %d and stop it with stop_job %d when done.",
+                        job_id, job_id, job_id);
+              if (append_tool_result (&calls[index], result) < 0)
+                return -1;
+              if (post_execution_steer (steer, sizeof (steer)) < 0)
+                return -1;
+            }
+          else
+            {
+              snprintf (result, sizeof (result), "%s",
+                        steer[0] != 0 ? "Job skipped because the human supplied a new direction."
+                                      : "Job refused by the human.");
+              if (append_tool_result (&calls[index], result) < 0)
+                return -1;
+            }
+          continue;
+        }
+      if (calls[index].valid && calls[index].kind == TOOL_JOB_STATUS)
+        {
+          size_t job_index;
+
+          reap_jobs ();
+          if (calls[index].job_id == 0)
+            {
+              char listing[MAX_JOBS * 192 + 64];
+              Buffer summary = { listing, sizeof (listing), 0 };
+              int printed = 0;
+
+              for (job_index = 0; job_index < MAX_JOBS; job_index++)
+                if (jobs[job_index].used)
+                  {
+                    long elapsed = (long)(time (NULL) - jobs[job_index].started);
+                    const char *state = job_state_name (&jobs[job_index]);
+
+                    printed++;
+                    print_formatted ("[job %d] %s, %lds: %s\n", jobs[job_index].id, state, elapsed,
+                                     jobs[job_index].command);
+                    if (jobs[job_index].state == JOB_RUNNING)
+                      {
+                        if (buffer_append_formatted (&summary, "%sjob %d: running for %lds: %s",
+                                                     printed == 1 ? "" : "\n", jobs[job_index].id, elapsed,
+                                                     jobs[job_index].command)
+                            < 0)
+                          break;
+                      }
+                    else if (buffer_append_formatted (&summary, "%sjob %d: %s after %lds, exit status %d: %s",
+                                                      printed == 1 ? "" : "\n", jobs[job_index].id, state, elapsed,
+                                                      jobs[job_index].exit_status, jobs[job_index].command)
+                             < 0)
+                      break;
+                  }
+              if (printed == 0)
+                {
+                  print_formatted ("[job status] no jobs\n");
+                  if (append_tool_result (&calls[index], "No jobs have been started.") < 0)
+                    return -1;
+                  continue;
+                }
+              listing[summary.length < sizeof (listing) ? summary.length : sizeof (listing) - 1] = 0;
+              if (append_tool_result (&calls[index], listing) < 0)
+                return -1;
+              continue;
+            }
+          {
+            Job *job = job_by_id (calls[index].job_id);
+
+            if (job == NULL)
+              {
+                snprintf (result, sizeof (result), "Error: no job with id %d; job_status without id lists them.",
+                          calls[index].job_id);
+                print_formatted ("%s\n", result);
+                if (append_tool_result (&calls[index], result) < 0)
+                  return -1;
+                continue;
+              }
+            {
+              long elapsed = (long)(time (NULL) - job->started);
+              const char *state = job_state_name (job);
+
+              print_formatted ("[job %d] %s: %s\n", job->id, state, job->command);
+              if (job->state == JOB_RUNNING)
+                snprintf (result, sizeof (result), "job %d: running, %lds elapsed. Log tail:", job->id, elapsed);
+              else
+                snprintf (result, sizeof (result), "job %d: %s after %lds, exit status %d. Log tail:", job->id, state,
+                          (long)(job->finished - job->started), job->exit_status);
+              output_length = read_log_tail (job->log_path, output, CAPTURE_SIZE, &dropped_length);
+              /* The human watches the same log tail the model receives,
+                 written raw like live command output so nothing is concealed. */
+              write_all (STDOUT_FILENO, output, output_length);
+              print_line_break ();
+              if (append_bounded_output (&calls[index], result, output, output_length, dropped_length) < 0)
+                return -1;
+            }
+          }
+          continue;
+        }
+      if (calls[index].valid && calls[index].kind == TOOL_STOP_JOB)
+        {
+          Job *job;
+
+          print_formatted ("\n[AI stops job]: %d\n", calls[index].job_id);
+          if (steer[0] != 0)
+            execute = 0;
+          else if (full_access)
+            execute = 1;
+          else if (stop_decision (&execute, steer, sizeof (steer)) < 0)
+            return -1;
+          if (!execute)
+            {
+              snprintf (result, sizeof (result), "%s",
+                        steer[0] != 0 ? "Stop skipped because the human supplied a new direction."
+                                      : "Stop refused by the human.");
+              if (append_tool_result (&calls[index], result) < 0)
+                return -1;
+              continue;
+            }
+          reap_jobs ();
+          job = job_by_id (calls[index].job_id);
+          if (job == NULL)
+            {
+              snprintf (result, sizeof (result), "Error: no job with id %d; job_status without id lists them.",
+                        calls[index].job_id);
+              print_formatted ("%s\n", result);
+              if (append_tool_result (&calls[index], result) < 0)
+                return -1;
+              continue;
+            }
+          if (job->state == JOB_RUNNING)
+            {
+              job_terminate (job);
+              print_formatted ("[job %d stopped] status %d\n", job->id, job->exit_status);
+              print_jobs_status ();
+              snprintf (result, sizeof (result), "[job %d stopped] exit status %d. Log tail:", job->id,
+                        job->exit_status);
+            }
+          else
+            snprintf (result, sizeof (result), "[job %d already %s] exit status %d. Log tail:", job->id,
+                      job_state_name (job), job->exit_status);
+          output_length = read_log_tail (job->log_path, output, CAPTURE_SIZE, &dropped_length);
+          write_all (STDOUT_FILENO, output, output_length);
+          print_line_break ();
+          if (append_bounded_output (&calls[index], result, output, output_length, dropped_length) < 0)
+            return -1;
+          if (post_execution_steer (steer, sizeof (steer)) < 0)
+            return -1;
+          continue;
+        }
       if (calls[index].valid && calls[index].supported)
         {
           print_formatted ("\n[AI requests command]: %s\n", calls[index].command);
@@ -3633,7 +4145,7 @@ process_tool_calls (ToolCall *calls, size_t call_count)
         {
           if (append_tool_result (&calls[index],
                                   "Error: unsupported tool; use run_terminal_command, read_file, list_dir, "
-                                  "apply_patch, or plan.")
+                                  "apply_patch, plan, start_job, job_status, or stop_job.")
               < 0)
             return -1;
         }
@@ -3716,6 +4228,12 @@ parse_tool_call (const cJSON *tool_call, ToolCall *call)
     call->kind = TOOL_LIST_DIR;
   else if (strcmp (call->name, "apply_patch") == 0)
     call->kind = TOOL_APPLY_PATCH;
+  else if (strcmp (call->name, "start_job") == 0)
+    call->kind = TOOL_START_JOB;
+  else if (strcmp (call->name, "job_status") == 0)
+    call->kind = TOOL_JOB_STATUS;
+  else if (strcmp (call->name, "stop_job") == 0)
+    call->kind = TOOL_STOP_JOB;
   else
     call->kind = TOOL_UNKNOWN;
   call->supported = call->kind != TOOL_UNKNOWN;
@@ -3779,6 +4297,19 @@ parse_tool_call (const cJSON *tool_call, ToolCall *call)
         }
       cJSON_Delete (argument_object);
       call->valid = call->patch[0] != 0;
+      return 0;
+    }
+
+  if (call->kind == TOOL_JOB_STATUS || call->kind == TOOL_STOP_JOB)
+    {
+      const cJSON *id = cJSON_GetObjectItemCaseSensitive (argument_object, "id");
+
+      call->job_id = 0;
+      if (cJSON_IsNumber (id))
+        call->job_id = (int)id->valuedouble;
+      cJSON_Delete (argument_object);
+      /* job_status without an id lists every job; stop_job needs one. */
+      call->valid = call->kind == TOOL_JOB_STATUS || call->job_id >= 1;
       return 0;
     }
 
@@ -4174,6 +4705,9 @@ ai_main (int argc, char **argv)
         return 1;
     }
   hide_control_characters ();
+  /* Registered after hide_control_characters, so atexit's LIFO order stops
+     jobs before the terminal state is restored. */
+  atexit (jobs_shutdown);
   memset (&action, 0, sizeof (action));
   action.sa_handler = on_signal;
   sigemptyset (&action.sa_mask);
@@ -4318,6 +4852,7 @@ ai_main (int argc, char **argv)
       if (!one_shot)
         attachment_count = 0;
       response_start = NULL;
+      reap_jobs ();
       if (call_endpoint_threaded (&response_start, response_storage) < 0)
         {
           size_t old_count = message_count;
@@ -4363,6 +4898,7 @@ ai_main (int argc, char **argv)
                 break;
               }
             response_start = NULL;
+            reap_jobs ();
             if (call_endpoint_threaded (&response_start, response_storage) < 0)
               {
                 size_t old_count = message_count;

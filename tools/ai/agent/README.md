@@ -271,6 +271,19 @@ any other message. Because the human issued it directly, `-C` workspace
 scoping and Landlock do not confine `!` commands. `!` alone prints a usage
 hint.
 
+Background jobs run the long parts out of band. `start_job` launches a
+command through `/bin/sh -c` with no command timeout and appends its output
+to `<workspace>/.ai/jobs/<id>.log` (the current directory without `-C`); it
+passes the same approval prompt, workspace scoping, and Landlock confinement
+as a regular command. `job_status` with an id reports how long the job has
+run — or its exit status once reaped — with a bounded tail of its log, and
+without an id it summarizes every job this session; it is read-only and needs
+no approval. `stop_job` terminates a job with SIGTERM and escalates to
+SIGKILL after a one-second grace period. Exited jobs are reaped between tool
+rounds and before each model request, and leaving the agent stops every live
+job. In the TUI the command pane border shows `jobs: N running (longest Xs)`
+while any are live.
+
 At startup the agent reads the frontmatter of `.agents/skills/*/SKILL.md`
 and adds one system message listing each skill's name and description. When
 a task matches a skill, the model reads the full `SKILL.md` with a read-only

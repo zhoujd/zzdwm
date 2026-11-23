@@ -71,6 +71,7 @@ static Pane panes[PANE_COUNT];
 static WINDOW *input_window;
 static int live_steering_active;
 static int ai_request_active;
+static char jobs_status[80];
 static int terminal_height;
 static int terminal_width;
 static volatile sig_atomic_t interrupted;
@@ -126,13 +127,14 @@ line_style (const char *line)
     return COLOR_PAIR (5) | A_BOLD;
   if (strncmp (line, "[AI Response]", 13) == 0 || strncmp (line, "[AI requests command]", 21) == 0
       || strncmp (line, "[AI reads file]", 15) == 0 || strncmp (line, "[AI lists dir]", 14) == 0
+      || strncmp (line, "[AI starts job]", 15) == 0 || strncmp (line, "[AI stops job]", 14) == 0
       || strncmp (line, "[AI requests patch]", 19) == 0)
     return COLOR_PAIR (1) | A_BOLD;
   if (strncmp (line, "[You]", 5) == 0 || strncmp (line, "[steer]", 7) == 0)
     return COLOR_PAIR (3) | A_BOLD;
   if (strncmp (line, "[AI request", 12) == 0 || strncmp (line, "[live steering", 14) == 0
       || strncmp (line, "[command", 8) == 0 || strncmp (line, "[context", 8) == 0 || strncmp (line, "[skill]", 7) == 0
-      || strncmp (line, "[shell", 6) == 0
+      || strncmp (line, "[shell", 6) == 0 || strncmp (line, "[job", 4) == 0
       || strncmp (line, "[Plan", 5) == 0 || strncmp (line, "[force mode", 11) == 0
       || strncmp (line, "[file read", 10) == 0 || strncmp (line, "[dir listing", 12) == 0
       || strncmp (line, "[patch applied", 14) == 0)
@@ -365,6 +367,7 @@ draw_pane_status (PaneId pane_id, WINDOW *border, int height, int width)
 {
   const char *status = pane_id == PANE_THOUGHTS && live_steering_active ? " Live steering "
                        : pane_id == PANE_COMMANDS && ai_request_active  ? " AI is working "
+                       : pane_id == PANE_COMMANDS                        ? jobs_status
                                                                         : "";
   int column = width - (int)strlen (status) - 2;
 
@@ -444,16 +447,12 @@ create_pane (PaneId pane_id, int height, int start_y, const char *title)
 }
 
 static void
-set_pane_status (PaneId pane_id, int active)
+redraw_pane_border (PaneId pane_id)
 {
   int start_y;
   int height;
-  int *state = pane_id == PANE_THOUGHTS ? &live_steering_active : &ai_request_active;
   const char *title = pane_id == PANE_THOUGHTS ? "1. AI & User Thoughts" : "2. AI Command Status";
 
-  if (*state == active)
-    return;
-  *state = active;
   content_pane_geometry (pane_id, &start_y, &height);
   if (panes[pane_id].border == NULL)
     return;
@@ -466,6 +465,28 @@ set_pane_status (PaneId pane_id, int active)
             start_y + height - 2, terminal_width - 2);
   touchwin (input_window);
   wrefresh (input_window);
+}
+
+static void
+set_pane_status (PaneId pane_id, int active)
+{
+  int *state = pane_id == PANE_THOUGHTS ? &live_steering_active : &ai_request_active;
+
+  if (*state == active)
+    return;
+  *state = active;
+  redraw_pane_border (pane_id);
+}
+
+/* The [jobs] marker only feeds the status line; the pane keeps silent. */
+static void
+update_jobs_status (const char *text)
+{
+  if (strcmp (text, "none") == 0)
+    jobs_status[0] = 0;
+  else
+    snprintf (jobs_status, sizeof (jobs_status), " jobs: %.60s ", text);
+  redraw_pane_border (PANE_COMMANDS);
 }
 
 static void
@@ -767,6 +788,8 @@ display_agent_line (const char *line)
   else if (strncmp (line, "[AI requests command]", 21) == 0 || strncmp (line, "[command]", 9) == 0
            || strncmp (line, "[command output]", 16) == 0 || strncmp (line, "Command output:", 15) == 0
            || strncmp (line, "[shell", 6) == 0
+           || strncmp (line, "[AI starts job]", 15) == 0 || strncmp (line, "[AI stops job]", 14) == 0
+           || strncmp (line, "[job ", 5) == 0
            || strncmp (line, "[command timed out after", 24) == 0 || strncmp (line, "[command completed]", 19) == 0
            || strncmp (line, "[AI reads file]", 15) == 0 || strncmp (line, "[AI lists dir]", 14) == 0
            || strncmp (line, "[AI requests patch]", 19) == 0 || strncmp (line, "[file read", 10) == 0
@@ -788,6 +811,12 @@ display_agent_line (const char *line)
   if (routed || hint != NULL || is_agent_prompt (line) || strncmp (line, "[context]", 9) == 0
       || strncmp (line, "error:", 6) == 0 || strncmp (line, "Error:", 6) == 0)
     plan_capture = 0;
+  if (strncmp (line, "[jobs] ", 7) == 0)
+    {
+      plan_capture = 0;
+      update_jobs_status (line + 7);
+      return;
+    }
   if (strcmp (line, "[AI request active]") == 0)
     {
       plan_capture = 0;
@@ -1072,6 +1101,7 @@ handle_agent_prompt (const char *line)
     multiline = 1;
   else if (strcmp (line, "[a]llow, [e]dit, [s]teer without running, [n]o, [f]orce, [q]uit: ") == 0
            || strcmp (line, "[a]llow, [s]teer without applying, [n]o, [f]orce, [q]uit: ") == 0
+           || strcmp (line, "[a]llow, [s]teer without stopping, [n]o, [f]orce, [q]uit: ") == 0
            || strcmp (line, "[edited command]: ") == 0
            || strcmp (line, "[s]teer before next AI request, Enter to continue, q quit: ") == 0)
     multiline = 0;
