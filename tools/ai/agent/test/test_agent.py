@@ -2529,6 +2529,38 @@ class AgentTests(unittest.TestCase):
         self.assertNotIn("attempt 4/3", result.stdout)
         self.assertEqual(len(endpoint.requests), 3)
 
+    def test_empty_stream_is_retried(self):
+        empty = (
+            b"HTTP/1.1 200 OK\r\n"
+            b"Content-Type: text/event-stream\r\n"
+            b"Connection: close\r\n\r\n"
+        )
+        result, endpoint = self.run_agent(
+            [empty, sse_response(["recovered"])],
+            "go\n\n/exit\n\n",
+        )
+        self.assertIn("AI stream ended without content", result.stdout)
+        self.assertIn("[retrying in 1s (attempt 2/3)]", result.stdout)
+        self.assertIn("recovered", result.stdout)
+        self.assertEqual(len(endpoint.requests), 2)
+        self.assertEqual(endpoint.requests[0], endpoint.requests[1])
+
+    def test_empty_stream_retries_until_exhausted(self):
+        empty = (
+            b"HTTP/1.1 200 OK\r\n"
+            b"Content-Type: text/event-stream\r\n"
+            b"Connection: close\r\n\r\n"
+        )
+        result, endpoint = self.run_agent(
+            [empty, empty, empty],
+            "go\n\n/exit\n\n",
+        )
+        self.assertEqual(result.stdout.count("AI stream ended without content"), 3)
+        self.assertIn("[retrying in 2s (attempt 3/3)]", result.stdout)
+        self.assertNotIn("attempt 4/3", result.stdout)
+        self.assertEqual(len(endpoint.requests), 3)
+        self.assertIn("[bye]", result.stdout)
+
     def test_http_400_is_not_retried(self):
         result, endpoint = self.run_agent(
             [

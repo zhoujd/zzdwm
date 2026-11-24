@@ -2602,7 +2602,13 @@ post_endpoint_once (const char *request, size_t request_length, const char **res
         print_formatted ("error: receive response: %s\n", strerror (receive_error));
       if (receive_status == -3)
         agent_exit_status = EXIT_TIMEOUT;
-      else if (!interrupted && transient_network_error (receive_error))
+      else if (!interrupted
+               && (transient_network_error (receive_error)
+                   /* EPROTO means the response arrived empty or truncated: an
+                      empty event stream, cut-off headers, or broken framing.
+                      Nothing was shown on screen yet, so replaying the request
+                      is safe and a transient flake gets the retry treatment. */
+                   || (receive_error == EPROTO && !stream_printed_content)))
         *transient = 1;
       /* Never replay a request whose output is already on screen. */
       if (stream_printed_content)
