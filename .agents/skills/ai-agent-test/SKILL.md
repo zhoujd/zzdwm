@@ -56,7 +56,12 @@ Use the `AI: ` prefix for AI agent commit subjects, for example:
 6. After committing source changes, refresh the tracked binary: rerun
    `./tools/ai/agent/build.sh -p`, copy `tools/ai/agent/ai` over
    `libexec/ai/ai`, and commit it as `Update libexec/ai/ai`. Never commit
-   `tools/ai/agent/ai` itself.
+   `tools/ai/agent/ai` itself. The order matters: `version.h` embeds the
+   build date and short git revision of HEAD at build time, so a publish
+   binary built before the source commit stamps the previous commit. The
+   rerun after the commit is mandatory even if a publish binary from
+   pre-commit testing already exists; confirm the stamp with
+   `libexec/ai/ai --version`.
 
 ## Environment and Endpoint Checks
 
