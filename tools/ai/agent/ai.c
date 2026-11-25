@@ -39,7 +39,7 @@
 
 #define VERSION "1.0"
 #define DEFAULT_ENDPOINT "http://127.0.0.1:8090/v1/chat/completions"
-#define DEFAULT_MODEL "glm-5.3-flash"
+#define DEFAULT_MODEL "glm-5.3"
 #define SYSTEM_PROMPT                                                                                                  \
   "You are a senior Linux systems and software engineer working directly on the user's host. "                         \
   "Diagnose methodically, state assumptions and impact, prefer read-only commands first, "                             \

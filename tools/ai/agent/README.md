@@ -155,7 +155,7 @@ Configuration is read from the environment:
 
 * `AI_API_URL`: HTTP endpoint or base URL. Default:
   `http://127.0.0.1:8090/v1/chat/completions`.
-* `AI_MODEL`: model name. Default: `glm-5.3-flash`; `-m` / `--model`
+* `AI_MODEL`: model name. Default: `glm-5.3`; `-m` / `--model`
   overrides it for one run.
 * `AI_API_KEY` or `OPENAI_API_KEY`: optional bearer token.
 * `AI_TIMEOUT_SECONDS`: API timeout, 1--1800. Default: 300.

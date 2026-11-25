@@ -24,10 +24,10 @@ Manual test examples:
 
 ```sh
 cd tools/ai/agent
-./ai -m glm-5.3-flash -e 'quick review'
-./ai -m glm-5.3-air -f ai.c -e 'review this file'
-./ai tui -m glm-5.3-air -f ai.c
-./ai tui -C . -m glm-5.3-air -f ai.c --full-access
+./ai -m glm-5.3 -e 'quick review'
+./ai -m glm-5.3-flash -f ai.c -e 'review this file'
+./ai tui -m glm-5.3-flash -f ai.c
+./ai tui -C . -m glm-5.3-flash -f ai.c --full-access
 ```
 
 Status: C implementation, tests, and documentation complete.
