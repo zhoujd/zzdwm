@@ -81,7 +81,11 @@ tools/ai/agent/ai -exec "summarize this repository"
 ```
 
 The prompt is sent verbatim, startup banners are omitted, and command approval
-remains enabled. Add `--full-access` for unattended one-shot execution.
+remains enabled. Add `--full-access` for unattended one-shot execution. A
+system message tells the model the run is one-shot — the prompt is the only
+user input and no follow-up answer will arrive — so it makes the reasonable
+decision itself instead of ending with a question; `task` subagents, which
+are one-shot children, inherit the same notice.
 
 Attach up to eight text files and/or pipe context while keeping the instruction
 last:

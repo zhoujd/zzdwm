@@ -2390,6 +2390,32 @@ class AgentTests(unittest.TestCase):
             result.stdout,
         )
 
+    def test_one_shot_mode_notice_in_system_messages(self):
+        _, endpoint = self.run_agent(
+            [text_response("done")],
+            full_access=True,
+            exec_prompt="diagnose",
+        )
+        system_texts = [
+            message["content"]
+            for message in endpoint.requests[0]["messages"]
+            if message["role"] == "system"
+        ]
+        # The model must know there is no second turn, so it settles
+        # questions itself instead of stranding the run.
+        self.assertTrue(any("One-shot mode" in text for text in system_texts))
+
+        _, endpoint = self.run_agent(
+            [text_response("ok")],
+            "go\n\n/exit\n\n",
+        )
+        system_texts = [
+            message["content"]
+            for message in endpoint.requests[0]["messages"]
+            if message["role"] == "system"
+        ]
+        self.assertFalse(any("One-shot mode" in text for text in system_texts))
+
     def test_tty_usage_line_starts_after_interrupt(self):
         endpoint = Endpoint([text_response("ok", 100, 10)])
         self.addCleanup(endpoint.thread.join, timeout=2)

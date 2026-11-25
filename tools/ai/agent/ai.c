@@ -55,6 +55,14 @@
   "Stop and ask the human before using sudo, modifying system paths (/etc, /usr, /var), "                              \
   "restarting services, or performing any destructive, ambiguous, or out-of-scope action."
 
+/* One-shot runs have no second turn: asking the human anything strands the
+   task, so the model must settle for itself. */
+#define ONE_SHOT_PROMPT                                                                                                \
+  "One-shot mode: this prompt is the only user input and no follow-up answer will "                                     \
+  "arrive. Do not end with questions or requests for confirmation; weigh the options, "                                 \
+  "pick the most reasonable and safest course yourself, state the assumptions you make, "                               \
+  "and carry the task to completion.\n"
+
 #define MAX_ENDPOINT 512
 #define MAX_HOST 128
 #define MAX_PATH 384
@@ -1187,6 +1195,9 @@ conversation_reset (void)
   summary_active = 0;
   context_summary[0] = 0;
   if (add_text_message ("system", SYSTEM_PROMPT, 1) < 0 || add_workspace_message () < 0
+      /* One-shot runs and the task-tool children they spawn learn the mode
+         here; interactive conversations never do. */
+      || (one_shot && add_text_message ("system", ONE_SHOT_PROMPT, 1) < 0)
       || add_skills_message () < 0)
     {
       print_formatted ("error: unable to initialize conversation\n");
