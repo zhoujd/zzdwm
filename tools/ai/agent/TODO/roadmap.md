@@ -13,7 +13,7 @@ Done: add-hostname-endpoints.md (getaddrinfo for `AI_API_URL` hostnames
 plus `fdatasync` on session appends); add-workspace-banner.md (banner
 line + working-directory system message);
 add-command-timeout.md (`-t` override, 64 KiB tail-truncated capture);
-add-http-retry.md (3 attempts, backoff, `Retry-After`);
+add-http-retry.md (5 attempts, backoff, `Retry-After`);
 add-usage-stats.md (`[usage]` line, cumulative tokens + rounds + context);
 add-session-resume.md (`.ai/session.jsonl` transcript, `--continue` /
 `--resume`, plan restore, torn-line tolerance);

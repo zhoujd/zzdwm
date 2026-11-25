@@ -2139,7 +2139,9 @@ class AgentTests(unittest.TestCase):
             input="",
             text=True,
             capture_output=True,
-            timeout=5,
+            # Connection-refused retries back off 1s+2s+4s+8s before the
+            # final failure, so this needs more than the 5s above.
+            timeout=30,
             env={"AI_API_URL": "http://127.0.0.1:1/v1", "PATH": os.environ["PATH"]},
         )
         self.assertEqual(process.returncode, 1)
@@ -2150,7 +2152,7 @@ class AgentTests(unittest.TestCase):
                 input="",
                 text=True,
                 capture_output=True,
-                timeout=5,
+                timeout=30,
                 env={"AI_API_URL": "http://127.0.0.1:1/v1", "PATH": os.environ["PATH"]},
             )
         self.assertEqual(process.returncode, 1)
@@ -2445,11 +2447,14 @@ class AgentTests(unittest.TestCase):
             [
                 b"HTTP/1.1 400 Bad Request\r\n"
                 b"Content-Length: 0\r\n"
-                b"Connection: close\r\n\r\n"
+                b"Connection: close\r\n\r\n",
+                text_response("second ok"),
             ],
             "first\n\nsecond\n\n/exit\n\n",
         )
         self.assertIn("AI endpoint returned HTTP 400", result.stdout)
+        # The failed round kills only that round; the next turn still runs.
+        self.assertIn("second ok", result.stdout)
         self.assertIn("[bye]", result.stdout)
         self.assertGreaterEqual(len(endpoint.requests), 1)
 
@@ -2508,7 +2513,7 @@ class AgentTests(unittest.TestCase):
             "go\n\n/exit\n\n",
         )
         self.assertIn("AI endpoint returned HTTP 429", result.stdout)
-        self.assertIn("[retrying in 2s (attempt 2/3)]", result.stdout)
+        self.assertIn("[retrying in 2s (attempt 2/5)]", result.stdout)
         self.assertIn("recovered", result.stdout)
         self.assertEqual(len(endpoint.requests), 2)
         self.assertEqual(endpoint.requests[0], endpoint.requests[1])
@@ -2520,14 +2525,17 @@ class AgentTests(unittest.TestCase):
             b"Connection: close\r\n\r\n"
         )
         result, endpoint = self.run_agent(
-            [refused, refused, refused],
+            [refused] * 5,
             "go\n\n/exit\n\n",
+            timeout=40,
         )
         self.assertIn("AI endpoint returned HTTP 500", result.stdout)
-        self.assertIn("[retrying in 1s (attempt 2/3)]", result.stdout)
-        self.assertIn("[retrying in 2s (attempt 3/3)]", result.stdout)
-        self.assertNotIn("attempt 4/3", result.stdout)
-        self.assertEqual(len(endpoint.requests), 3)
+        self.assertIn("[retrying in 1s (attempt 2/5)]", result.stdout)
+        self.assertIn("[retrying in 2s (attempt 3/5)]", result.stdout)
+        self.assertIn("[retrying in 4s (attempt 4/5)]", result.stdout)
+        self.assertIn("[retrying in 8s (attempt 5/5)]", result.stdout)
+        self.assertNotIn("attempt 6/5", result.stdout)
+        self.assertEqual(len(endpoint.requests), 5)
 
     def test_empty_stream_is_retried(self):
         empty = (
@@ -2539,8 +2547,11 @@ class AgentTests(unittest.TestCase):
             [empty, sse_response(["recovered"])],
             "go\n\n/exit\n\n",
         )
-        self.assertIn("AI stream ended without content", result.stdout)
-        self.assertIn("[retrying in 1s (attempt 2/3)]", result.stdout)
+        # A recovered retry shows only the notice; the reason line waits
+        # for a final failure.
+        self.assertNotIn("AI stream ended without content", result.stdout)
+        self.assertNotIn("Protocol error", result.stdout)
+        self.assertIn("[retrying in 1s (attempt 2/5)]", result.stdout)
         self.assertIn("recovered", result.stdout)
         self.assertEqual(len(endpoint.requests), 2)
         self.assertEqual(endpoint.requests[0], endpoint.requests[1])
@@ -2552,13 +2563,16 @@ class AgentTests(unittest.TestCase):
             b"Connection: close\r\n\r\n"
         )
         result, endpoint = self.run_agent(
-            [empty, empty, empty],
+            [empty] * 5,
             "go\n\n/exit\n\n",
+            timeout=40,
         )
-        self.assertEqual(result.stdout.count("AI stream ended without content"), 3)
-        self.assertIn("[retrying in 2s (attempt 3/3)]", result.stdout)
-        self.assertNotIn("attempt 4/3", result.stdout)
-        self.assertEqual(len(endpoint.requests), 3)
+        # Silent while retrying; the reason surfaces once, on giving up.
+        self.assertEqual(result.stdout.count("AI stream ended without content"), 1)
+        self.assertNotIn("Protocol error", result.stdout)
+        self.assertIn("[retrying in 8s (attempt 5/5)]", result.stdout)
+        self.assertNotIn("attempt 6/5", result.stdout)
+        self.assertEqual(len(endpoint.requests), 5)
         self.assertIn("[bye]", result.stdout)
 
     def test_http_400_is_not_retried(self):
@@ -2595,8 +2609,8 @@ class AgentTests(unittest.TestCase):
         )
         self.assertEqual(process.returncode, 1)
         combined = process.stdout + process.stderr
-        self.assertIn("[retrying in 1s (attempt 2/3)]", combined)
-        self.assertIn("[retrying in 2s (attempt 3/3)]", combined)
+        self.assertIn("[retrying in 1s (attempt 2/5)]", combined)
+        self.assertIn("[retrying in 8s (attempt 5/5)]", combined)
         self.assertIn("connect", combined)
 
     def test_context_compaction_keeps_a_user_message(self):
@@ -3944,6 +3958,10 @@ class AgentTests(unittest.TestCase):
             "go\n\n/exit\n\n",
         )
         self.assertIn("error: AI endpoint: boom", result.stdout)
+        # An explicit error event is definitive: no retry notice, no
+        # generic protocol-error companion line.
+        self.assertNotIn("retrying", result.stdout)
+        self.assertNotIn("Protocol error", result.stdout)
         self.assertNotIn("Hello", result.stdout)
 
     def test_stream_completes_without_done_marker(self):

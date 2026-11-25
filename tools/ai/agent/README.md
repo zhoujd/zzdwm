@@ -177,12 +177,15 @@ required.
 
 Transient endpoint failures are retried automatically, in interactive and
 one-shot mode alike: HTTP 429 and 5xx responses, and connections that are
-refused or reset mid-request, are retried up to 3 attempts with exponential
-backoff (1s, then 2s), honoring an integer `Retry-After` header when the
-endpoint supplies one (capped at 60s). Other 4xx responses are never retried —
+refused or reset mid-request, are retried up to 5 attempts with exponential
+backoff (1s, 2s, 4s, 8s), honoring an integer `Retry-After` header when the
+endpoint supplies one (capped at 60s). A stream that ends without any
+content counts as transient too — recovered attempts show only the retry
+notice, and the reason line surfaces once if every attempt fails. Other
+4xx responses are never retried —
 a retry cannot fix a protocol or request error — and a failed attempt mutates
 nothing, so the conversation stays intact. Each retry prints
-`[retrying in Ns (attempt N/3)]` so the stall stays visible. A stream whose
+`[retrying in Ns (attempt N/5)]` so the stall stays visible. A stream whose
 tokens already reached the screen is never replayed: once any output is
 visible, the attempt is final.
 

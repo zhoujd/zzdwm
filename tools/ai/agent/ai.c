@@ -72,7 +72,7 @@
 #define COMPACTION_MIN_ROUNDS 4
 #define DEFAULT_TOOL_ROUNDS 128
 #define MAX_TOOL_ROUNDS 1024
-#define MAX_HTTP_ATTEMPTS 3
+#define MAX_HTTP_ATTEMPTS 5
 #define MAX_RETRY_AFTER 60
 #define MESSAGE_SIZE (512 * 1024)
 #define MAX_REQUEST (512 * 1024)
@@ -2005,8 +2005,12 @@ receive_stream (int socket_fd, char *response, size_t capacity, size_t total,
   stream_active = 0;
   if (state.failed)
     {
+      /* An explicit error event, a limit overrun, or malformed SSE: the
+         specific reason is already on screen. That is a definitive
+         answer or a permanent fault, never a transient stumble — no
+         retry (status -5, distinct from the empty-stream -4). */
       *error_number = EPROTO;
-      return -1;
+      return -5;
     }
   if (interrupted)
     {
@@ -2015,9 +2019,11 @@ receive_stream (int socket_fd, char *response, size_t capacity, size_t total,
     }
   if (!state.done && state.content_length == 0 && state.call_count == 0)
     {
-      print_formatted ("error: AI stream ended without content\n");
+      /* Distinct status for the receive path: a recovered retry shows
+         only the retry notice, and the reason line moves to the give-up
+         branch in post_endpoint_once. */
       *error_number = EPROTO;
-      return -1;
+      return -4;
     }
   if (stream_finish (&state, *body, capacity - body_offset, response_length) < 0)
     {
@@ -2522,7 +2528,7 @@ transient_network_error (int error)
 
 static int
 post_endpoint_once (const char *request, size_t request_length, const char **response_body, char *response_storage,
-                    int *transient, int *retry_after)
+                    int *transient, int *retry_after, int final_attempt)
 {
   char headers[1024];
   int header_length;
@@ -2591,24 +2597,40 @@ post_endpoint_once (const char *request, size_t request_length, const char **res
         *transient = 1;
       return -1;
     }
+  if (receive_status == -5)
+    {
+      /* The stream consumer printed the specific reason; a definitive
+         answer or permanent fault needs neither a retry nor a second
+         line. */
+      return -1;
+    }
   if (receive_status < 0)
     {
+      /* EPROTO means the response arrived empty or truncated: an empty
+         event stream, cut-off headers, or broken framing (-4 is the
+         empty-stream form). Nothing was shown on screen yet, so
+         replaying the request is safe and a transient flake gets the
+         retry treatment. Recovered attempts print only the retry
+         notice; the reason line waits for the final failure. */
+      int retryable = !interrupted
+                      && (transient_network_error (receive_error)
+                          || (receive_error == EPROTO && !stream_printed_content));
+
       if (interrupted)
         {
           print_line_break ();
           print_formatted ("[request interrupted]\n");
         }
-      else
-        print_formatted ("error: receive response: %s\n", strerror (receive_error));
+      else if (!interrupted && (!retryable || final_attempt))
+        {
+          if (receive_status == -4)
+            print_formatted ("error: AI stream ended without content\n");
+          else
+            print_formatted ("error: receive response: %s\n", strerror (receive_error));
+        }
       if (receive_status == -3)
         agent_exit_status = EXIT_TIMEOUT;
-      else if (!interrupted
-               && (transient_network_error (receive_error)
-                   /* EPROTO means the response arrived empty or truncated: an
-                      empty event stream, cut-off headers, or broken framing.
-                      Nothing was shown on screen yet, so replaying the request
-                      is safe and a transient flake gets the retry treatment. */
-                   || (receive_error == EPROTO && !stream_printed_content)))
+      else if (retryable)
         *transient = 1;
       /* Never replay a request whose output is already on screen. */
       if (stream_printed_content)
@@ -2621,7 +2643,8 @@ post_endpoint_once (const char *request, size_t request_length, const char **res
 }
 
 static int
-call_endpoint_once (const char **response_body, char *response_storage, int *transient, int *retry_after)
+call_endpoint_once (const char **response_body, char *response_storage, int *transient, int *retry_after,
+                    int final_attempt)
 {
   static char request[MAX_REQUEST];
   size_t request_length;
@@ -2631,7 +2654,8 @@ call_endpoint_once (const char **response_body, char *response_storage, int *tra
       print_formatted ("error: conversation exceeds the request limit\n");
       return -1;
     }
-  return post_endpoint_once (request, request_length, response_body, response_storage, transient, retry_after);
+  return post_endpoint_once (request, request_length, response_body, response_storage, transient, retry_after,
+                             final_attempt);
 }
 
 /* Sleep in slices so Ctrl+C and the interrupted flag stay responsive. */
@@ -2658,7 +2682,10 @@ call_endpoint (const char **response_body, char *response_storage)
     {
       int transient = 0;
       int retry_after = 0;
-      int result = call_endpoint_once (response_body, response_storage, &transient, &retry_after);
+      /* The last allowed attempt must surface the failure reason itself:
+         no retry notice will follow it. */
+      int final_attempt = attempt >= MAX_HTTP_ATTEMPTS;
+      int result = call_endpoint_once (response_body, response_storage, &transient, &retry_after, final_attempt);
       int delay;
 
       if (result == 0 || !transient || attempt >= MAX_HTTP_ATTEMPTS || interrupted)
@@ -4868,8 +4895,9 @@ compact_messages (size_t start, size_t end)
   if (buffer_append_string (&buffer, "\"}]}") < 0)
     return -1;
   /* Buffered, single-shot, nothing streamed: this is internal bookkeeping,
-     and a failure simply falls back to plain pruning. */
-  if (post_endpoint_once (body, buffer.length, &response, reply, &transient, &retry_after) < 0)
+     and a failure simply falls back to plain pruning. Single attempt, so
+     its reason line is a final one. */
+  if (post_endpoint_once (body, buffer.length, &response, reply, &transient, &retry_after, 1) < 0)
     return -1;
   parsed = cJSON_Parse (response);
   if (parsed == NULL)
