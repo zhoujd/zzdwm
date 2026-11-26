@@ -5215,10 +5215,7 @@ usage (FILE *stream)
                    "OPENAI_API_KEY, AI_TIMEOUT_SECONDS and AI_COMMAND_TIMEOUT_SECONDS.\n"
                    "AI_TOOL_ROUNDS is also supported. Set AI_STREAM=0 to buffer responses\n"
                    "instead of streaming them, AI_LANDLOCK=0 to drop the OS-level workspace\n"
-                   "sandbox, and NO_COLOR to disable styling. The same AI_* keys may live\n"
-                   "in ~/.ai/config (see --init-config); the environment and flags win.\n"
-                   "Without -S, --continue, or --resume a run is ephemeral: no transcript\n"
-                   "is saved and no .ai/ directory is created.\n");
+                   "sandbox, and NO_COLOR to disable styling.\n");
 }
 
 /* The session name becomes a filename under .ai/, so it must be a plain
