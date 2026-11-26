@@ -1253,8 +1253,11 @@ class AgentTests(unittest.TestCase):
         os.write(master, b"\x7f")
         os.write(master, b"\r")
         deadline = time.time() + 5
-        while time.time() < deadline and process.poll() is None:
-            output += read_until(b"\n", 0.2)
+        while time.time() < deadline:
+            chunk = read_until(b"\n", 0.2)
+            output += chunk
+            if process.poll() is not None and not chunk:
+                break
         self.assertEqual(process.poll(), 0)
         self.assertEqual(output.count("好".encode()), 1)
         self.assertTrue(output.rstrip().endswith("你".encode()))
@@ -1305,14 +1308,17 @@ class AgentTests(unittest.TestCase):
         os.write(master, b"\x1b[H")   # Home: cursor at line start
         os.write(master, b"Y")        # "YaXb"
         os.write(master, b"\x1b[C")   # Right: cursor past "a"
-        os.write(master, b"\x1b[D")   # Left: cursor back after "a"
+        os.write(master, b"\x1b[D")   # Left: cursor back before "a"
         os.write(master, b"\x1b[F")   # End: cursor after "b"
         os.write(master, b"\x1b[4~")  # End (tilde form): still after "b"
         os.write(master, b"!")
         os.write(master, b"\r")
         deadline = time.time() + 5
-        while time.time() < deadline and process.poll() is None:
-            output += read_until(b"\n", 0.2)
+        while time.time() < deadline:
+            chunk = read_until(b"\n", 0.2)
+            output += chunk
+            if process.poll() is not None and not chunk:
+                break
         self.assertEqual(process.poll(), 0)
         self.assertTrue(output.rstrip().endswith("YaXb!".encode()))
 
@@ -1366,8 +1372,11 @@ class AgentTests(unittest.TestCase):
         os.write(master, b"!")
         os.write(master, b"\r")
         deadline = time.time() + 5
-        while time.time() < deadline and process.poll() is None:
-            output += read_until(b"\n", 0.2)
+        while time.time() < deadline:
+            chunk = read_until(b"\n", 0.2)
+            output += chunk
+            if process.poll() is not None and not chunk:
+                break
         self.assertEqual(process.poll(), 0)
         # The pty translates each newline to CRLF on output.
         self.assertTrue(output.replace(b"\r\n", b"\n").rstrip()
