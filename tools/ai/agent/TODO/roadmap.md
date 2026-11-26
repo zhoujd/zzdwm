@@ -4,12 +4,19 @@ Proposals for the next features. Grounded in the current set: tools =
 `terminal` + `read_file`/`list_dir`/`apply_patch` + `plan` +
 `start_job`/`job_status`/`stop_job` + `task`; flags `-C`, `--full-access`,
 `--no-shell`, `--ui`, `-f` (up to 8), `-m`, `-e`, `-t`; skills support;
-sessions with `--continue`/`--resume`; MAX_MESSAGES 24 with automatic
+sessions with `-S` (ephemeral default) and `--continue`/`--resume`;
+MAX_MESSAGES 24 with automatic
 compaction; default 128 rounds.
 
 ## Tier 1 — high value, small diffs
 
-Done: add-hostname-endpoints.md (getaddrinfo for `AI_API_URL` hostnames
+Proposed: none yet.
+
+Done: add-named-sessions.md (`-S, --session <name>` writes
+`<workspace>/.ai/<name>.jsonl`; the default is ephemeral — no transcript
+and no `.ai/` created without `-S`; `--continue` resumes the newest
+`.jsonl` or the named one; `--resume` unchanged);
+add-hostname-endpoints.md (getaddrinfo for `AI_API_URL` hostnames
 plus `fdatasync` on session appends); add-workspace-banner.md (banner
 line + working-directory system message);
 add-command-timeout.md (`-t` override, 64 KiB tail-truncated capture);

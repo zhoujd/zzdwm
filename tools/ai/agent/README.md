@@ -143,16 +143,25 @@ group receives SIGTERM, then SIGKILL after a grace second, the session
 continues, and the model receives `[command timed out ...]` plus whatever
 output was captured, so it can react instead of stalling the loop.
 
-Conversations persist as they run: non-system messages (including bounded
-tool results and plan updates) are appended to `<workspace>/.ai/session.jsonl`
-one JSON object per line, flushed and synced per message. `--continue` replays the
-latest saved session before the first request, and `--resume <file>` resumes
-a specific transcript; both work in one-shot mode and are forwarded by the
-TUI. Replayed messages re-enter the conversation verbatim through the usual
-`MAX_MESSAGES` pruning window, the active plan and a compacted summary are
-restored, a torn final
+Sessions are opt-in: a plain run is ephemeral — no transcript is written and
+no `.ai/` directory is ever created, so scratch workspaces, read-only trees,
+and `git status` stay clean. `-S <name>` (or `--session <name>`) persists the
+conversation to `<workspace>/.ai/<name>.jsonl`: non-system messages
+(including bounded tool results and plan updates) are appended one JSON
+object per line, flushed and synced per message. The name must be a plain
+filename part of 1 to 128 bytes — anything containing `/`, or the entries
+`.` and `..`, is a usage error, since the name becomes a file under `.ai/`.
+`--continue` replays a saved session before the first request — with
+`-S <name>` that session, without it the most recently modified `.jsonl`
+under `.ai` (a legacy `session.jsonl` counts) — and `--resume <file>` resumes
+a specific transcript and keeps appending to it; both work in one-shot mode
+and are forwarded by the TUI. `-S` and `--resume` are mutually exclusive: a
+path already names a session. Replayed messages re-enter the conversation
+verbatim through the usual `MAX_MESSAGES` pruning window, the active plan and
+a compacted summary are restored, a torn final
 line from a crash is skipped rather than fatal, and `--continue` with no
-saved session starts fresh. `/new` restarts the transcript, so a later
+saved session starts fresh — still recording when `-S` named one, ephemeral
+otherwise. `/new` restarts the transcript, so a later
 `--continue` replays what was on screen rather than replaced context.
 
 Configuration is read from four layers in decreasing precedence:
@@ -239,8 +248,9 @@ drop whole. The attempt is rate-limited to roughly once per few rounds, its
 tokens join the usage totals, the exit line notes `compacted ×N`, and any
 failure falls back to the plain drop-with-a-note — compaction never costs
 the session. `/compact` folds the older half of the conversation on demand,
-and the summary itself is recorded in `.ai/session.jsonl` (role `_summary`)
-so `--continue` resumes the compacted conversation instead of the bloat.
+and the summary itself is recorded in the session transcript (role
+`_summary`) so `--continue` resumes the compacted conversation instead of
+the bloat.
 
 At each requested command, choose `a` to allow, `e` to edit it, `s` to supply a
 steering instruction without running it, `n` to refuse it, or `f` to allow it

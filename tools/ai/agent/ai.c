@@ -200,6 +200,9 @@ static int session_save_failed;
 static int session_replaying;
 static int session_continue;
 static const char *session_resume_path;
+/* -S <name>: the transcript persists to .ai/<name>.jsonl. Empty means the
+   run is ephemeral — no transcript and no .ai/ directory created. */
+static char session_name[MAX_NAME];
 static char session_path[MAX_PATH];
 static int one_shot;
 static const char *attachment_paths[MAX_ATTACHMENTS];
@@ -824,7 +827,9 @@ drop_oldest_message (void)
 /* Session persistence: every non-system message is appended, one JSON
    object per line, so a restart can replay the conversation. The file is
    opened lazily on the first logged message and flushed per line, which
-   keeps a kill from losing more than the in-flight line. */
+   keeps a kill from losing more than the in-flight line. Without -S,
+   --continue, or --resume there is no session: nothing is written and
+   .ai/ is never created. */
 static void
 session_open (const char *mode)
 {
@@ -835,7 +840,12 @@ session_open (const char *mode)
      risk for no benefit. */
   if (session_file != NULL || session_save_failed || subagent_depth)
     return;
-  mkdir (".ai", 0777);
+  if (session_path[0] == 0)
+    return;
+  /* Only the built-in .ai/<name>.jsonl location needs the directory;
+     an explicit --resume path is responsible for its own parent. */
+  if (strncmp (session_path, ".ai/", 4) == 0)
+    mkdir (".ai", 0777);
   if (mode[0] == 'a')
     {
       /* A kill can leave a half-written final line; appending straight
@@ -1595,6 +1605,41 @@ resume_session (const char *path)
   fclose (file);
   print_formatted ("[session] resumed %zu messages from %s\n", restored, path);
   return 0;
+}
+
+/* --continue without -S: the flag still means "the latest saved session",
+   so pick the newest .jsonl under .ai/ — named sessions and the legacy
+   session.jsonl compete on mtime, one second of resolution and first
+   match winning ties. Leaves session_path empty when nothing is saved,
+   which keeps the run ephemeral. */
+static void
+find_newest_session (void)
+{
+  DIR *directory = opendir (".ai");
+  struct dirent *entry;
+  time_t newest = -1;
+
+  if (directory == NULL)
+    return;
+  while ((entry = readdir (directory)) != NULL)
+    {
+      const char *suffix = strrchr (entry->d_name, '.');
+      char path[MAX_PATH];
+      struct stat info;
+
+      if (suffix == NULL || strcmp (suffix, ".jsonl") != 0)
+        continue;
+      if (snprintf (path, sizeof (path), ".ai/%s", entry->d_name) >= (int)sizeof (path))
+        continue;
+      if (stat (path, &info) < 0 || !S_ISREG (info.st_mode))
+        continue;
+      if (info.st_mtime > newest)
+        {
+          newest = info.st_mtime;
+          snprintf (session_path, sizeof (session_path), "%s", path);
+        }
+    }
+  closedir (directory);
 }
 
 /* Streaming (SSE) response handling. When the endpoint answers with
@@ -5143,7 +5188,8 @@ usage (FILE *stream)
                    "-C, --cwd <dir>      set the workspace directory\n"
                    "--full-access        run commands without approval\n"
                    "--no-shell           file tools and plan only; no terminal or job tools\n"
-                   "--continue           resume the latest saved session\n"
+                   "-S, --session <name> save the transcript to .ai/<name>.jsonl\n"
+                   "--continue           resume the newest saved session, or -S <name>'s\n"
                    "--resume <file>      resume a specific session file\n"
                    "--ui                 use the line-oriented UI protocol\n"
                    "-f <file>            attach a text file (up to 8 times)\n"
@@ -5170,7 +5216,24 @@ usage (FILE *stream)
                    "AI_TOOL_ROUNDS is also supported. Set AI_STREAM=0 to buffer responses\n"
                    "instead of streaming them, AI_LANDLOCK=0 to drop the OS-level workspace\n"
                    "sandbox, and NO_COLOR to disable styling. The same AI_* keys may live\n"
-                   "in ~/.ai/config (see --init-config); the environment and flags win.\n");
+                   "in ~/.ai/config (see --init-config); the environment and flags win.\n"
+                   "Without -S, --continue, or --resume a run is ephemeral: no transcript\n"
+                   "is saved and no .ai/ directory is created.\n");
+}
+
+/* The session name becomes a filename under .ai/, so it must be a plain
+   name: non-empty, within the buffer, and free of separators or the
+   directory aliases. */
+static int
+valid_session_name (const char *name)
+{
+  size_t length = strlen (name);
+
+  if (length == 0 || length >= MAX_NAME)
+    return 0;
+  if (strchr (name, '/') != NULL || strcmp (name, ".") == 0 || strcmp (name, "..") == 0)
+    return 0;
+  return 1;
 }
 
 static int
@@ -5184,6 +5247,30 @@ parse_arguments (int argc, char **argv)
         full_access = 1;
       else if (strcmp (argv[index], "--no-shell") == 0)
         no_shell = 1;
+      else if (strcmp (argv[index], "-S") == 0 || strcmp (argv[index], "--session") == 0)
+        {
+          if (++index >= argc || argv[index][0] == 0)
+            {
+              fprintf (stderr, "error: -S requires a session name\n");
+              return -1;
+            }
+          if (session_name[0] != 0)
+            {
+              fprintf (stderr, "error: -S may only be supplied once\n");
+              return -1;
+            }
+          if (session_resume_path != NULL)
+            {
+              fprintf (stderr, "error: -S excludes --resume; the path already names a session\n");
+              return -1;
+            }
+          if (!valid_session_name (argv[index]))
+            {
+              fprintf (stderr, "error: -S session name must be a plain filename part of 1 to %d bytes\n", MAX_NAME);
+              return -1;
+            }
+          snprintf (session_name, sizeof (session_name), "%s", argv[index]);
+        }
       else if (strcmp (argv[index], "--continue") == 0)
         {
           if (session_continue || session_resume_path != NULL)
@@ -5203,6 +5290,11 @@ parse_arguments (int argc, char **argv)
           if (session_resume_path != NULL || session_continue)
             {
               fprintf (stderr, "error: --resume may only be supplied once and excludes --continue\n");
+              return -1;
+            }
+          if (session_name[0] != 0)
+            {
+              fprintf (stderr, "error: --resume excludes -S; the path already names a session\n");
               return -1;
             }
           if (strlen (argv[index]) >= sizeof (session_path))
@@ -5372,6 +5464,13 @@ ai_main (int argc, char **argv)
   signal (SIGPIPE, SIG_IGN);
   load_skills ();
   conversation_reset ();
+  /* Transcript persistence is opt-in: -S <name> targets .ai/<name>.jsonl,
+     --resume keeps appending to its file, and --continue picks the newest
+     saved .jsonl under .ai (the -S one when a name is given). With none of
+     them the run is ephemeral and .ai/ is never created. */
+  session_path[0] = 0;
+  if (session_name[0] != 0)
+    snprintf (session_path, sizeof (session_path), ".ai/%s.jsonl", session_name);
   if (!one_shot)
     {
       print_formatted ("ai %s %s %s interactive AI agent\n", VERSION, BUILD_DATE, BUILD_REVISION);
@@ -5394,6 +5493,7 @@ ai_main (int argc, char **argv)
           else
             print_formatted ("Sandbox: lexical path filter (landlock unavailable on this kernel)\n");
         }
+      print_formatted ("Session: %s\n", session_path[0] != 0 ? session_path : "ephemeral (-S <name> saves it)");
     }
   if (!one_shot)
     {
@@ -5410,19 +5510,28 @@ ai_main (int argc, char **argv)
       else
         print_formatted ("Every command is shown for allow/edit/steer/force/refuse before execution.\n");
     }
-  snprintf (session_path, sizeof (session_path), "%s", ".ai/session.jsonl");
   if (session_resume_path != NULL)
-    snprintf (session_path, sizeof (session_path), "%s", session_resume_path);
-  if (session_continue || session_resume_path != NULL)
     {
+      snprintf (session_path, sizeof (session_path), "%s", session_resume_path);
       if (resume_session (session_path) < 0)
         {
-          if (session_resume_path != NULL)
-            {
-              fprintf (stderr, "error: cannot read session %s: %s\n", session_resume_path, strerror (errno));
-              return 2;
-            }
-          print_formatted ("[session] no previous session in %s; starting fresh\n", session_path);
+          fprintf (stderr, "error: cannot read session %s: %s\n", session_resume_path, strerror (errno));
+          return 2;
+        }
+    }
+  else if (session_continue)
+    {
+      if (session_name[0] == 0)
+        find_newest_session ();
+      if (session_path[0] == 0 || resume_session (session_path) < 0)
+        {
+          /* A named session is an explicit opt-in, so a missing one still
+             starts recording at .ai/<name>.jsonl; unnamed --continue with
+             nothing to find stays ephemeral. */
+          if (session_name[0] == 0)
+            session_path[0] = 0;
+          print_formatted ("[session] no previous session in %s; starting fresh\n",
+                           session_name[0] != 0 ? session_path : ".ai");
         }
     }
   for (;;)

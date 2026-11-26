@@ -25,6 +25,7 @@
 #define MAX_INPUT 8192
 #define MAX_LINE 4096
 #define MAX_PANE_LINES 2048
+#define MAX_SESSION_NAME 128
 #define VERSION "1.0"
 #define TOP_HEIGHT 7
 #define BOTTOM_HEIGHT 5
@@ -98,6 +99,9 @@ static const char *model_override;
 static const char *timeout_override;
 static int session_continue;
 static const char *session_resume_path;
+/* -S <name>, forwarded verbatim: the backend owns the transcript; the TUI
+   only validates early so a bad name cannot kill the backend silently. */
+static char session_name[MAX_SESSION_NAME];
 static const char *attachment_paths[MAX_ATTACHMENTS];
 static int attachment_count;
 static int semantic_colors;
@@ -200,7 +204,8 @@ usage (FILE *stream)
                    "Options:\n"
                    "-C, --cwd <dir>      set the workspace directory\n"
                    "--full-access        run commands without approval\n"
-                   "--continue           resume the latest saved session\n"
+                   "-S, --session <name> save the transcript to .ai/<name>.jsonl\n"
+                   "--continue           resume the newest saved session, or -S <name>'s\n"
                    "--resume <file>      resume a specific session file\n"
                    "-f <file>            attach a text file to the first prompt\n"
                    "-m, --model <name>   override AI_MODEL for this run\n"
@@ -227,6 +232,20 @@ usage (FILE *stream)
                    "sandbox, and NO_COLOR to disable styling.\n");
 }
 
+/* Mirror of the backend's rule: the name becomes a filename under .ai/,
+   so it must be a plain name with no separators or directory aliases. */
+static int
+valid_session_name (const char *name)
+{
+  size_t length = strlen (name);
+
+  if (length == 0 || length >= MAX_SESSION_NAME)
+    return 0;
+  if (strchr (name, '/') != NULL || strcmp (name, ".") == 0 || strcmp (name, "..") == 0)
+    return 0;
+  return 1;
+}
+
 static int
 parse_arguments (int argc, char **argv)
 {
@@ -236,6 +255,31 @@ parse_arguments (int argc, char **argv)
     {
       if (strcmp (argv[index], "--full-access") == 0)
         full_access = 1;
+      else if (strcmp (argv[index], "-S") == 0 || strcmp (argv[index], "--session") == 0)
+        {
+          if (++index >= argc || argv[index][0] == 0)
+            {
+              fprintf (stderr, "error: -S requires a session name\n");
+              return -1;
+            }
+          if (session_name[0] != 0)
+            {
+              fprintf (stderr, "error: -S may only be supplied once\n");
+              return -1;
+            }
+          if (session_resume_path != NULL)
+            {
+              fprintf (stderr, "error: -S excludes --resume; the path already names a session\n");
+              return -1;
+            }
+          if (!valid_session_name (argv[index]))
+            {
+              fprintf (stderr, "error: -S session name must be a plain filename part of 1 to %d bytes\n",
+                       MAX_SESSION_NAME);
+              return -1;
+            }
+          snprintf (session_name, sizeof (session_name), "%s", argv[index]);
+        }
       else if (strcmp (argv[index], "--continue") == 0)
         {
           if (session_continue || session_resume_path != NULL)
@@ -255,6 +299,11 @@ parse_arguments (int argc, char **argv)
           if (session_resume_path != NULL || session_continue)
             {
               fprintf (stderr, "error: --resume may only be supplied once and excludes --continue\n");
+              return -1;
+            }
+          if (session_name[0] != 0)
+            {
+              fprintf (stderr, "error: --resume excludes -S; the path already names a session\n");
               return -1;
             }
           session_resume_path = argv[index];
@@ -1040,7 +1089,7 @@ start_agent (const char *agent_path, int *agent_stdin, int *agent_stdout)
   if (child == 0)
     {
       int index;
-      char *arguments[13 + 2 * MAX_ATTACHMENTS];
+      char *arguments[15 + 2 * MAX_ATTACHMENTS];
       int count = 0;
 
       dup2 (input_fds[0], STDIN_FILENO);
@@ -1059,6 +1108,11 @@ start_agent (const char *agent_path, int *agent_stdin, int *agent_stdout)
         }
       if (full_access)
         arguments[count++] = "--full-access";
+      if (session_name[0] != 0)
+        {
+          arguments[count++] = "-S";
+          arguments[count++] = session_name;
+        }
       if (session_continue)
         arguments[count++] = "--continue";
       if (session_resume_path != NULL)
