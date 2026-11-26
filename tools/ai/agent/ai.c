@@ -92,7 +92,7 @@
 #define MAX_INITIAL_PROMPT (384 * 1024)
 #define MAX_TIMEOUT 1800
 #define MAX_STEERING_LINES 64
-#define MAX_SKILLS 16
+#define MAX_SKILLS 64
 #define MAX_SKILL_NAME 64
 #define MAX_SKILL_DESC 512
 #define MAX_SKILL_BODY 4096
@@ -1079,15 +1079,19 @@ skill_defined (const char *name)
   return 0;
 }
 
-static void
+/* Returns how many well-formed skills were skipped because the shared
+   budget was already full; the caller reports that, so a silently
+   missing skill cannot go unnoticed. */
+static int
 load_skills_from (const char *base, int skip_known)
 {
   DIR *directory = opendir (base);
   struct dirent *entry;
+  int skipped = 0;
 
   if (directory == NULL)
-    return;
-  while (skill_count < MAX_SKILLS && (entry = readdir (directory)) != NULL)
+    return 0;
+  while ((entry = readdir (directory)) != NULL)
     {
       if (entry->d_name[0] == '.')
         continue;
@@ -1095,10 +1099,16 @@ load_skills_from (const char *base, int skip_known)
         continue;
       if (skip_known && skill_defined (entry->d_name))
         continue;
+      if (skill_count >= MAX_SKILLS)
+        {
+          skipped++;
+          continue;
+        }
       if (read_skill (base, entry->d_name) == 0)
         skill_count++;
     }
   closedir (directory);
+  return skipped;
 }
 
 static void
@@ -1106,14 +1116,18 @@ load_skills (void)
 {
   const char *home = getenv ("HOME");
   char base[MAX_PATH];
+  int skipped;
   int index;
 
-  load_skills_from (SKILLS_DIR, 0);
+  skipped = load_skills_from (SKILLS_DIR, 0);
   if (home != NULL && home[0] != 0)
     {
       if (snprintf (base, sizeof (base), "%s/.ai/skills", home) < (int)sizeof (base))
-        load_skills_from (base, 1);
+        skipped += load_skills_from (base, 1);
     }
+  if (skipped > 0)
+    fprintf (stderr, "warning: %d skill%s skipped; the budget is %d\n", skipped, skipped == 1 ? "" : "s",
+             MAX_SKILLS);
   for (index = 1; index < skill_count; index++)
     {
       Skill key = skills[index];
@@ -5380,21 +5394,6 @@ ai_main (int argc, char **argv)
           else
             print_formatted ("Sandbox: lexical path filter (landlock unavailable on this kernel)\n");
         }
-    }
-  if (skill_count > 0)
-    {
-      char listing[MAX_SKILLS * (MAX_SKILL_NAME + 2) + 16];
-      Buffer buffer = { listing, sizeof (listing), 0 };
-      int index;
-
-      for (index = 0; index < skill_count; index++)
-        if (buffer_append_formatted (&buffer, "%s%s", index == 0 ? "" : ", ", skills[index].name) < 0)
-          break;
-      if (buffer.length < sizeof (listing))
-        listing[buffer.length] = 0;
-      else
-        listing[sizeof (listing) - 1] = 0;
-      print_formatted ("Skills: %s\n", listing);
     }
   if (!one_shot)
     {

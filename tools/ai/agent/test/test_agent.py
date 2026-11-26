@@ -2297,7 +2297,6 @@ class AgentTests(unittest.TestCase):
         self.addCleanup(listener.close)
         self.addCleanup(thread.join, timeout=2)
         with tempfile.TemporaryDirectory() as workspace:
-            self.write_dummy_skill(workspace)
             process = subprocess.Popen(
                 [EXECUTABLE, "-e", "diagnose"],
                 cwd=workspace,
@@ -2311,7 +2310,10 @@ class AgentTests(unittest.TestCase):
                 },
             )
             self.addCleanup(process.kill)
-            self.assertIn("Skills: dummy", process.stdout.readline())
+            deadline = time.monotonic() + 5
+            while client is None and time.monotonic() < deadline:
+                time.sleep(0.01)
+            self.assertIsNotNone(client)
             time.sleep(0.1)
             process.send_signal(signal.SIGINT)
             output, _ = process.communicate(timeout=5)
@@ -3892,7 +3894,6 @@ class AgentTests(unittest.TestCase):
             "/skill dummy\n\nhello\n\n/exit\n\n",
             extra_env={"HOME": home},
         )
-        self.assertIn("Skills: dummy", result.stdout)
         self.assertIn("[skill] dummy added to the context", result.stdout)
         system = self.system_content(endpoint)
         self.assertIn("dummy: Pretend deployment helper", system)
@@ -3925,6 +3926,43 @@ class AgentTests(unittest.TestCase):
         # project-only: no user path, no (user) marker.
         self.assertNotIn(home, system)
 
+    def test_skill_budget_overflow_is_visible(self):
+        home = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, home, ignore_errors=True)
+        skills_root = os.path.join(home, ".ai", "skills")
+        for index in range(65):
+            self.write_skill(skills_root, name=f"s{index:02d}", description="d", body="b\n")
+        result, endpoint = self.run_agent(
+            [text_response("done")],
+            "hello\n\n/exit\n\n",
+            extra_env={"HOME": home},
+        )
+        self.assertIn("1 skill skipped", result.stderr)
+        self.assertIn("the budget is 64", result.stderr)
+        self.assertEqual(self.system_content(endpoint).count("- s"), 64)
+
+    def test_skill_budget_keeps_project_skills_first(self):
+        home = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, home, ignore_errors=True)
+        skills_root = os.path.join(home, ".ai", "skills")
+        for index in range(70):
+            self.write_skill(skills_root, name=f"s{index:02d}", description="d", body="b\n")
+        with tempfile.TemporaryDirectory() as workspace:
+            project_root = os.path.join(workspace, ".agents", "skills")
+            self.write_skill(project_root, name="p1", description="pd", body="pb\n")
+            self.write_skill(project_root, name="p2", description="pd", body="pb\n")
+            result, endpoint = self.run_agent(
+                [text_response("done")],
+                "hello\n\n/exit\n\n",
+                cwd=workspace,
+                extra_env={"HOME": home},
+            )
+        self.assertIn("8 skills skipped", result.stderr)
+        system = self.system_content(endpoint)
+        self.assertIn("p1: pd", system)
+        self.assertIn("p2: pd", system)
+        self.assertEqual(system.count("- s"), 62)
+
     def write_skill(self, root, name="dummy", description="Pretend deployment helper", body="Follow the dummy plan.\n"):
         skill_dir = os.path.join(root, name)
         os.makedirs(skill_dir)
@@ -3955,7 +3993,6 @@ class AgentTests(unittest.TestCase):
                 "hello\n\n/exit\n\n",
                 cwd=workspace,
             )
-        self.assertIn("Skills: dummy", result.stdout)
         system = self.system_content(endpoint)
         self.assertIn("dummy: Pretend deployment helper", system)
         self.assertIn("SKILL.md", system)

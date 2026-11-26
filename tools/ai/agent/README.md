@@ -354,12 +354,16 @@ and adds one system message listing each skill's name and description. When
 a task matches a skill, the model reads the full `SKILL.md` with a read-only
 command, so skill-guided actions still pass the human approval boundary.
 `/skills` lists the skills and `/skill <name>` loads one body into the
-context.
+context. Skills never print at startup — the listing lives in `/skills`
+and the model's system message — so a large library cannot clutter the
+screen.
 
 User-level skills live the same way under `~/.ai/skills/<name>/SKILL.md`
 and apply in every project; a project skill wins when both define the
-same name, and the shared 16-skill budget fills project skills first.
-A missing `HOME` or an unreadable `~/.ai/skills` is silently skipped.
+same name, and the shared 64-skill budget fills project skills first.
+A missing `HOME` or an unreadable `~/.ai/skills` is silently skipped,
+but skills dropped because the budget is full are not: the agent
+prints `warning: N skills skipped; the budget is 64` on stderr.
 The skills system message names both locations with the real home path,
 and notes that user-level skills sit outside a `-C` workspace — there
 the model asks the human to run `/skill <name>`, which the agent

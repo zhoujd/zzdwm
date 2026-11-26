@@ -9,6 +9,16 @@ project winning collisions on name or directory alias, and the skills
 system message names both locations with the real home path plus the
 -C caveat sentence. The full suite (173 tests, two new) passes.
 
+Follow-up (same day): the shared budget is 64 skills (the array is
+zero-initialized statics, so the bump is runtime memory only), and
+load_skills counts entries the full budget skips and prints
+`warning: N skills skipped; the budget is 64` on stderr, so a
+silently missing skill cannot go unnoticed; project skills still load
+first. Two more tests cover the singular and plural warning and the
+priority. With that many names, the startup banner's `Skills:` line made
+the screen noisy, so it was dropped the same day: `/skills`, `/skill
+<name>`, and the model's skills system message are the whole surface now.
+
 Goal:
 
 - A user-level skills directory `~/.ai/skills/<name>/SKILL.md` with the
