@@ -28,7 +28,11 @@ graceful degradation to the lexical filter);
 add-global-config.md (`~/.ai/config` KEY=VALUE lines with the exact
 `AI_*` keys, environment beats file and flags beat both, unknown key
 or malformed line is a startup error, `--init-config` writes a
-commented 600 template inside a 700 `~/.ai`).
+commented 600 template inside a 700 `~/.ai`);
+add-global-skills.md (`~/.ai/skills/<name>/SKILL.md` user-level
+skills beside the project's `.agents/skills`, project wins on name
+collision, skills system message names both bases with the real home
+path and the -C caveat).
 
 ## Tier 2 — bigger bets
 

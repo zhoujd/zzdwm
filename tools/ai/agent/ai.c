@@ -156,6 +156,7 @@ typedef struct
   char name[MAX_SKILL_NAME];
   char description[MAX_SKILL_DESC];
   char directory[MAX_SKILL_NAME];
+  char base[MAX_PATH];
 } Skill;
 
 static Message messages[MAX_MESSAGES];
@@ -1024,15 +1025,15 @@ copy_skill_field (char *destination, size_t capacity, char *value)
 }
 
 static int
-read_skill (const char *directory)
+read_skill (const char *base, const char *directory)
 {
-  char path[MAX_PATH];
+  char path[MAX_PATH + MAX_SKILL_NAME + 16];
   char line[1024];
   Skill *skill;
   FILE *file;
   int frontmatter = 0;
 
-  snprintf (path, sizeof (path), "%s/%s/SKILL.md", SKILLS_DIR, directory);
+  snprintf (path, sizeof (path), "%s/%s/SKILL.md", base, directory);
   file = fopen (path, "r");
   if (file == NULL)
     return -1;
@@ -1040,6 +1041,7 @@ read_skill (const char *directory)
   memset (skill, 0, sizeof (*skill));
   strncpy (skill->name, directory, sizeof (skill->name) - 1);
   strncpy (skill->directory, directory, sizeof (skill->directory) - 1);
+  strncpy (skill->base, base, sizeof (skill->base) - 1);
   while (fgets (line, sizeof (line), file) != NULL)
     {
       trim_spaces (line);
@@ -1061,12 +1063,27 @@ read_skill (const char *directory)
   return 0;
 }
 
-static void
-load_skills (void)
+/* Project skills load from .agents/skills in the working directory;
+   user-level skills from ~/.ai/skills apply in every project. When
+   both define the same skill the project wins: skip_known drops a
+   global directory name that matches an already-loaded skill's name
+   or directory. */
+static int
+skill_defined (const char *name)
 {
-  DIR *directory = opendir (SKILLS_DIR);
-  struct dirent *entry;
   int index;
+
+  for (index = 0; index < skill_count; index++)
+    if (strcmp (skills[index].name, name) == 0 || strcmp (skills[index].directory, name) == 0)
+      return 1;
+  return 0;
+}
+
+static void
+load_skills_from (const char *base, int skip_known)
+{
+  DIR *directory = opendir (base);
+  struct dirent *entry;
 
   if (directory == NULL)
     return;
@@ -1076,10 +1093,27 @@ load_skills (void)
         continue;
       if (strlen (entry->d_name) >= MAX_SKILL_NAME)
         continue;
-      if (read_skill (entry->d_name) == 0)
+      if (skip_known && skill_defined (entry->d_name))
+        continue;
+      if (read_skill (base, entry->d_name) == 0)
         skill_count++;
     }
   closedir (directory);
+}
+
+static void
+load_skills (void)
+{
+  const char *home = getenv ("HOME");
+  char base[MAX_PATH];
+  int index;
+
+  load_skills_from (SKILLS_DIR, 0);
+  if (home != NULL && home[0] != 0)
+    {
+      if (snprintf (base, sizeof (base), "%s/.ai/skills", home) < (int)sizeof (base))
+        load_skills_from (base, 1);
+    }
   for (index = 1; index < skill_count; index++)
     {
       Skill key = skills[index];
@@ -1107,11 +1141,23 @@ add_skills_message (void)
 {
   char content[MESSAGE_SIZE];
   Buffer buffer = { content, sizeof (content), 0 };
+  const char *global_base = NULL;
   int index;
 
   if (skill_count == 0)
     return 0;
-  if (buffer_append_string (&buffer, "Skills available under " SKILLS_DIR "/<skill>/SKILL.md:\n") < 0)
+  for (index = 0; index < skill_count && global_base == NULL; index++)
+    if (strcmp (skills[index].base, SKILLS_DIR) != 0)
+      global_base = skills[index].base;
+  if (global_base == NULL)
+    {
+      if (buffer_append_string (&buffer, "Skills available under " SKILLS_DIR "/<skill>/SKILL.md:\n") < 0)
+        return -1;
+    }
+  else if (buffer_append_formatted (&buffer, "Skills available under " SKILLS_DIR "/<skill>/SKILL.md "
+                                              "(project) or %s/<skill>/SKILL.md (user):\n",
+                                    global_base)
+           < 0)
     return -1;
   for (index = 0; index < skill_count; index++)
     {
@@ -1123,6 +1169,13 @@ add_skills_message (void)
       else if (buffer_append_formatted (&buffer, "- %s (%s): %s\n", skills[index].name, skills[index].directory,
                                         skills[index].description)
                < 0)
+        return -1;
+    }
+  if (global_base != NULL)
+    {
+      if (buffer_append_string (&buffer, "User-level skills live outside a -C workspace; there, ask the "
+                                         "human to run /skill <name> to inject one. ")
+          < 0)
         return -1;
     }
   if (buffer_append_string (&buffer, "When a task matches a skill, read its SKILL.md "
@@ -1139,7 +1192,7 @@ add_skills_message (void)
 static void
 handle_skill_command (char *name)
 {
-  char path[MAX_PATH];
+  char path[MAX_PATH + MAX_SKILL_NAME + 16];
   char body[MAX_SKILL_BODY + 16];
   Skill *skill;
   FILE *file;
@@ -1152,7 +1205,7 @@ handle_skill_command (char *name)
       print_formatted ("error: unknown skill; /skills lists them\n");
       return;
     }
-  snprintf (path, sizeof (path), "%s/%s/SKILL.md", SKILLS_DIR, skill->directory);
+  snprintf (path, sizeof (path), "%s/%s/SKILL.md", skill->base, skill->directory);
   file = fopen (path, "r");
   if (file == NULL)
     {
@@ -5423,7 +5476,7 @@ ai_main (int argc, char **argv)
           int index;
 
           if (skill_count == 0)
-            print_formatted ("No skills found under " SKILLS_DIR ".\n");
+            print_formatted ("No skills found under " SKILLS_DIR " or ~/.ai/skills.\n");
           for (index = 0; index < skill_count; index++)
             print_formatted ("%s: %s\n", skills[index].name, skills[index].description);
           continue;

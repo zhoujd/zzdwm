@@ -3883,17 +3883,62 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(process.returncode, 1)
         self.assertIn("HOME is not set", process.stderr)
 
-    def write_dummy_skill(self, workspace):
-        skill_dir = os.path.join(workspace, ".agents", "skills", "dummy")
+    def test_global_skill_loads_and_injects(self):
+        home = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, home, ignore_errors=True)
+        self.write_skill(os.path.join(home, ".ai", "skills"))
+        result, endpoint = self.run_agent(
+            [text_response("done")],
+            "/skill dummy\n\nhello\n\n/exit\n\n",
+            extra_env={"HOME": home},
+        )
+        self.assertIn("Skills: dummy", result.stdout)
+        self.assertIn("[skill] dummy added to the context", result.stdout)
+        system = self.system_content(endpoint)
+        self.assertIn("dummy: Pretend deployment helper", system)
+        self.assertIn(os.path.join(home, ".ai", "skills"), system)
+        self.assertIn("(user)", system)
+        self.assertIn("Follow the dummy plan.", system)
+
+    def test_project_skill_wins_over_global(self):
+        home = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, home, ignore_errors=True)
+        self.write_skill(
+            os.path.join(home, ".ai", "skills"),
+            description="Global deployment helper",
+            body="Follow the global plan.\n",
+        )
+        with tempfile.TemporaryDirectory() as workspace:
+            self.write_dummy_skill(workspace)
+            result, endpoint = self.run_agent(
+                [text_response("done")],
+                "/skill dummy\n\nhello\n\n/exit\n\n",
+                cwd=workspace,
+                extra_env={"HOME": home},
+            )
+        system = self.system_content(endpoint)
+        self.assertIn("Pretend deployment helper", system)
+        self.assertNotIn("Global deployment helper", system)
+        self.assertIn("Follow the dummy plan.", system)
+        self.assertNotIn("Follow the global plan.", system)
+        # The winning skill is a project one, so the message stays
+        # project-only: no user path, no (user) marker.
+        self.assertNotIn(home, system)
+
+    def write_skill(self, root, name="dummy", description="Pretend deployment helper", body="Follow the dummy plan.\n"):
+        skill_dir = os.path.join(root, name)
         os.makedirs(skill_dir)
-        with open(os.path.join(skill_dir, "SKILL.md"), "w") as handle:
+        with open(os.path.join(skill_dir, "SKILL.md"), "w", encoding="utf-8") as handle:
             handle.write(
                 "---\n"
-                "name: dummy\n"
-                "description: Pretend deployment helper\n"
+                f"name: {name}\n"
+                f"description: {description}\n"
                 "---\n"
-                "Follow the dummy plan.\n"
+                f"{body}"
             )
+
+    def write_dummy_skill(self, workspace):
+        self.write_skill(os.path.join(workspace, ".agents", "skills"))
 
     def system_content(self, endpoint):
         return "".join(

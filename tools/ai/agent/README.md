@@ -356,4 +356,13 @@ command, so skill-guided actions still pass the human approval boundary.
 `/skills` lists the skills and `/skill <name>` loads one body into the
 context.
 
+User-level skills live the same way under `~/.ai/skills/<name>/SKILL.md`
+and apply in every project; a project skill wins when both define the
+same name, and the shared 16-skill budget fills project skills first.
+A missing `HOME` or an unreadable `~/.ai/skills` is silently skipped.
+The skills system message names both locations with the real home path,
+and notes that user-level skills sit outside a `-C` workspace — there
+the model asks the human to run `/skill <name>`, which the agent
+itself reads and injects.
+
 `ai --version` reports the program version, build date, and short Git commit ID.
