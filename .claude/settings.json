@@ -3,23 +3,14 @@
     "INCLUDE_CO_AUTHORED_BY": "false"
   },
   "permissions": {
+    "defaultMode": "acceptEdits",
+    "blockReadsOutsideWorkingDirectories": false,
     "allow": [
-      "Bash(make:*)",
-      "Bash(./tools/ai/agent/build.sh:*)",
-      "Bash(./tools/ai/agent/ai:*)",
-      "Bash(tools/ai/agent/ai:*)",
-      "Bash(cp tools/ai/agent/ai libexec/ai/ai)",
-      "Bash(./libexec/ai/ai --version)",
-      "Bash(git status:*)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)",
-      "Bash(git show:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git check-ignore:*)",
-      "Bash(file:*)",
-      "Bash(readelf:*)",
-      "Bash(python3 -m unittest:*)"
+      "Bash",
+      "Edit",
+      "Write",
+      "WebFetch",
+      "WebSearch"
     ]
   },
   "attribution": {
