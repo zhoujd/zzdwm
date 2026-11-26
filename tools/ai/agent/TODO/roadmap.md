@@ -24,7 +24,11 @@ receive_stream, deltas reassembled into the buffered response shape,
 `AI_STREAM=0` opt-out, main-thread-only output);
 add-landlock.md (landlock.c direct-syscall ruleset in the exec child:
 workspace rw, /tmp scratch, system trees ro, `AI_LANDLOCK=0` opt-out,
-graceful degradation to the lexical filter).
+graceful degradation to the lexical filter);
+add-global-config.md (`~/.ai/config` KEY=VALUE lines with the exact
+`AI_*` keys, environment beats file and flags beat both, unknown key
+or malformed line is a startup error, `--init-config` writes a
+commented 600 template inside a 700 `~/.ai`).
 
 ## Tier 2 — bigger bets
 
@@ -56,8 +60,11 @@ a habit of it).
 
 ## Deliberately out of scope
 
-Plugins, embeddings/RAG, GUI, config-file formats beyond the existing
-`AI_*` env vars — each pulls against the static-musl, one-binary design.
+Plugins, embeddings/RAG, GUI — each pulls against the static-musl,
+one-binary design. (Config files were once listed here;
+add-global-config.md later shipped a `~/.ai/config` reusing the exact
+`AI_*` keys — same key surface, `KEY=VALUE` lines, no schema, so the
+one-binary objection did not apply.)
 
 ## Sandbox status note
 

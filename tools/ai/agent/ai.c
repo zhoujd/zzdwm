@@ -32,6 +32,7 @@
 #include "agent.h"
 #include "tool.h"
 #include "landlock.h"
+#include "config.h"
 
 #include "cJSON.h"
 
@@ -1360,12 +1361,15 @@ configure_environment (void)
   const char *selected_key;
   int timeout;
 
-  value = getenv ("AI_API_URL");
+  if (config_load () < 0)
+    return -1;
+
+  value = config_value ("AI_API_URL");
   if (value == NULL)
     value = DEFAULT_ENDPOINT;
   if (configure_endpoint (value) < 0)
     return -1;
-  value = getenv ("AI_MODEL");
+  value = config_value ("AI_MODEL");
   if (value != NULL && model_override == NULL)
     {
       if (value[0] == 0 || strlen (value) >= sizeof (model))
@@ -1377,7 +1381,7 @@ configure_environment (void)
     }
   if (model_override != NULL)
     strcpy (model, model_override);
-  selected_key = getenv ("AI_API_KEY");
+  selected_key = config_value ("AI_API_KEY");
   if (selected_key == NULL)
     selected_key = getenv ("OPENAI_API_KEY");
   if (selected_key != NULL)
@@ -1389,7 +1393,7 @@ configure_environment (void)
         }
       strcpy (api_key, selected_key);
     }
-  value = getenv ("AI_TIMEOUT_SECONDS");
+  value = config_value ("AI_TIMEOUT_SECONDS");
   if (value != NULL)
     {
       timeout = parse_positive_integer (value, MAX_TIMEOUT);
@@ -1400,7 +1404,7 @@ configure_environment (void)
         }
       api_timeout = timeout;
     }
-  value = getenv ("AI_COMMAND_TIMEOUT_SECONDS");
+  value = config_value ("AI_COMMAND_TIMEOUT_SECONDS");
   if (value != NULL)
     {
       timeout = parse_positive_integer (value, MAX_TIMEOUT);
@@ -1413,7 +1417,7 @@ configure_environment (void)
     }
   if (timeout_override >= 0)
     command_timeout = timeout_override;
-  value = getenv ("AI_TOOL_ROUNDS");
+  value = config_value ("AI_TOOL_ROUNDS");
   if (value != NULL)
     {
       timeout = parse_positive_integer (value, MAX_TOOL_ROUNDS);
@@ -1424,10 +1428,10 @@ configure_environment (void)
         }
       max_tool_rounds = timeout;
     }
-  value = getenv ("AI_STREAM");
+  value = config_value ("AI_STREAM");
   if (value != NULL)
     streaming_enabled = strcmp (value, "0") != 0;
-  value = getenv ("AI_LANDLOCK");
+  value = config_value ("AI_LANDLOCK");
   if (value != NULL)
     landlock_enabled = strcmp (value, "0") != 0;
   subagent_depth = getenv ("AI_SUBAGENT") != NULL;
@@ -5081,6 +5085,7 @@ usage (FILE *stream)
                    "-e, -exec <prompt>   run one non-empty one-shot prompt\n"
                    "--help               show this help\n"
                    "--version            show version information\n"
+                   "--init-config        write a commented ~/.ai/config template and exit\n"
                    "\n"
                    "Exit status:\n"
                    "0                    success\n"
@@ -5097,7 +5102,8 @@ usage (FILE *stream)
                    "OPENAI_API_KEY, AI_TIMEOUT_SECONDS and AI_COMMAND_TIMEOUT_SECONDS.\n"
                    "AI_TOOL_ROUNDS is also supported. Set AI_STREAM=0 to buffer responses\n"
                    "instead of streaming them, AI_LANDLOCK=0 to drop the OS-level workspace\n"
-                   "sandbox, and NO_COLOR to disable styling.\n");
+                   "sandbox, and NO_COLOR to disable styling. The same AI_* keys may live\n"
+                   "in ~/.ai/config (see --init-config); the environment and flags win.\n");
 }
 
 static int
@@ -5229,6 +5235,12 @@ parse_arguments (int argc, char **argv)
       else if (strcmp (argv[index], "--version") == 0)
         {
           print_formatted ("ai %s %s %s\n", VERSION, BUILD_DATE, BUILD_REVISION);
+          exit (0);
+        }
+      else if (strcmp (argv[index], "--init-config") == 0)
+        {
+          if (config_init () < 0)
+            exit (1);
           exit (0);
         }
       else

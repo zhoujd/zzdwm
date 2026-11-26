@@ -3714,6 +3714,175 @@ class AgentTests(unittest.TestCase):
         )
         self.assertIn("tool rounds: 512", result.stdout)
 
+    def make_home(self, text=None, mode=0o600):
+        home = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, home, ignore_errors=True)
+        if text is not None:
+            os.makedirs(os.path.join(home, ".ai"))
+            path = os.path.join(home, ".ai", "config")
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(text)
+            os.chmod(path, mode)
+        return home
+
+    def run_config_agent(self, home, text="diagnose\n\n/exit\n\n"):
+        return self.run_agent(
+            [text_response("done")],
+            text,
+            extra_env={"HOME": home},
+        )
+
+    def test_config_file_supplies_settings(self):
+        home = self.make_home('# comment\n\nAI_MODEL = "quoted model"\nAI_TOOL_ROUNDS = 7\n')
+        result, _ = self.run_config_agent(home)
+        self.assertIn("Model: quoted model", result.stdout)
+        self.assertIn("tool rounds: 7", result.stdout)
+
+    def test_config_file_duplicate_key_last_wins(self):
+        home = self.make_home("AI_MODEL=first\nAI_MODEL=second\n")
+        result, _ = self.run_config_agent(home)
+        self.assertIn("Model: second", result.stdout)
+
+    def test_config_file_environment_wins(self):
+        home = self.make_home("AI_MODEL=file-model\n")
+        result, _ = self.run_config_agent(home)
+        self.assertIn("Model: file-model", result.stdout)
+        result, _ = self.run_agent(
+            [text_response("done")],
+            "diagnose\n\n/exit\n\n",
+            extra_env={"HOME": home, "AI_MODEL": "env-model"},
+        )
+        self.assertIn("Model: env-model", result.stdout)
+        self.assertNotIn("file-model", result.stdout)
+
+    def test_config_file_flag_wins_over_file_and_environment(self):
+        home = self.make_home("AI_MODEL=file-model\n")
+        result, _ = self.run_agent(
+            [text_response("done")],
+            "diagnose\n\n/exit\n\n",
+            model="flag-model",
+            extra_env={"HOME": home, "AI_MODEL": "env-model"},
+        )
+        self.assertIn("Model: flag-model", result.stdout)
+
+    def test_config_file_missing_is_silent(self):
+        home = self.make_home()
+        result, _ = self.run_config_agent(home)
+        self.assertIn("tool rounds: 128", result.stdout)
+        self.assertNotIn(".ai/config", result.stdout + result.stderr)
+
+    def test_config_file_unknown_key_is_rejected(self):
+        home = self.make_home("AI_MODELL=x\n")
+        process = subprocess.run(
+            [EXECUTABLE],
+            input="diagnose\n\n/exit\n\n",
+            text=True,
+            capture_output=True,
+            env={
+                "AI_API_URL": "http://127.0.0.1:1/v1",
+                "PATH": os.environ["PATH"],
+                "HOME": home,
+            },
+            timeout=5,
+        )
+        self.assertEqual(process.returncode, 2)
+        self.assertIn("unknown key AI_MODELL", process.stderr)
+
+    def test_config_file_malformed_line_is_rejected(self):
+        home = self.make_home("AI_MODEL=ok\njust a line\n")
+        process = subprocess.run(
+            [EXECUTABLE],
+            input="diagnose\n\n/exit\n\n",
+            text=True,
+            capture_output=True,
+            env={
+                "AI_API_URL": "http://127.0.0.1:1/v1",
+                "PATH": os.environ["PATH"],
+                "HOME": home,
+            },
+            timeout=5,
+        )
+        self.assertEqual(process.returncode, 2)
+        self.assertIn("malformed line", process.stderr)
+
+    def test_config_file_values_pass_through_validation(self):
+        home = self.make_home("AI_TOOL_ROUNDS=1025\n")
+        process = subprocess.run(
+            [EXECUTABLE],
+            input="diagnose\n\n/exit\n\n",
+            text=True,
+            capture_output=True,
+            env={
+                "AI_API_URL": "http://127.0.0.1:1/v1",
+                "PATH": os.environ["PATH"],
+                "HOME": home,
+            },
+            timeout=5,
+        )
+        self.assertEqual(process.returncode, 2)
+        self.assertIn("AI_TOOL_ROUNDS is invalid", process.stdout + process.stderr)
+
+    def test_config_file_api_key_permission_warning(self):
+        home = self.make_home("AI_API_KEY=secret\n", mode=0o644)
+        result, _ = self.run_config_agent(home)
+        self.assertIn("world-readable", result.stderr)
+        os.chmod(os.path.join(home, ".ai", "config"), 0o600)
+        result, _ = self.run_config_agent(home)
+        self.assertNotIn("world-readable", result.stderr)
+
+    def test_init_config_writes_private_template(self):
+        home = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, home, ignore_errors=True)
+        process = subprocess.run(
+            [EXECUTABLE, "--init-config"],
+            text=True,
+            capture_output=True,
+            env={"PATH": os.environ["PATH"], "HOME": home},
+            timeout=5,
+        )
+        self.assertEqual(process.returncode, 0)
+        self.assertIn("wrote", process.stdout)
+        path = os.path.join(home, ".ai", "config")
+        with open(path, encoding="utf-8") as handle:
+            content = handle.read()
+        self.assertIn("#AI_MODEL=glm-5.3", content)
+        self.assertTrue(content.startswith("#"))
+        self.assertEqual(os.stat(path).st_mode & 0o777, 0o600)
+        self.assertEqual(os.stat(os.path.join(home, ".ai")).st_mode & 0o777, 0o700)
+        # Every template line is commented, so running against the fresh
+        # file leaves every default in place.
+        result, _ = self.run_agent(
+            [text_response("done")],
+            "diagnose\n\n/exit\n\n",
+            extra_env={"HOME": home},
+        )
+        self.assertIn("tool rounds: 128", result.stdout)
+
+    def test_init_config_refuses_overwrite(self):
+        home = self.make_home("AI_MODEL=keep\n")
+        process = subprocess.run(
+            [EXECUTABLE, "--init-config"],
+            text=True,
+            capture_output=True,
+            env={"PATH": os.environ["PATH"], "HOME": home},
+            timeout=5,
+        )
+        self.assertEqual(process.returncode, 1)
+        self.assertIn("already exists", process.stderr)
+        with open(os.path.join(home, ".ai", "config"), encoding="utf-8") as handle:
+            self.assertEqual(handle.read(), "AI_MODEL=keep\n")
+
+    def test_init_config_requires_home(self):
+        process = subprocess.run(
+            [EXECUTABLE, "--init-config"],
+            text=True,
+            capture_output=True,
+            env={"PATH": os.environ["PATH"]},
+            timeout=5,
+        )
+        self.assertEqual(process.returncode, 1)
+        self.assertIn("HOME is not set", process.stderr)
+
     def write_dummy_skill(self, workspace):
         skill_dir = os.path.join(workspace, ".agents", "skills", "dummy")
         os.makedirs(skill_dir)

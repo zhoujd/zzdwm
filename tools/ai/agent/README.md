@@ -155,7 +155,9 @@ line from a crash is skipped rather than fatal, and `--continue` with no
 saved session starts fresh. `/new` restarts the transcript, so a later
 `--continue` replays what was on screen rather than replaced context.
 
-Configuration is read from the environment:
+Configuration is read from four layers in decreasing precedence:
+command-line flags, the environment, `~/.ai/config`, and built-in
+defaults. The environment carries the same keys either way:
 
 * `AI_API_URL`: HTTP endpoint or base URL. Default:
   `http://127.0.0.1:8090/v1/chat/completions`.
@@ -172,6 +174,24 @@ Configuration is read from the environment:
 * `AI_LANDLOCK`: enforce OS-level workspace rules (Landlock) on approved
   commands under `-C`. Default: on; set `AI_LANDLOCK=0` to rely on the
   lexical path filter alone.
+
+The same keys can live in `~/.ai/config`, one `KEY=VALUE` per line
+(quotes optional, `#` comments and blank lines allowed), so a machine
+points every `ai` at its endpoint and model without shell-profile
+exports; a duplicate key's last line wins. The environment is
+per-invocation and outranks the file, and flags outrank both. A missing
+`HOME` or an unreadable file is silently ignored — cron, daemons, and
+fresh installs behave as before — while an unknown key, a malformed
+line, or an oversized value is a startup error naming the key. The file
+can hold `AI_API_KEY` in plaintext, so create it mode 600; the agent
+warns when it carries the key and is group- or world-readable.
+`OPENAI_API_KEY` (a compatibility fallback) and `AI_SUBAGENT` (an
+internal parent-to-child marker) are environment-only and never read
+from the file. `ai --init-config` writes the file as a fully
+commented template of every key with its default — mode 600 inside a
+mode 700 `~/.ai`, private by construction — and exits; it refuses to
+overwrite an existing file, and because every line is commented the
+fresh template changes no behavior.
 
 Endpoints are plain HTTP over IPv4; `AI_API_URL` hosts may be dotted quads or
 hostnames (resolved per request with `getaddrinfo`, first IPv4 address wins).
