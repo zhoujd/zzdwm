@@ -1259,6 +1259,120 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(output.count("好".encode()), 1)
         self.assertTrue(output.rstrip().endswith("你".encode()))
 
+    def test_editor_command_arrow_and_home_end_keys_move(self):
+        master, slave = pty.openpty()
+        process = subprocess.Popen(
+            [EXECUTABLE, "editor"],
+            stdin=slave,
+            stdout=slave,
+            stderr=subprocess.STDOUT,
+            env={"PATH": os.environ["PATH"]},
+        )
+        os.close(slave)
+
+        def cleanup():
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5)
+            try:
+                os.close(master)
+            except OSError:
+                pass
+
+        self.addCleanup(cleanup)
+
+        def read_until(marker, timeout):
+            data = b""
+            deadline = time.time() + timeout
+            while time.time() < deadline and marker not in data:
+                ready, _, _ = select.select([master], [], [], 0.05)
+                if not ready:
+                    continue
+                try:
+                    chunk = os.read(master, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                data += chunk
+            return data
+
+        output = read_until(b"[Edit]: ", 10)
+        os.write(master, b"ab")
+        output += read_until(b"ab", 5)
+        os.write(master, b"\x1b[D")   # Left: cursor between "a" and "b"
+        os.write(master, b"X")        # "aXb"
+        os.write(master, b"\x1b[H")   # Home: cursor at line start
+        os.write(master, b"Y")        # "YaXb"
+        os.write(master, b"\x1b[C")   # Right: cursor past "a"
+        os.write(master, b"\x1b[D")   # Left: cursor back after "a"
+        os.write(master, b"\x1b[F")   # End: cursor after "b"
+        os.write(master, b"\x1b[4~")  # End (tilde form): still after "b"
+        os.write(master, b"!")
+        os.write(master, b"\r")
+        deadline = time.time() + 5
+        while time.time() < deadline and process.poll() is None:
+            output += read_until(b"\n", 0.2)
+        self.assertEqual(process.poll(), 0)
+        self.assertTrue(output.rstrip().endswith("YaXb!".encode()))
+
+    def test_editor_command_line_arrows_move_between_lines(self):
+        master, slave = pty.openpty()
+        process = subprocess.Popen(
+            [EXECUTABLE, "editor"],
+            stdin=slave,
+            stdout=slave,
+            stderr=subprocess.STDOUT,
+            env={"PATH": os.environ["PATH"]},
+        )
+        os.close(slave)
+
+        def cleanup():
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5)
+            try:
+                os.close(master)
+            except OSError:
+                pass
+
+        self.addCleanup(cleanup)
+
+        def read_until(marker, timeout):
+            data = b""
+            deadline = time.time() + timeout
+            while time.time() < deadline and marker not in data:
+                ready, _, _ = select.select([master], [], [], 0.05)
+                if not ready:
+                    continue
+                try:
+                    chunk = os.read(master, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                data += chunk
+            return data
+
+        output = read_until(b"[Edit]: ", 10)
+        os.write(master, b"one")
+        output += read_until(b"one", 5)
+        os.write(master, b"\n")
+        output += read_until(b"[....]: ", 5)
+        os.write(master, b"two")
+        output += read_until(b"two", 5)
+        os.write(master, b"\x1b[A")  # Up: cursor to the end of "one"
+        os.write(master, b"\x1bOD")  # Left (SS3 form): cursor after "on"
+        os.write(master, b"!")
+        os.write(master, b"\r")
+        deadline = time.time() + 5
+        while time.time() < deadline and process.poll() is None:
+            output += read_until(b"\n", 0.2)
+        self.assertEqual(process.poll(), 0)
+        # The pty translates each newline to CRLF on output.
+        self.assertTrue(output.replace(b"\r\n", b"\n").rstrip()
+                        .endswith("on!e\ntwo".encode()))
+
     def test_editor_command_eof_cancels_with_status_130(self):
         master, slave = pty.openpty()
         process = subprocess.Popen(
@@ -1300,7 +1414,8 @@ class AgentTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0)
         self.assertEqual(result.stderr, "")
-        for keys in ("C-J", "C-A / C-E", "C-B / C-F", "C-P / C-N", "C-K", "C-W", "C-U"):
+        for keys in ("C-J", "C-A / C-E", "C-B / C-F", "C-P / C-N",
+                     "arrows / Home / End", "C-K", "C-W", "C-U"):
             self.assertIn(keys, result.stdout)
         self.assertIn("status 130", result.stdout)
 

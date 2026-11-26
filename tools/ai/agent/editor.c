@@ -364,10 +364,39 @@ move_to_last_row (const char *buffer, size_t cursor, size_t length)
     write_all (STDOUT_FILENO, "\033[B", 3);
 }
 
+/* Map the final byte (and tilde parameter) of a plain CSI or SS3 escape
+   sequence onto the control key with the same effect, so arrows and
+   Home/End share the Emacs-style handlers: A/B/C/D are the four arrows,
+   H and F are Home/End, and parameters 1/4 (or 7/8 on rxvt) are their
+   tilde forms. Everything else — function keys, modified sequences —
+   returns 0 and stays ignored. */
+static int
+escape_key (int final, size_t parameter)
+{
+  if (final == 'A')
+    return 16;
+  if (final == 'B')
+    return 14;
+  if (final == 'C')
+    return 6;
+  if (final == 'D')
+    return 2;
+  if (final == 'H')
+    return 1;
+  if (final == 'F')
+    return 5;
+  if (final == '~' && (parameter == 1 || parameter == 7))
+    return 1;
+  if (final == '~' && (parameter == 4 || parameter == 8))
+    return 5;
+  return 0;
+}
+
 /* Read one multiline input on a terminal. Enter (CR) submits and returns
    0; C-J opens another line; Emacs-style keys edit within the current
-   line or walk between lines. Returns -1 on EOF, error, or when C-D ends
-   an empty input. */
+   line or walk between lines, with arrows and Home/End mapped onto the
+   matching C-X keys. Returns -1 on EOF, error, or when C-D ends an
+   empty input. */
 int
 editor_read (const char *prompt, const char *continuation_prompt, char *buffer, size_t capacity)
 {
@@ -375,6 +404,8 @@ editor_read (const char *prompt, const char *continuation_prompt, char *buffer, 
   struct termios original_terminal;
   struct termios raw_terminal;
   int escape_state = 0;
+  int escape_modified = 0;
+  size_t escape_parameter = 0;
 
   editor_init (&editor, buffer, capacity);
   if (tcgetattr (STDIN_FILENO, &original_terminal) != 0)
@@ -432,9 +463,29 @@ editor_read (const char *prompt, const char *continuation_prompt, char *buffer, 
         }
       if (escape_state == 2)
         {
-          if ((unsigned char)character >= 0x40)
-            escape_state = 0;
-          continue;
+          int mapped;
+
+          /* Digits accumulate the tilde parameter; a semicolon, or any
+             other byte below 0x40, marks a modified or unknown sequence.
+             The final byte then closes the sequence: a plain arrow or
+             Home/End rewrites `character` to its control-key equivalent
+             and falls through to the shared handler below, everything
+             else is ignored as before. */
+          if ((unsigned char)character < 0x40)
+            {
+              if (character >= '0' && character <= '9' && !escape_modified)
+                escape_parameter = escape_parameter * 10 + (size_t)(character - '0');
+              else
+                escape_modified = 1;
+              continue;
+            }
+          escape_state = 0;
+          if (escape_modified)
+            continue;
+          mapped = escape_key ((unsigned char)character, escape_parameter);
+          if (mapped == 0)
+            continue;
+          character = mapped;
         }
       if (character == 4)
         {
@@ -660,6 +711,8 @@ editor_read (const char *prompt, const char *continuation_prompt, char *buffer, 
       if (character == 27)
         {
           escape_state = 1;
+          escape_modified = 0;
+          escape_parameter = 0;
           continue;
         }
       if ((unsigned char)character < 0x20)
@@ -708,6 +761,7 @@ editor_usage (FILE *stream)
                    "C-A / C-E            move to the start or end of the line\n"
                    "C-B / C-F            move one rune back or forward\n"
                    "C-P / C-N            move one line up or down\n"
+                   "arrows / Home / End  move like C-P/C-N, C-B/C-F, C-A/C-E\n"
                    "backspace / C-D      delete the rune before or after the cursor\n"
                    "C-K                  kill to the end of the line\n"
                    "C-W                  kill back to the start of the word\n"
