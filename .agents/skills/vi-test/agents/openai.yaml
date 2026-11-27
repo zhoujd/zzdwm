@@ -1,0 +1,4 @@
+interface:
+  display_name: "vi Testing"
+  short_description: "Build vi and run its pty tests"
+  default_prompt: "Use $vi-test to build the busybox vi port and validate it through the pty end-to-end suite and the static publish build."
