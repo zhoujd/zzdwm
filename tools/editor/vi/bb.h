@@ -49,7 +49,12 @@
 #define ENABLE_FEATURE_VI_CRASHME          0
 #define ENABLE_FEATURE_VI_DOT_CMD          1
 #define ENABLE_FEATURE_VI_READONLY         1
-#define ENABLE_FEATURE_VI_REGEX_SEARCH     1
+/* busybox itself defaults this one off: the code is written against
+ * the GNU regex API (re_syntax_options, re_search, REG_STARTEND),
+ * which glibc has and musl has not.  Off keeps the search and the
+ * :s substitute on the plain literal-match path, and the static
+ * publish build the same editor as the local one. */
+#define ENABLE_FEATURE_VI_REGEX_SEARCH     0
 #define ENABLE_FEATURE_VI_SEARCH           1
 #define ENABLE_FEATURE_VI_SET              1
 #define ENABLE_FEATURE_VI_SETOPTS          1
@@ -75,7 +80,7 @@
 #define IF_FEATURE_VI_CRASHME(...)
 #define IF_FEATURE_VI_DOT_CMD(...)          __VA_ARGS__
 #define IF_FEATURE_VI_READONLY(...)         __VA_ARGS__
-#define IF_FEATURE_VI_REGEX_SEARCH(...)     __VA_ARGS__
+#define IF_FEATURE_VI_REGEX_SEARCH(...)
 #define IF_FEATURE_VI_SEARCH(...)           __VA_ARGS__
 #define IF_FEATURE_VI_SET(...)              __VA_ARGS__
 #define IF_FEATURE_VI_SETOPTS(...)          __VA_ARGS__
