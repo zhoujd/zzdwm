@@ -4,7 +4,7 @@ SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 MNT_DIR=$(git rev-parse --show-toplevel)
 WS=$SCRIPT_DIR
 
-. /etc/os-release
+[ -f /etc/os-release ] && . /etc/os-release
 
 build() {
     ./configure --without-x linux
@@ -14,7 +14,7 @@ build() {
 }
 
 release() {
-    ./configure --without-x
+    ./configure --without-x linux
     make clean
     case $ID in
         alpine|void )
@@ -33,22 +33,23 @@ publish() {
         release
     else
         img=zhoujd/alpine
-        opt="
-            --name=build-elvis-1
-            --rm
-            -i
-            -u $(id -u):$(id -g)
-            -v $MNT_DIR:$MNT_DIR
-            -w $WS
-            "
-        docker run $opt $img sh <<'EOF'
-cat /etc/os-release
-./configure --without-x linux
-make clean
-make CC="gcc -Os -s -static"
-EOF
+        docker run \
+            --name="build-elvis-1" \
+            --rm \
+            -i \
+            -u "$(id -u):$(id -g)" \
+            -e INSIDE_DOCKER=1 \
+            -v "$MNT_DIR:$MNT_DIR" \
+            -w "$WS" \
+            "$img" \
+            sh -c '
+            cat /etc/os-release &&
+            ./configure --without-x linux &&
+            make clean &&
+            make CC="gcc -Os -s -static"
+            ' || exit 1
+        upx --ultra-brute elvis fmt ctags
     fi
-    upx --ultra-brute elvis fmt ctags
     echo "Build publish done"
 }
 
@@ -58,7 +59,7 @@ clean() {
 }
 
 install() {
-    if [ "$(whoami)" = "root" ]; then
+    if [ "$(id -u)" -eq 0 ]; then
         make install
     else
         sudo make install
@@ -67,7 +68,7 @@ install() {
 }
 
 uninstall() {
-    if [ "$(whoami)" == "root" ]; then
+    if [ "$(id -u)" -eq 0 ]; then
         make uninstall
     else
         sudo make uninstall
