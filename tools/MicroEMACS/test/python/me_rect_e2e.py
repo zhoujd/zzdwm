@@ -18,7 +18,7 @@ from common import drain, kill, save_quit, spawn
 UP, DOWN, RIGHT, LEFT = b"\x1bOA", b"\x1bOB", b"\x1bOC", b"\x1bOD"
 SETMARK = b"\x00"                 # C-Space (C-@)
 ANCHOR = b"\x18r\x00"             # C-X r C-@ (C-Space sends the same NUL)
-COPY = b"\x18r\x1bw"             # C-X r M-w
+COPY = b"\x18r\x1bW"             # C-X r M-W
 KILL = b"\x18rk"                 # C-X r k
 DELETE = b"\x18rd"               # C-X r d
 CLEAR = b"\x18rc"                # C-X r c
@@ -117,17 +117,30 @@ def main():
         expect(content == b"\tabc\nplain\n",
                "one undo restores the whole delete (%r)" % content)
 
-        # The region verb's capital M-W copies as GNU's lower-case
-        # M-w does: copy cols [0,2) mark-to-dot, then yank the copy
-        # back on the mark's line.
+        # The region verb's M-W copies: copy cols [0,2) mark-to-dot,
+        # then yank the copy back on the mark's line.
         content, terminal = run(
             directory, "rect_k3.txt", b"abcd\nwxyz\n",
-            [SETMARK, DOWN + RIGHT * 2, b"\x18r\x1bW",   # C-X r M-W
+            [SETMARK, DOWN + RIGHT * 2, COPY,            # C-X r M-W
              UP, YANK])
         expect(b"[Rectangle of 2 lines copied]" in terminal,
-               "the capital M-W copies the rectangle")
+               "the M-W copies the rectangle")
         expect(content == b"ababcd\nwxwxyz\n",
                "the M-W copy yanks back (%r)" % content)
+
+        # The verbs' own chords work beside the GNU keys: C-w kills
+        # the marked rectangle and C-y yanks it back, so the file
+        # ends where it started, both messages on the way.
+        content, terminal = run(
+            directory, "rect_k4.txt", b"abcd\nwxyz\n",
+            [SETMARK, DOWN + RIGHT * 2,
+             b"\x18r\x17",                               # C-X r C-w
+             b"\x18r\x19"])                              # C-X r C-y
+        expect(b"[Rectangle of 2 lines killed]" in terminal
+               and b"[Rectangle of 2 lines yanked]" in terminal,
+               "the verbs' chords kill and yank")
+        expect(content == b"abcd\nwxyz\n",
+               "the chord kill and yank restore the file (%r)" % content)
 
         # Clear blanks in place on the cell grid: the tab becomes the
         # eight spaces it renders as, and nothing after it moves.
@@ -248,12 +261,13 @@ def main():
 
         # The prefix takes exactly one key: an unknown one aborts with
         # a message the way C-X 4 does, and C-G aborts cleanly.  The
-        # old C-w chord from the keying before the GNU alignment is
-        # unknown now, the GNU keys having taken its place.
+        # old C-c clear chord from the keying before the GNU
+        # alignment is unknown now, the GNU keys having taken its
+        # place -- the verbs' C-w and C-y chords stayed.
         content, terminal = run(
             directory, "rect_f.txt", b"one\ntwo\n",
             [b"\x18r\x0e",                            # C-X r C-N
-             b"\x18r\x17",                            # C-X r C-w
+             b"\x18r\x03",                            # C-X r C-c
              b"\x18r\x07"])                           # C-X r C-G
         expect(terminal.count (b"Unknown C-X r command") == 2,
                "an unknown key after the prefix is refused")

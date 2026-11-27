@@ -1325,10 +1325,11 @@ renders as. Lines shorter than the rectangle read as blanks where
 text is copied. The rectangle clipboard is separate from the kill
 buffer. The prefix is **C-X r**\index{C-X r}, as in GNU Emacs, and
 the keys are GNU Emacs's own: **c** clear, **d** delete, **k** kill,
-**y** yank, **o** open, and **t** string, with **M-w** copy
-(**M-W**\index{M-W}, as the region verb is written here, taken too),
-and the anchor on **C-@**\index{C-@}, the **set-mark** key, as
-GNU's rectangles run between point and mark.
+**y** yank, **o** open, and **t** string, with **M-W**
+\index{M-W} copy, as the region verb is written here, and the
+verbs' chords **C-w** kill and **C-y** yank taken too, and the
+anchor on **C-@**\index{C-@}, the **set-mark** key, as GNU's
+rectangles run between point and mark.
 
 C-X r C-@
 
@@ -1388,16 +1389,15 @@ C-X r k
     Copy the rectangle as **copy-rectangle** does, then remove its
     characters from each line. Dot is left on the upper left corner
     of what was the rectangle. One **C-X U** undoes the whole
-    command.
+    command. The region verb's chord, **C-X r C-w**, works too.
 
-C-X r M-w
+C-X r M-W
 
-:   **copy-rectangle**\index{C-X r M-w}\index{copy-rectangle}
+:   **copy-rectangle**\index{C-X r M-W}\index{copy-rectangle}
 
     Copy the rectangle between the corners into the
     rectangle clipboard, leaving the buffer alone. A line of the
     rectangle that ends before the right edge contributes blanks.
-    The capital **M-W** works too, as the region verb is written.
 
 C-X r y
 
@@ -1406,7 +1406,8 @@ C-X r y
     Insert the rectangle clipboard at dot's column, one slice on dot's
     line and the lines below. A line that ends before the column is
     padded out with spaces, and the yank stops at the end of the
-    buffer, reporting how many lines fit.
+    buffer, reporting how many lines fit. The region verb's chord,
+    **C-X r C-y**, works too.
 
 # Words
 
@@ -3716,11 +3717,19 @@ C-X r k
 
 :   kill-rectangle
 
-C-X r M-w
+C-X r C-w
+
+:   kill-rectangle
+
+C-X r M-W
 
 :   copy-rectangle
 
 C-X r y
+
+:   yank-rectangle
+
+C-X r C-y
 
 :   yank-rectangle
 

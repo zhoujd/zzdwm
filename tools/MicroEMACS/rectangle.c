@@ -784,10 +784,10 @@ abortrectangle (int f, int n, int k)
  * The C-X r prefix, as in GNU Emacs: read the next key and run the
  * rectangle command it names.  The keys are GNU Emacs's own C-x r
  * keys, with c clear, d delete, k kill, o open, t string, and y
- * yank, and M-w copy (GNU's lower case, the capital M-W the region
- * verb is written with here taken too); the anchor sits on C-@, the
- * set-mark key.  While the prefix waits for its key, the rectangle
- * the command would use is highlighted: the
+ * yank, and M-W copy, as the region verb is written here, with the
+ * verbs' own chords C-w kill and C-y yank taken too; the anchor
+ * sits on C-@, the set-mark key.  While the prefix waits for its
+ * key, the rectangle the command would use is highlighted: the
  * anchor's when one is set, and otherwise the mark's, which only
  * this window shows ("rectmarkshow" lets the display draw it).
  */
@@ -806,12 +806,13 @@ rectprefix (int f, int n, int k)
     {KCTRL | '@', rectanchor},
     {'c',         rectclear},
     {'d',         rectdelete},
-    {KMETA | 'w', rectcopy},
     {KMETA | 'W', rectcopy},
     {'k',         rectkill},
+    {KCTRL | 'W', rectkill},
     {'o',         rectopen},
     {'t',         rectstring},
     {'y',         rectyank},
+    {KCTRL | 'Y', rectyank},
     {KCTRL | 'G', abortrectangle}
   };
   int key;

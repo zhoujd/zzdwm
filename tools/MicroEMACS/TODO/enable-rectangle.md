@@ -15,10 +15,11 @@ the prefix to `C-X r`, as in GNU Emacs, by folding the plain
 incremental search on `C-S`/`C-R` — a bare `RET` before any search
 text drops into the plain command.  The keys are GNU Emacs's own
 C-x r keys — `k` kill, `d` delete, `y` yank, `c` clear, `o` open,
-`t` string, and `M-w` copy, the capital `M-W` the region verb is
-written with taken too — after the verbs first sat one prefix
-deeper (`C-X r C-w` kill, `C-X r M-W` copy, `C-X r C-y` yank, with
-`C-c` clear and `C-o` open); `delete-rectangle` is GNU's `C-x r d`,
+`t` string, and `M-W` copy, as the region verb is written — with
+the verbs' chords `C-X r C-w` kill and `C-X r C-y` yank kept on
+beside the GNU keys, from the keying that first sat the verbs one
+prefix deeper (`C-X r C-c` clear and `C-X r C-o` open went when
+the GNU keys came); `delete-rectangle` is GNU's `C-x r d`,
 the cut without the clipboard save, which leaves the last copy or
 kill in place.  The anchor sits on `C-@`, the set-mark key.  With no anchor
 set the operators take the corners from mark-to-dot instead, the
@@ -48,11 +49,11 @@ click moves the far corner and a plain click drops the anchor
 region highlights never paint together.
 
 Covered by `test/python/me_rect_e2e.py` (the operators on their
-GNU keys, delete leaving the clipboard alone, the capital `M-W`
-copy, undo and
+GNU keys, delete leaving the clipboard alone, the `M-W` copy and
+the verbs' `C-w`/`C-y` chords, undo and
 redo, the read-only guard, the lost-anchor case, prefix errors,
-the pre-alignment chords among the refused, the anchor highlight,
-the shifted and control mouse drag, the
+the retired clear and open chords among the refused, the anchor
+highlight, the shifted and control mouse drag, the
 mark-to-dot corners, and the prefix's preview of them) and
 `test/python/me_search_e2e.py` (the
 search merge).
