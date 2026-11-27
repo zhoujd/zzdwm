@@ -73,6 +73,11 @@ clean:
 test: $(TARGET)
 	python3 test/test_agent.py
 
-.PHONY: all clean release test install FORCE
+# Kept out of "test": these cases replay full sessions and compile the
+# patched files with cc, which not every CI runner can do.
+test-ai: $(TARGET)
+	python3 test/test_ai.py
+
+.PHONY: all clean release test test-ai install FORCE
 
 FORCE:

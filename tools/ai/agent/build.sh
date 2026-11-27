@@ -14,6 +14,7 @@ Option:
 build|-b        build ai and ai-tui
 release|-r      release with local toolchains
 publish|-p      publish Linux static ai and ai-tui
+test|-t         run the ai regression tests (needs cc)
 clean|-c        clean build products
 EOF
 }
@@ -58,6 +59,11 @@ clean() {
     echo "Clean done"
 }
 
+test_ai() {
+    make -C "$SCRIPT_DIR" test-ai
+    echo "Test done"
+}
+
 case ${1:-""} in
     build|-b )
         build
@@ -67,6 +73,9 @@ case ${1:-""} in
         ;;
     publish|-p )
         publish
+        ;;
+    test|-t )
+        test_ai
         ;;
     clean|-c )
         clean
