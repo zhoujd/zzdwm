@@ -264,6 +264,20 @@ class SlowResponse:
         client.sendall(b"0\r\n\r\n")
 
 
+def reasoning_storm(count):
+    """Raw reasoning_content events, as a reasoning model emits them before
+    its first answer token. The scanner skips them, but their raw bytes must
+    not exhaust the receive buffer."""
+    return [
+        "data: "
+        + json.dumps(
+            {"choices": [{"index": 0, "delta": {"reasoning_content": "w" * 96}}]},
+            separators=(",", ":"),
+        )
+        for _ in range(count)
+    ]
+
+
 def plan_response(checklist, call_id="call-plan"):
     return {
         "choices": [
@@ -4750,6 +4764,45 @@ class AgentTests(unittest.TestCase):
             "[usage] tokens: 12.4k in / 3.1k out, 1 rounds, context 12.4k",
             result.stdout,
         )
+
+    def test_stream_discards_reasoning_deltas_beyond_buffer(self):
+        # The raw stream is scanned and discarded, never retained: a stream
+        # larger than the response buffer (256 KiB) whose reasoning deltas
+        # carry no answer must still deliver the answer, on the first
+        # attempt, with no retry storm.
+        response = sse_response(deltas=["answer"], extra_lines=reasoning_storm(2600))
+        self.assertGreater(len(response), 262144)
+        result, endpoint = self.run_agent([response], "go\n\n/exit\n\n")
+        self.assertIn("answer", result.stdout)
+        self.assertNotIn("retrying", result.stdout)
+        self.assertNotIn("AI stream ended without content", result.stdout)
+        self.assertEqual(len(endpoint.requests), 1)
+
+    def test_stream_discards_reasoning_before_tool_call(self):
+        # The tool-call round is the same story: reasoning first, then the
+        # call, and the call must survive a reasoning storm that dwarfs the
+        # response buffer.
+        response = sse_response(
+            tool_call_deltas=[
+                {
+                    "index": 0,
+                    "id": "call-1",
+                    "type": "function",
+                    "function": {"name": "run_terminal_command", "arguments": '{"command": "echo hi"}'},
+                }
+            ],
+            extra_lines=reasoning_storm(2600),
+        )
+        self.assertGreater(len(response), 262144)
+        result, endpoint = self.run_agent(
+            [response, text_response("done")],
+            "diagnose\n\na\n\n\n/exit\n\n",
+        )
+        self.assertIn("[AI requests command]: echo hi", result.stdout)
+        self.assertIn("hi", result.stdout)
+        self.assertNotIn("retrying", result.stdout)
+        self.assertNotIn("AI stream ended without content", result.stdout)
+        self.assertEqual(len(endpoint.requests), 2)
 
     def test_ai_stream_zero_sends_no_stream_flag(self):
         result, endpoint = self.run_agent(

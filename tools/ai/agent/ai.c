@@ -1652,8 +1652,14 @@ find_newest_session (void)
 
 #define MAX_SSE_EVENT (128 * 1024)
 #define MAX_STREAM_ARGUMENTS (MAX_PATCH + MAX_COMMAND + 1024)
+/* Extracted answer text: the assembled reply must still fit the response
+   buffer, but reasoning models can easily write more prose than MAX_LINE. */
+#define MAX_STREAM_CONTENT (128 * 1024)
+/* Sanity bound on the raw stream: SSE framing and reasoning deltas are
+   scanned and discarded, so this only guards a runaway stream. */
+#define MAX_STREAM_TOTAL (32 * 1024 * 1024)
 
-static char stream_content[MAX_LINE];
+static char stream_content[MAX_STREAM_CONTENT];
 static volatile size_t stream_available;
 static volatile size_t stream_flushed;
 static volatile sig_atomic_t stream_active;
@@ -2058,14 +2064,23 @@ stream_finish (StreamState *state, char *body, size_t capacity, size_t *response
   return 0;
 }
 
+/* Streaming receiver. SSE events are scanned and their payload extracted
+   incrementally, so the raw stream bytes are never retained: only the
+   answer text, the tool calls, and the usage counters are kept. The raw
+   stream may therefore exceed the response buffer by any amount — a
+   reasoning model can emit megabytes of discarded reasoning deltas
+   before its first answer token — and the response buffer is used solely
+   for the final assembled JSON. */
 static int
 receive_stream (int socket_fd, char *response, size_t capacity, size_t total,
                 size_t *response_length, char **body, int chunked, int *error_number)
 {
   static StreamState state;
+  static char scratch[16 * 1024];
   time_t deadline;
   fd_set read_set;
   size_t body_offset = (size_t)(*body - response);
+  size_t streamed = 0;
 
   memset (&state, 0, sizeof (state));
   state.scan.chunked = chunked;
@@ -2078,7 +2093,7 @@ receive_stream (int socket_fd, char *response, size_t capacity, size_t total,
   stream_feed_bytes (&state, *body, total - body_offset);
   /* A streaming reply can run long, so the timeout is per quiet period. */
   deadline = time (NULL) + api_timeout;
-  while (!state.done && !state.failed && total < capacity - 1)
+  while (!state.done && !state.failed)
     {
       ssize_t received;
       int ready;
@@ -2114,7 +2129,7 @@ receive_stream (int socket_fd, char *response, size_t capacity, size_t total,
           *error_number = ETIMEDOUT;
           return -3;
         }
-      received = recv (socket_fd, response + total, capacity - 1 - total, 0);
+      received = recv (socket_fd, scratch, sizeof (scratch), 0);
       if (received < 0)
         {
           if (errno == EINTR && !interrupted)
@@ -2124,10 +2139,15 @@ receive_stream (int socket_fd, char *response, size_t capacity, size_t total,
         }
       if (received == 0)
         break;
-      total += (size_t)received;
-      response[total] = 0;
+      streamed += (size_t)received;
+      if (streamed > MAX_STREAM_TOTAL)
+        {
+          print_formatted ("error: AI stream exceeds total size limit\n");
+          *error_number = EOVERFLOW;
+          return -5;
+        }
       deadline = time (NULL) + api_timeout;
-      stream_feed_bytes (&state, response + total - (size_t)received, (size_t)received);
+      stream_feed_bytes (&state, scratch, (size_t)received);
     }
   stream_active = 0;
   if (state.failed)
@@ -2152,7 +2172,8 @@ receive_stream (int socket_fd, char *response, size_t capacity, size_t total,
       *error_number = EPROTO;
       return -4;
     }
-  if (stream_finish (&state, *body, capacity - body_offset, response_length) < 0)
+  *body = response;
+  if (stream_finish (&state, response, capacity, response_length) < 0)
     {
       print_formatted ("error: AI response exceeds conversation limit\n");
       *error_number = EOVERFLOW;
