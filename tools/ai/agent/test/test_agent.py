@@ -2076,6 +2076,32 @@ class AgentTests(unittest.TestCase):
         with open(os.path.join(workspace, "app.txt")) as handle:
             self.assertEqual(handle.read(), "original\n")
 
+    def test_apply_patch_edits_file_with_multiline_search(self):
+        # A SEARCH block spanning several lines must match the consecutive
+        # file lines byte for byte, not just the first line.
+        workspace = self.make_workspace({"app.txt": "keep\nalpha\nbeta\nkeep too\n"})
+        patch = (
+            "app.txt\n"
+            "<<<<<<< SEARCH\n"
+            "alpha\n"
+            "beta\n"
+            "=======\n"
+            "ALPHA\n"
+            "BETA\n"
+            ">>>>>>> REPLACE\n"
+        )
+        result, endpoint = self.run_agent(
+            [named_tool_response("apply_patch", {"patch": patch}), text_response("done")],
+            "diagnose\n\na\n\n\n/exit\n\n",
+            workspace=workspace,
+        )
+        replies = self.tool_replies(endpoint)
+        self.assertIn(
+            "[patch applied: 1 hunk, +2 -2 lines] to app.txt", replies[0]["content"]
+        )
+        with open(os.path.join(workspace, "app.txt")) as handle:
+            self.assertEqual(handle.read(), "keep\nALPHA\nBETA\nkeep too\n")
+
     def test_apply_patch_reports_missing_search_text(self):
         workspace = self.make_workspace({"app.txt": "alpha\nbeta\n"})
         patch = (

@@ -249,20 +249,22 @@ tool_list_dir (const char *root, const char *path, ToolResult *result)
 
 /* Whole-line SEARCH/REPLACE matching. The block must start at a line
    beginning and end at a line boundary, and must be unique, so a patch can
-   never land in the wrong place silently. */
+   never land in the wrong place silently. A block may span several lines,
+   so the needle has to fit the remaining content, not just the current
+   line. */
 static const char *
 find_line_block (const char *content, const char *needle, size_t needle_length, int *occurrences)
 {
+  const char *content_end = content + strlen (content);
   const char *line = content;
   const char *found = NULL;
 
   *occurrences = 0;
-  while (*line != 0)
+  while (line < content_end)
     {
-      const char *end = strchr (line, '\n');
-      ptrdiff_t available = end != NULL ? end - line : (ptrdiff_t)strlen (line);
+      const char *end = memchr (line, '\n', (size_t)(content_end - line));
 
-      if (available >= (ptrdiff_t)needle_length && memcmp (line, needle, needle_length) == 0
+      if ((size_t)(content_end - line) >= needle_length && memcmp (line, needle, needle_length) == 0
           && (line[needle_length] == '\n' || line[needle_length] == 0))
         {
           (*occurrences)++;
