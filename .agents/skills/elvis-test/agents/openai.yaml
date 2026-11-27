@@ -1,0 +1,4 @@
+interface:
+  display_name: "elvis Testing"
+  short_description: "Build elvis and verify it"
+  default_prompt: "Use $elvis-test to build the elvis vi clone and verify it through the build.sh publish flow."
