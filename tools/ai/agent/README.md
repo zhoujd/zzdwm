@@ -229,8 +229,12 @@ round-trip instead of after the whole reply buffers. Deltas are reassembled
 into the same message the buffered path parses, so tool calls, session logs,
 and conversation state are byte-identical; keep-alive comments, `event:` and
 `id:` fields are ignored, and a plain JSON reply (streaming declined) falls
-back to buffering automatically. The API timeout acts as a per-quiet-period
-limit while streaming — every received chunk resets it.
+back to buffering automatically. Raw stream bytes are scanned and discarded,
+never stored: reasoning models can emit megabytes of reasoning deltas before
+their first answer token, and only the answer text, tool calls, and usage
+counters are kept, so a long stream cannot exhaust the receive buffer. The
+API timeout acts as a per-quiet-period limit while streaming — every received
+chunk resets it.
 
 Token usage is reported from the endpoint's `usage` object. The interactive
 agent prints one line at exit, and one-shot mode prints it after each round:
