@@ -445,6 +445,94 @@ print_formatted (const char *format, ...)
     write_all (STDOUT_FILENO, "\033[0m", 4);
 }
 
+/* Data-derived text — model answers, tool output, endpoint messages — is
+   content, not a terminal program: one stray "ESC ( 0" inside a streamed
+   answer leaves the terminal in the DEC graphics charset, and every later
+   line renders as line drawing until something resets it. Such bytes
+   therefore reach the screen with their control bytes rendered visible:
+   \n, \r, and \t are text structure and pass through, every other control
+   byte and DEL prints as \xNN in the notation escape_line already quotes
+   for the model, and bytes 0x80 and above are untouched UTF-8. Nothing is
+   concealed, and nothing written this way can reprogram the terminal.
+   Returns the number of input bytes consumed; the output is always
+   NUL-terminated. */
+static size_t
+sanitize_data_text (char *output, size_t capacity, const char *data, size_t length)
+{
+  static const char digits[] = "0123456789abcdef";
+  size_t position = 0;
+  size_t index;
+
+  if (capacity == 0)
+    return 0;
+  /* Keep room behind the worst four-byte escape an iteration can emit. */
+  for (index = 0; index < length && position + 4 < capacity; index++)
+    {
+      unsigned char byte = (unsigned char)data[index];
+
+      if (byte == '\n' || byte == '\r' || byte == '\t' || (byte >= 0x20 && byte != 0x7f))
+        output[position++] = (char)byte;
+      else
+        {
+          output[position++] = '\\';
+          output[position++] = 'x';
+          output[position++] = digits[byte >> 4];
+          output[position++] = digits[byte & 15];
+        }
+    }
+  output[position] = 0;
+  return index;
+}
+
+/* Echo data text of any size with sanitize_data_text's escapes, in
+   bounded pieces so a stream stays O(n). */
+static int
+write_sanitized (const char *data, size_t length)
+{
+  char piece[MAX_LINE];
+  size_t offset = 0;
+
+  while (offset < length)
+    {
+      size_t consumed = sanitize_data_text (piece, sizeof (piece), data + offset, length - offset);
+
+      if (consumed == 0)
+        break;
+      if (write_all (STDOUT_FILENO, piece, strlen (piece)) < 0)
+        return -1;
+      offset += consumed;
+    }
+  /* A newline survives escaping, so the last raw byte decides whether the
+     cursor sits mid-line; an empty write leaves the state alone. */
+  if (length > 0)
+    output_partial_line = data[length - 1] != '\n';
+  return 0;
+}
+
+/* One line of data text with the same escapes, printed through
+   print_formatted so its length cap and prefix styling match the raw
+   text it replaces. */
+static void
+print_data_line (const char *text, size_t length)
+{
+  char escaped[MAX_LINE];
+
+  sanitize_data_text (escaped, sizeof (escaped), text, length);
+  print_formatted ("%s\n", escaped);
+}
+
+/* A constant label with one data string appended on the same line: the
+   combined text keeps the label's styling, and the data keeps its
+   escapes. */
+static void
+print_labeled_data (const char *label, const char *text)
+{
+  char escaped[MAX_LINE];
+
+  sanitize_data_text (escaped, sizeof (escaped), text, strlen (text));
+  print_formatted ("%s%s\n", label, escaped);
+}
+
 /* Status markers must start on their own line; streamed deltas or command
    output can leave the cursor mid-line, so step below that first. */
 static void
@@ -493,7 +581,7 @@ queue_live_line (const char *text, size_t length)
     }
   pthread_mutex_unlock (&steering_mutex);
   if (queued)
-    print_formatted ("[live steering queued]: %s\n", text);
+    print_labeled_data ("[live steering queued]: ", text);
   else
     print_formatted ("[live steering dropped]: steering queue is full\n");
 }
@@ -1744,7 +1832,12 @@ stream_dispatch (StreamState *state)
       const cJSON *detail = cJSON_GetObjectItemCaseSensitive (item, "message");
 
       if (copy_json_string (detail, message, sizeof (message)) == 0)
-        print_formatted ("error: AI endpoint: %s\n", message);
+        {
+          char safe[MAX_LINE];
+
+          sanitize_data_text (safe, sizeof (safe), message, strlen (message));
+          print_formatted ("error: AI endpoint: %s\n", safe);
+        }
       else
         print_formatted ("error: AI endpoint returned an error response\n");
       cJSON_Delete (event);
@@ -1990,9 +2083,8 @@ stream_flush_output (int final)
           print_formatted ("\n[AI Response]:\n");
           stream_printed_content = 1;
         }
-      write_all (STDOUT_FILENO, stream_content + stream_flushed, pending);
+      write_sanitized (stream_content + stream_flushed, pending);
       stream_flushed = available;
-      output_partial_line = stream_content[stream_flushed - 1] != '\n';
     }
   /* The request thread and the main loop both finish the stream; emit the
      terminating newline only once. */
@@ -2360,7 +2452,13 @@ receive_response (int socket_fd, char *response, size_t capacity, size_t *respon
             detail = cJSON_GetObjectItemCaseSensitive (payload, "message");
         }
       if (cJSON_IsString (detail))
-        print_formatted ("error: AI endpoint returned HTTP %d: %.200s\n", status, cJSON_GetStringValue (detail));
+        {
+          char safe[MAX_LINE];
+
+          sanitize_data_text (safe, sizeof (safe), cJSON_GetStringValue (detail),
+                              strlen (cJSON_GetStringValue (detail)));
+          print_formatted ("error: AI endpoint returned HTTP %d: %.200s\n", status, safe);
+        }
       else
         print_formatted ("error: AI endpoint returned HTTP %d\n", status);
       cJSON_Delete (payload);
@@ -3255,17 +3353,17 @@ add_assistant_response (const char *content, const ToolCall *calls, size_t call_
   return add_message (json, buffer.length, call_count != 0 ? ROLE_ASSISTANT_TOOLS : ROLE_ASSISTANT);
 }
 
-/* Echo one chunk to the terminal and keep its tail in the capture
-   buffer, sliding earlier bytes out once it fills. */
+/* Echo one chunk to the terminal (with control bytes visible) and keep
+   its tail in the capture buffer, sliding earlier bytes out once it
+   fills. */
 static int
 capture_chunk (const char *chunk, ssize_t received, char *output, size_t capacity, size_t *captured,
                size_t *dropped)
 {
   size_t amount = (size_t)received;
 
-  if (write_all (STDOUT_FILENO, chunk, (size_t)received) < 0)
+  if (write_sanitized (chunk, (size_t)received) < 0)
     return -1;
-  output_partial_line = chunk[received - 1] != '\n';
   /* Keep the tail: once the buffer fills, slide it so the model sees the
      end of the output, where errors usually are. A single read never
      exceeds sizeof(chunk), far below capacity. */
@@ -3558,7 +3656,6 @@ task_run (const char *prompt, char *output, size_t capacity, size_t *output_leng
           received = read (pipe_fds[0], chunk, sizeof (chunk));
           if (received > 0)
             {
-              write_all (STDOUT_FILENO, chunk, (size_t) received);
               if (capture_chunk (chunk, received, output, capacity, &captured, &dropped) < 0)
                 break;
             }
@@ -3579,7 +3676,6 @@ task_run (const char *prompt, char *output, size_t capacity, size_t *output_leng
                 continue;
               if (received <= 0)
                 break;
-              write_all (STDOUT_FILENO, chunk, (size_t) received);
               if (capture_chunk (chunk, received, output, capacity, &captured, &dropped) < 0)
                 break;
             }
@@ -3667,7 +3763,7 @@ run_shell_prompt (char *command)
       print_formatted ("usage: ! <command> runs it here; its output joins the conversation\n");
       return;
     }
-  print_formatted ("\n[shell command]: %s\n", command);
+  print_labeled_data ("\n[shell command]: ", command);
   shell_direct = 1;
   if (run_command (command, output, CAPTURE_SIZE, &output_length, &dropped_length, &status, &timed_out) < 0)
     {
@@ -3758,8 +3854,13 @@ reap_jobs (void)
         jobs[index].exit_status = 1;
       jobs[index].finished = time (NULL);
       jobs[index].state = JOB_EXITED;
-      print_formatted ("[job %d exited] status %d after %lds: %s\n", jobs[index].id, jobs[index].exit_status,
-                       (long)(jobs[index].finished - jobs[index].started), jobs[index].command);
+      {
+        char label[80];
+
+        snprintf (label, sizeof (label), "[job %d exited] status %d after %lds: ", jobs[index].id,
+                  jobs[index].exit_status, (long)(jobs[index].finished - jobs[index].started));
+        print_labeled_data (label, jobs[index].command);
+      }
       changed = 1;
     }
   if (changed)
@@ -4035,7 +4136,7 @@ command_decision (ToolCall *call, int *run, char *steer, size_t steer_capacity)
           if (read_interactive_line ("[edited command]: ", call->command, sizeof (call->command)) < 0
               || call->command[0] == 0)
             continue;
-          print_formatted ("[AI command edited to]: %s\n", call->command);
+          print_labeled_data ("[AI command edited to]: ", call->command);
           *run = 1;
           return 0;
         }
@@ -4307,11 +4408,12 @@ record_plan (const char *checklist)
   plan_active = 1;
   session_log_plan (current_plan);
   print_formatted ("[Plan updated]:\n");
-  print_formatted ("%s\n", current_plan);
+  print_data_line (current_plan, strlen (current_plan));
 }
 
-/* Echo the raw patch text so the human can review the exact hunks before
-   deciding; print_formatted handles the pager-style flow control. */
+/* Echo the patch text so the human can review the exact hunks before
+   deciding; print_formatted handles the pager-style flow control and
+   print_data_line keeps control bytes from reprogramming the terminal. */
 static void
 print_patch_text (const char *patch)
 {
@@ -4322,7 +4424,7 @@ print_patch_text (const char *patch)
       const char *end = strchr (line, '\n');
       size_t length = end != NULL ? (size_t) (end - line) : strlen (line);
 
-      print_formatted ("%.*s\n", (int) length, line);
+      print_data_line (line, length);
       if (end == NULL)
         break;
       line = end + 1;
@@ -4361,33 +4463,35 @@ process_tool_calls (ToolCall *calls, size_t call_count)
         }
       if (calls[index].valid && calls[index].kind == TOOL_READ_FILE)
         {
-          print_formatted ("\n[AI reads file]: %s\n", calls[index].path);
+          print_labeled_data ("\n[AI reads file]: ", calls[index].path);
           if (tool_read_file (scope_root, calls[index].path, calls[index].offset, calls[index].limit, &tool) < 0
               || tool.failed)
             {
-              print_formatted ("%s\n", tool.status);
+              print_data_line (tool.status, strlen (tool.status));
               if (append_tool_result (&calls[index], tool.status) < 0)
                 return -1;
               continue;
             }
           /* The human watches the same numbered lines the model receives,
-             written raw like live command output so nothing is concealed. */
-          write_all (STDOUT_FILENO, tool.body, tool.body_length);
+             written like live command output — control bytes visible as
+             \xNN, so nothing is concealed and file bytes cannot reprogram
+             the terminal. */
+          write_sanitized (tool.body, tool.body_length);
           if (append_bounded_output (&calls[index], tool.status, tool.body, tool.body_length, 0) < 0)
             return -1;
           continue;
         }
       if (calls[index].valid && calls[index].kind == TOOL_LIST_DIR)
         {
-          print_formatted ("\n[AI lists dir]: %s\n", calls[index].path);
+          print_labeled_data ("\n[AI lists dir]: ", calls[index].path);
           if (tool_list_dir (scope_root, calls[index].path, &tool) < 0 || tool.failed)
             {
-              print_formatted ("%s\n", tool.status);
+              print_data_line (tool.status, strlen (tool.status));
               if (append_tool_result (&calls[index], tool.status) < 0)
                 return -1;
               continue;
             }
-          write_all (STDOUT_FILENO, tool.body, tool.body_length);
+          write_sanitized (tool.body, tool.body_length);
           if (append_bounded_output (&calls[index], tool.status, tool.body, tool.body_length, 0) < 0)
             return -1;
           continue;
@@ -4400,7 +4504,10 @@ process_tool_calls (ToolCall *calls, size_t call_count)
           print_patch_text (calls[index].patch);
           if (tool_patch_confined (scope_root, calls[index].patch, offender, sizeof (offender)) < 0)
             {
-              print_formatted ("Patch blocked: %s resolves outside the workspace scope %s.\n", offender, scope_root);
+              char safe[PATH_MAX];
+
+              sanitize_data_text (safe, sizeof (safe), offender, strlen (offender));
+              print_formatted ("Patch blocked: %s resolves outside the workspace scope %s.\n", safe, scope_root);
               if (append_tool_result (&calls[index],
                                       "Error: the patch references a path outside the workspace scope.")
                   < 0)
@@ -4417,14 +4524,14 @@ process_tool_calls (ToolCall *calls, size_t call_count)
             {
               if (tool_apply_patch (scope_root, calls[index].patch, &tool) < 0 || tool.failed)
                 {
-                  print_formatted ("%s\n", tool.status);
+                  print_data_line (tool.status, strlen (tool.status));
                   if (append_tool_result (&calls[index], tool.status) < 0)
                     return -1;
                   if (post_execution_steer (steer, sizeof (steer)) < 0)
                     return -1;
                   continue;
                 }
-              print_formatted ("%s\n", tool.status);
+              print_data_line (tool.status, strlen (tool.status));
               if (append_tool_result (&calls[index], tool.status) < 0)
                 return -1;
               if (post_execution_steer (steer, sizeof (steer)) < 0)
@@ -4444,7 +4551,7 @@ process_tool_calls (ToolCall *calls, size_t call_count)
         {
           int job_id = 0;
 
-          print_formatted ("\n[AI starts job]: %s\n", calls[index].command);
+          print_labeled_data ("\n[AI starts job]: ", calls[index].command);
           if (no_shell)
             {
               if (append_tool_result (&calls[index], "Error: background jobs are disabled by --no-shell.") < 0)
@@ -4516,8 +4623,12 @@ process_tool_calls (ToolCall *calls, size_t call_count)
                     const char *state = job_state_name (&jobs[job_index]);
 
                     printed++;
-                    print_formatted ("[job %d] %s, %lds: %s\n", jobs[job_index].id, state, elapsed,
-                                     jobs[job_index].command);
+                    {
+                      char label[80];
+
+                      snprintf (label, sizeof (label), "[job %d] %s, %lds: ", jobs[job_index].id, state, elapsed);
+                      print_labeled_data (label, jobs[job_index].command);
+                    }
                     if (jobs[job_index].state == JOB_RUNNING)
                       {
                         if (buffer_append_formatted (&summary, "%sjob %d: running for %lds: %s",
@@ -4559,8 +4670,10 @@ process_tool_calls (ToolCall *calls, size_t call_count)
             {
               long elapsed = (long)(time (NULL) - job->started);
               const char *state = job_state_name (job);
+              char label[48];
 
-              print_formatted ("[job %d] %s: %s\n", job->id, state, job->command);
+              snprintf (label, sizeof (label), "[job %d] %s: ", job->id, state);
+              print_labeled_data (label, job->command);
               if (job->state == JOB_RUNNING)
                 snprintf (result, sizeof (result), "job %d: running, %lds elapsed. Log tail:", job->id, elapsed);
               else
@@ -4568,11 +4681,10 @@ process_tool_calls (ToolCall *calls, size_t call_count)
                           (long)(job->finished - job->started), job->exit_status);
               output_length = read_log_tail (job->log_path, output, CAPTURE_SIZE, &dropped_length);
               /* The human watches the same log tail the model receives,
-                 written raw like live command output so nothing is concealed.
-                 The raw write skips print_formatted's bookkeeping, so track
-                 the partial line here or later notices would glue to it. */
-              write_all (STDOUT_FILENO, output, output_length);
-              output_partial_line = output_length > 0 && output[output_length - 1] != '\n';
+                 written like live command output, control bytes visible,
+                 so nothing is concealed. write_sanitized tracks the
+                 partial line or later notices would glue to it. */
+              write_sanitized (output, output_length);
               print_line_break ();
               if (append_bounded_output (&calls[index], result, output, output_length, dropped_length) < 0)
                 return -1;
@@ -4629,7 +4741,7 @@ process_tool_calls (ToolCall *calls, size_t call_count)
             snprintf (result, sizeof (result), "[job %d already %s] exit status %d. Log tail:", job->id,
                       job_state_name (job), job->exit_status);
           output_length = read_log_tail (job->log_path, output, CAPTURE_SIZE, &dropped_length);
-          write_all (STDOUT_FILENO, output, output_length);
+          write_sanitized (output, output_length);
           print_line_break ();
           if (append_bounded_output (&calls[index], result, output, output_length, dropped_length) < 0)
             return -1;
@@ -4640,7 +4752,7 @@ process_tool_calls (ToolCall *calls, size_t call_count)
       if (calls[index].valid && calls[index].kind == TOOL_TASK)
         {
           print_formatted ("\n[AI delegates task]:\n");
-          print_formatted ("%s\n", calls[index].command);
+          print_data_line (calls[index].command, strlen (calls[index].command));
           if (subagent_depth)
             {
               if (append_tool_result (&calls[index],
@@ -4693,7 +4805,7 @@ process_tool_calls (ToolCall *calls, size_t call_count)
         }
       if (calls[index].valid && calls[index].supported)
         {
-          print_formatted ("\n[AI requests command]: %s\n", calls[index].command);
+          print_labeled_data ("\n[AI requests command]: ", calls[index].command);
           if (no_shell)
             {
               if (append_tool_result (&calls[index],
@@ -5111,7 +5223,12 @@ process_response (const char *body)
       if (copy_json_string (message_value, content, sizeof (content)) < 0)
         print_formatted ("error: AI endpoint returned an error response\n");
       else
-        print_formatted ("error: AI endpoint: %s\n", content);
+        {
+          char safe[MAX_LINE];
+
+          sanitize_data_text (safe, sizeof (safe), content, strlen (content));
+          print_formatted ("error: AI endpoint: %s\n", safe);
+        }
       cJSON_Delete (response);
       return -1;
     }
@@ -5189,7 +5306,10 @@ process_response (const char *body)
       if (!stream_printed_content)
         {
           print_formatted ("\n[AI Response]:\n");
-          print_formatted ("%s\n", content[0] != 0 ? content : "(empty response)");
+          if (content[0] != 0)
+            print_data_line (content, strlen (content));
+          else
+            print_formatted ("(empty response)\n");
         }
       return 0;
     }
@@ -5445,6 +5565,13 @@ ai_main (int argc, char **argv)
 
     terminal_styling = !ui_mode && isatty (STDOUT_FILENO) && getenv ("NO_COLOR") == NULL && term != NULL && term[0] != 0
                        && strcmp (term, "dumb") != 0;
+    /* A previously run program can leave the terminal with the DEC graphics
+       charset selected, and this run's own output would render as line
+       drawing. Restore the default state before the first byte: G0 back to
+       ASCII (ESC ( B) and selected (SI). Healthy terminals ignore this;
+       a garbled one recovers. */
+    if (!ui_mode && isatty (STDOUT_FILENO))
+      write_all (STDOUT_FILENO, "\033(B\017", 4);
   }
   editor_set_prompt_printer (print_editor_prompt);
   editor_set_interrupt_checker (interrupt_is_pending);

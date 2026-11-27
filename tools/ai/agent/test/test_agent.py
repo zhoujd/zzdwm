@@ -4669,6 +4669,71 @@ class AgentTests(unittest.TestCase):
         self.assertIn("Hello streamed world", result.stdout)
         self.assertIs(endpoint.requests[0].get("stream"), True)
 
+    def test_streamed_control_bytes_print_visible_not_raw(self):
+        # A "ESC ( 0" in streamed text used to leave the terminal in the
+        # DEC graphics charset, garbling every later line. The screen copy
+        # must show the bytes escaped; the model keeps the raw text.
+        result, endpoint = self.run_agent(
+            [sse_response(deltas=["before\u001b(0after", "\u000e tail"])],
+            "go\n\n/exit\n\n",
+        )
+        self.assertIn("before\\x1b(0after\\x0e tail", result.stdout)
+        self.assertNotIn("\u001b", result.stdout)
+        self.assertNotIn("\u000e", result.stdout)
+
+    def test_command_output_control_bytes_print_visible(self):
+        arguments = json.dumps({"command": "printf 'x\\033(0y\\n'"})
+        result, endpoint = self.run_agent(
+            [
+                sse_response(
+                    tool_call_deltas=[
+                        {
+                            "index": 0,
+                            "id": "call-1",
+                            "type": "function",
+                            "function": {
+                                "name": "run_terminal_command",
+                                "arguments": arguments,
+                            },
+                        }
+                    ]
+                ),
+                text_response("done"),
+            ],
+            "diagnose\n\na\n\n\n/exit\n\n",
+        )
+        self.assertIn("x\\x1b(0y", result.stdout)
+        self.assertNotIn("\x1b(", result.stdout)
+        replies = self.tool_replies(endpoint)
+        self.assertIn("\x1b(0y", replies[0]["content"])
+
+    def test_read_file_control_bytes_print_visible(self):
+        workspace = self.make_workspace({"blob.txt": "x\x1b(0y\n"})
+        result, endpoint = self.run_agent(
+            [named_tool_response("read_file", {"path": "blob.txt"}), text_response("done")],
+            "diagnose\n\n\n/exit\n\n",
+            workspace=workspace,
+        )
+        self.assertIn("1\tx\\x1b(0y", result.stdout)
+        self.assertNotIn("\x1b(", result.stdout)
+        replies = self.tool_replies(endpoint)
+        self.assertIn("\x1b(0y", replies[0]["content"])
+
+    def test_endpoint_error_message_control_bytes_print_visible(self):
+        body = json.dumps({"error": {"message": "boom\u001b(0now"}}).encode()
+        response = (
+            b"HTTP/1.1 400 Bad Request\r\n"
+            b"Content-Type: application/json\r\n"
+            b"Content-Length: "
+            + str(len(body)).encode()
+            + b"\r\n"
+            b"Connection: close\r\n\r\n"
+            + body
+        )
+        result, endpoint = self.run_agent([response], "go\n\n/exit\n\n")
+        self.assertIn("boom\\x1b(0now", result.stdout)
+        self.assertNotIn("\x1b(", result.stdout)
+
     def test_streamed_tool_call_arguments_assemble_across_deltas(self):
         result, endpoint = self.run_agent(
             [

@@ -236,6 +236,20 @@ counters are kept, so a long stream cannot exhaust the receive buffer. The
 API timeout acts as a per-quiet-period limit while streaming — every received
 chunk resets it.
 
+Everything the agent prints that comes from outside its own code — streamed
+or buffered answers, tool output, endpoint error messages — is display-escaped
+rather than written raw: newlines, carriage returns, and tabs pass through,
+every other control byte and DEL prints as `\xNN`, and bytes 0x80 and above
+pass through as UTF-8. A single raw `ESC ( 0` in an answer leaves the terminal
+stuck in the DEC graphics charset, and every later line — from any program —
+renders as line drawing until something resets it; escaped, the byte is four
+visible characters and cannot reprogram the terminal. The escape is
+display-only: the reassembled message, the session log, and tool results keep
+the exact raw bytes, so the model sees what the endpoint sent and nothing is
+concealed. A tty startup also emits `ESC ( B` and SI once, before the first
+byte of output, restoring the ASCII charset a previously run program may have
+garbled; a healthy terminal ignores it.
+
 Token usage is reported from the endpoint's `usage` object. The interactive
 agent prints one line at exit, and one-shot mode prints it after each round:
 `[usage] tokens: 12.4k in / 3.1k out, 7 rounds, context 3.2k` — cumulative
@@ -262,7 +276,8 @@ and enable full access for the rest of the session. With
 `--full-access`, commands run immediately, but a steer/continue prompt still
 appears after every command before the next model request. Commands execute
 through `/bin/sh -c` with the current process privileges. All output is shown
-live; the agent keeps the last 64 KiB (earlier bytes are dropped and noted in
+live, control bytes visible as `\xNN`; the agent keeps the last 64 KiB
+(earlier bytes are dropped and noted in
 the tool result) and returns a bounded tail to the model, so a huge `cat`
 cannot blow the context window.
 `/force` toggles full access while the agent is running; the startup mode
