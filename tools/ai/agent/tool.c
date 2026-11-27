@@ -289,6 +289,129 @@ count_lines (const char *text, size_t length)
   return lines;
 }
 
+/* Diagnostic matching for a failed exact match: compare one line pair
+   while ignoring blanks around the text on both sides. */
+static int
+line_matches_relaxed (const char *file_line, size_t file_length, const char *needle_line, size_t needle_length)
+{
+  size_t file_begin = 0;
+  size_t file_end = file_length;
+  size_t needle_begin = 0;
+  size_t needle_end = needle_length;
+
+  while (file_begin < file_end && (file_line[file_begin] == ' ' || file_line[file_begin] == '\t'))
+    file_begin++;
+  while (file_end > file_begin && (file_line[file_end - 1] == ' ' || file_line[file_end - 1] == '\t'))
+    file_end--;
+  while (needle_begin < needle_end && (needle_line[needle_begin] == ' ' || needle_line[needle_begin] == '\t'))
+    needle_begin++;
+  while (needle_end > needle_begin && (needle_line[needle_end - 1] == ' ' || needle_line[needle_end - 1] == '\t'))
+    needle_end--;
+  if (file_end - file_begin != needle_end - needle_begin)
+    return 0;
+  return memcmp (file_line + file_begin, needle_line + needle_begin, file_end - file_begin) == 0;
+}
+
+/* Diagnostic matching for a failed exact match: does the needle block
+   line up with the file starting at `file_line`, a line beginning, once
+   blanks around each line are ignored? The result only explains a miss,
+   so it never has to be unique and is never applied. */
+static int
+block_matches_relaxed (const char *file_line, const char *content_end, const char *needle, size_t needle_length)
+{
+  const char *file_position = file_line;
+  const char *needle_position = needle;
+  const char *needle_end = needle + needle_length;
+
+  while (needle_position < needle_end)
+    {
+      const char *needle_newline = memchr (needle_position, '\n', (size_t)(needle_end - needle_position));
+      size_t needle_line_length = needle_newline != NULL ? (size_t)(needle_newline - needle_position)
+                                                         : (size_t)(needle_end - needle_position);
+      const char *file_newline = memchr (file_position, '\n', (size_t)(content_end - file_position));
+      size_t file_line_length = file_newline != NULL ? (size_t)(file_newline - file_position)
+                                                     : (size_t)(content_end - file_position);
+
+      if (file_position >= content_end
+          || !line_matches_relaxed (file_position, file_line_length, needle_position, needle_line_length))
+        return 0;
+      needle_position = needle_newline != NULL ? needle_newline + 1 : needle_end;
+      file_position = file_newline != NULL ? file_newline + 1 : content_end;
+    }
+  return 1;
+}
+
+/* Diagnostic matching for a failed exact match: walk the file line by
+   line and return the first place the needle block matches once blanks
+   are ignored, with its 1-based line number for the error message. */
+static const char *
+find_line_block_relaxed (const char *content, const char *needle, size_t needle_length, int *line_number)
+{
+  const char *content_end = content + strlen (content);
+  const char *line = content;
+  const char *found = NULL;
+  int number = 0;
+
+  *line_number = 0;
+  while (line < content_end)
+    {
+      const char *end = memchr (line, '\n', (size_t)(content_end - line));
+
+      number++;
+      if (found == NULL && block_matches_relaxed (line, content_end, needle, needle_length))
+        {
+          found = line;
+          *line_number = number;
+        }
+      if (end == NULL)
+        break;
+      line = end + 1;
+    }
+  return found;
+}
+
+/* Render one line with its whitespace visible so the model can copy the
+   exact bytes: a tab becomes \t, a carriage return \r, a backslash \\,
+   other control bytes \xNN. Long lines are cut with "...". */
+static void
+escape_line (const char *line, size_t length, char *output, size_t capacity)
+{
+  static const char digits[] = "0123456789abcdef";
+  size_t position = 0;
+  size_t index;
+
+  if (capacity == 0)
+    return;
+  /* Keep room for the "..." cut and the terminator behind the worst
+     four-byte escape an iteration can emit. */
+  for (index = 0; index < length && position + 8 < capacity; index++)
+    {
+      unsigned char byte = (unsigned char)line[index];
+
+      if (byte == '\t' || byte == '\r' || byte == '\\')
+        {
+          output[position++] = '\\';
+          output[position++] = byte == '\t' ? 't' : (byte == '\r' ? 'r' : '\\');
+        }
+      else if (byte < 32 || byte == 127)
+        {
+          output[position++] = '\\';
+          output[position++] = 'x';
+          output[position++] = digits[byte >> 4];
+          output[position++] = digits[byte & 15];
+        }
+      else
+        output[position++] = (char)byte;
+    }
+  if (index < length)
+    {
+      output[position++] = '.';
+      output[position++] = '.';
+      output[position++] = '.';
+    }
+  output[position] = 0;
+}
+
 /* Locate a line that consists of exactly the marker text. */
 static const char *
 find_marker_line (const char *start, const char *marker)
@@ -555,10 +678,33 @@ tool_apply_patch (const char *root, const char *patch, ToolResult *result)
                 }
               if (occurrences == 0)
                 {
-                  snprintf (result->status, sizeof (result->status),
-                            "Error: SEARCH text of hunk %zu not found in %s; re-read the file and copy the lines "
-                            "exactly.",
-                            hunks + 1, current_path);
+                  int near_line = 0;
+                  const char *near = find_line_block_relaxed (content, search, search_length, &near_line);
+
+                  if (near != NULL)
+                    {
+                      const char *content_end = content + strlen (content);
+                      const char *near_end = memchr (near, '\n', (size_t)(content_end - near));
+                      size_t near_length = near_end != NULL ? (size_t)(near_end - near)
+                                                            : (size_t)(content_end - near);
+                      char rendered[96];
+                      char message[PATH_MAX + 512];
+
+                      escape_line (near, near_length, rendered, sizeof (rendered));
+                      snprintf (message, sizeof (message),
+                                "Error: SEARCH text of hunk %zu not found in %s; it matches line %d except for "
+                                "whitespace: the file has \"%s\" there (a tab appears as \\t). Copy the whitespace "
+                                "exactly, tabs included.",
+                                hunks + 1, current_path, near_line, rendered);
+                      copy_status_text (message, result->status, sizeof (result->status));
+                    }
+                  else
+                    {
+                      snprintf (result->status, sizeof (result->status),
+                                "Error: SEARCH text of hunk %zu not found in %s; re-read the file and copy the lines "
+                                "exactly.",
+                                hunks + 1, current_path);
+                    }
                   failed = 1;
                   break;
                 }

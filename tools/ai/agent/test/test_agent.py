@@ -2098,6 +2098,58 @@ class AgentTests(unittest.TestCase):
         with open(os.path.join(workspace, "app.txt")) as handle:
             self.assertEqual(handle.read(), "alpha\nbeta\n")
 
+    def test_apply_patch_missing_search_text_hints_at_whitespace(self):
+        # The file indents with a tab while the patch indents with spaces;
+        # the error must name the real line so the model can copy its bytes.
+        workspace = self.make_workspace({"app.txt": "alpha\n\tint flag;\nbeta\n"})
+        patch = (
+            "app.txt\n"
+            "<<<<<<< SEARCH\n"
+            "       int flag;\n"
+            "=======\n"
+            "      int flag = 0;\n"
+            ">>>>>>> REPLACE\n"
+        )
+        result, endpoint = self.run_agent(
+            [named_tool_response("apply_patch", {"patch": patch}), text_response("done")],
+            "diagnose\n\na\n\n\n/exit\n\n",
+            workspace=workspace,
+        )
+        replies = self.tool_replies(endpoint)
+        self.assertIn(
+            "matches line 2 except for whitespace", replies[0]["content"]
+        )
+        self.assertIn('the file has "\\tint flag;"', replies[0]["content"])
+        with open(os.path.join(workspace, "app.txt")) as handle:
+            self.assertEqual(handle.read(), "alpha\n\tint flag;\nbeta\n")
+
+    def test_apply_patch_missing_search_text_hints_at_multiline_block(self):
+        # A multi-line SEARCH that only differs in indentation still points
+        # at where the block sits.
+        workspace = self.make_workspace({"app.txt": "start\n\tif (x)\n\t\tdo ();\nend\n"})
+        patch = (
+            "app.txt\n"
+            "<<<<<<< SEARCH\n"
+            "  if (x)\n"
+            "          do ();\n"
+            "=======\n"
+            "  if (x)\n"
+            "\t\tdo ();\n"
+            ">>>>>>> REPLACE\n"
+        )
+        result, endpoint = self.run_agent(
+            [named_tool_response("apply_patch", {"patch": patch}), text_response("done")],
+            "diagnose\n\na\n\n\n/exit\n\n",
+            workspace=workspace,
+        )
+        replies = self.tool_replies(endpoint)
+        self.assertIn(
+            "matches line 2 except for whitespace", replies[0]["content"]
+        )
+        self.assertIn('the file has "\\tif (x)"', replies[0]["content"])
+        with open(os.path.join(workspace, "app.txt")) as handle:
+            self.assertEqual(handle.read(), "start\n\tif (x)\n\t\tdo ();\nend\n")
+
     def test_apply_patch_reports_ambiguous_search_text(self):
         workspace = self.make_workspace({"dup.txt": "same\nsame\n"})
         patch = (
