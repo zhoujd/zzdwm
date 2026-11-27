@@ -1133,6 +1133,7 @@ void clearmarks (MARKRING *ring);
  */
 int rectanchor (int f, int n, int k); /* Toggle rectangle anchor. */
 int rectcopy (int f, int n, int k);   /* Copy rectangle.          */
+int rectdelete (int f, int n, int k); /* Delete rectangle, no clipboard. */
 int rectkill (int f, int n, int k);   /* Kill rectangle.          */
 int rectclear (int f, int n, int k);  /* Blank rectangle.         */
 int rectopen (int f, int n, int k);   /* Open rectangle columns.  */

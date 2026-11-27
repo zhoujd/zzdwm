@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Rectangle editing through the C-X r prefix: anchor one corner
 with C-X r C-@, or mark it with C-Space as GNU Emacs does, put point
-on the other, and copy/kill/yank/clear/open the column range between
-them; a set anchor is the corner the commands take first.  The
+on the other, and copy/kill/delete/yank/clear/open the column range
+between them; a set anchor is the corner the commands take first.  The
 rectangles are cut on the display-cell grid,
 so a tab counts as the cells it renders as: clearing replaces it with
 that many spaces, and a kill whose edge falls inside it expands it
 first.  Short lines read as blanks when text is copied and are padded
-out by yank.  One undo reverses a whole kill."""
+out by yank.  One undo reverses a whole kill or delete."""
 
 import os
 import re
@@ -18,12 +18,13 @@ from common import drain, kill, save_quit, spawn
 UP, DOWN, RIGHT, LEFT = b"\x1bOA", b"\x1bOB", b"\x1bOC", b"\x1bOD"
 SETMARK = b"\x00"                 # C-Space (C-@)
 ANCHOR = b"\x18r\x00"             # C-X r C-@ (C-Space sends the same NUL)
-COPY = b"\x18r\x1bW"             # C-X r M-W
-KILL = b"\x18r\x17"              # C-X r C-w
-CLEAR = b"\x18r\x03"             # C-X r C-c
-OPEN = b"\x18r\x0f"              # C-X r C-o
-STRING = b"\x18r\x14"            # C-X r C-t
-YANK = b"\x18r\x19"              # C-X r C-y
+COPY = b"\x18r\x1bw"             # C-X r M-w
+KILL = b"\x18rk"                 # C-X r k
+DELETE = b"\x18rd"               # C-X r d
+CLEAR = b"\x18rc"                # C-X r c
+OPEN = b"\x18ro"                 # C-X r o
+STRING = b"\x18rt"               # C-X r t
+YANK = b"\x18ry"                 # C-X r y
 UNDO = b"\x18U"
 REDO = b"\x15\x18U"                 # C-U C-X U
 READONLY = b"\x18\x11"
@@ -91,6 +92,42 @@ def main():
              RIGHT * 4, YANK])                        # yank at (0,6)
         expect(content == b"ab ghicdefj\nxy        \n12 zzz3456\n",
                "kill and yank move the rectangle (%r)" % content)
+
+        # Delete removes the rectangle without saving it, as GNU's
+        # delete-rectangle does: the clipboard keeps the copy made
+        # before, so the yank after brings that back, not the deleted
+        # cells.  Copy cols [0,2) mark-to-dot, anchor (1,5), point
+        # (0,7): cols [5,7) of both lines go.
+        content, terminal = run(
+            directory, "rect_k1.txt", b"abcdefgh\nijklmnop\n",
+            [SETMARK, DOWN + RIGHT * 2, COPY,     # copy cols [0,2)
+             RIGHT * 3, ANCHOR, UP + RIGHT * 2,   # anchor (1,5)
+             DELETE,                              # delete cols [5,7)
+             YANK])                               # yank the copy back
+        expect(b"[Rectangle of 2 lines deleted]" in terminal,
+               "the delete reports its lines")
+        expect(content == b"abcdeabh\nijklmijp\n",
+               "delete leaves the clipboard alone (%r)" % content)
+
+        # One undo restores the whole delete, the tab it split
+        # included, as it does a kill.
+        content, _ = run(
+            directory, "rect_k2.txt", b"\tabc\nplain\n",
+            [ANCHOR, DOWN, RIGHT * 4, DELETE, UNDO], undo=True)
+        expect(content == b"\tabc\nplain\n",
+               "one undo restores the whole delete (%r)" % content)
+
+        # The region verb's capital M-W copies as GNU's lower-case
+        # M-w does: copy cols [0,2) mark-to-dot, then yank the copy
+        # back on the mark's line.
+        content, terminal = run(
+            directory, "rect_k3.txt", b"abcd\nwxyz\n",
+            [SETMARK, DOWN + RIGHT * 2, b"\x18r\x1bW",   # C-X r M-W
+             UP, YANK])
+        expect(b"[Rectangle of 2 lines copied]" in terminal,
+               "the capital M-W copies the rectangle")
+        expect(content == b"ababcd\nwxwxyz\n",
+               "the M-W copy yanks back (%r)" % content)
 
         # Clear blanks in place on the cell grid: the tab becomes the
         # eight spaces it renders as, and nothing after it moves.
@@ -210,12 +247,15 @@ def main():
                "the lost anchor kills nothing more (%r)" % content)
 
         # The prefix takes exactly one key: an unknown one aborts with
-        # a message the way C-X 4 does, and C-G aborts cleanly.
+        # a message the way C-X 4 does, and C-G aborts cleanly.  The
+        # old C-w chord from the keying before the GNU alignment is
+        # unknown now, the GNU keys having taken its place.
         content, terminal = run(
             directory, "rect_f.txt", b"one\ntwo\n",
             [b"\x18r\x0e",                            # C-X r C-N
+             b"\x18r\x17",                            # C-X r C-w
              b"\x18r\x07"])                           # C-X r C-G
-        expect(terminal.count (b"Unknown C-X r command") == 1,
+        expect(terminal.count (b"Unknown C-X r command") == 2,
                "an unknown key after the prefix is refused")
         expect(b"[Aborted]" in terminal,
                "C-G aborts out of the prefix cleanly")
@@ -362,7 +402,7 @@ def main():
             prefix = send(fd, b"\x18r")           # the prefix waits
             expect(b"48;5;24" not in prefix,
                    "no rectangle preview over the region highlight")
-            killed = send(fd, b"\x17")            # C-w
+            killed = send(fd, b"k")              # k
             expect(b"[Rectangle of 2 lines killed]" in killed,
                    "the kill runs on the dragged corners")
             save_quit(process, fd)

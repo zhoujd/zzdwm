@@ -506,6 +506,49 @@ rectkill (int f, int n, int k)
 }
 
 /*
+ * Delete the rectangle, as GNU Emacs's "delete-rectangle" does: cut
+ * its characters from each line without saving them, so the
+ * rectangle clipboard keeps what the last copy or kill put there.
+ * Point is left on the upper left corner of what was the rectangle.
+ */
+int
+rectdelete (int f, int n, int k)
+{
+  LINE *lp, *first, *last, *above;
+  int s_col, e_col, count;
+
+  (void) f;
+  (void) n;
+  (void) k;
+
+  if (rectbounds (&first, &last, &s_col, &e_col) == FALSE)
+    return (FALSE);
+  /* "above" names the upper left corner after the cuts: a cut that
+     grows a line frees and replaces it, and this neighbor is never
+     touched.  Likewise "next" is read before the line holding it
+     can be cut. */
+  above = lback (first);
+  count = 0;
+  for (lp = first; ; )
+    {
+      LINE *next = lforw (lp);
+      int done = lp == last;
+      if (rectcutline (lp, s_col, e_col, FALSE) == FALSE)
+        return (FALSE);
+      ++count;
+      if (done)
+        break;
+      lp = next;
+    }
+  rectdrop ();
+  curwp->w_dot.p = lforw (above);
+  curwp->w_dot.o = wlcoloffset (curwp->w_dot.p, s_col);
+  curwp->w_flag |= WFMOVE;
+  eprintf ("[Rectangle of %d lines deleted]", count);
+  return (TRUE);
+}
+
+/*
  * Blank the rectangle in place: its characters become spaces, one
  * per cell they occupied, so nothing on the line moves.  Point is
  * left at the column it was at.
@@ -739,11 +782,12 @@ abortrectangle (int f, int n, int k)
 
 /*
  * The C-X r prefix, as in GNU Emacs: read the next key and run the
- * rectangle command it names.  The keys take the region verbs one
- * prefix deeper (C-W kill, M-W copy, C-y yank), with C-c clear,
- * C-o open, and C-t string from GNU Emacs's C-x r chords, and the
- * anchor sits on C-@, the set-mark key.  While the prefix waits for
- * its key, the rectangle the command would use is highlighted: the
+ * rectangle command it names.  The keys are GNU Emacs's own C-x r
+ * keys, with c clear, d delete, k kill, o open, t string, and y
+ * yank, and M-w copy (GNU's lower case, the capital M-W the region
+ * verb is written with here taken too); the anchor sits on C-@, the
+ * set-mark key.  While the prefix waits for its key, the rectangle
+ * the command would use is highlighted: the
  * anchor's when one is set, and otherwise the mark's, which only
  * this window shows ("rectmarkshow" lets the display draw it).
  */
@@ -760,12 +804,14 @@ rectprefix (int f, int n, int k)
   static const RECTKEY rectkey[] =
   {
     {KCTRL | '@', rectanchor},
-    {KCTRL | 'C', rectclear},
-    {KCTRL | 'W', rectkill},
-    {KCTRL | 'O', rectopen},
-    {KCTRL | 'T', rectstring},
+    {'c',         rectclear},
+    {'d',         rectdelete},
+    {KMETA | 'w', rectcopy},
     {KMETA | 'W', rectcopy},
-    {KCTRL | 'Y', rectyank},
+    {'k',         rectkill},
+    {'o',         rectopen},
+    {'t',         rectstring},
+    {'y',         rectyank},
     {KCTRL | 'G', abortrectangle}
   };
   int key;

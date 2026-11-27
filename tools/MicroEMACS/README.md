@@ -9,8 +9,8 @@ and Windows while keeping the executable small and fast.
 * UTF-8 editing and Unicode-aware display.
 * Incremental search on `C-S`/`C-R`, plus regular-expression search and
   replacement.
-* Rectangle editing on the `C-X r` prefix: copy, kill, yank, clear, open,
-  and string rectangles, highlighted from anchor to dot.
+* Rectangle editing on the `C-X r` prefix: copy, kill, delete, yank, clear,
+  open, and string rectangles, highlighted from anchor to dot.
 * Binary editing as hexl dumps through `C-X C-H` and the `-H` option, with
   the group size, byte order, and packed or GNU layout changeable at run
   time (files up to 8 MB).

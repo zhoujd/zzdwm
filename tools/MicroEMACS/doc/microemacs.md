@@ -1324,12 +1324,11 @@ edit the buffer first expand a straddling tab into the spaces it
 renders as. Lines shorter than the rectangle read as blanks where
 text is copied. The rectangle clipboard is separate from the kill
 buffer. The prefix is **C-X r**\index{C-X r}, as in GNU Emacs, and
-the keys take the region verbs one
-prefix deeper — **C-w**\index{C-w} kill, **M-W**\index{M-W} copy,
-**C-y** yank — with **C-c** clear, **C-o** open, and **C-t** string
-from GNU's
-rectangle chords, and the anchor on **C-@**\index{C-@}, the
-**set-mark** key, as GNU's rectangles run between point and mark.
+the keys are GNU Emacs's own: **c** clear, **d** delete, **k** kill,
+**y** yank, **o** open, and **t** string, with **M-w** copy
+(**M-W**\index{M-W}, as the region verb is written here, taken too),
+and the anchor on **C-@**\index{C-@}, the **set-mark** key, as
+GNU's rectangles run between point and mark.
 
 C-X r C-@
 
@@ -1342,17 +1341,17 @@ C-X r C-@
     "Rectangle anchor lost". **C-G**\index{C-G} drops it too, taking
     the highlight with it.
 
-C-X r C-c
+C-X r c
 
-:   **clear-rectangle**\index{C-X r C-c}\index{clear-rectangle}
+:   **clear-rectangle**\index{C-X r c}\index{clear-rectangle}
 
     Blank the rectangle in place: its characters become spaces, one
     per cell they occupied, so nothing to the right moves. Dot stays
     at its column.
 
-C-X r C-o
+C-X r o
 
-:   **open-rectangle**\index{C-X r C-o}\index{open-rectangle}
+:   **open-rectangle**\index{C-X r o}\index{open-rectangle}
 
     Insert a column of blanks the width of the rectangle, shifting
     the text to the right of it. A prefix argument gives the width
@@ -1361,9 +1360,9 @@ C-X r C-o
     first. Dot is left on the upper left corner of the opened
     column.
 
-C-X r C-t
+C-X r t
 
-:   **string-rectangle**\index{C-X r C-t}\index{string-rectangle}
+:   **string-rectangle**\index{C-X r t}\index{string-rectangle}
 
     Prompt for a string, then replace the rectangle with it: each
     line's slice of the rectangle is removed and the string is
@@ -1372,26 +1371,37 @@ C-X r C-t
     the upper left corner of what was the rectangle, at the head of
     the string.
 
-C-X r C-w
+C-X r d
 
-:   **kill-rectangle**\index{C-X r C-w}\index{kill-rectangle}
+:   **delete-rectangle**\index{C-X r d}\index{delete-rectangle}
+
+    Delete the rectangle without saving it: each line's slice is
+    removed as **kill-rectangle** removes it, but the rectangle
+    clipboard keeps what the last copy or kill put there. Dot is
+    left on the upper left corner of what was the rectangle. One
+    **C-X U** undoes the whole command.
+
+C-X r k
+
+:   **kill-rectangle**\index{C-X r k}\index{kill-rectangle}
 
     Copy the rectangle as **copy-rectangle** does, then remove its
     characters from each line. Dot is left on the upper left corner
     of what was the rectangle. One **C-X U** undoes the whole
     command.
 
-C-X r M-W
+C-X r M-w
 
-:   **copy-rectangle**\index{C-X r M-W}\index{copy-rectangle}
+:   **copy-rectangle**\index{C-X r M-w}\index{copy-rectangle}
 
     Copy the rectangle between the corners into the
     rectangle clipboard, leaving the buffer alone. A line of the
     rectangle that ends before the right edge contributes blanks.
+    The capital **M-W** works too, as the region verb is written.
 
-C-X r C-y
+C-X r y
 
-:   **yank-rectangle**\index{C-X r C-y}\index{yank-rectangle}
+:   **yank-rectangle**\index{C-X r y}\index{yank-rectangle}
 
     Insert the rectangle clipboard at dot's column, one slice on dot's
     line and the lines below. A line that ends before the column is
@@ -3686,27 +3696,31 @@ C-X r C-@
 
 :   rectangle-anchor
 
-C-X r C-c
+C-X r c
 
 :   clear-rectangle
 
-C-X r C-o
+C-X r o
 
 :   open-rectangle
 
-C-X r C-t
+C-X r t
 
 :   string-rectangle
 
-C-X r C-w
+C-X r d
+
+:   delete-rectangle
+
+C-X r k
 
 :   kill-rectangle
 
-C-X r M-W
+C-X r M-w
 
 :   copy-rectangle
 
-C-X r C-y
+C-X r y
 
 :   yank-rectangle
 
