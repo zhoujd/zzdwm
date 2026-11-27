@@ -284,11 +284,12 @@ anything runs, then the choice is `a` allow, `s` steer without applying,
 is resolved against the workspace root with symlinks followed and must stay
 inside it, regardless of `--full-access`; a patch is scope-checked before
 the approval prompt, so a violating patch is never half-applied. When a
-later hunk fails, earlier files in the same call are already patched and
-the error says so, alongside guidance to re-read the file and copy the
-lines exactly. A SEARCH block that matches only apart from its whitespace
-gets an error that names the line and quotes it with tabs rendered as
-`\t`, so a tab-versus-space slip is fixed in one retry.
+later hunk fails, earlier files in the same call stay patched while the
+failing file's own earlier hunks roll back, and the error reports both,
+alongside guidance to re-read the file and copy the lines exactly. A
+SEARCH block that matches only apart from its whitespace gets an error
+that names the line and quotes it with tabs rendered as `\t`, so a
+tab-versus-space slip is fixed in one retry.
 
 The `plan` tool records the current task checklist. Each update prints
 `[Plan updated]:` with the new plan, and the latest plan is pinned into

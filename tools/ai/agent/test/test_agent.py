@@ -2172,6 +2172,82 @@ class AgentTests(unittest.TestCase):
         with open(os.path.join(workspace, "dup.txt")) as handle:
             self.assertEqual(handle.read(), "same\nsame\n")
 
+    def test_apply_patch_failure_rolls_back_same_file_hunks(self):
+        # An earlier hunk of the same file must not survive a later hunk's
+        # failure, and the error must say the changes were rolled back.
+        workspace = self.make_workspace({"app.txt": "alpha\nbeta\n"})
+        patch = (
+            "app.txt\n"
+            "<<<<<<< SEARCH\n"
+            "alpha\n"
+            "=======\n"
+            "ALPHA\n"
+            ">>>>>>> REPLACE\n"
+            "<<<<<<< SEARCH\n"
+            "missing line\n"
+            "=======\n"
+            "anything\n"
+            ">>>>>>> REPLACE\n"
+        )
+        result, endpoint = self.run_agent(
+            [named_tool_response("apply_patch", {"patch": patch}), text_response("done")],
+            "diagnose\n\na\n\n\n/exit\n\n",
+            workspace=workspace,
+        )
+        replies = self.tool_replies(endpoint)
+        self.assertIn(
+            "SEARCH text of hunk 2 not found in app.txt", replies[0]["content"]
+        )
+        self.assertIn(
+            "Changes to app.txt were rolled back; resend all of its hunks.",
+            replies[0]["content"],
+        )
+        self.assertNotIn("Files already patched", replies[0]["content"])
+        with open(os.path.join(workspace, "app.txt")) as handle:
+            self.assertEqual(handle.read(), "alpha\nbeta\n")
+
+    def test_apply_patch_failure_keeps_earlier_files(self):
+        # Files finished before the failure stay patched on disk; the
+        # failing file's own applied hunk rolls back.
+        workspace = self.make_workspace({"a.txt": "one\n", "b.txt": "two\n"})
+        patch = (
+            "a.txt\n"
+            "<<<<<<< SEARCH\n"
+            "one\n"
+            "=======\n"
+            "ONE\n"
+            ">>>>>>> REPLACE\n"
+            "b.txt\n"
+            "<<<<<<< SEARCH\n"
+            "two\n"
+            "=======\n"
+            "TWO\n"
+            ">>>>>>> REPLACE\n"
+            "<<<<<<< SEARCH\n"
+            "missing line\n"
+            "=======\n"
+            "anything\n"
+            ">>>>>>> REPLACE\n"
+        )
+        result, endpoint = self.run_agent(
+            [named_tool_response("apply_patch", {"patch": patch}), text_response("done")],
+            "diagnose\n\na\n\n\n/exit\n\n",
+            workspace=workspace,
+        )
+        replies = self.tool_replies(endpoint)
+        self.assertIn(
+            "SEARCH text of hunk 3 not found in b.txt", replies[0]["content"]
+        )
+        self.assertIn("Files already patched: a.txt.", replies[0]["content"])
+        self.assertIn(
+            "Changes to b.txt were rolled back; resend all of its hunks.",
+            replies[0]["content"],
+        )
+        with open(os.path.join(workspace, "a.txt")) as handle:
+            self.assertEqual(handle.read(), "ONE\n")
+        with open(os.path.join(workspace, "b.txt")) as handle:
+            self.assertEqual(handle.read(), "two\n")
+
     def test_apply_patch_blocks_outside_workspace_even_with_full_access(self):
         outer = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, outer, ignore_errors=True)

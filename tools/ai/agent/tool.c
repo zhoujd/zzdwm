@@ -528,6 +528,24 @@ copy_status_text (const char *source, char *destination, size_t capacity)
   destination[length] = 0;
 }
 
+/* Append one path to a comma-separated list, skipping a repeat of the
+   last entry: consecutive hunks usually repeat one file. */
+static void
+append_path_list (char *list, size_t capacity, const char *path, size_t *length, size_t *last)
+{
+  if (*length != 0 && strcmp (list + *last, path) == 0)
+    return;
+  {
+    int written = snprintf (list + *length, capacity - *length, "%s%s", *length == 0 ? "" : ", ", path);
+
+    if (written >= 0 && (size_t)written < capacity - *length)
+      {
+        *last = *length + (*length == 0 ? 0 : 2);
+        *length += (size_t)written;
+      }
+  }
+}
+
 int
 tool_apply_patch (const char *root, const char *patch, ToolResult *result)
 {
@@ -540,10 +558,14 @@ tool_apply_patch (const char *root, const char *patch, ToolResult *result)
   char resolved[PATH_MAX];
   char current_path[PATH_MAX];
   char loaded_path[PATH_MAX];
+  char display_path[PATH_MAX];
   char touched[4 * PATH_MAX];
+  char persisted[4 * PATH_MAX];
   const char *line = patch;
   size_t touched_length = 0;
   size_t touched_last = 0;
+  size_t persisted_length = 0;
+  size_t persisted_last = 0;
   size_t hunks = 0;
   long added = 0;
   long removed = 0;
@@ -557,7 +579,9 @@ tool_apply_patch (const char *root, const char *patch, ToolResult *result)
   result->failed = 0;
   current_path[0] = 0;
   loaded_path[0] = 0;
+  display_path[0] = 0;
   touched[0] = 0;
+  persisted[0] = 0;
   while (*line != 0)
     {
       const char *end = strchr (line, '\n');
@@ -624,12 +648,16 @@ tool_apply_patch (const char *root, const char *patch, ToolResult *result)
             }
           if (!loaded || strcmp (resolved, loaded_path) != 0)
             {
-              if (loaded && dirty && save_patched_file (loaded_path, content) < 0)
+              if (loaded && dirty)
                 {
-                  snprintf (result->status, sizeof (result->status), "Error: cannot write %s: %s", loaded_path,
-                            strerror (errno));
-                  failed = 1;
-                  break;
+                  if (save_patched_file (loaded_path, content) < 0)
+                    {
+                      snprintf (result->status, sizeof (result->status), "Error: cannot write %s: %s", loaded_path,
+                                strerror (errno));
+                      failed = 1;
+                      break;
+                    }
+                  append_path_list (persisted, sizeof (persisted), display_path, &persisted_length, &persisted_last);
                 }
               if (load_patchable_file (resolved, content, buffer_capacity, &loaded_exists) < 0)
                 {
@@ -639,6 +667,7 @@ tool_apply_patch (const char *root, const char *patch, ToolResult *result)
                   break;
                 }
               snprintf (loaded_path, sizeof (loaded_path), "%s", resolved);
+              snprintf (display_path, sizeof (display_path), "%s", current_path);
               loaded = 1;
               dirty = 0;
             }
@@ -731,19 +760,7 @@ tool_apply_patch (const char *root, const char *patch, ToolResult *result)
               dirty = 1;
             }
           /* Consecutive hunks usually repeat one file; list each path once. */
-          if (touched_length != 0 && strcmp (touched + touched_last, current_path) == 0)
-            ;
-          else
-            {
-              int written = snprintf (touched + touched_length, sizeof (touched) - touched_length, "%s%s",
-                                      touched_length == 0 ? "" : ", ", current_path);
-
-              if (written >= 0 && (size_t)written < sizeof (touched) - touched_length)
-                {
-                  touched_last = touched_length + (touched_length == 0 ? 0 : 2);
-                  touched_length += (size_t)written;
-                }
-            }
+          append_path_list (touched, sizeof (touched), current_path, &touched_length, &touched_last);
           hunks++;
           added += count_lines (replace, replace_length);
           removed += count_lines (search, search_length);
@@ -763,6 +780,7 @@ tool_apply_patch (const char *root, const char *patch, ToolResult *result)
     {
       snprintf (result->status, sizeof (result->status), "Error: cannot write %s: %s", loaded_path, strerror (errno));
       failed = 1;
+      dirty = 0; /* the write error already explains itself; no rollback to report */
     }
   if (hunks == 0 && !failed)
     {
@@ -772,11 +790,20 @@ tool_apply_patch (const char *root, const char *patch, ToolResult *result)
     }
   if (failed)
     {
-      if (touched_length != 0)
+      if (persisted_length != 0)
         {
           char suffix[4 * PATH_MAX + 32];
 
-          snprintf (suffix, sizeof (suffix), " Files already patched: %s.", touched);
+          snprintf (suffix, sizeof (suffix), " Files already patched: %s.", persisted);
+          copy_status_text (suffix, result->status + strlen (result->status),
+                            sizeof (result->status) - strlen (result->status));
+        }
+      if (loaded && dirty)
+        {
+          char suffix[PATH_MAX + 96];
+
+          snprintf (suffix, sizeof (suffix), " Changes to %s were rolled back; resend all of its hunks.",
+                    display_path);
           copy_status_text (suffix, result->status + strlen (result->status),
                             sizeof (result->status) - strlen (result->status));
         }
