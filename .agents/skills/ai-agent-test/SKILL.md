@@ -63,6 +63,24 @@ Use the `AI: ` prefix for AI agent commit subjects, for example:
    pre-commit testing already exists; confirm the stamp with
    `libexec/ai/ai --version`.
 
+## Debug Build
+
+Build an unstripped binary when a failure needs stepping through under gdb:
+
+```sh
+./tools/ai/agent/build.sh -b
+```
+
+`build.sh -b` (the default `build.sh` action) passes `DEBUG=yes` to make;
+`make -C tools/ai/agent DEBUG=yes ai` is the direct equivalent. `DEBUG=yes`
+swaps `-Os` for `-g -O0` and drops the link-time strip while keeping the
+static link and the hardening flags, so gdb sees symbols on the same shape of
+binary the publish build ships. Modules compile to objects and the makefile
+records the flags in `.build-flags`, so toggling `DEBUG` or changing any flag
+rebuilds every object; `make test DEBUG=yes` runs the suite against the debug
+binary. The debug build is a local aid only — publish and validate the
+release build.
+
 ## Environment and Endpoint Checks
 
 - Use `AI_API_URL`, `AI_API_KEY`, and `AI_MODEL` from the environment.
