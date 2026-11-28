@@ -4734,6 +4734,18 @@ class AgentTests(unittest.TestCase):
         self.assertIn("boom\\x1b(0now", result.stdout)
         self.assertNotIn("\x1b(", result.stdout)
 
+    def test_refresh_command_without_tty_reports_instead_of_writing_bytes(self):
+        # /refresh re-applies the startup charset heal; with stdout piped
+        # (as here, and under the TUI) it must say so instead of writing
+        # the ESC ( B / SI control bytes into the pipe.
+        result, endpoint = self.run_agent(
+            [text_response("unused")],
+            "/refresh\n\n/exit\n\n",
+        )
+        self.assertIn("[refresh] nothing to restore: stdout is not a terminal", result.stdout)
+        self.assertNotIn("\x1b(", result.stdout)
+        self.assertEqual(endpoint.requests, [])
+
     def test_streamed_tool_call_arguments_assemble_across_deltas(self):
         result, endpoint = self.run_agent(
             [

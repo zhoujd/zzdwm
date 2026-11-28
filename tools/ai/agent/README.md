@@ -248,7 +248,9 @@ display-only: the reassembled message, the session log, and tool results keep
 the exact raw bytes, so the model sees what the endpoint sent and nothing is
 concealed. A tty startup also emits `ESC ( B` and SI once, before the first
 byte of output, restoring the ASCII charset a previously run program may have
-garbled; a healthy terminal ignores it.
+garbled; a healthy terminal ignores it, and `/refresh` re-applies the same
+restore mid-session — with piped or TUI output it reports that there is no
+terminal to restore rather than writing control bytes into the pipe.
 
 Token usage is reported from the endpoint's `usage` object. The interactive
 agent prints one line at exit, and one-shot mode prints it after each round:

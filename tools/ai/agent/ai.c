@@ -5725,6 +5725,23 @@ ai_main (int argc, char **argv)
           print_formatted ("[force mode is now %s]\n", full_access ? "ON; commands run without approval" : "OFF");
           continue;
         }
+      if (!one_shot && strcmp (prompt, "/refresh") == 0)
+        {
+          /* The tty startup heal, on demand: a program run after this one
+             can leave the DEC graphics charset selected, and every later
+             line renders as line drawing. G0 back to ASCII and selected
+             restores the terminal without restarting the session. Without
+             a terminal on stdout — the TUI pipe, a redirect — there is
+             nothing to heal, and control bytes never go into a pipe. */
+          if (!ui_mode && isatty (STDOUT_FILENO))
+            {
+              write_all (STDOUT_FILENO, "\033(B\017", 4);
+              print_formatted ("[terminal state restored]\n");
+            }
+          else
+            print_formatted ("[refresh] nothing to restore: stdout is not a terminal\n");
+          continue;
+        }
       if (!one_shot && strcmp (prompt, "/skills") == 0)
         {
           int index;
@@ -5799,6 +5816,7 @@ ai_main (int argc, char **argv)
                            "/new            reset context\n"
                            "/compact        fold old context into a summary\n"
                            "/force          no need allow\n"
+                           "/refresh        restore terminal charset\n"
                            "/model <name>   switch model\n"
                            "/skills         list skills\n"
                            "/skill <name>   load a skill\n"
