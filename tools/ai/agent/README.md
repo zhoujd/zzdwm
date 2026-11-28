@@ -7,15 +7,26 @@ command boundary.
 
 ## Build
 
+`build.sh` with no argument (or `-b`) builds an unstripped debug binary for
+gdb:
+
 ```sh
 tools/ai/agent/build.sh
 ```
 
-Build the agent and optional ncurses TUI with:
+Build the release agent and optional ncurses TUI with:
 
 ```sh
 make -C tools/ai/agent ai
 ```
+
+`build.sh -b` passes `DEBUG=yes` to make (`make -C tools/ai/agent DEBUG=yes ai`
+is the direct equivalent), which swaps `-Os` for `-g -O0` and drops the
+link-time strip while keeping the static link and the hardening flags, so the
+debugged binary has the same shape as the shipped one. Modules compile to
+objects, and the makefile records the build flags in `.build-flags`; toggling
+`DEBUG` (or changing any flag) rebuilds every object instead of mixing
+compilations.
 
 Run `tools/ai/agent/ai tui`. It launches the backend in `--ui` mode and
 renders three windows: shared AI/user thoughts, AI command status/output, and
@@ -43,12 +54,11 @@ Run the integration and binary checks with:
 make -C tools/ai/agent test
 ```
 
-The release build uses local toolchains: `musl-gcc` builds both executables
-when it can compile `ncurses.h`; because it compiles with `-nostdinc`, it
-usually cannot see the host ncurses headers, so it builds `ai`. Without any
-local ncursesw the release builds `ai` only and prints a note. Each model
-request runs in a joined worker thread while the main thread collects live
-steering; cancellation is coordinated through one bounded polling loop.
+The release build uses the local toolchain: it links `ai` statically when
+`cc` can link `ncursesw` that way, and otherwise falls back to a dynamically
+linked binary with a note. Each model request runs in a joined worker thread
+while the main thread collects live steering; cancellation is coordinated
+through one bounded polling loop.
 
 Publish stripped, statically linked `ai` executables built in
 the `zhoujd/alpine` Docker image with:

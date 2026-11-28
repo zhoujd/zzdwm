@@ -1,10 +1,33 @@
+# Makefile - makefile input file for the ai agent.
+
 PROGRAM = ai
 TARGET = ai
 DEST ?= /usr/local/bin
 VERSION_HEADER = version.h
-REPO_ROOT := $(shell git rev-parse --show-toplevel)
-BUILD_DIR := $(REPO_ROOT)/tools/ai/agent
-CFLAGS ?= -std=c11 -Os -pipe -Wall -Wextra -Werror
+
+# Objects comprising the agent. One binary holds the backend, the
+# ncurses TUI, and the editor, so every toolchain links ncursesw.
+
+OBJ := \
+	ai.o \
+	main.o \
+	tui.o \
+	cJSON.o \
+	rune.o \
+	editor.o \
+	tool.o \
+	landlock.o \
+	config.o
+
+HEADERS = agent.h editor.h tool.h landlock.h config.h
+
+# Compiler, linker, and their flags. DEBUG keeps the static link and
+# the hardening flags but swaps -Os for -g -O0 and drops the link-time
+# strip, so gdb sees symbols on the same shape of binary the publish
+# build ships.
+
+DEBUG ?= no
+CFLAGS ?= -std=c11 -pipe -Wall -Wextra -Werror
 CFLAGS += -D_FORTIFY_SOURCE=2
 LDFLAGS ?= -static -s
 LDFLAGS += -Wl,-z,relro,-z,now,-z,noexecstack
@@ -12,35 +35,39 @@ LDLIBS += -lpthread
 CFLAGS += $(shell pkg-config --cflags ncursesw)
 LDLIBS += $(shell pkg-config --libs ncursesw)
 
-# musl-gcc compiles with -nostdinc, so it cannot use the host glibc
-# ncurses headers; probe each toolchain instead of assuming it works.
+ifeq ($(DEBUG), yes)
+CFLAGS := -g -O0 $(CFLAGS)
+LDFLAGS := $(filter-out -s,$(LDFLAGS))
+else
+CFLAGS := -Os $(CFLAGS)
+endif
+
+BUILD_FLAGS = $(CC) $(CFLAGS) $(LDFLAGS) $(LDLIBS)
+BUILD_FLAGS_FILE = .build-flags
+
 # The \# escape keeps make from treating the include as a comment.
+# Headers alone do not guarantee the static archives exist, so the
+# static probe links a full program.
 NCURSES_PROBE = printf '%s\n' '\#include <ncurses.h>' 'int main(void) { return 0; }' | \
                   $(1) -x c -o /dev/null - >/dev/null 2>&1
-# One binary holds both the agent and the ncurses TUI, so any toolchain
-# used for it must link ncursesw too; probe the full static link because
-# headers alone do not guarantee the archives exist.
 STATIC_LINK_PROBE = printf '%s\n' '\#include <ncurses.h>' 'int main(void) { return 0; }' | \
                       $(1) -x c $(LDFLAGS) -o /dev/null - $(LDLIBS) >/dev/null 2>&1
+
+# How to build a release. The publish build runs inside Docker with
+# INSIDE_DOCKER set; on a host it links statically when cc can, and
+# otherwise falls back to a dynamically linked binary.
 
 release:
 	@if [ -n "$$INSIDE_DOCKER" ]; then \
 		$(MAKE) clean; \
 		$(MAKE) all; \
-	elif command -v musl-gcc >/dev/null 2>&1 \
-		&& $(call NCURSES_PROBE,musl-gcc); then \
-		$(MAKE) clean; \
-		$(MAKE) CC=musl-gcc all; \
 	elif $(call STATIC_LINK_PROBE,$(CC)); then \
 		$(MAKE) clean; \
-		if command -v musl-gcc >/dev/null 2>&1; then \
-			echo "Building static ai with $(CC) because musl-gcc lacks ncursesw"; \
-		fi; \
-		$(MAKE) $(TARGET); \
+		$(MAKE) all; \
 	elif $(call NCURSES_PROBE,$(CC)); then \
 		echo "No toolchain links ncursesw statically; building dynamically linked ai" >&2; \
 		$(MAKE) clean; \
-		$(MAKE) $(TARGET) LDFLAGS='-s -Wl,-z,relro,-z,now,-z,noexecstack'; \
+		$(MAKE) all LDFLAGS='-s -Wl,-z,relro,-z,now,-z,noexecstack'; \
 	else \
 		echo "error: ai needs ncurses headers; install libncursesw-dev or run build.sh -p" >&2; \
 		exit 1; \
@@ -48,17 +75,32 @@ release:
 
 all: $(TARGET)
 
-MAIN_SOURCE = main.c
-TUI_SOURCE = tui.c
-CJSON_SOURCE = cJSON.c
-UTF_SOURCE = rune.c
-EDITOR_SOURCE = editor.c
-TOOL_SOURCE = tool.c
-LANDLOCK_SOURCE = landlock.c
-CONFIG_SOURCE = config.c
+# Record the flags so a toggle such as DEBUG=yes rebuilds every object
+# instead of mixing old and new compilations.
 
-$(TARGET): $(PROGRAM).c $(MAIN_SOURCE) $(TUI_SOURCE) $(CJSON_SOURCE) $(UTF_SOURCE) $(EDITOR_SOURCE) $(TOOL_SOURCE) $(LANDLOCK_SOURCE) $(CONFIG_SOURCE) $(VERSION_HEADER) agent.h editor.h tool.h landlock.h config.h
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+$(BUILD_FLAGS_FILE): FORCE
+	@printf '%s\n' '$(BUILD_FLAGS)' > $@.tmp
+	@if cmp -s $@.tmp $@; then \
+	  rm -f $@.tmp; \
+	else \
+	  mv -f $@.tmp $@; \
+	fi
+
+# How to compile a module.
+
+.c.o:
+	$(CC) -c $(CFLAGS) $<
+
+# How to link the agent.
+
+$(TARGET): $(OBJ)
+	$(CC) $(LDFLAGS) -o $@ $(OBJ) $(LDLIBS)
+
+# Any header or version change rebuilds every object, matching the
+# single-shot compile this file replaced; version.sh rewrites the
+# header only when the stamp changes, so this stays incremental.
+
+$(OBJ): $(BUILD_FLAGS_FILE) $(VERSION_HEADER) $(HEADERS)
 
 $(VERSION_HEADER): FORCE
 	@./version.sh $@
@@ -68,7 +110,8 @@ install: $(TARGET)
 	install -m 0755 $(TARGET) $(DEST)/$(PROGRAM)
 
 clean:
-	rm -f $(TARGET) $(VERSION_HEADER)
+	rm -f *.o $(TARGET) $(VERSION_HEADER) $(BUILD_FLAGS_FILE) \
+	      $(BUILD_FLAGS_FILE).tmp
 
 test: $(TARGET)
 	python3 test/test_agent.py
@@ -78,6 +121,6 @@ test: $(TARGET)
 test-ai: $(TARGET)
 	python3 test/test_ai.py
 
-.PHONY: all clean release test test-ai install FORCE
-
 FORCE:
+
+.PHONY: all clean release test test-ai install FORCE

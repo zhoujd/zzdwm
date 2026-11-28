@@ -11,7 +11,7 @@ usage() {
     cat <<EOF
 Usage: $app {option}
 Options:
-build|-b        build ai tools
+build|-b        build ai tools (debug)
 release|-r      release with local toolchains
 publish|-p      publish Linux static ai tools
 install|-i      install ai tools (default: /usr/local/bin)
@@ -21,8 +21,8 @@ EOF
 }
 
 build() {
-    make -C "$SCRIPT_DIR" ai
-    echo "Build done"
+    make -C "$SCRIPT_DIR" DEBUG=yes ai
+    echo "Build debug done"
 }
 
 release() {

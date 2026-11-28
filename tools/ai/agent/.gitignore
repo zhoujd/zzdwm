@@ -4,4 +4,6 @@ __pycache__/
 
 version.h
 ai-tui
+ai-editor
 *.o
+.build-flags
