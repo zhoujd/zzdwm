@@ -10,10 +10,11 @@ usage() {
     app=$(basename $0)
     cat <<EOF
 Usage: $app {option}
-Option:
-build|-b        build ai and ai-tui
+Options:
+build|-b        build ai tools
 release|-r      release with local toolchains
-publish|-p      publish Linux static ai and ai-tui
+publish|-p      publish Linux static ai tools
+install|-i      install ai tools (default: /usr/local/bin)
 test|-t         run the ai regression tests (needs cc)
 clean|-c        clean build products
 EOF
@@ -27,6 +28,11 @@ build() {
 release() {
     make -C "$SCRIPT_DIR" release
     echo "Build release done"
+}
+
+install() {
+    sudo make -C "$SCRIPT_DIR" install
+    echo "Install release done"
 }
 
 publish() {
@@ -70,6 +76,9 @@ case ${1:-""} in
         ;;
     release|-r )
         release
+        ;;
+    install|-i )
+        install
         ;;
     publish|-p )
         publish
