@@ -59,10 +59,10 @@
 /* One-shot runs have no second turn: asking the human anything strands the
    task, so the model must settle for itself. */
 #define ONE_SHOT_PROMPT                                                                                                \
-  "One-shot mode: this prompt is the only user input and no follow-up answer will "                                     \
-  "arrive. Do not end with questions or requests for confirmation; weigh the options, "                                 \
-  "pick the most reasonable and safest course yourself, state the assumptions you make, "                               \
-  "and carry the task to completion.\n"
+  "One-shot mode: this prompt is the only user input and no follow-up answer will "                                    \
+  "arrive. Do not end with questions or requests for confirmation; weigh the options, "                                \
+  "pick the most reasonable and safest course yourself, state the assumptions you make, "                              \
+  "and carry the task to completion."
 
 #define MAX_ENDPOINT 512
 #define MAX_HOST 128
