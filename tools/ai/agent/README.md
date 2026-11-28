@@ -28,6 +28,12 @@ objects, and the makefile records the build flags in `.build-flags`; toggling
 `DEBUG` (or changing any flag) rebuilds every object instead of mixing
 compilations.
 
+Linking against glibc with `-static` makes `ld` warn that `getaddrinfo` needs
+the linking glibc's NSS shared libraries at runtime. The makefile adds
+`-Wl,-w` on static links only, so that known and accepted caveat stays out of
+otherwise-clean build output; the Alpine musl publish builds raise no such
+note.
+
 Run `tools/ai/agent/ai tui`. It launches the backend in `--ui` mode and
 renders three windows: shared AI/user thoughts, AI command status/output, and
 a keyboard input box. Pass `-C dir` to the TUI to start in a scoped workspace,

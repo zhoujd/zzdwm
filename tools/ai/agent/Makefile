@@ -31,6 +31,16 @@ CFLAGS ?= -std=c11 -pipe -Wall -Wextra -Werror
 CFLAGS += -D_FORTIFY_SOURCE=2
 LDFLAGS ?= -static -s
 LDFLAGS += -Wl,-z,relro,-z,now,-z,noexecstack
+# Static glibc warns as soon as the program references getaddrinfo: its
+# resolver dlopen()s NSS modules (libnss_*, libresolv, nscd) at runtime from
+# the glibc version used at link time, which a static binary cannot honor.
+# That caveat is inherent to static glibc rather than a defect here, and it
+# is the only linker warning this project's static link raises, so silence
+# ld warnings for static links only. The dynamic fallback and the musl
+# publish build (Docker) have no such note and keep full ld diagnostics.
+ifneq (,$(findstring -static,$(LDFLAGS)))
+LDFLAGS += -Wl,-w
+endif
 LDLIBS += -lpthread
 CFLAGS += $(shell pkg-config --cflags ncursesw)
 LDLIBS += $(shell pkg-config --libs ncursesw)
