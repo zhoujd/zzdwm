@@ -18,6 +18,8 @@
 
 #include "agent.h"
 
+#include "config.h"
+
 #include "editor.h"
 
 #include "version.h"
@@ -210,6 +212,7 @@ usage (FILE *stream)
                    "-f <file>            attach a text file to the first prompt\n"
                    "-m, --model <name>   override AI_MODEL for this run\n"
                    "-t, --timeout <sec>  per-command timeout; 0 is unlimited\n"
+                   "--init-config        write a commented ~/.ai/config template and exit\n"
                    "--help               show this help\n"
                    "--version            show version information\n"
                    "\n"
@@ -372,6 +375,12 @@ parse_arguments (int argc, char **argv)
       else if (strcmp (argv[index], "--version") == 0)
         {
           printf ("ai-tui %s %s %s\n", VERSION, BUILD_DATE, BUILD_REVISION);
+          exit (0);
+        }
+      else if (strcmp (argv[index], "--init-config") == 0)
+        {
+          if (config_init () < 0)
+            exit (1);
           exit (0);
         }
       else

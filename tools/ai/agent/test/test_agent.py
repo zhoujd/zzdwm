@@ -4154,6 +4154,43 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(process.returncode, 1)
         self.assertIn("HOME is not set", process.stderr)
 
+    # The TUI parses --init-config before initscr, so it must write the
+    # template and exit instead of starting the interface; the timeout
+    # fails the test if the process ever enters the TUI loop.
+    def test_tui_init_config_writes_private_template(self):
+        home = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, home, ignore_errors=True)
+        process = subprocess.run(
+            [EXECUTABLE, "tui", "--init-config"],
+            text=True,
+            capture_output=True,
+            env={"PATH": os.environ["PATH"], "HOME": home},
+            timeout=5,
+        )
+        self.assertEqual(process.returncode, 0)
+        self.assertIn("wrote", process.stdout)
+        path = os.path.join(home, ".ai", "config")
+        with open(path, encoding="utf-8") as handle:
+            content = handle.read()
+        self.assertIn("#AI_MODEL=glm-5.3", content)
+        self.assertTrue(content.startswith("#"))
+        self.assertEqual(os.stat(path).st_mode & 0o777, 0o600)
+        self.assertEqual(os.stat(os.path.join(home, ".ai")).st_mode & 0o777, 0o700)
+
+    def test_tui_init_config_refuses_overwrite(self):
+        home = self.make_home("AI_MODEL=keep\n")
+        process = subprocess.run(
+            [EXECUTABLE, "tui", "--init-config"],
+            text=True,
+            capture_output=True,
+            env={"PATH": os.environ["PATH"], "HOME": home},
+            timeout=5,
+        )
+        self.assertEqual(process.returncode, 1)
+        self.assertIn("already exists", process.stderr)
+        with open(os.path.join(home, ".ai", "config"), encoding="utf-8") as handle:
+            self.assertEqual(handle.read(), "AI_MODEL=keep\n")
+
     def test_global_skill_loads_and_injects(self):
         home = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, home, ignore_errors=True)

@@ -200,7 +200,8 @@ from the file. `ai --init-config` writes the file as a fully
 commented template of every key with its default — mode 600 inside a
 mode 700 `~/.ai`, private by construction — and exits; it refuses to
 overwrite an existing file, and because every line is commented the
-fresh template changes no behavior.
+fresh template changes no behavior. `ai tui --init-config` does the
+same before the interface starts, so it needs no terminal.
 
 Endpoints are plain HTTP over IPv4; `AI_API_URL` hosts may be dotted quads or
 hostnames (resolved per request with `getaddrinfo`, first IPv4 address wins).
