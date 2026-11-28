@@ -359,6 +359,33 @@ class AgentTests(unittest.TestCase):
             check=True,
         ), endpoint
 
+    def run_agent_raw(self, responses, args, cwd=None, input=b""):
+        # Like run_agent, but stdout stays bytes: tool output that is not
+        # UTF-8 at all would crash the text-mode decode of the capture
+        # before the request-body assertions could run.
+        endpoint = Endpoint(responses)
+        self.addCleanup(endpoint.thread.join, timeout=2)
+        self.addCleanup(endpoint.close)
+        if cwd is None:
+            scratch = tempfile.TemporaryDirectory()
+            self.addCleanup(scratch.cleanup)
+            cwd = scratch.name
+        settings = {
+            "AI_API_URL": f"http://127.0.0.1:{endpoint.port}/v1",
+            "AI_TIMEOUT_SECONDS": "2",
+            "AI_COMMAND_TIMEOUT_SECONDS": "2",
+            "PATH": os.environ["PATH"],
+        }
+        return subprocess.run(
+            [EXECUTABLE, *args],
+            input=input,
+            capture_output=True,
+            env=settings,
+            cwd=cwd,
+            timeout=10,
+            check=True,
+        ), endpoint
+
     def make_workspace(self, entries):
         workspace = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, workspace, ignore_errors=True)
@@ -2001,6 +2028,76 @@ class AgentTests(unittest.TestCase):
             "resolves outside the workspace scope", replies[0]["content"]
         )
         self.assertNotIn("root:", replies[0]["content"])
+
+    def test_read_file_quotes_undecodable_bytes_for_the_model(self):
+        # The endpoint decodes the request body as strict UTF-8, so a Latin-1
+        # byte and a cut three-byte sequence in a file must ride in quoted
+        # as \xNN notation, not raw: json.loads in the endpoint raises
+        # exactly the "'utf-8' codec can't decode byte" that produces
+        # HTTP 400, so a raw body never gets a second round to assert on.
+        workspace = self.make_workspace({})
+        with open(os.path.join(workspace, "notes.txt"), "wb") as handle:
+            handle.write(b"caf\xe9\n\xe4\xb8\n")
+        result, endpoint = self.run_agent_raw(
+            [named_tool_response("read_file", {"path": "notes.txt"}), text_response("done")],
+            ["-C", workspace, "-e", "diagnose"],
+        )
+        self.assertIn(b"[AI reads file]: notes.txt", result.stdout)
+        # The terminal echo keeps the raw bytes: the display is not the
+        # request, and nothing is concealed on screen.
+        self.assertIn(b"caf\xe9", result.stdout)
+        self.assertEqual(len(endpoint.requests), 2)
+        # The strict decode is the failure the endpoint reported: it must
+        # succeed on every request body the agent sends.
+        endpoint.raw_requests[1].decode("utf-8")
+        replies = self.tool_replies(endpoint)
+        self.assertIn(r"caf\xe9", replies[0]["content"])
+        self.assertIn(r"\xe4\xb8", replies[0]["content"])
+        self.assertIn("[file read: notes.txt, 2 lines]", replies[0]["content"])
+
+    def test_command_tail_cut_keeps_utf8_characters_whole(self):
+        # The tool-result tail is bounded at a byte offset; a cut inside a
+        # multi-byte character would quote the broken bytes as \xNN noise
+        # even though the output is valid UTF-8.
+        workspace = self.make_workspace({})
+        with open(os.path.join(workspace, "big.txt"), "w") as handle:
+            handle.write("€" * 1024 + "a")
+        result, endpoint = self.run_agent(
+            [tool_response("cat big.txt"), text_response("done")],
+            full_access=True,
+            exec_prompt="diagnose",
+            workspace=workspace,
+        )
+        self.assertIn("€", result.stdout)
+        replies = self.tool_replies(endpoint)
+        content = replies[0]["content"]
+        self.assertIn("[output tail]", content)
+        self.assertTrue(content.endswith("€" * 1023 + "a"))
+        self.assertNotIn("\\x", content)
+
+    def test_resume_quotes_undecodable_bytes_from_legacy_session(self):
+        # A transcript saved before the UTF-8 gate holds the raw bytes that
+        # broke the endpoint; --resume must quote them instead of replaying
+        # the failure into every later request.
+        scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(scratch.cleanup)
+        log = os.path.join(scratch.name, "legacy.jsonl")
+        with open(log, "wb") as handle:
+            handle.write(b'{"role":"user","content":"caf\xe9 note"}\n')
+        result, endpoint = self.run_agent(
+            [text_response("done")],
+            exec_prompt="continue",
+            flags=["--resume", log],
+            cwd=scratch.name,
+        )
+        self.assertIn("[session] resumed 1 messages", result.stdout)
+        endpoint.raw_requests[0].decode("utf-8")
+        contents = [
+            message["content"]
+            for message in endpoint.requests[0]["messages"]
+            if message["role"] == "user"
+        ]
+        self.assertIn("caf\\xe9 note", contents)
 
     def test_list_dir_reports_sorted_entries(self):
         workspace = self.make_workspace(

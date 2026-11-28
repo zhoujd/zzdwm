@@ -252,6 +252,18 @@ garbled; a healthy terminal ignores it, and `/refresh` re-applies the same
 restore mid-session — with piped or TUI output it reports that there is no
 terminal to restore rather than writing control bytes into the pipe.
 
+The request body faces the mirror rule on the way out: the endpoint decodes
+it as strict UTF-8 and rejects an undecodable body outright, so every byte
+embedded in a message is validated as it is encoded. Valid UTF-8 passes
+through untouched, and a byte that cannot decode — a Latin-1 file read by
+`read_file`, binary command output, a pipe in another encoding — is quoted
+as `\xNN`, the same notation the display and patch errors use, so the model
+sees which byte was there instead of a silent replacement. A byte-offset
+tail cut that would split one multi-byte character steps to the next
+character first, and a session saved before this rule existed has its
+stored lines quoted the same way on `--resume`/`--continue`, so an old
+transcript cannot replay the failure.
+
 Token usage is reported from the endpoint's `usage` object. The interactive
 agent prints one line at exit, and one-shot mode prints it after each round:
 `[usage] tokens: 12.4k in / 3.1k out, 7 rounds, context 3.2k` — cumulative

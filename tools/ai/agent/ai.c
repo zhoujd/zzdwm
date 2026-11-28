@@ -771,15 +771,69 @@ buffer_append_formatted (Buffer *buffer, const char *format, ...)
   return buffer_append (buffer, text, (size_t)length);
 }
 
+/* Byte length of the UTF-8 sequence starting at data[0], bounded by the
+   remaining length: 1 for ASCII, 2 to 4 for a well-formed sequence, and 0
+   when those bytes cannot decode — a lone continuation, an overlong form,
+   a surrogate half, a value past U+10FFFF, or a sequence cut short at the
+   end of the buffer. The endpoint decodes the whole request body as UTF-8
+   and answers HTTP 400 when it cannot, so this gate is what every byte
+   embedded in a request has to pass. */
+static size_t
+utf8_sequence_length (const char *data, size_t length)
+{
+  unsigned char lead = (unsigned char)data[0];
+  unsigned char minimum = 0x80;
+  unsigned char maximum = 0xBF;
+  size_t expected;
+  size_t index;
+
+  if (lead < 0x80)
+    return 1;
+  /* 0xC0 and 0xC1 start nothing but overlong ASCII; 0xF5 and beyond pass
+     U+10FFFF. */
+  if (lead < 0xC2 || lead > 0xF4)
+    return 0;
+  expected = lead < 0xE0 ? 2 : lead < 0xF0 ? 3 : 4;
+  if (length < expected)
+    return 0;
+  for (index = 1; index < expected; index++)
+    if (((unsigned char)data[index] & 0xC0) != 0x80)
+      return 0;
+  /* The lead range already rejects the overlong two-byte forms and values
+     past U+10FFFF; these second-byte windows also reject the overlong
+     three- and four-byte forms and both surrogate halves. */
+  if (lead == 0xE0)
+    minimum = 0xA0;
+  else if (lead == 0xED)
+    maximum = 0x9F;
+  else if (lead == 0xF0)
+    minimum = 0x90;
+  else if (lead == 0xF4)
+    maximum = 0x8F;
+  if ((unsigned char)data[1] < minimum || (unsigned char)data[1] > maximum)
+    return 0;
+  return expected;
+}
+
+/* Append the body of one JSON string: structural bytes as JSON escapes,
+   and multi-byte UTF-8 passed through only when it decodes. Tool output,
+   file bodies, and piped context arrive as raw bytes, and a file or
+   command that is not UTF-8 must not reach the endpoint verbatim — the
+   body stops being decodable and every request fails with HTTP 400.
+   Each undecodable byte is instead quoted as \xNN, the notation the
+   patch errors and the terminal echo already use, so the byte stays
+   visible to the model and nothing is silently replaced. */
 static int
 append_json_string_body (Buffer *buffer, const char *data, size_t length)
 {
+  static const char digits[] = "0123456789abcdef";
   size_t index;
 
   for (index = 0; index < length; index++)
     {
       unsigned char byte = (unsigned char)data[index];
       char escaped[7];
+      size_t sequence;
 
       if (byte == '"' || byte == '\\')
         {
@@ -801,9 +855,74 @@ append_json_string_body (Buffer *buffer, const char *data, size_t length)
           if (buffer_append (buffer, escaped, 6) < 0)
             return -1;
         }
-      else if (buffer_append (buffer, (const char *)&data[index], 1) < 0)
-        return -1;
+      else
+        {
+          sequence = byte < 0x80 ? 1 : utf8_sequence_length (data + index, length - index);
+          if (sequence != 0)
+            {
+              if (buffer_append (buffer, data + index, sequence) < 0)
+                return -1;
+              index += sequence - 1;
+            }
+          else
+            {
+              /* Five body bytes — the escaped backslash, then xNN — so the
+                 decoded string holds the four-character notation. */
+              escaped[0] = '\\';
+              escaped[1] = '\\';
+              escaped[2] = 'x';
+              escaped[3] = digits[byte >> 4];
+              escaped[4] = digits[byte & 15];
+              if (buffer_append (buffer, escaped, 5) < 0)
+                return -1;
+            }
+        }
     }
+  return 0;
+}
+
+/* Quote the undecodable bytes of one stored session line so a transcript
+   saved before the UTF-8 gate re-enters the conversation as decodable
+   JSON. The line already parsed as cJSON, so every byte above 0x7F sits
+   inside a string value, where an escaped backslash keeps both the JSON
+   structure and the \xNN notation the live encoder would have written.
+   Returns 0 with the quoted line and its length, or -1 when the growth
+   does not fit, which the caller treats like a torn line. */
+static int
+quote_undecodable_bytes (const char *line, size_t length, char *output, size_t capacity, size_t *quoted_length)
+{
+  static const char digits[] = "0123456789abcdef";
+  size_t position = 0;
+  size_t index = 0;
+
+  while (index < length)
+    {
+      unsigned char byte = (unsigned char)line[index];
+      size_t sequence = byte < 0x80 ? 1 : utf8_sequence_length (line + index, length - index);
+
+      if (sequence != 0)
+        {
+          /* The +1 keeps room for the terminator behind the last copy. */
+          if (position + sequence + 1 > capacity)
+            return -1;
+          memcpy (output + position, line + index, sequence);
+          position += sequence;
+          index += sequence;
+        }
+      else
+        {
+          if (position + 5 + 1 > capacity)
+            return -1;
+          output[position++] = '\\';
+          output[position++] = '\\';
+          output[position++] = 'x';
+          output[position++] = digits[byte >> 4];
+          output[position++] = digits[byte & 15];
+          index++;
+        }
+    }
+  output[position] = 0;
+  *quoted_length = position;
   return 0;
 }
 
@@ -1626,15 +1745,19 @@ header_equal (const char *line, size_t length, const char *name)
 }
 
 /* Replay a saved session into the live conversation. Stored lines are the
-   exact message objects previously sent, so they are re-added verbatim;
-   system lines are skipped because conversation_reset rebuilds that context
-   fresh each run, and a torn or malformed line from a kill is skipped rather
-   than fatal. add_message applies the MAX_MESSAGES drop-oldest window as
-   usual, so an oversized log still replays its newest tail. */
+   exact message objects previously sent, so they are re-added with only
+   their undecodable bytes quoted — a transcript saved before the UTF-8 gate
+   carries the very bytes that broke the endpoint, and replaying it verbatim
+   would fail every request the same way. System lines are skipped because
+   conversation_reset rebuilds that context fresh each run, and a torn or
+   malformed line from a kill is skipped rather than fatal. add_message
+   applies the MAX_MESSAGES drop-oldest window as usual, so an oversized log
+   still replays its newest tail. */
 static int
 resume_session (const char *path)
 {
   static char line[MESSAGE_SIZE + 8];
+  static char quoted[MESSAGE_SIZE + 8];
   size_t restored = 0;
   size_t skipped = 0;
   FILE *file;
@@ -1674,6 +1797,8 @@ resume_session (const char *path)
         }
       else
         {
+          size_t quoted_length;
+
           if (strcmp (role, "user") == 0)
             message_role = ROLE_USER;
           else if (strcmp (role, "assistant") == 0)
@@ -1682,7 +1807,10 @@ resume_session (const char *path)
             message_role = ROLE_TOOL;
           else
             message_role = ROLE_SYSTEM;
-          if (message_role == ROLE_SYSTEM || add_message (line, length, message_role) < 0)
+          if (message_role == ROLE_SYSTEM)
+            skipped++;
+          else if (quote_undecodable_bytes (line, length, quoted, sizeof (quoted), &quoted_length) < 0
+                   || add_message (quoted, quoted_length, message_role) < 0)
             skipped++;
           else
             restored++;
@@ -4375,6 +4503,12 @@ append_bounded_output (const ToolCall *call, const char *prefix, const char *out
   for (;;)
     {
       start = output_length > tail ? output_length - tail : 0;
+      /* A byte-aligned tail cut can split one UTF-8 character in half, and
+         the broken leading byte would then be quoted as \xNN noise even
+         though the output itself is valid UTF-8: step to the next sequence
+         start. */
+      while (start < output_length && ((unsigned char)output[start] & 0xC0) == 0x80)
+        start++;
       prefix_length = (size_t)snprintf (prefix_text, sizeof (prefix_text), "%s\n%s%s", prefix, drop_text,
                                         start != 0 ? "[output tail]\n" : "");
       if (prefix_length >= sizeof (prefix_text))
