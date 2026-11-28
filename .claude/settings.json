@@ -1,9 +1,5 @@
 {
-  "env": {
-    "INCLUDE_CO_AUTHORED_BY": "false"
-  },
   "permissions": {
-    "defaultMode": "acceptEdits",
     "blockReadsOutsideWorkingDirectories": false,
     "allow": [
       "Bash",
